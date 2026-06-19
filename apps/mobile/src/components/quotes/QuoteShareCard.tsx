@@ -19,10 +19,22 @@ export interface QuoteShareCardProps {
   qrValue: string;
 }
 
+// Card height is fixed, so long quotes shrink to fit rather than truncating —
+// no ellipsis cutoff above the QR code, just a smaller font for longer text.
+function quoteFontSize(text: string) {
+  if (text.length > 420) return 13;
+  if (text.length > 340) return 15;
+  if (text.length > 260) return 17;
+  if (text.length > 180) return 19;
+  if (text.length > 110) return 21;
+  return 24;
+}
+
 const QuoteShareCard = forwardRef<View, QuoteShareCardProps>(function QuoteShareCard(
   { quoteText, quoteAuthor, quoteSource, qrValue },
   ref
 ) {
+  const fontSizePx = quoteFontSize(quoteText);
   return (
     <View ref={ref} collapsable={false} style={styles.wrap}>
       <LinearGradient
@@ -39,7 +51,9 @@ const QuoteShareCard = forwardRef<View, QuoteShareCardProps>(function QuoteShare
         <View style={styles.divider} />
 
         <Text style={styles.openMark}>"</Text>
-        <Text style={styles.quoteText} numberOfLines={8}>{quoteText}</Text>
+        <Text style={[styles.quoteText, { fontSize: fontSizePx, lineHeight: fontSizePx * 1.4 }]}>
+          {quoteText}
+        </Text>
 
         {(quoteAuthor || quoteSource) && (
           <View style={styles.attribution}>

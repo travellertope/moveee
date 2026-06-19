@@ -114,6 +114,28 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 6, paddingVertical: 2, alignSelf: "flex-start", marginTop: 4,
     },
     nomText: { fontFamily: fonts.sans, fontSize: 10, color: "#854d0e" },
+    table: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
+      overflow: "hidden", marginBottom: space[5],
+    },
+    tableHeaderRow: {
+      flexDirection: "row", backgroundColor: c.paperDeep,
+      paddingVertical: space[2], paddingHorizontal: space[3],
+    },
+    tableHeaderCell: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.xs,
+      color: c.mute, letterSpacing: 0.5, textTransform: "uppercase",
+    },
+    tableRow: {
+      flexDirection: "row", alignItems: "center",
+      paddingVertical: space[2] + 2, paddingHorizontal: space[3],
+      borderTopWidth: 1, borderTopColor: c.rule,
+    },
+    tableActivityCell: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, paddingRight: space[2] },
+    tableNumCell: { width: 64, fontFamily: fonts.monoBold, fontSize: fontSize.sm, textAlign: "right" },
+    tableCreditNum: { color: "#92400e" },
+    tableRepNum: { color: "#5b21b6" },
+    tableDash: { color: c.ghost },
     loader: { padding: space[8], alignItems: "center" },
     errorBox: {
       backgroundColor: c.paperDeep, borderRadius: radius.md, padding: space[4],
@@ -166,8 +188,9 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
     if (visible) setTab(initialTab);
   }, [visible]);
 
-  const creditActions = config?.actions.filter((a) => a.credits > 0) ?? [];
-  const repActions = config?.actions.filter((a) => a.rep > 0) ?? [];
+  const breakdownRows = [...(config?.actions ?? [])].sort(
+    (a, b) => (b.rep + b.credits) - (a.rep + a.credits)
+  );
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -215,15 +238,25 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       {" "}— resets at midnight UTC.
                     </Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Earn Credits</Text>
-                  {creditActions.map((a) => (
-                    <View key={a.action} style={styles.row}>
-                      <Text style={styles.rowLabel}>{a.label}</Text>
-                      <View style={[styles.badge, styles.badgeCredit]}>
-                        <Text style={[styles.badgeText, styles.badgeCreditText]}>+{a.credits}</Text>
-                      </View>
+                  <Text style={styles.sectionTitle}>Earn Credits &amp; Points</Text>
+                  <View style={styles.table}>
+                    <View style={styles.tableHeaderRow}>
+                      <Text style={[styles.tableHeaderCell, { flex: 1 }]}>Activity</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Credits</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Points</Text>
                     </View>
-                  ))}
+                    {breakdownRows.map((a) => (
+                      <View key={a.action} style={styles.tableRow}>
+                        <Text style={styles.tableActivityCell}>{a.label}</Text>
+                        <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
+                          {a.credits > 0 ? `+${a.credits}` : "—"}
+                        </Text>
+                        <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
+                          {a.rep > 0 ? `+${a.rep}` : "—"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                   <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Spend Credits</Text>
                   {[
                     "Redeem partner perks in the Perks tab",
@@ -242,15 +275,25 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       Points are <Text style={styles.capBold}>permanent</Text> — they never decrease and cannot be spent. They unlock higher tiers and privileges.
                     </Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Earn Points</Text>
-                  {repActions.map((a) => (
-                    <View key={a.action} style={styles.row}>
-                      <Text style={styles.rowLabel}>{a.label}</Text>
-                      <View style={[styles.badge, styles.badgeRep]}>
-                        <Text style={[styles.badgeText, styles.badgeRepText]}>+{a.rep} PTS</Text>
-                      </View>
+                  <Text style={styles.sectionTitle}>Earn Credits &amp; Points</Text>
+                  <View style={styles.table}>
+                    <View style={styles.tableHeaderRow}>
+                      <Text style={[styles.tableHeaderCell, { flex: 1 }]}>Activity</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Credits</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Points</Text>
                     </View>
-                  ))}
+                    {breakdownRows.map((a) => (
+                      <View key={a.action} style={styles.tableRow}>
+                        <Text style={styles.tableActivityCell}>{a.label}</Text>
+                        <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
+                          {a.credits > 0 ? `+${a.credits}` : "—"}
+                        </Text>
+                        <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
+                          {a.rep > 0 ? `+${a.rep}` : "—"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                   <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Points Tiers</Text>
                   {(config?.tiers ?? []).map((tier) => (
                     <View key={tier.slug} style={styles.tierCard}>
