@@ -13,6 +13,7 @@ import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ShopProduct, ShopCategory, ShopVendor } from "../../types";
+import { decodeHtml } from "../../utils/decodeHtml";
 
 // ── Badge helpers ─────────────────────────────────────────────────────────────
 
@@ -306,7 +307,7 @@ export default function ShopScreen() {
 
   const pillLabels = useMemo(() => {
     if (categories.length === 0) return CATEGORIES_STATIC;
-    return ["All", ...categories.map((c) => c.name)];
+    return ["All", ...categories.map((c) => decodeHtml(c.name))];
   }, [categories]);
 
   const featured   = products.slice(0, 1);
