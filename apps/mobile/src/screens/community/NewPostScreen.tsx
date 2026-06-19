@@ -27,7 +27,6 @@ import { TEMPLATE_DEFS } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 
-const PROXY = "https://themoveee.com/api";
 
 interface TemplateMeta {
   id: TemplateId;
@@ -377,7 +376,7 @@ const uploadImages = async (): Promise<string[]> => {
       try {
         const fileName = uri.split("/").pop() ?? "photo.jpg";
         const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
-        const res = await api.upload<{ url: string }>(`${PROXY}/mobile/community/upload-image`, uri, fileName, fileType);
+        const res = await api.upload<{ url: string }>(`${MOBILE_API}/community/upload-image`, uri, fileName, fileType);
         urls.push(res.url);
       } catch {
         failures += 1;
