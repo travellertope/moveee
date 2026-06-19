@@ -302,7 +302,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               color: "#2e7d32", fontSize: "0.65rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               overflow: "hidden",
-              ...(item.communityTier === "patron" ? { boxShadow: "0 0 0 2px #b38238, 0 0 10px 2px rgba(179,130,56,.5)" } : {}),
+              ...(item.communityTier === "patron" ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

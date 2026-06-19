@@ -564,10 +564,10 @@ function createStyles(c: ColorPalette) {
     avatarRingPro: {
       borderColor: c.gold,
       shadowColor: c.gold,
-      shadowOpacity: 0.6,
-      shadowRadius: 14,
+      shadowOpacity: 0.85,
+      shadowRadius: 18,
       shadowOffset: { width: 0, height: 0 },
-      elevation: 10,
+      elevation: 12,
     },
     avatarRingCitizen: { borderColor: c.ghost },
     avatarInner: {
