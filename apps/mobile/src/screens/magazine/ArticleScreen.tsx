@@ -643,28 +643,45 @@ export default function ArticleScreen() {
       fire: (article as any).reactions?.fire ?? 0,
       clap: (article as any).reactions?.clap ?? 0,
     });
+    // The article fetch doesn't carry the viewer's own reaction state (unlike
+    // feed responses), so hydrate it separately from the per-user lookup.
+    api.get<{ userReaction: EmojiKey | null }>(
+      `${MOBILE_API}/user/reaction?post_id=${Number(article.id)}`
+    ).then((res) => {
+      setReactedKeys(new Set(res.userReaction ? [res.userReaction] : []));
+    }).catch(() => {});
   }, [article?.id]);
 
   const handleReact = useCallback(async (key: EmojiKey) => {
     if (!article) return;
     const already = reactedKeys.has(key);
-    setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? -1 : 1) }));
-    setReactedKeys((prev) => {
-      const next = new Set(prev);
-      already ? next.delete(key) : next.add(key);
+    const prevReaction = already ? key : (Array.from(reactedKeys)[0] ?? null);
+    const prevCounts = reactionCounts;
+
+    // Optimistic update — only one reaction type can be active per user,
+    // matching the server's per-user/per-post toggle-or-switch semantics.
+    setReactionCounts((prev) => {
+      const next = { ...prev };
+      if (prevReaction && prevReaction !== key) {
+        next[prevReaction] = Math.max(0, next[prevReaction] - 1);
+      }
+      next[key] = Math.max(0, next[key] + (already ? -1 : 1));
       return next;
     });
+    setReactedKeys(new Set(already ? [] : [key]));
+
     try {
-      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(article.id), type: key });
+      const res = await api.post<{ reactionType: EmojiKey | null; reactions: { love: number; fire: number; clap: number } }>(
+        `${MOBILE_API}/community/react`,
+        { post_id: Number(article.id), type: key }
+      );
+      setReactionCounts(res.reactions);
+      setReactedKeys(new Set(res.reactionType ? [res.reactionType] : []));
     } catch {
-      setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? 1 : -1) }));
-      setReactedKeys((prev) => {
-        const next = new Set(prev);
-        already ? next.add(key) : next.delete(key);
-        return next;
-      });
+      setReactionCounts(prevCounts);
+      setReactedKeys(new Set(prevReaction ? [prevReaction] : []));
     }
-  }, [article, reactedKeys]);
+  }, [article, reactedKeys, reactionCounts]);
 
   // Bookmark — fetch actual state from interactions endpoint once article loads
   const [bookmarked, setBookmarked] = useState(false);

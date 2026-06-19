@@ -204,6 +204,10 @@ export interface FeedItem {
 
   // Reactions
   reactions?: { love: number; fire: number; clap: number };
+  // This user's current reaction on the post, from `_culture_post_reactions`
+  // usermeta — null/undefined means not reacted. Source of truth for
+  // hydrating ReactionBar's initial state instead of always assuming false.
+  userReaction?: "love" | "fire" | "clap" | null;
   wpId?: string;
 }
 

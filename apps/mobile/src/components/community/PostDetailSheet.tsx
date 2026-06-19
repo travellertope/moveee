@@ -248,19 +248,45 @@ function ReactionsRow({
   onComment?: () => void;
   onReport?: () => void;
 }) {
-  const [loved, setLoved] = useState(false);
-  const [fired, setFired] = useState(false);
-  const [clapped, setClapped] = useState(false);
-  const love = (item.reactions?.love ?? 0) + (loved ? 1 : 0);
-  const fire = (item.reactions?.fire ?? 0) + (fired ? 1 : 0);
-  const clap = (item.reactions?.clap ?? 0) + (clapped ? 1 : 0);
+  const [counts, setCounts] = useState({
+    love: item.reactions?.love ?? 0,
+    fire: item.reactions?.fire ?? 0,
+    clap: item.reactions?.clap ?? 0,
+  });
+  const [reacted, setReacted] = useState<"love" | "fire" | "clap" | null>(item.userReaction ?? null);
+
+  const loved = reacted === "love";
+  const fired = reacted === "fire";
+  const clapped = reacted === "clap";
 
   const react = async (type: "love" | "fire" | "clap") => {
-    if (type === "love") setLoved((v) => !v);
-    if (type === "fire") setFired((v) => !v);
-    if (type === "clap") setClapped((v) => !v);
-    if (item.wpId) {
-      try { await api.post(`${MOBILE_API}/community/react`, { post_id: item.wpId, type }); } catch {}
+    if (!item.wpId) return;
+    const already = reacted === type;
+    const prevReaction = reacted;
+    const prevCounts = counts;
+
+    // Optimistic update — only one reaction type can be active per user,
+    // matching the server's per-user/per-post toggle-or-switch semantics.
+    setCounts((prev) => {
+      const next = { ...prev };
+      if (prevReaction && prevReaction !== type) {
+        next[prevReaction] = Math.max(0, next[prevReaction] - 1);
+      }
+      next[type] = Math.max(0, next[type] + (already ? -1 : 1));
+      return next;
+    });
+    setReacted(already ? null : type);
+
+    try {
+      const res = await api.post<{ reactionType: "love" | "fire" | "clap" | null; reactions: typeof counts }>(
+        `${MOBILE_API}/community/react`,
+        { post_id: item.wpId, type }
+      );
+      setCounts(res.reactions);
+      setReacted(res.reactionType ?? null);
+    } catch {
+      setCounts(prevCounts);
+      setReacted(prevReaction);
     }
   };
 
@@ -270,15 +296,15 @@ function ReactionsRow({
       <View style={styles.reactionsRow}>
         <TouchableOpacity style={styles.reactionBtn} onPress={() => react("love")} activeOpacity={0.7}>
           <Ionicons name={loved ? "heart" : "heart-outline"} size={18} color={loved ? "#E53E3E" : c.mute} />
-          <Text style={[styles.reactionCount, loved && { color: "#E53E3E" }]}>{love}</Text>
+          <Text style={[styles.reactionCount, loved && { color: "#E53E3E" }]}>{counts.love}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.reactionBtn} onPress={() => react("fire")} activeOpacity={0.7}>
           <Ionicons name={fired ? "flame" : "flame-outline"} size={18} color={fired ? "#F97316" : c.mute} />
-          <Text style={[styles.reactionCount, fired && { color: "#F97316" }]}>{fire}</Text>
+          <Text style={[styles.reactionCount, fired && { color: "#F97316" }]}>{counts.fire}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.reactionBtn} onPress={() => react("clap")} activeOpacity={0.7}>
           <Ionicons name={clapped ? "hand-left" : "hand-left-outline"} size={18} color={clapped ? "#B38238" : c.mute} />
-          <Text style={[styles.reactionCount, clapped && { color: "#B38238" }]}>{clap}</Text>
+          <Text style={[styles.reactionCount, clapped && { color: "#B38238" }]}>{counts.clap}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.reactionBtn} onPress={onComment} activeOpacity={0.7}>
           <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
