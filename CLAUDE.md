@@ -703,8 +703,9 @@ comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPr
 
 `_culture_cover_photo_url` usermeta mirrors `_culture_avatar_url` exactly.
 - Upload: `POST /mobile/me/cover-photo` (multipart, field `file`) →
-  `handle_upload_cover_photo()` in `class-culture-mobile-api.php`, same
-  `media_handle_upload()` pattern as `handle_upload_avatar()`.
+  `handle_upload_cover_photo()` in `class-culture-mobile-api.php`, stores to
+  Cloudflare R2 (see "Mobile image uploads → Cloudflare R2" below), same
+  pattern as `handle_upload_avatar()`.
 - Exposed as `coverPhotoUrl` (camelCase) in both `public_profile()` and the
   own-user-profile builder in `class-culture-mobile-api.php`, and as
   `cover_photo_url` (snake_case) in `handle_get_public_profile()` in
@@ -720,6 +721,65 @@ comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPr
   previously no cover banner on web at all, only on mobile (gradient).
 - `coverPhotoUrl: string` added to both `User` and `Member` in
   `apps/mobile/src/types/index.ts` (required field, not optional).
+
+---
+
+## Mobile image uploads → Cloudflare R2 (June 2026)
+
+All three mobile image-upload surfaces (community post images, avatar,
+cover photo) store to the **same R2 bucket the web app uses**, not
+WordPress's local media library. There are now two parallel ways this
+happens — both land in the same bucket, neither is "wrong", pick whichever
+pattern matches what you're touching:
+
+1. **Next.js proxy route, pre-existing pattern** (`apps/site/app/api/mobile/...`,
+   reached via the `PROXY = "https://themoveee.com/api"` constant in mobile
+   screens) — re-uses `packages/shared/lib/r2.ts`'s `uploadToR2()` directly,
+   plus a `sharp` re-compression step (community images: resize to
+   1600×1600 max, WebP q82; avatar: 400×400 cover-crop, WebP q85). Avatar
+   upload (`MemberSettingsScreen.tsx` → `${PROXY}/mobile/me/avatar` →
+   `apps/site/app/api/mobile/me/avatar/route.ts`) and community post images
+   (`NewPostScreen.tsx` → `${PROXY}/mobile/community/upload-image` →
+   `apps/site/app/api/mobile/community/upload-image/route.ts`) both use this
+   path. The avatar route saves the resulting URL back to WordPress via
+   `POST /mobile/me/avatar-url` (`handle_save_avatar_url()` — URL-only, no
+   file handling) since the upload itself already happened in Next.js.
+   **Do not "fix" these mobile screens to call the WordPress JWT host
+   directly thinking the PROXY route is dead** — it isn't; a prior session
+   in this same project mistakenly redirected the community-upload call from
+   `PROXY` to `MOBILE_API` believing the Next.js route didn't exist (it does,
+   see `apps/site/app/api/mobile/community/upload-image/route.ts`'s git
+   history, which predates that "fix"). That call site currently still
+   points at `MOBILE_API` and is **not** broken — see point 2 below for why —
+   but if you're investigating an upload bug, check whether the Next.js
+   route or the WordPress route is actually being hit before assuming either
+   one is missing.
+2. **WordPress-native R2 upload, new (`class-culture-r2.php`,
+   `Culture_R2`)** — a from-scratch PHP AWS SigV4 signer (no AWS SDK
+   dependency; raw `wp_remote_request()` PUT), functionally mirroring
+   `r2.ts`'s `uploadToR2()`. Used by `handle_upload_image()` (community,
+   key prefix `community/{userId}/`), `handle_upload_avatar()` (key prefix
+   `avatars/{userId}/`, direct-to-WP path — currently unused by the mobile
+   client, which goes through the Next.js proxy instead, but kept R2-backed
+   for parity since it's still a reachable registered route), and
+   `handle_upload_cover_photo()` (key prefix `covers/{userId}/`) in
+   `class-culture-mobile-api.php`. A shared private helper,
+   `upload_to_r2_from_request( $request, $key_prefix )`, does the
+   validation (MIME allowlist, 8MB cap) + R2 upload for all three. No WebP
+   re-compression on this path — uploads the original bytes/MIME type as-is.
+
+**R2 credentials (WordPress side)**: `Culture_R2`'s five private getters
+follow the project's standard `defined('CONSTANT') ?: get_option(...)`
+pattern (same as `Culture_Perks::hmac_key()`) —
+`CULTURE_R2_ACCOUNT_ID`/`culture_r2_account_id`,
+`CULTURE_R2_ACCESS_KEY_ID`/`culture_r2_access_key_id`,
+`CULTURE_R2_SECRET_ACCESS_KEY`/`culture_r2_secret_access_key`,
+`CULTURE_R2_BUCKET_NAME`/`culture_r2_bucket_name` (default
+`moveee-media`), `CULTURE_R2_PUBLIC_URL`/`culture_r2_public_url` (default
+`https://media.themoveee.com`). WP Admin fields live in the General tab
+(`render_general_tab()` in `class-culture-settings.php`), in a "Cloudflare
+R2 Storage" section — values must match the same R2 account/bucket the
+Next.js apps use (`R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/etc. on Vercel).
 
 ---
 
