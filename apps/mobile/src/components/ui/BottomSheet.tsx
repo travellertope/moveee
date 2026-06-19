@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -26,6 +26,11 @@ const PEEK_Y      = FULL_H - PEEK_H;   // translateY for peek (offset within she
 
 export type BottomSheetState = "peek" | "full" | "closed";
 
+export interface BottomSheetHandle {
+  /** Expands to full state (if currently peeking) and scrolls content to the bottom. */
+  scrollToEnd: () => void;
+}
+
 interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -36,13 +41,13 @@ interface BottomSheetProps {
   peekContent?: React.ReactNode;
 }
 
-export default function BottomSheet({
+const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function BottomSheet({
   visible,
   onClose,
   initialState = "full",
   children,
   peekContent,
-}: BottomSheetProps) {
+}, ref) {
   const c = useColors();
   const styles = createStyles(c);
   const insets = useSafeAreaInsets();
@@ -51,6 +56,7 @@ export default function BottomSheet({
   const translateY    = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropOpac  = useRef(new Animated.Value(0)).current;
   const dragStart     = useRef(0);
+  const scrollRef     = useRef<ScrollView>(null);
 
   const targetY = sheetState === "full" ? 0 : PEEK_Y;
 
@@ -182,6 +188,19 @@ export default function BottomSheet({
     })
   ).current;
 
+  useImperativeHandle(ref, () => ({
+    scrollToEnd: () => {
+      if (sheetState !== "full") {
+        expandToFull();
+      }
+      // Wait for the peek→full expand animation (and the full ScrollView to
+      // mount, since it's only rendered in the "full" branch) before scrolling.
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, sheetState !== "full" ? 220 : 0);
+    },
+  }), [sheetState, expandToFull]);
+
   if (!visible) return null;
 
   return (
@@ -224,6 +243,7 @@ export default function BottomSheet({
             behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
             <ScrollView
+              ref={scrollRef}
               style={styles.scrollArea}
               contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
               showsVerticalScrollIndicator={false}
@@ -238,7 +258,9 @@ export default function BottomSheet({
       </Animated.View>
     </Modal>
   );
-}
+});
+
+export default BottomSheet;
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({

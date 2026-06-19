@@ -57,7 +57,7 @@ class Culture_Post_Types {
                 'type'         => 'string',
                 'single'       => true,
                 'show_in_rest' => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
@@ -66,7 +66,7 @@ class Culture_Post_Types {
                 'type'         => $args['type'],
                 'single'       => true,
                 'show_in_rest' => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
@@ -162,7 +162,7 @@ class Culture_Post_Types {
                 'type'          => $type,
                 'single'        => true,
                 'show_in_rest'  => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
@@ -212,7 +212,7 @@ class Culture_Post_Types {
                 'type'          => $type,
                 'single'        => true,
                 'show_in_rest'  => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
     }
@@ -222,9 +222,7 @@ class Culture_Post_Types {
      * can query them.
      */
     public static function register_graphql_fields() {
-        error_log( 'Culture Community: Registering GraphQL fields...' );
         if ( ! function_exists( 'register_graphql_field' ) ) {
-            error_log( 'Culture Community: register_graphql_field function not found!' );
             return;
         }
 
@@ -1450,6 +1448,15 @@ class Culture_Post_Types {
     }
 
     public static function save_meta_boxes( $post_id ) {
+        // Nonce verification alone proves the request originated from the
+        // edit screen, not that this user is allowed to edit this specific
+        // post — save_post can still fire from contexts where that capability
+        // isn't guaranteed (e.g. another plugin calling wp_insert_post()
+        // directly). Check it once up front for all nonce-gated blocks below.
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
             if ( isset( $_POST['culture_dir_city'] ) ) {

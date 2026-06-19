@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, Image,
-  Modal, Share, Linking,
+  Modal, Share,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { api, MOBILE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -501,22 +502,22 @@ export default function MemberProfileScreen() {
           {hasSocial && (
             <View style={styles.socialRow}>
               {profile.instagram && (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("instagram", profile.instagram!))}>
+                <TouchableOpacity style={styles.socialBtn} onPress={() => openInApp(toSocialUrl("instagram", profile.instagram!))}>
                   <Ionicons name="logo-instagram" size={18} color={c.ghost} />
                 </TouchableOpacity>
               )}
               {profile.linkedin && (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("linkedin", profile.linkedin!))}>
+                <TouchableOpacity style={styles.socialBtn} onPress={() => openInApp(toSocialUrl("linkedin", profile.linkedin!))}>
                   <Ionicons name="logo-linkedin" size={18} color={c.ghost} />
                 </TouchableOpacity>
               )}
               {profile.website && (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("website", profile.website!))}>
+                <TouchableOpacity style={styles.socialBtn} onPress={() => openInApp(toSocialUrl("website", profile.website!))}>
                   <Ionicons name="globe-outline" size={18} color={c.ghost} />
                 </TouchableOpacity>
               )}
               {profile.twitter && (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("twitter", profile.twitter!))}>
+                <TouchableOpacity style={styles.socialBtn} onPress={() => openInApp(toSocialUrl("twitter", profile.twitter!))}>
                   <Ionicons name="logo-twitter" size={18} color={c.ghost} />
                 </TouchableOpacity>
               )}

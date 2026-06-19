@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,12 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../hooks/useColors";
-import { useNav } from "../../hooks/useNav";
-import { useRoute } from "@react-navigation/native";
+import { useNav, AppParamList } from "../../hooks/useNav";
+import { useRoute, RouteProp } from "@react-navigation/native";
 import type { ColorPalette } from "../../theme";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { api, CULTURE_API } from "../../api/client";
+import { decodeHtml } from "../../utils/decodeHtml";
 import DiscoverCard, { DiscoverEntry, TYPE_BADGE } from "../../components/community/DiscoverCard";
 import DiscoverFilterSheet, { SortOption } from "../../components/community/DiscoverFilterSheet";
 
@@ -28,12 +29,27 @@ interface BrowseResponse {
   perPage: number;
 }
 
+// WordPress taxonomy term names (e.g. "subtype") and post titles/excerpts
+// come back with HTML entities escaped (e.g. "Literature &amp; Poetry").
+function decodeEntry(entry: DiscoverEntry): DiscoverEntry {
+  return {
+    ...entry,
+    title:   decodeHtml(entry.title),
+    subtype: decodeHtml(entry.subtype),
+    excerpt: decodeHtml(entry.excerpt),
+    city:    decodeHtml(entry.city),
+  };
+}
+function decodeEntries(entries: DiscoverEntry[]): DiscoverEntry[] {
+  return entries.map(decodeEntry);
+}
+
 export default function DiscoverScreen() {
   const c = useColors();
-  const styles = createStyles(c);
+  const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
   const insets = useSafeAreaInsets();
-  const route = useRoute<any>();
+  const route = useRoute<RouteProp<AppParamList, "Discover">>();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -55,9 +71,11 @@ export default function DiscoverScreen() {
   const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const requestIdRef = useRef(0);
 
   // "Recently Added" rail — fetched once per type/region change, independent of search/sort
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const params = new URLSearchParams();
@@ -69,15 +87,19 @@ export default function DiscoverScreen() {
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        setRecent(data?.entries ?? []);
+        if (!cancelled) setRecent(decodeEntries(data?.entries ?? []));
       } catch {
-        setRecent([]);
+        if (!cancelled) setRecent([]);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [type, region]);
 
   // "Trending in Community" rail — entries most referenced by community posts
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const params = new URLSearchParams();
@@ -89,15 +111,22 @@ export default function DiscoverScreen() {
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        setTrending(data?.entries ?? []);
+        if (!cancelled) setTrending(decodeEntries(data?.entries ?? []));
       } catch {
-        setTrending([]);
+        if (!cancelled) setTrending([]);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [type, region]);
 
   const fetchPage = useCallback(
     async (pageNum: number, replace: boolean) => {
+      // Guards against a slower, older request resolving after a newer one
+      // and clobbering its result (e.g. a stale debounced search response
+      // landing after the user already typed something else).
+      const requestId = ++requestIdRef.current;
       try {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
@@ -114,11 +143,13 @@ export default function DiscoverScreen() {
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        setEntries((prev) => (replace ? data?.entries ?? [] : [...prev, ...(data?.entries ?? [])]));
+        if (requestId !== requestIdRef.current) return;
+        const decoded = decodeEntries(data?.entries ?? []);
+        setEntries((prev) => (replace ? decoded : [...prev, ...decoded]));
         setTotal(data?.total ?? 0);
         setPage(pageNum);
       } catch {
-        if (replace) setEntries([]);
+        if (requestId === requestIdRef.current && replace) setEntries([]);
       }
     },
     [query, type, region, sort]

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, TouchableOpacity, Linking, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { openInApp } from "../../utils/openInApp";
 import { Ionicons } from "@expo/vector-icons";
 import TypeBadge from "../ui/TypeBadge";
@@ -60,7 +60,7 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
   const handleCalendar = () => {
     // Placeholder — deep-link to calendar app
     if (item.eventDate) {
-      Linking.openURL(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(item.title ?? "")}&dates=${item.eventDate}`);
+      openInApp(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(item.title ?? "")}&dates=${item.eventDate}`);
     }
   };
 

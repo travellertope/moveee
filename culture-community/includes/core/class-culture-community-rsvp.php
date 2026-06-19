@@ -124,20 +124,33 @@ class Culture_Community_RSVP {
             return true;
         }
 
-        $capacity = self::get_capacity( $post_id );
-        if ( $capacity > 0 && self::get_count( $post_id ) >= $capacity ) {
-            return new WP_Error( 'event_full', 'This event is fully booked.', array( 'status' => 409 ) );
+        // Per-event advisory mutex — without it, two concurrent RSVPs racing
+        // the last open spot can both pass the capacity check below before
+        // either write lands, overbooking the event (TOCTOU).
+        $lock_name = 'culture_rsvp_' . $post_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+        if ( ! $locked ) {
+            return new WP_Error( 'rsvp_busy', 'This event is being updated right now. Please try again.', array( 'status' => 409 ) );
         }
 
-        if ( $existing ) {
-            $wpdb->update( $table, array( 'status' => 'confirmed' ), array( 'id' => $existing['id'] ), array( '%s' ), array( '%d' ) );
-        } else {
-            $wpdb->insert( $table, array(
-                'post_id'    => $post_id,
-                'user_id'    => $user_id,
-                'status'     => 'confirmed',
-                'created_at' => current_time( 'mysql' ),
-            ), array( '%d', '%d', '%s', '%s' ) );
+        try {
+            $capacity = self::get_capacity( $post_id );
+            if ( $capacity > 0 && self::get_count( $post_id ) >= $capacity ) {
+                return new WP_Error( 'event_full', 'This event is fully booked.', array( 'status' => 409 ) );
+            }
+
+            if ( $existing ) {
+                $wpdb->update( $table, array( 'status' => 'confirmed' ), array( 'id' => $existing['id'] ), array( '%s' ), array( '%d' ) );
+            } else {
+                $wpdb->insert( $table, array(
+                    'post_id'    => $post_id,
+                    'user_id'    => $user_id,
+                    'status'     => 'confirmed',
+                    'created_at' => current_time( 'mysql' ),
+                ), array( '%d', '%d', '%s', '%s' ) );
+            }
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
         }
 
         $organiser_id = (int) $post->post_author;

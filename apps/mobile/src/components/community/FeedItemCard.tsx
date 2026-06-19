@@ -964,7 +964,7 @@ export function ProGlowRing({ color }: { color: string }) {
       style={{
         position: "absolute",
         top: -5, left: -5, right: -5, bottom: -5,
-        borderRadius: 24,
+        borderRadius: 9999,
         borderWidth: 2,
         borderColor: color,
         opacity,

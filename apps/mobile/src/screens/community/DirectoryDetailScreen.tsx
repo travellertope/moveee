@@ -8,7 +8,6 @@ import {
   Image,
   Share,
   ActivityIndicator,
-  Linking,
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,6 +20,7 @@ import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
+import { decodeHtml } from "../../utils/decodeHtml";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -43,6 +43,38 @@ interface DirectoryEntry {
   aboutFields: AboutField[]; entryQuote: string;
   selectedWorks: SelectedWork[]; relatedEntries: RelatedEntry[];
   communityPosts: CommunityPost[]; communityPostCount: number;
+}
+
+// WordPress taxonomy term names and post text fields come back with HTML
+// entities escaped (e.g. "Literature &amp; Poetry").
+function decodeEntry(entry: DirectoryEntry): DirectoryEntry {
+  return {
+    ...entry,
+    title:   decodeHtml(entry.title),
+    excerpt: decodeHtml(entry.excerpt),
+    body:    decodeHtml(entry.body),
+    city:    decodeHtml(entry.city),
+    entryQuote: decodeHtml(entry.entryQuote),
+    interests: entry.interests.map((tag) => decodeHtml(tag)),
+    aboutFields: entry.aboutFields.map((f) => ({
+      label: decodeHtml(f.label),
+      value: decodeHtml(f.value),
+    })),
+    selectedWorks: entry.selectedWorks.map((w) => ({
+      ...w,
+      caption: decodeHtml(w.caption),
+    })),
+    relatedEntries: entry.relatedEntries.map((r) => ({
+      ...r,
+      title: decodeHtml(r.title),
+    })),
+    communityPosts: entry.communityPosts.map((p) => ({
+      ...p,
+      title: decodeHtml(p.title),
+      excerpt: decodeHtml(p.excerpt),
+      authorName: decodeHtml(p.authorName),
+    })),
+  };
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -362,7 +394,7 @@ export default function DirectoryDetailScreen() {
         const timer = setTimeout(() => controller.abort(), 12000);
         const res = await api.get<DirectoryEntry>(`${CULTURE_API}/mobile/directory/entry?${params}`, false);
         clearTimeout(timer);
-        setEntry(res);
+        setEntry(decodeEntry(res));
       } catch {
         setError(true);
       } finally {
