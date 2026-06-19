@@ -1714,7 +1714,12 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
         ) : null}
 
         {/* Recommend + genres */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginTop: 8 }}
+          contentContainerStyle={{ flexDirection: "row", gap: 6 }}
+        >
           {item.bookRecommend != null ? (
             <BadgePill
               label={item.bookRecommend ? "👍 Recommend" : "👎 Not for everyone"}
@@ -1726,7 +1731,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           {(item.bookGenres ?? []).slice(0, 3).map((g) => (
             <BadgePill key={g} label={g} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
           ))}
-        </View>
+        </ScrollView>
       </View>
       <FeedReactionBar item={item} marginTop={10} />
     </TouchableOpacity>
