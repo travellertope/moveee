@@ -11,7 +11,6 @@
  *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
  *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
  *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
- *  - Tweet pulse (every 30 min) — posts latest unposted pulse story to X/Twitter.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,7 +26,6 @@ class Culture_Cron {
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
     const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
-    const HOOK_TWEET_PULSE      = 'culture_tweet_pulse';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
@@ -99,7 +97,6 @@ class Culture_Cron {
             self::HOOK_REFRESH_PULSE    => 'daily',
             self::HOOK_SEED_EVENTS      => 'daily',
             self::HOOK_SEED_QUOTES      => 'weekly',
-            self::HOOK_TWEET_PULSE      => 'thirtyminutes',
             'culture_check_perk_expiry' => 'hourly',
         );
 
@@ -120,7 +117,6 @@ class Culture_Cron {
             self::HOOK_REFRESH_PULSE,
             self::HOOK_SEED_EVENTS,
             self::HOOK_SEED_QUOTES,
-            self::HOOK_TWEET_PULSE,
             'culture_check_perk_expiry',
         );
 
