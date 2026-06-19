@@ -115,6 +115,13 @@ function createStyles(c: ColorPalette) {
     },
     nomText: { fontFamily: fonts.sans, fontSize: 10, color: "#854d0e" },
     loader: { padding: space[8], alignItems: "center" },
+    errorBox: {
+      backgroundColor: c.paperDeep, borderRadius: radius.md, padding: space[4],
+      alignItems: "center", marginTop: space[2],
+    },
+    errorText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, textAlign: "center" },
+    retryBtn: { marginTop: space[3], paddingVertical: 6, paddingHorizontal: 14, borderRadius: radius.full, backgroundColor: c.ink },
+    retryText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
   });
 }
 
@@ -131,16 +138,31 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
   const [tab, setTab] = useState<Tab>(initialTab);
   const [config, setConfig] = useState<PointsConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadConfig = () => {
+    setLoading(true);
+    setLoadError(false);
+    fetch(`${PROXY}/mobile/points-config`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`points-config ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        if (!d || !Array.isArray(d.actions) || !Array.isArray(d.tiers)) {
+          throw new Error("points-config malformed response");
+        }
+        setConfig(d);
+      })
+      .catch((e) => {
+        console.warn("[RewardsInfoSheet] failed to load points-config:", e);
+        setLoadError(true);
+      })
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    if (visible && !config) {
-      setLoading(true);
-      fetch(`${PROXY}/mobile/points-config`)
-        .then((r) => r.json())
-        .then((d) => setConfig(d))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
+    if (visible && !config) loadConfig();
     if (visible) setTab(initialTab);
   }, [visible]);
 
@@ -175,6 +197,14 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
           ) : (
             <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
               {intro ? <Text style={styles.intro}>{intro}</Text> : null}
+              {loadError && (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>Couldn't load the rewards breakdown right now.</Text>
+                  <TouchableOpacity style={styles.retryBtn} onPress={loadConfig} activeOpacity={0.8}>
+                    <Text style={styles.retryText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               {tab === "credits" ? (
                 <>
                   <View style={styles.capBanner}>
