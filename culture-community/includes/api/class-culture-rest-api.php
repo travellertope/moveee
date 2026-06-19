@@ -641,6 +641,21 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Discover — paginated browse with type/region/sort filters (public, used by Discover screen + filter sheet count).
+        register_rest_route( 'culture/v1', '/directory/browse', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_browse' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'q'        => array( 'type' => 'string', 'default' => '' ),
+                'type'     => array( 'type' => 'string', 'default' => '' ),
+                'region'   => array( 'type' => 'string', 'default' => '' ),
+                'sort'     => array( 'type' => 'string', 'default' => 'relevant' ),
+                'page'     => array( 'type' => 'integer', 'default' => 1 ),
+                'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+            ),
+        ) );
+
         // Phase 3 — inline directory stub creation from post composer.
         register_rest_route( 'culture/v1', '/directory/quick-create', array(
             'methods'             => 'POST',
@@ -2477,6 +2492,7 @@ class Culture_REST_API {
             // Connect Directory
             'directory_disciplines'  => '_culture_directory_disciplines',
             'directory_instagram'    => '_culture_directory_instagram',
+            'directory_twitter'      => '_culture_directory_twitter',
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
             'avatar_url'             => '_culture_avatar_url',
@@ -4047,6 +4063,7 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_culture_directory_bio',         sanitize_textarea_field( (string) $request->get_param( 'directory_bio' ) ) );
         update_user_meta( $user_id, '_culture_directory_disciplines', sanitize_text_field( (string) $request->get_param( 'directory_disciplines' ) ) );
         update_user_meta( $user_id, '_culture_directory_instagram',   sanitize_text_field( (string) $request->get_param( 'directory_instagram' ) ) );
+        update_user_meta( $user_id, '_culture_directory_twitter',     sanitize_text_field( (string) $request->get_param( 'directory_twitter' ) ) );
         update_user_meta( $user_id, '_culture_directory_linkedin',    sanitize_text_field( (string) $request->get_param( 'directory_linkedin' ) ) );
         update_user_meta( $user_id, '_culture_directory_website',     sanitize_text_field( (string) $request->get_param( 'directory_website' ) ) );
 
@@ -4079,6 +4096,7 @@ class Culture_REST_API {
             '_culture_directory_bio',
             '_culture_directory_disciplines',
             '_culture_directory_instagram',
+            '_culture_directory_twitter',
             '_culture_directory_linkedin',
             '_culture_directory_website',
         );
@@ -4097,6 +4115,7 @@ class Culture_REST_API {
             'directory_bio'         => $get( '_culture_directory_bio' ),
             'directory_disciplines' => $get( '_culture_directory_disciplines' ),
             'directory_instagram'   => $get( '_culture_directory_instagram' ),
+            'directory_twitter'     => $get( '_culture_directory_twitter' ),
             'directory_linkedin'    => $get( '_culture_directory_linkedin' ),
             'directory_website'     => $get( '_culture_directory_website' ),
         ) );
@@ -4179,6 +4198,7 @@ class Culture_REST_API {
             '_culture_directory_bio',
             '_culture_directory_disciplines',
             '_culture_directory_instagram',
+            '_culture_directory_twitter',
             '_culture_directory_linkedin',
             '_culture_directory_website',
         );
@@ -4207,6 +4227,7 @@ class Culture_REST_API {
                 'directory_bio'          => $m['_culture_directory_bio']          ?? '',
                 'directory_disciplines'  => $m['_culture_directory_disciplines']  ?? '',
                 'directory_instagram'    => $m['_culture_directory_instagram']    ?? '',
+                'directory_twitter'      => $m['_culture_directory_twitter']      ?? '',
                 'directory_linkedin'     => $m['_culture_directory_linkedin']     ?? '',
                 'directory_website'      => $m['_culture_directory_website']      ?? '',
             );

@@ -1,5 +1,5 @@
 /**
- * Shared overlay primitives for Moveee Connect.
+ * Shared overlay primitives for Moveee.
  *
  * Exports:
  *   BottomSheet          — generic draggable bottom sheet wrapper
@@ -247,7 +247,7 @@ export function PasskeyPromptSheet({ visible, onCancel }: PasskeyPromptSheetProp
         <View style={styles.passkeyIcon}>
           <Ionicons name="scan-outline" size={28} color="#007AFF" />
         </View>
-        <Text style={styles.passkeyApp}>Moveee Connect</Text>
+        <Text style={styles.passkeyApp}>Moveee</Text>
         <Text style={styles.passkeyTitle}>Sign in with Face ID</Text>
         <Text style={styles.passkeyDesc}>Use your biometric to log in securely.</Text>
         <TouchableOpacity style={styles.passkeyCancel} onPress={onCancel}>

@@ -929,6 +929,7 @@ class Culture_Mobile_API {
             'occupation'             => '_culture_occupation',
             'avatar_url'             => '_culture_avatar_url',
             'directory_instagram'    => '_culture_directory_instagram',
+            'directory_twitter'      => '_culture_directory_twitter',
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
         );
@@ -1865,6 +1866,7 @@ class Culture_Mobile_API {
                 'bio'                => get_user_meta( $user->ID, '_culture_directory_bio',        true ) ?: '',
                 'disciplines'        => $disciplines,
                 'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram',  true ) ?: '',
+                'twitter'            => get_user_meta( $user->ID, '_culture_directory_twitter',    true ) ?: '',
                 'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin',   true ) ?: '',
                 'website'            => get_user_meta( $user->ID, '_culture_directory_website',    true ) ?: '',
             );
@@ -2015,6 +2017,7 @@ class Culture_Mobile_API {
                 return $raw ? ( json_decode( $raw, true ) ?: explode( ',', $raw ) ) : array();
             })(),
             'directoryInstagram'    => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'directoryTwitter'      => get_user_meta( $user->ID, '_culture_directory_twitter', true ) ?: '',
             'directoryLinkedIn'     => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
             'directoryWebsite'      => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
         );
@@ -2195,8 +2198,20 @@ class Culture_Mobile_API {
                 'eventCategory' => ( $interests && ! is_wp_error( $interests ) && ! empty( $interests ) ) ? $interests[0]->name : '',
                 'organiserName' => $organiser_name,
                 'organiserSlug' => $organiser_slug,
+                'organiserDirectoryId' => $organiser_id ?: null,
+                'isFeatured'    => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
+                'rsvpCount'     => self::get_editorial_event_rsvp_count( $post->post_name ),
             );
         }, $query->posts );
+    }
+
+    private static function get_editorial_event_rsvp_count( string $event_slug ): int {
+        global $wpdb;
+        $table = $wpdb->prefix . 'culture_event_rsvp';
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE event_slug = %s AND status = 'confirmed'",
+            $event_slug
+        ) );
     }
 
     private static function get_directory_feed_items(): array {
@@ -2241,7 +2256,9 @@ class Culture_Mobile_API {
         ) );
 
         return array_map( function( WP_Post $post ) {
-            $authors = get_the_terms( $post->ID, 'culture_quote_author' );
+            $authors     = get_the_terms( $post->ID, 'culture_quote_author' );
+            $submitter_id = (int) $post->post_author;
+            $submitter    = get_userdata( $submitter_id );
             return array(
                 'id'          => 'quote-' . $post->post_name,
                 'type'        => 'quote',
@@ -2253,7 +2270,10 @@ class Culture_Mobile_API {
                 'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
                 'quoteAuthor'        => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
                 'quoteSharingReason' => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
-                'authorName'         => get_the_author_meta( 'display_name', $post->post_author ),
+                'authorName'         => $submitter ? $submitter->display_name : '',
+                'communityAuthor'         => $submitter ? $submitter->display_name : '',
+                'communityAuthorUsername' => $submitter ? $submitter->user_login : '',
+                'communityAuthorAvatar'   => get_user_meta( $submitter_id, '_culture_avatar_url', true ) ?: '',
                 'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
             );
         }, $query->posts );
@@ -2409,6 +2429,8 @@ class Culture_Mobile_API {
                     ? ( ( (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) === 0 )
                         || Culture_Community_RSVP::get_count( $post->ID ) < (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) )
                     : false,
+                'isFeatured'              => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
+                'organiserDirectoryId'    => (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ?: null,
             );
         }, $query->posts );
     }
@@ -2434,6 +2456,7 @@ class Culture_Mobile_API {
             'bio'                => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
             'interests'          => $interests,
             'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'twitter'            => get_user_meta( $user->ID, '_culture_directory_twitter', true ) ?: '',
             'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
             'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
             'registeredAt'       => strtotime( $user->user_registered ),
@@ -2770,7 +2793,7 @@ class Culture_Mobile_API {
         $base_currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
         $base_symbol   = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $base_currency ) ) : '£';
 
-        if ( 'nigeria' === $country ) {
+        if ( 'nigeria' === $country && 'NGN' !== $base_currency ) {
             $rate = (float) get_option( 'culture_shop_fx_ngn_per_gbp', 1900 );
             return array( 'code' => 'NGN', 'symbol' => '₦', 'rate' => $rate > 0 ? $rate : 1900.0 );
         }

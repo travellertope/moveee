@@ -111,6 +111,15 @@ class Culture_Post_Types {
                         $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
                         return $oid ? get_post_field( 'post_name', $oid ) : null;
                     } )(),
+                    'is_featured'  => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                    'rsvp_count'   => ( function() use ( $post_arr ) {
+                        global $wpdb;
+                        $t = $wpdb->prefix . 'culture_event_rsvp';
+                        return (int) $wpdb->get_var( $wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$t} WHERE event_slug = %s AND status = 'confirmed'",
+                            $post_arr['slug']
+                        ) );
+                    } )(),
                 );
             },
             'schema' => null,
@@ -146,6 +155,7 @@ class Culture_Post_Types {
             '_culture_event_organiser_id' => 'integer',
             '_culture_rsvp_enabled'    => 'boolean',
             '_culture_rsvp_capacity'   => 'integer',
+            '_culture_is_featured'     => 'boolean',
         );
         foreach ( $community_post_meta as $meta_key => $type ) {
             register_post_meta( 'culture_post', $meta_key, array(
@@ -177,6 +187,7 @@ class Culture_Post_Types {
                     'rsvp_count'     => $rsvp_enabled && class_exists( 'Culture_Community_RSVP' )
                         ? Culture_Community_RSVP::get_count( $id )
                         : 0,
+                    'is_featured'    => (bool) get_post_meta( $id, '_culture_is_featured', true ),
                 );
             },
             'schema' => null,

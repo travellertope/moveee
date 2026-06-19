@@ -296,7 +296,7 @@ export default async function CommunityPostPage({
                   color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
                   letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem",
                 }}>
-                  About Moveee Connect
+                  About Moveee
                 </p>
                 <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: "0 0 0.85rem" }}>
                   Village square for culture loving creatives, entrepreneurs, professionals.
@@ -317,7 +317,7 @@ export default async function CommunityPostPage({
                     fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
                     textTransform: "uppercase", textDecoration: "none",
                   }}>
-                    Join Moveee Connect →
+                    Join Moveee →
                   </Link>
                 )}
               </div>

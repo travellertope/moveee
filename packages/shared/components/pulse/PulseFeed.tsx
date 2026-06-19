@@ -7,7 +7,9 @@ import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { rankFeed, getTrending, matchesInterests } from "@/lib/feed-recommendations";
+import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
+import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
 
@@ -160,7 +162,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     );
     // "For You": don't hard-filter — scoring in `sorted` reranks by relevance.
     // But if user has interests, boost matching items by keeping all; hide nothing.
-    return typeMatch && regionMatch && tagMatch && categoryMatch;
+    // Event-type items are surfaced exclusively through the Spotlight carousel below.
+    return typeMatch && regionMatch && tagMatch && categoryMatch && !isEventItem(item);
   }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
 
   // When "For You" is active, rank by relevance score; otherwise newest-first.
@@ -172,6 +175,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   // Trending items (shown in sidebar and For You mode)
   const trending = useMemo(() => getTrending(items), [items]);
+
+  // Spotlight events carousel — inserted after the 5th feed item.
+  const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
   const visible = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
@@ -457,14 +463,25 @@ const handleType = (type: FeedItemType | "all") => {
               Nothing here yet — check back soon.
             </div>
           ) : (
-            visible.map(item => (
-              <FeedCard
-                key={item.id}
-                item={item}
-                onTagClick={handleTagClick}
-                interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
-              />
-            ))
+            <>
+              {visible.slice(0, 5).map(item => (
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  onTagClick={handleTagClick}
+                  interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                />
+              ))}
+              {visible.length > 5 && <EventSpotlightCarousel events={spotlightEvents} />}
+              {visible.slice(5).map(item => (
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  onTagClick={handleTagClick}
+                  interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                />
+              ))}
+            </>
           )}
 
           <div ref={sentinelRef} style={{ height: "1px" }} />

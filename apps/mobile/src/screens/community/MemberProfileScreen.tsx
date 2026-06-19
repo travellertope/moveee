@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, Image,
-  Modal, Share,
+  Modal, Share, Linking,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
@@ -16,6 +16,7 @@ import type { Member, FeedItem, TemplateType } from "../../types";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import { useAuthStore } from "../../auth/authStore";
+import { ProGlowRing } from "../../components/community/FeedItemCard";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -128,6 +129,15 @@ interface PortfolioItem {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toSocialUrl(platform: "instagram" | "linkedin" | "website" | "twitter", value: string): string {
+  const v = value.trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  if (platform === "instagram") return `https://instagram.com/${v.replace(/^@/, "")}`;
+  if (platform === "linkedin") return `https://linkedin.com/${v.replace(/^\//, "")}`;
+  if (platform === "twitter") return `https://twitter.com/${v.replace(/^@/, "")}`;
+  return `https://${v}`;
+}
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -391,7 +401,7 @@ export default function MemberProfileScreen() {
       ? { slug: b, name: meta.name, emoji: meta.emoji, description: meta.description }
       : { slug: b, name: badgeTitleCase(b), emoji: "🏅", description: "" };
   });
-  const hasSocial = !!(profile.instagram || profile.linkedin || profile.website);
+  const hasSocial = !!(profile.instagram || profile.linkedin || profile.website || profile.twitter);
   const rep       = profile.reputation ?? 0;
 
   return (
@@ -417,6 +427,7 @@ export default function MemberProfileScreen() {
           </TouchableOpacity>
 
           <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+            {isPro && <ProGlowRing color={c.gold} />}
             <View style={styles.avatarInner}>
               {profile.avatarUrl ? (
                 <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
@@ -429,7 +440,11 @@ export default function MemberProfileScreen() {
           <View style={styles.identity}>
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName}>{profile.displayName}</Text>
-              {isPro && <Ionicons name="checkmark-circle" size={18} color={c.gold} style={styles.proCheck} />}
+              {isPro && (
+                <View style={styles.proBadgePill}>
+                  <Ionicons name="ribbon" size={9} color="#fff" />
+                </View>
+              )}
             </View>
             {profile.username    ? <Text style={styles.profileHandle}>@{profile.username}</Text> : null}
             {profile.occupation  ? <Text style={styles.profileOccupation}>{profile.occupation}</Text> : null}
@@ -476,9 +491,26 @@ export default function MemberProfileScreen() {
 
           {hasSocial && (
             <View style={styles.socialRow}>
-              {profile.instagram && <TouchableOpacity style={styles.socialBtn}><Ionicons name="logo-instagram" size={18} color={c.ghost} /></TouchableOpacity>}
-              {profile.linkedin  && <TouchableOpacity style={styles.socialBtn}><Ionicons name="logo-linkedin"  size={18} color={c.ghost} /></TouchableOpacity>}
-              {profile.website   && <TouchableOpacity style={styles.socialBtn}><Ionicons name="globe-outline"  size={18} color={c.ghost} /></TouchableOpacity>}
+              {profile.instagram && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("instagram", profile.instagram!))}>
+                  <Ionicons name="logo-instagram" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.linkedin && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("linkedin", profile.linkedin!))}>
+                  <Ionicons name="logo-linkedin" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.website && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("website", profile.website!))}>
+                  <Ionicons name="globe-outline" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.twitter && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("twitter", profile.twitter!))}>
+                  <Ionicons name="logo-twitter" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -560,14 +592,15 @@ function createStyles(c: ColorPalette) {
     avatarRing: {
       width: 96, height: 96, borderRadius: 48, borderWidth: 3, padding: 3,
       backgroundColor: c.paper, marginTop: -48,
+      position: "relative", overflow: "visible",
     },
     avatarRingPro: {
       borderColor: c.gold,
       shadowColor: c.gold,
-      shadowOpacity: 0.6,
-      shadowRadius: 14,
+      shadowOpacity: 0.85,
+      shadowRadius: 18,
       shadowOffset: { width: 0, height: 0 },
-      elevation: 10,
+      elevation: 12,
     },
     avatarRingCitizen: { borderColor: c.ghost },
     avatarInner: {
@@ -589,7 +622,14 @@ function createStyles(c: ColorPalette) {
     identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
     profileNameRow:    { flexDirection: "row", alignItems: "center", gap: 4 },
     profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: c.ink },
-    proCheck:           { marginTop: 2 },
+    proBadgePill: {
+      backgroundColor: c.gold,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: c.mute, marginTop: 2 },
     profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, marginTop: 4, textAlign: "center" },
     profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },
@@ -621,7 +661,7 @@ function createStyles(c: ColorPalette) {
 
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },
-    badgeRow:     { paddingHorizontal: 20, gap: 10 },
+    badgeRow:     { paddingHorizontal: 20, gap: 10, flexGrow: 1, justifyContent: "center" },
     badgeIcon: {
       width: 40, height: 40, borderRadius: 20,
       backgroundColor: c.paperDeep, borderWidth: 1, borderColor: c.ghost,

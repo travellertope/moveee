@@ -484,15 +484,17 @@ function createHowItsMadeStyles(c: ColorPalette) {
 
 // ── Maker Card ────────────────────────────────────────────────────────────────
 
-function MakerCard({ detail }: { detail: ShopProductDetail }) {
+function MakerCard({ detail, product }: { detail: ShopProductDetail; product?: ShopProduct | null }) {
   const c = useColors();
   const mkS = useMemo(() => createMakerStyles(c), [c]);
   const nav = useNav();
   const stars = Math.round(detail.makerRating);
+  const makerName = detail.makerName || product?.makerName || "";
+  const makerCity = detail.makerCity || product?.makerCity || "";
 
   const goToMakerShop = () => {
-    if (detail.makerName) {
-      nav.navigate("ShopListing", { categoryName: detail.makerName, categorySlug: "", makerName: detail.makerName });
+    if (makerName) {
+      nav.navigate("ShopListing", { categoryName: makerName, categorySlug: "", makerName });
     }
   };
 
@@ -519,11 +521,11 @@ function MakerCard({ detail }: { detail: ShopProductDetail }) {
           </View>
         </View>
         <View style={mkS.makerInfo}>
-          <Text style={mkS.makerName}>{detail.makerName}</Text>
-          {(detail.makerCity || detail.makerSince) && (
+          <Text style={mkS.makerName}>{makerName}</Text>
+          {(makerCity || detail.makerSince) && (
             <Text style={mkS.makerMeta}>
-              {detail.makerCity ? `📍 ${detail.makerCity}` : ""}
-              {detail.makerCity && detail.makerSince ? " · " : ""}
+              {makerCity ? `📍 ${makerCity}` : ""}
+              {makerCity && detail.makerSince ? " · " : ""}
               {detail.makerSince ? `Since ${detail.makerSince}` : ""}
             </Text>
           )}
@@ -723,6 +725,7 @@ export default function ProductDetailScreen() {
       variant,
       variationId: selectedVariation?.id,
       price:       parseFloat(displayPrice ?? product.price) || 0,
+      currencySymbol: product.currencySymbol,
       image:       (detail?.images?.[0] ?? product.imageUrl) ?? undefined,
     });
     nav.navigate("Cart");
@@ -955,12 +958,12 @@ export default function ProductDetailScreen() {
                 </View>
               )}
 
-              {detail && <MakerCard detail={detail} />}
+              {detail && <MakerCard detail={detail} product={product} />}
 
               {detail?.relatedProducts?.length ? (
                 <RelatedProducts
                   products={detail.relatedProducts}
-                  makerName={detail.makerName}
+                  makerName={detail.makerName || product?.makerName || ""}
                   onPress={(p) => nav.push("ProductDetail", { product: p })}
                 />
               ) : null}

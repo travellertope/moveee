@@ -175,7 +175,7 @@ export default async function EventsPage() {
       <section className="connect-band">
         <div className="connect-inner">
           <div>
-            <div className="connect-num">Moveee Connect</div>
+            <div className="connect-num">Moveee</div>
             <h3>Members go <em>first</em>.</h3>
             <p>Private views, supper tables, and early RSVP access — all yours with a Connect membership. The culture doesn&rsquo;t wait; neither should you.</p>
           </div>

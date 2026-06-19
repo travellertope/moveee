@@ -43,6 +43,7 @@ export interface User {
   directoryInstagram: string;
   directoryLinkedIn: string;
   directoryWebsite: string;
+  directoryTwitter: string;
 
   // Interests
   interests: string[];
@@ -73,6 +74,7 @@ export interface Member {
   instagram: string;
   linkedin: string;
   website: string;
+  twitter: string;
   followersCount?: number;
   followingCount?: number;
   isFollowing?: boolean;
@@ -113,7 +115,9 @@ export interface FeedItem {
   eventCategory?: string;
   organiserName?: string;
   organiserSlug?: string;
+  organiserDirectoryId?: number | null;
   city?: string;          // used on happening + directory items
+  isFeatured?: boolean;   // editorial culture_event + community event template
 
   // Community event RSVP (culture_post CPT, templateType "event" only)
   rsvpEnabled?: boolean;

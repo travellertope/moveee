@@ -31,14 +31,18 @@ import {
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
-import FeedCard from "../../components/community/FeedItemCard";
+import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
+import EventSpotlightCarousel from "../../components/community/EventSpotlightCarousel";
+import { getSpotlightEvents, isEventItem } from "../../features/community/eventSpotlight";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
+
+const SPOTLIGHT_MARKER_ID = "__event-spotlight__";
 
 function feedItemToPostId(item: FeedItem): string {
   return (item as any).wpId ?? item.id.replace(/^community-/, "");
@@ -200,6 +204,9 @@ export default function ConnectFeedScreen() {
       ? items.filter((i) => matchesCategory(i, activeCategory))
       : items;
 
+    // Event-type items are surfaced exclusively through the Spotlight carousel below.
+    filtered = filtered.filter((i) => !isEventItem(i));
+
     if (activeRegion !== "All") {
       filtered = filtered.filter(
         (i) => !(i as any).region || (i as any).region === activeRegion
@@ -214,6 +221,21 @@ export default function ConnectFeedScreen() {
   }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion, followedUsernames]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
+
+  // Spotlight carousel: computed once (locked via ref) on initial load so pagination
+  // never re-inserts/reorders it — avoids re-render loops from a reactive recompute.
+  // Sourced from `items` (not visibleItems) since event-type items are filtered out above.
+  const spotlightLockRef = useRef<FeedItem[] | null>(null);
+  if (spotlightLockRef.current === null && items.length > 0) {
+    spotlightLockRef.current = getSpotlightEvents(items);
+  }
+  const spotlightEvents = spotlightLockRef.current ?? [];
+
+  const listData = useMemo(() => {
+    if (spotlightEvents.length < 2 || visibleItems.length <= 5) return visibleItems;
+    const marker = { id: SPOTLIGHT_MARKER_ID, type: "spotlight" } as unknown as FeedItem;
+    return [...visibleItems.slice(0, 5), marker, ...visibleItems.slice(5)];
+  }, [visibleItems, spotlightEvents]);
 
   const handleFilter = (label: string) => {
     if (label === "✦ For You") {
@@ -249,6 +271,9 @@ export default function ConnectFeedScreen() {
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => {
+    if (item.id === SPOTLIGHT_MARKER_ID) {
+      return <EventSpotlightCarousel events={spotlightEvents} onOpenCommunity={setSheetItem} />;
+    }
     const forYouBadge =
       forYou && hasInterests && matchesInterests(item, interestTagSet);
     return (
@@ -313,6 +338,15 @@ export default function ConnectFeedScreen() {
               <Ionicons name="people-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
+            {/* Discover */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("Discover")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="compass-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
             {/* Bell */}
             <TouchableOpacity
               style={styles.iconBtn}
@@ -339,15 +373,18 @@ export default function ConnectFeedScreen() {
               onPress={() => nav.navigate("MemberDashboard")}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
-              {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
-              ) : (
-                <View style={[styles.avatarImg, styles.avatarFallback]}>
-                  <Text style={styles.avatarInitial}>
-                    {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <View style={[styles.avatarWrap, user?.tier === "patron" ? styles.avatarWrapPro : undefined]}>
+                {user?.tier === "patron" && <ProGlowRing color={c.gold} />}
+                {user?.avatarUrl ? (
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+                ) : (
+                  <View style={[styles.avatarImg, styles.avatarFallback]}>
+                    <Text style={styles.avatarInitial}>
+                      {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -447,7 +484,7 @@ export default function ConnectFeedScreen() {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={visibleItems}
+            data={listData}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             refreshControl={
@@ -564,6 +601,23 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   avatarBtn: {
     marginLeft: 4,
+  },
+  avatarWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: "visible",
+    position: "relative",
+  },
+  avatarWrapPro: {
+    borderWidth: 3.5,
+    borderColor: c.gold,
+    borderRadius: 17,
+    shadowColor: c.gold,
+    shadowOpacity: 0.85,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
   },
   avatarImg: {
     width: 34,

@@ -433,6 +433,8 @@ export default function FeedCard({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeModal = useCallback(() => setModalOpen(false), []);
 
+    const isPro = item.communityTier === "patron";
+
     async function submitReport(reason: string) {
       setReportState("sent");
       try {
@@ -470,6 +472,7 @@ export default function FeedCard({
                 color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 overflow: "hidden",
+                ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
               }}>
                 {item.communityAuthorAvatar ? (
                   <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -485,6 +488,7 @@ export default function FeedCard({
               color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0, overflow: "hidden",
+              ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -506,19 +510,11 @@ export default function FeedCard({
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
-              {item.communityTier === "patron" && (
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: "0.52rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#b38238",
-                  background: "rgba(179,130,56,.1)",
-                  border: "1px solid rgba(179,130,56,.25)",
-                  padding: "1px 5px",
-                  lineHeight: 1.6,
-                  flexShrink: 0,
-                }}>Pro</span>
+              {isPro && (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
+                  <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+                  <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
               )}
               <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
               <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>

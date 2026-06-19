@@ -857,6 +857,78 @@ source of truth for icons across the PHP/TS boundary.
 
 ---
 
+## Event Spotlight carousel (June 2026)
+
+Horizontally-scrolling carousel merging editorial `culture_event` items + community
+`culture_post` events (`templateType === 'event'`) into a ranked highlight strip,
+inserted once after the 5th feed item on initial load (never re-inserted on
+pagination/infinite scroll). Implemented independently on web and mobile — both
+platforms mirror the same scoring/filtering rules, per the project's existing
+web/mobile duplication convention (RN can't import `packages/shared`).
+
+### Scoring/filtering utility
+- Web: `packages/shared/lib/event-spotlight.ts`
+- Mobile: `apps/mobile/src/features/community/eventSpotlight.ts`
+
+Both export `getSpotlightEvents(items: FeedItem[], limit = 10): FeedItem[]`.
+Filters to `type === "happening"` or (`type === "community"` and
+`templateType === "event"`), hides any event missing 2+ of {image, venue/location,
+admission}, returns `[]` (hide the module) when fewer than 2 qualifying events
+remain. Score = `isFeatured(40) + completeness(0-30) + log-scale rsvpCount(0-20) +
+organiserDirectoryId(10)`; falls back to soonest-upcoming-first sort when none of
+the scoring inputs (`isFeatured`/`rsvpCount`/`organiserDirectoryId`) are present on
+any candidate.
+
+### Backend fields required for scoring
+- `isFeatured`: editorial events read `_culture_is_featured` postmeta; community
+  events already had it via `community_event_meta`.
+- `rsvpCount`: editorial events previously had none — added
+  `Culture_Mobile_API::get_editorial_event_rsvp_count()` (raw SQL count against
+  `wp_culture_event_rsvp` by `event_slug`/`status='confirmed'`) for mobile;
+  web's `mapRestEventToFrontendShape` already covers it.
+- `organiserDirectoryId`: read from `_culture_event_organiser_id` (community) /
+  the existing organiser resolution (editorial) on both platforms.
+- Wired in `class-culture-mobile-api.php`'s `get_happening_feed_items()` /
+  `get_community_feed_items()` (mobile `/mobile/feed`), and in
+  `packages/shared/lib/unified-feed.ts` (web) — both feed mappers needed these
+  fields added since each builds its own response shape independently.
+
+### UI components
+- Web: `packages/shared/components/pulse/EventSpotlightCarousel.tsx`, inserted in
+  `PulseFeed.tsx` via array slicing (`visible.slice(0,5)` / carousel /
+  `visible.slice(5)`) — declarative slicing achieves "once, at position 5" without
+  needing a ref, since position 5 is stable across re-renders.
+- Mobile: `apps/mobile/src/components/community/EventSpotlightCarousel.tsx`, wired
+  into `ConnectFeedScreen.tsx`'s `FlatList` via a synthetic marker item
+  (`id: "__event-spotlight__"`) spliced into `listData` at index 5. The spotlight
+  item list itself is computed once into a ref (`spotlightLockRef`) on first
+  non-empty load and never recomputed — required because `FlatList`'s `data` array
+  changes on every pagination page, and reactively recomputing the spotlight set
+  would reorder/jump the already-rendered carousel.
+
+Both platforms reuse existing detail UI rather than building new ones: tapping a
+"happening"-type card opens `HappeningDetailModal` (self-managed inside the
+carousel component, mirroring the existing `HappeningCard` pattern); tapping a
+"community"-type card delegates to whatever the host screen already uses for that
+(web: `CommunityDetailModal` rendered by `EventSpotlightCarousel.tsx` itself; mobile:
+`onOpenCommunity` callback → the screen's existing `sheetItem`/`PostDetailSheet`).
+"See all →" routes to the existing Events tab/screen, not a new one.
+
+### Event-type cards fully removed from the inline feed (replaced, not duplicated)
+The Spotlight carousel is the **exclusive** surface for event-type items in the
+Connect feed — `isEventItem()` (exported from both scoring utilities) is used to
+filter every "happening" and community "event"-template item out of the regular
+feed list (`PulseFeed.tsx`'s `filtered` memo on web, `ConnectFeedScreen.tsx`'s
+`visibleItems` memo on mobile), regardless of whether that item actually qualifies
+for/appears in the carousel. Because of this, the qualifying bar inside
+`getSpotlightEvents()` was deliberately loosened to `>= 1` of {image, venue,
+price} (down from `>= 2`) so that nearly every event is still discoverable
+somewhere rather than disappearing — an event missing all three fields entirely
+is rare and likely incomplete/spam. On mobile, the spotlight ref computation
+reads from the raw `items` array (not the already-filtered `visibleItems`), since
+the event items it needs have been stripped out of `visibleItems` by this exact
+filter.
+
 ## Event system enhancements
 
 ### Organiser field
@@ -1180,6 +1252,91 @@ Static-ish page for sharing individual community posts. URL: `/community/{slug}`
 - `ReactionBar`, `HashtagText`, `SourcePreviewCard`
 - Comment thread with `WpComment` type
 - Back link to Connect Feed (`/connect`)
+
+---
+
+## Discover (directory browse feature, June 2026)
+
+A dedicated browse/search surface over `culture_directory` entries (the 11 entry
+types: person, place, food, book, film, genre, movement, artwork, concept,
+fashion, tv-series) — separate from the existing `/directory` listing page
+(`DirectoryGrid.tsx`, which fetches all entries via GraphQL and filters
+client-side with no pagination/region/sort). Discover adds server-side
+pagination, search, a type filter (always visible, single-select chips), a
+region filter, sort options, and a live entry count — implemented identically
+on mobile and web per the project's existing web/mobile duplication
+convention.
+
+### Backend
+- `Culture_Directory::handle_browse()` (`class-culture-directory.php`) — new
+  paginated endpoint, registered as `GET /culture/v1/directory/browse`
+  (public, `class-culture-rest-api.php`). Params: `q` (optional text search),
+  `type` (comma-separated slugs — backend supports multi but both frontends
+  only ever send one, since the UI is single-select), `region` (single slug),
+  `sort` (`relevant`|`recent`|`rating`), `page`/`per_page` (capped 50, default
+  20). Returns `{ entries: [...], total, page, perPage }` — `total` is
+  `$query->found_posts`, the basis for the filter sheet's live "Show N
+  entries" count.
+- Region filtering has no dedicated taxonomy/meta field to query — there's
+  only the freeform `_entry_city` string. `Culture_Directory::REGION_CITY_KEYWORDS`
+  is a static substring-match keyword table (nigeria/ghana/uk/usa/pan-african)
+  resolved via raw SQL against `wp_postmeta` into `post__in` (same documented
+  pattern as the `culture_event` meta_query fix — raw SQL resolve-to-IDs
+  instead of a `meta_query` LIKE join, with `array(0)` forcing zero results
+  rather than an empty array). This is only as accurate as the keyword list;
+  extend `REGION_CITY_KEYWORDS` if a city is miscategorized.
+- The "subtype" pill shown on each card (e.g. "Music", "Venue") reuses the
+  entry's first attached `culture_interest` term — no new per-type subtype
+  taxonomy was added.
+- `_average_rating`/`_community_review_count` meta (already computed by
+  `Culture_Directory::recompute_directory_aggregates()`) is reused as-is for
+  card ratings — no new computation.
+
+### Mobile (`apps/mobile`)
+- Entry point: compass icon in `ConnectFeedScreen.tsx`'s header, left of the
+  notification bell → `nav.navigate("Discover")`. Registered in
+  `AppParamList` (`useNav.ts`) and as a screen in `ConnectStack`
+  (`navigation/index.tsx`).
+- `screens/community/DiscoverScreen.tsx` — search icon toggles a hidden
+  search bar; the type-filter chip row is always visible (tapping a chip
+  applies immediately); a "Filters" pill opens `DiscoverFilterSheet` for
+  region + sort. "Recently Added" horizontal rail (compact cards, `sort=recent`)
+  above a 2-column paginated grid (`onEndReached` infinite scroll).
+- `components/community/DiscoverCard.tsx` — shared rail/grid card, exports
+  `DiscoverEntry` type and the `TYPE_BADGE` emoji/label/color map per entry
+  type (compact mode for the rail, full mode with star rating + subtype pill
+  for the grid).
+- `components/community/DiscoverFilterSheet.tsx` — `BottomSheet`-based panel:
+  type pills (mirrors the screen's chip row, kept in sync since the sheet can
+  also change type), region pills, sort radios, and a sticky footer button
+  that debounce-fetches `per_page=1` against `/directory/browse` with the
+  draft filters to show a real `total` count before applying.
+
+### Web (`apps/connect` + `packages/shared`)
+- Entry point: compass icon link to `/discover` in `ConnectHeader.tsx`
+  (`apps/connect/components/Header.tsx`), shown for both authenticated and
+  unauthenticated visitors (the underlying data is public).
+- `app/api/directory/browse/route.ts` — proxy to
+  `GET /culture/v1/directory/browse` (same pattern as the existing
+  `app/api/directory/search/route.ts`).
+- `app/discover/page.tsx` — thin server component reading `?type=`/`?region=`
+  query params, rendering `DiscoverBrowser`.
+- `packages/shared/components/DiscoverBrowser.tsx` — the client component
+  mirroring the mobile screen exactly: search toggle, always-visible type
+  chips, a "Filters" overlay panel (region + sort + live debounced count),
+  Recently Added rail, paginated grid with a "Load more" button (web has no
+  scroll-based infinite scroll here, unlike mobile's `onEndReached`). Styled
+  via `apps/connect/app/discover.css`, imported as `@/app/discover.css` from
+  inside the shared component — same resolution trick `PulseFeed.tsx` already
+  uses for `@/app/pulse-layout.css`.
+- Web-only, not duplicated to `apps/site` — Discover is a Site B (Connect)
+  community feature, consistent with where `/directory` itself lives.
+
+### Not yet implemented (deferred, lower priority)
+- Feed inline treatments for newly-added directory entries (State A: a small
+  "New to Discover" card in the main feed; State B: a reference chip on
+  community posts that link to a directory entry via `_linked_directory_id`)
+  — flagged in the original mockup but not built in this pass.
 
 ---
 

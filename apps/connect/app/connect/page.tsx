@@ -14,7 +14,7 @@ import "./connect.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Moveee Connect — Community for Black & Diaspora Creatives",
+  title: "Moveee — Community for Black & Diaspora Creatives",
   description:
     "Where Black and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
 };

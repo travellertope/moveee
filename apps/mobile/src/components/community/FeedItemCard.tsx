@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNav } from "../../hooks/useNav";
 import {
   View,
@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView,
   Share,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -196,14 +197,14 @@ function createStyles(c: ColorPalette) {
       position: "relative" as const,
     },
     avatarWrapPro: {
-      borderWidth: 2.5,
+      borderWidth: 3.5,
       borderColor: c.gold,
       borderRadius: 20,
       shadowColor: c.gold,
-      shadowOpacity: 0.6,
-      shadowRadius: 10,
+      shadowOpacity: 0.85,
+      shadowRadius: 14,
       shadowOffset: { width: 0, height: 0 },
-      elevation: 8,
+      elevation: 10,
     },
     avatar: { width: 40, height: 40, borderRadius: 20 },
     avatarFallback: {
@@ -215,17 +216,6 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.sansBold,
       fontSize: fontSize.sm,
       color: c.gold,
-    },
-    proStar: {
-      position: "absolute" as const,
-      bottom: -2,
-      right: -2,
-      backgroundColor: c.paper,
-      borderRadius: radius.full,
-      width: 14,
-      height: 14,
-      justifyContent: "center" as const,
-      alignItems: "center" as const,
     },
     authorMeta: { flex: 1 },
     nameRow: {
@@ -940,6 +930,44 @@ function ReportControl({ item }: { item: FeedItem }) {
   );
 }
 
+// ── ProGlowRing ───────────────────────────────────────────────────────────────
+// Subtle pulsing halo behind Pro avatars, layered behind the static gold border
+// in avatarWrapPro — makes the gold treatment read as "premium" without
+// switching to a different ring colour/style.
+
+export function ProGlowRing({ color }: { color: string }) {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1300, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1300, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.28] });
+  const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        top: -5, left: -5, right: -5, bottom: -5,
+        borderRadius: 24,
+        borderWidth: 2,
+        borderColor: color,
+        opacity,
+        transform: [{ scale }],
+      }}
+    />
+  );
+}
+
 // ── AuthorRow ─────────────────────────────────────────────────────────────────
 
 function AuthorRow({ item, forYouBadge, onAuthorPress }: {
@@ -952,16 +980,12 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
     <View style={styles.authorRow}>
       <TouchableOpacity onPress={onAuthorPress} activeOpacity={onAuthorPress ? 0.7 : 1} disabled={!onAuthorPress}>
         <View style={[styles.avatarWrap, isPro ? styles.avatarWrapPro : undefined]}>
+          {isPro && <ProGlowRing color={c.gold} />}
           {item.communityAuthorAvatar ? (
             <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, styles.avatarFallback]}>
               <Text style={styles.avatarInitial}>{(item.communityAuthor ?? "?")[0]?.toUpperCase()}</Text>
-            </View>
-          )}
-          {isPro && (
-            <View style={styles.proStar}>
-              <Ionicons name="checkmark-circle" size={14} color={c.gold} />
             </View>
           )}
         </View>

@@ -16,6 +16,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_Directory {
 
     /**
+     * Coarse region buckets for the Discover region filter. There is no
+     * dedicated country/region field on culture_directory — only the free-text
+     * _entry_city meta — so regions are resolved by substring-matching city
+     * keywords. Extend this list as new regions are needed; matching is
+     * case-insensitive against _entry_city.
+     */
+    const REGION_CITY_KEYWORDS = array(
+        'nigeria'      => array( 'nigeria', 'lagos', 'abuja', 'ibadan', 'port harcourt', 'kano', 'enugu' ),
+        'ghana'        => array( 'ghana', 'accra', 'kumasi' ),
+        'uk'           => array( 'uk', 'united kingdom', 'london', 'manchester', 'birmingham', 'bristol' ),
+        'usa'          => array( 'usa', 'united states', 'new york', 'los angeles', 'atlanta', 'chicago', 'houston' ),
+        'pan-african'  => array( 'africa', 'pan-african', 'senegal', 'dakar', 'kenya', 'nairobi', 'south africa', 'johannesburg', 'cape town' ),
+    );
+
+    /**
      * Verify the shared bearer secret sent from the Next.js backend.
      *
      * The secret is stored in the WP option `culture_api_secret` and must match
@@ -466,6 +481,122 @@ class Culture_Directory {
         }
 
         return rest_ensure_response( $results );
+    }
+
+    // ── Discover: paginated browse with filters ──────────────────────────────
+
+    /**
+     * GET /culture/v1/directory/browse?q=&type=&region=&sort=&page=&per_page=
+     *
+     * Powers the Discover screen's "Recently Added" rail + 2-column grid, plus
+     * the filter sheet's live "Show N entries" count (via the `total` field).
+     * Public endpoint — no auth needed.
+     *
+     * - `type` accepts a comma-separated list of culture_dir_type slugs (multi-select).
+     * - `region` accepts a single slug from REGION_CITY_KEYWORDS, matched against
+     *   _entry_city via substring (case-insensitive).
+     * - `sort` is one of: relevant (title match relevance when `q` set, else recent),
+     *   recent (post_date desc), rating (_average_rating desc).
+     */
+    public static function handle_browse( WP_REST_Request $request ) {
+        global $wpdb;
+
+        $q        = sanitize_text_field( $request->get_param( 'q' ) );
+        $types    = array_filter( array_map( 'sanitize_key', explode( ',', (string) $request->get_param( 'type' ) ) ) );
+        $region   = sanitize_key( $request->get_param( 'region' ) );
+        $sort     = sanitize_key( $request->get_param( 'sort' ) ) ?: 'relevant';
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ?: 20 ) );
+
+        $args = array(
+            'post_type'      => 'culture_directory',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+        );
+
+        if ( $types ) {
+            $args['tax_query'] = array( array(
+                'taxonomy' => 'culture_dir_type',
+                'field'    => 'slug',
+                'terms'    => $types,
+            ) );
+        }
+
+        $title_filter = null;
+        if ( $q !== '' ) {
+            $title_filter = function( $where ) use ( $q ) {
+                global $wpdb;
+                $like   = '%' . $wpdb->esc_like( $q ) . '%';
+                $where .= $wpdb->prepare( " AND {$wpdb->posts}.post_title LIKE %s", $like );
+                return $where;
+            };
+            add_filter( 'posts_where', $title_filter );
+        }
+
+        // Region: resolve matching post IDs via a single raw-SQL lookup against
+        // _entry_city before passing to WP_Query, same pattern documented in
+        // CLAUDE.md for meta_query OR-branch slowness — avoids a meta_query join.
+        if ( $region && isset( self::REGION_CITY_KEYWORDS[ $region ] ) ) {
+            $keywords  = self::REGION_CITY_KEYWORDS[ $region ];
+            $like_sql  = array();
+            $like_args = array();
+            foreach ( $keywords as $kw ) {
+                $like_sql[]  = 'meta_value LIKE %s';
+                $like_args[] = '%' . $wpdb->esc_like( $kw ) . '%';
+            }
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_entry_city' AND (" . implode( ' OR ', $like_sql ) . ')';
+            $matching_ids = $wpdb->get_col( $wpdb->prepare( $sql, $like_args ) );
+            $args['post__in'] = $matching_ids ?: array( 0 );
+        }
+
+        if ( $sort === 'recent' || ( $sort === 'relevant' && $q === '' ) ) {
+            $args['orderby'] = 'date';
+            $args['order']   = 'DESC';
+        } elseif ( $sort === 'rating' ) {
+            $args['meta_key'] = '_average_rating';
+            $args['orderby']  = 'meta_value_num';
+            $args['order']    = 'DESC';
+        } else {
+            $args['orderby'] = 'title';
+            $args['order']   = 'ASC';
+        }
+
+        $query = new WP_Query( $args );
+        if ( $title_filter ) {
+            remove_filter( 'posts_where', $title_filter );
+        }
+
+        $today = current_time( 'Y-m-d' );
+        $entries = array();
+
+        foreach ( $query->posts as $post ) {
+            $type_terms     = get_the_terms( $post->ID, 'culture_dir_type' );
+            $type_slug      = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
+            $interest_terms = get_the_terms( $post->ID, 'culture_interest' );
+            $subtype        = ( $interest_terms && ! is_wp_error( $interest_terms ) ) ? $interest_terms[0]->name : '';
+
+            $entries[] = array(
+                'id'            => $post->ID,
+                'title'         => $post->post_title,
+                'slug'          => $post->post_name,
+                'type'          => $type_slug,
+                'subtype'       => $subtype,
+                'thumbnail'     => get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ?: null,
+                'city'          => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
+                'reviewCount'   => (int) get_post_meta( $post->ID, '_community_review_count', true ),
+                'dateAdded'     => $post->post_date,
+                'isNew'         => substr( $post->post_date, 0, 10 ) === $today,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'entries' => $entries,
+            'total'   => (int) $query->found_posts,
+            'page'    => $page,
+            'perPage' => $per_page,
+        ) );
     }
 
     // ── Phase 3: Quick-create stub ───────────────────────────────────────────
