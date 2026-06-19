@@ -2198,8 +2198,20 @@ class Culture_Mobile_API {
                 'eventCategory' => ( $interests && ! is_wp_error( $interests ) && ! empty( $interests ) ) ? $interests[0]->name : '',
                 'organiserName' => $organiser_name,
                 'organiserSlug' => $organiser_slug,
+                'organiserDirectoryId' => $organiser_id ?: null,
+                'isFeatured'    => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
+                'rsvpCount'     => self::get_editorial_event_rsvp_count( $post->post_name ),
             );
         }, $query->posts );
+    }
+
+    private static function get_editorial_event_rsvp_count( string $event_slug ): int {
+        global $wpdb;
+        $table = $wpdb->prefix . 'culture_event_rsvp';
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE event_slug = %s AND status = 'confirmed'",
+            $event_slug
+        ) );
     }
 
     private static function get_directory_feed_items(): array {
@@ -2417,6 +2429,8 @@ class Culture_Mobile_API {
                     ? ( ( (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) === 0 )
                         || Culture_Community_RSVP::get_count( $post->ID ) < (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) )
                     : false,
+                'isFeatured'              => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
+                'organiserDirectoryId'    => (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ?: null,
             );
         }, $query->posts );
     }

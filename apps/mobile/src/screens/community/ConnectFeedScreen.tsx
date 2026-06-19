@@ -33,12 +33,16 @@ import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
+import EventSpotlightCarousel from "../../components/community/EventSpotlightCarousel";
+import { getSpotlightEvents } from "../../features/community/eventSpotlight";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
+
+const SPOTLIGHT_MARKER_ID = "__event-spotlight__";
 
 function feedItemToPostId(item: FeedItem): string {
   return (item as any).wpId ?? item.id.replace(/^community-/, "");
@@ -215,6 +219,20 @@ export default function ConnectFeedScreen() {
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 
+  // Spotlight carousel: computed once (locked via ref) on initial load so pagination
+  // never re-inserts/reorders it — avoids re-render loops from a reactive recompute.
+  const spotlightLockRef = useRef<FeedItem[] | null>(null);
+  if (spotlightLockRef.current === null && visibleItems.length > 0) {
+    spotlightLockRef.current = getSpotlightEvents(visibleItems);
+  }
+  const spotlightEvents = spotlightLockRef.current ?? [];
+
+  const listData = useMemo(() => {
+    if (spotlightEvents.length < 2 || visibleItems.length <= 5) return visibleItems;
+    const marker = { id: SPOTLIGHT_MARKER_ID, type: "spotlight" } as unknown as FeedItem;
+    return [...visibleItems.slice(0, 5), marker, ...visibleItems.slice(5)];
+  }, [visibleItems, spotlightEvents]);
+
   const handleFilter = (label: string) => {
     if (label === "✦ For You") {
       setForYou(true);
@@ -249,6 +267,9 @@ export default function ConnectFeedScreen() {
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => {
+    if (item.id === SPOTLIGHT_MARKER_ID) {
+      return <EventSpotlightCarousel events={spotlightEvents} onOpenCommunity={setSheetItem} />;
+    }
     const forYouBadge =
       forYou && hasInterests && matchesInterests(item, interestTagSet);
     return (
@@ -450,7 +471,7 @@ export default function ConnectFeedScreen() {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={visibleItems}
+            data={listData}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             refreshControl={

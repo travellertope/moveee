@@ -7,7 +7,9 @@ import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { rankFeed, getTrending, matchesInterests } from "@/lib/feed-recommendations";
+import { getSpotlightEvents } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
+import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
 
@@ -172,6 +174,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   // Trending items (shown in sidebar and For You mode)
   const trending = useMemo(() => getTrending(items), [items]);
+
+  // Spotlight events carousel — inserted after the 5th feed item.
+  const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
   const visible = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
@@ -457,14 +462,25 @@ const handleType = (type: FeedItemType | "all") => {
               Nothing here yet — check back soon.
             </div>
           ) : (
-            visible.map(item => (
-              <FeedCard
-                key={item.id}
-                item={item}
-                onTagClick={handleTagClick}
-                interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
-              />
-            ))
+            <>
+              {visible.slice(0, 5).map(item => (
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  onTagClick={handleTagClick}
+                  interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                />
+              ))}
+              {visible.length > 5 && <EventSpotlightCarousel events={spotlightEvents} />}
+              {visible.slice(5).map(item => (
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  onTagClick={handleTagClick}
+                  interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                />
+              ))}
+            </>
           )}
 
           <div ref={sentinelRef} style={{ height: "1px" }} />

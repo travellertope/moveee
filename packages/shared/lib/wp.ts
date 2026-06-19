@@ -220,6 +220,7 @@ function mapRestEventToFrontendShape(item: any) {
     city: pick(cem.city, acf.city, meta.city, meta._culture_event_city),
     admission: pick(cem.admission, acf.admission, meta.admission, meta._culture_admission),
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
+    rsvpCount: Number(cem.rsvp_count) || 0,
     isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(cem.ai_generated ?? acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
     openingHours: pick(cem.opening_hours, acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
@@ -361,8 +362,9 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
   const gqlEvents = (gql?.cultureEvents?.nodes ?? []).filter((e: any) => !isEventExpired(e));
   if (gqlEvents.length > 0) {
-    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch
-    const needsPatch = gqlEvents.some((e: any) => !e.location || !e.city || !e.endDate || !e.venueAddress);
+    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch.
+    // Always patch: rsvpCount has no GraphQL resolver and must stay live, not cached.
+    const needsPatch = true;
     if (needsPatch) {
       try {
         const patchCtrl = new AbortController();
@@ -400,6 +402,8 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
               if (!ev.organiserDirectoryId && cem.organiser_id) ev.organiserDirectoryId = Number(cem.organiser_id);
               if (!ev.organiserName && cem.organiser_name) ev.organiserName = cem.organiser_name;
               if (!ev.organiserSlug && cem.organiser_slug) ev.organiserSlug = cem.organiser_slug;
+              ev.rsvpCount = Number(cem.rsvp_count) || 0;
+              if (!ev.isFeatured) ev.isFeatured = Boolean(cem.is_featured);
             }
           }
         }

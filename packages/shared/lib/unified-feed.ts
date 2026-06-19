@@ -39,6 +39,8 @@ export interface FeedItem {
   eventCategory?: string;
   organiserName?: string;
   organiserSlug?: string;
+  isFeatured?: boolean;
+  organiserDirectoryId?: number;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -199,6 +201,8 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       rsvpEnabled: post.community_event_meta?.rsvp_enabled ?? undefined,
       rsvpCapacity: post.community_event_meta?.rsvp_capacity ?? undefined,
       rsvpCount: post.community_event_meta?.rsvp_count ?? undefined,
+      isFeatured: Boolean(post.community_event_meta?.is_featured),
+      organiserDirectoryId: post.community_event_meta?.organiser_id ? Number(post.community_event_meta.organiser_id) : undefined,
     };
   });
 }
@@ -301,6 +305,9 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
         organiserName: event.organiserName || undefined,
         organiserSlug: event.organiserSlug || undefined,
+        organiserDirectoryId: event.organiserDirectoryId ?? undefined,
+        isFeatured: Boolean(event.isFeatured),
+        rsvpCount: Number(event.rsvpCount) || 0,
       });
     }
   }

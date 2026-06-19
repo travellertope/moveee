@@ -857,6 +857,63 @@ source of truth for icons across the PHP/TS boundary.
 
 ---
 
+## Event Spotlight carousel (June 2026)
+
+Horizontally-scrolling carousel merging editorial `culture_event` items + community
+`culture_post` events (`templateType === 'event'`) into a ranked highlight strip,
+inserted once after the 5th feed item on initial load (never re-inserted on
+pagination/infinite scroll). Implemented independently on web and mobile — both
+platforms mirror the same scoring/filtering rules, per the project's existing
+web/mobile duplication convention (RN can't import `packages/shared`).
+
+### Scoring/filtering utility
+- Web: `packages/shared/lib/event-spotlight.ts`
+- Mobile: `apps/mobile/src/features/community/eventSpotlight.ts`
+
+Both export `getSpotlightEvents(items: FeedItem[], limit = 10): FeedItem[]`.
+Filters to `type === "happening"` or (`type === "community"` and
+`templateType === "event"`), hides any event missing 2+ of {image, venue/location,
+admission}, returns `[]` (hide the module) when fewer than 2 qualifying events
+remain. Score = `isFeatured(40) + completeness(0-30) + log-scale rsvpCount(0-20) +
+organiserDirectoryId(10)`; falls back to soonest-upcoming-first sort when none of
+the scoring inputs (`isFeatured`/`rsvpCount`/`organiserDirectoryId`) are present on
+any candidate.
+
+### Backend fields required for scoring
+- `isFeatured`: editorial events read `_culture_is_featured` postmeta; community
+  events already had it via `community_event_meta`.
+- `rsvpCount`: editorial events previously had none — added
+  `Culture_Mobile_API::get_editorial_event_rsvp_count()` (raw SQL count against
+  `wp_culture_event_rsvp` by `event_slug`/`status='confirmed'`) for mobile;
+  web's `mapRestEventToFrontendShape` already covers it.
+- `organiserDirectoryId`: read from `_culture_event_organiser_id` (community) /
+  the existing organiser resolution (editorial) on both platforms.
+- Wired in `class-culture-mobile-api.php`'s `get_happening_feed_items()` /
+  `get_community_feed_items()` (mobile `/mobile/feed`), and in
+  `packages/shared/lib/unified-feed.ts` (web) — both feed mappers needed these
+  fields added since each builds its own response shape independently.
+
+### UI components
+- Web: `packages/shared/components/pulse/EventSpotlightCarousel.tsx`, inserted in
+  `PulseFeed.tsx` via array slicing (`visible.slice(0,5)` / carousel /
+  `visible.slice(5)`) — declarative slicing achieves "once, at position 5" without
+  needing a ref, since position 5 is stable across re-renders.
+- Mobile: `apps/mobile/src/components/community/EventSpotlightCarousel.tsx`, wired
+  into `ConnectFeedScreen.tsx`'s `FlatList` via a synthetic marker item
+  (`id: "__event-spotlight__"`) spliced into `listData` at index 5. The spotlight
+  item list itself is computed once into a ref (`spotlightLockRef`) on first
+  non-empty load and never recomputed — required because `FlatList`'s `data` array
+  changes on every pagination page, and reactively recomputing the spotlight set
+  would reorder/jump the already-rendered carousel.
+
+Both platforms reuse existing detail UI rather than building new ones: tapping a
+"happening"-type card opens `HappeningDetailModal` (self-managed inside the
+carousel component, mirroring the existing `HappeningCard` pattern); tapping a
+"community"-type card delegates to whatever the host screen already uses for that
+(web: `CommunityDetailModal` rendered by `EventSpotlightCarousel.tsx` itself; mobile:
+`onOpenCommunity` callback → the screen's existing `sheetItem`/`PostDetailSheet`).
+"See all →" routes to the existing Events tab/screen, not a new one.
+
 ## Event system enhancements
 
 ### Organiser field
