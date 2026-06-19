@@ -238,6 +238,7 @@ function MainTabs() {
         name="Connect"
         component={ConnectStack}
         options={{
+          tabBarLabel: "Feed",
           tabBarIcon: ({ focused, color, size }) => (
             <View style={{ width: size, height: size }}>
               <Ionicons
