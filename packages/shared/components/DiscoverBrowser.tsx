@@ -120,8 +120,8 @@ export default function DiscoverBrowser({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const countDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const countDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Recently Added rail
   useEffect(() => {
