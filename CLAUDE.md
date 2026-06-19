@@ -1123,9 +1123,15 @@ Photos are embedded in the scroll body (NOT a floating strip). Pattern: dashed 8
 
 **Food Review** — dish/item input → DirectorySearch (restaurant) → divider → MultiRating (Taste/Value/Vibe) → "Your review" textarea → cuisine chips (Nigerian/Pan-African/West African/Continental/Fusion/Seafood) → price range chips → divider → inline photos
 
-**Book Review** — book search input (🔍, fetches from `${MOBILE_API}/books/search?q=X`) + dropdown with book cover/title/author/year + "Add new book" → book card (selected, 48×64 cover) → status chips (Finished/Reading/Want to Read) → overall StarRating → breakdown MultiRating (Writing/Story/Characters/Pacing) → review textarea → favourite quote (ochre left border, italic) → recommend chips (Yes green / No) → genre chips (multi-select). No images.
+**Book Review** — `DirectorySearch` (`typeFilter="book"`, `showAuthorField`) for picking/creating the
+`culture_directory` book entry → status chips (Finished/Reading/Want to Read) → overall StarRating →
+breakdown MultiRating (Writing/Story/Characters/Pacing) → review textarea → favourite quote (ochre
+left border, italic) → recommend chips (Yes green / No) → genre chips (multi-select). No images.
 
-Submits to `${MOBILE_API}/community/submit` with extra fields: `book_title`, `book_author`, `book_status`, `book_overall_rating`, `book_rating_writing/story/characters/pacing`, `book_fav_quote?`, `book_recommend`, `book_genres?`
+Submits to `${MOBILE_API}/community/submit` with extra fields: `linked_directory_id` (the selected
+book's `culture_directory` post ID — see "Book Review → directory linkage" below), `book_title`,
+`book_author`, `book_status`, `book_overall_rating`, `book_rating_writing/story/characters/pacing`,
+`book_fav_quote?`, `book_recommend`, `book_genres?`
 
 **Creative Showcase** — title input → medium chips (Photography/Film/Digital Art/Illustration/Music/Writing, single-select) → "About this work" textarea → collaborator input (@-prefixed) → divider → 120px dashed upload zone. MAX_IMAGES = 4.
 
@@ -1152,7 +1158,7 @@ cuisineTag, foodPriceRange
 showcaseTitle, showcaseMedium, showcaseCollaborator
 
 // Book Review
-bookEntry, bookSearch, bookSearchResults, bookSearchOpen
+bookEntry  // DirectoryEntry | null — selected via shared DirectorySearch, not a bespoke search
 bookStatus, bookOverallRating, bookRatings ({writing, story, characters, pacing})
 bookFavQuote, bookRecommend, bookGenres
 
@@ -1295,10 +1301,21 @@ convention.
   (public, `class-culture-rest-api.php`). Params: `q` (optional text search),
   `type` (comma-separated slugs — backend supports multi but both frontends
   only ever send one, since the UI is single-select), `region` (single slug),
-  `sort` (`relevant`|`recent`|`rating`), `page`/`per_page` (capped 50, default
-  20). Returns `{ entries: [...], total, page, perPage }` — `total` is
+  `sort` (`relevant`|`recent`|`rating`|`trending`|`random`), `seed` (integer,
+  only used by `sort=random`), `page`/`per_page` (capped 50, default
+  20). Returns `{ entries: [...], total, page, perPage, seed }` — `total` is
   `$query->found_posts`, the basis for the filter sheet's live "Show N
   entries" count.
+- `sort=trending` orders by `_community_review_count` (existing aggregate —
+  no new computation) as a proxy for "most referenced by community posts".
+- `sort=random` powers the "Explore More" grid's per-visit shuffle (see
+  Mobile/Web sections below) via a seeded MySQL `RAND(seed)` `posts_orderby`
+  filter — stable across "Load more" pagination within one visit (same
+  client-generated seed reused for every page request) but different on the
+  next visit/screen-mount. The client only sends `sort=random` when the user
+  hasn't chosen an explicit sort and isn't searching (`sort === "relevant" &&
+  !query`) — an explicit "Recently Added"/"Highest Rated" choice or an active
+  text search always overrides it.
 - Region filtering has no dedicated taxonomy/meta field to query — there's
   only the freeform `_entry_city` string. `Culture_Directory::REGION_CITY_KEYWORDS`
   is a static substring-match keyword table (nigeria/ghana/uk/usa/pan-african)
@@ -1323,7 +1340,12 @@ convention.
   search bar; the type-filter chip row is always visible (tapping a chip
   applies immediately); a "Filters" pill opens `DiscoverFilterSheet` for
   region + sort. "Recently Added" horizontal rail (compact cards, `sort=recent`)
-  above a 2-column paginated grid (`onEndReached` infinite scroll).
+  and a "Trending in Community" rail (`sort=trending`) above a 2-column
+  paginated "Explore More" grid (renamed from "Browse All", `onEndReached`
+  infinite scroll) — the grid defaults to `sort=random` with a per-visit
+  seed (`useRef`, regenerated only on screen remount) so default browsing
+  always surfaces a fresh mix; an explicit sort choice or active search
+  overrides the randomization.
 - `components/community/DiscoverCard.tsx` — shared rail/grid card, exports
   `DiscoverEntry` type and the `TYPE_BADGE` emoji/label/color map per entry
   type (compact mode for the rail, full mode with star rating + subtype pill
@@ -1346,11 +1368,12 @@ convention.
 - `packages/shared/components/DiscoverBrowser.tsx` — the client component
   mirroring the mobile screen exactly: search toggle, always-visible type
   chips, a "Filters" overlay panel (region + sort + live debounced count),
-  Recently Added rail, paginated grid with a "Load more" button (web has no
-  scroll-based infinite scroll here, unlike mobile's `onEndReached`). Styled
-  via `apps/connect/app/discover.css`, imported as `@/app/discover.css` from
-  inside the shared component — same resolution trick `PulseFeed.tsx` already
-  uses for `@/app/pulse-layout.css`.
+  Recently Added rail, Trending in Community rail, paginated "Explore More"
+  grid (random-by-default, same seed/override rules as mobile above) with a
+  "Load more" button (web has no scroll-based infinite scroll here, unlike
+  mobile's `onEndReached`). Styled via `apps/connect/app/discover.css`,
+  imported as `@/app/discover.css` from inside the shared component — same
+  resolution trick `PulseFeed.tsx` already uses for `@/app/pulse-layout.css`.
 - Web-only, not duplicated to `apps/site` — Discover is a Site B (Connect)
   community feature, consistent with where `/directory` itself lives.
 
@@ -1359,6 +1382,29 @@ convention.
   "New to Discover" card in the main feed; State B: a reference chip on
   community posts that link to a directory entry via `_linked_directory_id`)
   — flagged in the original mockup but not built in this pass.
+
+### Book Review → directory linkage (mobile-only, fixed June 2026)
+Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
+same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.
+`handle_submit_post()` in `class-culture-mobile-api.php` already saves and reads back
+`_linked_directory_id` generically for any `culture_post` template (not gated by
+`template_type`), so no PHP changes were needed; the gap was purely in
+`NewPostScreen.tsx`, which had a bespoke book search (`bookSearch`/`bookSearchResults`/
+`bookSearchOpen` state, a fake `Date.now()`-based ID, city used as a stand-in for author)
+that never created or linked a real directory post. Fixed by swapping it for the shared
+`DirectorySearch` component (`typeFilter="book"`, `showAuthorField`) — same component
+already used by Hidden Gem and Food Review. `bookEntry` is now a `DirectoryEntry | null`
+from `DirectorySearch`'s exported interface; the submit payload includes
+`linked_directory_id: bookEntry!.id`. Author is stored on the directory entry via the
+generic `_about_fields` JSON blob (`[{label: "Author", value: ...}]`), read back by
+`Culture_Directory::get_about_field()` and returned as `author` in both
+`/directory/search` and `/directory/quick-create` responses — this is the same
+mechanism `DirectorySearch`'s `showAuthorField` prop already expected, just not
+previously wired up for books. `PostDetailSheet.tsx`'s `TemplateBookReview` now renders
+a "View in Directory →" chip when `item.linkedDirectoryId` is set, mirroring
+`TemplateHiddenGem`'s existing pattern. Web has no Book Review composer or
+feed-rendering at all, so this fix is mobile-only — no `packages/shared` or
+`apps/connect` changes needed.
 
 ---
 

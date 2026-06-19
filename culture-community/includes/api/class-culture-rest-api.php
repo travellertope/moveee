@@ -653,6 +653,7 @@ class Culture_REST_API {
                 'sort'     => array( 'type' => 'string', 'default' => 'relevant' ),
                 'page'     => array( 'type' => 'integer', 'default' => 1 ),
                 'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+                'seed'     => array( 'type' => 'integer', 'default' => 0 ),
             ),
         ) );
 

@@ -431,6 +431,28 @@ class Culture_Directory {
      * Returns a list of matching directory entries for post-composer autocomplete.
      * Public endpoint — no auth needed.
      */
+    /**
+     * Reads a single labelled value out of the generic `_about_fields` JSON
+     * blob (format: [{label, value}], used by the mobile DirectoryDetailScreen
+     * "About" section) — e.g. get_about_field( $id, 'Author' ) for book entries.
+     */
+    private static function get_about_field( $post_id, $label ) {
+        $raw = get_post_meta( $post_id, '_about_fields', true );
+        if ( ! $raw ) {
+            return '';
+        }
+        $fields = json_decode( $raw, true );
+        if ( ! is_array( $fields ) ) {
+            return '';
+        }
+        foreach ( $fields as $field ) {
+            if ( isset( $field['label'], $field['value'] ) && $field['label'] === $label ) {
+                return $field['value'];
+            }
+        }
+        return '';
+    }
+
     public static function handle_search( WP_REST_Request $request ) {
         $q    = sanitize_text_field( $request->get_param( 'q' ) );
         $type = sanitize_key( $request->get_param( 'type' ) );
@@ -477,6 +499,7 @@ class Culture_Directory {
                 'type'      => $type_slug,
                 'thumbnail' => $thumb ?: null,
                 'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                'author'    => self::get_about_field( $post->ID, 'Author' ),
             );
         }
 
@@ -496,7 +519,11 @@ class Culture_Directory {
      * - `region` accepts a single slug from REGION_CITY_KEYWORDS, matched against
      *   _entry_city via substring (case-insensitive).
      * - `sort` is one of: relevant (title match relevance when `q` set, else recent),
-     *   recent (post_date desc), rating (_average_rating desc).
+     *   recent (post_date desc), rating (_average_rating desc), trending
+     *   (_community_review_count desc), random (seeded shuffle — pass the same
+     *   `seed` back on subsequent pages to keep pagination stable within a
+     *   single Discover visit; a new seed should be generated client-side on
+     *   each fresh visit to the screen).
      */
     public static function handle_browse( WP_REST_Request $request ) {
         global $wpdb;
@@ -550,6 +577,8 @@ class Culture_Directory {
             $args['post__in'] = $matching_ids ?: array( 0 );
         }
 
+        $random_filter = null;
+        $seed          = 0;
         if ( $sort === 'recent' || ( $sort === 'relevant' && $q === '' ) ) {
             $args['orderby'] = 'date';
             $args['order']   = 'DESC';
@@ -557,6 +586,20 @@ class Culture_Directory {
             $args['meta_key'] = '_average_rating';
             $args['orderby']  = 'meta_value_num';
             $args['order']    = 'DESC';
+        } elseif ( $sort === 'trending' ) {
+            $args['meta_key'] = '_community_review_count';
+            $args['orderby']  = 'meta_value_num';
+            $args['order']    = 'DESC';
+        } elseif ( $sort === 'random' ) {
+            // Seeded MySQL RAND() — a single seed value keeps ordering stable
+            // across paginated requests within one Discover visit, while a
+            // fresh seed (generated client-side per screen visit) reshuffles
+            // the grid on the next visit.
+            $seed = (int) $request->get_param( 'seed' ) ?: wp_rand( 1, PHP_INT_MAX );
+            $random_filter = function( $orderby ) use ( $seed, $wpdb ) {
+                return $wpdb->prepare( 'RAND(%d)', $seed );
+            };
+            add_filter( 'posts_orderby', $random_filter );
         } else {
             $args['orderby'] = 'title';
             $args['order']   = 'ASC';
@@ -565,6 +608,9 @@ class Culture_Directory {
         $query = new WP_Query( $args );
         if ( $title_filter ) {
             remove_filter( 'posts_where', $title_filter );
+        }
+        if ( $random_filter ) {
+            remove_filter( 'posts_orderby', $random_filter );
         }
 
         $today = current_time( 'Y-m-d' );
@@ -601,6 +647,7 @@ class Culture_Directory {
             'total'   => (int) $query->found_posts,
             'page'    => $page,
             'perPage' => $per_page,
+            'seed'    => $seed ?: null,
         ) );
     }
 
@@ -620,6 +667,7 @@ class Culture_Directory {
         $lat          = (float) $request->get_param( 'location_lat' );
         $lng          = (float) $request->get_param( 'location_lng' );
         $city         = sanitize_text_field( $request->get_param( 'city' ) );
+        $author       = sanitize_text_field( $request->get_param( 'author' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -650,6 +698,9 @@ class Culture_Directory {
         if ( $city ) {
             update_post_meta( $post_id, '_entry_city', $city );
         }
+        if ( $author ) {
+            update_post_meta( $post_id, '_about_fields', wp_json_encode( array( array( 'label' => 'Author', 'value' => $author ) ) ) );
+        }
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
@@ -658,10 +709,11 @@ class Culture_Directory {
         }
 
         return rest_ensure_response( array(
-            'id'    => $post_id,
-            'slug'  => get_post_field( 'post_name', $post_id ),
-            'title' => $title,
-            'city'  => $city,
+            'id'     => $post_id,
+            'slug'   => get_post_field( 'post_name', $post_id ),
+            'title'  => $title,
+            'city'   => $city,
+            'author' => $author,
         ) );
     }
 

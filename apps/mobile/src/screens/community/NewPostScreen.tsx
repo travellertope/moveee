@@ -9,7 +9,7 @@ import { useNav } from "../../hooks/useNav";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { detectRegion } from "../../features/community/useFeedRecommendations";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -127,7 +127,7 @@ const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
-interface DirectoryEntry { id: number; title: string; type: string; city?: string }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string; author?: string }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -236,10 +236,7 @@ export default function NewPostScreen() {
   const [showcaseCollaborator, setShowcaseCollaborator] = useState<MemberResult | null>(null);
 
   // Book Review state
-  const [bookEntry, setBookEntry] = useState<{ id: number; title: string; author: string; year?: string } | null>(null);
-  const [bookSearch, setBookSearch] = useState("");
-  const [bookSearchResults, setBookSearchResults] = useState<Array<{ id: number; title: string; author: string; year?: string }>>([]);
-  const [bookSearchOpen, setBookSearchOpen] = useState(false);
+  const [bookEntry, setBookEntry] = useState<DirectoryEntry | null>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
@@ -280,7 +277,6 @@ export default function NewPostScreen() {
   const [pickerTarget, setPickerTarget] = useState<"start" | "end">("start");
 
   const textRef = useRef<TextInput>(null);
-  const bookSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tmpl = TEMPLATES.find((t) => t.id === template)!;
   const tmplDef = TEMPLATE_DEFS.find((t) => t.id === template)!;
 
@@ -438,6 +434,7 @@ const uploadImages = async (): Promise<string[]> => {
         await api.post(`${MOBILE_API}/community/submit`, {
           template_type: "book-review",
           content: text,
+          linked_directory_id: bookEntry!.id,
           book_title: bookEntry!.title,
           book_author: bookEntry!.author,
           book_status: bookStatus,
@@ -926,90 +923,14 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {/* Book search */}
       <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Book *</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={styles.prefixIcon}>🔍</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={bookSearch}
-            onChangeText={(v) => {
-              setBookSearch(v);
-              if (!v.trim()) {
-                setBookSearchResults([]);
-                setBookSearchOpen(false);
-                return;
-              }
-              setBookSearchOpen(true);
-              if (bookSearchTimer.current) clearTimeout(bookSearchTimer.current);
-              bookSearchTimer.current = setTimeout(async () => {
-                try {
-                  const data = await api.get<Array<{ id: number; title: string; type: string; city?: string }>>(
-                    `${CULTURE_API}/directory/search?q=${encodeURIComponent(v.trim())}`,
-                    false
-                  );
-                  setBookSearchResults((data ?? []).map((r) => ({ id: r.id, title: r.title, author: r.city ?? "" })));
-                } catch {
-                  setBookSearchResults([]);
-                }
-              }, 350);
-            }}
-            placeholder="Search by title"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-        {bookSearchOpen && (
-          <View style={styles.bookSearchDropdown}>
-            {bookSearchResults.length > 0 ? (
-              <>
-                {bookSearchResults.slice(0, 8).map((r) => (
-                  <TouchableOpacity
-                    key={r.id}
-                    style={styles.bookSearchResultRow}
-                    onPress={() => {
-                      setBookEntry(r);
-                      setBookSearch("");
-                      setBookSearchResults([]);
-                      setBookSearchOpen(false);
-                    }}
-                  >
-                    <Text style={styles.bookSearchResultTitle}>{r.title}</Text>
-                    {r.author ? <Text style={styles.bookSearchResultAuthor}>{r.author}</Text> : null}
-                  </TouchableOpacity>
-                ))}
-              </>
-            ) : null}
-            <TouchableOpacity
-              style={styles.bookSearchNoResult}
-              onPress={() => {
-                if (bookSearch.trim()) {
-                  setBookEntry({ id: Date.now(), title: bookSearch.trim(), author: "" });
-                  setBookSearch("");
-                  setBookSearchResults([]);
-                  setBookSearchOpen(false);
-                }
-              }}
-            >
-              <Text style={styles.bookSearchNoResultText}>
-                {bookSearchResults.length > 0 ? `Add "${bookSearch}" as a new entry` : `Add "${bookSearch}" as a new book`}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <DirectorySearch
+          selected={bookEntry}
+          onSelect={setBookEntry}
+          label="Book *"
+          typeFilter="book"
+          showAuthorField
+        />
       </View>
-
-      {/* Book card */}
-      {bookEntry && (
-        <View style={styles.bookCard}>
-          <View style={styles.bookCover} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bookTitle}>{bookEntry.title}</Text>
-            {bookEntry.author ? <Text style={styles.bookAuthor}>{bookEntry.author}</Text> : null}
-          </View>
-          <TouchableOpacity onPress={() => setBookEntry(null)}>
-            <Text style={{ color: c.mute, fontSize: 16 }}>✕</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Status */}
       <View style={styles.fieldGroup}>
@@ -1683,28 +1604,6 @@ function createStyles(c: ColorPalette) {
     showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
 
     // Book
-    bookCard: {
-      flexDirection: "row", alignItems: "flex-start",
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      padding: 12, gap: 12, backgroundColor: c.paper, marginTop: 8,
-    },
-    bookCover: { width: 48, height: 64, borderRadius: 2, backgroundColor: c.paperDeep },
-    bookTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
-    bookAuthor: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, marginTop: 2 },
-    bookSearchDropdown: {
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      backgroundColor: c.paper, overflow: "hidden", marginTop: 4,
-    },
-    bookSearchResultRow: {
-      paddingHorizontal: 14, paddingVertical: 10,
-      borderBottomWidth: 1, borderBottomColor: c.rule,
-    },
-    bookSearchResultTitle: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
-    bookSearchResultAuthor: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: 1 },
-    bookSearchNoResult: {
-      padding: 12, backgroundColor: c.paperDeep,
-    },
-    bookSearchNoResultText: { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
     bookRatingsContainer: {
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md, overflow: "hidden",
     },

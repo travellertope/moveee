@@ -747,6 +747,7 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 }
 
 function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
   const overall = item.bookOverallRating ?? 0;
   const statusColor = "#2D6A4F";
 
@@ -817,6 +818,16 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
 
       {/* Review text */}
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
+
+      {item.linkedDirectoryId ? (
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
+          <Ionicons name="grid-outline" size={12} color={c.gold} />
+          <Text style={styles.directoryChipText}>View in Directory →</Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Favourite quote */}
       {item.bookFavQuote ? (
