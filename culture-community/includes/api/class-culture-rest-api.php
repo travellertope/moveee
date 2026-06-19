@@ -4847,21 +4847,20 @@ class Culture_REST_API {
             array( '%d', '%d', '%s', '%s' )
         );
 
-        // Award reputation via gamification system.
-        do_action( 'culture_award_points', $user_id, 'event_checkin', $event_id );
-
-        // Award credits.
-        if ( method_exists( 'Culture_Gamification', 'award_credits' ) ) {
-            Culture_Gamification::award_credits( $user_id, 3, 'event_checkin' );
-        } else {
-            do_action( 'culture_award_credits', $user_id, 3, 'event_checkin' );
-        }
+        // Award reputation and credits directly — the previous do_action() hooks
+        // ('culture_award_points' / 'culture_award_credits') had no listeners
+        // anywhere in the codebase, so check-ins were silently awarding 0
+        // reputation despite the response message claiming otherwise.
+        $rep_earned     = Culture_Gamification::get_point_value( 'event_checkin' );
+        $credits_earned = Culture_Gamification::get_credit_bonus( 'event_checkin' );
+        Culture_Gamification::award_reputation( $user_id, $rep_earned, 'event_checkin', $event_id );
+        Culture_Gamification::award_credits( $user_id, $credits_earned, 'event_checkin', $event_id );
 
         return rest_ensure_response( array(
             'success'        => true,
-            'message'        => 'Check-in successful! You earned 20 points and 3 credits.',
-            'rep_earned'     => 20,
-            'credits_earned' => 3,
+            'message'        => "Check-in successful! You earned {$rep_earned} points and {$credits_earned} credits.",
+            'rep_earned'     => $rep_earned,
+            'credits_earned' => $credits_earned,
         ) );
     }
 

@@ -648,8 +648,8 @@ class Culture_Directory {
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
-            Culture_Gamification::award_reputation( $user_id, 15, 'directory_entry', $post_id );
-            Culture_Gamification::award_credits( $user_id, 2, 'directory_entry', $post_id );
+            Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'directory_entry' ), 'directory_entry', $post_id );
+            Culture_Gamification::award_credits( $user_id, Culture_Gamification::get_credit_bonus( 'directory_entry' ), 'directory_entry', $post_id );
         }
 
         return rest_ensure_response( array(

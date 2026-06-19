@@ -79,6 +79,10 @@ function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): str
 function stripHtmlTags(html?: string | null): string | undefined {
   if (!html) return undefined;
   const text = html
+    // Turn block-level breaks into paragraph breaks before the generic tag
+    // strip below discards them — otherwise multi-paragraph excerpts collapse
+    // into one continuous line.
+    .replace(/<\/p>|<br\s*\/?>/gi, "\n\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -87,7 +91,9 @@ function stripHtmlTags(html?: string | null): string | undefined {
     .replace(/&#8220;|&ldquo;/g, "“")
     .replace(/&#8221;|&rdquo;/g, "”")
     .replace(/&#\d+;/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
   return text || undefined;
 }
