@@ -336,6 +336,13 @@ export default function NewPostScreen() {
       allowsMultipleSelection: multi,
       selectionLimit: multi ? MAX_IMAGES : 1,
       quality: 0.85,
+      // iOS Photos can store originals as HEIC; "Compatible" forces the
+      // picker to hand back a JPEG copy instead. Without this, a HEIC file
+      // gets mislabeled as image/jpeg on upload (see uploadImages()) and
+      // the server's webp conversion silently falls back to uploading the
+      // raw, unreadable HEIC bytes under a .jpg URL — image looks "attached"
+      // but never renders anywhere.
+      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
     });
     if (!result.canceled) {
       if (multi) {
@@ -365,13 +372,24 @@ export default function NewPostScreen() {
 
 const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
+    let failures = 0;
     for (const uri of images) {
       try {
         const fileName = uri.split("/").pop() ?? "photo.jpg";
         const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
         const res = await api.upload<{ url: string }>(`${PROXY}/mobile/community/upload-image`, uri, fileName, fileType);
         urls.push(res.url);
-      } catch { /* skip */ }
+      } catch {
+        failures += 1;
+      }
+    }
+    if (failures > 0) {
+      Alert.alert(
+        "Image upload failed",
+        failures === images.length
+          ? "None of your photos could be uploaded. The post will be submitted without them."
+          : `${failures} photo${failures > 1 ? "s" : ""} could not be uploaded and will be left out of the post.`
+      );
     }
     return urls;
   };

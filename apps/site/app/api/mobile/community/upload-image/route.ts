@@ -59,10 +59,16 @@ export async function POST(req: NextRequest) {
         .toBuffer();
       uploadType = "image/webp";
       uploadExt = "webp";
-    } catch {
-      uploadBuffer = rawBuffer;
-      uploadType = file.type;
-      uploadExt = file.type.split("/")[1].replace("jpeg", "jpg");
+    } catch (err) {
+      // Conversion failure usually means the bytes don't actually match the
+      // declared type (e.g. a HEIC photo mislabeled as image/jpeg by the
+      // client). Uploading the raw bytes anyway would silently produce an
+      // unviewable image with no error shown anywhere — fail loudly instead.
+      console.error("[mobile/upload-image] sharp conversion failed", err);
+      return NextResponse.json(
+        { error: "Could not process this image. Try a different photo or format." },
+        { status: 400 }
+      );
     }
   }
 
