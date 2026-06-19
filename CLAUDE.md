@@ -403,6 +403,59 @@ New work: create a fresh branch from main or use whatever branch is specified at
 
 ---
 
+## Reaction consistency fix (June 2026)
+
+Reactions (love/fire/clap) on community posts, pulse stories, quotes, and
+magazine articles were inconsistent across surfaces — some components never
+hydrated the viewer's own reaction state from the server (always starting
+"not reacted" on mount), some allowed multiple simultaneous "active"
+reactions per post (contradicting the single-reaction-per-user backend
+model), and web's reaction endpoint did a non-atomic GET-then-PATCH against
+native WP REST with no real per-user server record (relied on localStorage).
+
+**Backend (single source of truth):** `_culture_post_reactions` usermeta —
+a `post_id => reaction_type` map per user. `Culture_Mobile_API::toggle_reaction()`
+(`class-culture-mobile-api.php`) is the one place the toggle/switch logic
+lives; both mobile's `handle_react()` (JWT, `/mobile/community/react`) and
+web's new `handle_react()` (API key, `/community/react`, in
+`class-culture-rest-api.php`) just call into it — same mirrored-endpoint
+pattern as Follow/Community RSVP. Switching emoji decrements the old type's
+counter and increments the new one; tapping the same emoji again un-reacts.
+`_culture_liked_posts` (flat array) is kept in sync for backward
+compatibility with old boolean-`liked` reads.
+
+**Reading current reaction state:** Feed/list responses (`get_pulse_feed_items()`,
+`get_quote_feed_items()`, `get_community_feed_items()`, `format_community_post()`)
+now include a `userReaction` field sourced from the map directly — no extra
+request needed when rendering from a feed. Surfaces that fetch content
+*outside* a feed (e.g. magazine articles, fetched by slug) have no
+`userReaction` field to read, so there's a small dedicated GET lookup
+instead: web `GET /culture/v1/user/reaction` (used by
+`packages/shared/components/pulse/ReactionBar.tsx` on mount, proxied via
+`apps/connect/app/api/community/react/route.ts`), mobile
+`GET /culture/v1/mobile/user/reaction` (used by `ArticleScreen.tsx`).
+**Per the project's WPGraphQL-vs-REST rule**, this lookup was deliberately
+kept as a separate small REST call rather than threading `userReaction`
+through the GraphQL-sourced web content fetch (`unified-feed.ts`) —
+user-specific reads stay off the content/GraphQL path.
+
+**Frontend pattern (apply to any new reaction surface):** hydrate initial
+state from `item.userReaction` (or the dedicated lookup if there's no feed
+item), track at most one active reaction (a single `reacted` key/Set with
+at most one entry, not independent booleans per emoji), and after the POST
+always overwrite local state with the response's `reactionType`/`reactions`
+rather than trusting the optimistic guess (the server's switch logic is the
+authority, not the client's prediction). Fixed in this pass:
+`packages/shared/components/pulse/ReactionBar.tsx` (web shared),
+`apps/mobile/src/components/community/ReactionBar.tsx`,
+`PostDetailSheet.tsx`'s `ReactionsRow`, `FeedItemCard.tsx`'s `QuoteCard`
+(love-only bespoke handler), `QuoteDetailModal.tsx`, and
+`ArticleScreen.tsx`'s lifted top/bottom-bar state. Any component still
+written as `useState(false)` per emoji rather than one shared "which
+reaction is active" value has this same bug.
+
+---
+
 ## @mentions system (June 2026)
 
 Hashtags removed entirely. @mentions implemented end-to-end.
