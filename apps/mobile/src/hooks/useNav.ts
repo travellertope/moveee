@@ -14,6 +14,7 @@ export type AppParamList = {
   Notifications: undefined;
   DirectoryDetail: { id?: number; slug?: string; title?: string; entryType?: string };
   DirectoryPosts: { entryId: number; entryTitle: string; showRating?: boolean };
+  Discover: { type?: string; region?: string } | undefined;
   Article: { slug: string };
   AuthorArchive: { slug: string; name: string };
   CategoryArchive: { slug: string; name: string };

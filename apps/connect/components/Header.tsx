@@ -90,6 +90,25 @@ export default function ConnectHeader() {
 
           {/* Right: auth + bell + hamburger */}
           <div className="ch-right">
+            <Link
+              href="/discover"
+              aria-label="Discover"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                color: "#14110d",
+                lineHeight: 1,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+              </svg>
+            </Link>
             {status === "authenticated" && user ? (
               <>
                 <NotificationBell />

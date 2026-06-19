@@ -641,6 +641,21 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Discover — paginated browse with type/region/sort filters (public, used by Discover screen + filter sheet count).
+        register_rest_route( 'culture/v1', '/directory/browse', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_browse' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'q'        => array( 'type' => 'string', 'default' => '' ),
+                'type'     => array( 'type' => 'string', 'default' => '' ),
+                'region'   => array( 'type' => 'string', 'default' => '' ),
+                'sort'     => array( 'type' => 'string', 'default' => 'relevant' ),
+                'page'     => array( 'type' => 'integer', 'default' => 1 ),
+                'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+            ),
+        ) );
+
         // Phase 3 — inline directory stub creation from post composer.
         register_rest_route( 'culture/v1', '/directory/quick-create', array(
             'methods'             => 'POST',

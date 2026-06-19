@@ -1255,6 +1255,91 @@ Static-ish page for sharing individual community posts. URL: `/community/{slug}`
 
 ---
 
+## Discover (directory browse feature, June 2026)
+
+A dedicated browse/search surface over `culture_directory` entries (the 11 entry
+types: person, place, food, book, film, genre, movement, artwork, concept,
+fashion, tv-series) — separate from the existing `/directory` listing page
+(`DirectoryGrid.tsx`, which fetches all entries via GraphQL and filters
+client-side with no pagination/region/sort). Discover adds server-side
+pagination, search, a type filter (always visible, single-select chips), a
+region filter, sort options, and a live entry count — implemented identically
+on mobile and web per the project's existing web/mobile duplication
+convention.
+
+### Backend
+- `Culture_Directory::handle_browse()` (`class-culture-directory.php`) — new
+  paginated endpoint, registered as `GET /culture/v1/directory/browse`
+  (public, `class-culture-rest-api.php`). Params: `q` (optional text search),
+  `type` (comma-separated slugs — backend supports multi but both frontends
+  only ever send one, since the UI is single-select), `region` (single slug),
+  `sort` (`relevant`|`recent`|`rating`), `page`/`per_page` (capped 50, default
+  20). Returns `{ entries: [...], total, page, perPage }` — `total` is
+  `$query->found_posts`, the basis for the filter sheet's live "Show N
+  entries" count.
+- Region filtering has no dedicated taxonomy/meta field to query — there's
+  only the freeform `_entry_city` string. `Culture_Directory::REGION_CITY_KEYWORDS`
+  is a static substring-match keyword table (nigeria/ghana/uk/usa/pan-african)
+  resolved via raw SQL against `wp_postmeta` into `post__in` (same documented
+  pattern as the `culture_event` meta_query fix — raw SQL resolve-to-IDs
+  instead of a `meta_query` LIKE join, with `array(0)` forcing zero results
+  rather than an empty array). This is only as accurate as the keyword list;
+  extend `REGION_CITY_KEYWORDS` if a city is miscategorized.
+- The "subtype" pill shown on each card (e.g. "Music", "Venue") reuses the
+  entry's first attached `culture_interest` term — no new per-type subtype
+  taxonomy was added.
+- `_average_rating`/`_community_review_count` meta (already computed by
+  `Culture_Directory::recompute_directory_aggregates()`) is reused as-is for
+  card ratings — no new computation.
+
+### Mobile (`apps/mobile`)
+- Entry point: compass icon in `ConnectFeedScreen.tsx`'s header, left of the
+  notification bell → `nav.navigate("Discover")`. Registered in
+  `AppParamList` (`useNav.ts`) and as a screen in `ConnectStack`
+  (`navigation/index.tsx`).
+- `screens/community/DiscoverScreen.tsx` — search icon toggles a hidden
+  search bar; the type-filter chip row is always visible (tapping a chip
+  applies immediately); a "Filters" pill opens `DiscoverFilterSheet` for
+  region + sort. "Recently Added" horizontal rail (compact cards, `sort=recent`)
+  above a 2-column paginated grid (`onEndReached` infinite scroll).
+- `components/community/DiscoverCard.tsx` — shared rail/grid card, exports
+  `DiscoverEntry` type and the `TYPE_BADGE` emoji/label/color map per entry
+  type (compact mode for the rail, full mode with star rating + subtype pill
+  for the grid).
+- `components/community/DiscoverFilterSheet.tsx` — `BottomSheet`-based panel:
+  type pills (mirrors the screen's chip row, kept in sync since the sheet can
+  also change type), region pills, sort radios, and a sticky footer button
+  that debounce-fetches `per_page=1` against `/directory/browse` with the
+  draft filters to show a real `total` count before applying.
+
+### Web (`apps/connect` + `packages/shared`)
+- Entry point: compass icon link to `/discover` in `ConnectHeader.tsx`
+  (`apps/connect/components/Header.tsx`), shown for both authenticated and
+  unauthenticated visitors (the underlying data is public).
+- `app/api/directory/browse/route.ts` — proxy to
+  `GET /culture/v1/directory/browse` (same pattern as the existing
+  `app/api/directory/search/route.ts`).
+- `app/discover/page.tsx` — thin server component reading `?type=`/`?region=`
+  query params, rendering `DiscoverBrowser`.
+- `packages/shared/components/DiscoverBrowser.tsx` — the client component
+  mirroring the mobile screen exactly: search toggle, always-visible type
+  chips, a "Filters" overlay panel (region + sort + live debounced count),
+  Recently Added rail, paginated grid with a "Load more" button (web has no
+  scroll-based infinite scroll here, unlike mobile's `onEndReached`). Styled
+  via `apps/connect/app/discover.css`, imported as `@/app/discover.css` from
+  inside the shared component — same resolution trick `PulseFeed.tsx` already
+  uses for `@/app/pulse-layout.css`.
+- Web-only, not duplicated to `apps/site` — Discover is a Site B (Connect)
+  community feature, consistent with where `/directory` itself lives.
+
+### Not yet implemented (deferred, lower priority)
+- Feed inline treatments for newly-added directory entries (State A: a small
+  "New to Discover" card in the main feed; State B: a reference chip on
+  community posts that link to a directory entry via `_linked_directory_id`)
+  — flagged in the original mockup but not built in this pass.
+
+---
+
 ## Interest taxonomy (canonical slugs)
 
 Stored in `lib/interest-mappings.ts`. PHP allowlists in `class-culture-rest-api.php`. Seeded by `Culture_Activator::seed_interests()`.
