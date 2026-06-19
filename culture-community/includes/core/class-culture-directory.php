@@ -576,12 +576,17 @@ class Culture_Directory {
             $interest_terms = get_the_terms( $post->ID, 'culture_interest' );
             $subtype        = ( $interest_terms && ! is_wp_error( $interest_terms ) ) ? $interest_terms[0]->name : '';
 
+            $excerpt = $post->post_excerpt
+                ? wp_trim_words( $post->post_excerpt, 20 )
+                : wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 );
+
             $entries[] = array(
                 'id'            => $post->ID,
                 'title'         => $post->post_title,
                 'slug'          => $post->post_name,
                 'type'          => $type_slug,
                 'subtype'       => $subtype,
+                'excerpt'       => $excerpt,
                 'thumbnail'     => get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ?: null,
                 'city'          => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,

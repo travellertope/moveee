@@ -10,6 +10,7 @@ export interface DiscoverEntry {
   slug: string;
   type: string;
   subtype?: string;
+  excerpt?: string;
   thumbnail: string | null;
   city: string;
   averageRating: number | null;
@@ -71,6 +72,7 @@ function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean })
           {badge.emoji} {badge.label}
         </div>
         <div className="disc-card-title">{entry.title}</div>
+        {!rail && entry.excerpt && <div className="disc-card-excerpt">{entry.excerpt}</div>}
       </div>
       <div>
         {entry.city && <div className="disc-card-city">📍 {entry.city}</div>}
