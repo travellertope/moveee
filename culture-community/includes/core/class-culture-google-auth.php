@@ -39,6 +39,17 @@ class Culture_Google_Auth {
 			return new WP_Error( 'google_signin_disabled', 'Google Sign-In is not configured.', array( 'status' => 503 ) );
 		}
 
+		// Rate-limit per IP — without this, an attacker can hammer this
+		// endpoint with junk tokens, each forwarded as an outbound request
+		// to Google's tokeninfo endpoint (cost/DoS amplification).
+		$ip       = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( $_SERVER['REMOTE_ADDR'] ) : 'unknown';
+		$rate_key = 'culture_google_auth_' . md5( $ip );
+		$attempts = (int) get_transient( $rate_key );
+		if ( $attempts >= 20 ) {
+			return new WP_Error( 'rate_limited', 'Too many sign-in attempts. Please try again later.', array( 'status' => 429 ) );
+		}
+		set_transient( $rate_key, $attempts + 1, MINUTE_IN_SECONDS );
+
 		$response = wp_remote_get( add_query_arg( 'id_token', rawurlencode( $id_token ), self::TOKENINFO_URL ), array(
 			'timeout' => 8,
 		) );

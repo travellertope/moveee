@@ -221,7 +221,7 @@ class Culture_NL_Analytics {
                     'subscriber'  => $email,
                     'opened_at'   => current_time( 'mysql' ),
                     'ip_address'  => self::client_ip(),
-                    'user_agent'  => substr( $_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500 ),
+                    'user_agent'  => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 500 ),
                 ),
                 array( '%d', '%s', '%s', '%s', '%s' )
             );
@@ -270,7 +270,7 @@ class Culture_NL_Analytics {
                     'url'         => $url,
                     'clicked_at'  => current_time( 'mysql' ),
                     'ip_address'  => self::client_ip(),
-                    'user_agent'  => substr( $_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500 ),
+                    'user_agent'  => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 500 ),
                 ),
                 array( '%d', '%s', '%s', '%s', '%s', '%s' )
             );
