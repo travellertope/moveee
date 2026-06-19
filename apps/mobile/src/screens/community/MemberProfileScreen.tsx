@@ -276,6 +276,9 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
   styles: ReturnType<typeof createStyles>; c: ColorPalette;
 }) {
   const colW = (SCREEN_W - 32 - 8) / 2;
+  if (items.length === 0 && !isOwnProfile) {
+    return <Text style={styles.emptyTabText}>No portfolio items yet.</Text>;
+  }
   return (
     <View style={styles.portfolioGrid}>
       {items.map((item, i) => {
@@ -549,7 +552,7 @@ export default function MemberProfileScreen() {
                 {posts.length === 0 && <Text style={styles.emptyTabText}>No posts yet.</Text>}
               </>
             ) : (
-              <PortfolioGrid items={portfolio} isOwnProfile={false} styles={styles} c={c} />
+              <PortfolioGrid items={portfolio} isOwnProfile={isSelf} styles={styles} c={c} />
             )}
           </View>
         </View>
