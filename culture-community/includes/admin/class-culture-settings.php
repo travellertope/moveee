@@ -308,6 +308,13 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
+        // Cloudflare R2 storage (mobile media uploads).
+        register_setting( 'culture_settings_general', 'culture_r2_account_id', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_access_key_id', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_secret_access_key', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_bucket_name', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_public_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+
 
         // Advertising.
         register_setting( 'culture_settings_moderation', 'culture_community_blocklist', array(
@@ -986,6 +993,50 @@ class Culture_Settings {
                            value="<?php echo esc_attr( self::get( 'culture_google_client_id_android' ) ); ?>" class="large-text"
                            placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
                     <p class="description"><?php esc_html_e( 'Used by the mobile app on Android via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Cloudflare R2 Storage', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Credentials for the shared media bucket. Mobile app uploads (community post images, avatars, cover photos) are stored here, the same bucket used by the web app.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_r2_account_id"><?php esc_html_e( 'Account ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_r2_account_id" name="culture_r2_account_id"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_account_id' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Must match the R2_ACCOUNT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_access_key_id"><?php esc_html_e( 'Access Key ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_r2_access_key_id" name="culture_r2_access_key_id"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_access_key_id' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_secret_access_key"><?php esc_html_e( 'Secret Access Key', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_r2_secret_access_key" name="culture_r2_secret_access_key"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_secret_access_key' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_bucket_name"><?php esc_html_e( 'Bucket Name', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_r2_bucket_name" name="culture_r2_bucket_name"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_bucket_name' ) ); ?>" class="regular-text" placeholder="moveee-media" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_public_url"><?php esc_html_e( 'Public URL', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="url" id="culture_r2_public_url" name="culture_r2_public_url"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_public_url' ) ); ?>" class="large-text" placeholder="https://media.themoveee.com" />
+                    <p class="description"><?php esc_html_e( 'Public base URL the bucket is served from. Must match R2_PUBLIC_URL on Vercel.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

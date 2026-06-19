@@ -1069,11 +1069,29 @@ class Culture_Mobile_API {
 
     /**
      * Mobile community image upload — accepts a multipart `file` field,
-     * stores it as a WP attachment, and returns its URL for use as
-     * `image_url` on /community/submit. Mirrors web's
-     * /api/community/upload-image (without the WebP re-compression step).
+     * stores it in Cloudflare R2 (same bucket the web app uses), and
+     * returns its URL for use as `image_url` on /community/submit.
      */
     public static function handle_upload_image( $request ) {
+        $user_id = get_current_user_id();
+        $url     = self::upload_to_r2_from_request( $request, 'community/' . $user_id );
+
+        if ( is_wp_error( $url ) ) {
+            return $url;
+        }
+
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    /**
+     * Shared helper: validate the multipart `file` field on a REST request
+     * and upload it to Cloudflare R2 under the given key prefix.
+     *
+     * @param WP_REST_Request $request    Incoming request.
+     * @param string          $key_prefix Object key prefix, e.g. "community/123".
+     * @return string|WP_Error Public R2 URL, or WP_Error.
+     */
+    private static function upload_to_r2_from_request( $request, $key_prefix ) {
         $files = $request->get_file_params();
         $file  = $files['file'] ?? null;
 
@@ -1089,23 +1107,27 @@ class Culture_Mobile_API {
             return new WP_Error( 'too_large', __( 'Image must be under 8 MB.', 'culture-community' ), array( 'status' => 400 ) );
         }
 
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-
-        // media_handle_upload() reads from $_FILES — the REST request's file
-        // params are sourced from there, so this is already populated.
-        $_FILES['file']['name'] = 'community-' . time() . '-' . sanitize_file_name( $file['name'] );
-
-        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
-
-        if ( is_wp_error( $attachment_id ) ) {
-            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        $body = file_get_contents( $file['tmp_name'] );
+        if ( false === $body ) {
+            return new WP_Error( 'read_failed', __( 'Could not read uploaded file.', 'culture-community' ), array( 'status' => 500 ) );
         }
 
-        return rest_ensure_response( array(
-            'url' => wp_get_attachment_url( $attachment_id ),
-        ) );
+        $ext_map = array(
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        );
+        $ext = $ext_map[ $file['type'] ] ?? 'jpg';
+        $key = trailingslashit( $key_prefix ) . time() . '.' . $ext;
+
+        $url = Culture_R2::upload( $key, $body, $file['type'] );
+
+        if ( is_wp_error( $url ) ) {
+            return new WP_Error( 'upload_failed', $url->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        return $url;
     }
 
     public static function handle_submit_post( $request ) {
@@ -2783,33 +2805,12 @@ class Culture_Mobile_API {
 
     public static function handle_upload_avatar( $request ) {
         $user_id = get_current_user_id();
-        $files   = $request->get_file_params();
-        $file    = $files['file'] ?? null;
+        $url     = self::upload_to_r2_from_request( $request, 'avatars/' . $user_id );
 
-        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
-            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        if ( is_wp_error( $url ) ) {
+            return $url;
         }
 
-        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
-            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
-        }
-
-        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
-            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
-        }
-
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-
-        $_FILES['file']['name'] = 'avatar-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
-        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
-
-        if ( is_wp_error( $attachment_id ) ) {
-            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
-        }
-
-        $url = wp_get_attachment_url( $attachment_id );
         update_user_meta( $user_id, '_culture_avatar_url', $url );
 
         return rest_ensure_response( array( 'url' => $url ) );
@@ -2829,33 +2830,12 @@ class Culture_Mobile_API {
 
     public static function handle_upload_cover_photo( $request ) {
         $user_id = get_current_user_id();
-        $files   = $request->get_file_params();
-        $file    = $files['file'] ?? null;
+        $url     = self::upload_to_r2_from_request( $request, 'covers/' . $user_id );
 
-        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
-            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        if ( is_wp_error( $url ) ) {
+            return $url;
         }
 
-        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
-            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
-        }
-
-        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
-            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
-        }
-
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-
-        $_FILES['file']['name'] = 'cover-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
-        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
-
-        if ( is_wp_error( $attachment_id ) ) {
-            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
-        }
-
-        $url = wp_get_attachment_url( $attachment_id );
         update_user_meta( $user_id, '_culture_cover_photo_url', $url );
 
         return rest_ensure_response( array( 'url' => $url ) );
