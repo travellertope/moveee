@@ -1803,6 +1803,47 @@ Common mistake: `api.get(url, { auth: false })` — the object is truthy so it i
 ### useNotificationCount hook
 Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
 
+**Gotcha (fixed June 2026): mobile must call the JWT mobile endpoint, not the web proxy.**
+`useNotificationCount.ts` previously called `https://themoveee.com/api/notifications/count` —
+the Next.js web proxy route, which authenticates via `getServerSession()` (NextAuth cookie). The
+mobile app has no NextAuth session, only a JWT bearer token, so that route's `session?.user` was
+always null and it silently returned `{ unread: 0 }` — the bell badge (in `ConnectFeedScreen.tsx`'s
+header) and the Connect tab's red dot (`navigation/index.tsx` `MainTabs`) both read from this same
+hook, so both were permanently dark regardless of actual unread count. Fixed: the hook now calls
+`${MOBILE_API}/notifications/count` directly (the pre-existing mobile JWT endpoint,
+`handle_notification_count()` in `class-culture-mobile-api.php`) via `api.get()`, which attaches
+the Bearer token automatically. **Any future mobile hook that proxies through
+`https://themoveee.com/api/...` should first check whether a same-shaped `/mobile/...` JWT endpoint
+already exists** — most of the wallet/perks/passkey endpoints genuinely need the web proxy (they
+require `CULTURE_API_SECRET`, per the "Key gotchas" section above), but notifications already had
+a working mobile-native route that was simply never wired up.
+
+### Notification tap routing (smart deep-links, June 2026)
+Tapping a notification in `NotificationsScreen.tsx` now navigates somewhere relevant instead of
+just marking it read. `openNotification(item, nav)` switches on `item.type` and reads fields off
+`item.meta` (the JSON blob set by whichever PHP call site fired the notification — see
+`Culture_Notifications::add()` call sites for the authoritative field names per type):
+- `mention` / `comment_received` / `new_follower_post` → `meta.post_id` → fetches the actual post
+  via `GET /mobile/community/post?post_id=X` (new endpoint, returns `{ item: FeedItem }`) then
+  navigates to `PostDetail` with the fetched item. **`PostDetail` requires a full `FeedItem` object,
+  not just an id** — there was previously no way to deep-link to an arbitrary post by id alone, only
+  via the unified feed list. The new endpoint reuses the exact same per-post field mapping as the
+  unified feed (extracted into `format_community_feed_item()`, called by both
+  `get_community_feed_items()` and the new `handle_get_community_post()`) so the post renders
+  identically regardless of entry point.
+- `new_follower` → `meta.follower_id` → `MemberProfile` with that `userId`.
+- `badge_unlocked` → own `MemberDashboard` (badges shown there).
+- `credit_earned` / `cashout_approved` / `cashout_rejected` / `escrow_released` / `post_validated`
+  → `Wallet`.
+- `perk_redeemed` / `perk_expiring` → `Coupons`.
+- `referral_received` → `Referral`. `event_rsvp` → `MyEvents`. `system` → no-op (not actionable).
+- The pressed row shows a small spinner in place of its emoji while the post-fetch case is in
+  flight (`navigatingId` state) — the other cases navigate synchronously so this is rarely visible
+  outside the fetch-based branch.
+- `MyEvents` was missing from `AppParamList` in `useNav.ts` despite already being a registered
+  `ConnectStack` screen — added it. If `nav.navigate()` to an existing screen throws a type error,
+  check `useNav.ts`'s `AppParamList` before assuming the screen isn't registered.
+
 ### ConnectFeedScreen category chip matching (substring + alias, June 2026)
 `matchesCategory()` in `ConnectFeedScreen.tsx` no longer requires an exact string match between
 a filter chip (e.g. "Food") and the backend taxonomy term name (e.g. "Food & Drink" from
