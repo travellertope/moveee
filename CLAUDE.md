@@ -1818,6 +1818,18 @@ already exists** — most of the wallet/perks/passkey endpoints genuinely need t
 require `CULTURE_API_SECRET`, per the "Key gotchas" section above), but notifications already had
 a working mobile-native route that was simply never wired up.
 
+**Same bug class recurred (fixed June 2026) in `NewPostScreen.tsx`'s `uploadImages()`** — it POSTed
+to `${PROXY}/mobile/community/upload-image` (`PROXY = "https://themoveee.com/api"`, the Next.js web
+proxy), but no such route exists there; the real endpoint is
+`POST culture/v1/mobile/community/upload-image` on WordPress, reachable via `MOBILE_API`. Every
+image attached to a community post silently failed to upload ("Image upload failed" alert on every
+submit). Fixed by switching to `${MOBILE_API}/community/upload-image`; the now-unused `PROXY`
+constant was deleted from the file (the Event template's own past use of `PROXY` was already
+rerouted to `community/submit` earlier, so nothing else referenced it). **Lesson reinforced: before
+introducing or fixing any mobile API call to `https://themoveee.com/api/...`, grep
+`class-culture-mobile-api.php` for a matching `/mobile/...` route first** — this is now the second
+time a mobile screen called the web proxy for an endpoint that already had a native JWT route.
+
 ### Notification tap routing (smart deep-links, June 2026)
 Tapping a notification in `NotificationsScreen.tsx` now navigates somewhere relevant instead of
 just marking it read. `openNotification(item, nav)` switches on `item.type` and reads fields off
