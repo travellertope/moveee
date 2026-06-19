@@ -1020,7 +1020,7 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
         )}
         {item.communityTag ? (
           <View style={styles.tagChip}>
-            <Text style={styles.tagChipText}>{item.communityTag}</Text>
+            <Text style={styles.tagChipText} numberOfLines={1}>{item.communityTag}</Text>
           </View>
         ) : null}
       </View>

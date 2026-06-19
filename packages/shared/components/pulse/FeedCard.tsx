@@ -534,6 +534,7 @@ export default function FeedCard({
                     border: "none",
                     cursor: onTagClick ? "pointer" : "default",
                     flexShrink: 0,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {item.communityTag}
