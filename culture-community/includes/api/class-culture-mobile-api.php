@@ -2770,7 +2770,7 @@ class Culture_Mobile_API {
         $base_currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
         $base_symbol   = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $base_currency ) ) : '£';
 
-        if ( 'nigeria' === $country ) {
+        if ( 'nigeria' === $country && 'NGN' !== $base_currency ) {
             $rate = (float) get_option( 'culture_shop_fx_ngn_per_gbp', 1900 );
             return array( 'code' => 'NGN', 'symbol' => '₦', 'rate' => $rate > 0 ? $rate : 1900.0 );
         }

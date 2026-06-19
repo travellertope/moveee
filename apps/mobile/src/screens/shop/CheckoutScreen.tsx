@@ -8,17 +8,21 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { WebView } from "react-native-webview";
 import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
-import { openInApp } from "../../utils/openInApp";
 import { api, MOBILE_API } from "../../api/client";
+
+// WooCommerce/gateway redirect paths that signal payment completion
+const PAYMENT_DONE_PATTERNS = ["order-received", "checkout/thank-you", "checkout/success"];
 
 interface ShippingRate {
   id: string;
@@ -87,6 +91,7 @@ export default function CheckoutScreen() {
 
   const [paying, setPaying] = useState(false);
   const [payReference, setPayReference] = useState<string | null>(null);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -124,28 +129,36 @@ export default function CheckoutScreen() {
     }
   };
 
+  const checkOrderOnce = async (reference: string) => {
+    try {
+      const order = await api.get<OrderStatusResponse>(
+        `${MOBILE_API}/checkout/order-by-reference/${reference}`,
+      );
+      if (order.status && order.status !== "pending") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        clearCart();
+        nav.navigate("OrderConfirmation", {
+          orderId: `#${order.id}`,
+          total: `${totals?.display.currencySymbol ?? "£"}${totals?.display.total ?? ""}`,
+          itemCount: items.reduce((sum, i) => sum + i.qty, 0),
+        });
+        return true;
+      }
+    } catch {
+      // keep polling — order may not exist yet if webhook is delayed
+    }
+    return false;
+  };
+
   const startPolling = (reference: string) => {
     setPayReference(reference);
+    setPayUrl(null);
     setStep("paying");
     let attempts = 0;
     pollRef.current = setInterval(async () => {
       attempts += 1;
-      try {
-        const order = await api.get<OrderStatusResponse>(
-          `${MOBILE_API}/checkout/order-by-reference/${reference}`,
-        );
-        if (order.status && order.status !== "pending") {
-          if (pollRef.current) clearInterval(pollRef.current);
-          clearCart();
-          nav.navigate("OrderConfirmation", {
-            orderId: `#${order.id}`,
-            total: `${totals?.display.currencySymbol ?? "£"}${totals?.display.total ?? ""}`,
-            itemCount: items.reduce((sum, i) => sum + i.qty, 0),
-          });
-        }
-      } catch {
-        // keep polling — order may not exist yet if webhook is delayed
-      }
+      const done = await checkOrderOnce(reference);
+      if (done) return;
       if (attempts >= 40) {
         // ~2 minutes at 3s intervals
         if (pollRef.current) clearInterval(pollRef.current);
@@ -169,13 +182,26 @@ export default function CheckoutScreen() {
         email,
         phone,
       });
-      await openInApp(res.url);
-      startPolling(res.reference);
+      setPayUrl(res.url);
+      setPayReference(res.reference);
     } catch (e: any) {
       Alert.alert("Payment failed to start", e?.message || "Please try again.");
     } finally {
       setPaying(false);
     }
+  };
+
+  const handleWebViewNavChange = (navState: { url: string }) => {
+    const url = navState.url || "";
+    if (PAYMENT_DONE_PATTERNS.some((p) => url.includes(p)) && payReference) {
+      setPayUrl(null);
+      startPolling(payReference);
+    }
+  };
+
+  const handleCloseWebView = () => {
+    setPayUrl(null);
+    if (payReference) checkOrderOnce(payReference);
   };
 
   if (items.length === 0) {
@@ -322,6 +348,30 @@ export default function CheckoutScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
+
+      <Modal visible={!!payUrl} animationType="slide" onRequestClose={handleCloseWebView}>
+        <SafeAreaView style={[s.safe, { backgroundColor: c.paper }]}>
+          <View style={s.header}>
+            <TouchableOpacity onPress={handleCloseWebView} style={s.headerBtn}>
+              <Ionicons name="close" size={24} color={c.ink} />
+            </TouchableOpacity>
+            <Text style={s.headerTitle}>Secure payment</Text>
+            <View style={s.headerBtn} />
+          </View>
+          {payUrl ? (
+            <WebView
+              source={{ uri: payUrl }}
+              onNavigationStateChange={handleWebViewNavChange}
+              startInLoadingState
+              renderLoading={() => (
+                <View style={s.center}>
+                  <ActivityIndicator size="large" color={c.gold} />
+                </View>
+              )}
+            />
+          ) : null}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
