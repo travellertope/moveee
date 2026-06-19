@@ -914,6 +914,21 @@ carousel component, mirroring the existing `HappeningCard` pattern); tapping a
 `onOpenCommunity` callback → the screen's existing `sheetItem`/`PostDetailSheet`).
 "See all →" routes to the existing Events tab/screen, not a new one.
 
+### Event-type cards fully removed from the inline feed (replaced, not duplicated)
+The Spotlight carousel is the **exclusive** surface for event-type items in the
+Connect feed — `isEventItem()` (exported from both scoring utilities) is used to
+filter every "happening" and community "event"-template item out of the regular
+feed list (`PulseFeed.tsx`'s `filtered` memo on web, `ConnectFeedScreen.tsx`'s
+`visibleItems` memo on mobile), regardless of whether that item actually qualifies
+for/appears in the carousel. Because of this, the qualifying bar inside
+`getSpotlightEvents()` was deliberately loosened to `>= 1` of {image, venue,
+price} (down from `>= 2`) so that nearly every event is still discoverable
+somewhere rather than disappearing — an event missing all three fields entirely
+is rare and likely incomplete/spam. On mobile, the spotlight ref computation
+reads from the raw `items` array (not the already-filtered `visibleItems`), since
+the event items it needs have been stripped out of `visibleItems` by this exact
+filter.
+
 ## Event system enhancements
 
 ### Organiser field

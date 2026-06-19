@@ -34,7 +34,7 @@ import { api, MOBILE_API } from "../../api/client";
 import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import EventSpotlightCarousel from "../../components/community/EventSpotlightCarousel";
-import { getSpotlightEvents } from "../../features/community/eventSpotlight";
+import { getSpotlightEvents, isEventItem } from "../../features/community/eventSpotlight";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
@@ -204,6 +204,9 @@ export default function ConnectFeedScreen() {
       ? items.filter((i) => matchesCategory(i, activeCategory))
       : items;
 
+    // Event-type items are surfaced exclusively through the Spotlight carousel below.
+    filtered = filtered.filter((i) => !isEventItem(i));
+
     if (activeRegion !== "All") {
       filtered = filtered.filter(
         (i) => !(i as any).region || (i as any).region === activeRegion
@@ -221,9 +224,10 @@ export default function ConnectFeedScreen() {
 
   // Spotlight carousel: computed once (locked via ref) on initial load so pagination
   // never re-inserts/reorders it — avoids re-render loops from a reactive recompute.
+  // Sourced from `items` (not visibleItems) since event-type items are filtered out above.
   const spotlightLockRef = useRef<FeedItem[] | null>(null);
-  if (spotlightLockRef.current === null && visibleItems.length > 0) {
-    spotlightLockRef.current = getSpotlightEvents(visibleItems);
+  if (spotlightLockRef.current === null && items.length > 0) {
+    spotlightLockRef.current = getSpotlightEvents(items);
   }
   const spotlightEvents = spotlightLockRef.current ?? [];
 

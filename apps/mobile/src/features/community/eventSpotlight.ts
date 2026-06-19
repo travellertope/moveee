@@ -1,18 +1,18 @@
 import type { FeedItem } from "../../types";
 
-function isEventItem(item: FeedItem): boolean {
+export function isEventItem(item: FeedItem): boolean {
   if (item.type === "happening") return true;
   if (item.type === "community" && item.templateType === "event") return true;
   return false;
 }
 
-/** Hide events missing 2+ of {image, venue/location, price/admission}. */
+/** Hide only events with none of {image, venue/location, price/admission} — nearly all real events qualify. */
 function isQualifying(item: FeedItem): boolean {
   const hasImage = Boolean(item.image);
   const hasVenue = Boolean(item.venueAddress || item.location);
   const hasPrice = Boolean(item.admission);
   const present = [hasImage, hasVenue, hasPrice].filter(Boolean).length;
-  return present >= 2;
+  return present >= 1;
 }
 
 function completenessScore(item: FeedItem): number {
@@ -43,6 +43,10 @@ function eventDateOf(item: FeedItem): string {
  * when fewer than 2 qualifying events exist. Falls back to soonest-upcoming-first
  * sort when none of the scoring inputs (isFeatured/rsvpCount/organiserDirectoryId)
  * are present on any candidate.
+ *
+ * All event-type items are now exclusively surfaced through this module — the
+ * inline feed filters them out via isEventItem() regardless of spotlight
+ * qualification, so the qualifying bar here is intentionally low (>=1 field).
  */
 export function getSpotlightEvents(items: FeedItem[], limit = 10): FeedItem[] {
   const candidates = items.filter(isEventItem).filter(isQualifying);
