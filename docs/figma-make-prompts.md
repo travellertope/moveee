@@ -2799,6 +2799,156 @@ Entry type badge on HERO uses the colour table defined above.
 
 ---
 
+### PROMPT 11C — "Discover" Tab + Feed Reference Chips (Directory removed from inline feed)
+
+```
+Senior mobile UX/UI designer — Moveee Connect, Discover surface. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0,
+mute #7A6F5C, success #2D6A4F. DM Sans + Fraunces + JetBrains Mono.
+
+CONTEXT FOR THE DESIGNER: Directory entries (Person, Place, Food, Book, Film, Genre, Movement,
+Artwork, Concept, Fashion, TV Series — see Prompt 11B) are evergreen knowledge-graph content.
+They do not belong inline in the Connect Feed, because the feed is a reverse-chronological "what's
+new" timeline and a static reference entry has no honest "new" moment except the day it was added.
+This prompt makes three changes:
+  1. A new "Discover" entry point — a dedicated browsable/filterable home for all Directory
+     content, replacing inline feed exposure as the primary way to find it.
+  2. Directory entries are removed from the general inline feed pool entirely, EXCEPT on the
+     calendar day they were added — shown then with an explicit "🆕 New to Discover" badge instead
+     of a normal age-based timestamp, so the "new" framing stays honest.
+  3. When a community post references a Directory entry (`linkedDirectoryId` already exists on
+     FeedItem), show a small reference chip on that post instead of a separate standalone card —
+     contextual exposure, not a floating unrelated card.
+
+This is a pre-launch IA change — there is no existing "Discover" entry point to preserve
+compatibility with. Use a header icon, not a 6th bottom tab (the app already uses 5: Connect,
+Magazine, Games, Events, Me) — adding a tab would require a broader nav redesign out of scope here.
+
+⚠️ DEV ANNOTATION REQUIREMENT — IMPORTANT FOR HANDOFF:
+Add inline HTML/JSX comments at the points below using <!-- DEV: <note> --> (HTML) or
+{/* DEV: <note> */} (JSX), placed directly above the relevant component — not bundled at the
+top of the file.
+
+  1. Above the Discover entry-point icon in the feed header:
+     "DEV: New nav entry point, no existing route. Add as a stack screen reachable from a header
+     icon (compass/sparkle), not a bottom tab — bottom nav stays at 5 tabs. Existing
+     MemberDirectoryScreen (app users) is unrelated — do not confuse with this Discover screen,
+     which browses culture_directory CPT content, not member profiles."
+  2. Above the Discover grid's data fetch:
+     "DEV: Fetch from the existing class-culture-directory.php search/list endpoint, same one
+     DirectoryGrid.tsx (web) already uses. No new backend endpoint needed for browse/search;
+     region + type filters map to existing _entry_city and entry-type taxonomy/post params."
+  3. Above the filter chips (type + region):
+     "DEV: Entry types = the 11 from Prompt 11B (person/place/food/book/film/genre/movement/
+     artwork/concept/fashion/tv-series). Region filter should query distinct _entry_city values —
+     there is no separate region/country taxonomy today, so this may need a lightweight new param
+     on the search endpoint (city contains / country grouping) — flag to backend if not present."
+  4. Above the feed's filtering logic that excludes Directory items:
+     "DEV: Remove type==='directory' from the general unified feed pool in unified-feed.ts, EXCEPT
+     where dateAdded === today — gate that exception on the post's publish date, not a separate
+     flag (none exists yet)."
+  5. Above the reference chip on community post cards:
+     "DEV: Renders only when FeedItem.linkedDirectoryId is present (field already exists — see
+     SubmitPost.tsx DirectorySearch integration). Tapping routes to the existing Directory Entry
+     Detail page (Prompt 11B), passing linkedDirectoryId's slug — no new API call needed beyond
+     what that detail page already fetches by slug."
+  6. Above the "New to Discover" badge variant:
+     "DEV: Badge replaces the normal '· 3h ago' timestamp element only when the post's publish
+     date is the current calendar day — compare dates client-side, no new field required."
+
+---
+
+FRAME 1 — DISCOVER ENTRY POINT (feed header icon, annotated inset):
+Small inset crop of the existing Connect Feed header (Prompt 3): show a 🧭 compass icon, 24px ink,
+added to the right side of the header, left of the notification bell, 12px gap. Label below the
+crop: "New: Discover icon — opens the Discover tab stack" DM Sans 11px mute italic.
+
+---
+
+FRAME 2 — DISCOVER HOME (browse + search):
+HEADER (64px, white bg, shadow-card bottom): back chevron + "Discover" Fraunces 20px bold ink
+  centred + 🔍 search icon right, 16px inset.
+
+SEARCH BAR (appears on tapping the search icon — shown active in this frame, 48px, white bg,
+  ghost bottom border, 16px horizontal padding): 🔍 icon + "Search people, places, books, films…"
+  DM Sans 14px ghost placeholder.
+
+FILTER ROW (44px, horizontal scroll, white bg, ghost bottom border, 16px padding, 8px gap):
+  "All Types ▼" ghost pill + "All Regions ▼" ghost pill + active example: "🍽 Food ✕" ochre fill
+  white text pill (radius-full, 32px height, DM Sans 13px bold) — opens the filter sheet (Frame 4)
+  on tap.
+
+RECENTLY ADDED RAIL (16px top, horizontal scroll, 16px left padding, 12px gap):
+  "Recently Added to Discover" DM Sans 12px bold mute uppercase, 16px padding bottom 8px.
+  3 compact cards (140px wide, white fill, radius-lg, shadow-card, no image — text-forward,
+  consistent with the "evergreen reference, not a photo wall" principle):
+    Type emoji + type label (colour per Prompt 11B's badge table) DM Sans 10px bold uppercase.
+    Title DM Sans 13px bold ink, 2 lines. City DM Sans 11px mute, 4px top.
+    "🆕 Added today" JetBrains Mono 9px ochre, 6px top (only on the newest card; the other two
+    show "Added 2d ago" / "Added 4d ago" in ghost mute instead).
+
+BROWSE GRID (2 columns, 12px gap, 16px horizontal padding, 16px top):
+  ENTRY CARD (white fill, radius-lg, shadow-card, 12px padding, no image at grid scale):
+    Top: type emoji + type label, colour-coded per Prompt 11B's badge system, DM Sans 10px bold
+      uppercase.
+    Title: DM Sans 14px bold ink, 2 lines.
+    City: "📍 Lagos, Nigeria" DM Sans 11px mute, 4px top.
+    Bottom row (8px top, ghost top border, 6px top padding): star rating "★★★★☆ 4.2" JetBrains
+      Mono 10px gold (if reviews exist) left + interest tag chip (1 only, ghost border, 9px) right.
+
+  Show 8 cards spanning a mix of types: Fela Kuti (Person) · New Afrika Shrine (Place) · Jollof
+  Rice (Food) · Things Fall Apart (Book) · Afrobeat (Genre) · Ankara Print (Fashion) · Half of a
+  Yellow Sun (Film) · Ori Olokun (Artwork).
+
+  "1,204 entries" JetBrains Mono 10px mute, centred, 16px top margin below the grid.
+
+---
+
+FRAME 3 — FEED TREATMENTS (component states, isolated):
+
+STATE A — "New to Discover" inline card (rare, same-day-added Directory entries only):
+  Same compact card style as the Recently Added rail above, but full-width in the feed context
+  (white fill, radius-xl, shadow-card, 16px margin): type badge + title + city + excerpt 2 lines +
+  "🆕 New to Discover" JetBrains Mono 10px bold ochre badge where a timestamp would normally sit +
+  "Explore →" DM Sans 12px bold ochre link, bottom-right.
+
+STATE B — Reference chip on a community post (most common path):
+  Take Card 2 from Prompt 3 (Community — Hidden Gem) and add, directly below the content text and
+  above the image grid: a single reference chip (ghost border, radius-full, 6px ver 10px hor
+  padding, inline-flex, max-content width): type emoji + "Peckham Vinyl Exchange" DM Sans 12px bold
+  ink + small chevron 12px ghost. Tapping routes to that entry's Detail page (Prompt 11B).
+  Label this state: "Reference chip — renders only when linkedDirectoryId is present."
+
+---
+
+FRAME 4 — DISCOVER FILTER SHEET (bottom sheet):
+SCRIM: ink @ 40%. SHEET (white bg, radius-2xl top corners, ~60% screen height, shadow-card):
+  Drag handle 36×4px ghost pill, centred, 8px top.
+  "Filter Discover" Fraunces 18px bold ink + "Reset" ochre DM Sans 13px right, 16px padding.
+
+  SECTION — TYPE (16px padding, 12px bottom): "Type" DM Sans 12px bold mute uppercase, 10px
+    bottom. Chip grid (wrap, 8px gap, colour accent dot per chip matching Prompt 11B's badge
+    table): Person · Place · Food · Book · Film · Genre · Movement · Artwork · Concept · Fashion ·
+    TV Series — ghost border inactive, ink fill white text active.
+
+  SECTION — REGION (16px padding, ghost top border, 12px bottom): "Region" DM Sans 12px bold
+    mute uppercase, 10px bottom. Search input (44px, ghost border) "Search city or country" +
+    quick chips below: "Nigeria" (selected) · "Ghana" · "UK" · "USA" · "Pan-African" — same chip
+    style.
+
+  SECTION — SORT (16px padding, ghost top border): "Sort by" DM Sans 12px bold mute uppercase,
+    10px bottom. 3 chips: "Most Relevant" (selected) · "Recently Added" · "Highest Rated".
+
+  FOOTER (sticky, white bg, shadow-card top, 16px padding): "Show 142 entries" primary ochre
+    button, full width, radius-full, 52px height, DM Sans 15px bold white.
+
+---
+
+Output 4 frames: Entry Point inset, Discover Home, Feed Treatments, Filter Sheet.
+```
+
+---
+
 ## 12. NOTIFICATIONS & ANALYTICS
 
 ---
