@@ -8,24 +8,28 @@ import { api, CULTURE_API } from "../../api/client";
 const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
-interface DirectoryEntry {
+export interface DirectoryEntry {
   id: number;
   title: string;
   type: string;
   city?: string;
+  author?: string;
 }
 
 interface Props {
   onSelect: (entry: DirectoryEntry) => void;
   selected?: DirectoryEntry | null;
   label?: string;
-  /** Optional slug to pass as ?type= to the backend search endpoint */
+  /** Optional slug to pass as ?type= to the backend search endpoint, and as
+   * entry_type when quick-creating a new entry (defaults to "place"). */
   typeFilter?: string;
+  /** Show an Author field instead of City on the quick-create form (books). */
+  showAuthorField?: boolean;
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 
-export default function DirectorySearch({ onSelect, selected, label, typeFilter }: Props) {
+export default function DirectorySearch({ onSelect, selected, label, typeFilter, showAuthorField }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +39,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCity, setNewCity] = useState("");
+  const [newAuthor, setNewAuthor] = useState("");
 
   const search = useCallback((q: string) => {
     clearTimeout(debounceTimer);
@@ -77,13 +82,15 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter 
     try {
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: newName.trim(),
-        entry_type: "place",
-        city: newCity.trim() || undefined,
+        entry_type: typeFilter || "place",
+        city: showAuthorField ? undefined : newCity.trim() || undefined,
+        author: showAuthorField ? newAuthor.trim() || undefined : undefined,
       });
       onSelect(entry);
       setCreating(false);
       setNewName("");
       setNewCity("");
+      setNewAuthor("");
     } catch {
       // silent
     } finally {
@@ -96,7 +103,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter 
       <View style={styles.selectedRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.selectedName}>{selected.title}</Text>
-          {selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
+          {selected.author ? <Text style={styles.selectedCity}>{selected.author}</Text> : selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
         </View>
         <TouchableOpacity onPress={() => onSelect(null as any)} style={styles.clearBtn}>
           <Ionicons name="close" size={16} color={colors.mute} />
@@ -113,17 +120,27 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter 
           style={styles.input}
           value={newName}
           onChangeText={setNewName}
-          placeholder="Place name *"
+          placeholder={showAuthorField ? "Book title *" : "Place name *"}
           placeholderTextColor={colors.ghost}
           autoFocus
         />
-        <TextInput
-          style={styles.input}
-          value={newCity}
-          onChangeText={setNewCity}
-          placeholder="City (optional)"
-          placeholderTextColor={colors.ghost}
-        />
+        {showAuthorField ? (
+          <TextInput
+            style={styles.input}
+            value={newAuthor}
+            onChangeText={setNewAuthor}
+            placeholder="Author (optional)"
+            placeholderTextColor={colors.ghost}
+          />
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={newCity}
+            onChangeText={setNewCity}
+            placeholder="City (optional)"
+            placeholderTextColor={colors.ghost}
+          />
+        )}
         <View style={styles.createBtns}>
           <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={!newName.trim() || loading}>
             {loading ? <ActivityIndicator color={colors.paper} size="small" /> : <Text style={styles.createBtnText}>Add</Text>}
@@ -165,7 +182,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter 
               {results.slice(0, 8).map((r) => (
                 <TouchableOpacity key={r.id} style={styles.resultRow} onPress={() => handleSelect(r)}>
                   <Text style={styles.resultTitle}>{r.title}</Text>
-                  {r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
+                  {r.author ? <Text style={styles.resultCity}>{r.author}</Text> : r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
                 </TouchableOpacity>
               ))}
               <TouchableOpacity style={styles.addNewRow} onPress={() => setCreating(true)}>

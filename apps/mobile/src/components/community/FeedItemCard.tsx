@@ -79,6 +79,10 @@ function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): str
 function stripHtmlTags(html?: string | null): string | undefined {
   if (!html) return undefined;
   const text = html
+    // Turn block-level breaks into paragraph breaks before the generic tag
+    // strip below discards them — otherwise multi-paragraph excerpts collapse
+    // into one continuous line.
+    .replace(/<\/p>|<br\s*\/?>/gi, "\n\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -87,7 +91,9 @@ function stripHtmlTags(html?: string | null): string | undefined {
     .replace(/&#8220;|&ldquo;/g, "“")
     .replace(/&#8221;|&rdquo;/g, "”")
     .replace(/&#\d+;/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
   return text || undefined;
 }
@@ -1014,7 +1020,7 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
         )}
         {item.communityTag ? (
           <View style={styles.tagChip}>
-            <Text style={styles.tagChipText}>{item.communityTag}</Text>
+            <Text style={styles.tagChipText} numberOfLines={1}>{item.communityTag}</Text>
           </View>
         ) : null}
       </View>
@@ -1708,7 +1714,12 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
         ) : null}
 
         {/* Recommend + genres */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginTop: 8 }}
+          contentContainerStyle={{ flexDirection: "row", gap: 6 }}
+        >
           {item.bookRecommend != null ? (
             <BadgePill
               label={item.bookRecommend ? "👍 Recommend" : "👎 Not for everyone"}
@@ -1720,7 +1731,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           {(item.bookGenres ?? []).slice(0, 3).map((g) => (
             <BadgePill key={g} label={g} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
           ))}
-        </View>
+        </ScrollView>
       </View>
       <FeedReactionBar item={item} marginTop={10} />
     </TouchableOpacity>

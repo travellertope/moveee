@@ -276,6 +276,9 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
   styles: ReturnType<typeof createStyles>; c: ColorPalette;
 }) {
   const colW = (SCREEN_W - 32 - 8) / 2;
+  if (items.length === 0 && !isOwnProfile) {
+    return <Text style={styles.emptyTabText}>No portfolio items yet.</Text>;
+  }
   return (
     <View style={styles.portfolioGrid}>
       {items.map((item, i) => {
@@ -327,14 +330,20 @@ export default function MemberProfileScreen() {
 
   useEffect(() => {
     const uid = params.userId;
-    if (!uid) { setLoading(false); return; }
-    api.get<PublicProfile>(`${MOBILE_API}/member/${uid}`)
+    const username = params.username;
+    const url = uid
+      ? `${MOBILE_API}/member/${uid}`
+      : username
+      ? `${MOBILE_API}/member/by-username/${encodeURIComponent(username)}`
+      : null;
+    if (!url) { setLoading(false); return; }
+    api.get<PublicProfile>(url)
       .then((p) => {
         setProfile(p);
         setIsFollowing(!!p.isFollowing);
         setFollowersCount(p.followersCount ?? 0);
       }).catch(() => {}).finally(() => setLoading(false));
-  }, [params.userId]);
+  }, [params.userId, params.username]);
 
   useEffect(() => {
     if (!profile) return;
@@ -543,7 +552,7 @@ export default function MemberProfileScreen() {
                 {posts.length === 0 && <Text style={styles.emptyTabText}>No posts yet.</Text>}
               </>
             ) : (
-              <PortfolioGrid items={portfolio} isOwnProfile={false} styles={styles} c={c} />
+              <PortfolioGrid items={portfolio} isOwnProfile={isSelf} styles={styles} c={c} />
             )}
           </View>
         </View>

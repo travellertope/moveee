@@ -383,6 +383,24 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Username-based lookup — used by surfaces that only have a username
+        // on hand (e.g. @mention taps, quote poster attribution), not a numeric
+        // user ID. Registered as a separate route (not a fallback on the route
+        // above) since the \d+ pattern on /mobile/member/(?P<id>\d+) means a
+        // non-numeric segment simply won't match that route at all.
+        register_rest_route( 'culture/v1', '/mobile/member/by-username/(?P<username>[a-zA-Z0-9_\-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_member_by_username' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'username' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_user',
+                ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/members', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_members' ),
@@ -1142,7 +1160,7 @@ class Culture_Mobile_API {
         }
 
         if ( $image ) {
-            update_post_meta( $post_id, '_community_image_url', $image );
+            update_post_meta( $post_id, 'community_image_url', $image );
         }
 
         if ( $tag ) {
@@ -1720,6 +1738,22 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
         }
 
+        return rest_ensure_response( self::build_member_profile_response( $user ) );
+    }
+
+    public static function handle_get_member_by_username( $request ) {
+        $username = (string) $request->get_param( 'username' );
+        $user     = get_user_by( 'login', $username );
+
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( self::build_member_profile_response( $user ) );
+    }
+
+    private static function build_member_profile_response( WP_User $user ): array {
+        $user_id = $user->ID;
         $profile = self::public_profile( $user );
         $profile['followersCount'] = Culture_Follows::followers_count( $user_id );
         $profile['followingCount'] = Culture_Follows::following_count( $user_id );
@@ -1727,7 +1761,7 @@ class Culture_Mobile_API {
         $viewer_id = get_current_user_id();
         $profile['isFollowing'] = $viewer_id ? Culture_Follows::is_following( $viewer_id, $user_id ) : false;
 
-        return rest_ensure_response( $profile );
+        return $profile;
     }
 
     public static function handle_follow_member( $request ) {
@@ -1802,8 +1836,10 @@ class Culture_Mobile_API {
         $location   = $request->get_param( 'location' );
         $per_page   = min( (int) ( $request->get_param( 'per_page' ) ?: 100 ), 200 );
 
-        $meta_query = array(
-            'relation' => 'AND',
+        // Directory browse (no search term) is gated to opted-in members only.
+        // @mention / user search (search term present) must be able to find any
+        // community member, not just those who opted into the public directory.
+        $meta_query = $search ? array() : array(
             array(
                 'key'     => '_culture_directory_opt_in',
                 'value'   => '1',
@@ -2338,7 +2374,7 @@ class Culture_Mobile_API {
                 'title'                   => $body_text ?: get_the_title( $post ),
                 'slug'                    => $post->post_name,
                 'date'                    => $post->post_date_gmt,
-                'image'                   => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+                'image'                   => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
                 'href'                    => '/community/' . $post->post_name,
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
                 'communityAuthor'         => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
@@ -2719,7 +2755,7 @@ class Culture_Mobile_API {
         return array(
             'id'           => (string) $post->ID,
             'content'      => wp_strip_all_tags( $post->post_content ),
-            'imageUrl'     => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+            'imageUrl'     => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
             'publishedAt'  => get_date_from_gmt( $post->post_date_gmt, 'c' ),
             'likeCount'    => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
             'commentCount' => (int) get_comments_number( $post->ID ),
@@ -3186,7 +3222,6 @@ class Culture_Mobile_API {
 
     public static function handle_points_config( $request ) {
         $point_values  = Culture_Gamification::get_point_values();
-        $credit_bonuses = Culture_Gamification::CREDIT_BONUSES;
         $daily_cap     = Culture_Gamification::get_daily_cap();
 
         $action_labels = array(
@@ -3214,7 +3249,7 @@ class Culture_Mobile_API {
         $actions = array();
         foreach ( $action_labels as $key => $label ) {
             $rep     = isset( $point_values[ $key ] ) ? (int) $point_values[ $key ] : 0;
-            $credits = isset( $credit_bonuses[ $key ] ) ? (int) $credit_bonuses[ $key ] : 0;
+            $credits = Culture_Gamification::get_credit_bonus( $key );
             if ( $rep === 0 && $credits === 0 ) continue;
             $actions[] = array(
                 'action'  => $key,
@@ -3691,6 +3726,7 @@ class Culture_Mobile_API {
         // Look up the configured credit amount for magazine_read (default 1).
         $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
         $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
+        Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'magazine_read' ), 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );

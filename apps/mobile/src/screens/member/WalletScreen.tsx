@@ -166,7 +166,7 @@ export default function WalletScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [tab, setTab] = useState<WalletTab>("history");
-  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation"; intro?: string }>({ visible: false, tab: "credits" });
+  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [creditsPerGbp, setCreditsPerGbp] = useState(200);
@@ -273,10 +273,7 @@ export default function WalletScreen() {
 
         <View style={styles.balanceHero}>
           <TouchableOpacity
-            onPress={() => setRewardsSheet({
-              visible: true, tab: "credits",
-              intro: "Culture Points (Credits) are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks, or cash out to real money (Connect Pro only, 40% fee). Daily cap: 50 credits.",
-            })}
+            onPress={() => setRewardsSheet({ visible: true, tab: "credits" })}
             style={styles.eyebrowBtn}
             activeOpacity={0.7}
           >
@@ -288,10 +285,7 @@ export default function WalletScreen() {
           </Text>
           <View style={styles.statsRow}>
             <TouchableOpacity
-              onPress={() => setRewardsSheet({
-                visible: true, tab: "reputation",
-                intro: "Points are your permanent standing in the Moveee community — they never decrease. Quality contributions (posts, comments, directory entries) earn points. Higher tiers unlock exclusive privileges and perks.",
-              })}
+              onPress={() => setRewardsSheet({ visible: true, tab: "reputation" })}
               activeOpacity={0.7}
             >
               <Text style={styles.statText}>{user?.reputation ?? 0} PTS ⓘ</Text>
@@ -476,7 +470,6 @@ export default function WalletScreen() {
       <RewardsInfoSheet
         visible={rewardsSheet.visible}
         initialTab={rewardsSheet.tab}
-        intro={rewardsSheet.intro}
         onClose={() => setRewardsSheet({ visible: false, tab: "credits" })}
       />
     </SafeAreaView>

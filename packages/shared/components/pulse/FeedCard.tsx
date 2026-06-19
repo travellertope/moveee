@@ -534,6 +534,7 @@ export default function FeedCard({
                     border: "none",
                     cursor: onTagClick ? "pointer" : "default",
                     flexShrink: 0,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {item.communityTag}
@@ -892,7 +893,7 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}
@@ -999,7 +1000,7 @@ export default function FeedCard({
             {item.title}
           </h3>
           {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
               {displayText}
             </p>
           )}
@@ -1062,7 +1063,7 @@ export default function FeedCard({
               {item.title}
             </h3>
             {displayText && (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {displayText}
               </p>
             )}
@@ -1169,7 +1170,7 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}

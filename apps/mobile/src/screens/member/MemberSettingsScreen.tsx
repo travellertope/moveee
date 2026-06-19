@@ -207,7 +207,10 @@ function ProfileTab() {
     });
     if (result.canceled || !result.assets?.[0]) return;
     try {
-      await api.upload(`${PROXY}/mobile/me/avatar`, result.assets[0].uri, "avatar");
+      const uri = result.assets[0].uri;
+      const fileName = uri.split("/").pop() ?? "avatar.jpg";
+      const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
+      await api.upload(`${PROXY}/mobile/me/avatar`, uri, fileName, fileType);
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload photo.");
@@ -223,7 +226,10 @@ function ProfileTab() {
     });
     if (result.canceled || !result.assets?.[0]) return;
     try {
-      await api.upload(`${MOBILE_API}/me/cover-photo`, result.assets[0].uri, "file");
+      const uri = result.assets[0].uri;
+      const fileName = uri.split("/").pop() ?? "cover.jpg";
+      const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
+      await api.upload(`${MOBILE_API}/me/cover-photo`, uri, fileName, fileType);
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload cover photo.");

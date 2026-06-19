@@ -306,36 +306,38 @@ class Culture_Gamification {
     /**
      * Default reputation values per action. These replace the old points system
      * — reputation is permanent and never spent.
+     *
+     * Every action awards both reputation and credits (no action is rep-only or
+     * credit-only) so the rewards breakdown never shows a dash in either column.
      */
-    // Reputation is earned only from quality/community signals (Option B).
-    // Passive/low-effort actions (read, share, like, game, poll) give 0 rep —
-    // they still earn credits. This makes tier progression meaningful.
     const POINTS = array(
         'event_rsvp'             => 5,
         'event_checkin'          => 20,
         'magazine_comment'       => 5,
         'newsletter_comment'     => 10,
-        'newsletter_reaction'    => 0,   // passive — credits only
+        'newsletter_reaction'    => 1,
         'referral'               => 30,
         'quote_submission'       => 10,
-        'quote_like'             => 0,   // passive — credits only
-        'magazine_read'          => 0,   // passive — credits only
-        'magazine_share'         => 0,   // passive — credits only
+        'quote_like'             => 1,
+        'magazine_read'          => 1,
+        'magazine_share'         => 2,
         'community_comment'      => 8,
-        'community_like'         => 0,   // passive — credits only
+        'community_like'         => 1,
         'directory_entry'        => 20,
-        'game_completed'         => 0,   // passive — credits only
+        'game_completed'         => 1,
         'community_post'         => 10,
         'profile_completed'      => 15,
         'email_verified'         => 5,
         'directory_opt_in'       => 10,
         'newsletter_subscribed'  => 5,
-        'poll_vote'              => 0,   // passive — credits only
+        'poll_vote'              => 1,
     );
 
     /**
      * Small credit bonuses for non-post actions.
      * Post credits are earned only via validation threshold (see check_post_threshold).
+     *
+     * Every action awards both reputation and credits (see POINTS above).
      */
     const CREDIT_BONUSES = array(
         'event_rsvp'            => 1,
@@ -343,9 +345,13 @@ class Culture_Gamification {
         'referral'              => 5,
         'magazine_comment'      => 2,
         'newsletter_comment'    => 1,
+        'newsletter_reaction'   => 1,
         'quote_submission'      => 1,
+        'quote_like'            => 1,
         'magazine_read'         => 1,
         'magazine_share'        => 2,
+        'community_comment'     => 2,
+        'community_like'        => 1,
         'directory_entry'       => 3,
         'game_completed'        => 1,
         'community_post'        => 2,
@@ -353,6 +359,7 @@ class Culture_Gamification {
         'email_verified'        => 2,
         'directory_opt_in'      => 2,
         'newsletter_subscribed' => 2,
+        'poll_vote'             => 1,
     );
 
     const DAILY_CREDIT_CAP = 50;
@@ -451,11 +458,11 @@ class Culture_Gamification {
     public static function get_point_values() {
         $values = array();
         foreach ( self::POINTS as $action => $default ) {
-            if ( class_exists( 'Culture_Settings' ) ) {
-                $values[ $action ] = Culture_Settings::get_points( $action );
-            } else {
-                $values[ $action ] = $default;
-            }
+            // Delegate to get_point_value() so this reads the same live,
+            // admin-configurable value (with proper fallback) that actually
+            // gets awarded at runtime via award_points() — keeps the rewards
+            // breakdown table in sync with what members really earn.
+            $values[ $action ] = self::get_point_value( $action );
         }
         return $values;
     }

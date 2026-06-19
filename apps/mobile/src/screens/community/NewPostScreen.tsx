@@ -9,7 +9,7 @@ import { useNav } from "../../hooks/useNav";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { detectRegion } from "../../features/community/useFeedRecommendations";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -106,6 +106,38 @@ const TEMPLATES: TemplateMeta[] = [
 
 const SECTION_TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
+// Keyword lists for content-based section detection — mirrors
+// packages/shared/components/pulse/SubmitPost.tsx's TAG_KEYWORDS exactly;
+// keep both in sync per the project's web/mobile duplication convention.
+const SECTION_TAG_KEYWORDS: [string, string[]][] = [
+  ["Music",      ["music","song","album","artist","band","concert","gig","playlist","track","rapper","singer","lyrics","afrobeats","jazz","hip hop","r&b"]],
+  ["Film",       ["film","movie","cinema","watched","director","actor","actress","series","episode","netflix","streaming","documentary","tv show"]],
+  ["Literature", ["book","reading","novel","author","poetry","poem","writer","chapter","fiction","nonfiction","memoir","literature"]],
+  ["Food",       ["food","eating","restaurant","dish","meal","cuisine","recipe","chef","cooking","taste","cafe","brunch","dinner","lunch"]],
+  ["Travel",     ["travel","trip","city","country","visited","explore","destination","hotel","flight","vacation","holiday","abroad"]],
+  ["Art",        ["art","painting","gallery","exhibition","sculpture","artwork","illustration","mural","portrait","photography"]],
+  ["Fashion",    ["fashion","style","outfit","clothes","wearing","brand","designer","trend","runway","streetwear","sneakers","wardrobe"]],
+  ["Sport",      ["sport","football","basketball","tennis","match","game","player","team","league","athletics","cricket","rugby","fifa"]],
+  ["Tech",       ["tech","technology","app","software","coding","artificial intelligence","digital","startup","programming","algorithm"]],
+  ["Design",     ["design","graphic","logo","typography","interface","ux","ui","branding","visual identity","illustration"]],
+  ["Ideas",      ["idea","philosophy","society","politics","economy","future","innovation","theory","culture","mindset","movement"]],
+];
+
+function detectSectionTagFromContent(text: string): string | null {
+  let best: string | null = null;
+  let bestScore = 0;
+  const lower = text.toLowerCase();
+  for (const [tag, keywords] of SECTION_TAG_KEYWORDS) {
+    let score = 0;
+    for (const kw of keywords) {
+      let pos = lower.indexOf(kw);
+      while (pos !== -1) { score++; pos = lower.indexOf(kw, pos + 1); }
+    }
+    if (score > bestScore) { bestScore = score; best = tag; }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
 const EVENT_CATEGORIES: { id: string; label: string }[] = [
   { id: "live-music",         label: "Music" },
   { id: "visual-art",         label: "Art" },
@@ -127,7 +159,7 @@ const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
-interface DirectoryEntry { id: number; title: string; type: string; city?: string }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string; author?: string }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -236,10 +268,7 @@ export default function NewPostScreen() {
   const [showcaseCollaborator, setShowcaseCollaborator] = useState<MemberResult | null>(null);
 
   // Book Review state
-  const [bookEntry, setBookEntry] = useState<{ id: number; title: string; author: string; year?: string } | null>(null);
-  const [bookSearch, setBookSearch] = useState("");
-  const [bookSearchResults, setBookSearchResults] = useState<Array<{ id: number; title: string; author: string; year?: string }>>([]);
-  const [bookSearchOpen, setBookSearchOpen] = useState(false);
+  const [bookEntry, setBookEntry] = useState<DirectoryEntry | null>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
@@ -280,17 +309,15 @@ export default function NewPostScreen() {
   const [pickerTarget, setPickerTarget] = useState<"start" | "end">("start");
 
   const textRef = useRef<TextInput>(null);
-  const bookSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tmpl = TEMPLATES.find((t) => t.id === template)!;
   const tmplDef = TEMPLATE_DEFS.find((t) => t.id === template)!;
 
   const handleTextChange = (v: string) => {
     setText(v);
-    if (!tagLocked && v.length >= 20) {
-      const lc = v.toLowerCase();
-      const detected = SECTION_TAGS.find((t) => lc.includes(t.toLowerCase()));
-      if (detected) setSectionTag(detected);
-    }
+    if (tagLocked) return;
+    if (v.length < 20) { setSectionTag(null); return; }
+    const detected = detectSectionTagFromContent(v);
+    if (detected) setSectionTag(detected);
   };
 
   const switchTemplate = useCallback((id: TemplateId) => {
@@ -309,6 +336,13 @@ export default function NewPostScreen() {
       allowsMultipleSelection: multi,
       selectionLimit: multi ? MAX_IMAGES : 1,
       quality: 0.85,
+      // iOS Photos can store originals as HEIC; "Compatible" forces the
+      // picker to hand back a JPEG copy instead. Without this, a HEIC file
+      // gets mislabeled as image/jpeg on upload (see uploadImages()) and
+      // the server's webp conversion silently falls back to uploading the
+      // raw, unreadable HEIC bytes under a .jpg URL — image looks "attached"
+      // but never renders anywhere.
+      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
     });
     if (!result.canceled) {
       if (multi) {
@@ -338,13 +372,24 @@ export default function NewPostScreen() {
 
 const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
+    let failures = 0;
     for (const uri of images) {
       try {
         const fileName = uri.split("/").pop() ?? "photo.jpg";
         const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
         const res = await api.upload<{ url: string }>(`${PROXY}/mobile/community/upload-image`, uri, fileName, fileType);
         urls.push(res.url);
-      } catch { /* skip */ }
+      } catch {
+        failures += 1;
+      }
+    }
+    if (failures > 0) {
+      Alert.alert(
+        "Image upload failed",
+        failures === images.length
+          ? "None of your photos could be uploaded. The post will be submitted without them."
+          : `${failures} photo${failures > 1 ? "s" : ""} could not be uploaded and will be left out of the post.`
+      );
     }
     return urls;
   };
@@ -438,6 +483,7 @@ const uploadImages = async (): Promise<string[]> => {
         await api.post(`${MOBILE_API}/community/submit`, {
           template_type: "book-review",
           content: text,
+          linked_directory_id: bookEntry!.id,
           book_title: bookEntry!.title,
           book_author: bookEntry!.author,
           book_status: bookStatus,
@@ -631,7 +677,11 @@ const uploadImages = async (): Promise<string[]> => {
           <TouchableOpacity
             key={t}
             style={[styles.sectionTag, sectionTag === t && styles.sectionTagActive]}
-            onPress={() => { setSectionTag(sectionTag === t ? null : t); setTagLocked(true); }}
+            onPress={() => {
+              const next = sectionTag === t ? null : t;
+              setSectionTag(next);
+              setTagLocked(next !== null); // clearing resumes auto-detection
+            }}
           >
             <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
           </TouchableOpacity>
@@ -926,90 +976,14 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {/* Book search */}
       <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Book *</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={styles.prefixIcon}>🔍</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={bookSearch}
-            onChangeText={(v) => {
-              setBookSearch(v);
-              if (!v.trim()) {
-                setBookSearchResults([]);
-                setBookSearchOpen(false);
-                return;
-              }
-              setBookSearchOpen(true);
-              if (bookSearchTimer.current) clearTimeout(bookSearchTimer.current);
-              bookSearchTimer.current = setTimeout(async () => {
-                try {
-                  const data = await api.get<Array<{ id: number; title: string; type: string; city?: string }>>(
-                    `${CULTURE_API}/directory/search?q=${encodeURIComponent(v.trim())}`,
-                    false
-                  );
-                  setBookSearchResults((data ?? []).map((r) => ({ id: r.id, title: r.title, author: r.city ?? "" })));
-                } catch {
-                  setBookSearchResults([]);
-                }
-              }, 350);
-            }}
-            placeholder="Search by title"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-        {bookSearchOpen && (
-          <View style={styles.bookSearchDropdown}>
-            {bookSearchResults.length > 0 ? (
-              <>
-                {bookSearchResults.slice(0, 8).map((r) => (
-                  <TouchableOpacity
-                    key={r.id}
-                    style={styles.bookSearchResultRow}
-                    onPress={() => {
-                      setBookEntry(r);
-                      setBookSearch("");
-                      setBookSearchResults([]);
-                      setBookSearchOpen(false);
-                    }}
-                  >
-                    <Text style={styles.bookSearchResultTitle}>{r.title}</Text>
-                    {r.author ? <Text style={styles.bookSearchResultAuthor}>{r.author}</Text> : null}
-                  </TouchableOpacity>
-                ))}
-              </>
-            ) : null}
-            <TouchableOpacity
-              style={styles.bookSearchNoResult}
-              onPress={() => {
-                if (bookSearch.trim()) {
-                  setBookEntry({ id: Date.now(), title: bookSearch.trim(), author: "" });
-                  setBookSearch("");
-                  setBookSearchResults([]);
-                  setBookSearchOpen(false);
-                }
-              }}
-            >
-              <Text style={styles.bookSearchNoResultText}>
-                {bookSearchResults.length > 0 ? `Add "${bookSearch}" as a new entry` : `Add "${bookSearch}" as a new book`}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <DirectorySearch
+          selected={bookEntry}
+          onSelect={setBookEntry}
+          label="Book *"
+          typeFilter="book"
+          showAuthorField
+        />
       </View>
-
-      {/* Book card */}
-      {bookEntry && (
-        <View style={styles.bookCard}>
-          <View style={styles.bookCover} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bookTitle}>{bookEntry.title}</Text>
-            {bookEntry.author ? <Text style={styles.bookAuthor}>{bookEntry.author}</Text> : null}
-          </View>
-          <TouchableOpacity onPress={() => setBookEntry(null)}>
-            <Text style={{ color: c.mute, fontSize: 16 }}>✕</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Status */}
       <View style={styles.fieldGroup}>
@@ -1683,28 +1657,6 @@ function createStyles(c: ColorPalette) {
     showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
 
     // Book
-    bookCard: {
-      flexDirection: "row", alignItems: "flex-start",
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      padding: 12, gap: 12, backgroundColor: c.paper, marginTop: 8,
-    },
-    bookCover: { width: 48, height: 64, borderRadius: 2, backgroundColor: c.paperDeep },
-    bookTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
-    bookAuthor: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, marginTop: 2 },
-    bookSearchDropdown: {
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      backgroundColor: c.paper, overflow: "hidden", marginTop: 4,
-    },
-    bookSearchResultRow: {
-      paddingHorizontal: 14, paddingVertical: 10,
-      borderBottomWidth: 1, borderBottomColor: c.rule,
-    },
-    bookSearchResultTitle: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
-    bookSearchResultAuthor: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: 1 },
-    bookSearchNoResult: {
-      padding: 12, backgroundColor: c.paperDeep,
-    },
-    bookSearchNoResultText: { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
     bookRatingsContainer: {
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md, overflow: "hidden",
     },
