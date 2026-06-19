@@ -475,7 +475,7 @@ const uploadImages = async (): Promise<string[]> => {
           sharing_reason: quoteSharingReason || undefined,
           quote_type: quoteType || undefined,
         } as Record<string, unknown>);
-        nav.goBack();
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
         return;
       }
 
@@ -496,7 +496,7 @@ const uploadImages = async (): Promise<string[]> => {
           book_recommend: bookRecommend,
           book_genres: bookGenres.length > 0 ? bookGenres : undefined,
         } as Record<string, unknown>);
-        nav.goBack();
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
         return;
       }
 
@@ -569,7 +569,7 @@ const uploadImages = async (): Promise<string[]> => {
       }
 
       await api.post(`${MOBILE_API}/community/submit`, body);
-      nav.goBack();
+      nav.navigate("ConnectFeed", { justPosted: Date.now() });
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Could not submit post.");
     } finally {
