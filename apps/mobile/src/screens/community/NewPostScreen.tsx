@@ -106,6 +106,38 @@ const TEMPLATES: TemplateMeta[] = [
 
 const SECTION_TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
+// Keyword lists for content-based section detection — mirrors
+// packages/shared/components/pulse/SubmitPost.tsx's TAG_KEYWORDS exactly;
+// keep both in sync per the project's web/mobile duplication convention.
+const SECTION_TAG_KEYWORDS: [string, string[]][] = [
+  ["Music",      ["music","song","album","artist","band","concert","gig","playlist","track","rapper","singer","lyrics","afrobeats","jazz","hip hop","r&b"]],
+  ["Film",       ["film","movie","cinema","watched","director","actor","actress","series","episode","netflix","streaming","documentary","tv show"]],
+  ["Literature", ["book","reading","novel","author","poetry","poem","writer","chapter","fiction","nonfiction","memoir","literature"]],
+  ["Food",       ["food","eating","restaurant","dish","meal","cuisine","recipe","chef","cooking","taste","cafe","brunch","dinner","lunch"]],
+  ["Travel",     ["travel","trip","city","country","visited","explore","destination","hotel","flight","vacation","holiday","abroad"]],
+  ["Art",        ["art","painting","gallery","exhibition","sculpture","artwork","illustration","mural","portrait","photography"]],
+  ["Fashion",    ["fashion","style","outfit","clothes","wearing","brand","designer","trend","runway","streetwear","sneakers","wardrobe"]],
+  ["Sport",      ["sport","football","basketball","tennis","match","game","player","team","league","athletics","cricket","rugby","fifa"]],
+  ["Tech",       ["tech","technology","app","software","coding","artificial intelligence","digital","startup","programming","algorithm"]],
+  ["Design",     ["design","graphic","logo","typography","interface","ux","ui","branding","visual identity","illustration"]],
+  ["Ideas",      ["idea","philosophy","society","politics","economy","future","innovation","theory","culture","mindset","movement"]],
+];
+
+function detectSectionTagFromContent(text: string): string | null {
+  let best: string | null = null;
+  let bestScore = 0;
+  const lower = text.toLowerCase();
+  for (const [tag, keywords] of SECTION_TAG_KEYWORDS) {
+    let score = 0;
+    for (const kw of keywords) {
+      let pos = lower.indexOf(kw);
+      while (pos !== -1) { score++; pos = lower.indexOf(kw, pos + 1); }
+    }
+    if (score > bestScore) { bestScore = score; best = tag; }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
 const EVENT_CATEGORIES: { id: string; label: string }[] = [
   { id: "live-music",         label: "Music" },
   { id: "visual-art",         label: "Art" },
@@ -282,11 +314,10 @@ export default function NewPostScreen() {
 
   const handleTextChange = (v: string) => {
     setText(v);
-    if (!tagLocked && v.length >= 20) {
-      const lc = v.toLowerCase();
-      const detected = SECTION_TAGS.find((t) => lc.includes(t.toLowerCase()));
-      if (detected) setSectionTag(detected);
-    }
+    if (tagLocked) return;
+    if (v.length < 20) { setSectionTag(null); return; }
+    const detected = detectSectionTagFromContent(v);
+    if (detected) setSectionTag(detected);
   };
 
   const switchTemplate = useCallback((id: TemplateId) => {
@@ -628,7 +659,11 @@ const uploadImages = async (): Promise<string[]> => {
           <TouchableOpacity
             key={t}
             style={[styles.sectionTag, sectionTag === t && styles.sectionTagActive]}
-            onPress={() => { setSectionTag(sectionTag === t ? null : t); setTagLocked(true); }}
+            onPress={() => {
+              const next = sectionTag === t ? null : t;
+              setSectionTag(next);
+              setTagLocked(next !== null); // clearing resumes auto-detection
+            }}
           >
             <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
           </TouchableOpacity>
