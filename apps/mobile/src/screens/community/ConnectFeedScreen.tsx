@@ -31,7 +31,7 @@ import {
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
-import FeedCard from "../../components/community/FeedItemCard";
+import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
@@ -339,15 +339,18 @@ export default function ConnectFeedScreen() {
               onPress={() => nav.navigate("MemberDashboard")}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
-              {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
-              ) : (
-                <View style={[styles.avatarImg, styles.avatarFallback]}>
-                  <Text style={styles.avatarInitial}>
-                    {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <View style={[styles.avatarWrap, user?.tier === "patron" ? styles.avatarWrapPro : undefined]}>
+                {user?.tier === "patron" && <ProGlowRing color={c.gold} />}
+                {user?.avatarUrl ? (
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+                ) : (
+                  <View style={[styles.avatarImg, styles.avatarFallback]}>
+                    <Text style={styles.avatarInitial}>
+                      {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -564,6 +567,23 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   avatarBtn: {
     marginLeft: 4,
+  },
+  avatarWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: "visible",
+    position: "relative",
+  },
+  avatarWrapPro: {
+    borderWidth: 3.5,
+    borderColor: c.gold,
+    borderRadius: 17,
+    shadowColor: c.gold,
+    shadowOpacity: 0.85,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
   },
   avatarImg: {
     width: 34,

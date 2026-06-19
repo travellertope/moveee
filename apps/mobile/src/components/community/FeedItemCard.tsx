@@ -217,17 +217,6 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.sm,
       color: c.gold,
     },
-    proStar: {
-      position: "absolute" as const,
-      bottom: -2,
-      right: -2,
-      backgroundColor: c.paper,
-      borderRadius: radius.full,
-      width: 14,
-      height: 14,
-      justifyContent: "center" as const,
-      alignItems: "center" as const,
-    },
     authorMeta: { flex: 1 },
     nameRow: {
       flexDirection: "row" as const,
@@ -946,7 +935,7 @@ function ReportControl({ item }: { item: FeedItem }) {
 // in avatarWrapPro — makes the gold treatment read as "premium" without
 // switching to a different ring colour/style.
 
-function ProGlowRing({ color }: { color: string }) {
+export function ProGlowRing({ color }: { color: string }) {
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -997,11 +986,6 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           ) : (
             <View style={[styles.avatar, styles.avatarFallback]}>
               <Text style={styles.avatarInitial}>{(item.communityAuthor ?? "?")[0]?.toUpperCase()}</Text>
-            </View>
-          )}
-          {isPro && (
-            <View style={styles.proStar}>
-              <Ionicons name="checkmark-circle" size={14} color={c.gold} />
             </View>
           )}
         </View>

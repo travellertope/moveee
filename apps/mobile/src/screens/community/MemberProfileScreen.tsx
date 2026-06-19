@@ -16,6 +16,7 @@ import type { Member, FeedItem, TemplateType } from "../../types";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import { useAuthStore } from "../../auth/authStore";
+import { ProGlowRing } from "../../components/community/FeedItemCard";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -417,6 +418,7 @@ export default function MemberProfileScreen() {
           </TouchableOpacity>
 
           <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+            {isPro && <ProGlowRing color={c.gold} />}
             <View style={styles.avatarInner}>
               {profile.avatarUrl ? (
                 <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
@@ -429,7 +431,11 @@ export default function MemberProfileScreen() {
           <View style={styles.identity}>
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName}>{profile.displayName}</Text>
-              {isPro && <Ionicons name="checkmark-circle" size={18} color={c.gold} style={styles.proCheck} />}
+              {isPro && (
+                <View style={styles.proBadgePill}>
+                  <Ionicons name="ribbon" size={9} color="#fff" />
+                </View>
+              )}
             </View>
             {profile.username    ? <Text style={styles.profileHandle}>@{profile.username}</Text> : null}
             {profile.occupation  ? <Text style={styles.profileOccupation}>{profile.occupation}</Text> : null}
@@ -560,6 +566,7 @@ function createStyles(c: ColorPalette) {
     avatarRing: {
       width: 96, height: 96, borderRadius: 48, borderWidth: 3, padding: 3,
       backgroundColor: c.paper, marginTop: -48,
+      position: "relative", overflow: "visible",
     },
     avatarRingPro: {
       borderColor: c.gold,
@@ -589,7 +596,14 @@ function createStyles(c: ColorPalette) {
     identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
     profileNameRow:    { flexDirection: "row", alignItems: "center", gap: 4 },
     profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: c.ink },
-    proCheck:           { marginTop: 2 },
+    proBadgePill: {
+      backgroundColor: c.gold,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: c.mute, marginTop: 2 },
     profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, marginTop: 4, textAlign: "center" },
     profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },
