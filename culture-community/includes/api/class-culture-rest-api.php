@@ -350,6 +350,20 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Per-user, per-post reaction lookup — lets web's ReactionBar hydrate
+        // its initial state from the real server record instead of guessing
+        // "not reacted" or relying solely on localStorage. If post_id is
+        // omitted, returns the user's whole reaction map.
+        register_rest_route( 'culture/v1', '/user/reaction', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_user_reaction' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/user/referrals', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_referrals' ),
@@ -828,6 +842,21 @@ class Culture_REST_API {
             'args'                => array(
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Multi-type reaction toggle (love/fire/clap) — mirrors mobile's
+        // /mobile/community/react, same per-user/per-post/per-type semantics
+        // via Culture_Mobile_API::toggle_reaction(). Supersedes /content/like
+        // for surfaces that need to know/switch the specific reaction type.
+        register_rest_route( 'culture/v1', '/community/react', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_react' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'type'    => array( 'default' => 'love', 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
             ),
         ) );
 
@@ -3271,6 +3300,28 @@ class Culture_REST_API {
         ) );
     }
 
+    /**
+     * GET /culture/v1/user/reaction
+     * Reads from the same `_culture_post_reactions` usermeta map written by
+     * Culture_Mobile_API::toggle_reaction() (mobile + web share one map) —
+     * single source of truth for "did this user react, and with what emoji."
+     */
+    public static function handle_get_user_reaction( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        if ( $post_id > 0 ) {
+            return rest_ensure_response( array(
+                'userReaction' => isset( $reactions_map[ $post_id ] ) ? $reactions_map[ $post_id ] : null,
+            ) );
+        }
+
+        return rest_ensure_response( array( 'reactions' => $reactions_map ) );
+    }
+
     public static function handle_get_referrals( $request ) {
         global $wpdb;
         $user_id = (int) $request->get_param( 'user_id' );
@@ -3483,6 +3534,27 @@ class Culture_REST_API {
             'liked'   => ! $already_liked,
             'count'   => $new_count,
         ) );
+    }
+
+    /**
+     * POST /culture/v1/community/react
+     * Web mirror of the mobile /mobile/community/react endpoint — same
+     * per-user, per-post, per-type (love/fire/clap) toggle/switch semantics,
+     * via the shared Culture_Mobile_API::toggle_reaction() implementation.
+     * Unlike mobile's JWT auth (current user implicit), web is API-key
+     * authenticated so user_id is an explicit param.
+     */
+    public static function handle_react( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        $type    = $request->get_param( 'type' ) ?: 'love';
+
+        $result = Culture_Mobile_API::toggle_reaction( $user_id, $post_id, $type );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
     }
 
     /**

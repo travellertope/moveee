@@ -13,6 +13,12 @@ type ReactionCounts = { love: number; fire: number; clap: number };
 interface Props {
   postId: string;
   initialCounts: ReactionCounts;
+  // The user's current reaction on this post, from the feed/detail item's
+  // `userReaction` field (server-truth, `_culture_post_reactions` usermeta) —
+  // without this every ReactionBar instance defaults to "not reacted" on
+  // mount even when the user already reacted, since the API toggle endpoint
+  // only reports state changes, not the current state.
+  initialReaction?: EmojiKey | null;
   shareUrl?: string;
   shareTitle?: string;
   noBorder?: boolean;
@@ -39,13 +45,15 @@ const REACTIONS: Array<{
 ];
 
 export default function ReactionBar({
-  postId, initialCounts, shareUrl, shareTitle, noBorder, commentCount, onCommentPress, showReport,
+  postId, initialCounts, initialReaction, shareUrl, shareTitle, noBorder, commentCount, onCommentPress, showReport,
   counts: controlledCounts, reacted: controlledReacted, onReact: controlledOnReact,
 }: Props) {
   const c = useColors();
   const styles = createStyles(c);
   const [localCounts, setLocalCounts]   = useState(initialCounts);
-  const [localReacted, setLocalReacted] = useState<Set<EmojiKey>>(new Set());
+  const [localReacted, setLocalReacted] = useState<Set<EmojiKey>>(
+    () => new Set(initialReaction ? [initialReaction] : [])
+  );
   const [reportOpen, setReportOpen] = useState(false);
   const [reported, setReported] = useState(false);
 
@@ -64,23 +72,33 @@ export default function ReactionBar({
   };
 
   const uncontrolledHandleReact = async (key: EmojiKey) => {
-    const already = reacted.has(key);
-    setCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? -1 : 1) }));
-    setReacted((prev) => {
-      const next = new Set(prev);
-      already ? next.delete(key) : next.add(key);
+    const already  = reacted.has(key);
+    const prevReaction = already ? key : (Array.from(reacted)[0] ?? null);
+    const prevCounts   = counts;
+
+    // Optimistic update — only one reaction type can be active per user,
+    // matching the server's per-user/per-post toggle-or-switch semantics.
+    setCounts((prev) => {
+      const next = { ...prev };
+      if (prevReaction && prevReaction !== key) {
+        next[prevReaction] = Math.max(0, next[prevReaction] - 1);
+      }
+      next[key] = Math.max(0, next[key] + (already ? -1 : 1));
       return next;
     });
+    setReacted(new Set(already ? [] : [key]));
+
     try {
-      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(postId), type: key });
+      const res = await api.post<{ reactionType: EmojiKey | null; reactions: ReactionCounts }>(
+        `${MOBILE_API}/community/react`,
+        { post_id: Number(postId), type: key }
+      );
+      setCounts(res.reactions);
+      setReacted(new Set(res.reactionType ? [res.reactionType] : []));
     } catch {
       // revert
-      setCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? 1 : -1) }));
-      setReacted((prev) => {
-        const next = new Set(prev);
-        already ? next.add(key) : next.delete(key);
-        return next;
-      });
+      setCounts(prevCounts);
+      setReacted(new Set(prevReaction ? [prevReaction] : []));
     }
   };
 

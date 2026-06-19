@@ -123,6 +123,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
             <ReactionBar
               postId={item.wpId}
               initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+              initialReaction={item.userReaction ?? null}
               shareUrl={shareUrl}
               showReport
             />

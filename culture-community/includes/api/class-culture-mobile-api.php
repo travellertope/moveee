@@ -223,6 +223,19 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/user/reaction', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_user_reaction' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/report', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_report' ),
@@ -1038,10 +1051,12 @@ class Culture_Mobile_API {
             'order'          => 'DESC',
         ) );
 
-        $liked_ids = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
-        $posts = array_map( function( $post ) use ( $liked_ids ) {
-            return self::format_community_post( $post, $liked_ids );
+        $posts = array_map( function( $post ) use ( $liked_ids, $reactions_map ) {
+            return self::format_community_post( $post, $liked_ids, $reactions_map );
         }, $query->posts );
 
         return rest_ensure_response( $posts );
@@ -1662,53 +1677,123 @@ class Culture_Mobile_API {
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
+    const REACTION_TYPES = array( 'love', 'fire', 'clap' );
 
+    /**
+     * Toggles/switches a single user's reaction on a post. Reaction state is
+     * tracked per-user, per-post, per-type via `_culture_post_reactions`
+     * usermeta (post_id => reaction type) — this is what lets a user switch
+     * from e.g. "love" to "fire" on the same post without desyncing the
+     * per-type counters, and lets any feed/detail response tell a client
+     * "this user reacted, and with what emoji" instead of every UI surface
+     * independently guessing "not reacted" on mount.
+     *
+     * `_culture_liked_posts` (flat array of post IDs) is kept in sync purely
+     * for backward compatibility with older reads of the boolean `liked` flag.
+     */
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
-        $type    = sanitize_key( $request->get_param( 'type' ) ?: 'love' );
+        $type    = $request->get_param( 'type' ) ?: 'love';
+
+        $result = self::toggle_reaction( $user_id, $post_id, $type );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    /**
+     * Returns the current user's reaction type (or null) on a given post —
+     * used by surfaces that fetch content directly (e.g. magazine articles
+     * via slug) rather than through a feed response that already carries
+     * `userReaction`.
+     */
+    public static function handle_get_user_reaction( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        return rest_ensure_response( array(
+            'userReaction' => isset( $reactions_map[ $post_id ] ) ? $reactions_map[ $post_id ] : null,
+        ) );
+    }
+
+    /**
+     * Shared toggle/switch logic for both the mobile (JWT) and web (API-key)
+     * reaction endpoints — single source of truth, mirroring the pattern
+     * already used by Culture_Follows / Culture_Community_RSVP for surfaces
+     * with mirrored mobile+web REST routes.
+     */
+    public static function toggle_reaction( int $user_id, int $post_id, string $type ) {
+        $type = sanitize_key( $type ?: 'love' );
+        if ( ! in_array( $type, self::REACTION_TYPES, true ) ) {
+            $type = 'love';
+        }
 
         $post = get_post( $post_id );
         if ( ! $post || ! in_array( $post->post_type, self::REACTABLE_POST_TYPES, true ) ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
-        $is_community  = $post->post_type === 'culture_post';
-        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
-        $already_liked = in_array( $post_id, $liked_ids, false );
+        $is_community = $post->post_type === 'culture_post';
 
-        if ( $already_liked ) {
-            $liked_ids = array_values( array_diff( $liked_ids, array( $post_id ) ) );
-            $new_count = max( 0, (int) get_post_meta( $post_id, '_culture_like_count', true ) - 1 );
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+        $prev_type     = isset( $reactions_map[ $post_id ] ) ? $reactions_map[ $post_id ] : null;
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+
+        if ( $prev_type === $type ) {
+            // Same reaction tapped again — un-react.
+            unset( $reactions_map[ $post_id ] );
+            $liked_ids   = array_values( array_diff( $liked_ids, array( $post_id ) ) );
+            $current     = (int) get_post_meta( $post_id, 'reaction_' . $type, true );
+            update_post_meta( $post_id, 'reaction_' . $type, max( 0, $current - 1 ) );
+            $new_count   = max( 0, (int) get_post_meta( $post_id, '_culture_like_count', true ) - 1 );
+            $now_reacted = false;
+            $result_type = null;
         } else {
-            $liked_ids[] = $post_id;
-            $new_count   = (int) get_post_meta( $post_id, '_culture_like_count', true ) + 1;
-            if ( $is_community && class_exists( 'Culture_Gamification' ) ) {
-                Culture_Gamification::award_points( $user_id, 'community_like' );
+            if ( null !== $prev_type ) {
+                // Switching from one reaction type to another — only the
+                // per-type counters move, the overall like count is unchanged.
+                $old_current = (int) get_post_meta( $post_id, 'reaction_' . $prev_type, true );
+                update_post_meta( $post_id, 'reaction_' . $prev_type, max( 0, $old_current - 1 ) );
+                $new_count = (int) get_post_meta( $post_id, '_culture_like_count', true );
+            } else {
+                $liked_ids[] = $post_id;
+                $new_count   = (int) get_post_meta( $post_id, '_culture_like_count', true ) + 1;
+                if ( $is_community && class_exists( 'Culture_Gamification' ) ) {
+                    Culture_Gamification::award_points( $user_id, 'community_like' );
+                }
             }
+            $reactions_map[ $post_id ] = $type;
+            $current = (int) get_post_meta( $post_id, 'reaction_' . $type, true );
+            update_post_meta( $post_id, 'reaction_' . $type, $current + 1 );
+            $now_reacted = true;
+            $result_type = $type;
         }
 
+        update_user_meta( $user_id, '_culture_post_reactions', $reactions_map );
         update_user_meta( $user_id, '_culture_liked_posts', $liked_ids );
         update_post_meta( $post_id, '_culture_like_count', $new_count );
 
-        // Also increment the named reaction counter (love/fire/clap) used by the feed.
-        $reaction_key = in_array( $type, array( 'love', 'fire', 'clap' ), true ) ? 'reaction_' . $type : 'reaction_love';
-        if ( ! $already_liked ) {
-            $current = (int) get_post_meta( $post_id, $reaction_key, true );
-            update_post_meta( $post_id, $reaction_key, $current + 1 );
-        } else {
-            $current = (int) get_post_meta( $post_id, $reaction_key, true );
-            update_post_meta( $post_id, $reaction_key, max( 0, $current - 1 ) );
-        }
-
-        if ( $is_community && ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
+        if ( $is_community && null === $prev_type && $now_reacted && class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::check_post_threshold( $post_id );
         }
 
-        return rest_ensure_response( array(
-            'liked' => ! $already_liked,
-            'count' => $new_count,
-        ) );
+        return array(
+            'liked'        => $now_reacted,
+            'reactionType' => $result_type,
+            'count'        => $new_count,
+            'reactions'    => array(
+                'love' => (int) get_post_meta( $post_id, 'reaction_love', true ),
+                'fire' => (int) get_post_meta( $post_id, 'reaction_fire', true ),
+                'clap' => (int) get_post_meta( $post_id, 'reaction_clap', true ),
+            ),
+        );
     }
 
     public static function handle_report( $request ) {
@@ -2112,6 +2197,10 @@ class Culture_Mobile_API {
     }
 
     private static function get_pulse_feed_items(): array {
+        $user_id       = get_current_user_id();
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
         $query = new WP_Query( array(
             'post_type'      => 'pulse_story',
             'post_status'    => 'publish',
@@ -2121,9 +2210,10 @@ class Culture_Mobile_API {
             'no_found_rows'  => true,
         ) );
 
-        return array_map( function( WP_Post $post ) {
+        return array_map( function( WP_Post $post ) use ( $reactions_map ) {
             $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
             $cat_terms = get_the_terms( $post->ID, 'pulse_category' );
+            $user_reaction = isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null;
             return array(
                 'id'            => 'pulse-' . $post->ID,
                 'type'          => 'pulse',
@@ -2148,6 +2238,8 @@ class Culture_Mobile_API {
                     'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
                     'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
                 ),
+                'liked'         => null !== $user_reaction,
+                'userReaction'  => $user_reaction,
                 'wpId'          => (string) $post->ID,
             );
         }, $query->posts );
@@ -2295,6 +2387,10 @@ class Culture_Mobile_API {
     }
 
     private static function get_quote_feed_items(): array {
+        $user_id       = get_current_user_id();
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
         $query = new WP_Query( array(
             'post_type'      => 'culture_quote',
             'post_status'    => 'publish',
@@ -2304,10 +2400,11 @@ class Culture_Mobile_API {
             'no_found_rows'  => true,
         ) );
 
-        return array_map( function( WP_Post $post ) {
+        return array_map( function( WP_Post $post ) use ( $reactions_map ) {
             $authors     = get_the_terms( $post->ID, 'culture_quote_author' );
             $submitter_id = (int) $post->post_author;
             $submitter    = get_userdata( $submitter_id );
+            $user_reaction = isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null;
             return array(
                 'id'          => 'quote-' . $post->post_name,
                 'type'        => 'quote',
@@ -2324,13 +2421,22 @@ class Culture_Mobile_API {
                 'communityAuthorUsername' => $submitter ? $submitter->user_login : '',
                 'communityAuthorAvatar'   => get_user_meta( $submitter_id, '_culture_avatar_url', true ) ?: '',
                 'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
+                'reactions'          => array(
+                    'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
+                    'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
+                    'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
+                ),
+                'liked'              => null !== $user_reaction,
+                'userReaction'       => $user_reaction,
             );
         }, $query->posts );
     }
 
     private static function get_community_feed_items(): array {
-        $user_id   = get_current_user_id();
-        $liked_ids = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $user_id       = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
         $query = new WP_Query( array(
             'post_type'      => 'culture_post',
@@ -2359,8 +2465,8 @@ class Culture_Mobile_API {
             }
         }
 
-        return array_map( function( WP_Post $post ) use ( $liked_ids, $organiser_map ) {
-            return self::format_community_feed_item( $post, $liked_ids, $organiser_map );
+        return array_map( function( WP_Post $post ) use ( $liked_ids, $reactions_map, $organiser_map ) {
+            return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
         }, $query->posts );
     }
 
@@ -2377,8 +2483,10 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Post not found', array( 'status' => 404 ) );
         }
 
-        $user_id   = get_current_user_id();
-        $liked_ids = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $user_id       = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
         $organiser_map = array();
         $organiser_id  = (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true );
@@ -2389,10 +2497,10 @@ class Culture_Mobile_API {
             }
         }
 
-        return rest_ensure_response( array( 'item' => self::format_community_feed_item( $post, $liked_ids, $organiser_map ) ) );
+        return rest_ensure_response( array( 'item' => self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map ) ) );
     }
 
-    private static function format_community_feed_item( WP_Post $post, array $liked_ids, array $organiser_map ): array {
+    private static function format_community_feed_item( WP_Post $post, array $liked_ids, array $reactions_map, array $organiser_map ): array {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
             $raw         = wpautop( $post->post_content );
@@ -2442,6 +2550,7 @@ class Culture_Mobile_API {
                     'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
                 ),
                 'liked'                   => in_array( $post->ID, $liked_ids, false ),
+                'userReaction'            => isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null,
                 'wpId'                    => (string) $post->ID,
                 // Template fields — all card variants
                 'templateType'            => $template,
@@ -2769,8 +2878,10 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
         }
 
-        $viewer_id = get_current_user_id();
-        $liked_ids = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $viewer_id     = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
         $query = new WP_Query( array(
             'post_type'      => 'culture_post',
@@ -2782,8 +2893,8 @@ class Culture_Mobile_API {
             'order'          => 'DESC',
         ) );
 
-        $posts = array_map( function( $post ) use ( $liked_ids ) {
-            return self::format_community_post( $post, $liked_ids );
+        $posts = array_map( function( $post ) use ( $liked_ids, $reactions_map ) {
+            return self::format_community_post( $post, $liked_ids, $reactions_map );
         }, $query->posts );
 
         return rest_ensure_response( array(
@@ -2792,10 +2903,11 @@ class Culture_Mobile_API {
         ) );
     }
 
-    private static function format_community_post( WP_Post $post, array $liked_ids ): array {
+    private static function format_community_post( WP_Post $post, array $liked_ids, array $reactions_map = array() ): array {
         $author_id   = (int) $post->post_author;
         $author      = get_userdata( $author_id );
         $author_tier = get_user_meta( $author_id, '_culture_membership_tier', true ) ?: 'citizen';
+        $user_reaction = isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null;
 
         return array(
             'id'           => (string) $post->ID,
@@ -2805,6 +2917,12 @@ class Culture_Mobile_API {
             'likeCount'    => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
             'commentCount' => (int) get_comments_number( $post->ID ),
             'liked'        => in_array( $post->ID, $liked_ids, false ),
+            'userReaction' => $user_reaction,
+            'reactions'    => array(
+                'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
+                'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
+                'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
+            ),
             'status'       => $post->post_status,
             'author'       => array(
                 'id'        => (string) $author_id,

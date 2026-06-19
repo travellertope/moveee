@@ -1081,6 +1081,7 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
       <ReactionBar
         postId={item.wpId}
         initialCounts={item.reactions}
+        initialReaction={item.userReaction ?? null}
         shareUrl={shareUrlFor(item)}
         shareTitle={item.title || item.communityAuthor ? `${item.communityAuthor ?? "Someone"}'s post on Moveee` : undefined}
         showReport
@@ -1852,7 +1853,7 @@ function QuoteCard({ item }: FeedCardProps) {
   const user = useAuthStore((s) => s.user);
   const [modalOpen, setModalOpen] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  const [loved, setLoved] = useState(false);
+  const [loved, setLoved] = useState(item.userReaction === "love");
   const [loveCount, setLoveCount] = useState(item.reactions?.love ?? 0);
 
   useEffect(() => {
@@ -1868,13 +1869,20 @@ function QuoteCard({ item }: FeedCardProps) {
   const handleLove = async () => {
     if (!item.wpId) return;
     const next = !loved;
+    const prevLoved = loved;
+    const prevCount = loveCount;
     setLoved(next);
     setLoveCount((prev) => prev + (next ? 1 : -1));
     try {
-      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(item.wpId), type: "love" });
+      const res = await api.post<{ reactionType: "love" | "fire" | "clap" | null; reactions: { love: number; fire: number; clap: number } }>(
+        `${MOBILE_API}/community/react`,
+        { post_id: Number(item.wpId), type: "love" }
+      );
+      setLoved(res.reactionType === "love");
+      setLoveCount(res.reactions.love);
     } catch {
-      setLoved(!next);
-      setLoveCount((prev) => prev + (next ? -1 : 1));
+      setLoved(prevLoved);
+      setLoveCount(prevCount);
     }
   };
 
