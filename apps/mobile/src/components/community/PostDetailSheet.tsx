@@ -314,6 +314,7 @@ function TemplatePost({ item, c, styles, onMentionPress }: { item: FeedItem; c: 
 }
 
 function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
   const images = item.galleryImages ?? [];
   return (
     <>
@@ -326,10 +327,13 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
       ) : null}
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
       {item.linkedDirectoryId ? (
-        <View style={styles.directoryChip}>
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
           <Ionicons name="grid-outline" size={12} color={c.gold} />
           <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </View>
+        </TouchableOpacity>
       ) : null}
       {(item.priceRange || item.openingHours) ? (
         <View style={[styles.locationRow, { marginBottom: 8 }]}>
@@ -368,6 +372,7 @@ function TemplateCulturalTake({ item, c, styles }: { item: FeedItem; c: ColorPal
 }
 
 function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
   const taste = item.foodRatingTaste ?? 0;
   const value = item.foodRatingValue ?? 0;
   const vibe = item.foodRatingVibe ?? 0;
@@ -378,10 +383,13 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
     <>
       <Text style={styles.serifTitle}>{item.foodDishName ?? item.title}</Text>
       {item.linkedDirectoryId ? (
-        <View style={styles.locationRow}>
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
           <Ionicons name="grid-outline" size={12} color={c.gold} />
           <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </View>
+        </TouchableOpacity>
       ) : null}
       <View style={styles.foodMeta}>
         {item.locationName ? (
@@ -554,6 +562,7 @@ function TemplateItinerary({ item, c, styles }: { item: FeedItem; c: ColorPalett
 }
 
 function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
   return (
     <>
       <Text style={[styles.serifTitle, { fontSize: 22 }]}>{item.title}</Text>
@@ -596,7 +605,21 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
         {item.organiserName ? (
           <View style={styles.eventMetaRow}>
             <Text style={styles.eventMetaIcon}>👤</Text>
-            <Text style={styles.organiserLink}>{item.organiserName}</Text>
+            {item.organiserDirectoryId || item.organiserSlug ? (
+              <TouchableOpacity
+                onPress={() =>
+                  nav.navigate("DirectoryDetail", {
+                    id: item.organiserDirectoryId,
+                    slug: item.organiserSlug,
+                    title: item.organiserName,
+                  })
+                }
+              >
+                <Text style={styles.organiserLink}>{item.organiserName}</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.organiserLink}>{item.organiserName}</Text>
+            )}
           </View>
         ) : null}
       </View>
