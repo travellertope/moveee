@@ -1836,8 +1836,10 @@ class Culture_Mobile_API {
         $location   = $request->get_param( 'location' );
         $per_page   = min( (int) ( $request->get_param( 'per_page' ) ?: 100 ), 200 );
 
-        $meta_query = array(
-            'relation' => 'AND',
+        // Directory browse (no search term) is gated to opted-in members only.
+        // @mention / user search (search term present) must be able to find any
+        // community member, not just those who opted into the public directory.
+        $meta_query = $search ? array() : array(
             array(
                 'key'     => '_culture_directory_opt_in',
                 'value'   => '1',
