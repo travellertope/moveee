@@ -99,6 +99,7 @@ export default function TheEditScreen() {
       title: item.title,
       brand: item.brand,
       price: item.price,
+      currencySymbol: item.currencySymbol,
       image: item.image,
     });
   };
@@ -254,11 +255,11 @@ export default function TheEditScreen() {
                   <View style={styles.pickPriceRow}>
                     <View>
                       {item.originalPrice && (
-                        <Text style={styles.pickStrike}>£{item.originalPrice}</Text>
+                        <Text style={styles.pickStrike}>{item.currencySymbol ?? "£"}{item.originalPrice}</Text>
                       )}
-                      <Text style={styles.pickPrice}>£{item.price}</Text>
+                      <Text style={styles.pickPrice}>{item.currencySymbol ?? "£"}{item.price}</Text>
                       {item.proPrice && isPatron && (
-                        <Text style={styles.pickProPrice}>£{item.proPrice} Pro</Text>
+                        <Text style={styles.pickProPrice}>{item.currencySymbol ?? "£"}{item.proPrice} Pro</Text>
                       )}
                     </View>
                     <TouchableOpacity
@@ -345,9 +346,9 @@ export default function TheEditScreen() {
                   </Text>
                   <View style={styles.gridPriceRow}>
                     <View>
-                      <Text style={styles.gridPrice}>£{item.price}</Text>
+                      <Text style={styles.gridPrice}>{item.currencySymbol ?? "£"}{item.price}</Text>
                       {item.proPrice && isPatron && (
-                        <Text style={styles.gridProPrice}>£{item.proPrice} Pro</Text>
+                        <Text style={styles.gridProPrice}>{item.currencySymbol ?? "£"}{item.proPrice} Pro</Text>
                       )}
                     </View>
                     <TouchableOpacity

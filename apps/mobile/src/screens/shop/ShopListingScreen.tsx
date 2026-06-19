@@ -302,6 +302,7 @@ export default function ShopListingScreen() {
       title: product.name,
       brand: product.makerName,
       price: parseFloat(product.price) || 0,
+      currencySymbol: product.currencySymbol,
       image: product.imageUrl ?? undefined,
     });
     nav.navigate("Cart");

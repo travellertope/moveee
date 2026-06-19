@@ -34,6 +34,7 @@ export default function CartScreen() {
   const [editing, setEditing]           = useState(false);
 
   const isPatron    = user?.tier === "patron";
+  const currencySymbol = items[0]?.currencySymbol ?? "£";
   const subtotal    = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const proDiscount = isPatron ? subtotal * PRO_DISCOUNT_RATE : 0;
   const total       = subtotal - proDiscount - couponDiscount;
@@ -168,7 +169,7 @@ export default function CartScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-            <Text style={styles.itemPrice}>£{(item.price * item.qty).toFixed(2)}</Text>
+            <Text style={styles.itemPrice}>{item.currencySymbol ?? "£"}{(item.price * item.qty).toFixed(2)}</Text>
           </View>
         ))}
 
@@ -208,7 +209,7 @@ export default function CartScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal ({totalQty} items)</Text>
-            <Text style={styles.summaryValue}>£{subtotal.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>{currencySymbol}{subtotal.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery</Text>
@@ -217,7 +218,7 @@ export default function CartScreen() {
           {isPatron && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Pro member discount</Text>
-              <Text style={[styles.summaryValue, { color: c.gold }]}>–£{proDiscount.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: c.gold }]}>–{currencySymbol}{proDiscount.toFixed(2)}</Text>
             </View>
           )}
           {appliedVoucher ? (
@@ -229,7 +230,7 @@ export default function CartScreen() {
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Estimated total</Text>
-            <Text style={styles.totalValue}>£{total.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>{currencySymbol}{total.toFixed(2)}</Text>
           </View>
           <Text style={styles.taxNote}>Taxes included</Text>
         </View>
@@ -241,7 +242,7 @@ export default function CartScreen() {
             onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
           >
             <Text style={styles.proStripText}>
-              ★ Pro members save £{(subtotal * PRO_DISCOUNT_RATE).toFixed(2)} on this order
+              ★ Pro members save {currencySymbol}{(subtotal * PRO_DISCOUNT_RATE).toFixed(2)} on this order
             </Text>
             <Text style={styles.proStripCta}>UPGRADE →</Text>
           </TouchableOpacity>

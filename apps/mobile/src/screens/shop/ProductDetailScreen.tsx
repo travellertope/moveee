@@ -725,6 +725,7 @@ export default function ProductDetailScreen() {
       variant,
       variationId: selectedVariation?.id,
       price:       parseFloat(displayPrice ?? product.price) || 0,
+      currencySymbol: product.currencySymbol,
       image:       (detail?.images?.[0] ?? product.imageUrl) ?? undefined,
     });
     nav.navigate("Cart");
