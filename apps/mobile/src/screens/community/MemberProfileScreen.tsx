@@ -130,11 +130,12 @@ interface PortfolioItem {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function toSocialUrl(platform: "instagram" | "linkedin" | "website", value: string): string {
+function toSocialUrl(platform: "instagram" | "linkedin" | "website" | "twitter", value: string): string {
   const v = value.trim();
   if (/^https?:\/\//i.test(v)) return v;
   if (platform === "instagram") return `https://instagram.com/${v.replace(/^@/, "")}`;
   if (platform === "linkedin") return `https://linkedin.com/${v.replace(/^\//, "")}`;
+  if (platform === "twitter") return `https://twitter.com/${v.replace(/^@/, "")}`;
   return `https://${v}`;
 }
 
@@ -400,7 +401,7 @@ export default function MemberProfileScreen() {
       ? { slug: b, name: meta.name, emoji: meta.emoji, description: meta.description }
       : { slug: b, name: badgeTitleCase(b), emoji: "🏅", description: "" };
   });
-  const hasSocial = !!(profile.instagram || profile.linkedin || profile.website);
+  const hasSocial = !!(profile.instagram || profile.linkedin || profile.website || profile.twitter);
   const rep       = profile.reputation ?? 0;
 
   return (
@@ -503,6 +504,11 @@ export default function MemberProfileScreen() {
               {profile.website && (
                 <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("website", profile.website!))}>
                   <Ionicons name="globe-outline" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.twitter && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("twitter", profile.twitter!))}>
+                  <Ionicons name="logo-twitter" size={18} color={c.ghost} />
                 </TouchableOpacity>
               )}
             </View>

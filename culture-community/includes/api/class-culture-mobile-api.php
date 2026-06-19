@@ -929,6 +929,7 @@ class Culture_Mobile_API {
             'occupation'             => '_culture_occupation',
             'avatar_url'             => '_culture_avatar_url',
             'directory_instagram'    => '_culture_directory_instagram',
+            'directory_twitter'      => '_culture_directory_twitter',
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
         );
@@ -1865,6 +1866,7 @@ class Culture_Mobile_API {
                 'bio'                => get_user_meta( $user->ID, '_culture_directory_bio',        true ) ?: '',
                 'disciplines'        => $disciplines,
                 'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram',  true ) ?: '',
+                'twitter'            => get_user_meta( $user->ID, '_culture_directory_twitter',    true ) ?: '',
                 'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin',   true ) ?: '',
                 'website'            => get_user_meta( $user->ID, '_culture_directory_website',    true ) ?: '',
             );
@@ -2015,6 +2017,7 @@ class Culture_Mobile_API {
                 return $raw ? ( json_decode( $raw, true ) ?: explode( ',', $raw ) ) : array();
             })(),
             'directoryInstagram'    => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'directoryTwitter'      => get_user_meta( $user->ID, '_culture_directory_twitter', true ) ?: '',
             'directoryLinkedIn'     => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
             'directoryWebsite'      => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
         );
@@ -2439,6 +2442,7 @@ class Culture_Mobile_API {
             'bio'                => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
             'interests'          => $interests,
             'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'twitter'            => get_user_meta( $user->ID, '_culture_directory_twitter', true ) ?: '',
             'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
             'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
             'registeredAt'       => strtotime( $user->user_registered ),

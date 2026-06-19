@@ -16,6 +16,7 @@ interface Member {
   instagram?: string;
   linkedin?: string;
   website?: string;
+  twitter?: string;
 }
 
 const DISCIPLINES = [
@@ -147,16 +148,18 @@ export default function MemberDirectory() {
 function MemberCard({ member }: { member: Member }) {
   const isPatron = member.tier === "patron";
   const location = [member.city, member.countryOfResidence].filter(Boolean).join(", ");
-  const toUrl = (platform: "instagram" | "linkedin" | "website", value: string) => {
+  const toUrl = (platform: "instagram" | "linkedin" | "website" | "twitter", value: string) => {
     if (/^https?:\/\//i.test(value)) return value;
     if (platform === "instagram") return `https://instagram.com/${value.replace(/^@/, "")}`;
     if (platform === "linkedin") return `https://linkedin.com/${value.replace(/^\//, "")}`;
+    if (platform === "twitter") return `https://twitter.com/${value.replace(/^@/, "")}`;
     return `https://${value}`;
   };
   const links = [
     member.instagram && { label: "Instagram", href: toUrl("instagram", member.instagram) },
     member.linkedin  && { label: "LinkedIn",  href: toUrl("linkedin", member.linkedin) },
     member.website   && { label: "Website",   href: toUrl("website", member.website) },
+    member.twitter   && { label: "Twitter",   href: toUrl("twitter", member.twitter) },
   ].filter(Boolean) as { label: string; href: string }[];
 
   const inner = (

@@ -43,6 +43,7 @@ export interface User {
   directoryInstagram: string;
   directoryLinkedIn: string;
   directoryWebsite: string;
+  directoryTwitter: string;
 
   // Interests
   interests: string[];
@@ -73,6 +74,7 @@ export interface Member {
   instagram: string;
   linkedin: string;
   website: string;
+  twitter: string;
   followersCount?: number;
   followingCount?: number;
   isFollowing?: boolean;

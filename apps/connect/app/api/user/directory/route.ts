@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest) {
     directory_instagram:    body.directory_instagram    ?? "",
     directory_linkedin:     body.directory_linkedin     ?? "",
     directory_website:      body.directory_website      ?? "",
+    directory_twitter:      body.directory_twitter      ?? "",
   });
 
   try {
@@ -82,9 +83,10 @@ export async function GET() {
         instagram:   data.directory_instagram ?? "",
         linkedin:    data.directory_linkedin  ?? "",
         website:     data.directory_website   ?? "",
+        twitter:     data.directory_twitter   ?? "",
       });
     }
   } catch { /* fall through to defaults */ }
 
-  return NextResponse.json({ optIn: false, bio: "", disciplines: [], instagram: "", linkedin: "", website: "" });
+  return NextResponse.json({ optIn: false, bio: "", disciplines: [], instagram: "", linkedin: "", website: "", twitter: "" });
 }

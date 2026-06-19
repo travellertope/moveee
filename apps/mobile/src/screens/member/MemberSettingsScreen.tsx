@@ -567,6 +567,7 @@ function DirectoryTab() {
   const [instagram, setInstagram]     = useState(user?.directoryInstagram ?? "");
   const [linkedin, setLinkedin]       = useState(user?.directoryLinkedIn ?? "");
   const [website, setWebsite]         = useState(user?.directoryWebsite ?? "");
+  const [twitter, setTwitter]         = useState(user?.directoryTwitter ?? "");
   const [saving, setSaving]           = useState(false);
 
   const toggleDiscipline = (d: string) => {
@@ -587,6 +588,7 @@ function DirectoryTab() {
         directory_instagram:   instagram,
         directory_linkedin:    linkedin,
         directory_website:     website,
+        directory_twitter:     twitter,
       });
       await refreshProfile();
       Alert.alert("Saved", "Directory profile updated.");
@@ -695,6 +697,24 @@ function DirectoryTab() {
               value={website}
               onChangeText={setWebsite}
               placeholder="https://yoursite.com"
+              placeholderTextColor={c.ghost}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+          </View>
+        </View>
+
+        {/* Twitter / X */}
+        <View style={{ marginBottom: 12 }}>
+          <View style={dirStyles.socialRow}>
+            <View style={dirStyles.socialPrefix}>
+              <Ionicons name="logo-twitter" size={18} color={c.mute} />
+            </View>
+            <TextInput
+              style={dirStyles.socialInput}
+              value={twitter}
+              onChangeText={setTwitter}
+              placeholder="https://x.com/yourhandle"
               placeholderTextColor={c.ghost}
               keyboardType="url"
               autoCapitalize="none"
