@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
@@ -35,7 +35,7 @@ interface Props {
 
 export default function DiscoverFilterSheet({ visible, onClose, type, region, sort, query, onApply }: Props) {
   const c = useColors();
-  const styles = createStyles(c);
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [draftType, setDraftType] = useState(type);
   const [draftRegion, setDraftRegion] = useState(region);
@@ -52,6 +52,7 @@ export default function DiscoverFilterSheet({ visible, onClose, type, region, so
 
   useEffect(() => {
     if (!visible) return;
+    let cancelled = false;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
@@ -65,12 +66,15 @@ export default function DiscoverFilterSheet({ visible, onClose, type, region, so
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        setCount(data?.total ?? 0);
+        if (!cancelled) setCount(data?.total ?? 0);
       } catch {
-        setCount(null);
+        if (!cancelled) setCount(null);
       }
     }, 350);
-    return () => clearTimeout(debounceRef.current);
+    return () => {
+      cancelled = true;
+      clearTimeout(debounceRef.current);
+    };
   }, [visible, query, draftType, draftRegion, draftSort]);
 
   return (

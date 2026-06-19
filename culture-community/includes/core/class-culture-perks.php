@@ -697,9 +697,23 @@ class Culture_Perks {
     private static function _refund_credits( $user_id, $amount, $source_id ) {
         if ( $amount <= 0 ) return;
 
-        $current   = Culture_Gamification::get_credits( $user_id );
-        $new_total = $current + $amount;
-        update_user_meta( $user_id, '_culture_credits', $new_total );
+        global $wpdb;
+
+        // Same advisory-mutex pattern as award_credits()/deduct_credits() in
+        // Culture_Gamification — without it, a refund racing a concurrent
+        // redeem/cashout for the same user can read a stale balance and
+        // clobber the other write (lost update).
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return;
+
+        try {
+            $current   = Culture_Gamification::get_credits( $user_id );
+            $new_total = $current + $amount;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+        }
 
         Culture_Gamification::ledger_add( $user_id, 'credit', $amount, 'cashout_refund', $source_id );
 

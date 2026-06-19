@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import type { ColorPalette } from "../../theme";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -56,7 +56,7 @@ interface Props {
 }
 
 export default function DiscoverCard({ entry, c, compact, onPress }: Props) {
-  const styles = createStyles(c);
+  const styles = useMemo(() => createStyles(c), [c]);
   const badge = TYPE_BADGE[entry.type] ?? DEFAULT_BADGE;
 
   return (

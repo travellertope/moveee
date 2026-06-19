@@ -108,6 +108,44 @@ class Culture_NL_Analytics {
     }
 
     /**
+     * Sign a single click-through destination URL for one subscriber+campaign.
+     *
+     * The campaign-level token (generate_token) verifies the subscriber but is
+     * not bound to any particular destination — without this, a recipient
+     * could swap the `u` query param on their own valid tracking link to any
+     * URL and the click endpoint would redirect through the trusted domain
+     * (open redirect / phishing vector). Binding the URL into the signature
+     * means tampering with `u` invalidates `s` and the redirect falls back
+     * to home.
+     *
+     * @param string $url
+     * @param int    $campaign_id
+     * @param string $email
+     * @return string
+     */
+    public static function sign_url( $url, $campaign_id, $email ) {
+        $email = strtolower( trim( $email ) );
+        return substr( hash_hmac( 'sha256', $campaign_id . ':' . $email . ':' . $url, AUTH_SALT ), 0, 32 );
+    }
+
+    /**
+     * Verify a URL signature produced by sign_url().
+     *
+     * @param string $url
+     * @param string $sig
+     * @param int    $campaign_id
+     * @param string $email
+     * @return bool
+     */
+    public static function verify_url_signature( $url, $sig, $campaign_id, $email ) {
+        if ( ! $sig ) {
+            return false;
+        }
+        $expected = self::sign_url( $url, $campaign_id, $email );
+        return hash_equals( $expected, $sig );
+    }
+
+    /**
      * Verify a token and return the subscriber email, or false on failure.
      *
      * @param string $token
@@ -156,6 +194,7 @@ class Culture_NL_Analytics {
                 'c' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
                 't' => array( 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ),
                 'u' => array( 'required' => true, 'sanitize_callback' => 'esc_url_raw' ),
+                's' => array( 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
     }
@@ -212,9 +251,16 @@ class Culture_NL_Analytics {
         $campaign_id = (int) $req->get_param( 'c' );
         $token       = $req->get_param( 't' );
         $url         = $req->get_param( 'u' );
+        $sig         = $req->get_param( 's' );
         $email       = self::verify_token( $token, $campaign_id );
 
-        if ( $email && $url ) {
+        // The campaign token only proves who the subscriber is — it isn't
+        // bound to a destination, so the URL signature is what stops a
+        // recipient from swapping `u` to redirect through our trusted
+        // domain to an arbitrary site (open redirect / phishing).
+        $url_verified = $email && $url && self::verify_url_signature( $url, $sig, $campaign_id, $email );
+
+        if ( $email && $url && $url_verified ) {
             global $wpdb;
             $wpdb->insert(
                 $wpdb->prefix . self::TABLE_CLICKS,
@@ -230,7 +276,7 @@ class Culture_NL_Analytics {
             );
         }
 
-        $destination = ( $url && wp_http_validate_url( $url ) ) ? $url : home_url( '/' );
+        $destination = ( $url_verified && wp_http_validate_url( $url ) ) ? $url : home_url( '/' );
 
         if ( ! headers_sent() ) {
             wp_redirect( $destination, 302 );
