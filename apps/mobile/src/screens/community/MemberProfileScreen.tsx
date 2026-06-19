@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, Image,
-  Modal, Share,
+  Modal, Share, Linking,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
@@ -129,6 +129,14 @@ interface PortfolioItem {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toSocialUrl(platform: "instagram" | "linkedin" | "website", value: string): string {
+  const v = value.trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  if (platform === "instagram") return `https://instagram.com/${v.replace(/^@/, "")}`;
+  if (platform === "linkedin") return `https://linkedin.com/${v.replace(/^\//, "")}`;
+  return `https://${v}`;
+}
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -482,9 +490,21 @@ export default function MemberProfileScreen() {
 
           {hasSocial && (
             <View style={styles.socialRow}>
-              {profile.instagram && <TouchableOpacity style={styles.socialBtn}><Ionicons name="logo-instagram" size={18} color={c.ghost} /></TouchableOpacity>}
-              {profile.linkedin  && <TouchableOpacity style={styles.socialBtn}><Ionicons name="logo-linkedin"  size={18} color={c.ghost} /></TouchableOpacity>}
-              {profile.website   && <TouchableOpacity style={styles.socialBtn}><Ionicons name="globe-outline"  size={18} color={c.ghost} /></TouchableOpacity>}
+              {profile.instagram && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("instagram", profile.instagram!))}>
+                  <Ionicons name="logo-instagram" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.linkedin && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("linkedin", profile.linkedin!))}>
+                  <Ionicons name="logo-linkedin" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
+              {profile.website && (
+                <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL(toSocialUrl("website", profile.website!))}>
+                  <Ionicons name="globe-outline" size={18} color={c.ghost} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -635,7 +655,7 @@ function createStyles(c: ColorPalette) {
 
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },
-    badgeRow:     { paddingHorizontal: 20, gap: 10 },
+    badgeRow:     { paddingHorizontal: 20, gap: 10, flexGrow: 1, justifyContent: "center" },
     badgeIcon: {
       width: 40, height: 40, borderRadius: 20,
       backgroundColor: c.paperDeep, borderWidth: 1, borderColor: c.ghost,

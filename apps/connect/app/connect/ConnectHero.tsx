@@ -12,7 +12,7 @@ export default function ConnectHero() {
     <section className="mco-hero">
       <div className="mco-hero-inner">
         <div className="mco-hero-text">
-          <p className="mco-eyebrow">Moveee Connect</p>
+          <p className="mco-eyebrow">Moveee</p>
           <h1 className="mco-headline">
             Where culture <em>gathers.</em>
           </h1>
@@ -21,7 +21,7 @@ export default function ConnectHero() {
           </p>
         </div>
         <div className="mco-hero-cta">
-          <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
+          <Link href="/register" className="con-btn-primary">Join Moveee →</Link>
           <Link href="/login?callbackUrl=/connect" className="con-btn-ghost">Already a member? Sign in</Link>
         </div>
       </div>

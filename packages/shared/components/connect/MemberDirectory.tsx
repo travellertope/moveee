@@ -147,10 +147,16 @@ export default function MemberDirectory() {
 function MemberCard({ member }: { member: Member }) {
   const isPatron = member.tier === "patron";
   const location = [member.city, member.countryOfResidence].filter(Boolean).join(", ");
+  const toUrl = (platform: "instagram" | "linkedin" | "website", value: string) => {
+    if (/^https?:\/\//i.test(value)) return value;
+    if (platform === "instagram") return `https://instagram.com/${value.replace(/^@/, "")}`;
+    if (platform === "linkedin") return `https://linkedin.com/${value.replace(/^\//, "")}`;
+    return `https://${value}`;
+  };
   const links = [
-    member.instagram && { label: "Instagram", href: `https://instagram.com/${member.instagram.replace(/^@/, "")}` },
-    member.linkedin  && { label: "LinkedIn",  href: member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}` },
-    member.website   && { label: "Website",   href: member.website.startsWith("http")  ? member.website  : `https://${member.website}` },
+    member.instagram && { label: "Instagram", href: toUrl("instagram", member.instagram) },
+    member.linkedin  && { label: "LinkedIn",  href: toUrl("linkedin", member.linkedin) },
+    member.website   && { label: "Website",   href: toUrl("website", member.website) },
   ].filter(Boolean) as { label: string; href: string }[];
 
   const inner = (

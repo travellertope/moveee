@@ -2241,7 +2241,9 @@ class Culture_Mobile_API {
         ) );
 
         return array_map( function( WP_Post $post ) {
-            $authors = get_the_terms( $post->ID, 'culture_quote_author' );
+            $authors     = get_the_terms( $post->ID, 'culture_quote_author' );
+            $submitter_id = (int) $post->post_author;
+            $submitter    = get_userdata( $submitter_id );
             return array(
                 'id'          => 'quote-' . $post->post_name,
                 'type'        => 'quote',
@@ -2253,7 +2255,10 @@ class Culture_Mobile_API {
                 'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
                 'quoteAuthor'        => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
                 'quoteSharingReason' => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
-                'authorName'         => get_the_author_meta( 'display_name', $post->post_author ),
+                'authorName'         => $submitter ? $submitter->display_name : '',
+                'communityAuthor'         => $submitter ? $submitter->display_name : '',
+                'communityAuthorUsername' => $submitter ? $submitter->user_login : '',
+                'communityAuthorAvatar'   => get_user_meta( $submitter_id, '_culture_avatar_url', true ) ?: '',
                 'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
             );
         }, $query->posts );

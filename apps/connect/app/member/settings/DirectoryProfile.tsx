@@ -86,7 +86,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
         <div>
           <div className="mem-field-label">Show me in the directory</div>
           <div className="mem-field-value mem-field-value--muted">
-            Your name, role, and location will be visible to all Moveee Connect members
+            Your name, role, and location will be visible to all Moveee members
           </div>
         </div>
         <button
@@ -159,9 +159,9 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
           </div>
 
           {/* Links */}
-          <LinkField label="Instagram handle" placeholder="@yourhandle" value={state.instagram} onSave={instagram => save({ instagram })} />
-          <LinkField label="LinkedIn URL" placeholder="linkedin.com/in/yourname" value={state.linkedin} onSave={linkedin => save({ linkedin })} />
-          <LinkField label="Website" placeholder="yoursite.com" value={state.website} onSave={website => save({ website })} />
+          <LinkField label="Instagram" placeholder="https://instagram.com/yourhandle" value={state.instagram} onSave={instagram => save({ instagram })} />
+          <LinkField label="LinkedIn" placeholder="https://linkedin.com/in/yourname" value={state.linkedin} onSave={linkedin => save({ linkedin })} />
+          <LinkField label="Website" placeholder="https://yoursite.com" value={state.website} onSave={website => save({ website })} />
         </>
       )}
 

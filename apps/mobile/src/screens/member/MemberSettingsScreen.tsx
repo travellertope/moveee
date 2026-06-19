@@ -223,7 +223,7 @@ function ProfileTab() {
     });
     if (result.canceled || !result.assets?.[0]) return;
     try {
-      await api.upload(`${PROXY}/mobile/me/cover-photo`, result.assets[0].uri, "file");
+      await api.upload(`${MOBILE_API}/me/cover-photo`, result.assets[0].uri, "file");
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload cover photo.");
@@ -646,19 +646,21 @@ function DirectoryTab() {
 
         {/* Social Links */}
         <Text style={dirStyles.socialHeader}>Social Links</Text>
+        <Text style={dirStyles.socialSub}>Paste the full link to your profile or site.</Text>
 
         {/* Instagram */}
         <View style={{ marginBottom: 12 }}>
           <View style={dirStyles.socialRow}>
             <View style={dirStyles.socialPrefix}>
-              <Text style={dirStyles.socialPrefixText}>@</Text>
+              <Ionicons name="logo-instagram" size={18} color={c.mute} />
             </View>
             <TextInput
               style={dirStyles.socialInput}
               value={instagram}
               onChangeText={setInstagram}
-              placeholder="yourhandle"
+              placeholder="https://instagram.com/yourhandle"
               placeholderTextColor={c.ghost}
+              keyboardType="url"
               autoCapitalize="none"
             />
           </View>
@@ -668,14 +670,15 @@ function DirectoryTab() {
         <View style={{ marginBottom: 12 }}>
           <View style={dirStyles.socialRow}>
             <View style={dirStyles.socialPrefix}>
-              <Text style={dirStyles.socialPrefixText}>linkedin.com/</Text>
+              <Ionicons name="logo-linkedin" size={18} color={c.mute} />
             </View>
             <TextInput
               style={dirStyles.socialInput}
               value={linkedin}
               onChangeText={setLinkedin}
-              placeholder="in/yourhandle"
+              placeholder="https://linkedin.com/in/yourname"
               placeholderTextColor={c.ghost}
+              keyboardType="url"
               autoCapitalize="none"
             />
           </View>
@@ -685,7 +688,7 @@ function DirectoryTab() {
         <View style={{ marginBottom: 12 }}>
           <View style={dirStyles.socialRow}>
             <View style={dirStyles.socialPrefix}>
-              <Text style={dirStyles.socialPrefixText}>🌐</Text>
+              <Ionicons name="globe-outline" size={18} color={c.mute} />
             </View>
             <TextInput
               style={dirStyles.socialInput}
@@ -735,18 +738,19 @@ function createDirStyles(c: ColorPalette) {
     pillText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     pillTextActive: { color: c.paper },
 
-    socialHeader: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, marginBottom: 12 },
+    socialHeader: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, marginBottom: 4 },
+    socialSub: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.mute, marginBottom: 12 },
     socialRow: {
       flexDirection: "row", height: 52,
       borderWidth: 1, borderColor: c.ghost, borderRadius: 6,
       overflow: "hidden", backgroundColor: c.paper,
     },
     socialPrefix: {
-      backgroundColor: c.paperDeep, paddingHorizontal: 12,
+      width: 44,
+      backgroundColor: c.paperDeep,
       justifyContent: "center", alignItems: "center",
       borderRightWidth: 1, borderRightColor: c.ghost,
     },
-    socialPrefixText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
     socialInput: {
       flex: 1, paddingHorizontal: 12,
       fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,

@@ -34,7 +34,7 @@ export default async function DirectorySettingsPage() {
 
   return (
     <section className="mem-card">
-      <div className="mem-card-label">Moveee Connect Directory</div>
+      <div className="mem-card-label">Moveee Directory</div>
       <DirectoryProfile
         displayName={displayName}
         occupation={user.occupation ?? ""}

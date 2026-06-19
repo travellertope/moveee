@@ -7,7 +7,7 @@ import "../../sections.css";
 import "../connect.css";
 
 export const metadata: Metadata = {
-  title: "Membership — Moveee Connect",
+  title: "Membership — Moveee",
   description:
     "Join Moveee as a Citizen for free, or upgrade to Connect Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
 };
@@ -24,12 +24,12 @@ export default async function MembershipPage() {
       <section className="mco-hero">
         <div className="mco-hero-inner">
           <div className="mco-hero-text">
-            <p className="mco-eyebrow">Moveee Connect · Membership</p>
+            <p className="mco-eyebrow">Moveee · Membership</p>
             <h1 className="mco-headline">
               Belong to <em>something.</em>
             </h1>
             <p className="mco-lede">
-              Moveee Connect is for Black and diaspora creatives, entrepreneurs, professionals,
+              Moveee is for Black and diaspora creatives, entrepreneurs, professionals,
               and culture lovers. Membership is how you show up.
             </p>
           </div>

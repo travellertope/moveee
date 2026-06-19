@@ -7,9 +7,9 @@ import "../../sections.css";
 import "../connect.css";
 
 export const metadata: Metadata = {
-  title: "Member Directory — Moveee Connect",
+  title: "Member Directory — Moveee",
   description:
-    "Find Black and diaspora creatives, entrepreneurs, professionals, and culture lovers in the Moveee Connect member directory.",
+    "Find Black and diaspora creatives, entrepreneurs, professionals, and culture lovers in the Moveee member directory.",
 };
 
 export default async function PeoplePage() {
@@ -21,12 +21,12 @@ export default async function PeoplePage() {
       <section className="mco-hero">
         <div className="mco-hero-inner">
           <div className="mco-hero-text">
-            <p className="mco-eyebrow">Moveee Connect · The Directory</p>
+            <p className="mco-eyebrow">Moveee · The Directory</p>
             <h1 className="mco-headline">
               Find each <em>other.</em>
             </h1>
             <p className="mco-lede">
-              A searchable index of Moveee Connect members — who they are, what they do, and where
+              A searchable index of Moveee members — who they are, what they do, and where
               they're based. The Lagos photographer. The UK art director. The Nigerian lawyer in New York.
             </p>
           </div>

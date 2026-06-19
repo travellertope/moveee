@@ -224,14 +224,14 @@ class Culture_Gamification {
         // ── Profile & onboarding badges ───────────────────────────────────
         'profile_complete' => array(
             'name'        => 'Profile Complete',
-            'description' => 'Completed your Moveee Connect profile.',
+            'description' => 'Completed your Moveee profile.',
             'icon'        => 'dashicons-id',
             'trigger'     => 'profile_completed',
             'threshold'   => 1,
         ),
         'directory_member' => array(
             'name'        => 'In the Directory',
-            'description' => 'Opted into the Moveee Connect member directory.',
+            'description' => 'Opted into the Moveee member directory.',
             'icon'        => 'dashicons-businessperson',
             'trigger'     => 'directory_opted_in',
             'threshold'   => 1,
@@ -246,21 +246,21 @@ class Culture_Gamification {
         // ── Loyalty & tenure badges ───────────────────────────────────────
         'monthly_member' => array(
             'name'        => 'Monthly Member',
-            'description' => 'Been a Moveee Connect member for 30 days.',
+            'description' => 'Been a Moveee member for 30 days.',
             'icon'        => 'dashicons-calendar-alt',
             'trigger'     => 'account_age_days',
             'threshold'   => 30,
         ),
         'veteran' => array(
             'name'        => 'Veteran',
-            'description' => 'Been a Moveee Connect member for 180 days.',
+            'description' => 'Been a Moveee member for 180 days.',
             'icon'        => 'dashicons-awards',
             'trigger'     => 'account_age_days',
             'threshold'   => 180,
         ),
         'annual_advocate' => array(
             'name'        => 'Annual Advocate',
-            'description' => 'Been a Moveee Connect member for a full year.',
+            'description' => 'Been a Moveee member for a full year.',
             'icon'        => 'dashicons-star-half',
             'trigger'     => 'account_age_days',
             'threshold'   => 365,
