@@ -679,7 +679,8 @@ export default function ProductDetailScreen() {
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
 
-  const seed: ShopProduct = params?.product;
+  const seed: ShopProduct | undefined = params?.product;
+  const productId: number | undefined = seed?.id ?? params?.productId ?? params?.id;
 
   const [detail, setDetail] = useState<ShopProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -688,13 +689,13 @@ export default function ProductDetailScreen() {
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!seed?.id) return;
+    if (!productId) { setLoading(false); return; }
     const countryParam = user?.countryOfResidence ? `?country=${encodeURIComponent(user.countryOfResidence)}` : "";
-    api.get<ShopProductDetail>(`${MOBILE_API}/shop/products/${seed.id}${countryParam}`, false)
+    api.get<ShopProductDetail>(`${MOBILE_API}/shop/products/${productId}${countryParam}`, false)
       .then(setDetail)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [seed?.id, user?.countryOfResidence]);
+  }, [productId, user?.countryOfResidence]);
 
   const product = detail ?? seed;
   const images = detail?.images ?? (seed?.imageUrl ? [seed.imageUrl] : []);

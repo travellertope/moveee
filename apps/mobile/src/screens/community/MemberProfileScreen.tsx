@@ -299,7 +299,10 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
         );
       })}
       {isOwnProfile && (
-        <TouchableOpacity style={[styles.portfolioAddBtn, { width: colW }]}>
+        <TouchableOpacity
+          style={[styles.portfolioAddBtn, { width: colW }]}
+          onPress={() => openInApp("https://connect.themoveee.com/member/portfolio")}
+        >
           <Ionicons name="add" size={20} color={c.ghost} />
           <Text style={styles.portfolioAddText}>Add portfolio item</Text>
         </TouchableOpacity>
