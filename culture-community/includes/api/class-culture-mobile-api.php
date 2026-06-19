@@ -383,6 +383,24 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Username-based lookup — used by surfaces that only have a username
+        // on hand (e.g. @mention taps, quote poster attribution), not a numeric
+        // user ID. Registered as a separate route (not a fallback on the route
+        // above) since the \d+ pattern on /mobile/member/(?P<id>\d+) means a
+        // non-numeric segment simply won't match that route at all.
+        register_rest_route( 'culture/v1', '/mobile/member/by-username/(?P<username>[a-zA-Z0-9_\-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_member_by_username' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'username' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_user',
+                ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/members', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_members' ),
@@ -1720,6 +1738,22 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
         }
 
+        return rest_ensure_response( self::build_member_profile_response( $user ) );
+    }
+
+    public static function handle_get_member_by_username( $request ) {
+        $username = (string) $request->get_param( 'username' );
+        $user     = get_user_by( 'login', $username );
+
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( self::build_member_profile_response( $user ) );
+    }
+
+    private static function build_member_profile_response( WP_User $user ): array {
+        $user_id = $user->ID;
         $profile = self::public_profile( $user );
         $profile['followersCount'] = Culture_Follows::followers_count( $user_id );
         $profile['followingCount'] = Culture_Follows::following_count( $user_id );
@@ -1727,7 +1761,7 @@ class Culture_Mobile_API {
         $viewer_id = get_current_user_id();
         $profile['isFollowing'] = $viewer_id ? Culture_Follows::is_following( $viewer_id, $user_id ) : false;
 
-        return rest_ensure_response( $profile );
+        return $profile;
     }
 
     public static function handle_follow_member( $request ) {

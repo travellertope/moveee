@@ -327,14 +327,20 @@ export default function MemberProfileScreen() {
 
   useEffect(() => {
     const uid = params.userId;
-    if (!uid) { setLoading(false); return; }
-    api.get<PublicProfile>(`${MOBILE_API}/member/${uid}`)
+    const username = params.username;
+    const url = uid
+      ? `${MOBILE_API}/member/${uid}`
+      : username
+      ? `${MOBILE_API}/member/by-username/${encodeURIComponent(username)}`
+      : null;
+    if (!url) { setLoading(false); return; }
+    api.get<PublicProfile>(url)
       .then((p) => {
         setProfile(p);
         setIsFollowing(!!p.isFollowing);
         setFollowersCount(p.followersCount ?? 0);
       }).catch(() => {}).finally(() => setLoading(false));
-  }, [params.userId]);
+  }, [params.userId, params.username]);
 
   useEffect(() => {
     if (!profile) return;
