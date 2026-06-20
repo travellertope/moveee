@@ -2218,6 +2218,17 @@ class Culture_Mobile_API {
         return rest_ensure_response( $response );
     }
 
+    /**
+     * post_date_gmt is a MySQL datetime string ("Y-m-d H:i:s") with no
+     * timezone marker. JS engines parsing that shape (space instead of "T",
+     * no "Z"/offset) treat it as local device time rather than UTC, so a
+     * post made seconds ago appears N hours old/new depending on the
+     * device's UTC offset. Appending "Z" makes the UTC-ness explicit.
+     */
+    private static function gmt_iso( string $mysql_gmt ): string {
+        return $mysql_gmt ? str_replace( ' ', 'T', $mysql_gmt ) . 'Z' : '';
+    }
+
     private static function get_pulse_feed_items(): array {
         $user_id       = get_current_user_id();
         $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
@@ -2241,7 +2252,7 @@ class Culture_Mobile_API {
                 'type'          => 'pulse',
                 'title'         => get_the_title( $post ),
                 'slug'          => $post->post_name,
-                'date'          => $post->post_date_gmt,
+                'date'          => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'       => wp_strip_all_tags( $post->post_excerpt ),
                 'body'          => wpautop( $post->post_content ),
                 'image'         => $thumb ?: null,
@@ -2288,7 +2299,7 @@ class Culture_Mobile_API {
                 'type'        => 'editorial',
                 'title'       => get_the_title( $post ),
                 'slug'        => $post->post_name,
-                'date'        => $post->post_date_gmt,
+                'date'        => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'     => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'image'       => $thumb ?: null,
                 'href'        => '/magazine/' . $post->post_name,
@@ -2346,7 +2357,7 @@ class Culture_Mobile_API {
                 'type'          => 'happening',
                 'title'         => get_the_title( $post ),
                 'slug'          => $post->post_name,
-                'date'          => $post->post_date_gmt,
+                'date'          => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'       => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'body'          => wp_strip_all_tags( $post->post_content ),
                 'image'         => $thumb ?: null,
@@ -2395,7 +2406,7 @@ class Culture_Mobile_API {
                 'type'      => 'directory',
                 'title'     => get_the_title( $post ),
                 'slug'      => $post->post_name,
-                'date'      => $post->post_date_gmt,
+                'date'      => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'body'      => wp_strip_all_tags( $post->post_content ),
                 'image'     => $thumb ?: null,
@@ -2432,7 +2443,7 @@ class Culture_Mobile_API {
                 'type'        => 'quote',
                 'title'       => wp_strip_all_tags( $post->post_content ?: get_the_title( $post ) ),
                 'slug'        => $post->post_name,
-                'date'        => $post->post_date_gmt,
+                'date'        => self::gmt_iso( $post->post_date_gmt ),
                 'href'        => '/quotes/' . $post->ID . '-' . $post->post_name,
                 'wpId'        => (string) $post->ID,
                 'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
@@ -2549,7 +2560,7 @@ class Culture_Mobile_API {
                 'type'                    => 'community',
                 'title'                   => $body_text ?: get_the_title( $post ),
                 'slug'                    => $post->post_name,
-                'date'                    => $post->post_date_gmt,
+                'date'                    => self::gmt_iso( $post->post_date_gmt ),
                 'image'                   => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
                 'href'                    => '/community/' . $post->post_name,
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
