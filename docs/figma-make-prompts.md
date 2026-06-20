@@ -5247,53 +5247,69 @@ Output 4 frames side by side.
 
 ---
 
-## 18. WEB HOMEPAGE — MAGAZINE + APP LANDING PAGE (Site A, themoveee.com)
+## 18. WEB HOMEPAGE — MOVEEE AS COMMUNITY/DISCOVERY PLATFORM, MAGAZINE AS ITS ARM (Site A, themoveee.com)
 
 > **Note on scope:** every other section in this document targets the mobile app (390×844px
 > iOS frames). This section is different — it's a **responsive web redesign** for
 > `apps/site` (themoveee.com), so frames are specified at **desktop 1440px** with a
 > **mobile 390px** companion frame per screen. Use the same Figma Make / First Draft workflow.
 
+### Brand architecture (read this before writing or designing anything below)
+
+- **Moveee** is the product — the community and discovery platform. It is never called
+  "the app" or "an app" in any visible copy; it is always just **Moveee**. Moveee is what
+  this homepage leads with.
+- **Moveee Magazine** is the editorial arm — the publication this site already runs. It
+  gets its own clearly-labelled section lower on the page, including a spotlight of the
+  latest issue, but it is not the lead story anymore.
+- Internal tier names (**Connect Citizen** / **Connect Pro**) are unchanged — this is a
+  platform-brand change, not a membership-tier rename.
+- No geography- or identity-based audience language anywhere on this page. Moveee covers
+  culture globally; copy describes content categories (music, food, film, style, ideas),
+  never an audience's identity or region.
+
 ### Why this section exists
 
 themoveee.com today is a magazine homepage with one thin, late-page mention of "Connect"
 (an `id="connect"` block buried below several editorial modules — see
-`apps/site/components/HomepageContent.tsx`). It has zero mention of the mobile app, no
-download CTA, and no real explanation of what Connect actually does (feed, credits, perks,
-directory, events, games). This redesign turns the homepage into a dual-purpose landing
-page: it still sells the magazine, but now equally sells Connect — the app and the
-community — to a visitor who has never heard of either.
+`apps/site/components/HomepageContent.tsx`). It undersells what Moveee actually is — a
+community that rewards people for actively participating in culture, not just reading about
+it — and buries the one product visitors should be funnelled toward. This redesign flips
+the hierarchy: Moveee leads, the magazine becomes a clearly-positioned arm with its own
+spotlight moment further down the page.
 
 ### Marketing copy (final — use verbatim in the prompt; do not let Figma Make invent its own)
 
 **HERO**
-- Eyebrow: `AN INDEPENDENT MAGAZINE — AND THE COMMUNITY LIVING IT`
-- H1: `Moveee covers culture. Connect is how you join it.`
-- Subhead: `We report on the music, film, art, fashion, food and ideas shaping global
-  Black and African culture. Connect is where you stop just reading about it — post your
-  own finds, earn for your taste, and meet the people who get it.`
-- Primary CTA: `Read the latest issue`
-- Secondary CTA: `Get the Connect app`
+- Eyebrow: `A COMMUNITY THAT REWARDS YOU FOR BEING AN ACTIVE PART OF CULTURE`
+- H1: `Moveee for culture. Discover and engage.`
+- Subhead: `Post the spot before it's cool. Call the next big thing. Rate, react, debate —
+  every contribution builds your standing and earns you real rewards. Moveee is where
+  culture happens with you in it, not just in front of you.`
+- Primary CTA: `Join Moveee`
+- Secondary CTA: `See how it works`
 - Trust line (small, under CTAs): `Free to join · iOS & Android · No spam, ever`
 
-**"WHAT IS CONNECT" INTRO**
-- Eyebrow: `THE APP`
+**"WHAT IS MOVEEE" INTRO**
+- Eyebrow: `MOVEEE`
 - H2: `Your taste, with receipts.`
-- Body: `Connect is the social side of Moveee — built for people who find the spot before
-  it's cool, have a take on every new release, and want it to count for something. Post a
-  hidden gem. Rate the meal. Call the next big thing. Every contribution builds your
-  reputation — and earns credits you can spend on real perks from brands that get it.`
+- Body: `Moveee is a community and discovery platform built for people who find the spot
+  before it's cool, have a take on every new release, and want it to count for something.
+  Post a hidden gem. Rate the meal. Call the next big thing. Every contribution builds your
+  standing — and earns Culture Credits (Cr) you can spend on real perks from brands that
+  get it.`
 - Link: `See how it works →`
 
 **FEATURE GRID (6 cards — title / one-line hook / body)**
 1. Pulse Feed — *Nine ways to post* — `A hidden gem. A hot take. A poll. An itinerary.
    Post however the moment calls for it — not just another caption.`
-2. Credits & Reputation — *Get rewarded for having taste* — `Every post, comment and
-   validated tip earns credits. Climb from Member to Culture Authority — title and all.`
-3. Partner Perks & Wallet — *Spend it, or cash it out* — `Redeem credits for real
-   discounts at partner spots across the city, or convert them straight to cash.`
-4. Discover (Directory) — *The map only the community could write* — `People, places,
-   dishes, films, movements — a living archive, browsable by type and city.`
+2. Culture Credits & Reputation Points — *Get rewarded for having taste* — `Every post,
+   comment and validated tip earns Culture Credits (Cr). Build Reputation Points (Pt) and
+   climb from Member to Culture Authority — title and all.`
+3. Partner Perks & Wallet — *Spend it, or cash it out* — `Redeem Culture Credits (Cr) for
+   real discounts at partner spots across the city, or convert them straight to cash.`
+4. Discover — *The map only the community could write* — `People, places, dishes, films,
+   movements — a living archive, browsable by type and city.`
 5. Events — *Know what's actually happening* — `RSVP to the shows, pop-ups and talks
    worth your night — curated by us, submitted by you.`
 6. Daily Games — *Keep your culture IQ sharp* — `Trivia and Who Said It? — two minutes a
@@ -5309,19 +5325,29 @@ community — to a visitor who has never heard of either.
   features before anyone else.`
 - CTA: `Compare plans` (Citizen) / `Upgrade to Pro` (Pro)
 
-**APP DOWNLOAD CTA (near footer)**
-- Eyebrow: `GET THE APP`
+**JOIN MOVEEE — DOWNLOAD MOMENT (near footer)**
+- Eyebrow: `JOIN MOVEEE`
 - H2: `Carry the culture in your pocket.`
-- Body: `Connect is free on iOS and Android. Download it, claim your handle, and start
+- Body: `Moveee is free on iOS and Android. Download it, claim your handle, and start
   earning from your first post.`
 - App Store + Google Play badges + QR code (desktop only, "Scan to download")
 
+**MOVEEE MAGAZINE SPOTLIGHT (the editorial arm — positioned after the Moveee zone, before
+the existing Latest Issue / Interviews / Shop modules)**
+- Eyebrow: `MOVEEE MAGAZINE — OUR EDITORIAL ARM`
+- H2: `The reporting behind the community.`
+- Body: `Everything Moveee's community surfaces starts somewhere — Moveee Magazine is our
+  independent editorial team covering the music, film, art, fashion, food and ideas worth
+  knowing about.`
+- Latest Issue card (real spotlight module, not a text link): issue cover image, issue
+  title + dek, issue number/date, `Read the latest issue` primary CTA.
+- Secondary link: `Browse the archive →`
+
 ⚠️ **DEV ANNOTATION REQUIREMENT** — add `<!-- DEV: <note> -->` comments at these points:
-  1. Above the hero CTAs: `"DEV: 'Read the latest issue' anchors to the existing Latest
-     Issue module further down this same page (#latest-issue) — no new route. 'Get the
-     Connect app' routes to a new /app or /download landing route (does not exist yet) that
-     should detect OS via user-agent and deep-link to the correct store; fall back to a
-     simple page with both badges + QR for desktop."`
+  1. Above the hero CTAs: `"DEV: 'Join Moveee' routes to a new /app or /download landing
+     route (does not exist yet) that should detect OS via user-agent and deep-link to the
+     correct store; fall back to a simple page with both badges + QR for desktop. 'See how
+     it works' anchors to the 'What is Moveee' intro block on this same page (#what-is-moveee)."`
   2. Above the App Store / Google Play badges: `"DEV: Store URLs do not exist yet — app is
      not published. Use placeholder badge graphics and wire real store IDs at launch; do not
      hardcode a fake App Store ID."`
@@ -5331,32 +5357,40 @@ community — to a visitor who has never heard of either.
   4. Above the feature grid: `"DEV: This section replaces the existing thin #connect block
      in HomepageContent.tsx — same anchor id should be preserved if anything else in the
      site links to #connect."`
-  5. Above the whole new "Connect zone" (Hero's lower half through Membership teaser):
+  5. Above the whole new "Moveee zone" (Hero through Join Moveee download strip):
      `"DEV: This zone intentionally uses the warm paper token (#F3ECE0) to bridge Site A's
      white magazine background with Site B/Connect's visual language — do NOT change the
      global --paper CSS variable (apps/site/app/globals.css), scope the warm background to
      this section locally instead."`
+  6. Above the Moveee Magazine Spotlight / Latest Issue card: `"DEV: Wire the Latest Issue
+     card to the same data source as the existing Latest Issue module further down the page
+     (getNewslettersWithFallback / latest culture_edition query in lib/wp.ts) — do not
+     duplicate the fetch, reuse the already-fetched latest-issue data passed into
+     HomepageContent.tsx so this card and the existing Latest Issue module never go out of
+     sync."`
 
 ---
 
-### PROMPT 18 — Homepage Hero + Connect Marketing Zone (Desktop 1440px + Mobile 390px)
+### PROMPT 18 — Homepage Hero + Moveee Marketing Zone + Magazine Spotlight (Desktop 1440px + Mobile 390px)
 
 ```
 Senior web UX/UI designer — themoveee.com homepage redesign. Desktop frame 1440px wide,
 companion mobile frame 390px wide, same content, stacked layout.
 Brand tokens — MAGAZINE zone (existing, unchanged): white #FFFFFF bg, ink #14110D text,
 ochre #C5491F accent, Fraunces (display) + DM Sans (body) + JetBrains Mono (kickers/meta).
-Brand tokens — NEW CONNECT ZONE (this prompt): paper-warm #F3ECE0 bg, white cards,
+Brand tokens — NEW MOVEEE ZONE (this prompt): paper-warm #F3ECE0 bg, white cards,
 ochre #C5491F, gold #B38238, ghost #C8BFB0, mute #7A6F5C, success #2D6A4F.
 Radius: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
 Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04).
 
 CONTEXT: themoveee.com is an editorial homepage today (cover story, latest issue, shop,
-newsletter). It needs a new top section that markets Connect (the community app) with
-equal weight to the magazine, without abandoning the magazine identity. Everything below
-this new zone (Latest Issue, Interviews, Shop, series strips, footer) stays exactly as it
-is today — this prompt only covers the NEW top-of-page content, which replaces the old
-hero and the old thin "Connect CTA" block.
+newsletter). Moveee — the community and discovery platform — is now the lead product;
+the magazine is its editorial arm. This prompt covers: a new top section that leads with
+Moveee, and a new "Moveee Magazine" spotlight section that hands off to the existing
+editorial modules with a real Latest Issue feature card (not just a text link). Everything
+below the Magazine Spotlight (Interviews, Shop, series strips, footer) stays exactly as it
+is today — this prompt replaces the old hero and the old thin "Connect CTA" block, and
+inserts the new Magazine Spotlight directly above the existing Latest Issue module.
 
 Use the marketing copy supplied above VERBATIM — do not paraphrase or invent new headline
 copy. Bracketed placeholders like [PRICE] should render as literal bracketed text so it's
@@ -5364,41 +5398,43 @@ obvious to the engineer that real data needs to be wired in.
 
 ---
 
-FRAME 1 — DESKTOP HERO (1440×720px, white bg — magazine zone, unchanged token set):
+FRAME 1 — DESKTOP HERO (1440×720px, paper-warm #F3ECE0 bg — Moveee zone, this prompt's
+new token set):
 
 Split layout, 2 columns (60/40):
   LEFT COLUMN (60%, 64px left padding):
-    Eyebrow: "AN INDEPENDENT MAGAZINE — AND THE COMMUNITY LIVING IT" JetBrains Mono 11px
-      bold ochre uppercase, letter-spacing 1px.
-    H1: "Moveee covers culture. Connect is how you join it." Fraunces 56px bold ink,
+    Eyebrow: "A COMMUNITY THAT REWARDS YOU FOR BEING AN ACTIVE PART OF CULTURE"
+      JetBrains Mono 11px bold ochre uppercase, letter-spacing 1px.
+    H1: "Moveee for culture. Discover and engage." Fraunces 56px bold ink,
       line-height 1.05, max-width 640px, 16px top margin.
     Subhead: full copy block from above, DM Sans 18px ink-soft, line-height 1.5,
       max-width 560px, 20px top margin.
     CTA ROW (24px top, 16px gap):
-      Primary: "Read the latest issue" — ink fill white text, radius-full, 56px height,
+      Primary: "Join Moveee" — ink fill white text, radius-full, 56px height,
         20px horizontal padding, DM Sans 15px bold.
-      Secondary: "Get the Connect app" — ochre border ochre text, radius-full, 56px height,
+      Secondary: "See how it works" — ochre border ochre text, radius-full, 56px height,
         same padding, white bg.
     Trust line: "Free to join · iOS & Android · No spam, ever" JetBrains Mono 11px ghost,
       12px top margin.
-  RIGHT COLUMN (40%): Large editorial cover-story image (existing pattern), full-bleed to
-    frame edge, slight ink gradient overlay bottom-left for legibility if any text overlaps.
+  RIGHT COLUMN (40%): Lively composite visual of the Pulse feed / community in action
+    (post cards, reactions, a badge unlock) — full-bleed to frame edge, slight ink gradient
+    overlay bottom-left for legibility if any text overlaps.
 
 ---
 
-FRAME 2 — DESKTOP "WHAT IS CONNECT" + FEATURE GRID (1440×900px, paper-warm #F3ECE0 bg —
-new Connect zone begins here, full-bleed section, 80px vertical padding):
+FRAME 2 — DESKTOP "WHAT IS MOVEEE" + FEATURE GRID (1440×900px, paper-warm #F3ECE0 bg
+continues, full-bleed section, 80px vertical padding), anchor id `#what-is-moveee`:
 
 INTRO BLOCK (centred, max-width 720px, centred horizontally):
-  Eyebrow: "THE APP" JetBrains Mono 11px bold ochre uppercase, centred.
+  Eyebrow: "MOVEEE" JetBrains Mono 11px bold ochre uppercase, centred.
   H2: "Your taste, with receipts." Fraunces 40px bold ink, centred, 12px top.
   Body: full copy block, DM Sans 17px ink-soft, centred, line-height 1.5, 16px top.
   Link: "See how it works →" DM Sans 14px bold ochre, centred, 16px top.
 
 FEATURE GRID (3 columns × 2 rows, 64px top margin, 24px gap, max-width 1200px centred):
   FEATURE CARD (white fill, radius-xl, shadow-card, 32px padding):
-    Icon/emoji 32px (top): 🌊 Pulse Feed · 🏆 Credits & Reputation · 🎁 Partner Perks &
-      Wallet · 🧭 Discover (Directory) · 📅 Events · 🎮 Daily Games.
+    Icon/emoji 32px (top): 🌊 Pulse Feed · 🏆 Culture Credits & Reputation Points · 🎁
+      Partner Perks & Wallet · 🧭 Discover · 📅 Events · 🎮 Daily Games.
     Title: DM Sans 12px bold ochre uppercase, 16px top.
     Hook: Fraunces 20px bold ink, 6px top (the italic "hook" line from the copy above, e.g.
       "Nine ways to post").
@@ -5407,7 +5443,7 @@ FEATURE GRID (3 columns × 2 rows, 64px top margin, 24px gap, max-width 1200px c
 
 ---
 
-FRAME 3 — DESKTOP MEMBERSHIP + APP DOWNLOAD (1440×640px, paper-warm bg continues,
+FRAME 3 — DESKTOP MEMBERSHIP + JOIN MOVEEE DOWNLOAD (1440×640px, paper-warm bg continues,
 80px vertical padding, ghost top border separating from Frame 2's section):
 
 MEMBERSHIP TEASER (max-width 1000px, centred):
@@ -5424,9 +5460,9 @@ MEMBERSHIP TEASER (max-width 1000px, centred):
       Body copy, DM Sans 14px white/85% opacity, line-height 1.5, 12px top.
       "Upgrade to Pro" gold fill ink-text button, full width, 48px, radius-full, 20px top.
 
-APP DOWNLOAD STRIP (64px top margin, white card, radius-2xl, shadow-card, full-width
-  max 1200px centred, 48px padding, split layout):
-  LEFT: "GET THE APP" JetBrains Mono 11px bold ochre uppercase + "Carry the culture in
+JOIN MOVEEE DOWNLOAD STRIP (64px top margin, white card, radius-2xl, shadow-card,
+  full-width max 1200px centred, 48px padding, split layout):
+  LEFT: "JOIN MOVEEE" JetBrains Mono 11px bold ochre uppercase + "Carry the culture in
     your pocket." Fraunces 28px bold ink, 8px top + body copy DM Sans 15px ink-soft, 12px top.
   RIGHT: App Store badge (140×42px placeholder, radius-md) + Google Play badge (same size)
     side by side, 12px gap + small 80×80px QR code placeholder right of the badges, "Scan
@@ -5434,17 +5470,39 @@ APP DOWNLOAD STRIP (64px top margin, white card, radius-2xl, shadow-card, full-w
 
 ---
 
-FRAME 4 — MOBILE COMPANION (390px wide, single scrolling stack, all 3 frames condensed):
-  Hero: stacked (text block, then image below, full-width), CTAs full-width stacked not
-    side-by-side.
-  Feature grid: single column, 1 card per row, full-width.
-  Membership cards: stacked vertically, full-width each.
-  App download strip: badges stacked vertically, full-width, QR code centred below both.
+FRAME 4 — DESKTOP MOVEEE MAGAZINE SPOTLIGHT (1440×560px, white bg — back to magazine zone,
+unchanged token set, sits directly above the existing Latest Issue module):
+
+INTRO BLOCK (left-aligned, max-width 600px, 64px left padding):
+  Eyebrow: "MOVEEE MAGAZINE — OUR EDITORIAL ARM" JetBrains Mono 11px bold ochre uppercase.
+  H2: "The reporting behind the community." Fraunces 36px bold ink, 12px top.
+  Body: full copy block, DM Sans 16px ink-soft, line-height 1.5, 16px top.
+
+LATEST ISSUE CARD (right side, 560px wide, white card, radius-xl, shadow-card, ghost 1px
+  border, split internally — image left 220px, text right):
+  Cover image (220×280px, radius-lg, object-fit cover).
+  Issue label: JetBrains Mono 10px mute uppercase (e.g. "ISSUE 14 — JUNE 2026").
+  Issue title: Fraunces 22px bold ink, 8px top, max 2 lines.
+  Issue dek: DM Sans 13px ink-soft, line-height 1.4, 8px top, max 2 lines.
+  "Read the latest issue" ink fill white text button, radius-full, 44px height, 20px top.
+  "Browse the archive →" DM Sans 13px bold ochre link, 12px top, below the button.
 
 ---
 
-Output 4 frames: Desktop Hero, Desktop Feature Zone, Desktop Membership + Download,
-Mobile Companion (full stack).
+FRAME 5 — MOBILE COMPANION (390px wide, single scrolling stack, all 4 frames condensed):
+  Hero: stacked (text block, then visual below, full-width), CTAs full-width stacked not
+    side-by-side.
+  Feature grid: single column, 1 card per row, full-width.
+  Membership cards: stacked vertically, full-width each.
+  Join Moveee download strip: badges stacked vertically, full-width, QR code centred
+    below both.
+  Magazine Spotlight: stacked (intro text, then Latest Issue card full-width below it,
+    image on top of card, text below image instead of side-by-side).
+
+---
+
+Output 5 frames: Desktop Hero, Desktop Feature Zone, Desktop Membership + Download,
+Desktop Magazine Spotlight, Mobile Companion (full stack).
 ```
 
 ---

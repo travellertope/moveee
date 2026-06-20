@@ -86,9 +86,24 @@ React Native can't use the DOM-dependent shared package — edit both when those
 | `citizen` | Connect Citizen / Citizen |
 | `getmelit` | GetMeLit |
 | `culture-drop` | Culture Drop |
+| `credits` (gamification ledger) | **Culture Credits (Cr)** |
+| `reputation` (gamification score) | **Reputation Points (Pt)** |
 
 Never change the internal DB/PHP values (`patron`, `citizen`, `getmelit`,
-`culture-drop`). Only change user-visible copy.
+`culture-drop`, `credits`, `reputation`, `credit_ledger`, `award_credits`,
+`REPUTATION_TIERS`, etc.). Only change user-visible copy.
+
+**Credits/Reputation rename (user-facing only):** what used to be shown to users as
+"credits" is now **"Culture Credits"**, abbreviated **"Cr"** (e.g. `+15 Cr`). What used
+to be shown as "reputation" is now **"Reputation Points"**, abbreviated **"Pt"** (e.g.
+`280 Pt`). This is copy-only — `class-culture-gamification.php`, the `credit_ledger`
+table, `award_credits()`/`award_reputation()`, `REPUTATION_TIERS`, the `credits`/
+`reputation` fields in the NextAuth session shape, and all REST/API field names stay
+exactly as they are. Only labels, button text, card titles, and chart legends in
+user-visible UI change. As of 2026-06-20 this has only been applied to
+`docs/figma-make-prompts.md` Section 18 — a full sweep of `apps/site`, `apps/connect`,
+`apps/mobile`, and `packages/shared` UI copy (gamification feature descriptions, wallet/
+analytics pages, badge/credit toast messages, membership perk copy) is still pending.
 
 ---
 
