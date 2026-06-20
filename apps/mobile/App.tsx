@@ -10,15 +10,18 @@ import {
   Fraunces_400Regular,
   Fraunces_700Bold,
   Fraunces_400Regular_Italic,
+  Fraunces_700Bold_Italic,
 } from "@expo-google-fonts/fraunces";
 import {
   DMSans_400Regular,
   DMSans_500Medium,
   DMSans_700Bold,
+  DMSans_400Regular_Italic,
 } from "@expo-google-fonts/dm-sans";
 import {
   JetBrainsMono_400Regular,
   JetBrainsMono_700Bold,
+  JetBrainsMono_400Regular_Italic,
 } from "@expo-google-fonts/jetbrains-mono";
 
 import Navigation from "./src/navigation";
@@ -80,11 +83,14 @@ export default function App() {
     Fraunces_400Regular,
     Fraunces_700Bold,
     Fraunces_400Regular_Italic,
+    Fraunces_700Bold_Italic,
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
+    DMSans_400Regular_Italic,
     JetBrainsMono_400Regular,
     JetBrainsMono_700Bold,
+    JetBrainsMono_400Regular_Italic,
   });
 
   useEffect(() => {

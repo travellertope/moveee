@@ -208,7 +208,7 @@ function createStyles(c: ColorPalette) {
       borderRadius: 4, // right-side radius approximated
       padding: 12,
     },
-    blockquoteText: { fontFamily: fonts.serif, fontStyle: "italic", fontSize: 15, color: c.inkSoft },
+    blockquoteText: { fontFamily: fonts.serifItalic, fontSize: 15, color: c.inkSoft },
 
     // About card
     aboutCard: {

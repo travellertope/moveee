@@ -1221,8 +1221,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     lineHeight: 32, marginBottom: space[2],
   },
   standfirst: {
-    fontFamily: fonts.sans, fontSize: 15,
-    fontStyle: "italic", color: c.inkSoft, lineHeight: 22, marginTop: 6,
+    fontFamily: fonts.sansItalic, fontSize: 15,
+    color: c.inkSoft, lineHeight: 22, marginTop: 6,
   },
 
   divider: {
@@ -1275,7 +1275,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     paddingLeft: 16, marginVertical: 20,
   },
   pullQuoteText: {
-    fontFamily: fonts.serif, fontSize: 20, fontStyle: "italic",
+    fontFamily: fonts.serifItalic, fontSize: 20,
     color: c.inkSoft, lineHeight: 28,
   },
 
@@ -1417,8 +1417,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     fontFamily: fonts.serifBold, fontSize: 22, color: c.ink, marginBottom: 6,
   },
   tocArticleTitle: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.ghost, lineHeight: 16,
-    fontStyle: "italic" as const,
+    fontFamily: fonts.monoItalic, fontSize: 11, color: c.ghost, lineHeight: 16,
   },
   tocMeta: {
     marginTop: 16, marginBottom: 0,

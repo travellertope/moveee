@@ -493,7 +493,7 @@ function createStyles(c: ColorPalette) {
     scoreBody: { padding: space[8], alignItems: "center", gap: space[3], paddingTop: 60 },
     scoreLarge: { fontFamily: fonts.serifBold, fontSize: 56, color: c.ink, lineHeight: 60 },
     scorePct:   { fontFamily: fonts.sans, fontSize: 16, color: c.mute },
-    scoreMsg:   { fontFamily: fonts.serifBold, fontSize: 20, fontStyle: "italic" as any, color: c.gold, textAlign: "center" },
+    scoreMsg:   { fontFamily: fonts.serifBoldItalic, fontSize: 20, color: c.gold, textAlign: "center" },
     crPill: {
       backgroundColor: c.gold, borderRadius: radius.full,
       paddingHorizontal: space[4], paddingVertical: 8,

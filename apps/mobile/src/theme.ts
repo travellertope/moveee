@@ -150,14 +150,17 @@ export const darkColors = {
 export type ColorPalette = typeof lightColors;
 
 export const fonts = {
-  serif:       'Fraunces_400Regular',
-  serifBold:   'Fraunces_700Bold',
-  serifItalic: 'Fraunces_400Regular_Italic',
+  serif:           'Fraunces_400Regular',
+  serifBold:       'Fraunces_700Bold',
+  serifItalic:     'Fraunces_400Regular_Italic',
+  serifBoldItalic: 'Fraunces_700Bold_Italic',
   sans:       'DMSans_400Regular',
   sansMedium: 'DMSans_500Medium',
   sansBold:   'DMSans_700Bold',
+  sansItalic: 'DMSans_400Regular_Italic',
   mono:       'JetBrainsMono_400Regular',
   monoBold:   'JetBrainsMono_700Bold',
+  monoItalic: 'JetBrainsMono_400Regular_Italic',
 } as const;
 
 // Type scale from Figma Design System

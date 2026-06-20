@@ -1682,7 +1682,7 @@ function createStyles(c: ColorPalette) {
     // Fav quote
     favQuoteWrap: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 16 },
     favQuoteInput: {
-      fontFamily: fonts.sans, fontSize: 14, fontStyle: "italic",
+      fontFamily: fonts.sansItalic, fontSize: 14,
       color: c.ink, lineHeight: 22, minHeight: 60, textAlignVertical: "top",
     },
 
@@ -1721,7 +1721,7 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
     },
     quoteBoxInput: {
-      fontFamily: fonts.serif, fontSize: 18, fontStyle: "italic",
+      fontFamily: fonts.serifItalic, fontSize: 18,
       color: c.ink, lineHeight: 28, minHeight: 100, textAlignVertical: "top",
     },
 

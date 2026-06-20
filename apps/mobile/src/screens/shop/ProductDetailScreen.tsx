@@ -470,10 +470,9 @@ function createHowItsMadeStyles(c: ColorPalette) {
     stepRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
     stepTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, flex: 1 },
     stepDuration: {
-      fontFamily: fonts.mono,
+      fontFamily: fonts.monoItalic,
       fontSize: 10,
       color: c.mute,
-      fontStyle: "italic",
       marginLeft: 8,
       marginTop: 1,
       flexShrink: 0,

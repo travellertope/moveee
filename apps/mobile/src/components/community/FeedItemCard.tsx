@@ -554,8 +554,7 @@ function createStyles(c: ColorPalette) {
       paddingLeft: 10,
     },
     bookFavQuoteText: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic" as const,
+      fontFamily: fonts.serifItalic,
       fontSize: fontSize.sm,
       color: c.inkSoft,
       lineHeight: 20,
@@ -740,8 +739,7 @@ function createStyles(c: ColorPalette) {
       marginBottom: -4,
     },
     cqQuoteText: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic" as const,
+      fontFamily: fonts.serifItalic,
       fontSize: 20,
       color: c.ink,
       lineHeight: 30,
@@ -1412,7 +1410,7 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge, onMention
       <View style={{ paddingHorizontal: 14 }}>
         <BadgePill label="🔥 CULTURAL TAKE" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
         {item.culturalTakeHeadline ? (
-          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
+          <Text style={[styles.cardTitle, { marginTop: 8, fontFamily: fonts.serifBoldItalic }]}>
             {item.culturalTakeHeadline}
           </Text>
         ) : null}

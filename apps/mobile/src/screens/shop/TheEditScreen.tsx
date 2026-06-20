@@ -476,7 +476,7 @@ function createStyles(c: ColorPalette) {
     },
     storyTagText: { fontFamily: fonts.sansBold, fontSize: 10, color: c.inkSoft },
     featureContent: { padding: 20, gap: 8 },
-    featureStoryLabel: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, fontStyle: "italic" },
+    featureStoryLabel: { fontFamily: fonts.sansItalic, fontSize: 12, color: c.mute },
     featureTitle: { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink },
     featureMaker: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
     quoteBlock: {
@@ -486,7 +486,7 @@ function createStyles(c: ColorPalette) {
       padding: 12,
       borderRadius: 4,
     },
-    quoteText: { fontFamily: fonts.serif, fontSize: 14, color: c.inkSoft, lineHeight: 22, fontStyle: "italic" },
+    quoteText: { fontFamily: fonts.serifItalic, fontSize: 14, color: c.inkSoft, lineHeight: 22 },
     featurePriceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     featurePrice: { fontFamily: fonts.sansBold, fontSize: 18, color: c.ink },
     featureProPrice: { fontFamily: fonts.sansBold, fontSize: 12, color: c.gold },
@@ -608,8 +608,7 @@ function createStyles(c: ColorPalette) {
     signOffLine: { flex: 1, height: 1, backgroundColor: "rgba(179,130,56,0.2)" },
     signOffContent: { alignItems: "center", gap: 4 },
     signOffHeading: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic",
+      fontFamily: fonts.serifItalic,
       fontSize: 18,
       color: c.ink,
       textAlign: "center",

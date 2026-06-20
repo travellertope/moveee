@@ -280,9 +280,8 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 12, paddingVertical: 10, backgroundColor: c.paper,
     },
     improveNote: {
-      fontFamily: fonts.sans, fontSize: 12, color: c.mute,
+      fontFamily: fonts.sansItalic, fontSize: 12, color: c.mute,
       lineHeight: 18, marginTop: space[3],
-      fontStyle: "italic",
     },
 
     // Pro gate
