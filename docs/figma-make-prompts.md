@@ -5247,6 +5247,208 @@ Output 4 frames side by side.
 
 ---
 
+## 18. WEB HOMEPAGE — MAGAZINE + APP LANDING PAGE (Site A, themoveee.com)
+
+> **Note on scope:** every other section in this document targets the mobile app (390×844px
+> iOS frames). This section is different — it's a **responsive web redesign** for
+> `apps/site` (themoveee.com), so frames are specified at **desktop 1440px** with a
+> **mobile 390px** companion frame per screen. Use the same Figma Make / First Draft workflow.
+
+### Why this section exists
+
+themoveee.com today is a magazine homepage with one thin, late-page mention of "Connect"
+(an `id="connect"` block buried below several editorial modules — see
+`apps/site/components/HomepageContent.tsx`). It has zero mention of the mobile app, no
+download CTA, and no real explanation of what Connect actually does (feed, credits, perks,
+directory, events, games). This redesign turns the homepage into a dual-purpose landing
+page: it still sells the magazine, but now equally sells Connect — the app and the
+community — to a visitor who has never heard of either.
+
+### Marketing copy (final — use verbatim in the prompt; do not let Figma Make invent its own)
+
+**HERO**
+- Eyebrow: `AN INDEPENDENT MAGAZINE — AND THE COMMUNITY LIVING IT`
+- H1: `Moveee covers culture. Connect is how you join it.`
+- Subhead: `We report on the music, film, art, fashion, food and ideas shaping global
+  Black and African culture. Connect is where you stop just reading about it — post your
+  own finds, earn for your taste, and meet the people who get it.`
+- Primary CTA: `Read the latest issue`
+- Secondary CTA: `Get the Connect app`
+- Trust line (small, under CTAs): `Free to join · iOS & Android · No spam, ever`
+
+**"WHAT IS CONNECT" INTRO**
+- Eyebrow: `THE APP`
+- H2: `Your taste, with receipts.`
+- Body: `Connect is the social side of Moveee — built for people who find the spot before
+  it's cool, have a take on every new release, and want it to count for something. Post a
+  hidden gem. Rate the meal. Call the next big thing. Every contribution builds your
+  reputation — and earns credits you can spend on real perks from brands that get it.`
+- Link: `See how it works →`
+
+**FEATURE GRID (6 cards — title / one-line hook / body)**
+1. Pulse Feed — *Nine ways to post* — `A hidden gem. A hot take. A poll. An itinerary.
+   Post however the moment calls for it — not just another caption.`
+2. Credits & Reputation — *Get rewarded for having taste* — `Every post, comment and
+   validated tip earns credits. Climb from Member to Culture Authority — title and all.`
+3. Partner Perks & Wallet — *Spend it, or cash it out* — `Redeem credits for real
+   discounts at partner spots across the city, or convert them straight to cash.`
+4. Discover (Directory) — *The map only the community could write* — `People, places,
+   dishes, films, movements — a living archive, browsable by type and city.`
+5. Events — *Know what's actually happening* — `RSVP to the shows, pop-ups and talks
+   worth your night — curated by us, submitted by you.`
+6. Daily Games — *Keep your culture IQ sharp* — `Trivia and Who Said It? — two minutes a
+   day, bragging rights forever.`
+
+**MEMBERSHIP TEASER**
+- Eyebrow: `MEMBERSHIP`
+- H2: `Free to join. More for the obsessed.`
+- Citizen card — `Connect Citizen — Free` — `Post to the feed, browse Discover, RSVP to
+  events, and get our newsletters — GetMeLit and Culture Drop — straight to your inbox.`
+- Pro card — `Connect Pro — from [PRICE]/mo` — `Everything in Citizen, plus exclusive
+  patron stories, 10% off the shop with early access to every drop, and first access to new
+  features before anyone else.`
+- CTA: `Compare plans` (Citizen) / `Upgrade to Pro` (Pro)
+
+**APP DOWNLOAD CTA (near footer)**
+- Eyebrow: `GET THE APP`
+- H2: `Carry the culture in your pocket.`
+- Body: `Connect is free on iOS and Android. Download it, claim your handle, and start
+  earning from your first post.`
+- App Store + Google Play badges + QR code (desktop only, "Scan to download")
+
+⚠️ **DEV ANNOTATION REQUIREMENT** — add `<!-- DEV: <note> -->` comments at these points:
+  1. Above the hero CTAs: `"DEV: 'Read the latest issue' anchors to the existing Latest
+     Issue module further down this same page (#latest-issue) — no new route. 'Get the
+     Connect app' routes to a new /app or /download landing route (does not exist yet) that
+     should detect OS via user-agent and deep-link to the correct store; fall back to a
+     simple page with both badges + QR for desktop."`
+  2. Above the App Store / Google Play badges: `"DEV: Store URLs do not exist yet — app is
+     not published. Use placeholder badge graphics and wire real store IDs at launch; do not
+     hardcode a fake App Store ID."`
+  3. Above the Membership teaser pricing: `"DEV: Do not hardcode the Pro price — reuse the
+     existing <PatronPrice /> component (apps/site/components, already used in the current
+     Connect CTA block) so currency/locale logic stays centralised."`
+  4. Above the feature grid: `"DEV: This section replaces the existing thin #connect block
+     in HomepageContent.tsx — same anchor id should be preserved if anything else in the
+     site links to #connect."`
+  5. Above the whole new "Connect zone" (Hero's lower half through Membership teaser):
+     `"DEV: This zone intentionally uses the warm paper token (#F3ECE0) to bridge Site A's
+     white magazine background with Site B/Connect's visual language — do NOT change the
+     global --paper CSS variable (apps/site/app/globals.css), scope the warm background to
+     this section locally instead."`
+
+---
+
+### PROMPT 18 — Homepage Hero + Connect Marketing Zone (Desktop 1440px + Mobile 390px)
+
+```
+Senior web UX/UI designer — themoveee.com homepage redesign. Desktop frame 1440px wide,
+companion mobile frame 390px wide, same content, stacked layout.
+Brand tokens — MAGAZINE zone (existing, unchanged): white #FFFFFF bg, ink #14110D text,
+ochre #C5491F accent, Fraunces (display) + DM Sans (body) + JetBrains Mono (kickers/meta).
+Brand tokens — NEW CONNECT ZONE (this prompt): paper-warm #F3ECE0 bg, white cards,
+ochre #C5491F, gold #B38238, ghost #C8BFB0, mute #7A6F5C, success #2D6A4F.
+Radius: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
+Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04).
+
+CONTEXT: themoveee.com is an editorial homepage today (cover story, latest issue, shop,
+newsletter). It needs a new top section that markets Connect (the community app) with
+equal weight to the magazine, without abandoning the magazine identity. Everything below
+this new zone (Latest Issue, Interviews, Shop, series strips, footer) stays exactly as it
+is today — this prompt only covers the NEW top-of-page content, which replaces the old
+hero and the old thin "Connect CTA" block.
+
+Use the marketing copy supplied above VERBATIM — do not paraphrase or invent new headline
+copy. Bracketed placeholders like [PRICE] should render as literal bracketed text so it's
+obvious to the engineer that real data needs to be wired in.
+
+---
+
+FRAME 1 — DESKTOP HERO (1440×720px, white bg — magazine zone, unchanged token set):
+
+Split layout, 2 columns (60/40):
+  LEFT COLUMN (60%, 64px left padding):
+    Eyebrow: "AN INDEPENDENT MAGAZINE — AND THE COMMUNITY LIVING IT" JetBrains Mono 11px
+      bold ochre uppercase, letter-spacing 1px.
+    H1: "Moveee covers culture. Connect is how you join it." Fraunces 56px bold ink,
+      line-height 1.05, max-width 640px, 16px top margin.
+    Subhead: full copy block from above, DM Sans 18px ink-soft, line-height 1.5,
+      max-width 560px, 20px top margin.
+    CTA ROW (24px top, 16px gap):
+      Primary: "Read the latest issue" — ink fill white text, radius-full, 56px height,
+        20px horizontal padding, DM Sans 15px bold.
+      Secondary: "Get the Connect app" — ochre border ochre text, radius-full, 56px height,
+        same padding, white bg.
+    Trust line: "Free to join · iOS & Android · No spam, ever" JetBrains Mono 11px ghost,
+      12px top margin.
+  RIGHT COLUMN (40%): Large editorial cover-story image (existing pattern), full-bleed to
+    frame edge, slight ink gradient overlay bottom-left for legibility if any text overlaps.
+
+---
+
+FRAME 2 — DESKTOP "WHAT IS CONNECT" + FEATURE GRID (1440×900px, paper-warm #F3ECE0 bg —
+new Connect zone begins here, full-bleed section, 80px vertical padding):
+
+INTRO BLOCK (centred, max-width 720px, centred horizontally):
+  Eyebrow: "THE APP" JetBrains Mono 11px bold ochre uppercase, centred.
+  H2: "Your taste, with receipts." Fraunces 40px bold ink, centred, 12px top.
+  Body: full copy block, DM Sans 17px ink-soft, centred, line-height 1.5, 16px top.
+  Link: "See how it works →" DM Sans 14px bold ochre, centred, 16px top.
+
+FEATURE GRID (3 columns × 2 rows, 64px top margin, 24px gap, max-width 1200px centred):
+  FEATURE CARD (white fill, radius-xl, shadow-card, 32px padding):
+    Icon/emoji 32px (top): 🌊 Pulse Feed · 🏆 Credits & Reputation · 🎁 Partner Perks &
+      Wallet · 🧭 Discover (Directory) · 📅 Events · 🎮 Daily Games.
+    Title: DM Sans 12px bold ochre uppercase, 16px top.
+    Hook: Fraunces 20px bold ink, 6px top (the italic "hook" line from the copy above, e.g.
+      "Nine ways to post").
+    Body: DM Sans 14px ink-soft, line-height 1.5, 8px top, 3 lines max.
+  Fill all 6 cards with the exact feature copy supplied above, in the order listed.
+
+---
+
+FRAME 3 — DESKTOP MEMBERSHIP + APP DOWNLOAD (1440×640px, paper-warm bg continues,
+80px vertical padding, ghost top border separating from Frame 2's section):
+
+MEMBERSHIP TEASER (max-width 1000px, centred):
+  Eyebrow + H2 centred, same style as Frame 2's intro block: "MEMBERSHIP" /
+    "Free to join. More for the obsessed."
+  2 CARDS side by side (480px each, 24px gap):
+    CITIZEN CARD (white fill, radius-xl, shadow-card, 32px padding):
+      "Connect Citizen" Fraunces 22px bold ink + "Free" DM Sans 14px bold ochre pill inline.
+      Body copy, DM Sans 14px ink-soft, line-height 1.5, 12px top.
+      "Compare plans" ghost-border button, full width, 48px, radius-full, 20px top.
+    PRO CARD (ink fill #14110D bg, radius-xl, shadow-card, 32px padding, gold 2px border):
+      "Connect Pro" Fraunces 22px bold white + "from [PRICE]/mo" DM Sans 14px bold gold
+        pill inline.
+      Body copy, DM Sans 14px white/85% opacity, line-height 1.5, 12px top.
+      "Upgrade to Pro" gold fill ink-text button, full width, 48px, radius-full, 20px top.
+
+APP DOWNLOAD STRIP (64px top margin, white card, radius-2xl, shadow-card, full-width
+  max 1200px centred, 48px padding, split layout):
+  LEFT: "GET THE APP" JetBrains Mono 11px bold ochre uppercase + "Carry the culture in
+    your pocket." Fraunces 28px bold ink, 8px top + body copy DM Sans 15px ink-soft, 12px top.
+  RIGHT: App Store badge (140×42px placeholder, radius-md) + Google Play badge (same size)
+    side by side, 12px gap + small 80×80px QR code placeholder right of the badges, "Scan
+    to download" JetBrains Mono 9px mute centred below QR.
+
+---
+
+FRAME 4 — MOBILE COMPANION (390px wide, single scrolling stack, all 3 frames condensed):
+  Hero: stacked (text block, then image below, full-width), CTAs full-width stacked not
+    side-by-side.
+  Feature grid: single column, 1 card per row, full-width.
+  Membership cards: stacked vertically, full-width each.
+  App download strip: badges stacked vertically, full-width, QR code centred below both.
+
+---
+
+Output 4 frames: Desktop Hero, Desktop Feature Zone, Desktop Membership + Download,
+Mobile Companion (full stack).
+```
+
+---
+
 ## APPENDIX — SCREEN INVENTORY
 
 Complete list of screens to design:
