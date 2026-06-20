@@ -16,6 +16,7 @@ interface Action {
   label: string;
   rep: number;
   credits: number;
+  credits_variable?: boolean;
 }
 
 interface Tier {
@@ -138,7 +139,7 @@ function createStyles(c: ColorPalette) {
     },
     tableActivityCell: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, paddingRight: space[2] },
     tableNumCell: { width: 64, fontFamily: fonts.monoBold, fontSize: fontSize.sm, textAlign: "right" },
-    tableCreditNum: { color: "#92400e" },
+    tableCreditNum: { color: "#92400e", width: 78 },
     tableRepNum: { color: "#5b21b6" },
     tableDash: { color: c.ghost },
     loader: { padding: space[8], alignItems: "center" },
@@ -262,7 +263,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
                       <View key={a.action} style={styles.tableRow}>
                         <Text style={styles.tableActivityCell}>{a.label}</Text>
                         <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
-                          {a.credits > 0 ? `+${a.credits}` : "—"}
+                          {a.credits > 0 ? `${a.credits_variable ? "Up to " : ""}+${a.credits}` : "—"}
                         </Text>
                         <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
                           {a.rep > 0 ? `+${a.rep}` : "—"}
@@ -305,7 +306,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
                       <View key={a.action} style={styles.tableRow}>
                         <Text style={styles.tableActivityCell}>{a.label}</Text>
                         <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
-                          {a.credits > 0 ? `+${a.credits}` : "—"}
+                          {a.credits > 0 ? `${a.credits_variable ? "Up to " : ""}+${a.credits}` : "—"}
                         </Text>
                         <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
                           {a.rep > 0 ? `+${a.rep}` : "—"}

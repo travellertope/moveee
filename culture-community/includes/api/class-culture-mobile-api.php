@@ -3383,7 +3383,6 @@ class Culture_Mobile_API {
             'magazine_share'        => 'Share an article',
             'directory_entry'       => 'Add a directory entry',
             'directory_opt_in'      => 'Opt into the directory',
-            'game_completed'        => 'Complete a game',
             'poll_vote'             => 'Vote in a poll',
             'profile_completed'     => 'Complete your profile',
             'email_verified'        => 'Verify your email',
@@ -3399,6 +3398,25 @@ class Culture_Mobile_API {
                 'label'   => $label,
                 'rep'     => $rep,
                 'credits' => $credits,
+            );
+        }
+
+        // Games award credits proportional to score (see
+        // Culture_REST_API::handle_games_complete() / GAME_MAX_CREDITS), not the
+        // flat 'game_completed' value above — show the real per-game ceiling
+        // instead of a flat number that never matched what players actually got.
+        $game_rep = isset( $point_values['game_completed'] ) ? (int) $point_values['game_completed'] : 0;
+        $game_labels = array(
+            'trivia'      => 'Complete Daily Trivia',
+            'who-said-it' => 'Complete Who Said It',
+        );
+        foreach ( Culture_REST_API::GAME_MAX_CREDITS as $game_type => $max_credits ) {
+            $actions[] = array(
+                'action'           => 'game_completed_' . $game_type,
+                'label'            => isset( $game_labels[ $game_type ] ) ? $game_labels[ $game_type ] : 'Complete a game',
+                'rep'              => $game_rep,
+                'credits'          => $max_credits,
+                'credits_variable' => true,
             );
         }
 
