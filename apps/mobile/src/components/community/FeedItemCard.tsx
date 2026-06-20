@@ -9,6 +9,7 @@ import {
   ScrollView,
   Share,
   Animated,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,6 +40,14 @@ interface FeedCardProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+// Full-bleed photo carousels (CreativeShowcaseCard) size each slide so a fixed
+// sliver of the next one is always visible, signalling the strip is scrollable
+// instead of looking like a single static image.
+const SCREEN_W = Dimensions.get("window").width;
+const CAROUSEL_PEEK = 32;
+const CAROUSEL_GAP = 8;
+const CAROUSEL_ITEM_W = SCREEN_W - 32 /* card margins */ - 14 /* left padding */ - CAROUSEL_PEEK;
 
 function timeAgo(d: string): string {
   if (!d) return "";
@@ -1499,14 +1508,16 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMen
               horizontal
               showsHorizontalScrollIndicator={false}
               style={{ marginTop: 10, height: 200 }}
-              contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
+              contentContainerStyle={{ gap: CAROUSEL_GAP, paddingHorizontal: 14 }}
+              snapToInterval={CAROUSEL_ITEM_W + CAROUSEL_GAP}
+              decelerationRate="fast"
               onMomentumScrollEnd={(e) => {
-                const idx = Math.round(e.nativeEvent.contentOffset.x / 260);
+                const idx = Math.round(e.nativeEvent.contentOffset.x / (CAROUSEL_ITEM_W + CAROUSEL_GAP));
                 setActiveIdx(Math.min(idx, count - 1));
               }}
             >
               {gallery.map((src, i) => (
-                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={260} onPress={() => setLightboxIdx(i)} />
+                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={CAROUSEL_ITEM_W} onPress={() => setLightboxIdx(i)} />
               ))}
             </ScrollView>
             <Text style={styles.photoCounter}>
