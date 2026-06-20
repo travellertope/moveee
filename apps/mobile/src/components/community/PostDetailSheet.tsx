@@ -331,10 +331,13 @@ function ReactionsRow({
 // ── Template bodies ─────────────────────────────────────────────────────────────
 
 function TemplatePost({ item, c, styles, onMentionPress }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles>; onMentionPress?: (username: string) => void }) {
+  const images = item.galleryImages ?? [];
   return (
     <>
       {item.title ? <HashtagText text={item.title} style={styles.bodyText} onMentionPress={onMentionPress} /> : null}
-      {item.image ? <TappableHero uri={item.image} /> : null}
+      {images.length > 0
+        ? <GalleryGrid images={images} />
+        : item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
 }

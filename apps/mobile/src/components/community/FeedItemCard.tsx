@@ -1333,7 +1333,8 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const gallery = item.galleryImages ?? [];
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
   const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
@@ -1345,9 +1346,11 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
         <View style={{ paddingHorizontal: 14 }}>
           <HashtagText text={displayBody} style={styles.cardBody} onMentionPress={handleMentionPress} />
         </View>
-        {item.image ? (
+        {gallery.length > 0 ? (
+          <GalleryStrip images={gallery} height={220} width={220} onTap={(i) => setLightboxIdx(i)} />
+        ) : item.image ? (
           <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder height={220} src={item.image} onPress={() => setLightboxOpen(true)} />
+            <ImgPlaceholder height={220} src={item.image} onPress={() => setLightboxIdx(0)} />
           </View>
         ) : hasLink ? (
           <View style={{ marginTop: 10 }}>
@@ -1356,9 +1359,12 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      {item.image && (
-        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
-      )}
+      <ImageLightbox
+        visible={lightboxIdx !== null}
+        images={gallery.length > 0 ? gallery : item.image ? [item.image] : []}
+        initialIndex={lightboxIdx ?? 0}
+        onClose={() => setLightboxIdx(null)}
+      />
     </>
   );
 }
@@ -1577,7 +1583,10 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
 function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const gallery = item.galleryImages ?? (item.image ? [item.image] : []);
   return (
+    <>
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
@@ -1616,8 +1625,13 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
           </View>
         ) : null}
       </View>
+      {gallery.length > 0 ? (
+        <GalleryStrip images={gallery} height={130} width={180} onTap={(i) => setLightboxIdx(i)} />
+      ) : null}
       <FeedReactionBar item={item} marginTop={10} />
     </TouchableOpacity>
+    <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
+    </>
   );
 }
 
@@ -1743,8 +1757,9 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [rsvped, setRsvped] = useState(false);
+  const gallery = item.galleryImages ?? (item.image ? [item.image] : []);
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const handleRsvp = async () => {
@@ -1767,7 +1782,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
           {/* Compact thumbnail beside title/date/location, instead of a full-width hero */}
           <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
             {item.image ? (
-              <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
+              <TouchableOpacity onPress={() => setLightboxIdx(0)} activeOpacity={0.9}>
                 <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={item.image} />
               </TouchableOpacity>
             ) : (
@@ -1837,11 +1852,12 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
             </View>
           ) : null}
         </View>
+        {gallery.length > 1 ? (
+          <GalleryStrip images={gallery} height={100} width={140} onTap={(i) => setLightboxIdx(i)} />
+        ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      {item.image && (
-        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
-      )}
+      <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
     </>
   );
 }
