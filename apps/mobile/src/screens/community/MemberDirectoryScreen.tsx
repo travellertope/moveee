@@ -341,7 +341,7 @@ function createStyles(c: ColorPalette) {
     },
     searchRow: {
       height: 48, flexDirection: "row", alignItems: "center",
-      paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.ghost,
+      paddingHorizontal: 16,
     },
     searchInput: {
       flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
