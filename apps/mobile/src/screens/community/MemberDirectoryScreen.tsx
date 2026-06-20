@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, ScrollView,
+  StyleSheet, SafeAreaView, ActivityIndicator,
 } from "react-native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
@@ -125,6 +125,7 @@ export default function MemberDirectoryScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [discOpen,   setDiscOpen]   = useState(false);
   const [locOpen,    setLocOpen]    = useState(false);
+  const [cityOpen,   setCityOpen]   = useState(false);
   const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
@@ -203,7 +204,7 @@ export default function MemberDirectoryScreen() {
             onChangeText={setSearch}
           />
           <TouchableOpacity
-            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); setLocOpen(false); }}
+            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); setLocOpen(false); setCityOpen(false); }}
             style={[styles.filterIconBtn, filtersOpen && styles.filterIconBtnActive]}
           >
             <Ionicons name="options-outline" size={20} color={filtersOpen ? c.paper : c.ink} />
@@ -221,7 +222,7 @@ export default function MemberDirectoryScreen() {
                 style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
                 onPress={() => {
                   if (discipline !== "All") { setDiscipline("All"); }
-                  else { setDiscOpen(!discOpen); setLocOpen(false); }
+                  else { setDiscOpen(!discOpen); setLocOpen(false); setCityOpen(false); }
                 }}
               >
                 <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
@@ -232,13 +233,26 @@ export default function MemberDirectoryScreen() {
                 style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
                 onPress={() => {
                   if (location !== "All") { setLocation("All"); }
-                  else { setLocOpen(!locOpen); setDiscOpen(false); }
+                  else { setLocOpen(!locOpen); setDiscOpen(false); setCityOpen(false); }
                 }}
               >
                 <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
                   {location === "All" ? "Location ▾" : `${location} ✕`}
                 </Text>
               </TouchableOpacity>
+              {availableCities.length > 1 && (
+                <TouchableOpacity
+                  style={[styles.filterChip, cityFilter !== "All" && styles.filterChipActive]}
+                  onPress={() => {
+                    if (cityFilter !== "All") { setCityFilter("All"); }
+                    else { setCityOpen(!cityOpen); setDiscOpen(false); setLocOpen(false); }
+                  }}
+                >
+                  <Text style={[styles.filterChipText, cityFilter !== "All" && styles.filterChipTextActive]}>
+                    {cityFilter === "All" ? "City ▾" : `${cityFilter} ✕`}
+                  </Text>
+                </TouchableOpacity>
+              )}
               {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
                 <TouchableOpacity onPress={() => { setDiscipline("All"); setLocation("All"); setCityFilter("All"); }}>
                   <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: c.mute }}>Clear all</Text>
@@ -249,40 +263,6 @@ export default function MemberDirectoryScreen() {
           </>
         )}
       </View>
-
-      {/* City strip — only shown when filters panel is open */}
-      {filtersOpen && availableCities.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ height: 44, backgroundColor: c.paperWarm, borderBottomWidth: 1, borderBottomColor: c.ghost }}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, flexDirection: "row", alignItems: "center" }}
-        >
-          {availableCities.map((city) => {
-            const isActive = city === cityFilter;
-            const label = city === "All" ? "All cities" : (city === user?.city ? `📍 ${city}` : city);
-            return (
-              <TouchableOpacity
-                key={city}
-                onPress={() => setCityFilter(city)}
-                style={{
-                  paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99,
-                  borderWidth: 1, alignSelf: "center",
-                  borderColor: isActive ? c.ink : c.ghost,
-                  backgroundColor: isActive ? c.ink : "transparent",
-                }}
-              >
-                <Text style={{
-                  fontFamily: fonts.mono, fontSize: 10,
-                  color: isActive ? c.paper : c.mute,
-                }}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={c.gold} />
@@ -313,7 +293,7 @@ export default function MemberDirectoryScreen() {
         />
       )}
 
-      {/* Dropdown overlays — rendered last so they paint above the city strip / grid on Android */}
+      {/* Dropdown overlays — rendered last so they paint above the grid on Android */}
       {filtersOpen && discOpen && (
         <View style={styles.dropdown}>
           {DISCIPLINES.map((d) => (
@@ -330,6 +310,18 @@ export default function MemberDirectoryScreen() {
               <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
             </TouchableOpacity>
           ))}
+        </View>
+      )}
+      {filtersOpen && cityOpen && (
+        <View style={styles.dropdown}>
+          {availableCities.map((city) => {
+            const label = city === "All" ? "All cities" : (city === user?.city ? `📍 ${city}` : city);
+            return (
+              <TouchableOpacity key={city} style={styles.dropdownItem} onPress={() => { setCityFilter(city); setCityOpen(false); }}>
+                <Text style={[styles.dropdownItemText, cityFilter === city && { color: c.ochre, fontFamily: fonts.sansBold }]}>{label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
     </SafeAreaView>
