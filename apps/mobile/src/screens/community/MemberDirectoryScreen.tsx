@@ -134,18 +134,30 @@ export default function MemberDirectoryScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Derive city list from loaded members — user's city first
+  // Derive city list from loaded members in the active location — user's city first
   const availableCities = useMemo(() => {
     const userCity = (user?.city ?? "").trim();
     const seen = new Set<string>();
     const cities: string[] = ["All"];
     if (userCity) { cities.push(userCity); seen.add(userCity.toLowerCase()); }
-    members.forEach((m) => {
-      const c = (m.city ?? "").trim();
-      if (c && !seen.has(c.toLowerCase())) { seen.add(c.toLowerCase()); cities.push(c); }
-    });
+    members
+      .filter((m) =>
+        location === "All" ||
+        (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase())
+      )
+      .forEach((m) => {
+        const c = (m.city ?? "").trim();
+        if (c && !seen.has(c.toLowerCase())) { seen.add(c.toLowerCase()); cities.push(c); }
+      });
     return cities;
-  }, [members, user?.city]);
+  }, [members, user?.city, location]);
+
+  // Reset city filter if it's no longer a valid option after a location change
+  useEffect(() => {
+    if (cityFilter !== "All" && !availableCities.some((c) => c.toLowerCase() === cityFilter.toLowerCase())) {
+      setCityFilter("All");
+    }
+  }, [availableCities, cityFilter]);
 
   useEffect(() => {
     const q = search.toLowerCase();
