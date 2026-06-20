@@ -331,10 +331,13 @@ function ReactionsRow({
 // ── Template bodies ─────────────────────────────────────────────────────────────
 
 function TemplatePost({ item, c, styles, onMentionPress }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles>; onMentionPress?: (username: string) => void }) {
+  const images = item.galleryImages ?? [];
   return (
     <>
       {item.title ? <HashtagText text={item.title} style={styles.bodyText} onMentionPress={onMentionPress} /> : null}
-      {item.image ? <TappableHero uri={item.image} /> : null}
+      {images.length > 0
+        ? <GalleryGrid images={images} />
+        : item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
 }
@@ -468,7 +471,9 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
 }
 
 function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
   const images = item.galleryImages ?? [];
+  const collaboratorUsername = item.showcaseCollaboratorUsername;
   return (
     <>
       <Text style={styles.serifTitle}>{item.showcaseTitle ?? item.title}</Text>
@@ -486,7 +491,11 @@ function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: Colo
         <View style={[styles.tagRow, { backgroundColor: c.paperWarm, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center" }]}>
           <Text style={{ fontSize: 14 }}>🤝</Text>
           <Text style={{ fontSize: 13, color: c.inkSoft, flex: 1, marginLeft: 6 }}>Collaboration with {item.showcaseCollaborator}</Text>
-          <Text style={{ fontSize: 13, color: c.gold }}>View profile →</Text>
+          {collaboratorUsername ? (
+            <TouchableOpacity onPress={() => nav.navigate("MemberProfile", { username: collaboratorUsername })}>
+              <Text style={{ fontSize: 13, color: c.gold }}>View profile →</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
     </>

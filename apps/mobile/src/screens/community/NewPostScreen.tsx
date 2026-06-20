@@ -329,33 +329,46 @@ export default function NewPostScreen() {
 
   const MAX_IMAGES = 4;
 
+  // Guards against a second launchImageLibraryAsync() firing before the first
+  // resolves. On a fresh install the OS permission dialog delays the picker
+  // opening, which makes a double-tap on "add photo" easy — two overlapping
+  // picker launches can both try to resume the same underlying Android
+  // activity-result continuation, crashing with "Already resumed".
+  const isPickingImagesRef = useRef(false);
+
   const pickImages = useCallback(async (multi = false) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: multi,
-      selectionLimit: multi ? MAX_IMAGES : 1,
-      quality: 0.85,
-      // iOS Photos can store originals as HEIC; "Compatible" forces the
-      // picker to hand back a JPEG copy instead. Without this, a HEIC file
-      // gets mislabeled as image/jpeg on upload (see uploadImages()) and
-      // the server's webp conversion silently falls back to uploading the
-      // raw, unreadable HEIC bytes under a .jpg URL — image looks "attached"
-      // but never renders anywhere.
-      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-    });
-    if (!result.canceled) {
-      if (multi) {
-        setImages((prev) => {
-          const newUris = result.assets.map((a) => a.uri);
-          const combined = [...prev, ...newUris];
-          if (combined.length > MAX_IMAGES) {
-            Alert.alert("Maximum 4 images", "You can add up to 4 images per post.");
-          }
-          return combined.slice(0, MAX_IMAGES);
-        });
-      } else {
-        setImages([result.assets[0].uri]);
+    if (isPickingImagesRef.current) return;
+    isPickingImagesRef.current = true;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: multi,
+        selectionLimit: multi ? MAX_IMAGES : 1,
+        quality: 0.85,
+        // iOS Photos can store originals as HEIC; "Compatible" forces the
+        // picker to hand back a JPEG copy instead. Without this, a HEIC file
+        // gets mislabeled as image/jpeg on upload (see uploadImages()) and
+        // the server's webp conversion silently falls back to uploading the
+        // raw, unreadable HEIC bytes under a .jpg URL — image looks "attached"
+        // but never renders anywhere.
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      });
+      if (!result.canceled) {
+        if (multi) {
+          setImages((prev) => {
+            const newUris = result.assets.map((a) => a.uri);
+            const combined = [...prev, ...newUris];
+            if (combined.length > MAX_IMAGES) {
+              Alert.alert("Maximum 4 images", "You can add up to 4 images per post.");
+            }
+            return combined.slice(0, MAX_IMAGES);
+          });
+        } else {
+          setImages([result.assets[0].uri]);
+        }
       }
+    } finally {
+      isPickingImagesRef.current = false;
     }
   }, []);
 
@@ -1669,7 +1682,7 @@ function createStyles(c: ColorPalette) {
     // Fav quote
     favQuoteWrap: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 16 },
     favQuoteInput: {
-      fontFamily: fonts.sans, fontSize: 14, fontStyle: "italic",
+      fontFamily: fonts.sansItalic, fontSize: 14,
       color: c.ink, lineHeight: 22, minHeight: 60, textAlignVertical: "top",
     },
 
@@ -1708,7 +1721,7 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
     },
     quoteBoxInput: {
-      fontFamily: fonts.serif, fontSize: 18, fontStyle: "italic",
+      fontFamily: fonts.serifItalic, fontSize: 18,
       color: c.ink, lineHeight: 28, minHeight: 100, textAlignVertical: "top",
     },
 

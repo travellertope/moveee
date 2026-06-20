@@ -107,6 +107,7 @@ function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedIte
     showcaseTitle: post.showcase_title || "",
     showcaseMedium: post.showcase_medium || "",
     showcaseCollaborator: post.showcase_collaborator || "",
+    showcaseCollaboratorUsername: post.showcase_collaborator_username || "",
     bookTitle: post.book_title || "",
     bookAuthor: post.book_author || "",
     bookStatus: post.book_status || "",
@@ -253,7 +254,12 @@ function BadgeRow({
   );
 }
 
-function MiniPostCard({ post, styles, onPress }: { post: CommunityPost; styles: ReturnType<typeof createStyles>; onPress: () => void }) {
+function MiniPostCard({
+  post, styles, onPress, isSelf, isPinned, onTogglePin,
+}: {
+  post: CommunityPost; styles: ReturnType<typeof createStyles>; onPress: () => void;
+  isSelf?: boolean; isPinned?: boolean; onTogglePin?: () => void;
+}) {
   const meta = TEMPLATE_META[post.template_type] ?? { emoji: "📝", label: "Post" };
   return (
     <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.7}>
@@ -262,6 +268,11 @@ function MiniPostCard({ post, styles, onPress }: { post: CommunityPost; styles: 
           <Text style={styles.templateBadgeText}>{meta.emoji} {meta.label}</Text>
         </View>
         <Text style={styles.postTimeAgo}>{timeAgo(post.publishedAt)}</Text>
+        {isSelf && onTogglePin && (
+          <TouchableOpacity onPress={onTogglePin} style={styles.pinBtn} hitSlop={8}>
+            <Ionicons name={isPinned ? "bookmark" : "bookmark-outline"} size={16} color={isPinned ? "#C5491F" : styles.postMeta.color as string} />
+          </TouchableOpacity>
+        )}
       </View>
       <Text style={styles.postExcerpt} numberOfLines={2}>{post.content}</Text>
       <View style={styles.postMetaRow}>
@@ -272,41 +283,56 @@ function MiniPostCard({ post, styles, onPress }: { post: CommunityPost; styles: 
   );
 }
 
-function PortfolioGrid({ items, isOwnProfile, styles, c }: {
-  items: PortfolioItem[]; isOwnProfile: boolean;
+function PortfolioGrid({ items, pinnedPosts, isOwnProfile, styles, c, onPressPinned, onUnpin, onAdd }: {
+  items: PortfolioItem[]; pinnedPosts: CommunityPost[]; isOwnProfile: boolean;
   styles: ReturnType<typeof createStyles>; c: ColorPalette;
+  onPressPinned: (post: CommunityPost) => void; onUnpin: (post: CommunityPost) => void;
+  onAdd: () => void;
 }) {
   const colW = (SCREEN_W - 32 - 8) / 2;
-  if (items.length === 0 && !isOwnProfile) {
+  if (items.length === 0 && pinnedPosts.length === 0 && !isOwnProfile) {
     return <Text style={styles.emptyTabText}>No portfolio items yet.</Text>;
   }
   return (
-    <View style={styles.portfolioGrid}>
-      {items.map((item, i) => {
-        const imageUrl = item.media?.find((m) => m.type === "image")?.url;
-        const year = item.created_at ? new Date(item.created_at).getFullYear() : "";
-        return (
-          <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
-            <View style={styles.portfolioImage}>
-              {imageUrl
-                ? <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
-              }
+    <View>
+      {pinnedPosts.map((post) => (
+        <MiniPostCard
+          key={`pin-${post.id}`}
+          post={post}
+          styles={styles}
+          onPress={() => onPressPinned(post)}
+          isSelf={isOwnProfile}
+          isPinned
+          onTogglePin={() => onUnpin(post)}
+        />
+      ))}
+      <View style={styles.portfolioGrid}>
+        {items.map((item, i) => {
+          const imageUrl = item.media?.find((m) => m.type === "image")?.url;
+          const year = item.created_at ? new Date(item.created_at).getFullYear() : "";
+          return (
+            <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
+              <View style={styles.portfolioImage}>
+                {imageUrl
+                  ? <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                  : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
+                }
+              </View>
+              <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.portfolioYear}>{year}</Text>
             </View>
-            <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
-            <Text style={styles.portfolioYear}>{year}</Text>
-          </View>
-        );
-      })}
-      {isOwnProfile && (
-        <TouchableOpacity
-          style={[styles.portfolioAddBtn, { width: colW }]}
-          onPress={() => openInApp("https://connect.themoveee.com/member/portfolio")}
-        >
-          <Ionicons name="add" size={20} color={c.ghost} />
-          <Text style={styles.portfolioAddText}>Add portfolio item</Text>
-        </TouchableOpacity>
-      )}
+          );
+        })}
+        {isOwnProfile && (
+          <TouchableOpacity
+            style={[styles.portfolioAddBtn, { width: colW }]}
+            onPress={onAdd}
+          >
+            <Ionicons name="add" size={20} color={c.ghost} />
+            <Text style={styles.portfolioAddText}>Add portfolio item</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -323,6 +349,7 @@ export default function MemberProfileScreen() {
   const [profile,   setProfile]   = useState<PublicProfile | null>(null);
   const [posts,     setPosts]     = useState<CommunityPost[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<CommunityPost[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [postPage,  setPostPage]  = useState(1);
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
@@ -358,9 +385,19 @@ export default function MemberProfileScreen() {
 
   useEffect(() => {
     if (!profile || activeTab !== "portfolio") return;
-    api.get<{ items: PortfolioItem[] }>(`${MOBILE_API}/portfolio?user_id=${profile.id}`)
-      .then((d) => setPortfolio(d?.items ?? [])).catch(() => {});
+    api.get<{ items: PortfolioItem[]; pinned_posts_data: CommunityPost[] }>(`${MOBILE_API}/portfolio?user_id=${profile.id}`)
+      .then((d) => {
+        setPortfolio(d?.items ?? []);
+        setPinnedPosts(d?.pinned_posts_data ?? []);
+      }).catch(() => {});
   }, [profile, activeTab]);
+
+  const togglePin = async (post: CommunityPost, pinned: boolean) => {
+    try {
+      await api.post(`${MOBILE_API}/portfolio/pin`, { post_id: Number(post.id), pinned });
+      setPinnedPosts((prev) => pinned ? [...prev, post] : prev.filter((p) => p.id !== post.id));
+    } catch { /* ignore */ }
+  };
 
   const isPro = profile?.tier === "patron";
   const isSelf = !!currentUser && !!profile && String(currentUser.id) === String(profile.id);
@@ -546,6 +583,9 @@ export default function MemberProfileScreen() {
                     post={p}
                     styles={styles}
                     onPress={() => setSheetItem(mapPostToFeedItem(p, profile))}
+                    isSelf={isSelf}
+                    isPinned={pinnedPosts.some((pp) => pp.id === p.id)}
+                    onTogglePin={() => togglePin(p, !pinnedPosts.some((pp) => pp.id === p.id))}
                   />
                 ))}
                 {posts.length > 0 && (
@@ -556,7 +596,16 @@ export default function MemberProfileScreen() {
                 {posts.length === 0 && <Text style={styles.emptyTabText}>No posts yet.</Text>}
               </>
             ) : (
-              <PortfolioGrid items={portfolio} isOwnProfile={isSelf} styles={styles} c={c} />
+              <PortfolioGrid
+                items={portfolio}
+                pinnedPosts={pinnedPosts}
+                isOwnProfile={isSelf}
+                styles={styles}
+                c={c}
+                onPressPinned={(post) => setSheetItem(mapPostToFeedItem(post, profile))}
+                onUnpin={(post) => togglePin(post, false)}
+                onAdd={() => nav.navigate("NewPortfolioItem" as any)}
+              />
             )}
           </View>
         </View>
@@ -726,6 +775,7 @@ function createStyles(c: ColorPalette) {
     postExcerpt:   { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 20 },
     postMetaRow:   { flexDirection: "row", gap: 16, marginTop: 12 },
     postMeta:      { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
+    pinBtn:        { marginLeft: 8 },
 
     loadMore:     { marginTop: 8, alignItems: "center", paddingVertical: 8 },
     loadMoreText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },

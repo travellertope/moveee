@@ -9,6 +9,7 @@ import {
   ScrollView,
   Share,
   Animated,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,6 +40,14 @@ interface FeedCardProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+// Full-bleed photo carousels (CreativeShowcaseCard) size each slide so a fixed
+// sliver of the next one is always visible, signalling the strip is scrollable
+// instead of looking like a single static image.
+const SCREEN_W = Dimensions.get("window").width;
+const CAROUSEL_PEEK = 32;
+const CAROUSEL_GAP = 8;
+const CAROUSEL_ITEM_W = SCREEN_W - 32 /* card margins */ - 14 /* left padding */ - CAROUSEL_PEEK;
 
 function timeAgo(d: string): string {
   if (!d) return "";
@@ -554,8 +563,7 @@ function createStyles(c: ColorPalette) {
       paddingLeft: 10,
     },
     bookFavQuoteText: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic" as const,
+      fontFamily: fonts.serifItalic,
       fontSize: fontSize.sm,
       color: c.inkSoft,
       lineHeight: 20,
@@ -740,8 +748,7 @@ function createStyles(c: ColorPalette) {
       marginBottom: -4,
     },
     cqQuoteText: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic" as const,
+      fontFamily: fonts.serifItalic,
       fontSize: 20,
       color: c.ink,
       lineHeight: 30,
@@ -1333,7 +1340,8 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const gallery = item.galleryImages ?? [];
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
   const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
@@ -1345,9 +1353,11 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
         <View style={{ paddingHorizontal: 14 }}>
           <HashtagText text={displayBody} style={styles.cardBody} onMentionPress={handleMentionPress} />
         </View>
-        {item.image ? (
+        {gallery.length > 0 ? (
+          <GalleryStrip images={gallery} height={220} width={220} onTap={(i) => setLightboxIdx(i)} />
+        ) : item.image ? (
           <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder height={220} src={item.image} onPress={() => setLightboxOpen(true)} />
+            <ImgPlaceholder height={220} src={item.image} onPress={() => setLightboxIdx(0)} />
           </View>
         ) : hasLink ? (
           <View style={{ marginTop: 10 }}>
@@ -1356,9 +1366,12 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      {item.image && (
-        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
-      )}
+      <ImageLightbox
+        visible={lightboxIdx !== null}
+        images={gallery.length > 0 ? gallery : item.image ? [item.image] : []}
+        initialIndex={lightboxIdx ?? 0}
+        onClose={() => setLightboxIdx(null)}
+      />
     </>
   );
 }
@@ -1406,7 +1419,7 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge, onMention
       <View style={{ paddingHorizontal: 14 }}>
         <BadgePill label="🔥 CULTURAL TAKE" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
         {item.culturalTakeHeadline ? (
-          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
+          <Text style={[styles.cardTitle, { marginTop: 8, fontFamily: fonts.serifBoldItalic }]}>
             {item.culturalTakeHeadline}
           </Text>
         ) : null}
@@ -1495,14 +1508,16 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMen
               horizontal
               showsHorizontalScrollIndicator={false}
               style={{ marginTop: 10, height: 200 }}
-              contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
+              contentContainerStyle={{ gap: CAROUSEL_GAP, paddingHorizontal: 14 }}
+              snapToInterval={CAROUSEL_ITEM_W + CAROUSEL_GAP}
+              decelerationRate="fast"
               onMomentumScrollEnd={(e) => {
-                const idx = Math.round(e.nativeEvent.contentOffset.x / 260);
+                const idx = Math.round(e.nativeEvent.contentOffset.x / (CAROUSEL_ITEM_W + CAROUSEL_GAP));
                 setActiveIdx(Math.min(idx, count - 1));
               }}
             >
               {gallery.map((src, i) => (
-                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={260} onPress={() => setLightboxIdx(i)} />
+                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={CAROUSEL_ITEM_W} onPress={() => setLightboxIdx(i)} />
               ))}
             </ScrollView>
             <Text style={styles.photoCounter}>
@@ -1577,7 +1592,10 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
 function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const gallery = item.galleryImages ?? (item.image ? [item.image] : []);
   return (
+    <>
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
@@ -1616,8 +1634,13 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
           </View>
         ) : null}
       </View>
+      {gallery.length > 0 ? (
+        <GalleryStrip images={gallery} height={130} width={180} onTap={(i) => setLightboxIdx(i)} />
+      ) : null}
       <FeedReactionBar item={item} marginTop={10} />
     </TouchableOpacity>
+    <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
+    </>
   );
 }
 
@@ -1743,8 +1766,9 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [rsvped, setRsvped] = useState(false);
+  const gallery = item.galleryImages ?? (item.image ? [item.image] : []);
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const handleRsvp = async () => {
@@ -1767,7 +1791,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
           {/* Compact thumbnail beside title/date/location, instead of a full-width hero */}
           <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
             {item.image ? (
-              <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
+              <TouchableOpacity onPress={() => setLightboxIdx(0)} activeOpacity={0.9}>
                 <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={item.image} />
               </TouchableOpacity>
             ) : (
@@ -1837,11 +1861,12 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
             </View>
           ) : null}
         </View>
+        {gallery.length > 1 ? (
+          <GalleryStrip images={gallery} height={100} width={140} onTap={(i) => setLightboxIdx(i)} />
+        ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      {item.image && (
-        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
-      )}
+      <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { INTERESTS } from "@moveee/utils/interest-mappings";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Pressable,
@@ -198,15 +198,24 @@ function ProfileTab() {
     }
   };
 
+  // Guards against a second launchImageLibraryAsync() firing before the first
+  // resolves — see NewPostScreen.tsx's isPickingImagesRef for why this matters
+  // (the OS permission dialog on a fresh install delays the picker opening,
+  // making a double-tap easy, which crashes with "Already resumed").
+  const isPickingAvatarRef = useRef(false);
+  const isPickingCoverRef = useRef(false);
+
   const handleAvatarPick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
+    if (isPickingAvatarRef.current) return;
+    isPickingAvatarRef.current = true;
     try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
       const uri = result.assets[0].uri;
       const fileName = uri.split("/").pop() ?? "avatar.jpg";
       const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -214,18 +223,22 @@ function ProfileTab() {
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload photo.");
+    } finally {
+      isPickingAvatarRef.current = false;
     }
   };
 
   const handleCoverPhotoPick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
+    if (isPickingCoverRef.current) return;
+    isPickingCoverRef.current = true;
     try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
       const uri = result.assets[0].uri;
       const fileName = uri.split("/").pop() ?? "cover.jpg";
       const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -233,6 +246,8 @@ function ProfileTab() {
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload cover photo.");
+    } finally {
+      isPickingCoverRef.current = false;
     }
   };
 

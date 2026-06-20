@@ -651,11 +651,28 @@ class Culture_Mobile_API {
 
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
-            'methods'             => 'GET',
-            'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_save_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/portfolio/pin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_pin_portfolio_post' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
             'args'                => array(
-                'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'pinned'  => array( 'default'  => true ),
             ),
         ) );
 
@@ -1315,6 +1332,9 @@ class Culture_Mobile_API {
             }
             if ( $request->get_param( 'collaborator' ) ) {
                 update_post_meta( $post_id, '_showcase_collaborator', sanitize_text_field( $request->get_param( 'collaborator' ) ) );
+            }
+            if ( $request->get_param( 'collaborator_username' ) ) {
+                update_post_meta( $post_id, '_showcase_collaborator_username', sanitize_text_field( $request->get_param( 'collaborator_username' ) ) );
             }
             if ( $request->get_param( 'video_url' ) ) {
                 update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
@@ -2218,6 +2238,17 @@ class Culture_Mobile_API {
         return rest_ensure_response( $response );
     }
 
+    /**
+     * post_date_gmt is a MySQL datetime string ("Y-m-d H:i:s") with no
+     * timezone marker. JS engines parsing that shape (space instead of "T",
+     * no "Z"/offset) treat it as local device time rather than UTC, so a
+     * post made seconds ago appears N hours old/new depending on the
+     * device's UTC offset. Appending "Z" makes the UTC-ness explicit.
+     */
+    private static function gmt_iso( string $mysql_gmt ): string {
+        return $mysql_gmt ? str_replace( ' ', 'T', $mysql_gmt ) . 'Z' : '';
+    }
+
     private static function get_pulse_feed_items(): array {
         $user_id       = get_current_user_id();
         $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
@@ -2241,7 +2272,7 @@ class Culture_Mobile_API {
                 'type'          => 'pulse',
                 'title'         => get_the_title( $post ),
                 'slug'          => $post->post_name,
-                'date'          => $post->post_date_gmt,
+                'date'          => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'       => wp_strip_all_tags( $post->post_excerpt ),
                 'body'          => wpautop( $post->post_content ),
                 'image'         => $thumb ?: null,
@@ -2288,7 +2319,7 @@ class Culture_Mobile_API {
                 'type'        => 'editorial',
                 'title'       => get_the_title( $post ),
                 'slug'        => $post->post_name,
-                'date'        => $post->post_date_gmt,
+                'date'        => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'     => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'image'       => $thumb ?: null,
                 'href'        => '/magazine/' . $post->post_name,
@@ -2346,7 +2377,7 @@ class Culture_Mobile_API {
                 'type'          => 'happening',
                 'title'         => get_the_title( $post ),
                 'slug'          => $post->post_name,
-                'date'          => $post->post_date_gmt,
+                'date'          => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'       => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'body'          => wp_strip_all_tags( $post->post_content ),
                 'image'         => $thumb ?: null,
@@ -2395,7 +2426,7 @@ class Culture_Mobile_API {
                 'type'      => 'directory',
                 'title'     => get_the_title( $post ),
                 'slug'      => $post->post_name,
-                'date'      => $post->post_date_gmt,
+                'date'      => self::gmt_iso( $post->post_date_gmt ),
                 'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
                 'body'      => wp_strip_all_tags( $post->post_content ),
                 'image'     => $thumb ?: null,
@@ -2432,7 +2463,7 @@ class Culture_Mobile_API {
                 'type'        => 'quote',
                 'title'       => wp_strip_all_tags( $post->post_content ?: get_the_title( $post ) ),
                 'slug'        => $post->post_name,
-                'date'        => $post->post_date_gmt,
+                'date'        => self::gmt_iso( $post->post_date_gmt ),
                 'href'        => '/quotes/' . $post->ID . '-' . $post->post_name,
                 'wpId'        => (string) $post->ID,
                 'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
@@ -2549,7 +2580,7 @@ class Culture_Mobile_API {
                 'type'                    => 'community',
                 'title'                   => $body_text ?: get_the_title( $post ),
                 'slug'                    => $post->post_name,
-                'date'                    => $post->post_date_gmt,
+                'date'                    => self::gmt_iso( $post->post_date_gmt ),
                 'image'                   => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
                 'href'                    => '/community/' . $post->post_name,
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
@@ -2603,6 +2634,7 @@ class Culture_Mobile_API {
                 'showcaseTitle'           => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
                 'showcaseMedium'          => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
                 'showcaseCollaborator'    => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+                'showcaseCollaboratorUsername' => get_post_meta( $post->ID, '_showcase_collaborator_username', true ) ?: '',
                 'bookTitle'               => get_post_meta( $post->ID, '_book_title', true ) ?: '',
                 'bookAuthor'              => get_post_meta( $post->ID, '_book_author', true ) ?: '',
                 'bookStatus'              => get_post_meta( $post->ID, '_book_status', true ) ?: '',
@@ -2845,7 +2877,76 @@ class Culture_Mobile_API {
         $requested_user = (int) $request->get_param( 'user_id' );
         $user_id        = $requested_user ?: get_current_user_id();
         $request->set_param( 'user_id', $user_id );
-        return Culture_REST_API::handle_get_portfolio( $request );
+
+        $response = Culture_REST_API::handle_get_portfolio( $request );
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $data         = $response->get_data();
+        $pinned_ids   = array_map( 'absint', (array) ( $data['pinned_posts'] ?? array() ) );
+        $data['pinned_posts_data'] = self::resolve_pinned_posts( $pinned_ids );
+
+        return rest_ensure_response( $data );
+    }
+
+    // Resolves pinned community-post IDs into the same shape format_community_post()
+    // already produces for the member-posts list, preserving the caller's pin order.
+    private static function resolve_pinned_posts( array $post_ids ): array {
+        if ( empty( $post_ids ) ) {
+            return array();
+        }
+
+        $viewer_id     = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'post__in'       => $post_ids,
+            'orderby'        => 'post__in',
+            'posts_per_page' => count( $post_ids ),
+        ) );
+
+        return array_map( function( $post ) use ( $liked_ids, $reactions_map ) {
+            return self::format_community_post( $post, $liked_ids, $reactions_map );
+        }, $query->posts );
+    }
+
+    public static function handle_save_portfolio( $request ) {
+        $request->set_param( 'user_id', get_current_user_id() );
+        return Culture_REST_API::handle_save_portfolio( $request );
+    }
+
+    // POST /mobile/portfolio/pin — toggle a single community post in/out of the
+    // current user's pinned set without touching their manually-added items.
+    public static function handle_pin_portfolio_post( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = absint( $request->get_param( 'post_id' ) );
+        $pinned  = (bool) $request->get_param( 'pinned' );
+
+        if ( ! $post_id || get_post_type( $post_id ) !== 'culture_post' ) {
+            return new WP_Error( 'invalid_post', 'Invalid post.', array( 'status' => 400 ) );
+        }
+        if ( (int) get_post_field( 'post_author', $post_id ) !== $user_id ) {
+            return new WP_Error( 'forbidden', 'You can only pin your own posts.', array( 'status' => 403 ) );
+        }
+
+        $raw = get_user_meta( $user_id, '_portfolio_pinned_posts', true );
+        $ids = json_decode( $raw ?: '[]', true ) ?: array();
+        $ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+
+        if ( $pinned && ! in_array( $post_id, $ids, true ) ) {
+            $ids[] = $post_id;
+        } elseif ( ! $pinned ) {
+            $ids = array_values( array_diff( $ids, array( $post_id ) ) );
+        }
+
+        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $ids ) );
+
+        return rest_ensure_response( array( 'success' => true, 'pinned_posts' => $ids ) );
     }
 
     public static function handle_get_member_posts( $request ) {
@@ -2939,6 +3040,7 @@ class Culture_Mobile_API {
             'showcase_title'            => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
             'showcase_medium'           => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
             'showcase_collaborator'     => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+            'showcase_collaborator_username' => get_post_meta( $post->ID, '_showcase_collaborator_username', true ) ?: '',
             'book_title'                => get_post_meta( $post->ID, '_book_title', true ) ?: '',
             'book_author'               => get_post_meta( $post->ID, '_book_author', true ) ?: '',
             'book_status'               => get_post_meta( $post->ID, '_book_status', true ) ?: '',
@@ -3383,7 +3485,6 @@ class Culture_Mobile_API {
             'magazine_share'        => 'Share an article',
             'directory_entry'       => 'Add a directory entry',
             'directory_opt_in'      => 'Opt into the directory',
-            'game_completed'        => 'Complete a game',
             'poll_vote'             => 'Vote in a poll',
             'profile_completed'     => 'Complete your profile',
             'email_verified'        => 'Verify your email',
@@ -3399,6 +3500,25 @@ class Culture_Mobile_API {
                 'label'   => $label,
                 'rep'     => $rep,
                 'credits' => $credits,
+            );
+        }
+
+        // Games award credits proportional to score (see
+        // Culture_REST_API::handle_games_complete() / GAME_MAX_CREDITS), not the
+        // flat 'game_completed' value above — show the real per-game ceiling
+        // instead of a flat number that never matched what players actually got.
+        $game_rep = isset( $point_values['game_completed'] ) ? (int) $point_values['game_completed'] : 0;
+        $game_labels = array(
+            'trivia'      => 'Complete Daily Trivia',
+            'who-said-it' => 'Complete Who Said It',
+        );
+        foreach ( Culture_REST_API::GAME_MAX_CREDITS as $game_type => $max_credits ) {
+            $actions[] = array(
+                'action'           => 'game_completed_' . $game_type,
+                'label'            => isset( $game_labels[ $game_type ] ) ? $game_labels[ $game_type ] : 'Complete a game',
+                'rep'              => $game_rep,
+                'credits'          => $max_credits,
+                'credits_variable' => true,
             );
         }
 

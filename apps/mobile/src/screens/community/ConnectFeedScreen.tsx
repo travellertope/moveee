@@ -220,7 +220,11 @@ export default function ConnectFeedScreen() {
     return filtered;
   }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion, followedUsernames]);
 
-  const trending = useMemo(() => getTrending(items, 3), [items]);
+  const [trendingExpanded, setTrendingExpanded] = useState(false);
+  const trending = useMemo(
+    () => getTrending(items, trendingExpanded ? 10 : 3),
+    [items, trendingExpanded]
+  );
 
   // Spotlight carousel: computed once (locked via ref) on initial load so pagination
   // never re-inserts/reorders it — avoids re-render loops from a reactive recompute.
@@ -238,6 +242,7 @@ export default function ConnectFeedScreen() {
   }, [visibleItems, spotlightEvents]);
 
   const handleFilter = (label: string) => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     if (label === "✦ For You") {
       setForYou(true);
       setActiveCategory("");
@@ -427,7 +432,11 @@ export default function ConnectFeedScreen() {
           <View style={styles.trendingStrip}>
             <View style={styles.trendingHeader}>
               <Text style={styles.trendingNowLabel}>TRENDING NOW</Text>
-              <Text style={styles.trendingSeeAll}>See all →</Text>
+              <TouchableOpacity onPress={() => setTrendingExpanded((prev) => !prev)}>
+                <Text style={styles.trendingSeeAll}>
+                  {trendingExpanded ? "Show less" : "See all →"}
+                </Text>
+              </TouchableOpacity>
             </View>
             <ScrollView
               horizontal

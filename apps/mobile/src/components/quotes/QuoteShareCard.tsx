@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     lineHeight: 56, marginBottom: -8,
   },
   quoteText: {
-    fontFamily: fonts.serif, fontStyle: "italic", fontSize: 24, lineHeight: 34,
+    fontFamily: fonts.serifItalic, fontSize: 24, lineHeight: 34,
     color: "#f3ece0", textAlign: "center", marginBottom: space[6],
   },
 

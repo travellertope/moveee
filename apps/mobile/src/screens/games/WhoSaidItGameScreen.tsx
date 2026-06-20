@@ -346,7 +346,7 @@ function createStyles(c: ColorPalette) {
       padding: space[5], gap: space[2],
     },
     quoteMarks:  { fontFamily: fonts.serifBold, fontSize: 48, color: c.gold, lineHeight: 40, marginTop: -8 },
-    quoteText:   { fontFamily: fonts.serif, fontSize: fontSize.lg, color: c.ink, lineHeight: 26, fontStyle: "italic" },
+    quoteText:   { fontFamily: fonts.serifItalic, fontSize: fontSize.lg, color: c.ink, lineHeight: 26 },
     quoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: space[1] },
 
     promptText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
@@ -398,7 +398,7 @@ function createStyles(c: ColorPalette) {
     reviewDot:        { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
     reviewDotCorrect: { backgroundColor: c.communityText },
     reviewDotWrong:   { backgroundColor: c.ochre },
-    reviewQuote:      { fontFamily: fonts.serif, fontSize: fontSize.xs, color: c.mute, marginBottom: 4, fontStyle: "italic" },
+    reviewQuote:      { fontFamily: fonts.serifItalic, fontSize: fontSize.xs, color: c.mute, marginBottom: 4 },
     reviewA:          { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.communityText },
     reviewAWrong:     { color: c.ochre },
     reviewYours:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost, marginTop: 2 },

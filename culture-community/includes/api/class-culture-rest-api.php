@@ -990,6 +990,17 @@ class Culture_REST_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/user/portfolio/pin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_pin_portfolio_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'pinned'  => array( 'default'  => true ),
+            ),
+        ) );
+
         // ── Phase 6: Partner Perks & Wallet ──────────────────────────────────
 
         register_rest_route( 'culture/v1', '/perks', array(
@@ -4535,38 +4546,60 @@ class Culture_REST_API {
             update_meta_cache( 'post', wp_list_pluck( $posts, 'ID' ) );
         }
 
-        $result = array();
-
-        foreach ( $posts as $post ) {
-            $pid      = $post->ID;
-            $result[] = array(
-                'id'             => $pid,
-                'slug'           => $post->post_name,
-                'date'           => get_the_date( 'c', $pid ),
-                'text'           => wp_strip_all_tags( $post->post_content ),
-                'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
-                'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
-                'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
-                'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
-                'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
-                'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
-                'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
-                'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
-                'star_rating'    => (int) get_post_meta( $pid, '_star_rating', true ),
-                'location_name'  => get_post_meta( $pid, '_location_name', true ) ?: '',
-                'gallery_images' => json_decode( get_post_meta( $pid, '_gallery_images', true ) ?: '[]', true ),
-                'video_url'      => get_post_meta( $pid, '_video_url', true ) ?: '',
-                'food_dish_name' => get_post_meta( $pid, '_food_dish_name', true ) ?: '',
-                'reactions'      => array(
-                    'love' => (int) get_post_meta( $pid, 'reaction_love', true ),
-                    'fire' => (int) get_post_meta( $pid, 'reaction_fire', true ),
-                    'clap' => (int) get_post_meta( $pid, 'reaction_clap', true ),
-                ),
-                'comment_count'  => (int) $post->comment_count,
-            );
-        }
+        $result = array_map( array( __CLASS__, 'format_community_post_row' ), $posts );
 
         return rest_ensure_response( $result );
+    }
+
+    // Shared per-post field shape (snake_case, web's community-post listing shape)
+    // — used by handle_get_community_posts() and the portfolio pinned-posts resolver
+    // so both surfaces render identically.
+    private static function format_community_post_row( WP_Post $post ): array {
+        $pid = $post->ID;
+        return array(
+            'id'             => $pid,
+            'slug'           => $post->post_name,
+            'date'           => get_the_date( 'c', $pid ),
+            'text'           => wp_strip_all_tags( $post->post_content ),
+            'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
+            'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
+            'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
+            'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
+            'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
+            'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
+            'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
+            'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
+            'star_rating'    => (int) get_post_meta( $pid, '_star_rating', true ),
+            'location_name'  => get_post_meta( $pid, '_location_name', true ) ?: '',
+            'gallery_images' => json_decode( get_post_meta( $pid, '_gallery_images', true ) ?: '[]', true ),
+            'video_url'      => get_post_meta( $pid, '_video_url', true ) ?: '',
+            'food_dish_name' => get_post_meta( $pid, '_food_dish_name', true ) ?: '',
+            'showcase_collaborator_username' => get_post_meta( $pid, '_showcase_collaborator_username', true ) ?: '',
+            'reactions'      => array(
+                'love' => (int) get_post_meta( $pid, 'reaction_love', true ),
+                'fire' => (int) get_post_meta( $pid, 'reaction_fire', true ),
+                'clap' => (int) get_post_meta( $pid, 'reaction_clap', true ),
+            ),
+            'comment_count'  => (int) $post->comment_count,
+        );
+    }
+
+    // Resolves pinned community-post IDs into the same row shape as
+    // handle_get_community_posts(), preserving the caller's pin order.
+    private static function resolve_pinned_posts_web( array $post_ids ): array {
+        if ( empty( $post_ids ) ) {
+            return array();
+        }
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'post__in'       => $post_ids,
+            'orderby'        => 'post__in',
+            'posts_per_page' => count( $post_ids ),
+        ) );
+
+        return array_map( array( __CLASS__, 'format_community_post_row' ), $query->posts );
     }
 
     /**
@@ -4596,8 +4629,9 @@ class Culture_REST_API {
         $items        = json_decode( $map['_portfolio_items']        ?? '[]', true ) ?: array();
 
         return rest_ensure_response( array(
-            'pinned_posts' => $pinned_posts,
-            'items'        => $items,
+            'pinned_posts'      => $pinned_posts,
+            'items'             => $items,
+            'pinned_posts_data' => self::resolve_pinned_posts_web( array_map( 'absint', $pinned_posts ) ),
         ) );
     }
 
@@ -4615,21 +4649,52 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        // Sanitise: ensure pinned_posts is an array of integers.
-        if ( ! is_array( $pinned_posts ) ) {
-            $pinned_posts = array();
+        // Only touch the keys that were actually sent — a caller that only
+        // wants to update pinned posts (or only items) must not blow away
+        // the other half of the portfolio by omitting it.
+        if ( is_array( $pinned_posts ) ) {
+            $pinned_posts = array_values( array_map( 'absint', $pinned_posts ) );
+            update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $pinned_posts ) );
         }
-        $pinned_posts = array_values( array_map( 'absint', $pinned_posts ) );
-
-        // Sanitise: ensure items is an array.
-        if ( ! is_array( $items ) ) {
-            $items = array();
+        if ( is_array( $items ) ) {
+            update_user_meta( $user_id, '_portfolio_items', wp_json_encode( $items ) );
         }
-
-        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $pinned_posts ) );
-        update_user_meta( $user_id, '_portfolio_items', wp_json_encode( $items ) );
 
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * POST /culture/v1/user/portfolio/pin
+     * Toggles a single community post in/out of a user's pinned set without
+     * touching their manually-added items. Mirrors the mobile
+     * Culture_Mobile_API::handle_pin_portfolio_post() but takes an explicit
+     * user_id (API-key auth — caller is the trusted Next.js proxy).
+     */
+    public static function handle_pin_portfolio_post( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = absint( $request->get_param( 'post_id' ) );
+        $pinned  = (bool) $request->get_param( 'pinned' );
+
+        if ( ! $post_id || get_post_type( $post_id ) !== 'culture_post' ) {
+            return new WP_Error( 'invalid_post', 'Invalid post.', array( 'status' => 400 ) );
+        }
+        if ( (int) get_post_field( 'post_author', $post_id ) !== $user_id ) {
+            return new WP_Error( 'forbidden', 'You can only pin your own posts.', array( 'status' => 403 ) );
+        }
+
+        $raw = get_user_meta( $user_id, '_portfolio_pinned_posts', true );
+        $ids = json_decode( $raw ?: '[]', true ) ?: array();
+        $ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+
+        if ( $pinned && ! in_array( $post_id, $ids, true ) ) {
+            $ids[] = $post_id;
+        } elseif ( ! $pinned ) {
+            $ids = array_values( array_diff( $ids, array( $post_id ) ) );
+        }
+
+        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $ids ) );
+
+        return rest_ensure_response( array( 'success' => true, 'pinned_posts' => $ids ) );
     }
 
     // ── Phase 6: Partner Perks & Wallet Handlers ─────────────────────────────
