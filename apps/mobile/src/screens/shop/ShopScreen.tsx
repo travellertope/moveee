@@ -424,13 +424,13 @@ export default function ShopScreen() {
                   <TouchableOpacity onPress={() => nav.navigate("TheEdit")}><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
                 </View>
 
-                <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { slug: featured[0].slug })} />
+                <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { productId: featured[0].id, product: featured[0] })} />
 
                 {featSmall.length > 0 && (
                   <View style={styles.smallGrid}>
                     {featSmall.map((p) => (
                       <View key={p.id} style={{ flex: 1 }}>
-                        <ProductCardSmall product={p} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { slug: p.slug })} />
+                        <ProductCardSmall product={p} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { productId: p.id, product: p })} />
                       </View>
                     ))}
                   </View>
