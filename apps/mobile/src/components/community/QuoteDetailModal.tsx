@@ -175,8 +175,7 @@ function createStyles(c: ColorPalette) {
       marginBottom: -8,
     },
     quoteText: {
-      fontFamily: "Fraunces_400Regular",
-      fontStyle: "italic",
+      fontFamily: fonts.serifItalic,
       fontSize: 22,
       color: c.ink,
       lineHeight: 32,
