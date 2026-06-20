@@ -10,16 +10,20 @@ import { fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem, Notification } from "../../types";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
 
 /**
  * Maps a notification to where tapping it should go. Most types route to a
  * fixed in-app destination (wallet, coupons, referrals, etc.) derived purely
  * from `type`. The three types tied to a specific community post (mention,
  * comment_received, new_follower_post) need the actual post fetched first
- * since PostDetail requires a full FeedItem, not just an id — see
- * `handle_get_community_post` (PHP) / `/mobile/community/post`.
+ * since the bottom-sheet viewer requires a full FeedItem, not just an id —
+ * see `handle_get_community_post` (PHP) / `/mobile/community/post`. These
+ * three return the fetched FeedItem instead of navigating, so the caller can
+ * present it via `PostDetailSheet` (the app's standard post viewer) rather
+ * than the legacy full-screen `PostDetailScreen`.
  */
-async function openNotification(item: Notification, nav: AppNavProp) {
+async function openNotification(item: Notification, nav: AppNavProp): Promise<FeedItem | void> {
   const meta = item.meta ?? {};
   const postId = meta.post_id;
 
@@ -32,7 +36,7 @@ async function openNotification(item: Notification, nav: AppNavProp) {
         const { item: post } = await api.get<{ item: FeedItem }>(
           `${MOBILE_API}/community/post?post_id=${postId}`
         );
-        nav.navigate("PostDetail", { item: post });
+        return post;
       } catch {
         // Post may have been deleted/unpublished since the notification fired — no-op.
       }
@@ -187,6 +191,7 @@ export default function NotificationsScreen() {
   const [hasMore,      setHasMore]      = useState(true);
   const [loadingMore,  setLoadingMore]  = useState(false);
   const [navigatingId, setNavigatingId] = useState<number | null>(null);
+  const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -233,7 +238,8 @@ export default function NotificationsScreen() {
     if (!item.read_at) markRead(item.id);
     setNavigatingId(item.id);
     try {
-      await openNotification(item, nav);
+      const post = await openNotification(item, nav);
+      if (post) setSheetItem(post);
     } finally {
       setNavigatingId(null);
     }
@@ -319,6 +325,12 @@ export default function NotificationsScreen() {
           stickySectionHeadersEnabled
         />
       )}
+
+      <PostDetailSheet
+        item={sheetItem}
+        visible={sheetItem !== null}
+        onClose={() => setSheetItem(null)}
+      />
     </SafeAreaView>
   );
 }
