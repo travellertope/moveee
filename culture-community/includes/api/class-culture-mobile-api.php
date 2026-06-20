@@ -651,11 +651,28 @@ class Culture_Mobile_API {
 
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
-            'methods'             => 'GET',
-            'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_save_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/portfolio/pin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_pin_portfolio_post' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
             'args'                => array(
-                'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'pinned'  => array( 'default'  => true ),
             ),
         ) );
 
@@ -2860,7 +2877,76 @@ class Culture_Mobile_API {
         $requested_user = (int) $request->get_param( 'user_id' );
         $user_id        = $requested_user ?: get_current_user_id();
         $request->set_param( 'user_id', $user_id );
-        return Culture_REST_API::handle_get_portfolio( $request );
+
+        $response = Culture_REST_API::handle_get_portfolio( $request );
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $data         = $response->get_data();
+        $pinned_ids   = array_map( 'absint', (array) ( $data['pinned_posts'] ?? array() ) );
+        $data['pinned_posts_data'] = self::resolve_pinned_posts( $pinned_ids );
+
+        return rest_ensure_response( $data );
+    }
+
+    // Resolves pinned community-post IDs into the same shape format_community_post()
+    // already produces for the member-posts list, preserving the caller's pin order.
+    private static function resolve_pinned_posts( array $post_ids ): array {
+        if ( empty( $post_ids ) ) {
+            return array();
+        }
+
+        $viewer_id     = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'post__in'       => $post_ids,
+            'orderby'        => 'post__in',
+            'posts_per_page' => count( $post_ids ),
+        ) );
+
+        return array_map( function( $post ) use ( $liked_ids, $reactions_map ) {
+            return self::format_community_post( $post, $liked_ids, $reactions_map );
+        }, $query->posts );
+    }
+
+    public static function handle_save_portfolio( $request ) {
+        $request->set_param( 'user_id', get_current_user_id() );
+        return Culture_REST_API::handle_save_portfolio( $request );
+    }
+
+    // POST /mobile/portfolio/pin — toggle a single community post in/out of the
+    // current user's pinned set without touching their manually-added items.
+    public static function handle_pin_portfolio_post( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = absint( $request->get_param( 'post_id' ) );
+        $pinned  = (bool) $request->get_param( 'pinned' );
+
+        if ( ! $post_id || get_post_type( $post_id ) !== 'culture_post' ) {
+            return new WP_Error( 'invalid_post', 'Invalid post.', array( 'status' => 400 ) );
+        }
+        if ( (int) get_post_field( 'post_author', $post_id ) !== $user_id ) {
+            return new WP_Error( 'forbidden', 'You can only pin your own posts.', array( 'status' => 403 ) );
+        }
+
+        $raw = get_user_meta( $user_id, '_portfolio_pinned_posts', true );
+        $ids = json_decode( $raw ?: '[]', true ) ?: array();
+        $ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+
+        if ( $pinned && ! in_array( $post_id, $ids, true ) ) {
+            $ids[] = $post_id;
+        } elseif ( ! $pinned ) {
+            $ids = array_values( array_diff( $ids, array( $post_id ) ) );
+        }
+
+        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $ids ) );
+
+        return rest_ensure_response( array( 'success' => true, 'pinned_posts' => $ids ) );
     }
 
     public static function handle_get_member_posts( $request ) {

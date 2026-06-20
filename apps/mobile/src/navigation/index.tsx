@@ -74,6 +74,7 @@ import AnalyticsScreen from "../screens/member/AnalyticsScreen";
 import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import ReferralScreen from "../screens/member/ReferralScreen";
 import MyEventsScreen from "../screens/member/MyEventsScreen";
+import NewPortfolioItemScreen from "../screens/member/NewPortfolioItemScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ function ConnectStack() {
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
     </Stack.Navigator>
   );
 }
@@ -208,6 +210,7 @@ function MemberStack() {
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
     </Stack.Navigator>
   );
 }
