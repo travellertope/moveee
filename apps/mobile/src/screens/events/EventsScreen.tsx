@@ -82,6 +82,15 @@ function dateKey(d: string): string {
   return new Date(d).toDateString();
 }
 
+function isOngoing(event: EventItem): boolean {
+  if (!event.eventDate || !event.endDate) return false;
+  const start = new Date(event.eventDate);
+  const end = new Date(event.endDate);
+  if (dateKey(event.eventDate) === dateKey(event.endDate)) return false;
+  const now = new Date();
+  return start <= now && now <= end;
+}
+
 function dateHeaderLabel(d: string): string {
   try {
     return new Date(d)
@@ -168,6 +177,7 @@ function TimelineRow({
   const style  = categoryStyle(event.category, event.isOnline);
   const isFree = !event.admission || event.admission.toLowerCase().includes("free");
   const time   = fmtTime12(event.eventDate);
+  const ongoing = isOngoing(event);
 
   return (
     <TouchableOpacity style={styles.timelineRow} onPress={onPress} activeOpacity={0.85}>
@@ -191,6 +201,11 @@ function TimelineRow({
 
         <View style={styles.timelineCardHeader}>
           <View style={styles.timelineCatRow}>
+            {ongoing ? (
+              <View style={styles.ongoingBadge}>
+                <Text style={styles.ongoingBadgeText}>● ONGOING</Text>
+              </View>
+            ) : null}
             <View style={[styles.catDot, { backgroundColor: style.color }]} />
             <Text style={styles.timelineCatText}>{style.label}</Text>
           </View>
@@ -710,6 +725,9 @@ function createStyles(c: ColorPalette) {
 
     goingBadge: { backgroundColor: "rgba(45,106,79,0.12)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full },
     goingBadgeText: { fontFamily: fonts.sansBold, fontSize: 10, color: c.success },
+
+    ongoingBadge: { backgroundColor: c.ochre, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.full, marginRight: 2 },
+    ongoingBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper, letterSpacing: 0.5 },
 
     timelineTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, lineHeight: 19, marginBottom: 4 },
     timelineMetaText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
