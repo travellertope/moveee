@@ -178,6 +178,7 @@ export interface FeedItem {
   showcaseTitle?: string;
   showcaseMedium?: string;
   showcaseCollaborator?: string;
+  showcaseCollaboratorUsername?: string;
   // Book Review
   bookTitle?: string;
   bookAuthor?: string;

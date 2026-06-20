@@ -107,6 +107,7 @@ function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedIte
     showcaseTitle: post.showcase_title || "",
     showcaseMedium: post.showcase_medium || "",
     showcaseCollaborator: post.showcase_collaborator || "",
+    showcaseCollaboratorUsername: post.showcase_collaborator_username || "",
     bookTitle: post.book_title || "",
     bookAuthor: post.book_author || "",
     bookStatus: post.book_status || "",

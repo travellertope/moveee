@@ -1316,6 +1316,9 @@ class Culture_Mobile_API {
             if ( $request->get_param( 'collaborator' ) ) {
                 update_post_meta( $post_id, '_showcase_collaborator', sanitize_text_field( $request->get_param( 'collaborator' ) ) );
             }
+            if ( $request->get_param( 'collaborator_username' ) ) {
+                update_post_meta( $post_id, '_showcase_collaborator_username', sanitize_text_field( $request->get_param( 'collaborator_username' ) ) );
+            }
             if ( $request->get_param( 'video_url' ) ) {
                 update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
             }
@@ -2614,6 +2617,7 @@ class Culture_Mobile_API {
                 'showcaseTitle'           => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
                 'showcaseMedium'          => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
                 'showcaseCollaborator'    => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+                'showcaseCollaboratorUsername' => get_post_meta( $post->ID, '_showcase_collaborator_username', true ) ?: '',
                 'bookTitle'               => get_post_meta( $post->ID, '_book_title', true ) ?: '',
                 'bookAuthor'              => get_post_meta( $post->ID, '_book_author', true ) ?: '',
                 'bookStatus'              => get_post_meta( $post->ID, '_book_status', true ) ?: '',
@@ -2950,6 +2954,7 @@ class Culture_Mobile_API {
             'showcase_title'            => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
             'showcase_medium'           => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
             'showcase_collaborator'     => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+            'showcase_collaborator_username' => get_post_meta( $post->ID, '_showcase_collaborator_username', true ) ?: '',
             'book_title'                => get_post_meta( $post->ID, '_book_title', true ) ?: '',
             'book_author'               => get_post_meta( $post->ID, '_book_author', true ) ?: '',
             'book_status'               => get_post_meta( $post->ID, '_book_status', true ) ?: '',
