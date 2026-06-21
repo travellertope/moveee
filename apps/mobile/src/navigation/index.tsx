@@ -30,6 +30,8 @@ import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
 import DirectoryDetailScreen from "../screens/community/DirectoryDetailScreen";
 import DirectoryPostsScreen from "../screens/community/DirectoryPostsScreen";
 import DiscoverScreen from "../screens/community/DiscoverScreen";
+import ClusterScreen from "../screens/community/ClusterScreen";
+import StartClusterScreen from "../screens/community/StartClusterScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -90,6 +92,8 @@ type FeedStackParams = {
   DirectoryDetail:   { id?: number; slug?: string; title?: string; entryType?: string };
   DirectoryPosts:    { entryId: number; entryTitle: string; showRating?: boolean };
   Discover:          { type?: string; region?: string } | undefined;
+  ClusterScreen:      { id: number };
+  StartClusterScreen: undefined;
   // Editorial articles opened from the Connect feed stay in this stack
   // so the Magazine tab is never polluted by cross-tab navigation.
   Article:           { slug: string };
@@ -123,6 +127,8 @@ function ConnectStack() {
       <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
       <Stack.Screen name="DirectoryPosts"   component={DirectoryPostsScreen} />
       <Stack.Screen name="Discover"         component={DiscoverScreen} />
+      <Stack.Screen name="ClusterScreen"      component={ClusterScreen} />
+      <Stack.Screen name="StartClusterScreen" component={StartClusterScreen} />
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />

@@ -80,6 +80,27 @@ export interface Member {
   isFollowing?: boolean;
 }
 
+// ── House Fellowship (street clusters) ──────────────────────────────────────
+export interface Cluster {
+  id: number;
+  name: string;
+  city: string;
+  street: string;
+  country: string;
+  status: 'forming' | 'active' | 'archived';
+  memberCount: number;
+  capacity: number;
+  meetingDay: string;
+  meetingTime: string;
+  locationNote: string;
+}
+
+export interface ClusterStatus {
+  isMember: boolean;
+  role: string | null;
+  joinedAt: string | null;
+}
+
 // ── Unified feed ────────────────────────────────────────────────────────────
 export type FeedItemType =
   | 'pulse' | 'editorial' | 'happening'

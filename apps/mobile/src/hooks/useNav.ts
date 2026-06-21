@@ -30,6 +30,8 @@ export type AppParamList = {
   Referral: undefined;
   MyEvents: undefined;
   NewPortfolioItem: undefined;
+  ClusterScreen: { id: number };
+  StartClusterScreen: undefined;
   // Auth
   Onboarding: undefined;
   Login: undefined;
