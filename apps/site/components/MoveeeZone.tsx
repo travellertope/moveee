@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import PatronPrice from "@/components/PatronPrice";
+import WaitlistModal from "@/components/WaitlistModal";
 
 const FEATURES = [
   {
@@ -41,8 +45,11 @@ const FEATURES = [
 ];
 
 export default function MoveeeZone() {
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+
   return (
     <div className="mz-zone">
+      <WaitlistModal open={waitlistOpen} onClose={() => setWaitlistOpen(false)} />
       {/*
         DEV: This zone intentionally uses the warm paper token (#F3ECE0) to bridge Site A's
         white magazine background with Site B/Connect's visual language — do NOT change the
@@ -172,10 +179,15 @@ export default function MoveeeZone() {
           {/*
             DEV: Store URLs do not exist yet — app is not published. Use placeholder badge
             graphics and wire real store IDs at launch; do not hardcode a fake App Store ID.
+            Until launch, both badges open a waitlist popup instead of linking out.
           */}
           <div className="mz-download-badges">
-            <span className="mz-store-badge">App Store</span>
-            <span className="mz-store-badge">Google Play</span>
+            <button type="button" className="mz-store-badge" onClick={() => setWaitlistOpen(true)}>
+              App Store
+            </button>
+            <button type="button" className="mz-store-badge" onClick={() => setWaitlistOpen(true)}>
+              Google Play
+            </button>
             <div className="mz-qr-block">
               <span className="mz-qr-placeholder" aria-hidden="true" />
               <span className="mz-qr-caption">Scan to download</span>

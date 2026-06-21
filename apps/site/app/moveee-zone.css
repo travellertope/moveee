@@ -365,6 +365,12 @@
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.mz-store-badge:hover {
+  opacity: 0.85;
 }
 
 .mz-qr-block {
@@ -387,6 +393,86 @@
   font-family: var(--font-mono);
   font-size: 9px;
   color: var(--mz-mute);
+  text-align: center;
+}
+
+/* ---------- WAITLIST MODAL ---------- */
+.mz-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.mz-modal {
+  position: relative;
+  background: #fff;
+  border-radius: var(--mz-radius-xl, 12px);
+  box-shadow: var(--mz-shadow-card, 0px 1px 3px rgba(20, 17, 13, 0.08));
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.mz-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #7a6f5c;
+  cursor: pointer;
+}
+
+.mz-modal-h3 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: #14110d;
+  margin: 12px 0 0;
+}
+
+.mz-modal-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #3a342b;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.mz-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.mz-modal-input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--mz-radius-md, 4px);
+  border: 1px solid #c8bfb0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.mz-modal-error {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #c5491f;
+}
+
+.mz-modal-success {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #2d6a4f;
+  margin-top: 20px;
 }
 
 /* ---------- MAGAZINE SPOTLIGHT (back to white magazine zone) ---------- */
