@@ -118,6 +118,32 @@ export interface ClusterElectionStatus {
   totalVotes: number;
 }
 
+export interface ClusterMember {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  role: string;
+  joinedAt: string;
+}
+
+export interface ClusterHostQr {
+  token: string;
+  meetingDate: string;
+  expiresAt: number;
+}
+
+export interface ClusterCheckinResult {
+  success: boolean;
+  alreadyCheckedIn: boolean;
+  meetingDate: string;
+}
+
+export interface ClusterAttendance {
+  totalCheckins: number;
+  streak: number;
+  lastCheckedIn: string | null;
+}
+
 // ── Unified feed ────────────────────────────────────────────────────────────
 export type FeedItemType =
   | 'pulse' | 'editorial' | 'happening'

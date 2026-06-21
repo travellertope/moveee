@@ -401,6 +401,46 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Phase 3 — check-in & attendance (QR + manual host fallback). Mirrors
+        // /cluster/{id}/... (web, API key) — see class-culture-rest-api.php.
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_members' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/host-qr', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_host_qr' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/checkin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_checkin' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'meeting_date' => array( 'required' => true, 'type' => 'string' ),
+                'expires_at'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'token'        => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/checkin-manual', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_checkin_manual' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'member_user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/attendance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_attendance' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -1905,6 +1945,72 @@ class Culture_Mobile_API {
         $cluster_id = (int) $request->get_param( 'id' );
 
         return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_members( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( array( 'members' => Culture_Clusters::get_members( $cluster_id ) ) );
+    }
+
+    public static function handle_cluster_host_qr( $request ) {
+        $host_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $result = Culture_Clusters::generate_host_qr( $cluster_id, $host_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_checkin( $request ) {
+        $user_id      = get_current_user_id();
+        $cluster_id   = (int) $request->get_param( 'id' );
+        $meeting_date = (string) $request->get_param( 'meeting_date' );
+        $expires_at   = (int) $request->get_param( 'expires_at' );
+        $token        = (string) $request->get_param( 'token' );
+
+        $verified = Culture_Clusters::verify_checkin_qr( $cluster_id, $meeting_date, $expires_at, $token );
+        if ( is_wp_error( $verified ) ) {
+            return $verified;
+        }
+
+        $result = Culture_Clusters::check_in( $cluster_id, $user_id, 'qr', $meeting_date );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_checkin_manual( $request ) {
+        $host_id        = get_current_user_id();
+        $cluster_id     = (int) $request->get_param( 'id' );
+        $member_user_id = (int) $request->get_param( 'member_user_id' );
+
+        $cluster = Culture_Clusters::get_cluster( $cluster_id );
+        if ( ! $cluster ) {
+            return new WP_Error( 'not_found', 'House Fellowship not found.', array( 'status' => 404 ) );
+        }
+        if ( (int) $cluster['hostId'] !== $host_id ) {
+            return new WP_Error( 'forbidden', 'Only the current host can record manual check-ins.', array( 'status' => 403 ) );
+        }
+
+        $result = Culture_Clusters::check_in( $cluster_id, $member_user_id, 'host_manual' );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_attendance( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( Culture_Clusters::get_attendance_history( $cluster_id, $user_id ) );
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );

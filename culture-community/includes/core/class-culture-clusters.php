@@ -41,6 +41,35 @@ class Culture_Clusters {
         ) {$charset_collate};" );
     }
 
+    /**
+     * Weekly meeting check-in records (Phase 3, §2.2). Member-scans-host's-QR
+     * or host-manual fallback; UNIQUE KEY makes a duplicate scan in the same
+     * week a silent no-op, same upsert-not-duplicate philosophy as
+     * wp_culture_follows / wp_culture_community_rsvp.
+     */
+    public static function checkins_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_cluster_checkins';
+    }
+
+    public static function create_checkins_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $table = self::checkins_table();
+        dbDelta( "CREATE TABLE {$table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            cluster_id bigint(20) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            meeting_date date NOT NULL,
+            checked_in_at datetime DEFAULT CURRENT_TIMESTAMP,
+            method varchar(12) NOT NULL DEFAULT 'qr',
+            PRIMARY KEY  (id),
+            UNIQUE KEY cluster_user_date (cluster_id, user_id, meeting_date),
+            KEY cluster_date (cluster_id, meeting_date)
+        ) {$charset_collate};" );
+    }
+
     /* ——————————————————————————————————————
      *  Admin-configurable settings (§2.5)
      * —————————————————————————————————————— */
@@ -135,6 +164,36 @@ class Culture_Clusters {
             $cluster_id
         ) );
         return array_map( 'intval', $ids ?: array() );
+    }
+
+    /**
+     * Member list with names/avatars (§4.4 — never built in Phase 1, only a
+     * count was rendered). Host sorted first so the UI can badge them, and so
+     * host-manual check-in can list members to tap without a second lookup.
+     */
+    public static function get_members( int $cluster_id ) : array {
+        global $wpdb;
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT m.user_id, m.role, m.joined_at, u.display_name
+             FROM " . self::table() . " m
+             INNER JOIN {$wpdb->users} u ON u.ID = m.user_id
+             WHERE m.cluster_id = %d AND m.status = 'active'
+             ORDER BY (m.role = 'host') DESC, m.joined_at ASC",
+            $cluster_id
+        ), ARRAY_A );
+
+        $members = array();
+        foreach ( $rows ?: array() as $row ) {
+            $user_id   = (int) $row['user_id'];
+            $members[] = array(
+                'id'        => $user_id,
+                'name'      => $row['display_name'],
+                'avatarUrl' => get_user_meta( $user_id, '_culture_avatar_url', true ) ?: '',
+                'role'      => $row['role'],
+                'joinedAt'  => $row['joined_at'],
+            );
+        }
+        return $members;
     }
 
     public static function list_for_user( int $user_id ) : array {
@@ -712,6 +771,169 @@ class Culture_Clusters {
             array( 'role' => 'host' ),
             array( 'cluster_id' => $cluster_id, 'user_id' => $new_host_id ),
             array( '%s' ), array( '%d', '%d' )
+        );
+    }
+
+    /* ——————————————————————————————————————
+     *  Check-in & attendance (Phase 3, §5/§6)
+     * —————————————————————————————————————— */
+
+    /** Host-shown QR token lifetime, in seconds. */
+    const QR_TOKEN_TTL = 900;
+
+    /**
+     * HMAC signing key — same fallback chain as Culture_Perks::hmac_key().
+     */
+    private static function hmac_key() : string {
+        if ( defined( 'CULTURE_API_SECRET' ) && CULTURE_API_SECRET ) {
+            return CULTURE_API_SECRET;
+        }
+        return get_option( 'culture_api_secret', '' );
+    }
+
+    private static function sign_checkin_token( int $cluster_id, string $meeting_date, int $expires_at ) : string {
+        $payload = "{$cluster_id}:{$meeting_date}:{$expires_at}";
+        return hash_hmac( 'sha256', $payload, self::hmac_key() );
+    }
+
+    /**
+     * Host shows this QR; members scan it with the in-app camera scanner.
+     * Reversed direction from Culture_Perks (staff-scans-member) — this is
+     * host-shows / member-scans, the first such flow in this codebase.
+     */
+    public static function generate_host_qr( int $cluster_id, int $host_id ) {
+        $cluster = self::get_cluster( $cluster_id );
+        if ( ! $cluster ) {
+            return new WP_Error( 'not_found', __( 'House Fellowship not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+        if ( (int) $cluster['hostId'] !== $host_id ) {
+            return new WP_Error( 'forbidden', __( 'Only the current host can generate a check-in code.', 'culture-community' ), array( 'status' => 403 ) );
+        }
+
+        $meeting_date = current_time( 'Y-m-d' );
+        $expires_at   = time() + self::QR_TOKEN_TTL;
+        $token        = self::sign_checkin_token( $cluster_id, $meeting_date, $expires_at );
+
+        return array(
+            'token'       => $token,
+            'meetingDate' => $meeting_date,
+            'expiresAt'   => $expires_at,
+        );
+    }
+
+    /**
+     * Verify a scanned token before calling check_in(). Returns true or a
+     * WP_Error explaining why the code can't be redeemed.
+     */
+    public static function verify_checkin_qr( int $cluster_id, string $meeting_date, int $expires_at, string $token ) {
+        if ( time() > $expires_at ) {
+            return new WP_Error( 'expired', __( 'This check-in code has expired — ask your host to refresh it.', 'culture-community' ), array( 'status' => 410 ) );
+        }
+        $expected = self::sign_checkin_token( $cluster_id, $meeting_date, $expires_at );
+        if ( ! hash_equals( $expected, $token ) ) {
+            return new WP_Error( 'invalid_token', __( 'Invalid check-in code.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+        return true;
+    }
+
+    /**
+     * Record a check-in. $method is 'qr' (member scanned the host's code) or
+     * 'host_manual' (host tapped the member's name as a fallback). UNIQUE KEY
+     * on (cluster_id, user_id, meeting_date) makes a re-scan the same week a
+     * harmless no-op rather than an error.
+     */
+    public static function check_in( int $cluster_id, int $user_id, string $method = 'qr', string $meeting_date = '' ) {
+        global $wpdb;
+
+        $status = self::get_member_status( $cluster_id, $user_id );
+        if ( ! $status['isMember'] ) {
+            return new WP_Error( 'not_member', __( 'You are not a member of this House Fellowship.', 'culture-community' ), array( 'status' => 403 ) );
+        }
+
+        $meeting_date = $meeting_date ?: current_time( 'Y-m-d' );
+        $method       = in_array( $method, array( 'qr', 'host_manual' ), true ) ? $method : 'qr';
+        $table        = self::checkins_table();
+
+        $existing = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE cluster_id = %d AND user_id = %d AND meeting_date = %s",
+            $cluster_id, $user_id, $meeting_date
+        ) );
+
+        if ( $existing ) {
+            return array( 'success' => true, 'alreadyCheckedIn' => true, 'meetingDate' => $meeting_date );
+        }
+
+        $wpdb->insert(
+            $table,
+            array(
+                'cluster_id'    => $cluster_id,
+                'user_id'       => $user_id,
+                'meeting_date'  => $meeting_date,
+                'checked_in_at' => current_time( 'mysql' ),
+                'method'        => $method,
+            ),
+            array( '%d', '%d', '%s', '%s', '%s' )
+        );
+
+        // Reward wiring (award_points('cluster_checked_in')) is Phase 4 scope
+        // per the plan doc's implementation order — not added yet.
+
+        return array( 'success' => true, 'alreadyCheckedIn' => false, 'meetingDate' => $meeting_date );
+    }
+
+    /**
+     * Consecutive weekly check-in streak for a user, across however many
+     * clusters they've checked into (almost always just one). A gap of 4–10
+     * days between consecutive meeting dates still counts as "consecutive"
+     * to absorb a meeting moved a day or two; anything wider breaks it.
+     */
+    public static function get_checkin_streak( int $user_id ) : int {
+        global $wpdb;
+        $dates = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT meeting_date FROM " . self::checkins_table() . " WHERE user_id = %d ORDER BY meeting_date DESC",
+            $user_id
+        ) );
+
+        if ( empty( $dates ) ) {
+            return 0;
+        }
+
+        $streak = 1;
+        $prev   = strtotime( $dates[0] );
+        for ( $i = 1, $count = count( $dates ); $i < $count; $i++ ) {
+            $cur      = strtotime( $dates[ $i ] );
+            $gap_days = ( $prev - $cur ) / DAY_IN_SECONDS;
+            if ( $gap_days >= 4 && $gap_days <= 10 ) {
+                $streak++;
+                $prev = $cur;
+            } else {
+                break;
+            }
+        }
+        return $streak;
+    }
+
+    /**
+     * Attendance summary for a member's own cluster — backs the streak/total
+     * display in the UI and the "Cluster Regular" badge stat.
+     */
+    public static function get_attendance_history( int $cluster_id, int $user_id ) : array {
+        global $wpdb;
+        $table = self::checkins_table();
+
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE cluster_id = %d AND user_id = %d",
+            $cluster_id, $user_id
+        ) );
+        $last = $wpdb->get_var( $wpdb->prepare(
+            "SELECT meeting_date FROM {$table} WHERE cluster_id = %d AND user_id = %d ORDER BY meeting_date DESC LIMIT 1",
+            $cluster_id, $user_id
+        ) );
+
+        return array(
+            'totalCheckins' => $total,
+            'streak'        => self::get_checkin_streak( $user_id ),
+            'lastCheckedIn' => $last ?: null,
         );
     }
 }

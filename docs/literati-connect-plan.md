@@ -1,27 +1,49 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
-Status: **Phase 1 in progress.** This document is the single source of truth for
-building this feature. Do not begin implementation on any later phase until this
-document is read in full — it exists specifically to prevent scope creep and to
-avoid omitting load-bearing pieces (gamification wiring, notification wiring,
-mobile/web parity) that are easy to forget mid-build in this codebase.
+Status: **Phases 1–3 complete end-to-end (backend + mobile + web). Phase 4 next.**
+This document is the single source of truth for building this feature. Do not
+begin implementation on any later phase until this document is read in full —
+it exists specifically to prevent scope creep and to avoid omitting load-bearing
+pieces (gamification wiring, notification wiring, mobile/web parity) that are
+easy to forget mid-build in this codebase.
 
-**Phase 1 backend progress (as of 2026-06-21):** `culture_cluster` CPT + `_cluster_*`
-meta registered (`class-culture-post-types.php`). `wp_culture_cluster_members` table
-(`Culture_Clusters::create_table()`, wired into `Culture_Activator::create_tables()`,
-`CULTURE_VERSION` bumped to `2.5.0`) — `wp_culture_cluster_checkins` is still Phase 3,
-not created yet. `Culture_Clusters` core class complete: `create_cluster`, `join`,
-`leave`, `get_cluster`, `get_member_status`, `list_for_user`, `discover`,
-`maybe_activate` (auto-activation + founder notification/credit award). Gamification:
-`cluster_founded` added to `POINTS`/`CREDIT_BONUSES`. Notifications: `cluster_activated`
-and `cluster_forming_expired` added to `TYPES`. Cron: `Culture_Cron::sweep_forming_clusters()`
-(daily) archives stale `forming` clusters past the window and notifies the founder.
-Admin settings: "Literati Connect / House Fellowship" section added to WP Admin →
-Culture Community → General tab (`class-culture-settings.php`) — the four config
-options below are now live and editable, not just `defined()` constants.
-**Still pending for Phase 1**: REST endpoints (mobile + web, mirrored), all
-frontend (mobile + web Discover integration, cluster home screen, founding flow UI).
-Election/check-in (Phase 2/3) intentionally not started.
+**Phase 1 (Data model & core membership) — done.** `culture_cluster` CPT +
+`_cluster_*` meta (`class-culture-post-types.php`). `wp_culture_cluster_members`
+table, `Culture_Clusters` core class (`create_cluster`, `join`, `leave`,
+`get_cluster`, `get_member_status`, `list_for_user`, `discover`, `maybe_activate`).
+Gamification (`cluster_founded`), notifications (`cluster_activated`,
+`cluster_forming_expired`), cron (`sweep_forming_clusters`), admin settings
+section, REST endpoints (mobile + web, mirrored), and both frontends (Discover
+integration, cluster home screen, founding flow UI) all shipped.
+
+**Phase 2 (Host mechanisms) — done.** Election flow (§2.4.3) incl. cron tally,
+both frontends (`ClusterElection.tsx` on web, equivalent section in mobile's
+`ClusterScreen.tsx`).
+
+**Phase 3 (Check-in & attendance) — done.** `wp_culture_cluster_checkins` table
++ `(cluster_id, user_id, meeting_date)` unique constraint. `Culture_Clusters`
+extended with `generate_host_qr`/`verify_checkin_qr` (HMAC-signed, 900s TTL),
+`check_in` (idempotent — returns `alreadyCheckedIn` on duplicate scan rather
+than erroring), `checkin_manual`, `get_attendance_history`. Five mirrored REST
+endpoints (mobile `/mobile/cluster/...` JWT, web `/cluster/...` API-key) for
+members/host-qr/checkin/checkin-manual/attendance. Mobile: `ClusterScreen.tsx`
+host QR display (`react-native-qrcode-svg`, 13-min refresh) via `expo-camera`
+member scan flow, host manual check-in member-list modal, attendance/streak
+row. Web: `ClusterCheckin.tsx` (`qrcode.react` for host QR display) — no
+in-browser camera scanning in v1; web members are directed to scan via the
+mobile app or rely on the host's manual check-in fallback — plus the same
+manual check-in modal and attendance/streak row, wired into
+`app/cluster/[id]/page.tsx` alongside `ClusterElection`.
+
+**Phase 4 (Rewards & notifications) — not started, up next.** Reward wiring
+(`cluster_checked_in`/`cluster_host_served`/`literati_connect_attended` action
+keys), two badges (`cluster_regular`, `city_convener`), cron jobs
+(`culture_sweep_literati_attendance`, `culture_award_cluster_host_service`),
+five new notification types with icon-map/deep-link updates across all three
+frontend icon maps (see the main CLAUDE.md "Notification touchpoint audit"
+section for why there's no shared source of truth for those).
+
+**Phase 5 (Literati Connect integration + feed surfacing) — not started.**
 
 Two related but distinct offerings, both physical/IRL, both open to **all**
 members (Citizen and Pro — no tier gating anywhere in this feature):

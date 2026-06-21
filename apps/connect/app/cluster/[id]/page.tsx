@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClusterActions from "./ClusterActions";
 import ClusterElection from "./ClusterElection";
+import ClusterCheckin from "./ClusterCheckin";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -175,6 +176,15 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
         <section className="mem-card">
           <ClusterActions clusterId={cluster.id} initialIsMember={status.isMember} />
         </section>
+
+        {cluster.status === "active" && status.isMember && (
+          <section className="mem-card">
+            <ClusterCheckin
+              clusterId={cluster.id}
+              isHost={cluster.hostId === Number(session.user.id)}
+            />
+          </section>
+        )}
 
         {cluster.status === "active" && status.isMember && (
           <section className="mem-card">
