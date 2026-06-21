@@ -1,0 +1,416 @@
+/* ===================================================================
+   FEATURE PAGES — themoveee.com/features/*
+   One marketing page per major Moveee (app) feature. Shares the
+   --mz-* design tokens defined in moveee-zone.css (same warm-paper /
+   white alternating section rhythm as the homepage's Moveee Zone) —
+   this file only adds page-specific layout classes, prefixed `fp-`.
+   =================================================================== */
+
+/* ---------- HERO ---------- */
+.fp-hero {
+  background: var(--mz-white, #fff);
+  padding: 56px 24px;
+}
+
+.fp-hero-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.fp-eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fp-back-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mz-mute, #7a6f5c);
+  text-decoration: none;
+}
+
+.fp-back-link:hover {
+  color: var(--mz-ochre, #c5491f);
+}
+
+.fp-h1 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  line-height: 1.1;
+  margin: 16px 0 0;
+}
+
+.fp-h1 em {
+  font-style: italic;
+}
+
+.fp-subhead {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--mz-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin: 20px 0 0;
+  max-width: 560px;
+}
+
+.fp-hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.fp-trust {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mz-ghost, #c8bfb0);
+  margin-top: 12px;
+}
+
+.fp-hero-photo {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--mz-radius-xl, 12px);
+  box-shadow: var(--mz-shadow-card);
+}
+
+.fp-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.fp-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.fp-stat-num {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--mz-ochre, #c5491f);
+}
+
+.fp-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--mz-mute, #7a6f5c);
+  margin-top: 4px;
+}
+
+/* ---------- SECTIONS ---------- */
+.fp-section {
+  background: var(--mz-paper-warm, #f3ece0);
+  padding: 56px 24px;
+}
+
+.fp-section--white {
+  background: var(--mz-white, #fff);
+  border-top: 1px solid var(--mz-ghost, #c8bfb0);
+}
+
+.fp-section-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.fp-intro {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.fp-h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.fp-body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--mz-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+
+.fp-body--centred {
+  text-align: center;
+}
+
+/* ---------- TEMPLATE / ITEM GRID (reused across feature pages) ---------- */
+.fp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.fp-grid--2col {
+  grid-template-columns: 1fr;
+}
+
+.fp-card {
+  background: var(--mz-white, #fff);
+  border-radius: var(--mz-radius-xl, 12px);
+  box-shadow: var(--mz-shadow-card);
+  padding: 24px;
+}
+
+.fp-card-icon {
+  font-size: 28px;
+  display: block;
+}
+
+.fp-card-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  margin-top: 12px;
+}
+
+.fp-card-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mz-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.fp-card--dark {
+  background: var(--mz-ink, #14110d);
+}
+
+.fp-card--dark .fp-card-title {
+  color: #fff;
+}
+
+.fp-card--dark .fp-card-body {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- ALTERNATING FEATURE ROW (image + text) ---------- */
+.fp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  margin-top: 56px;
+}
+
+.fp-row:first-of-type {
+  margin-top: 48px;
+}
+
+.fp-row--reverse {
+  flex-direction: column;
+}
+
+.fp-row-photo {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--mz-radius-xl, 12px);
+  box-shadow: var(--mz-shadow-card);
+  flex-shrink: 0;
+}
+
+.fp-row-text {
+  width: 100%;
+}
+
+.fp-row-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mz-ochre, #c5491f);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.fp-row-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  margin-top: 8px;
+}
+
+.fp-row-body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--mz-ink-soft, #3a342b);
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.fp-row-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fp-row-list li {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mz-ink-soft, #3a342b);
+  padding-left: 20px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.fp-row-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--mz-success, #2d6a4f);
+  font-weight: 700;
+}
+
+/* ---------- CTA STRIP (bottom of every feature page) ---------- */
+.fp-cta-strip {
+  background: var(--mz-paper-warm, #f3ece0);
+  border-radius: var(--mz-radius-2xl, 20px);
+  box-shadow: var(--mz-shadow-card);
+  padding: 36px 28px;
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  text-align: center;
+  align-items: center;
+}
+
+.fp-cta-h3 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  margin-top: 8px;
+}
+
+.fp-cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ---------- RELATED FEATURES STRIP ---------- */
+.fp-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.fp-related-link {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mz-ink, #14110d);
+  background: var(--mz-white, #fff);
+  border: 1px solid var(--mz-ghost, #c8bfb0);
+  border-radius: var(--mz-radius-full, 9999px);
+  padding: 8px 16px;
+  text-decoration: none;
+}
+
+.fp-related-link:hover {
+  border-color: var(--mz-ochre, #c5491f);
+  color: var(--mz-ochre, #c5491f);
+}
+
+/* =====================================================================
+   DESKTOP BREAKPOINT
+   ===================================================================== */
+@media (min-width: 1024px) {
+  .fp-hero {
+    padding: 80px 64px;
+  }
+
+  .fp-hero-inner {
+    grid-template-columns: 55% 45%;
+    align-items: center;
+  }
+
+  .fp-h1 {
+    font-size: 48px;
+    max-width: 640px;
+  }
+
+  .fp-hero-cta {
+    flex-direction: row;
+  }
+
+  .fp-hero-photo {
+    height: 320px;
+  }
+
+  .fp-section {
+    padding: 80px 64px;
+  }
+
+  .fp-h2 {
+    font-size: 36px;
+  }
+
+  .fp-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .fp-grid--2col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fp-row {
+    flex-direction: row;
+    gap: 56px;
+  }
+
+  .fp-row--reverse {
+    flex-direction: row-reverse;
+  }
+
+  .fp-row-photo {
+    width: 440px;
+    height: 280px;
+  }
+
+  .fp-row-text {
+    flex: 1;
+  }
+
+  .fp-cta-strip {
+    padding: 56px;
+  }
+
+  .fp-cta-buttons {
+    flex-direction: row;
+    max-width: none;
+  }
+}
