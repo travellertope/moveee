@@ -117,7 +117,12 @@ React Native can't use the DOM-dependent shared package — edit both when those
   (weekly, street-cluster — new `culture_cluster` CPT, open to all tiers, three
   host-selection mechanisms: appointed/self-nominated/elected, overflow joining when a
   home-street cluster is full, QR-based weekly check-in mirroring the Perks redemption
-  pattern). Status as of 2026-06-21: planning complete, build not started.
+  pattern). Status as of 2026-06-21: Phases 1–4 complete end-to-end (backend + mobile +
+  web) — House Fellowship CPT/membership/host-election/QR check-in (1–3) and rewards +
+  badges + notifications + cron (4) are all live. Phase 5 (Literati Connect integration
+  + feed surfacing) next. See the plan doc's own status line for the authoritative,
+  up-to-date detail — keep this summary in sync with it rather than re-deriving phase
+  status here.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
   Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
   emails/admin labels) — this superseded the prior naming and is now fully applied

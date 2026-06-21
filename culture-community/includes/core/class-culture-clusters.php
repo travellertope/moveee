@@ -875,8 +875,9 @@ class Culture_Clusters {
             array( '%d', '%d', '%s', '%s', '%s' )
         );
 
-        // Reward wiring (award_points('cluster_checked_in')) is Phase 4 scope
-        // per the plan doc's implementation order — not added yet.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'cluster_checked_in' );
+        }
 
         return array( 'success' => true, 'alreadyCheckedIn' => false, 'meetingDate' => $meeting_date );
     }
@@ -935,5 +936,40 @@ class Culture_Clusters {
             'streak'        => self::get_checkin_streak( $user_id ),
             'lastCheckedIn' => $last ?: null,
         );
+    }
+
+    /**
+     * Consecutive calendar months (counting back from the current month) in
+     * which a user received a 'cluster_host_served' credit ledger award —
+     * backs the "City Convener" badge stat. Reads the ledger rather than any
+     * cluster table since host service is awarded monthly by cron, not
+     * per-cluster state.
+     */
+    public static function get_host_consecutive_months( int $user_id ) : int {
+        global $wpdb;
+        $months = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT DATE_FORMAT(created_at, '%%Y-%%m') FROM {$wpdb->prefix}culture_credit_ledger
+             WHERE user_id = %d AND source = 'cluster_host_served'
+             ORDER BY created_at DESC",
+            $user_id
+        ) );
+
+        if ( empty( $months ) ) {
+            return 0;
+        }
+
+        $streak = 1;
+        $prev   = strtotime( $months[0] . '-01' );
+        for ( $i = 1, $count = count( $months ); $i < $count; $i++ ) {
+            $cur      = strtotime( $months[ $i ] . '-01' );
+            $expected = strtotime( '-1 month', $prev );
+            if ( gmdate( 'Y-m', $expected ) === gmdate( 'Y-m', $cur ) ) {
+                $streak++;
+                $prev = $cur;
+            } else {
+                break;
+            }
+        }
+        return $streak;
     }
 }

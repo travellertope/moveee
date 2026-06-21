@@ -1,6 +1,6 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
-Status: **Phases 1–3 complete end-to-end (backend + mobile + web). Phase 4 next.**
+Status: **Phases 1–4 complete end-to-end (backend + mobile + web). Phase 5 next.**
 This document is the single source of truth for building this feature. Do not
 begin implementation on any later phase until this document is read in full —
 it exists specifically to prevent scope creep and to avoid omitting load-bearing
@@ -35,15 +35,42 @@ mobile app or rely on the host's manual check-in fallback — plus the same
 manual check-in modal and attendance/streak row, wired into
 `app/cluster/[id]/page.tsx` alongside `ClusterElection`.
 
-**Phase 4 (Rewards & notifications) — not started, up next.** Reward wiring
-(`cluster_checked_in`/`cluster_host_served`/`literati_connect_attended` action
-keys), two badges (`cluster_regular`, `city_convener`), cron jobs
-(`culture_sweep_literati_attendance`, `culture_award_cluster_host_service`),
-five new notification types with icon-map/deep-link updates across all three
-frontend icon maps (see the main CLAUDE.md "Notification touchpoint audit"
-section for why there's no shared source of truth for those).
+**Phase 4 (Rewards & notifications) — done.** Reward wiring: `cluster_checked_in`
+(`Culture_Clusters::check_in()` calls `award_points()` on a genuine new
+check-in only, not the `alreadyCheckedIn` early-return path) and
+`cluster_host_served` (new monthly cron, see below) added to both
+`Culture_Gamification::POINTS`/`::CREDIT_BONUSES`. Two new badges:
+`cluster_regular` (trigger `cluster_checkin_streak`, threshold 8, reads
+`Culture_Clusters::get_checkin_streak()`) and `city_convener` (trigger
+`cluster_host_consecutive_months`, threshold 3, reads the new
+`Culture_Clusters::get_host_consecutive_months()`, which walks distinct
+year-month buckets in the credit ledger). Two new cron jobs in
+`class-culture-cron.php`: `culture_award_cluster_host_service` (monthly —
+required adding a custom `'monthly'` interval to `add_schedules()`, since WP
+core has no built-in monthly schedule; awards each active cluster's current
+host once per calendar month, idempotency checked via a ledger query scoped
+to `source = 'cluster_host_served' AND source_id = $cluster_id AND
+created_at >= ` start of month, not `ledger_has_entry()` which has no time
+window) and `culture_send_cluster_checkin_reminders` (daily — matches
+`_cluster_meeting_day` against today's day name, notifies every active
+member of a matching cluster). One new notification type,
+`cluster_checkin_reminder`, registered in `Culture_Notifications::TYPES` with
+icon-map entries added across all three frontend files and a deep-link case
+in mobile's `openNotification()` (routes to `ClusterScreen`, same as the
+other four cluster types — all four of those were already fully wired in
+Phases 1–3, confirmed during this pass).
 
-**Phase 5 (Literati Connect integration + feed surfacing) — not started.**
+**Note on `literati_connect_attended` (deferred to Phase 5):** this doc's §6.1
+table lists it as a Phase 4 action key, but §7's implementation order
+explicitly assigns "the attendance-sweep cron and its reward" for Literati
+Connect to Phase 5, alongside the `_culture_event_is_literati` editorial-CPT
+meta flag from §1 that the sweep depends on (also Phase 5 scope, not yet
+built). Since the action key's only real trigger doesn't exist yet, it was
+deliberately left out of `POINTS`/`CREDIT_BONUSES` in this pass rather than
+added as dead config — add it together with the `culture_sweep_literati_attendance`
+cron job and the §1 meta flag when Phase 5 is built, not before.
+
+**Phase 5 (Literati Connect integration + feed surfacing) — not started, up next.**
 
 Two related but distinct offerings, both physical/IRL, both open to **all**
 members (Citizen and Pro — no tier gating anywhere in this feature):
