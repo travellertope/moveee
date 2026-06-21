@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  View, Text, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, StyleSheet, SafeAreaView, Image,
   TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput,
 } from "react-native";
 import { useNav } from "../../hooks/useNav";
@@ -32,6 +32,7 @@ export interface EventItem {
   organiserName: string | null;
   organiserSlug: string | null;
   attendeeCount?: number;
+  isLiterati: boolean;
 }
 
 function pick(...vals: unknown[]): string | null {
@@ -61,6 +62,7 @@ function mapEvent(wp: any): EventItem {
     organiserName: pick(cem.organiser_name, meta._culture_event_organiser_name),
     organiserSlug: pick(cem.organiser_slug, meta._culture_event_organiser_slug),
     attendeeCount: wp.rsvp_count ?? undefined,
+    isLiterati:    !!(cem.is_literati || meta._culture_event_is_literati),
   };
 }
 
@@ -98,6 +100,15 @@ function dateHeaderLabel(d: string): string {
       .toUpperCase();
   } catch {
     return d;
+  }
+}
+
+function fmtDateShort(d: string | null): string {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  } catch {
+    return "";
   }
 }
 
@@ -235,6 +246,36 @@ function TimelineRow({
   );
 }
 
+function LiteratiRail({
+  events, nearby, onPress, styles, c,
+}: { events: EventItem[]; nearby: boolean; onPress: (e: EventItem) => void; styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
+  if (events.length === 0) return null;
+  return (
+    <View style={styles.literatiSection}>
+      <View style={styles.literatiHeader}>
+        <Text style={styles.literatiHeaderText}>🪶 Literati Connect{nearby ? " near you" : ""}</Text>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.literatiRailContent}>
+        {events.map((e) => (
+          <TouchableOpacity key={e.id} style={styles.literatiCard} onPress={() => onPress(e)} activeOpacity={0.85}>
+            {e.imageUrl ? (
+              <Image source={{ uri: e.imageUrl }} style={styles.literatiCardImg} />
+            ) : (
+              <View style={[styles.literatiCardImg, { backgroundColor: c.paperWarm }]} />
+            )}
+            <View style={styles.literatiCardBody}>
+              <Text style={styles.literatiCardTitle} numberOfLines={2}>{e.title}</Text>
+              <Text style={styles.literatiCardMeta} numberOfLines={1}>
+                {[fmtDateShort(e.eventDate), e.city].filter(Boolean).join(" · ")}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 export default function EventsScreen() {
   const nav = useNav();
   const { user } = useAuthStore() as any;
@@ -327,6 +368,14 @@ export default function EventsScreen() {
     return result;
   }, [events, typeFilters, cityFilters, price, when, proOnly]);
 
+  const userCity = (user?.city ?? "").toLowerCase().trim();
+  const literatiNearby = useMemo(
+    () => (userCity ? events.filter((e) => e.isLiterati && (e.city ?? "").toLowerCase().includes(userCity)) : []),
+    [events, userCity]
+  );
+  const literatiAll = useMemo(() => events.filter((e) => e.isLiterati), [events]);
+  const literatiEvents = (literatiNearby.length > 0 ? literatiNearby : literatiAll).slice(0, 10);
+
   const activeFilterChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
     typeFilters.forEach((t) => chips.push({ key: `type-${t}`, label: t, onRemove: () => setTypeFilters((s) => { const n = new Set(s); n.delete(t); return n; }) }));
@@ -384,6 +433,18 @@ export default function EventsScreen() {
 
   const timelineChildren: React.ReactNode[] = [];
   const stickyIndices: number[] = [];
+  if (literatiEvents.length > 0) {
+    timelineChildren.push(
+      <LiteratiRail
+        key="literati-rail"
+        events={literatiEvents}
+        nearby={literatiNearby.length > 0}
+        onPress={(e) => nav.navigate("EventDetail", { event: e })}
+        styles={styles}
+        c={c}
+      />
+    );
+  }
   grouped.forEach((g) => {
     stickyIndices.push(timelineChildren.length);
     timelineChildren.push(
@@ -669,6 +730,25 @@ export default function EventsScreen() {
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.paperWarm },
+
+    literatiSection: { paddingTop: space[3], paddingBottom: space[2] },
+    literatiHeader: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], marginBottom: space[2],
+    },
+    literatiHeaderText: {
+      fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 0.4,
+      textTransform: "uppercase", color: c.ochre,
+    },
+    literatiRailContent: { paddingHorizontal: space[4], gap: 10 },
+    literatiCard: {
+      width: 200, borderRadius: radius.lg, backgroundColor: c.paper,
+      borderWidth: 1, borderColor: c.ochre, overflow: "hidden", marginRight: 10,
+    },
+    literatiCardImg: { width: "100%", height: 100 },
+    literatiCardBody: { padding: space[2] },
+    literatiCardTitle: { fontFamily: fonts.serifBold, fontSize: 13, color: c.ink, marginBottom: 4 },
+    literatiCardMeta: { fontFamily: fonts.sans, fontSize: 11, color: c.inkSoft },
 
     header: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",

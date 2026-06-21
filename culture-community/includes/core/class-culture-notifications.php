@@ -29,6 +29,7 @@ class Culture_Notifications {
         'cluster_forming_expired'  => 'House Fellowship Did Not Activate',
         'cluster_new_host'         => 'New Host',
         'cluster_election_started' => 'Host Election Started',
+        'cluster_checkin_reminder' => 'House Fellowship Meeting Today',
     );
 
     /* ——————————————————————————————————————

@@ -5,7 +5,6 @@
  * Provides an overview page with:
  * - Member statistics (total, by tier, new this month)
  * - Event attendance trends (check-ins per month)
- * - Popular chapters (by member count and attendance)
  * - Revenue overview (Patron subscribers, churn)
  */
 

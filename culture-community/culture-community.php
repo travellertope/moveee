@@ -54,7 +54,6 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-ajax.php';
 // Frontend includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-shortcodes.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-registration.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-leader-dashboard.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-templates.php';
 
 // Admin includes.
@@ -128,7 +127,6 @@ function culture_community_init() {
     Culture_Referrals::init();
     Culture_Cron::init();
     Culture_Registration::init();
-    Culture_Leader_Dashboard::init();
     Culture_Emails::init();
     Culture_Newsletter_Queue::init();
     Culture_Newsletter_Send::init();
@@ -195,8 +193,9 @@ add_action( 'wp_enqueue_scripts', 'culture_community_enqueue_assets' );
 /**
  * Check if the current user can view a target user's phone number.
  *
- * Phone numbers are private. Only the user themselves, administrators,
- * and chapter leaders of the target user's chapter(s) may see them.
+ * Phone numbers are private. Only the user themselves and administrators may
+ * see them. (The chapter-leader exception was removed June 2026 along with
+ * the rest of the Chapter system — see CLAUDE.md.)
  *
  * @param int $target_user_id The user whose phone number is being viewed.
  * @return bool
@@ -216,34 +215,6 @@ function culture_can_view_phone( $target_user_id ) {
     // Administrators can see all phone numbers.
     if ( current_user_can( 'manage_options' ) ) {
         return true;
-    }
-
-    // Chapter leaders can see phone numbers of members in their chapter.
-    $cache_key     = 'culture_leader_chapters_' . $current_user_id;
-    $leader_chapters = get_transient( $cache_key );
-    if ( false === $leader_chapters ) {
-        $leader_chapters = get_posts( array(
-            'post_type'           => 'culture_chapter',
-            'posts_per_page'      => -1,
-            'fields'              => 'ids',
-            'meta_key'            => '_culture_chapter_leader_id',
-            'meta_value'          => $current_user_id,
-            'no_found_rows'       => true,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-        ) );
-        set_transient( $cache_key, $leader_chapters ?: [], HOUR_IN_SECONDS );
-    }
-
-    if ( ! empty( $leader_chapters ) ) {
-        $target_primary   = get_user_meta( $target_user_id, '_culture_primary_chapter_id', true );
-        $target_secondary = get_user_meta( $target_user_id, '_culture_secondary_chapter_id', true );
-
-        foreach ( $leader_chapters as $chapter_id ) {
-            if ( (int) $chapter_id === (int) $target_primary || (int) $chapter_id === (int) $target_secondary ) {
-                return true;
-            }
-        }
     }
 
     return false;

@@ -108,8 +108,6 @@ if ( $plugin_active && get_theme_mod( 'culture_show_events_section', true ) ) :
                 <?php foreach ( $events as $event ) :
                     $event_date  = get_post_meta( $event->ID, '_culture_event_date', true );
                     $is_physical = get_post_meta( $event->ID, '_culture_is_physical', true );
-                    $chapter_id  = get_post_meta( $event->ID, '_culture_chapter_id', true );
-                    $chapter_name = $chapter_id ? get_the_title( $chapter_id ) : '';
                 ?>
                     <a href="<?php echo esc_url( get_permalink( $event ) ); ?>" class="ct-event-card">
                         <div class="ct-event-card__date-block">
@@ -119,9 +117,6 @@ if ( $plugin_active && get_theme_mod( 'culture_show_events_section', true ) ) :
                         <div class="ct-event-card__body">
                             <h3 class="ct-event-card__title"><?php echo esc_html( $event->post_title ); ?></h3>
                             <div class="ct-event-card__meta">
-                                <?php if ( $chapter_name ) : ?>
-                                    <span><?php echo esc_html( $chapter_name ); ?></span>
-                                <?php endif; ?>
                                 <span><?php echo esc_html( date_i18n( 'g:i A', strtotime( $event_date ) ) ); ?></span>
                             </div>
                         </div>
@@ -188,54 +183,6 @@ if ( get_theme_mod( 'culture_show_magazine_section', true ) ) :
                         </div>
                     </article>
                 <?php endforeach; wp_reset_postdata(); ?>
-            </div>
-        </div>
-    </section>
-<?php
-    endif;
-endif;
-?>
-
-<?php
-// ── Chapters Section ──
-if ( $plugin_active && get_theme_mod( 'culture_show_chapters_section', true ) ) :
-    $chapters = get_posts( array(
-        'post_type'      => 'culture_chapter',
-        'posts_per_page' => 6,
-        'post_status'    => 'publish',
-    ) );
-
-    if ( ! empty( $chapters ) ) :
-?>
-    <section class="ct-section ct-section--chapters">
-        <div class="ct-section__inner">
-            <div class="ct-section__header">
-                <h2 class="ct-section__title"><?php echo esc_html( get_theme_mod( 'culture_chapters_title', __( 'Explore Chapters', 'culture-theme' ) ) ); ?></h2>
-                <a href="<?php echo esc_url( get_post_type_archive_link( 'culture_chapter' ) ); ?>" class="ct-section__link"><?php esc_html_e( 'All Chapters', 'culture-theme' ); ?> &rarr;</a>
-            </div>
-            <div class="ct-chapters-grid">
-                <?php foreach ( $chapters as $chapter ) : ?>
-                    <a href="<?php echo esc_url( get_permalink( $chapter ) ); ?>" class="ct-chapter-card">
-                        <?php if ( has_post_thumbnail( $chapter ) ) : ?>
-                            <div class="ct-chapter-card__thumb">
-                                <?php echo get_the_post_thumbnail( $chapter, 'culture-card' ); ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="ct-chapter-card__body">
-                            <h3 class="ct-chapter-card__title"><?php echo esc_html( $chapter->post_title ); ?></h3>
-                            <?php
-                            $member_count = count( get_users( array(
-                                'meta_key'   => '_culture_primary_chapter_id',
-                                'meta_value' => $chapter->ID,
-                                'fields'     => 'ID',
-                            ) ) );
-                            ?>
-                            <span class="ct-chapter-card__count">
-                                <?php printf( esc_html( _n( '%d member', '%d members', $member_count, 'culture-theme' ) ), $member_count ); ?>
-                            </span>
-                        </div>
-                    </a>
-                <?php endforeach; ?>
             </div>
         </div>
     </section>

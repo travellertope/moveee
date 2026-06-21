@@ -321,29 +321,22 @@ class Culture_Activator {
     }
 
     /**
-     * Create the Chapter Leader role with specific capabilities.
+     * Grant culture capabilities to administrators.
+     *
+     * The Chapter Leader role (and its culture_manage_events/culture_manage_chapter/
+     * culture_view_attendance capabilities) was removed June 2026 — chapter membership
+     * had no assignment UI anywhere and the culture_chapter CPT was never even
+     * registered, so the whole role was dead. culture_scan_qr is kept: it's also the
+     * door-staff permission for the unrelated paid-ticketing system
+     * (Culture_Ticket_Payment::handle_verify()).
      */
     public static function create_roles() {
-        // Remove existing role first to update capabilities cleanly.
+        // Clean up the role from any existing installs.
         remove_role( 'chapter_leader' );
 
-        add_role( 'chapter_leader', __( 'Chapter Leader', 'culture-community' ), array(
-            'read'                     => true,
-            'edit_posts'               => true,
-            'upload_files'             => true,
-            'culture_manage_events'    => true,
-            'culture_scan_qr'          => true,
-            'culture_manage_chapter'   => true,
-            'culture_view_attendance'  => true,
-        ) );
-
-        // Grant admins the culture capabilities.
         $admin_role = get_role( 'administrator' );
         if ( $admin_role ) {
-            $admin_role->add_cap( 'culture_manage_events' );
             $admin_role->add_cap( 'culture_scan_qr' );
-            $admin_role->add_cap( 'culture_manage_chapter' );
-            $admin_role->add_cap( 'culture_view_attendance' );
         }
     }
 }

@@ -17,6 +17,13 @@
  *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
  *  - House Fellowship cluster forming-expiry sweep (daily) — pure WP-side
  *    logic, archives 'forming' clusters past their window (no Next.js call).
+ *  - House Fellowship host service award (monthly) — Phase 4 — awards
+ *    'cluster_host_served' once per active cluster's host per month.
+ *  - House Fellowship check-in reminder (daily) — Phase 4 — notifies all
+ *    active members of clusters meeting today.
+ *  - Literati Connect attendance sweep (daily) — Phase 5 — awards
+ *    'literati_connect_attended' once per event per confirmed RSVP attendee,
+ *    for literati-flagged culture_event posts that ended in the last 48h.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -35,6 +42,9 @@ class Culture_Cron {
     const HOOK_CLUSTER_SWEEP           = 'culture_check_cluster_forming_expiry';
     const HOOK_CLUSTER_ELECTION_TALLY  = 'culture_check_cluster_elections';
     const HOOK_CLUSTER_GRACE_SWEEP     = 'culture_check_cluster_host_vacancy_grace';
+    const HOOK_CLUSTER_HOST_SERVICE    = 'culture_award_cluster_host_service';
+    const HOOK_CLUSTER_CHECKIN_REMINDER = 'culture_send_cluster_checkin_reminders';
+    const HOOK_LITERATI_ATTENDANCE      = 'culture_sweep_literati_attendance';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
@@ -51,6 +61,9 @@ class Culture_Cron {
         add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
         add_action( self::HOOK_CLUSTER_ELECTION_TALLY, array( __CLASS__, 'tally_cluster_elections' ) );
         add_action( self::HOOK_CLUSTER_GRACE_SWEEP,    array( __CLASS__, 'sweep_cluster_host_vacancy' ) );
+        add_action( self::HOOK_CLUSTER_HOST_SERVICE,   array( __CLASS__, 'award_cluster_host_service' ) );
+        add_action( self::HOOK_CLUSTER_CHECKIN_REMINDER, array( __CLASS__, 'send_cluster_checkin_reminders' ) );
+        add_action( self::HOOK_LITERATI_ATTENDANCE,      array( __CLASS__, 'sweep_literati_attendance' ) );
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -83,6 +96,12 @@ class Culture_Cron {
                 'display'  => __( 'Once a Week', 'culture-community' ),
             );
         }
+        if ( ! isset( $schedules['monthly'] ) ) {
+            $schedules['monthly'] = array(
+                'interval' => 30 * DAY_IN_SECONDS,
+                'display'  => __( 'Once a Month', 'culture-community' ),
+            );
+        }
         return $schedules;
     }
 
@@ -113,6 +132,9 @@ class Culture_Cron {
             self::HOOK_CLUSTER_SWEEP           => 'daily',
             self::HOOK_CLUSTER_ELECTION_TALLY  => 'daily',
             self::HOOK_CLUSTER_GRACE_SWEEP     => 'daily',
+            self::HOOK_CLUSTER_HOST_SERVICE      => 'monthly',
+            self::HOOK_CLUSTER_CHECKIN_REMINDER  => 'daily',
+            self::HOOK_LITERATI_ATTENDANCE       => 'daily',
         );
 
         foreach ( $jobs as $hook => $recurrence ) {
@@ -136,6 +158,9 @@ class Culture_Cron {
             self::HOOK_CLUSTER_SWEEP,
             self::HOOK_CLUSTER_ELECTION_TALLY,
             self::HOOK_CLUSTER_GRACE_SWEEP,
+            self::HOOK_CLUSTER_HOST_SERVICE,
+            self::HOOK_CLUSTER_CHECKIN_REMINDER,
+            self::HOOK_LITERATI_ATTENDANCE,
         );
 
         foreach ( $hooks as $hook ) {
@@ -394,6 +419,187 @@ class Culture_Cron {
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' had no remaining members for 14 days and has been archived.',
                     '/connect/people',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
+                );
+            }
+        }
+    }
+
+    /**
+     * Award the recurring 'cluster_host_served' reward to every current host
+     * of an 'active' House Fellowship, once per calendar month per cluster.
+     * Idempotency is checked against the credit ledger directly (source_id =
+     * cluster_id, scoped to the current month) rather than
+     * Culture_Gamification::ledger_has_entry() — that helper matches on
+     * source_id alone with no time window, which would only ever allow one
+     * award per host for all time. Runs monthly.
+     */
+    public static function award_cluster_host_service() {
+        if ( ! class_exists( 'Culture_Clusters' ) || ! class_exists( 'Culture_Gamification' ) ) {
+            return;
+        }
+
+        global $wpdb;
+
+        $active_ids = get_posts( array(
+            'post_type'      => 'culture_cluster',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_cluster_status',
+                    'value' => Culture_Clusters::STATUS_ACTIVE,
+                ),
+            ),
+        ) );
+
+        $month_start = gmdate( 'Y-m-01 00:00:00' );
+
+        foreach ( $active_ids as $cluster_id ) {
+            $host_id = (int) get_post_meta( $cluster_id, '_cluster_host_id', true );
+            if ( ! $host_id ) {
+                continue;
+            }
+
+            $already_awarded = (bool) $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}culture_credit_ledger
+                 WHERE user_id = %d AND source = 'cluster_host_served' AND source_id = %d AND created_at >= %s LIMIT 1",
+                $host_id, $cluster_id, $month_start
+            ) );
+            if ( $already_awarded ) {
+                continue;
+            }
+
+            Culture_Gamification::award_points( $host_id, 'cluster_host_served' );
+        }
+    }
+
+    /**
+     * Same-day morning reminder to all active members of a House Fellowship
+     * whose meeting day is today, per §6.4/§6.3 — `cluster_checkin_reminder`.
+     * Runs daily; the day-of-week match against `_cluster_meeting_day`
+     * (lowercase day name, e.g. "monday") keeps this a single sweep rather
+     * than seven separate per-day schedules.
+     */
+    public static function send_cluster_checkin_reminders() {
+        if ( ! class_exists( 'Culture_Clusters' ) || ! class_exists( 'Culture_Notifications' ) ) {
+            return;
+        }
+
+        $today = strtolower( current_time( 'l' ) ); // e.g. "monday"
+
+        $active_ids = get_posts( array(
+            'post_type'      => 'culture_cluster',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_cluster_status',
+                    'value' => Culture_Clusters::STATUS_ACTIVE,
+                ),
+                array(
+                    'key'   => '_cluster_meeting_day',
+                    'value' => $today,
+                ),
+            ),
+        ) );
+
+        foreach ( $active_ids as $cluster_id ) {
+            $name = get_post_meta( $cluster_id, '_cluster_name', true );
+            foreach ( Culture_Clusters::get_members( $cluster_id ) as $member ) {
+                Culture_Notifications::add(
+                    (int) $member['id'],
+                    'cluster_checkin_reminder',
+                    'House Fellowship meets today',
+                    $name . ' meets today — don\'t forget to check in.',
+                    '/cluster/' . $cluster_id,
+                    array( 'cluster_id' => $cluster_id )
+                );
+            }
+        }
+    }
+
+    /**
+     * Award `literati_connect_attended` reputation + credits, once per event
+     * per attendee, to confirmed RSVPs on Literati Connect editorial events
+     * (`culture_event` posts flagged `_culture_event_is_literati`) whose date
+     * has passed. Runs daily; only scans events that ended in the last 48h so
+     * each event is only checked a couple of times rather than forever.
+     *
+     * `wp_culture_event_rsvp` (Culture_Event_RSVP) has no `user_id` column —
+     * only `email` and `event_slug` — so attendees are resolved to a WP user
+     * via get_user_by('email', ...), the same lookup already used by
+     * Culture_Event_RSVP::handle_submit(). RSVPs with no matching registered
+     * user are silently skipped (mirrors that existing precedent).
+     */
+    public static function sweep_literati_attendance() {
+        if ( ! class_exists( 'Culture_Gamification' ) || ! class_exists( 'Culture_Event_RSVP' ) ) {
+            return;
+        }
+
+        global $wpdb;
+
+        $window_start = gmdate( 'Y-m-d H:i:s', strtotime( '-48 hours' ) );
+        $now          = current_time( 'mysql', true );
+
+        $event_ids = get_posts( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_culture_event_is_literati',
+                    'value' => '1',
+                ),
+                array(
+                    'key'     => '_culture_event_date',
+                    'value'   => array( $window_start, $now ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'DATETIME',
+                ),
+            ),
+        ) );
+
+        if ( empty( $event_ids ) ) {
+            return;
+        }
+
+        $rsvp_table = $wpdb->prefix . 'culture_event_rsvp';
+
+        foreach ( $event_ids as $event_id ) {
+            $slug = get_post_field( 'post_name', $event_id );
+            if ( ! $slug ) {
+                continue;
+            }
+
+            $rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT email FROM {$rsvp_table} WHERE event_slug = %s AND status = 'confirmed'",
+                $slug
+            ), ARRAY_A );
+
+            foreach ( $rows as $row ) {
+                $user = get_user_by( 'email', $row['email'] );
+                if ( ! $user ) {
+                    continue;
+                }
+
+                if ( Culture_Gamification::ledger_has_entry( $user->ID, 'literati_connect_attended', $event_id ) ) {
+                    continue;
+                }
+
+                Culture_Gamification::award_reputation(
+                    $user->ID,
+                    Culture_Gamification::get_point_value( 'literati_connect_attended' ),
+                    'literati_connect_attended',
+                    $event_id
+                );
+                Culture_Gamification::award_credits(
+                    $user->ID,
+                    Culture_Gamification::get_credit_bonus( 'literati_connect_attended' ),
+                    'literati_connect_attended',
+                    $event_id
                 );
             }
         }

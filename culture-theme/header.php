@@ -103,7 +103,6 @@ function culture_theme_fallback_menu() {
     echo '<li><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( 'Home', 'culture-theme' ) . '</a></li>';
     if ( culture_theme_plugin_active() ) {
         echo '<li><a href="' . esc_url( get_post_type_archive_link( 'culture_event' ) ) . '">' . esc_html__( 'Events', 'culture-theme' ) . '</a></li>';
-        echo '<li><a href="' . esc_url( get_post_type_archive_link( 'culture_chapter' ) ) . '">' . esc_html__( 'Chapters', 'culture-theme' ) . '</a></li>';
         echo '<li><a href="' . esc_url( get_post_type_archive_link( 'culture_newsletter' ) ) . '">' . esc_html__( 'Digest', 'culture-theme' ) . '</a></li>';
     }
     echo '<li><a href="' . esc_url( home_url( '/blog/' ) ) . '">' . esc_html__( 'Magazine', 'culture-theme' ) . '</a></li>';

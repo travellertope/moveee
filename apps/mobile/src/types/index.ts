@@ -182,6 +182,7 @@ export interface FeedItem {
   organiserDirectoryId?: number | null;
   city?: string;          // used on happening + directory items
   isFeatured?: boolean;   // editorial culture_event + community event template
+  isLiterati?: boolean;   // editorial culture_event only — Literati Connect monthly meetup flag
 
   // Community event RSVP (culture_post CPT, templateType "event" only)
   rsvpEnabled?: boolean;

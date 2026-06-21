@@ -371,8 +371,6 @@ class Culture_Paystack {
 
         update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
         update_user_meta( $user_id, '_culture_subscription_status', 'cancelled' );
-        // Remove secondary chapter access on downgrade.
-        delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
     }
 
     /**

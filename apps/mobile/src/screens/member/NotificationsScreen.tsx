@@ -70,7 +70,8 @@ async function openNotification(item: Notification, nav: AppNavProp): Promise<Fe
     case "cluster_activated":
     case "cluster_forming_expired":
     case "cluster_new_host":
-    case "cluster_election_started": {
+    case "cluster_election_started":
+    case "cluster_checkin_reminder": {
       const clusterId = meta.cluster_id;
       if (clusterId) nav.navigate("ClusterScreen", { id: Number(clusterId) });
       break;
@@ -104,6 +105,7 @@ function getTypeMeta(c: ColorPalette) {
     cluster_forming_expired:  { emoji: "⌛", accent: c.warning, border: false },
     cluster_new_host:         { emoji: "🗳️", accent: c.gold,    border: false },
     cluster_election_started: { emoji: "🏛️", accent: c.ochre,   border: false },
+    cluster_checkin_reminder: { emoji: "📅", accent: c.gold,    border: false },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

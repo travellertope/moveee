@@ -270,7 +270,6 @@ function culture_theme_scripts() {
     $sections = array(
         'events'   => '.ct-section--events',
         'magazine' => '.ct-section--magazine',
-        'chapters' => '.ct-section--chapters',
     );
     foreach ( $sections as $key => $selector ) {
         $s_bg      = get_theme_mod( "culture_{$key}_bg_color", '' );
