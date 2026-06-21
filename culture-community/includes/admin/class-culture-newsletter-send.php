@@ -138,7 +138,7 @@ class Culture_Newsletter_Send {
             'gh'  => 'Ghana',
             'ca'  => 'Canada',
             'au'  => 'Australia',
-            'pro' => 'Connect Pro Members',
+            'pro' => 'Moveee Pro Members',
         );
 
         // Build counts[list][segment] — empty string segment = whole list total.

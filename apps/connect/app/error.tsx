@@ -56,7 +56,7 @@ export default function Error({
             Try again
           </button>
           <Link
-            href="/connect"
+            href="/feed"
             className="w-full border border-[--color-rule] px-8 py-4 font-mono text-[10px] uppercase tracking-[0.15em] text-[--color-ink] transition hover:bg-[--color-ink] hover:text-[--color-paper] sm:w-auto"
           >
             Back to Connect

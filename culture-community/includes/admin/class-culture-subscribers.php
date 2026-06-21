@@ -26,7 +26,7 @@ class Culture_Subscribers {
         'gh'  => 'Ghana',
         'ca'  => 'Canada',
         'au'  => 'Australia',
-        'pro' => 'Connect Pro Members',
+        'pro' => 'Moveee Pro Members',
     );
 
     public static function init() {

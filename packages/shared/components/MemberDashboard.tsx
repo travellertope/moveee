@@ -68,7 +68,7 @@ export default function MemberDashboard({
           >ⓘ</button>
           {openTooltip === 'credits' && (
             <div className="mem-tooltip" role="tooltip">
-              <strong>Moveee Credits</strong> are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Connect Pro only, 40% fee). Daily cap: <strong>50 credits</strong>.
+              <strong>Moveee Credits</strong> are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Moveee Pro only, 40% fee). Daily cap: <strong>50 credits</strong>.
             </div>
           )}
         </span>

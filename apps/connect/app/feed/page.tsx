@@ -5,7 +5,7 @@ import PulseFeed from "@/components/pulse/PulseFeed";
 import ConnectHero from "./ConnectHero";
 import Link from "next/link";
 import "../sections.css";
-import "./connect.css";
+import "./feed.css";
 
 // No session dependency in the RSC — hero and per-user features are handled
 // client-side (ConnectHero uses useSession; PulseFeed uses useSession for
@@ -56,9 +56,9 @@ export default async function ConnectPage() {
         <div className="mco-membership-teaser-inner">
           <div>
             <p className="mco-section-eyebrow">Membership</p>
-            <h2 className="mco-section-title" style={{ marginBottom: 8 }}>Connect Citizen &amp; Connect Pro</h2>
+            <h2 className="mco-section-title" style={{ marginBottom: 8 }}>Moveee Citizen &amp; Moveee Pro</h2>
             <p className="mco-section-desc">
-              Free membership gets you in. Connect Pro gets you featured, gated content, a Pro badge,
+              Free membership gets you in. Moveee Pro gets you featured, gated content, a Pro badge,
               and more. Two tiers. One community.
             </p>
           </div>

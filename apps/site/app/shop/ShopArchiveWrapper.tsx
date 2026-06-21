@@ -416,7 +416,7 @@ export default async function ShopArchiveWrapper({
                 </div>
               ))}
             </div>
-            <Link href="/connect" className="mb-btn">Join Connect →</Link>
+            <Link href="/feed" className="mb-btn">Join Moveee →</Link>
           </div>
           <div className="mb-right">
             <div className="mb-img" />

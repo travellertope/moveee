@@ -78,15 +78,15 @@ export default function ProEarlyAccessGate({ openDate, onUpgrade, onLearnMore }:
       <Text style={styles.star}>★</Text>
       <Text style={styles.title}>Early Access — Pro Members Only</Text>
       <Text style={styles.desc}>
-        This product is available exclusively to Connect Pro members before it goes on general sale.
+        This product is available exclusively to Moveee Pro members before it goes on general sale.
       </Text>
       {countdown ? <Text style={styles.countdown}>Opens in {countdown}</Text> : null}
       <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} activeOpacity={0.85}>
-        <Text style={styles.upgradeBtnText}>Upgrade to Connect Pro</Text>
+        <Text style={styles.upgradeBtnText}>Upgrade to Moveee Pro</Text>
       </TouchableOpacity>
       {onLearnMore && (
         <TouchableOpacity onPress={onLearnMore} activeOpacity={0.7}>
-          <Text style={styles.learnMore}>Learn more about Connect Pro →</Text>
+          <Text style={styles.learnMore}>Learn more about Moveee Pro →</Text>
         </TouchableOpacity>
       )}
     </View>

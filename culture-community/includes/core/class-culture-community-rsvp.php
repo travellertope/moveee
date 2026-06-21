@@ -7,7 +7,7 @@
  *
  * Free, capacity-limited signups only — no payment processing. Enabling
  * RSVP on an event (creation) and viewing/managing the attendee list
- * (management) are both restricted to Connect Pro (patron) members.
+ * (management) are both restricted to Moveee Pro (patron) members.
  */
 class Culture_Community_RSVP {
 

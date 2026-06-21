@@ -37,23 +37,23 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
   let footnote: React.ReactNode;
 
   if (isPatronGate && !isLoggedIn) {
-    tierLabel = "Connect Pro";
+    tierLabel = "Moveee Pro";
     heading = "There's more on the other side.";
     body =
-      "This piece goes deeper — reserved for Connect Pro members. Join a global community of culture-forward people, with exclusive editorials, a Pro badge, and long-form content worth your time.";
-    primaryBtn = { label: "Explore Connect Pro →", href: "/register?tier=patron" };
+      "This piece goes deeper — reserved for Moveee Pro members. Join a global community of culture-forward people, with exclusive editorials, a Pro badge, and long-form content worth your time.";
+    primaryBtn = { label: "Explore Moveee Pro →", href: "/register?tier=patron" };
     secondaryBtn = { label: "Already a member? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = (
       <span>
-        Connect Pro · <PatronPrice variant="yearly" /> · Cancel anytime · Free account always available
+        Moveee Pro · <PatronPrice variant="yearly" /> · Cancel anytime · Free account always available
       </span>
     );
   } else if (isPatronGate && isLoggedIn) {
-    tierLabel = "Connect Pro";
+    tierLabel = "Moveee Pro";
     heading = "You're one step away.";
     body =
-      "This piece is part of our Connect Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.";
-    primaryBtn = { label: "Upgrade to Connect Pro →", href: "/connect" };
+      "This piece is part of our Moveee Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.";
+    primaryBtn = { label: "Upgrade to Moveee Pro →", href: "/feed" };
     secondaryBtn = null;
     footnote = (
       <span>

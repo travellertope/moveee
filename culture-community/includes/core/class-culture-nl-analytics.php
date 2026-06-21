@@ -521,7 +521,7 @@ class Culture_NL_Analytics {
         'gh'  => 'Ghana',
         'ca'  => 'Canada',
         'au'  => 'Australia',
-        'pro' => 'Connect Pro Members',
+        'pro' => 'Moveee Pro Members',
     );
 
     /**

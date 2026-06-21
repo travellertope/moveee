@@ -70,7 +70,7 @@ export default async function WalletPage() {
             <h1 className="mem-name">{balance?.credits ?? 0} Credits</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Connect Pro" : "Connect Citizen"}
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
               <span className="mem-sep">·</span>
               <span>≈ £{((balance?.credit_value_gbp ?? 0) / 100).toFixed(2)}</span>

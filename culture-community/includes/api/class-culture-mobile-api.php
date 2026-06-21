@@ -1164,7 +1164,7 @@ class Culture_Mobile_API {
 
         $tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
         if ( 'citizen' === $tier && preg_match( '/https?:\/\//i', $content ) ) {
-            return new WP_Error( 'links_not_allowed', 'Connect Citizen members cannot post links.', array( 'status' => 403 ) );
+            return new WP_Error( 'links_not_allowed', 'Moveee Citizen members cannot post links.', array( 'status' => 403 ) );
         }
 
         $rl_key   = 'culture_post_rate_' . $user_id;
@@ -1188,7 +1188,7 @@ class Culture_Mobile_API {
             if ( 'patron' !== $tier ) {
                 $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
                 if ( $rep < 2500 ) {
-                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 points).', array( 'status' => 403 ) );
+                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Moveee Pro membership or Taste Maker status (2,500 points).', array( 'status' => 403 ) );
                 }
             }
         }
@@ -1198,7 +1198,7 @@ class Culture_Mobile_API {
             if ( 'patron' !== $tier ) {
                 $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
                 if ( $rep < 500 ) {
-                    return new WP_Error( 'rep_required', 'Creating events requires Connect Pro membership or Culture Contributor status (500 points).', array( 'status' => 403 ) );
+                    return new WP_Error( 'rep_required', 'Creating events requires Moveee Pro membership or Culture Contributor status (500 points).', array( 'status' => 403 ) );
                 }
             }
         }
@@ -1421,7 +1421,7 @@ class Culture_Mobile_API {
                 update_post_meta( $post_id, '_culture_event_organiser_id', (int) $request->get_param( 'organiser_directory_id' ) );
             }
 
-            // RSVP toggle + capacity — Connect Pro (patron) privilege only.
+            // RSVP toggle + capacity — Moveee Pro (patron) privilege only.
             if ( $request->get_param( 'rsvp_enabled' ) ) {
                 if ( Culture_Community_RSVP::is_pro( $user_id ) ) {
                     update_post_meta( $post_id, '_culture_rsvp_enabled', 1 );
@@ -1601,7 +1601,7 @@ class Culture_Mobile_API {
     }
 
     /**
-     * Mobile directory entry submission — Connect Pro (patron) privilege,
+     * Mobile directory entry submission — Moveee Pro (patron) privilege,
      * delegates to Culture_Directory::handle_submit with the authenticated
      * mobile user as submitter (mirrors web's /api/directory/submit gate).
      */
@@ -1613,7 +1613,7 @@ class Culture_Mobile_API {
         if ( 'patron' !== $tier ) {
             return new WP_Error(
                 'patron_required',
-                __( 'Connect Pro membership required to submit directory entries.', 'culture-community' ),
+                __( 'Moveee Pro membership required to submit directory entries.', 'culture-community' ),
                 array( 'status' => 403 )
             );
         }
@@ -1690,7 +1690,7 @@ class Culture_Mobile_API {
         $post_id = (int) $request->get_param( 'post_id' );
 
         if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
-            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+            return new WP_Error( 'patron_required', 'Moveee Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
         }
         if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
             return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
@@ -1712,7 +1712,7 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
 
         if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
-            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+            return new WP_Error( 'patron_required', 'Moveee Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
         }
 
         return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );

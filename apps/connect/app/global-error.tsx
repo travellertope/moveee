@@ -64,7 +64,7 @@ export default function GlobalError({
           }}
         >
           We hit an unexpected snag. Please try refreshing, or visit{" "}
-          <a href="/connect" style={{ color: "#b38238" }}>
+          <a href="/feed" style={{ color: "#b38238" }}>
             web.themoveee.com
           </a>{" "}
           to start over.
@@ -87,7 +87,7 @@ export default function GlobalError({
             Try again
           </button>
           <a
-            href="/connect"
+            href="/feed"
             style={{
               fontFamily: "monospace",
               fontSize: 10,

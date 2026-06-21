@@ -361,7 +361,7 @@ function CompleteProfileForm() {
     <div style={styles.page}>
       <div style={styles.card}>
         <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Connect Pro" : "Choose your membership"}</h1>
+        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Moveee Pro" : "Choose your membership"}</h1>
 
         {!isUpgrade && (
           <ProgressBar labels={stepLabels} currentIdx={2} percent={100} />
@@ -397,7 +397,7 @@ function CompleteProfileForm() {
                 },
                 {
                   value: "patron" as const,
-                  label: "Connect Pro",
+                  label: "Moveee Pro",
                   price: currency === "NGN" ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000") : (billingCycle === "monthly" ? "$4" : "$40"),
                   period: billingCycle === "monthly" ? "/ mo" : "/ yr",
                   perks: ["Everything in Citizen", "All patron-only articles", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],

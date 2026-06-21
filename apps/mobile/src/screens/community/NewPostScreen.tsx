@@ -1350,15 +1350,15 @@ const uploadImages = async (): Promise<string[]> => {
 
       {renderDivider()}
 
-      {/* RSVP — Connect Pro only */}
+      {/* RSVP — Moveee Pro only */}
       <View style={styles.fieldGroup}>
         <TouchableOpacity
           style={styles.rsvpToggleRow}
           onPress={() => {
             if (user?.tier !== "patron") {
               Alert.alert(
-                "Connect Pro feature",
-                "RSVP management is available to Connect Pro members. Upgrade to enable RSVP for your events."
+                "Moveee Pro feature",
+                "RSVP management is available to Moveee Pro members. Upgrade to enable RSVP for your events."
               );
               return;
             }

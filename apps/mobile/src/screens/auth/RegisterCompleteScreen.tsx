@@ -293,7 +293,7 @@ export default function RegisterCompleteScreen() {
                 <View style={styles.tierCardHeader}>
                   <View>
                     <Text style={styles.tierEyebrow}>FREE FOREVER</Text>
-                    <Text style={styles.tierName}>Connect Citizen</Text>
+                    <Text style={styles.tierName}>Moveee Citizen</Text>
                   </View>
                   <View style={[styles.tierRadio, tier === "citizen" && styles.tierRadioActive]}>
                     {tier === "citizen" && <View style={styles.tierRadioDot} />}
@@ -310,8 +310,8 @@ export default function RegisterCompleteScreen() {
               >
                 <View style={styles.tierCardHeader}>
                   <View>
-                    <Text style={[styles.tierEyebrow, { color: colors.gold }]}>CONNECT PRO ★</Text>
-                    <Text style={styles.tierName}>Connect Pro</Text>
+                    <Text style={[styles.tierEyebrow, { color: colors.gold }]}>MOVEEE PRO ★</Text>
+                    <Text style={styles.tierName}>Moveee Pro</Text>
                     <Text style={styles.tierPriceNote}>Upgrade via web after sign up</Text>
                   </View>
                   <View style={[styles.tierRadio, tier === "patron" && styles.tierRadioProActive]}>
@@ -319,7 +319,7 @@ export default function RegisterCompleteScreen() {
                   </View>
                 </View>
                 <Text style={styles.tierDesc}>
-                  Everything in Citizen + Connect Pro badge, gated content, early access, pro shop pricing.
+                  Everything in Citizen + Moveee Pro badge, gated content, early access, pro shop pricing.
                 </Text>
               </Pressable>
 
