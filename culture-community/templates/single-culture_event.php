@@ -12,12 +12,8 @@ while ( have_posts() ) :
 
     $event_id    = get_the_ID();
     $event_date  = get_post_meta( $event_id, '_culture_event_date', true );
-    $chapter_id  = get_post_meta( $event_id, '_culture_chapter_id', true );
     $is_physical = get_post_meta( $event_id, '_culture_is_physical', true );
     $capacity    = get_post_meta( $event_id, '_culture_capacity', true );
-
-    $chapter_title = $chapter_id ? get_the_title( $chapter_id ) : '';
-    $chapter_url   = $chapter_id ? get_permalink( $chapter_id ) : '';
 
     // Count RSVPs.
     global $wpdb;
@@ -68,13 +64,6 @@ while ( have_posts() ) :
                     <div class="culture-single-event__detail">
                         <span class="dashicons dashicons-calendar-alt"></span>
                         <span><?php echo esc_html( $formatted_date ); ?></span>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ( $chapter_title ) : ?>
-                    <div class="culture-single-event__detail">
-                        <span class="dashicons dashicons-location-alt"></span>
-                        <a href="<?php echo esc_url( $chapter_url ); ?>"><?php echo esc_html( $chapter_title ); ?></a>
                     </div>
                 <?php endif; ?>
 

@@ -204,13 +204,12 @@
     } );
 
     /* ═══════════════════════════════════
-       Homepage Sections — Events, Magazine, Chapters
+       Homepage Sections — Events, Magazine
        ═══════════════════════════════════ */
 
     var sectionMap = {
         events:   '.ct-section--events',
-        magazine: '.ct-section--magazine',
-        chapters: '.ct-section--chapters'
+        magazine: '.ct-section--magazine'
     };
 
     // Background colour.
@@ -250,12 +249,6 @@
     wp.customize( 'culture_magazine_title', function( value ) {
         value.bind( function( to ) {
             $( '.ct-section--magazine .ct-section__title' ).text( to );
-        } );
-    } );
-
-    wp.customize( 'culture_chapters_title', function( value ) {
-        value.bind( function( to ) {
-            $( '.ct-section--chapters .ct-section__title' ).text( to );
         } );
     } );
 

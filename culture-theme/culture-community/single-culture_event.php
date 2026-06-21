@@ -2,7 +2,7 @@
 /**
  * Template: Single Event (Theme Override)
  *
- * Rich event page with details, RSVP, chapter info, and related events.
+ * Rich event page with details, RSVP, and related events.
  */
 
 get_header();
@@ -12,12 +12,8 @@ while ( have_posts() ) :
 
     $event_id    = get_the_ID();
     $event_date  = get_post_meta( $event_id, '_culture_event_date', true );
-    $chapter_id  = get_post_meta( $event_id, '_culture_chapter_id', true );
     $is_physical = get_post_meta( $event_id, '_culture_is_physical', true );
     $capacity    = get_post_meta( $event_id, '_culture_capacity', true );
-
-    $chapter_title = $chapter_id ? get_the_title( $chapter_id ) : '';
-    $chapter_url   = $chapter_id ? get_permalink( $chapter_id ) : '';
 
     // Count RSVPs.
     global $wpdb;
@@ -58,11 +54,7 @@ while ( have_posts() ) :
     // Is the event in the past?
     $is_past = $ts && $ts < current_time( 'timestamp' );
 
-    // Chapter location for map.
-    $chapter_lat = $chapter_id ? get_post_meta( $chapter_id, '_culture_location_lat', true ) : '';
-    $chapter_lng = $chapter_id ? get_post_meta( $chapter_id, '_culture_location_lng', true ) : '';
-
-    // Related events (same chapter or same interests).
+    // Related events (same interests, upcoming).
     $related_args = array(
         'post_type'      => 'culture_event',
         'posts_per_page' => 3,
@@ -79,12 +71,6 @@ while ( have_posts() ) :
             ),
         ),
     );
-    if ( $chapter_id ) {
-        $related_args['meta_query'][] = array(
-            'key'   => '_culture_chapter_id',
-            'value' => $chapter_id,
-        );
-    }
     $related_events = get_posts( $related_args );
 ?>
 
@@ -139,15 +125,12 @@ while ( have_posts() ) :
                     </div>
                 </div>
             <?php endif; ?>
-            <?php if ( $chapter_title ) : ?>
-                <div class="ct-single-event__info-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <div>
-                        <strong><a href="<?php echo esc_url( $chapter_url ); ?>"><?php echo esc_html( $chapter_title ); ?></a></strong>
-                        <span><?php echo esc_html( '1' === $is_physical ? __( 'In-person event', 'culture-community' ) : __( 'Virtual event', 'culture-community' ) ); ?></span>
-                    </div>
+            <div class="ct-single-event__info-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <div>
+                    <span><?php echo esc_html( '1' === $is_physical ? __( 'In-person event', 'culture-community' ) : __( 'Virtual event', 'culture-community' ) ); ?></span>
                 </div>
-            <?php endif; ?>
+            </div>
             <div class="ct-single-event__info-item">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <div>
@@ -195,32 +178,6 @@ while ( have_posts() ) :
                     </div>
                 </section>
 
-                <!-- Map (if physical event with chapter location) -->
-                <?php if ( '1' === $is_physical && $chapter_lat && $chapter_lng ) : ?>
-                    <section class="ct-single-event__section">
-                        <h2 class="ct-single-event__section-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <?php esc_html_e( 'Venue Location', 'culture-community' ); ?>
-                        </h2>
-                        <?php
-                        wp_enqueue_style( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', array(), '1.9.4' );
-                        wp_enqueue_script( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', array(), '1.9.4', true );
-                        ?>
-                        <div id="culture-event-map" class="ct-single-event__map"></div>
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            var map = L.map('culture-event-map').setView([<?php echo esc_js( $chapter_lat ); ?>, <?php echo esc_js( $chapter_lng ); ?>], 14);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '&copy; OpenStreetMap contributors'
-                            }).addTo(map);
-                            L.marker([<?php echo esc_js( $chapter_lat ); ?>, <?php echo esc_js( $chapter_lng ); ?>])
-                                .addTo(map)
-                                .bindPopup('<?php echo esc_js( get_the_title() ); ?>');
-                        });
-                        </script>
-                    </section>
-                <?php endif; ?>
-
                 <!-- Related Events -->
                 <?php if ( ! empty( $related_events ) ) : ?>
                     <section class="ct-single-event__section">
@@ -232,8 +189,6 @@ while ( have_posts() ) :
                             <?php foreach ( $related_events as $rel ) :
                                 $rel_date     = get_post_meta( $rel->ID, '_culture_event_date', true );
                                 $rel_physical = get_post_meta( $rel->ID, '_culture_is_physical', true );
-                                $rel_chap_id  = get_post_meta( $rel->ID, '_culture_chapter_id', true );
-                                $rel_chap     = $rel_chap_id ? get_the_title( $rel_chap_id ) : '';
                             ?>
                                 <a href="<?php echo esc_url( get_permalink( $rel ) ); ?>" class="ct-event-card">
                                     <div class="ct-event-card__date-block">
@@ -243,9 +198,6 @@ while ( have_posts() ) :
                                     <div class="ct-event-card__body">
                                         <h3 class="ct-event-card__title"><?php echo esc_html( $rel->post_title ); ?></h3>
                                         <div class="ct-event-card__meta">
-                                            <?php if ( $rel_chap ) : ?>
-                                                <span><?php echo esc_html( $rel_chap ); ?></span>
-                                            <?php endif; ?>
                                             <span><?php echo esc_html( date_i18n( 'g:i A', strtotime( $rel_date ) ) ); ?></span>
                                         </div>
                                     </div>
@@ -334,37 +286,6 @@ while ( have_posts() ) :
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <!-- Chapter Card -->
-                <?php if ( $chapter_id && $chapter_title ) : ?>
-                    <div class="ct-single-event__sidebar-card">
-                        <h3 class="ct-single-event__sidebar-title">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                            <?php esc_html_e( 'Hosted By', 'culture-community' ); ?>
-                        </h3>
-                        <a href="<?php echo esc_url( $chapter_url ); ?>" class="ct-single-event__chapter-link">
-                            <?php if ( has_post_thumbnail( $chapter_id ) ) : ?>
-                                <div class="ct-single-event__chapter-thumb">
-                                    <?php echo get_the_post_thumbnail( $chapter_id, 'culture-thumbnail' ); ?>
-                                </div>
-                            <?php endif; ?>
-                            <div class="ct-single-event__chapter-info">
-                                <strong><?php echo esc_html( $chapter_title ); ?></strong>
-                                <?php
-                                $ch_count = count( get_users( array(
-                                    'meta_key'   => '_culture_primary_chapter_id',
-                                    'meta_value' => $chapter_id,
-                                    'fields'     => 'ID',
-                                ) ) );
-                                ?>
-                                <span>
-                                    <?php printf( esc_html( _n( '%d member', '%d members', $ch_count, 'culture-community' ) ), $ch_count ); ?>
-                                </span>
-                            </div>
-                            <svg class="ct-single-event__chapter-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                        </a>
-                    </div>
-                <?php endif; ?>
 
                 <!-- Event Details Card -->
                 <div class="ct-single-event__sidebar-card">

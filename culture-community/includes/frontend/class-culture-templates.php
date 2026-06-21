@@ -3,7 +3,6 @@
  * Template override system for Culture Community CPTs.
  *
  * Provides default single and archive templates for:
- * - culture_chapter (single + archive)
  * - culture_event (single + archive)
  * - culture_newsletter (single + archive)
  *
@@ -23,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_Templates {
 
     /** CPT slugs handled by this loader. */
-    const POST_TYPES = array( 'culture_chapter', 'culture_event', 'culture_newsletter' );
+    const POST_TYPES = array( 'culture_event', 'culture_newsletter' );
 
     public static function init() {
         add_filter( 'single_template', array( __CLASS__, 'load_single_template' ) );

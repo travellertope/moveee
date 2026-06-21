@@ -719,6 +719,42 @@ application logic.
 
 ---
 
+## Chapter Leader system removal (June 2026)
+
+The entire "Chapter Leader" / `culture_chapter` system has been removed. Rationale: the
+`culture_chapter` CPT was never actually registered via `register_post_type()` anywhere in the
+codebase, no assignment UI ever existed for chapter membership (`primary_chapter`/
+`secondary_chapter` fields were posted by JS to an AJAX action, `culture_set_chapters`, that had
+no PHP handler), and the feature has been fully superseded by the now-functional Literati Connect /
+House Fellowship build (see `docs/literati-connect-plan.md`).
+
+Removed: the `culture_chapter` CPT references, `_culture_chapter_leader_id`/`_culture_chapter_id`
+post meta, `_culture_primary_chapter_id`/`_culture_secondary_chapter_id` user meta, the
+`chapter_leader` WP role, `class-culture-leader-dashboard.php` (the WP Admin "QR Scanner" +
+"Attendance" submenu pages), the `/culture/v1/check-in` REST endpoint, the single/archive
+`culture_chapter` plugin templates and their theme counterparts, all chapter-related CSS in both
+`culture-community/assets/css/culture-community.css` and `culture-theme/assets/css/theme.css`
+(including the homepage "Chapters Grid" section and its customizer background-color wiring in
+`culture-theme/functions.php`), the dead `bindChapterSelect()` / chapter-toggle JS in
+`culture-community.js`/`culture-admin.js`, and a broken `{chapter_name}` merge tag in the welcome
+email template (`class-culture-email-templates.php`) that was declared but never actually
+substituted by the sending code — a genuine latent bug caught as a side effect of this sweep.
+
+Deliberately **kept** (still load-bearing, do not remove): the `culture_scan_qr` capability (used
+by `class-culture-ticket-payment.php`'s door-staff ticket verification), the `wp_culture_attendance`
+table (written by `handle_self_checkin()`, read by `class-culture-gamification.php` for badge
+triggers, `class-culture-ticket-payment.php`, `templates/single-culture_event.php`, and
+`class-culture-analytics.php`), and `handle_self_checkin()`/`handle_generate_checkin_token()` in
+`class-culture-rest-api.php` (the working, member-initiated editorial-event self-checkin flow — see
+"Editorial event self-checkin" above).
+
+**Known follow-on, out of scope for this pass**: with `class-culture-leader-dashboard.php` deleted,
+nothing in the plugin enqueues `culture-admin.js` anymore (no `wp_enqueue_script` call references
+it) — its remaining content (registration form step-nav JS) may itself be dead/unreachable. Not
+fixed here since it predates and is independent of the chapter removal; investigate before touching.
+
+---
+
 ## VIP Club Upgrade — Phase Status
 
 All phases implemented. Phase docs live in `docs/phases/`.
@@ -1212,16 +1248,15 @@ simple SHA-256-hash check-in token on editorial `culture_event` posts.
   `if (!id || !t) redirect("/events")` guard before the session/login check or the actual check-in
   ever ran — symptom: scanning the QR silently bounced to `/events` with no login prompt and no
   check-in confirmation, for both logged-in and logged-out users.
-- This feature is **not** the same as `/culture/v1/check-in` (`handle_checkin()`, gated by the
-  `culture_scan_qr` capability, table `wp_culture_attendance`) — that's a separate "staff scans
-  member" tool. It is **not dead code** despite having no scanning UI inside this same admin
-  metabox area: it backs the WP Admin "Chapter Leader" dashboard
-  (`class-culture-leader-dashboard.php`, submenu pages "QR Scanner" + "Attendance", gated on
-  `culture_scan_qr`/`culture_view_attendance` capabilities), wired up via `.js-culture-checkin-btn`
-  / `.js-culture-qr-checkin-btn` handlers in `culture-admin.js`. `wp_culture_attendance` is also
-  read by `class-culture-gamification.php`, `class-culture-ticket-payment.php`'s permission checks,
-  `templates/single-culture_event.php`, and WP Admin analytics (`class-culture-analytics.php`) — do
-  not remove it without checking all of these.
+- `wp_culture_attendance` is a separate table, deliberately kept despite the rest of the Chapter
+  Leader system being removed (see "Chapter Leader system removal" below) — it's read by
+  `class-culture-gamification.php` for badge triggers, `class-culture-ticket-payment.php`'s
+  permission checks, `templates/single-culture_event.php`, and WP Admin analytics
+  (`class-culture-analytics.php`); do not remove it without checking all of these. The
+  `culture_scan_qr` capability is kept for the same reason (still used by
+  `class-culture-ticket-payment.php`'s door-staff ticket verification). The REST route that used to
+  write to this table (`/culture/v1/check-in`) and the WP Admin "Chapter Leader" dashboard UI that
+  called it have both been removed — see below.
 
 ## Event system enhancements
 

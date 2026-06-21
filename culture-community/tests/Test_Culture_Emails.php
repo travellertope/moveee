@@ -15,29 +15,16 @@ class Test_Culture_Emails extends TestCase {
         $GLOBALS['_culture_test_emails']    = array();
     }
 
-    private function createUser( int $id, string $tier = 'citizen', int $chapter = 0 ): void {
+    private function createUser( int $id, string $tier = 'citizen' ): void {
         update_user_meta( $id, '_culture_membership_tier', $tier );
         update_user_meta( $id, '_culture_points', 0 );
         update_user_meta( $id, '_culture_badges', array() );
-        if ( $chapter ) {
-            update_user_meta( $id, '_culture_primary_chapter_id', $chapter );
-        }
-    }
-
-    private function createChapter( int $id, string $title ): void {
-        $GLOBALS['_culture_test_posts'][ $id ] = (object) array(
-            'ID'          => $id,
-            'post_type'   => 'culture_chapter',
-            'post_status' => 'publish',
-            'post_title'  => $title,
-        );
     }
 
     // ── Welcome Email ──
 
     public function testWelcomeEmailSentOnRegistration(): void {
-        $this->createChapter( 100, 'London Chapter' );
-        $this->createUser( 1, 'citizen', 100 );
+        $this->createUser( 1, 'citizen' );
 
         Culture_Emails::send_welcome_email( 1 );
 
@@ -48,15 +35,13 @@ class Test_Culture_Emails extends TestCase {
         $this->assertStringContainsString( 'Test User 1', $email['subject'] );
     }
 
-    public function testWelcomeEmailContainsTierAndChapter(): void {
-        $this->createChapter( 100, 'London Chapter' );
-        $this->createUser( 1, 'patron', 100 );
+    public function testWelcomeEmailContainsTier(): void {
+        $this->createUser( 1, 'patron' );
 
         Culture_Emails::send_welcome_email( 1 );
 
         $email = $GLOBALS['_culture_test_emails'][0];
         $this->assertStringContainsString( 'Patron', $email['body'] );
-        $this->assertStringContainsString( 'London Chapter', $email['body'] );
     }
 
     public function testWelcomeEmailSkipsInvalidUser(): void {

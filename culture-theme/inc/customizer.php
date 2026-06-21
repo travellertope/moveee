@@ -702,16 +702,6 @@ function culture_theme_customize_register( $wp_customize ) {
         'type'    => 'checkbox',
     ) );
 
-    $wp_customize->add_setting( 'culture_show_chapters_section', array(
-        'default'           => true,
-        'sanitize_callback' => 'culture_theme_sanitize_checkbox',
-    ) );
-    $wp_customize->add_control( 'culture_show_chapters_section', array(
-        'label'   => __( 'Show Chapters Section', 'culture-theme' ),
-        'section' => 'culture_homepage',
-        'type'    => 'checkbox',
-    ) );
-
     $wp_customize->add_setting( 'culture_show_magazine_section', array(
         'default'           => true,
         'sanitize_callback' => 'culture_theme_sanitize_checkbox',
@@ -902,69 +892,6 @@ function culture_theme_customize_register( $wp_customize ) {
         'label'   => __( 'Show Related Posts', 'culture-theme' ),
         'section' => 'culture_magazine',
         'type'    => 'checkbox',
-    ) );
-
-    // ═══════════════════════════════════════════
-    //  Chapters Section Styling
-    // ═══════════════════════════════════════════
-
-    $wp_customize->add_section( 'culture_hp_chapters', array(
-        'title'    => __( 'Chapters Section', 'culture-theme' ),
-        'panel'    => 'culture_theme_options',
-        'priority' => 26,
-    ) );
-
-    $wp_customize->add_setting( 'culture_chapters_title', array(
-        'default'           => __( 'Explore Chapters', 'culture-theme' ),
-        'sanitize_callback' => 'sanitize_text_field',
-        'transport'         => 'postMessage',
-    ) );
-    $wp_customize->add_control( 'culture_chapters_title', array(
-        'label'   => __( 'Section Title', 'culture-theme' ),
-        'section' => 'culture_hp_chapters',
-        'type'    => 'text',
-    ) );
-
-    $wp_customize->add_setting( 'culture_chapters_bg_color', array(
-        'default'           => '',
-        'sanitize_callback' => 'sanitize_hex_color',
-        'transport'         => 'postMessage',
-    ) );
-    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'culture_chapters_bg_color', array(
-        'label'       => __( 'Background Colour', 'culture-theme' ),
-        'description' => __( 'Leave empty for default.', 'culture-theme' ),
-        'section'     => 'culture_hp_chapters',
-    ) ) );
-
-    $wp_customize->add_setting( 'culture_chapters_bg_image', array(
-        'default'           => '',
-        'sanitize_callback' => 'esc_url_raw',
-    ) );
-    $wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, 'culture_chapters_bg_image', array(
-        'label'   => __( 'Background Image', 'culture-theme' ),
-        'section' => 'culture_hp_chapters',
-    ) ) );
-
-    $wp_customize->add_setting( 'culture_chapters_title_color', array(
-        'default'           => '',
-        'sanitize_callback' => 'sanitize_hex_color',
-        'transport'         => 'postMessage',
-    ) );
-    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'culture_chapters_title_color', array(
-        'label'   => __( 'Title Colour', 'culture-theme' ),
-        'section' => 'culture_hp_chapters',
-    ) ) );
-
-    $wp_customize->add_setting( 'culture_chapters_padding', array(
-        'default'           => 60,
-        'sanitize_callback' => 'absint',
-        'transport'         => 'postMessage',
-    ) );
-    $wp_customize->add_control( 'culture_chapters_padding', array(
-        'label'       => __( 'Vertical Padding (px)', 'culture-theme' ),
-        'section'     => 'culture_hp_chapters',
-        'type'        => 'number',
-        'input_attrs' => array( 'min' => 0, 'max' => 200, 'step' => 5 ),
     ) );
 
     // ═══════════════════════════════════════════

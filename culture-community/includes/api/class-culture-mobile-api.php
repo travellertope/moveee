@@ -2419,9 +2419,6 @@ class Culture_Mobile_API {
     // -------------------------------------------------------------------------
 
     private static function full_profile( WP_User $user ): array {
-        $primary_id   = (int) get_user_meta( $user->ID, '_culture_primary_chapter_id', true );
-        $secondary_id = (int) get_user_meta( $user->ID, '_culture_secondary_chapter_id', true );
-
         $stored_tier = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
         $tier = ( is_super_admin( $user->ID ) || user_can( $user, 'manage_options' ) )
             ? 'patron'
@@ -2470,8 +2467,6 @@ class Culture_Mobile_API {
             'occupation'            => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
             'phone'                 => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
             'whatsapp'              => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
-            'primaryChapter'        => array( 'id' => $primary_id, 'name' => $primary_id ? get_the_title( $primary_id ) : '' ),
-            'secondaryChapter'      => array( 'id' => $secondary_id, 'name' => $secondary_id ? get_the_title( $secondary_id ) : '' ),
             'isVendor'              => $is_vendor,
             'vendorSlug'            => $is_vendor ? $user->user_nicename : '',
             'hasPasskey'            => $passkey_count > 0,

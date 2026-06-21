@@ -64,7 +64,7 @@ class Culture_Emails {
         // Welcome email is sent explicitly by each registration handler after
         // all user meta has been saved.  Do NOT hook it to user_register here —
         // wp_create_user() fires that action before meta is written, which would
-        // produce an email with empty chapter / tier data and duplicate sends.
+        // produce an email with empty tier data and duplicate sends.
 
         // Referral confirmation to the referrer.
         add_action( 'culture_referral_completed', array( __CLASS__, 'send_referral_confirmation' ), 10, 2 );

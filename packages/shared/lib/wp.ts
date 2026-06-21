@@ -940,7 +940,7 @@ export const GET_TAG_INFO = `
   }
 `;
 
-// ── COMMUNITY CHAPTERS & EVENTS FRAGMENTS ─────────────────────────────────
+// ── DIRECTORY & EVENTS FRAGMENTS ─────────────────────────────────
 
 const DIRECTORY_FIELDS_FRAGMENT = `
   fragment DirectoryFields on CultureDirectory {

@@ -29,7 +29,6 @@ class Culture_Email_Templates {
                 'tags'            => array(
                     '{display_name}' => __( 'Member\'s display name', 'culture-community' ),
                     '{tier}'         => __( 'Membership tier (e.g. Citizen, Patron)', 'culture-community' ),
-                    '{chapter_name}' => __( 'Primary chapter name (may be empty)', 'culture-community' ),
                 ),
                 'default_subject' => 'Welcome to Culture Community, {display_name}!',
                 'default_heading' => 'Welcome Aboard!',
@@ -39,12 +38,11 @@ class Culture_Email_Templates {
 <table style="width:100%;margin:20px 0;border-collapse:collapse;">
 <tbody>
 <tr><td style="padding:8px 12px;background:#f8f9fa;font-weight:600;width:140px;">Membership</td><td style="padding:8px 12px;background:#f8f9fa;">{tier}</td></tr>
-<tr><td style="padding:8px 12px;font-weight:600;">Chapter</td><td style="padding:8px 12px;">{chapter_name}</td></tr>
 </tbody>
 </table>
 <p>Here\'s what you can do next:</p>
 <ul>
-<li>Browse upcoming events in your chapter</li>
+<li>Browse upcoming events near you</li>
 <li>Read the latest GetMeLit and Culture Drop newsletters</li>
 <li>Share your referral link to earn Culture Points</li>
 <li>Check your Cultural Passport to track badges and progress</li>
