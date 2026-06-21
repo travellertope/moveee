@@ -111,7 +111,13 @@ React Native can't use the DOM-dependent shared package — edit both when those
 - **Literati Connect** is a *separate* offering — the name for city-by-city physical
   meetup clusters of Moveee members. Do not confuse this with the Moveee product itself,
   and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
-  now belongs to Literati Connect.
+  now belongs to Literati Connect. **Full planning doc (read before any build work on
+  this feature): `docs/literati-connect-plan.md`** — covers Literati Connect (monthly,
+  city-wide — reuses the existing editorial `culture_event` CPT) and House Fellowship
+  (weekly, street-cluster — new `culture_cluster` CPT, open to all tiers, three
+  host-selection mechanisms: appointed/self-nominated/elected, overflow joining when a
+  home-street cluster is full, QR-based weekly check-in mirroring the Perks redemption
+  pattern). Status as of 2026-06-21: planning complete, build not started.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
   Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
   emails/admin labels) — this superseded the prior naming and is now fully applied
@@ -581,6 +587,46 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 `pm.max_children = floor((available_RAM_MB - 512) / 110)`. For 4GB: safe to set to ~30.
 
 ---
+
+## Cron / scheduled jobs — split ownership between WP-Cron and cron-job.org (June 2026)
+
+Two independent schedulers trigger Next.js worker routes via `Authorization:
+Bearer {CRON_SECRET}`. They are **not** interchangeable and must not both
+schedule the same job — discovered June 2026 when a cron-job.org dashboard
+audit showed several jobs double-firing on mismatched schedules (e.g.
+directory seeding running daily via cron-job.org while `Culture_Cron`
+scheduled it weekly), and three jobs auto-disabled ("Inactive") by
+cron-job.org after repeated failures.
+
+**WP-Cron (`Culture_Cron`, `culture-community/includes/core/class-culture-cron.php`)
+is the canonical owner for jobs that have WP-side logic**, triggered by a real
+Lightsail server crontab every 30 min (`DISABLE_WP_CRON=true`):
+grace period check (daily), directory seed (weekly), pulse refresh (daily),
+events seed (daily), quotes seed (weekly). **Do not also schedule these five
+on cron-job.org** — disable any matching entries there.
+
+**cron-job.org is the sole scheduler for jobs with no WP-side logic at all**
+(there is nothing to make canonical in PHP for these): `trivia daily`
+(`/api/games/trivia/daily`), `who said it daily`, `quote audit`. This is
+intentional, not a stopgap — keep these on cron-job.org's free tier rather
+than inventing WP-Cron hooks for them.
+
+**`/api/games/crossword/daily` needs no scheduler at all** — it lazy-generates
+and caches the puzzle on the first player request each day (see the route
+file for the WordPress-cache → Gemini → static-bank fallback chain). Any
+cron-job.org entry for it should be deleted, not fixed.
+
+**Important: there is no Vercel-native cron in this project** — `apps/site/vercel.json`
+is `{}`. Some route file comments previously claimed "invoked by Vercel cron"
+(stale/aspirational, fixed June 2026) — if you see that phrasing anywhere
+else, it's wrong; the real trigger is one of the two schedulers above.
+
+**Timeout mismatch gotcha:** cron-job.org's per-job request timeout (configured
+in its dashboard, commonly defaulted to 30s) can be shorter than a route's own
+`maxDuration` (e.g. `auto-seed` is 300s, `pulse/refresh` is 120s) — cron-job.org
+reports "Failed (timeout)" even when the underlying serverless function may
+still complete fine server-side. When keeping a job on cron-job.org, set its
+timeout to match or exceed the route's `maxDuration`.
 
 ## Next.js middleware — use proxy.ts, never middleware.ts
 

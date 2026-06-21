@@ -12,6 +12,8 @@ import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
+import { api, MOBILE_API } from "../../api/client";
+import type { Cluster } from "../../types";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
@@ -170,6 +172,26 @@ export default function MemberDashboardScreen() {
   const { mode } = useThemeStore();
   const systemScheme = useColorScheme();
   const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
+  const [myCluster, setMyCluster] = useState<Cluster | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.get<{ clusters: Cluster[] }>(`${MOBILE_API}/cluster/my-clusters`);
+        const clusters = data?.clusters ?? [];
+        setMyCluster(clusters.find((cl) => cl.status !== "archived") ?? null);
+      } catch {
+        setMyCluster(null);
+      }
+    })();
+  }, []);
+
+  const quickLinks = useMemo(() => {
+    const houseFellowshipItem = myCluster
+      ? { emoji: "🏠", label: "My House Fellowship", screen: "ClusterScreen", params: { id: myCluster.id } }
+      : { emoji: "🏠", label: "Find your House Fellowship", screen: "MemberDirectory" };
+    return [houseFellowshipItem, ...QUICK_LINKS];
+  }, [myCluster]);
 
   if (!user) return null;
 
@@ -353,11 +375,11 @@ export default function MemberDashboardScreen() {
 
         {/* Card 7: Quick Links Menu */}
         <View style={[styles.card, styles.menuCard]}>
-          {QUICK_LINKS.map((item, i) => (
+          {quickLinks.map((item: any, i) => (
             <TouchableOpacity
               key={item.label}
-              style={[styles.menuItem, i === QUICK_LINKS.length - 1 && styles.menuItemLast]}
-              onPress={() => nav.navigate(item.screen as never, item.tab ? { tab: item.tab } : undefined)}
+              style={[styles.menuItem, i === quickLinks.length - 1 && styles.menuItemLast]}
+              onPress={() => nav.navigate(item.screen as never, (item.params ?? (item.tab ? { tab: item.tab } : undefined)) as never)}
             >
               <Text style={styles.menuEmoji}>{item.emoji}</Text>
               <Text style={styles.menuLabel}>{item.label}</Text>

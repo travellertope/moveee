@@ -2,8 +2,12 @@
 /**
  * Scheduled jobs for Culture Community.
  *
- * All automation runs via WordPress cron, triggered by a real server cron
- * on Lightsail every 30 minutes (see wp-config.php: DISABLE_WP_CRON = true).
+ * This class is the canonical owner for the five jobs below — automation runs
+ * via WordPress cron, triggered by a real server cron on Lightsail every 30
+ * minutes (see wp-config.php: DISABLE_WP_CRON = true). These same five jobs
+ * must NOT also be scheduled on cron-job.org (the external scheduler used for
+ * jobs that have no WP-side logic) — running both would double-fire the seed
+ * with mismatched frequencies. See "Split cron ownership" in CLAUDE.md.
  *
  * Jobs:
  *  - Grace period check (daily) — downgrades lapsed Patron accounts.
@@ -11,6 +15,8 @@
  *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
  *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
  *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
+ *  - House Fellowship cluster forming-expiry sweep (daily) — pure WP-side
+ *    logic, archives 'forming' clusters past their window (no Next.js call).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,6 +32,7 @@ class Culture_Cron {
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
     const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
+    const HOOK_CLUSTER_SWEEP    = 'culture_check_cluster_forming_expiry';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
@@ -39,6 +46,7 @@ class Culture_Cron {
         add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
         add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
         add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
+        add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -98,6 +106,7 @@ class Culture_Cron {
             self::HOOK_SEED_EVENTS      => 'daily',
             self::HOOK_SEED_QUOTES      => 'weekly',
             'culture_check_perk_expiry' => 'hourly',
+            self::HOOK_CLUSTER_SWEEP    => 'daily',
         );
 
         foreach ( $jobs as $hook => $recurrence ) {
@@ -118,6 +127,7 @@ class Culture_Cron {
             self::HOOK_SEED_EVENTS,
             self::HOOK_SEED_QUOTES,
             'culture_check_perk_expiry',
+            self::HOOK_CLUSTER_SWEEP,
         );
 
         foreach ( $hooks as $hook ) {
@@ -237,6 +247,56 @@ class Culture_Cron {
      */
     public static function seed_quotes() {
         self::call_nextjs( '/api/quotes/auto-populate' );
+    }
+
+    /**
+     * Archive House Fellowship clusters still 'forming' past their window
+     * (default 30 days — see Culture_Clusters::forming_window_days()),
+     * notifying the founder with a CTA to merge into a nearby active
+     * cluster instead. Runs daily.
+     */
+    public static function sweep_forming_clusters() {
+        if ( ! class_exists( 'Culture_Clusters' ) ) {
+            return;
+        }
+
+        $window_days = Culture_Clusters::forming_window_days();
+        $cutoff      = gmdate( 'Y-m-d H:i:s', strtotime( '-' . $window_days . ' days' ) );
+
+        $stale_ids = get_posts( array(
+            'post_type'      => 'culture_cluster',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_cluster_status',
+                    'value' => Culture_Clusters::STATUS_FORMING,
+                ),
+                array(
+                    'key'     => '_cluster_created_at',
+                    'value'   => $cutoff,
+                    'compare' => '<=',
+                    'type'    => 'DATETIME',
+                ),
+            ),
+        ) );
+
+        foreach ( $stale_ids as $cluster_id ) {
+            update_post_meta( $cluster_id, '_cluster_status', 'archived' );
+
+            $founder_id = (int) get_post_meta( $cluster_id, '_cluster_founder_id', true );
+            if ( $founder_id && class_exists( 'Culture_Notifications' ) ) {
+                Culture_Notifications::add(
+                    $founder_id,
+                    'cluster_forming_expired',
+                    'Your House Fellowship didn\'t reach activation',
+                    get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby House Fellowship instead.',
+                    '/connect/people',
+                    array( 'cluster_id' => $cluster_id, 'archived' => true )
+                );
+            }
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

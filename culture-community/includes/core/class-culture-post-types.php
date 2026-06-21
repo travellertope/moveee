@@ -215,6 +215,36 @@ class Culture_Post_Types {
                 'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
+
+        // House Fellowship cluster meta (Literati Connect plan, Phase 1).
+        $cluster_meta = array(
+            '_cluster_name'                 => 'string',
+            '_cluster_city'                 => 'string',
+            '_cluster_street'               => 'string',
+            '_cluster_country'              => 'string',
+            '_cluster_lat'                  => 'number',
+            '_cluster_lng'                  => 'number',
+            '_cluster_status'               => 'string',
+            '_cluster_founder_id'           => 'integer',
+            '_cluster_host_id'              => 'integer',
+            '_cluster_host_mechanism'       => 'string',
+            '_cluster_capacity'             => 'integer',
+            '_cluster_meeting_day'          => 'string',
+            '_cluster_meeting_time'         => 'string',
+            '_cluster_meeting_location_note' => 'string',
+            '_cluster_created_at'           => 'string',
+            '_cluster_activated_at'         => 'string',
+            '_cluster_election_open_until'  => 'string',
+            '_cluster_election_votes'       => 'string', // JSON: {voter_user_id: candidate_user_id}
+        );
+        foreach ( $cluster_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_cluster', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+            ) );
+        }
     }
 
     /**
@@ -1056,6 +1086,31 @@ class Culture_Post_Types {
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureJourney',
             'graphql_plural_name' => 'cultureJourneys',
+        ) );
+
+        // House Fellowship cluster CPT — structured entity, not a rendered page
+        // (same rationale as culture_directory's earlier public=>false siblings:
+        // it's surfaced only through dedicated screens/endpoints).
+        register_post_type( 'culture_cluster', array(
+            'labels' => array(
+                'name'               => __( 'House Fellowship Clusters', 'culture-community' ),
+                'singular_name'      => __( 'Cluster', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Cluster', 'culture-community' ),
+                'edit_item'          => __( 'Edit Cluster', 'culture-community' ),
+                'view_item'          => __( 'View Cluster', 'culture-community' ),
+                'all_items'          => __( 'Clusters', 'culture-community' ),
+                'search_items'       => __( 'Search Clusters', 'culture-community' ),
+                'not_found'          => __( 'No clusters found', 'culture-community' ),
+            ),
+            'public'              => false,
+            'show_ui'             => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-groups',
+            'supports'            => array( 'title' ),
+            'show_in_rest'        => true,
+            'rest_base'           => 'clusters',
+            'capability_type'     => 'post',
         ) );
     }
 

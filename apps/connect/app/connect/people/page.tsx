@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import MemberDirectory from "@/components/connect/MemberDirectory";
+import HouseFellowship from "@/components/connect/HouseFellowship";
 import Link from "next/link";
 import "../../sections.css";
 import "../../feed/feed.css";
@@ -47,6 +48,10 @@ export default async function PeoplePage() {
           <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
         </nav>
       </section>
+
+      {loggedIn && (
+        <HouseFellowship viewerCity={viewerCity} viewerCountry={viewerCountry} />
+      )}
 
       <section className="mco-directory-section" style={{ borderTop: "none" }}>
         <MemberDirectory viewerCity={viewerCity} viewerCountry={viewerCountry} />

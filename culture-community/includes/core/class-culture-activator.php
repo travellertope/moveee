@@ -200,6 +200,9 @@ class Culture_Activator {
         // Community event RSVPs table.
         Culture_Community_RSVP::create_table();
 
+        // House Fellowship cluster membership table (Literati Connect plan, Phase 1).
+        Culture_Clusters::create_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

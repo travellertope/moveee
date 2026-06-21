@@ -324,6 +324,60 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // House Fellowship clusters (culture_cluster CPT). Phase 1 — create/discover/
+        // join/leave/status only, no election/check-in. Mirrors /cluster/* (web, API key).
+        register_rest_route( 'culture/v1', '/mobile/cluster/create', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_create' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'name'    => array( 'required' => true, 'type' => 'string' ),
+                'city'    => array( 'type' => 'string' ),
+                'street'  => array( 'type' => 'string' ),
+                'country' => array( 'type' => 'string' ),
+                'capacity' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'meeting_day'    => array( 'type' => 'string' ),
+                'meeting_time'   => array( 'type' => 'string' ),
+                'location_note'  => array( 'type' => 'string' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/discover', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_discover' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/my-clusters', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_my_clusters' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_get' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/join', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_join' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/leave', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_leave' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -1716,6 +1770,86 @@ class Culture_Mobile_API {
         }
 
         return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  House Fellowship clusters (mobile, JWT)
+     * —————————————————————————————————————— */
+
+    public static function handle_cluster_create( $request ) {
+        $user_id = get_current_user_id();
+        $data    = array(
+            'name'         => (string) $request->get_param( 'name' ),
+            'city'         => (string) $request->get_param( 'city' ),
+            'street'       => (string) $request->get_param( 'street' ),
+            'country'      => (string) $request->get_param( 'country' ),
+            'capacity'     => $request->get_param( 'capacity' ),
+            'meetingDay'   => (string) $request->get_param( 'meeting_day' ),
+            'meetingTime'  => (string) $request->get_param( 'meeting_time' ),
+            'locationNote' => (string) $request->get_param( 'location_note' ),
+        );
+
+        $result = Culture_Clusters::create_cluster( $user_id, $data );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_cluster( $result ) );
+    }
+
+    public static function handle_cluster_discover( $request ) {
+        $params = array(
+            'q'        => (string) $request->get_param( 'q' ),
+            'city'     => (string) $request->get_param( 'city' ),
+            'country'  => (string) $request->get_param( 'country' ),
+            'status'   => (string) $request->get_param( 'status' ),
+            'sort'     => (string) $request->get_param( 'sort' ),
+            'page'     => (int) ( $request->get_param( 'page' ) ?: 1 ),
+            'per_page' => (int) ( $request->get_param( 'per_page' ) ?: 20 ),
+        );
+
+        return rest_ensure_response( Culture_Clusters::discover( $params ) );
+    }
+
+    public static function handle_cluster_my_clusters( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( array( 'clusters' => Culture_Clusters::list_for_user( $user_id ) ) );
+    }
+
+    public static function handle_cluster_get( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+        $cluster    = Culture_Clusters::get_cluster( $cluster_id );
+        if ( ! $cluster ) {
+            return new WP_Error( 'not_found', 'Cluster not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( $cluster );
+    }
+
+    public static function handle_cluster_status( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Clusters::get_member_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_join( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $result = Culture_Clusters::join( $cluster_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_member_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_leave( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        Culture_Clusters::leave( $cluster_id, $user_id );
+
+        return rest_ensure_response( Culture_Clusters::get_member_status( $cluster_id, $user_id ) );
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
