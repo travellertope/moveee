@@ -25,6 +25,8 @@ class Culture_Notifications {
         'new_follower'      => 'New Follower',
         'new_follower_post' => 'New Post From Someone You Follow',
         'event_rsvp'        => 'Event RSVP',
+        'cluster_activated'      => 'House Fellowship Activated',
+        'cluster_forming_expired' => 'House Fellowship Did Not Activate',
     );
 
     /* ——————————————————————————————————————

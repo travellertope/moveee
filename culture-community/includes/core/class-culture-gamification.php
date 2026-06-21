@@ -331,6 +331,7 @@ class Culture_Gamification {
         'directory_opt_in'       => 10,
         'newsletter_subscribed'  => 5,
         'poll_vote'              => 1,
+        'cluster_founded'        => 50,
     );
 
     /**
@@ -360,6 +361,7 @@ class Culture_Gamification {
         'directory_opt_in'      => 2,
         'newsletter_subscribed' => 2,
         'poll_vote'             => 1,
+        'cluster_founded'       => 15,
     );
 
     const DAILY_CREDIT_CAP = 50;

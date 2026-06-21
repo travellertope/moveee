@@ -315,6 +315,12 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_r2_bucket_name', $text );
         register_setting( 'culture_settings_general', 'culture_r2_public_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
+        // Literati Connect / House Fellowship (culture_cluster CPT).
+        register_setting( 'culture_settings_general', 'culture_cluster_min_activation_members', $int );
+        register_setting( 'culture_settings_general', 'culture_cluster_forming_window_days', $int );
+        register_setting( 'culture_settings_general', 'culture_cluster_default_capacity', $int );
+        register_setting( 'culture_settings_general', 'culture_cluster_election_window_days', $int );
+
 
         // Advertising.
         register_setting( 'culture_settings_moderation', 'culture_community_blocklist', array(
@@ -1037,6 +1043,43 @@ class Culture_Settings {
                     <input type="url" id="culture_r2_public_url" name="culture_r2_public_url"
                            value="<?php echo esc_attr( self::get( 'culture_r2_public_url' ) ); ?>" class="large-text" placeholder="https://media.themoveee.com" />
                     <p class="description"><?php esc_html_e( 'Public base URL the bucket is served from. Must match R2_PUBLIC_URL on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Literati Connect / House Fellowship', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Controls the culture_cluster CPT lifecycle — street-level House Fellowship clusters that form, activate, and (if they never reach enough members) auto-archive.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_cluster_min_activation_members"><?php esc_html_e( 'Min. Members to Activate', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_cluster_min_activation_members" name="culture_cluster_min_activation_members"
+                           value="<?php echo esc_attr( self::get( 'culture_cluster_min_activation_members' ) ?: 4 ); ?>" min="2" max="50" step="1" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Number of active members a "forming" cluster needs to auto-flip to "active" and become publicly discoverable.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_cluster_forming_window_days"><?php esc_html_e( 'Forming Window (days)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_cluster_forming_window_days" name="culture_cluster_forming_window_days"
+                           value="<?php echo esc_attr( self::get( 'culture_cluster_forming_window_days' ) ?: 30 ); ?>" min="1" max="120" step="1" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'A cluster still "forming" after this many days is auto-archived by the daily cron sweep, notifying the founder.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_cluster_default_capacity"><?php esc_html_e( 'Default Capacity', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_cluster_default_capacity" name="culture_cluster_default_capacity"
+                           value="<?php echo esc_attr( self::get( 'culture_cluster_default_capacity' ) ?: 12 ); ?>" min="0" max="500" step="1" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Default member cap for a newly-founded cluster unless the founder overrides it. 0 = unlimited.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_cluster_election_window_days"><?php esc_html_e( 'Host Election Window (days)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_cluster_election_window_days" name="culture_cluster_election_window_days"
+                           value="<?php echo esc_attr( self::get( 'culture_cluster_election_window_days' ) ?: 7 ); ?>" min="1" max="30" step="1" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Reserved for the Phase 2 host-election flow — how long voting stays open after a host vacancy is triggered.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

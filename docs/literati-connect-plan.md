@@ -1,11 +1,27 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
-Status: **Planning — not started.** No code, CPTs, tables, or endpoints described
-below exist yet. This document is the single source of truth for building this
-feature. Do not begin implementation until this document is read in full — it
-exists specifically to prevent scope creep and to avoid omitting load-bearing
-pieces (gamification wiring, notification wiring, mobile/web parity) that are
-easy to forget mid-build in this codebase.
+Status: **Phase 1 in progress.** This document is the single source of truth for
+building this feature. Do not begin implementation on any later phase until this
+document is read in full — it exists specifically to prevent scope creep and to
+avoid omitting load-bearing pieces (gamification wiring, notification wiring,
+mobile/web parity) that are easy to forget mid-build in this codebase.
+
+**Phase 1 backend progress (as of 2026-06-21):** `culture_cluster` CPT + `_cluster_*`
+meta registered (`class-culture-post-types.php`). `wp_culture_cluster_members` table
+(`Culture_Clusters::create_table()`, wired into `Culture_Activator::create_tables()`,
+`CULTURE_VERSION` bumped to `2.5.0`) — `wp_culture_cluster_checkins` is still Phase 3,
+not created yet. `Culture_Clusters` core class complete: `create_cluster`, `join`,
+`leave`, `get_cluster`, `get_member_status`, `list_for_user`, `discover`,
+`maybe_activate` (auto-activation + founder notification/credit award). Gamification:
+`cluster_founded` added to `POINTS`/`CREDIT_BONUSES`. Notifications: `cluster_activated`
+and `cluster_forming_expired` added to `TYPES`. Cron: `Culture_Cron::sweep_forming_clusters()`
+(daily) archives stale `forming` clusters past the window and notifies the founder.
+Admin settings: "Literati Connect / House Fellowship" section added to WP Admin →
+Culture Community → General tab (`class-culture-settings.php`) — the four config
+options below are now live and editable, not just `defined()` constants.
+**Still pending for Phase 1**: REST endpoints (mobile + web, mirrored), all
+frontend (mobile + web Discover integration, cluster home screen, founding flow UI).
+Election/check-in (Phase 2/3) intentionally not started.
 
 Two related but distinct offerings, both physical/IRL, both open to **all**
 members (Citizen and Pro — no tier gating anywhere in this feature):
