@@ -6,9 +6,9 @@ import "@/app/homepage.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "The Moveee — Best in Global Culture",
+  title: "Moveee — Culture. Discover and Engage.",
   description:
-    "The Moveee is an independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
+    "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
   alternates: {
     canonical: "https://www.themoveee.com",
     languages: {
@@ -19,11 +19,11 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "The Moveee — Best in Global Culture",
+    title: "Moveee — Culture. Discover and Engage.",
     description:
-      "An independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
     url: "https://www.themoveee.com",
-    siteName: "The Moveee",
+    siteName: "Moveee",
     locale: "en_GB",
     type: "website",
     images: [
@@ -31,15 +31,15 @@ export const metadata: Metadata = {
         url: "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png",
         width: 920,
         height: 144,
-        alt: "The Moveee",
+        alt: "Moveee",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in Global Culture",
+    title: "Moveee — Culture. Discover and Engage.",
     description:
-      "An independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
   },
 };
 

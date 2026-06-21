@@ -320,20 +320,21 @@ export default function HomepageContent({
         </section>
       )}
 
-      {/* ===== CONNECT CTA (non-grid) ===== */}
+      {/* ===== MOVEEE CTA (non-grid) ===== */}
       <section className="connect" id="connect">
         <div className="connect-inner">
           <div className="connect-left">
-            <h3>An archive <em>alive</em>.</h3>
+            <h3>Moveee for culture. <em>Discover and engage.</em></h3>
             <p>
-              Join free as a Connect Citizen — read, post to the Pulse feed,
-              get listed in the directory, and receive <em>Culture Drop</em> weekly.
-              Upgrade to <em>Connect Pro</em> for the full experience.
+              A community that rewards you for being an active part of culture. Join free as
+              a Connect Citizen — post to the Pulse feed, get listed in the directory, and
+              receive <em>Culture Drop</em> weekly. Upgrade to <em>Connect Pro</em> for the
+              full experience.
             </p>
           </div>
           <div className="connect-right">
             <div className="perks">
-              <div className="perk"><span className="n">1.</span><p><em>Connect Pro</em> badge on your Pulse posts and exclusive gated content.</p></div>
+              <div className="perk"><span className="n">1.</span><p>Earn Culture Credits (Cr) and Reputation Points (Pt) for every post, review, and validated tip.</p></div>
               <div className="perk"><span className="n">2.</span><p>10% off the Moveee Shop and early access to new features.</p></div>
             </div>
             <ConnectCTA />

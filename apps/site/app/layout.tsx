@@ -37,10 +37,10 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
   title: {
-    default: "The Moveee — Best in Culture",
-    template: "%s | The Moveee",
+    default: "Moveee — Culture. Discover and Engage.",
+    template: "%s | Moveee",
   },
-  description: "The Moveee is an independent magazine and community celebrating the best of culture worldwide — editorials, music, film, travel, lifestyle, and more.",
+  description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
   alternates: {
     canonical: "/",
   },
@@ -48,20 +48,20 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://themoveee.com",
-    siteName: "The Moveee",
+    siteName: "Moveee",
     images: [
       {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "The Moveee — Best in Global Culture",
+        alt: "Moveee — Culture. Discover and Engage.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in Global Culture",
-    description: "The Moveee is an independent magazine and community celebrating the best of culture worldwide — editorials, music, film, travel, lifestyle, and more.",
+    title: "Moveee — Culture. Discover and Engage.",
+    description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
     images: ["/og-fallback.png"],
   },
 };
