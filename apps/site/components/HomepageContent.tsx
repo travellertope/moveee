@@ -6,7 +6,8 @@ import { decodeHtml } from "@/lib/decode-html";
 import ShopCarousel from "@/components/ShopCarousel";
 import IssueCarousel from "@/components/IssueCarousel";
 import HomepageNewsletterForm from "@/components/HomepageNewsletterForm";
-import ConnectCTA from "@/components/ConnectCTA";
+import MoveeeZone from "@/components/MoveeeZone";
+import MagazineSpotlight from "@/components/MagazineSpotlight";
 import type { EditionSlug } from "@/lib/editions";
 import { EDITIONS } from "@/lib/editions";
 
@@ -25,130 +26,21 @@ interface Props {
 }
 
 export default function HomepageContent({
-  coverStory, stories, products, edition,
+  products, edition,
   latestIssue, latestIssueStories = [], interviewStories = [],
   seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
-  const heroStories   = stories.slice(0, 5);
   const interviewStrip = interviewStories.slice(0, 4);
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
 
-  const coverExcerpt = (() => {
-    const src = coverStory?.content || coverStory?.excerpt || "";
-    const plain = src.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    return plain.length > 220 ? plain.slice(0, 220).replace(/\s\S+$/, "") + "…" : plain;
-  })();
-
   return (
     <>
-      {/* ===== HERO: STICKY COVER STORY + SCROLLING RIGHT ===== */}
-      <section className="hp-hero">
+      {/* ===== MOVEEE ZONE: HERO + WHAT IS MOVEEE + FEATURE GRID + MEMBERSHIP + DOWNLOAD ===== */}
+      <MoveeeZone />
 
-        {/* LEFT: Sticky Cover Story — Monocle-style stacked layout */}
-        <div className="hp-cover-col">
-          <div className="hp-cover-sticky">
-            {coverStory ? (
-              <Link href={`/magazine/${coverStory.slug}`} className="hp-cover-link">
-                    {/* Image above text */}
-                {coverStory.featuredImage && (
-                  <div className="hp-cover-image-box">
-                    <div className="hp-cover-image">
-                      <Image
-                        src={coverStory.featuredImage.node.sourceUrl}
-                        alt={coverStory.featuredImage.node.altText || coverStory.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                        priority
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Text block: category → title → excerpt → meta */}
-                <div className="hp-cover-text">
-                  <div className="hp-cover-kicker">
-                    {decodeHtml(coverStory.categories?.nodes[0]?.name || "Culture").toUpperCase()}
-                  </div>
-                  <h2 className="hp-cover-title">{coverStory.title}</h2>
-                  <p className="hp-cover-excerpt">{coverExcerpt}</p>
-                </div>
-              </Link>
-            ) : (
-              <div className="hp-cover-placeholder">
-                <div className="hp-cover-placeholder-inner">
-                  <span>The Moveee</span>
-                  <p>Best in Culture</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT: Scrollable — article grid + widgets */}
-        <div className="hp-right-col">
-          <div className="hp-right-stories">
-            {heroStories.map((story: any) => (
-              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-story-card">
-                <div className="hp-story-thumb">
-                  {story.featuredImage && (
-                    <Image
-                      src={story.featuredImage.node.sourceUrl}
-                      alt={story.featuredImage.node.altText || ""}
-                      fill className="object-cover"
-                    />
-                  )}
-                </div>
-                <span className="hp-story-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
-                <h4 className="hp-story-title">{story.title}</h4>
-                <span className="hp-story-meta">
-                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ""}
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          <AdBanner slot="hero-sidebar" className="hp-ad-sidebar" />
-
-          <div className="hp-games-widget">
-            <div className="hp-widget-head">
-              <div className="hp-widget-label">Culture Games</div>
-              <Link href="/games" className="hp-widget-see-all">Play now →</Link>
-            </div>
-            <div className="hp-games-list">
-              <Link href="/games/trivia" className="hp-game-item">
-                <div className="hp-game-icon">🧠</div>
-                <div>
-                  <div className="hp-game-name">Culture Trivia</div>
-                  <div className="hp-game-desc">10 daily questions on global culture</div>
-                </div>
-              </Link>
-              <Link href="/games/who-said-it" className="hp-game-item">
-                <div className="hp-game-icon">💬</div>
-                <div>
-                  <div className="hp-game-name">Who Said It?</div>
-                  <div className="hp-game-desc">Match the quote to the voice</div>
-                </div>
-              </Link>
-              <Link href="/games/sudoku" className="hp-game-item">
-                <div className="hp-game-icon">🔢</div>
-                <div>
-                  <div className="hp-game-name">Daily Sudoku</div>
-                  <div className="hp-game-desc">One grid a day, same for everyone</div>
-                </div>
-              </Link>
-              <Link href="/games/crossword" className="hp-game-item">
-                <div className="hp-game-icon">✏️</div>
-                <div>
-                  <div className="hp-game-name">Daily Crossword</div>
-                  <div className="hp-game-desc">World culture mini-crossword</div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ===== MOVEEE MAGAZINE SPOTLIGHT ===== */}
+      <MagazineSpotlight latestIssue={latestIssue} />
 
       <Marquee />
 
@@ -319,28 +211,6 @@ export default function HomepageContent({
           </div>
         </section>
       )}
-
-      {/* ===== MOVEEE CTA (non-grid) ===== */}
-      <section className="connect" id="connect">
-        <div className="connect-inner">
-          <div className="connect-left">
-            <h3>Moveee for culture. <em>Discover and engage.</em></h3>
-            <p>
-              A community that rewards you for being an active part of culture. Join free as
-              a Connect Citizen — post to the Pulse feed, get listed in the directory, and
-              receive <em>Culture Drop</em> weekly. Upgrade to <em>Connect Pro</em> for the
-              full experience.
-            </p>
-          </div>
-          <div className="connect-right">
-            <div className="perks">
-              <div className="perk"><span className="n">1.</span><p>Earn Culture Credits (Cr) and Reputation Points (Pt) for every post, review, and validated tip.</p></div>
-              <div className="perk"><span className="n">2.</span><p>10% off the Moveee Shop and early access to new features.</p></div>
-            </div>
-            <ConnectCTA />
-          </div>
-        </div>
-      </section>
 
       <AdBanner slot="leaderboard-mid" className="hp-ad-leaderboard" />
 
