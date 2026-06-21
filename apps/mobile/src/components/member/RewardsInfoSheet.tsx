@@ -36,7 +36,7 @@ interface PointsConfig {
 type Tab = "credits" | "reputation";
 
 const TAB_INTRO: Record<Tab, string> = {
-  credits: "Moveee Credits are your spendable currency — earn them by posting, engaging, and participating in the community. Redeem them for partner perks, or cash out to real money (Connect Pro only, 40% fee). Credits reset daily up to the cap below.",
+  credits: "Moveee Credits are your spendable currency — earn them by posting, engaging, and participating in the community. Redeem them for partner perks, or cash out to real money (Moveee Pro only, 40% fee). Credits reset daily up to the cap below.",
   reputation: "Points are your permanent standing in the Moveee community — they never decrease and can't be spent. Quality contributions earn points, which unlock higher tiers and exclusive privileges.",
 };
 
@@ -246,7 +246,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
                   <Text style={styles.sectionTitle}>Spend Credits</Text>
                   {[
                     "Redeem partner perks in the Perks tab",
-                    "Cash out to GBP/USD/NGN (Connect Pro only)",
+                    "Cash out to GBP/USD/NGN (Moveee Pro only)",
                   ].map((item) => (
                     <View key={item} style={styles.row}>
                       <Text style={styles.rowLabel}>{item}</Text>

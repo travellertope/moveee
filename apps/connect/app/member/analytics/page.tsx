@@ -29,7 +29,7 @@ export default async function AnalyticsPage() {
             <h1 className="mem-name">My Analytics</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${user.tier === "patron" ? "patron" : "citizen"}`}>
-                {user.tier === "patron" ? "Connect Pro" : "Connect Citizen"}
+                {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
               </span>
             </div>
           </div>

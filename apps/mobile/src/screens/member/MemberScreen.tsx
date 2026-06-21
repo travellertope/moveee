@@ -31,7 +31,7 @@ export default function MemberScreen() {
 
         {!isPro && (
           <TouchableOpacity style={styles.upgradeCard} onPress={() => nav.navigate("Membership")}>
-            <Text style={styles.upgradeTitle}>Upgrade to Connect Pro</Text>
+            <Text style={styles.upgradeTitle}>Upgrade to Moveee Pro</Text>
             <Text style={styles.upgradeSub}>Unlock full community access and perks</Text>
           </TouchableOpacity>
         )}

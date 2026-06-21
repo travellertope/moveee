@@ -183,13 +183,13 @@ export default function MyEventsScreen() {
         <View style={[styles.scroll, { flex: 1, justifyContent: "center" }]}>
           <View style={styles.lockCard}>
             <Ionicons name="lock-closed" size={28} color={c.ochre} />
-            <Text style={styles.lockTitle}>Connect Pro feature</Text>
+            <Text style={styles.lockTitle}>Moveee Pro feature</Text>
             <Text style={styles.lockText}>
-              RSVP management for community events is available to Connect Pro members.
+              RSVP management for community events is available to Moveee Pro members.
               Upgrade to enable RSVP on your events and view attendee lists.
             </Text>
             <TouchableOpacity style={styles.upgradeBtn} onPress={() => nav.navigate("Membership" as never)}>
-              <Text style={styles.upgradeBtnText}>View Connect Pro</Text>
+              <Text style={styles.upgradeBtnText}>View Moveee Pro</Text>
             </TouchableOpacity>
           </View>
         </View>

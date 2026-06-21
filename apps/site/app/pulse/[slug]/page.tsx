@@ -159,12 +159,12 @@ export default async function PulseStoryPage({
                 borderBottom: "1px solid #e8e2d8",
                 marginBottom: "1rem",
               }}>
-                <Link href="/connect" style={{
+                <Link href="/feed" style={{
                   display: "inline-flex", alignItems: "center", gap: "0.3rem",
                   color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
                   letterSpacing: "0.06em", textTransform: "uppercase",
                 }}>
-                  ← Connect Feed
+                  ← Feed
                 </Link>
               </div>
               <p style={{
@@ -351,7 +351,7 @@ export default async function PulseStoryPage({
                   AI-curated culture stories from across the globe — music, film, art, fashion and more.
                 </p>
                 {loggedIn ? (
-                  <Link href="/connect" style={{
+                  <Link href="/feed" style={{
                     display: "block", background: "#c93c2a", color: "#fff",
                     textAlign: "center", padding: "0.45rem 0.75rem",
                     fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",

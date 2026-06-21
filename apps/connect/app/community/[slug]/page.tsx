@@ -13,12 +13,12 @@ export const dynamicParams = true;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
 const NAV_LINKS = [
-  { label: "All",       href: "/connect" },
-  { label: "Pulse",     href: "/connect" },
-  { label: "News",      href: "/connect" },
-  { label: "Editorial", href: "/connect" },
-  { label: "Event",     href: "/connect" },
-  { label: "Directory", href: "/connect" },
+  { label: "All",       href: "/feed" },
+  { label: "Pulse",     href: "/feed" },
+  { label: "News",      href: "/feed" },
+  { label: "Editorial", href: "/feed" },
+  { label: "Event",     href: "/feed" },
+  { label: "Directory", href: "/feed" },
 ];
 
 export function generateStaticParams() {
@@ -142,7 +142,7 @@ export default async function CommunityPostPage({
           <aside className="pulse-sidebar-left">
             <nav style={{ padding: "1.25rem 0" }}>
               <div style={{ padding: "0 0.75rem 1rem", borderBottom: "1px solid #e8e2d8", marginBottom: "1rem" }}>
-                <Link href="/connect" style={{
+                <Link href="/feed" style={{
                   display: "inline-flex", alignItems: "center", gap: "0.3rem",
                   color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
                   letterSpacing: "0.06em", textTransform: "uppercase",
@@ -182,12 +182,12 @@ export default async function CommunityPostPage({
           <main className="pulse-timeline">
             {/* Back link */}
             <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
-              <Link href="/connect" style={{
+              <Link href="/feed" style={{
                 color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
                 letterSpacing: "0.06em", textTransform: "uppercase",
                 display: "inline-flex", alignItems: "center", gap: "0.3rem",
               }}>
-                ← Connect Feed
+                ← Feed
               </Link>
             </div>
 
@@ -218,7 +218,7 @@ export default async function CommunityPostPage({
                   <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(post.date)}</span>
                   {tag && (
                     <Link
-                      href={`/connect?tag=${encodeURIComponent(tag)}`}
+                      href={`/feed?tag=${encodeURIComponent(tag)}`}
                       style={{
                         marginLeft: "auto",
                         background: "#edf7ed", color: "#2e7d32",

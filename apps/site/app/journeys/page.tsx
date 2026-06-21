@@ -277,7 +277,7 @@ export default async function OriginsPage() {
             ))}
           </div>
           <div className="origins-cb-ctas">
-            <Link href="/connect" className="btn-primary-ink">Become a Member →</Link>
+            <Link href="/feed" className="btn-primary-ink">Become a Member →</Link>
             <span className="origins-cb-price">from $9 / month</span>
           </div>
         </div>

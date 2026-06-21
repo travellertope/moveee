@@ -14,9 +14,9 @@ const LOGO_URL =
   "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png";
 
 const NAV = [
-  { href: "/connect", label: "Feed"   },
-  { href: "/events",  label: "Events" },
-  { href: "/games",   label: "Games"  },
+  { href: "/feed",   label: "Feed"   },
+  { href: "/events", label: "Events" },
+  { href: "/games",  label: "Games"  },
 ];
 
 export default function ConnectHeader() {
@@ -52,7 +52,7 @@ export default function ConnectHeader() {
   }, [mobileOpen]);
 
   function isActive(href: string) {
-    if (href === "/connect") return pathname === "/connect" || pathname.startsWith("/connect/");
+    if (href === "/feed") return pathname === "/feed";
     return pathname.startsWith(href);
   }
 
@@ -70,7 +70,6 @@ export default function ConnectHeader() {
               height={28}
               width={178}
             />
-            <span className="ch-logo-badge">Connect</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -158,7 +157,7 @@ export default function ConnectHeader() {
                     <div className="ch-user-menu" role="menu">
                       <div className="ch-user-name">{user.displayName || user.name}</div>
                       <div className="ch-user-tier">
-                        {user.tier === "patron" ? "Connect Pro" : "Connect Citizen"}
+                        {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
                       </div>
                       <div className="ch-user-divider" />
                       <Link href="/member" className="ch-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>My Dashboard</Link>

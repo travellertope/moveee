@@ -44,7 +44,7 @@ const Footer = () => {
           <div className="hb-footer-col">
             <h6>Community</h6>
             <ul>
-              <li><Link href="/connect">Moveee</Link></li>
+              <li><Link href="/feed">Moveee</Link></li>
               <li><Link href="/connect/people">People Near Me</Link></li>
               <li><Link href="/events">Happenings</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
@@ -69,7 +69,7 @@ const Footer = () => {
               <li><Link href="/shop">Moveee Shop</Link></li>
               <li><Link href="/makers">Vetted Makers</Link></li>
               <li><Link href="/shop/shipping">Shipping &amp; Returns</Link></li>
-              <li><Link href="/connect">Become a Member</Link></li>
+              <li><Link href="/feed">Become a Member</Link></li>
               <li><Link href="/member">My Account</Link></li>
             </ul>
           </div>

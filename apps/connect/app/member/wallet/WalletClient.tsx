@@ -210,16 +210,16 @@ export default function WalletClient({
           {!isPro ? (
             <div style={{ border: "1px solid var(--ochre)", borderRadius: 8, padding: "20px 16px", marginTop: 8 }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--ochre)", color: "#fff", fontSize: "0.7rem", fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 10px", borderRadius: 20, marginBottom: 12 }}>
-                Connect Pro
+                Moveee Pro
               </div>
               <p style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 6px" }}>
                 Cash out your credits
               </p>
               <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", margin: "0 0 16px", lineHeight: 1.6 }}>
-                Convert your earned credits to real money — a Connect Pro exclusive. Upgrade to start cashing out.
+                Convert your earned credits to real money — a Moveee Pro exclusive. Upgrade to start cashing out.
               </p>
               <a href="/connect/membership" style={{ display: "inline-block", background: "var(--ink)", color: "var(--paper)", padding: "10px 20px", borderRadius: 4, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
-                Upgrade to Connect Pro →
+                Upgrade to Moveee Pro →
               </a>
             </div>
           ) : (

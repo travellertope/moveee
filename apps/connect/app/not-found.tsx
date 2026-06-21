@@ -38,7 +38,7 @@ export default function NotFound() {
         </p>
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-6">
           <Link
-            href="/connect"
+            href="/feed"
             className="w-full bg-[--color-ochre] px-8 py-4 font-mono text-[10px] uppercase tracking-[0.15em] text-white transition hover:opacity-90 sm:w-auto"
           >
             Go to Connect

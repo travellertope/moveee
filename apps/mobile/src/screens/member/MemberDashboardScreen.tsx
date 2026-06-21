@@ -227,7 +227,7 @@ export default function MemberDashboardScreen() {
               </View>
               {!isPro && (
                 <View style={styles.tierBadgeCitizen}>
-                  <Text style={styles.tierTextCitizen}>CONNECT CITIZEN</Text>
+                  <Text style={styles.tierTextCitizen}>MOVEEE CITIZEN</Text>
                 </View>
               )}
               {user.city ? (
@@ -301,7 +301,7 @@ export default function MemberDashboardScreen() {
         {!isPro && (
           <TouchableOpacity style={styles.upgradeBanner} onPress={() => nav.navigate("Membership")}>
             <View style={styles.upgradeBannerLeft}>
-              <Text style={styles.upgradeBannerTitle}>Upgrade to Connect Pro</Text>
+              <Text style={styles.upgradeBannerTitle}>Upgrade to Moveee Pro</Text>
               <Text style={styles.upgradeBannerSub}>Unlock perks, earn more</Text>
             </View>
             <View style={styles.upgradeBtn}>

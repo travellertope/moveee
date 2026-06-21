@@ -674,7 +674,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   </div>
                 ) : (
                   <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "0.25rem" }}>
-                    Connect Pro members can enable RSVP for their events.
+                    Moveee Pro members can enable RSVP for their events.
                   </p>
                 )}
               </>

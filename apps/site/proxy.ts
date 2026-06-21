@@ -173,7 +173,7 @@ export async function proxy(request: NextRequest) {
   // ── Site B redirects — moved to web.themoveee.com ───────────
   const CONNECT = 'https://web.themoveee.com'
   const connectPrefixes = [
-    '/connect', '/events', '/community', '/pulse', '/directory',
+    '/connect', '/feed', '/events', '/community', '/pulse', '/directory',
     '/quotes', '/games', '/member', '/vendor',
     '/login', '/register', '/forgot-password', '/reset-password',
     '/account', '/membership',

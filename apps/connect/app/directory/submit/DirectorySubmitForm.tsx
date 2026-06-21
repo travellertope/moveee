@@ -114,16 +114,16 @@ export default function DirectorySubmitForm({
           ← Culture Directory
         </Link>
         <div className="dir-submit-auth-gate">
-          <div className="dir-eyebrow">★ Connect Pro</div>
-          <h2>Connect Pro required</h2>
+          <div className="dir-eyebrow">★ Moveee Pro</div>
+          <h2>Moveee Pro required</h2>
           <p>
-            Building the Culture Directory is a Connect Pro privilege. Upgrade your
+            Building the Culture Directory is a Moveee Pro privilege. Upgrade your
             membership to contribute entries, earn points, and shape what goes
             in the archive.
           </p>
           <div style={{ display: "flex", gap: 12 }}>
             <Link href="/connect/membership" className="dir-submit-btn">
-              Upgrade to Connect Pro →
+              Upgrade to Moveee Pro →
             </Link>
             <Link href="/directory" className="dir-secondary-btn">
               Browse the directory

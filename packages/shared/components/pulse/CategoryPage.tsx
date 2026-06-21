@@ -98,7 +98,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
             color: "#7a6f5c",
             margin: "0 0 0.6rem",
           }}>
-            <Link href="/connect" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Connect</Link>
+            <Link href="/feed" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Feed</Link>
             {" · "}
             <Link href="/pulse/categories" style={{ color: "#7a6f5c", textDecoration: "none" }}>Categories</Link>
           </p>

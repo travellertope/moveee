@@ -93,7 +93,7 @@ export default function EventSubmitPage() {
   return (
     <div style={{ background: "#ffffff", minHeight: "100vh", padding: "2.5rem 1.5rem 5rem" }}>
       <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-        <Link href="/connect" style={{
+        <Link href="/feed" style={{
           color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
           letterSpacing: "0.06em", textTransform: "uppercase",
           display: "inline-flex", alignItems: "center", gap: "0.3rem", marginBottom: "2rem",

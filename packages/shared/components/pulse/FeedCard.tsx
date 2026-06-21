@@ -892,7 +892,7 @@ export default function FeedCard({
                   itemId={item.wpId}
                   itemType="pulse"
                   initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/connect`}
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/feed`}
                 />
               </div>
               <button

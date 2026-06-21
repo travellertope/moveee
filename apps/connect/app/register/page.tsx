@@ -15,7 +15,7 @@ function RegisterForm() {
   const nextUrl = searchParams.get("next") || "";
   const isUpgrade = searchParams.get("upgrade") === "patron";
 
-  // Upgrade flow: already logged-in member going to Connect Pro
+  // Upgrade flow: already logged-in member going to Moveee Pro
   if (isUpgrade && session) {
     router.replace(`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`);
     return null;
@@ -184,7 +184,7 @@ function RegisterForm() {
           <Link href="/login" style={styles.link}>Sign in</Link>
         </p>
         <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: 8, marginBottom: 0, textAlign: "center" }}>
-          Want Connect Pro?{" "}
+          Want Moveee Pro?{" "}
           <Link
             href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}
             style={styles.link}

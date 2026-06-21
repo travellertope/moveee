@@ -87,7 +87,7 @@ export default function ProductSelectors({
           </div>
         ) : !showMemberPrice ? (
           <div className="sp-price-member">
-            Connect Pro members get exclusive pricing
+            Moveee Pro members get exclusive pricing
           </div>
         ) : null}
       </div>

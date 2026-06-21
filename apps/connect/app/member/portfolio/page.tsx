@@ -36,7 +36,7 @@ export default async function PortfolioPage() {
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Connect Pro" : "Connect Citizen"}
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
               {username && (
                 <>

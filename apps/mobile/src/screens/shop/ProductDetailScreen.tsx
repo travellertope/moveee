@@ -811,7 +811,7 @@ export default function ProductDetailScreen() {
                       </Text>
                       <View style={s.proSavingsBadge}>
                         <Text style={s.proSavingsText}>
-                          ★ Connect Pro · Saving {product?.currencySymbol}
+                          ★ Moveee Pro · Saving {product?.currencySymbol}
                           {(parseFloat(product?.regularPrice || "0") - parseFloat(detail.proPrice)).toFixed(2)}
                         </Text>
                       </View>
@@ -823,10 +823,10 @@ export default function ProductDetailScreen() {
                     {detail?.proPrice && (
                       <View style={s.proUpsellBox}>
                         <Text style={s.proUpsellMain}>
-                          ★ Connect Pro price: {product?.currencySymbol}{detail.proPrice}
+                          ★ Moveee Pro price: {product?.currencySymbol}{detail.proPrice}
                         </Text>
                         <Text style={s.proUpsellSub}>
-                          Connect Pro members save 10% ·{" "}
+                          Moveee Pro members save 10% ·{" "}
                           <Text style={{ color: c.ochre }}>Upgrade →</Text>
                         </Text>
                       </View>

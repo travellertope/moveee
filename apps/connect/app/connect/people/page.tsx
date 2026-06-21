@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import MemberDirectory from "@/components/connect/MemberDirectory";
 import Link from "next/link";
 import "../../sections.css";
-import "../connect.css";
+import "../../feed/feed.css";
 
 export const metadata: Metadata = {
   title: "People Near Me — Moveee",
@@ -38,11 +38,11 @@ export default async function PeoplePage() {
             ) : (
               <Link href="/register" className="con-btn-primary">Join &amp; get listed →</Link>
             )}
-            <Link href="/connect" className="con-btn-ghost">← Back to Connect</Link>
+            <Link href="/feed" className="con-btn-ghost">← Back to Feed</Link>
           </div>
         </div>
         <nav className="mco-section-nav" aria-label="Connect sections">
-          <Link href="/connect" className="mco-nav-link">Pulse Feed</Link>
+          <Link href="/feed" className="mco-nav-link">Pulse Feed</Link>
           <span className="mco-nav-link mco-nav-link--active">People Near Me</span>
           <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
         </nav>

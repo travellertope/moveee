@@ -305,7 +305,7 @@ export default function BecomeAMakerPage() {
             <div className="bam-faq-grid">
               {[
                 { q: "How much does it cost?", a: "Listing products is free. Moveee takes a small commission on each sale — you'll see the exact rate in your analytics dashboard." },
-                { q: "Do I need a Connect Pro membership?", a: "No. Any Moveee member can open a store. Connect Pro members get early visibility boosts and promotional perks." },
+                { q: "Do I need a Moveee Pro membership?", a: "No. Any Moveee member can open a store. Moveee Pro members get early visibility boosts and promotional perks." },
                 { q: "What can I sell?", a: "Physical goods, digital downloads, made-to-order pieces, and art prints — anything that fits Moveee's culture-forward ethos." },
                 { q: "How do I get paid?", a: "Earnings are held in your WCFM wallet and paid out on request. UK, US, NG, GH and more currencies supported." },
               ].map(({ q, a }) => (

@@ -63,7 +63,7 @@ export default async function MemberPage() {
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Connect Pro" : "Connect Citizen"}
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
               {user.city && (
                 <>
@@ -83,7 +83,7 @@ export default async function MemberPage() {
           initialPoints={liveReputation}
           initialBadges={liveBadges}
           referralCount={user.referralCount ?? 0}
-          membership={isPatron ? "Connect Pro" : "Connect Citizen"}
+          membership={isPatron ? "Moveee Pro" : "Moveee Citizen"}
           initialCredits={liveCredits}
           initialReputation={liveReputation}
           reputationTier={liveReputationTier}
@@ -138,19 +138,19 @@ export default async function MemberPage() {
             {!isPatron && (
               <section className="mem-card mem-card--dark">
                 <div className="mem-card-label" style={{ color: "var(--ochre)" }}>
-                  Upgrade to Connect Pro
+                  Upgrade to Moveee Pro
                 </div>
                 <h3 className="mem-upgrade-title">
                   Unlock the full experience.
                 </h3>
                 <ul className="mem-upgrade-perks">
-                  <li>Connect Pro badge on your Pulse posts</li>
+                  <li>Moveee Pro badge on your Pulse posts</li>
                   <li>Exclusive gated content &amp; editorials</li>
                   <li>10% Moveee Shop discount</li>
                   <li>Early access to new features</li>
                 </ul>
                 <Link href="/connect/membership" className="mem-upgrade-btn">
-                  Become a Connect Pro →
+                  Become a Moveee Pro →
                 </Link>
               </section>
             )}

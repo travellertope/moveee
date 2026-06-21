@@ -72,7 +72,7 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
           <Image source={{ uri: item.image }} style={styles.hero} resizeMode="cover" />
           {isPatronOnly && !isPatron && (
             <View style={styles.heroOverlay}>
-              <Text style={styles.heroOverlayText}>🔒 Connect Pro members only</Text>
+              <Text style={styles.heroOverlayText}>🔒 Moveee Pro members only</Text>
             </View>
           )}
         </View>

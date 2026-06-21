@@ -34,7 +34,7 @@ export default async function CouponsPage() {
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Connect Pro" : "Connect Citizen"}
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
             </div>
           </div>
