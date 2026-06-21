@@ -80,6 +80,23 @@ React Native can't use the DOM-dependent shared package — edit both when those
 
 ## Naming conventions (important)
 
+### Brand architecture (as of 2026-06-21)
+
+- **Moveee** is the primary product brand — the community and discovery platform
+  (apps/connect + apps/mobile). It is never called "the app", "Connect", or "the Moveee
+  Connect app" in user-facing copy. Just **Moveee**. Site/page metadata (titles,
+  descriptions, OG tags) should lead with Moveee, not with "magazine".
+- **Moveee Magazine** is the editorial arm (apps/site editorial content) — secondary to
+  Moveee in marketing copy, but still gets a real spotlight treatment (e.g. Latest Issue
+  card) wherever it appears.
+- **Literati Connect** is a *separate* offering — the name for city-by-city physical
+  meetup clusters of Moveee members. Do not confuse this with the Moveee product itself,
+  and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
+  now belongs to Literati Connect.
+- `Connect Citizen` / `Connect Pro` tier names and the `/connect` route path are unchanged
+  by this — those are pre-existing internal naming and stay as-is; only the top-level
+  product brand name changed.
+
 | Internal DB value | User-visible label |
 |---|---|
 | `patron` | Connect Pro / Pro |
