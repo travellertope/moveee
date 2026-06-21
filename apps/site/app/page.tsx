@@ -6,9 +6,9 @@ import "@/app/homepage.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Moveee Magazine — Best in Culture",
+  title: "Moveee — Culture. Discover and Engage.",
   description:
-    "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+    "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
   alternates: {
     canonical: "https://themoveee.com/",
     languages: {
@@ -18,11 +18,11 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Moveee Magazine — Best in Culture",
+    title: "Moveee — Culture. Discover and Engage.",
     description:
-      "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
     url: "https://themoveee.com/",
-    siteName: "Moveee Magazine",
+    siteName: "Moveee",
     locale: "en_GB",
     type: "website",
     images: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "Moveee Magazine",
+        alt: "Moveee — Culture. Discover and Engage.",
       },
     ],
   },
@@ -38,9 +38,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Moveee Magazine — Best in Culture",
+    title: "Moveee — Culture. Discover and Engage.",
     description:
-      "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
   },
 };
 

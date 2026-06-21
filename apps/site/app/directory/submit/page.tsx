@@ -5,8 +5,8 @@ import DirectorySubmitForm from "./DirectorySubmitForm";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Submit a Directory Entry · Moveee Magazine" },
-  description: "Add a person, place, movement, or cultural institution to the Moveee Culture Directory.",
+  title: { absolute: "Submit a Directory Entry · The Moveee" },
+  description: "Add a person, place, movement, or cultural institution to the Moveee Culture Directory. Help build the definitive reference of global culture.",
   robots: { index: false, follow: false },
 };
 

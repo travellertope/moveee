@@ -1,6 +1,6 @@
-# Moveee Connect — Mobile App
+# Moveee — Mobile App
 
-React Native (Expo) app for Moveee Connect. Targets Android (`.apk`/`.aab`) and iOS (`.ipa`) from a single codebase.
+React Native (Expo) app for Moveee. Targets Android (`.apk`/`.aab`) and iOS (`.ipa`) from a single codebase.
 
 ## Stack
 

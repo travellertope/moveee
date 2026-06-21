@@ -6,12 +6,12 @@ import type { Visual } from "@/components/VisualsGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Visuals — Moveee Magazine" },
-  description: "A living archive of illustrations documenting culture — people, places, movements, and moments. Curated by Moveee Magazine. Free for creative use.",
+  title: { absolute: "Visuals | The Moveee" },
+  description: "A curated library of illustrations documenting global culture — people, places, movements, and moments. Free for creative use.",
   alternates: { canonical: "https://themoveee.com/visuals" },
   openGraph: {
-    title: "Visuals — Moveee Magazine",
-    description: "A living archive of illustrations documenting culture — people, places, movements, and moments. Free for creative use.",
+    title: "Visuals | The Moveee",
+    description: "A curated library of illustrations documenting global culture — people, places, movements, and moments. Free for creative use.",
     url: "https://themoveee.com/visuals",
     siteName: "Moveee Magazine",
     type: "website",
@@ -21,8 +21,8 @@ export const metadata = {
     card: "summary_large_image" as const,
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Visuals — Moveee Magazine",
-    description: "A living archive of illustrations documenting culture — people, places, movements, and moments. Free for creative use.",
+    title: "Visuals | The Moveee",
+    description: "A curated library of illustrations documenting global culture — people, places, movements, and moments. Free for creative use.",
   },
 };
 
@@ -48,8 +48,8 @@ export default async function VisualsPage() {
       <section className="visuals-hero">
         <h1 className="visuals-title">Moveee Visuals</h1>
         <p className="visuals-subtitle">
-          A living archive of AI-generated illustrations celebrating African and
-          diaspora culture. Curated from our directory. Available for your creative projects.
+          A living archive of AI-generated illustrations celebrating global
+          culture. Curated from our directory. Available for your creative projects.
         </p>
       </section>
 

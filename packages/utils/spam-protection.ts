@@ -1,5 +1,5 @@
 /**
- * Spam protection for the Moveee Connect feed.
+ * Spam protection for the Moveee feed.
  *
  * Rate limiting uses an in-memory store keyed by user ID.
  * On a multi-instance deployment replace the Map with a shared Redis counter

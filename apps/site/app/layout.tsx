@@ -40,10 +40,10 @@ export const metadata: Metadata = {
     google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
   },
   title: {
-    default: "Moveee Magazine — Best in Culture",
-    template: "%s | Moveee Magazine",
+    default: "Moveee — Culture. Discover and Engage.",
+    template: "%s | Moveee",
   },
-  description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+  description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
   alternates: {
     canonical: "https://themoveee.com/",
   },
@@ -51,13 +51,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://themoveee.com",
-    siteName: "Moveee Magazine",
+    siteName: "Moveee",
     images: [
       {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "Moveee Magazine — Best in Culture",
+        alt: "Moveee — Culture. Discover and Engage.",
       },
     ],
   },
@@ -65,8 +65,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Moveee Magazine — Best in Culture",
-    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+    title: "Moveee — Culture. Discover and Engage.",
+    description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
     images: ["/og-fallback.png"],
   },
 };

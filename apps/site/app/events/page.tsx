@@ -11,7 +11,7 @@ export const dynamicParams = true;
 
 export const metadata = {
   title: { absolute: "Happenings | The Moveee" },
-  description: "Curated cultural events across Africa and the diaspora — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
+  description: "Curated cultural events from around the world — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
 };
 
 const FEATURED_CITIES = [
@@ -74,7 +74,7 @@ export default async function EventsPage() {
       {/* ── HERO ── */}
       <EventHero
         title="Moveee <em>Happenings</em>"
-        standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — across Africa and the diaspora."
+        standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — from around the world."
         stats={[
           { num: upcoming.length, label: `Happenings · ${new Date().getFullYear()}` },
           { num: sidebarCities.length, label: "Cities covered" },
@@ -166,7 +166,7 @@ export default async function EventsPage() {
       <section className="connect-band">
         <div className="connect-inner">
           <div>
-            <div className="connect-num">Moveee Connect</div>
+            <div className="connect-num">Moveee</div>
             <h3>Members go <em>first</em>.</h3>
             <p>Private views, supper tables, and early RSVP access — all yours with a Connect membership. The culture doesn&rsquo;t wait; neither should you.</p>
           </div>

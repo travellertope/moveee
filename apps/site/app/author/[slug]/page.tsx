@@ -63,7 +63,7 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
   }
 
   const authorName = author?.name || resolvedParams.slug.replace(/-/g, " ");
-  const authorBio = author?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora.";
+  const authorBio = author?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond.";
   const authorAvatar = author?.avatar?.url;
 
   return (

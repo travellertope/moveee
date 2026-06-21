@@ -40,7 +40,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
     tierLabel = "Connect Pro";
     heading = "There's more on the other side.";
     body =
-      "This piece goes deeper — reserved for Connect Pro members. Join a community of culture-forward people across Africa and the diaspora, with exclusive editorials, a Pro badge, and long-form content worth your time.";
+      "This piece goes deeper — reserved for Connect Pro members. Join a global community of culture-forward people, with exclusive editorials, a Pro badge, and long-form content worth your time.";
     primaryBtn = { label: "Explore Connect Pro →", href: "/register?tier=patron" };
     secondaryBtn = { label: "Already a member? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = (

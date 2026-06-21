@@ -549,7 +549,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <>
               <h4>{post.asToldTo}</h4>
               <p className="a-told-to">as told to <strong>{post.author?.node?.name || "The Moveee"}</strong></p>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond."}</p>
             </>
           ) : (
             <>
@@ -566,7 +566,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <>The <em>Moveee</em></>
                 )}
               </h4>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter. Long-form essays and visual stories that document the things that matter."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond. Long-form essays and visual stories that document the things that matter."}</p>
             </>
           )}
         </div>

@@ -50,7 +50,7 @@ const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string 
   "visual-design":       { name: "Design",              icon: "◻", desc: "Craft, visual & creative direction" },
   "tech-culture":        { name: "Tech & Culture",      icon: "○", desc: "Innovation, startups & digital culture" },
   "sport-wellness":      { name: "Sport & Wellness",    icon: "●", desc: "Fitness, sports & wellness" },
-  "travel":              { name: "Travel",              icon: "→", desc: "Exploration, diaspora & journeys" },
+  "travel":              { name: "Travel",              icon: "→", desc: "Exploration, discovery & journeys" },
   "ideas":               { name: "Ideas & Culture",     icon: "◇", desc: "Panels, talks & cultural theory" },
   "event-performance":   { name: "Performance",         icon: "★", desc: "Theatre, dance & live arts" },
   "event-community":     { name: "Community",           icon: "◇", desc: "Gatherings, panels & community events" },
@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const c = CATEGORY_SLUGS[slug];
     return {
       title: { absolute: `${c.name} Events | Moveee Happenings` },
-      description: `${c.desc} — curated for the African and diaspora community.`,
+      description: `${c.desc} — curated for our global community.`,
     };
   }
 

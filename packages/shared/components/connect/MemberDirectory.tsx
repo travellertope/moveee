@@ -129,7 +129,7 @@ export default function MemberDirectory() {
           <p className="mco-dir-empty-title">The directory is growing.</p>
           <p className="mco-dir-empty-body">
             Members who have opted into the directory will appear here — the Lagos photographer,
-            the UK art director, the Nigerian lawyer in New York. Join Moveee Connect and opt in
+            the UK art director, the Nigerian lawyer in New York. Join Moveee and opt in
             from your profile settings to be listed.
           </p>
           <Link href="/register" className="mco-dir-empty-cta">Join &amp; get listed →</Link>

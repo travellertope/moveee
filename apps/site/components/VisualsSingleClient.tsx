@@ -129,7 +129,7 @@ export default function VisualsSingleClient({ entry }: Props) {
               {entry.excerpt ? (
                 <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt) }} />
               ) : (
-                <p>A curated AI-generated illustration representing African culture. This artwork is part of the Moveee Visuals archive.</p>
+                <p>A curated AI-generated illustration representing global culture. This artwork is part of the Moveee Visuals archive.</p>
               )}
             </div>
 

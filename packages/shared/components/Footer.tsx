@@ -44,7 +44,7 @@ const Footer = () => {
           <div className="hb-footer-col">
             <h6>Community</h6>
             <ul>
-              <li><Link href="/connect">Moveee Connect</Link></li>
+              <li><Link href="/connect">Moveee</Link></li>
               <li><Link href="/connect/people">Member Directory</Link></li>
               <li><Link href="/events">Happenings</Link></li>
               <li><Link href="/journeys">Origins</Link></li>

@@ -557,7 +557,7 @@ const handleType = (type: FeedItemType | "all") => {
             )}
 
             <div style={{ background: "#fff", border: "1px solid #e8e2d8", borderRadius: "4px", padding: "0.85rem" }}>
-              <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem" }}>About Moveee Connect</p>
+              <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem" }}>About Moveee</p>
               <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: 0 }}>
                 The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
               </p>

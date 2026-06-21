@@ -217,7 +217,7 @@ This is admin-only for now. Phase 6 adds self-service partner onboarding.
 ### 5.2 Vendor-Partner Link
 
 On the vendor profile page (`app/vendor/` dashboard), add an opt-in:
-"Join the Partner Programme — let Moveee Connect members redeem credits at
+"Join the Partner Programme — let Moveee members redeem credits at
 your shop."
 
 This sets `_vendor_is_partner = true` and optionally links to a directory

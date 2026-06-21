@@ -9,7 +9,7 @@ import "../connect.css";
 export const metadata: Metadata = {
   title: "Member Directory — Moveee",
   description:
-    "Find Black and diaspora creatives, entrepreneurs, professionals, and culture lovers in the Moveee member directory.",
+    "Find creatives from around the world, entrepreneurs, professionals, and culture lovers in the Moveee member directory.",
 };
 
 export default async function PeoplePage() {

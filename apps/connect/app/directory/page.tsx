@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Culture Directory | The Moveee" },
-  description: "A living reference of African and diaspora culture — creatives, institutions, movements, genres, cities, and more. Discover and add to the canon.",
+  description: "A living reference of global culture — creatives, institutions, movements, genres, cities, and more. Discover and add to the canon.",
 };
 
 export default async function DirectoryPage({
@@ -35,7 +35,7 @@ export default async function DirectoryPage({
         <div className="dir-hero-inner">
           <h1 className="dir-heading">Culture Directory</h1>
           <p className="dir-subheading">
-            A living wiki of African and diaspora culture — people, places,
+            A living wiki of global culture — people, places,
             movements, genres, and more. Community-built. AI-assisted.
           </p>
           <Link href="/directory/submit" className="dir-hero-cta">

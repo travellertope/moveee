@@ -99,15 +99,47 @@ React Native can't use the DOM-dependent shared package — edit both when those
 
 ## Naming conventions (important)
 
+### Brand architecture (as of 2026-06-21)
+
+- **Moveee** is the primary product brand — the community and discovery platform
+  (apps/connect + apps/mobile). It is never called "the app", "Connect", or "the Moveee
+  Connect app" in user-facing copy. Just **Moveee**. Site/page metadata (titles,
+  descriptions, OG tags) should lead with Moveee, not with "magazine".
+- **Moveee Magazine** is the editorial arm (apps/site editorial content) — secondary to
+  Moveee in marketing copy, but still gets a real spotlight treatment (e.g. Latest Issue
+  card) wherever it appears.
+- **Literati Connect** is a *separate* offering — the name for city-by-city physical
+  meetup clusters of Moveee members. Do not confuse this with the Moveee product itself,
+  and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
+  now belongs to Literati Connect.
+- `Connect Citizen` / `Connect Pro` tier names and the `/connect` route path are unchanged
+  by this — those are pre-existing internal naming and stay as-is; only the top-level
+  product brand name changed.
+
 | Internal DB value | User-visible label |
 |---|---|
 | `patron` | Connect Pro / Pro |
 | `citizen` | Connect Citizen / Citizen |
 | `getmelit` | GetMeLit |
 | `culture-drop` | Culture Drop |
+| `credits` (gamification ledger) | **Culture Credits (Cr)** |
+| `reputation` (gamification score) | **Reputation Points (Pt)** |
 
 Never change the internal DB/PHP values (`patron`, `citizen`, `getmelit`,
-`culture-drop`). Only change user-visible copy.
+`culture-drop`, `credits`, `reputation`, `credit_ledger`, `award_credits`,
+`REPUTATION_TIERS`, etc.). Only change user-visible copy.
+
+**Credits/Reputation rename (user-facing only):** what used to be shown to users as
+"credits" is now **"Culture Credits"**, abbreviated **"Cr"** (e.g. `+15 Cr`). What used
+to be shown as "reputation" is now **"Reputation Points"**, abbreviated **"Pt"** (e.g.
+`280 Pt`). This is copy-only — `class-culture-gamification.php`, the `credit_ledger`
+table, `award_credits()`/`award_reputation()`, `REPUTATION_TIERS`, the `credits`/
+`reputation` fields in the NextAuth session shape, and all REST/API field names stay
+exactly as they are. Only labels, button text, card titles, and chart legends in
+user-visible UI change. As of 2026-06-20 this has only been applied to
+`docs/figma-make-prompts.md` Section 18 — a full sweep of `apps/site`, `apps/connect`,
+`apps/mobile`, and `packages/shared` UI copy (gamification feature descriptions, wallet/
+analytics pages, badge/credit toast messages, membership perk copy) is still pending.
 
 ---
 
