@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import PatronPrice from "@/components/PatronPrice";
 import WaitlistModal from "@/components/WaitlistModal";
@@ -46,6 +46,10 @@ const FEATURES = [
 
 export default function MoveeeZone() {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
+
+  useEffect(() => {
+    if (window.location.hash === "#download") setWaitlistOpen(true);
+  }, []);
 
   return (
     <div className="mz-zone">
@@ -172,7 +176,7 @@ export default function MoveeeZone() {
         </div>
 
         {/* ===== JOIN MOVEEE DOWNLOAD STRIP ===== */}
-        <div className="mz-download-strip">
+        <div className="mz-download-strip" id="download">
           <div className="mz-download-text">
             <p className="mz-eyebrow">Join Moveee</p>
             <h3 className="mz-download-h3">Carry the culture in your pocket.</h3>

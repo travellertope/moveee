@@ -9,6 +9,9 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
 import Footer from "@/components/Footer";
+import AppDownloadBanner from "@/components/AppDownloadBanner";
+import AppDownloadModal from "@/components/AppDownloadModal";
+import "@/components/app-download-nudge.css";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -82,9 +85,11 @@ export default function RootLayout({
           <CurrencyProvider initialPricing={null}>
             <LanguageProvider>
               <ThemeProvider>
+                <AppDownloadBanner />
                 <ConnectHeader />
                 <main>{children}</main>
                 <Footer />
+                <AppDownloadModal />
               </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>
