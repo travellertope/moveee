@@ -24,17 +24,19 @@ export const metadata: Metadata = {
 };
 
 const COMPARE = [
-  { feature: "Post to Pulse Feed, all 10 templates", citizen: true, pro: true },
-  { feature: "Browse Discover & RSVP to events", citizen: true, pro: true },
+  { feature: "Pulse Feed & community posts", citizen: true, pro: true },
+  { feature: "Browse Discover & member directory", citizen: true, pro: true },
   { feature: "GetMeLit & Culture Drop newsletters", citizen: true, pro: true },
-  { feature: "Daily Games — Trivia & Who Said It?", citizen: true, pro: true },
-  { feature: "Earn Culture Credits & Reputation", citizen: true, pro: true },
   { feature: "Literati Connect & House Fellowship", citizen: true, pro: true },
+  { feature: "Culture Credits & Reputation Points", citizen: "50 Cr/day cap", pro: "100 Cr/day cap" },
+  { feature: "Daily Games plays", citizen: "1/day", pro: "5/day" },
   { feature: "Post links in the feed", citizen: false, pro: true },
+  { feature: "Poll & Itinerary post templates", citizen: false, pro: true },
   { feature: "Create RSVP-managed events with attendee lists", citizen: false, pro: true },
-  { feature: "10% off the Lifestyle Shop", citizen: false, pro: true },
-  { feature: "Early access to new Shop drops", citizen: false, pro: true },
+  { feature: "Cash out Culture Credits to your bank", citizen: false, pro: true },
+  { feature: "10% off the Lifestyle Shop + early access to drops", citizen: false, pro: true },
   { feature: "Exclusive Moveee Pro patron stories", citizen: false, pro: true },
+  { feature: "Moveee Pro badge on profile & posts", citizen: false, pro: true },
   { feature: "First access to new features", citizen: false, pro: true },
 ];
 
@@ -122,8 +124,12 @@ export default function MembershipPage() {
                 {COMPARE.map((row) => (
                   <tr key={row.feature} style={{ borderBottom: "1px solid var(--mz-ghost, #e2dccf)" }}>
                     <td style={{ padding: "10px 8px", fontSize: 14 }}>{row.feature}</td>
-                    <td style={{ textAlign: "center", padding: "10px 8px" }}>{row.citizen ? "✓" : "—"}</td>
-                    <td style={{ textAlign: "center", padding: "10px 8px", color: "var(--mz-gold, #b38238)" }}>{row.pro ? "✓" : "—"}</td>
+                    <td style={{ textAlign: "center", padding: "10px 8px" }}>
+                      {typeof row.citizen === "string" ? row.citizen : row.citizen ? "✓" : "—"}
+                    </td>
+                    <td style={{ textAlign: "center", padding: "10px 8px", color: "var(--mz-gold, #b38238)" }}>
+                      {typeof row.pro === "string" ? row.pro : row.pro ? "✓" : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
