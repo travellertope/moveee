@@ -11,7 +11,7 @@ export default {
   expo: {
     name: "Moveee",
     slug: "moveee-platform",
-    owner: "moveees-team",
+    owner: "moveee-pro",
     version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/icon.png",
