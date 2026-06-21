@@ -78,20 +78,20 @@ export async function POST(req: NextRequest) {
   const sessionTier: string = user?.tier ?? "";
   const isPro = sessionTier === "patron";
 
-  // Event creation requires Connect Pro or Culture Contributor (500 rep) — same floor
+  // Event creation requires Moveee Pro or Culture Contributor (500 rep) — same floor
   // enforced on the mobile event-template submit path (handle_submit_post()).
   if (templateType === "event" && !isPro && (user?.reputation ?? 0) < 500) {
     return NextResponse.json(
-      { error: "Creating events requires Connect Pro membership or Culture Contributor status (500 points)." },
+      { error: "Creating events requires Moveee Pro membership or Culture Contributor status (500 points)." },
       { status: 403 }
     );
   }
 
-  // Poll and itinerary creation requires Connect Pro or Taste Maker (2,500 rep) — same
+  // Poll and itinerary creation requires Moveee Pro or Taste Maker (2,500 rep) — same
   // floor enforced on the mobile path (handle_submit_post()).
   if ((templateType === "poll" || templateType === "itinerary") && !isPro && (user?.reputation ?? 0) < 2500) {
     return NextResponse.json(
-      { error: "Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 points)." },
+      { error: "Poll and itinerary posts require Moveee Pro membership or Taste Maker status (2,500 points)." },
       { status: 403 }
     );
   }
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
     : content.slice(0, 80) + (content.length > 80 ? "…" : "");
   const htmlContent = content ? `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>` : "";
 
-  // RSVP enabling/capacity is Connect Pro only — silently ignored for non-Pro posters
+  // RSVP enabling/capacity is Moveee Pro only — silently ignored for non-Pro posters
   // rather than failing the whole submit, mirroring handle_submit_post() on mobile.
   const rsvpEnabled = templateType === "event" && isPro && !!rsvp_enabled;
 

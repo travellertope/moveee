@@ -50,9 +50,9 @@ stale history.
 Next.js 15 (App Router) frontend + WordPress headless CMS backend.
 WordPress runs the `culture-community` plugin (custom CPTs, REST API, email
 queue, analytics). The frontend fetches via GraphQL (WPGraphQL) with a REST
-fallback. Members have two tiers: **Connect Citizen** (free, `citizen` in DB)
-and **Connect Pro** (paid, `patron` in DB — the DB value is `patron` but all
-user-visible copy says "Connect Pro" or "Pro").
+fallback. Members have two tiers: **Moveee Citizen** (free, `citizen` in DB)
+and **Moveee Pro** (paid, `patron` in DB — the DB value is `patron` but all
+user-visible copy says "Moveee Pro" or "Pro").
 
 This is a **Turborepo monorepo** (as of June 2026).
 
@@ -112,14 +112,22 @@ React Native can't use the DOM-dependent shared package — edit both when those
   meetup clusters of Moveee members. Do not confuse this with the Moveee product itself,
   and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
   now belongs to Literati Connect.
-- `Connect Citizen` / `Connect Pro` tier names and the `/connect` route path are unchanged
-  by this — those are pre-existing internal naming and stay as-is; only the top-level
-  product brand name changed.
+- **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
+  Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
+  emails/admin labels) — this superseded the prior naming and is now fully applied
+  repo-wide. Internal DB/PHP values (`patron`, `citizen`) are unchanged, per the table
+  below. The `/connect` route *path* in `apps/connect` also changed: the feed itself
+  moved from `/connect` to `/feed` (see "Connect app feed route" below) — `/connect`
+  is now only the parent path for the `people`, `membership`, `perks`, and `[username]`
+  sub-routes, plus a back-compat redirect to `/feed` for the bare path.
+- The header in `apps/connect/components/Header.tsx` no longer renders a "Connect"
+  badge next to the logo (removed 2026-06-21, consistent with "Connect" no longer
+  referring to the Moveee platform itself).
 
 | Internal DB value | User-visible label |
 |---|---|
-| `patron` | Connect Pro / Pro |
-| `citizen` | Connect Citizen / Citizen |
+| `patron` | Moveee Pro / Pro |
+| `citizen` | Moveee Citizen / Citizen |
 | `getmelit` | GetMeLit |
 | `culture-drop` | Culture Drop |
 | `credits` (gamification ledger) | **Culture Credits (Cr)** |
@@ -416,7 +424,7 @@ results.
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
-  All user-facing copy uses "Connect Pro" / "Pro".
+  All user-facing copy uses "Moveee Pro" / "Pro".
 - "Cultural Digest" / "The Cultural Digest" is the old name — do not use it.
   Use "GetMeLit" and "Culture Drop" specifically, or "Moveee newsletters"
   generically.
@@ -588,6 +596,56 @@ Please use "./proxy.ts" only.
 All edge logic (redirects, cache headers, cookie setting, rate limiting) must
 go into **`proxy.ts`** at the project root. The exported function is named
 `proxy` (not `middleware`) and uses the same `NextRequest`/`NextResponse` API.
+
+---
+
+## Connect app feed route (`/feed`, renamed 2026-06-21)
+
+The community feed used to live at the bare `/connect` path in `apps/connect`. It now
+lives at `app/feed/` (`page.tsx`, `feed.css` — renamed from `connect.css`, `ConnectHero.tsx`,
+`loading.tsx`), and `apps/connect/proxy.ts` redirects `/` and the old `/connect` path to
+`/feed`. The `app/connect/` directory still exists and still serves its other sub-routes
+unchanged: `app/connect/people/`, `app/connect/membership/`, `app/connect/perks/`,
+`app/connect/[username]/` — only the feed page itself moved. `apps/site/proxy.ts`'s
+`connectPrefixes` cross-domain redirect array includes both `/connect` and `/feed` so
+either path on themoveee.com correctly forwards to web.themoveee.com.
+
+**If you add a new link to the community feed**, point it at `/feed`, not `/connect` —
+`/connect` alone now only resolves via the back-compat redirect. Links to the sub-routes
+(`/connect/people` etc.) are unaffected and should stay as-is.
+
+---
+
+## App download nudge (Connect web only, June 2026)
+
+`apps/connect` (web.themoveee.com) shows a non-blocking nudge encouraging visitors to use
+the native Moveee app instead of the web app — "TikTok-style" but explicitly never
+blocking. `apps/site` (themoveee.com) does **not** get this — it already has its own
+download section (`.mz-download-strip` in `MoveeeZone.tsx`).
+
+Two pieces, both mounted globally in `apps/connect/app/layout.tsx` (alongside
+`ConnectHeader`/`Footer`):
+- `components/AppDownloadBanner.tsx` — persistent top banner, dismissible (✕ button writes
+  `sessionStorage["moveee_app_banner_dismissed"]` — reappears next session, never permanently
+  gone).
+- `components/AppDownloadModal.tsx` — occasional soft modal, shown at most once per session
+  after `PAGE_VIEW_THRESHOLD` (3) page views (`usePathname` change increments a
+  `sessionStorage` counter). Strong messaging ("The full experience to connect to culture is
+  on the app.") but always offers a de-emphasized "Continue in browser" dismiss — never a
+  hard wall, per explicit product decision not to block.
+- Styles: `components/app-download-nudge.css`, imported once from `app/layout.tsx`.
+
+**CTA destination — the app is pre-launch (no real App Store/Play Store listing yet).**
+Both components link to `https://themoveee.com/#download` rather than a store URL — this
+reuses Site A's existing waitlist flow (`MoveeeZone.tsx`'s `.mz-download-strip` +
+`WaitlistModal.tsx`) instead of duplicating email-capture infrastructure in `apps/connect`
+(which has no anonymous newsletter-subscribe route — only member-scoped
+`NewsletterPreferences.tsx`). `MoveeeZone.tsx` has an `id="download"` anchor on the strip and
+a mount-time `useEffect` that auto-opens `WaitlistModal` when the page loads with
+`#download` in the URL, so the cross-domain link lands the visitor straight on the waitlist
+form rather than just scrolling them to it. **Once the app actually ships to the stores,
+swap these href targets for real store URLs** (same TODO as the `DEV:` comment already in
+`MoveeeZone.tsx` for its own store badges) rather than leaving the waitlist redirect in place.
 
 ---
 
@@ -1126,7 +1184,7 @@ user's organised events with live RSVP counts).
 
 ### Pro-gating (hard requirement)
 **Both RSVP creation (enabling the toggle when posting an event) and RSVP management
-(attendee list/export) are restricted to Connect Pro (`patron`) members only** —
+(attendee list/export) are restricted to Moveee Pro (`patron`) members only** —
 enforced server-side via `Culture_Community_RSVP::is_pro()`, not just hidden in the UI:
 - Creation: `handle_submit_post()` Event branch in `class-culture-mobile-api.php` —
   if `rsvp_enabled` is passed but the poster isn't Pro, the toggle is **silently
@@ -1372,8 +1430,8 @@ Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
 |---|---|---|
 | Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
 | Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
-| Event template (creation) | Culture Contributor (500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile) and the web submit route (added June 2026) |
-| Poll + Itinerary templates | Taste Maker (2,500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile, 403) and `apps/connect/app/api/community/submit/route.ts` (web, 403 — added June 2026, web previously had zero gating on these templates since this route bypasses PHP entirely) |
+| Event template (creation) | Culture Contributor (500 rep), Moveee Pro bypasses | PHP `handle_submit_post()` (mobile) and the web submit route (added June 2026) |
+| Poll + Itinerary templates | Taste Maker (2,500 rep), Moveee Pro bypasses | PHP `handle_submit_post()` (mobile, 403) and `apps/connect/app/api/community/submit/route.ts` (web, 403 — added June 2026, web previously had zero gating on these templates since this route bypasses PHP entirely) |
 | Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
 | Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
 
@@ -1602,7 +1660,7 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 **Step 2 & 3 — `/register/complete?uid=xxx&token=xxx&next=/article`:**
 - Page load calls `POST /api/verify-email` → `POST /culture/v1/verify-email` to validate token
 - Step 2: DOB, Country, City, Occupation
-- Step 3: Membership tier (Citizen / Connect Pro)
+- Step 3: Membership tier (Citizen / Moveee Pro)
 - On submit calls `POST /api/complete-profile` → `POST /culture/v1/complete-profile`
   - Saves KYC fields, marks email verified, clears token, sends welcome email
   - Returns `checkout_url` for patron; otherwise redirects to `/login?registered=1&callbackUrl=<next>`
@@ -1747,7 +1805,7 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
 
 **Checks applied to posts (`app/api/community/submit/route.ts`):**
-1. URL/link blocking — Citizens cannot post links; Connect Pro members can
+1. URL/link blocking — Citizens cannot post links; Moveee Pro members can
 2. Rate limit — 5 posts per 10 minutes per user (HTTP 429)
 3. Duplicate detection — same text rejected within 30 minutes (HTTP 409)
 4. Keyword blocklist — default phrases + admin-configured custom phrases (HTTP 400)
@@ -1909,7 +1967,7 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
-- `patron` = Connect Pro DB value — never rename in code
+- `patron` = Moveee Pro DB value — never rename in code
 - `react-native-passkeys` replaces `@simplewebauthn/browser` for WebAuthn in RN
 - `react-native-qrcode-svg` for rendering perk QR codes
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode

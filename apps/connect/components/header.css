@@ -31,19 +31,6 @@
   display: block;
 }
 
-.ch-logo-badge {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--paper);
-  background: var(--ink);
-  padding: 0.2em 0.55em;
-  border-radius: 3px;
-  line-height: 1.6;
-}
-
 /* ── Desktop Nav ── */
 .ch-nav {
   display: flex;
@@ -369,9 +356,5 @@
 @media (max-width: 480px) {
   .ch-inner {
     padding: 0 1rem;
-  }
-
-  .ch-logo-badge {
-    display: none;
   }
 }

@@ -101,7 +101,7 @@ class Culture_Email_Templates {
 <tr><td style="padding:10px 12px;background:#f8f9fa;font-weight:600;">Date</td><td style="padding:10px 12px;">{date}</td></tr>
 </tbody>
 </table>
-<p>As a Connect Pro member, you now have access to:</p>
+<p>As a Moveee Pro member, you now have access to:</p>
 <ul>
 <li>All patron-only articles and content</li>
 <li>10% discount in the Moveee shop + early access to new drops</li>
@@ -157,7 +157,7 @@ class Culture_Email_Templates {
 <li>Earn points and badges</li>
 <li>Refer friends</li>
 </ul>
-<p>To regain Connect Pro benefits, you can re-subscribe at any time.</p>',
+<p>To regain Moveee Pro benefits, you can re-subscribe at any time.</p>',
             ),
 
             'event_rsvp_confirmation' => array(

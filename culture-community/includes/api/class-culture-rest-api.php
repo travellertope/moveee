@@ -1590,7 +1590,7 @@ class Culture_REST_API {
         $post_id = (int) $request->get_param( 'post_id' );
 
         if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
-            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+            return new WP_Error( 'patron_required', 'Moveee Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
         }
         if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
             return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
@@ -1612,7 +1612,7 @@ class Culture_REST_API {
         $user_id = (int) $request->get_param( 'user_id' );
 
         if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
-            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+            return new WP_Error( 'patron_required', 'Moveee Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
         }
 
         return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
@@ -1925,7 +1925,7 @@ class Culture_REST_API {
             $segment = '';
         }
 
-        // 'patron' is the internal DB value for Connect Pro — stored as-is on the
+        // 'patron' is the internal DB value for Moveee Pro — stored as-is on the
         // subscriber record so Pro-only newsletter campaigns can target it.
         $is_pro = ( 'patron' === $tier );
 

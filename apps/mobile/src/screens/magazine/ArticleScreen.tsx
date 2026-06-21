@@ -928,13 +928,13 @@ export default function ArticleScreen() {
                     <Ionicons name="lock-closed" size={24} color={c.gold} style={{ marginBottom: 12 }} />
                     <Text style={styles.gateTitle}>Members-only article</Text>
                     <Text style={styles.gateDesc}>
-                      This article is exclusive to Connect Pro members. Upgrade to read the full piece and unlock all premium content.
+                      This article is exclusive to Moveee Pro members. Upgrade to read the full piece and unlock all premium content.
                     </Text>
                     <TouchableOpacity
                       style={styles.upgradeBtn}
                       onPress={() => nav.navigate("Membership")}
                     >
-                      <Text style={styles.upgradeBtnText}>Upgrade to Connect Pro</Text>
+                      <Text style={styles.upgradeBtnText}>Upgrade to Moveee Pro</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={{ marginTop: 12 }}

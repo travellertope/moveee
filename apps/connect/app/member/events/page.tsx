@@ -52,13 +52,13 @@ export default async function MemberEventsPage() {
         </div>
         <div className="mem-body">
           <section className="mem-card">
-            <div className="mem-card-label">Connect Pro feature</div>
+            <div className="mem-card-label">Moveee Pro feature</div>
             <p className="mem-card-desc">
-              RSVP management for community events is available to Connect Pro members.
+              RSVP management for community events is available to Moveee Pro members.
               Upgrade your membership to enable RSVP on your events and view attendee lists.
             </p>
             <Link href="/connect/membership" className="mem-settings-back-link">
-              View Connect Pro →
+              View Moveee Pro →
             </Link>
           </section>
         </div>
@@ -79,7 +79,7 @@ export default async function MemberEventsPage() {
             </div>
             <h1 className="mem-name">My Events</h1>
             <div className="mem-meta">
-              <span className="mem-tier-badge patron">Connect Pro</span>
+              <span className="mem-tier-badge patron">Moveee Pro</span>
             </div>
           </div>
         </div>

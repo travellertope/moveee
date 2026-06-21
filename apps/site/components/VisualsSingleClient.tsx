@@ -191,11 +191,11 @@ export default function VisualsSingleClient({ entry }: Props) {
             <div className="visual-modal-icon">★</div>
             <h3>Daily Limit Reached</h3>
             <p>
-              You've hit your daily limit of 5 downloads. To enjoy unlimited downloads and support independent culture, upgrade to Connect Pro.
+              You've hit your daily limit of 5 downloads. To enjoy unlimited downloads and support independent culture, upgrade to Moveee Pro.
             </p>
             <div className="flex flex-col gap-4">
               <Link href="/connect/membership" className="visual-btn visual-btn-primary">
-                Upgrade to Connect Pro
+                Upgrade to Moveee Pro
               </Link>
               <button onClick={() => setIsModalOpen(false)} className="text-sm text-zinc-500 hover:text-white transition-colors">
                 Maybe Later

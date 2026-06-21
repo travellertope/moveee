@@ -11,7 +11,7 @@ export async function GET(
   const postId = parseInt(id, 10);
 
   if (!postId || isNaN(postId)) {
-    return NextResponse.redirect(new URL("/connect", _req.url));
+    return NextResponse.redirect(new URL("/feed", _req.url));
   }
 
   try {
@@ -44,5 +44,5 @@ export async function GET(
     // fall through
   }
 
-  return NextResponse.redirect(new URL("/connect", _req.url));
+  return NextResponse.redirect(new URL("/feed", _req.url));
 }

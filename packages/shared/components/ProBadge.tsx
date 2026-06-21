@@ -1,10 +1,10 @@
-// Gold pill badge for Connect Pro members — mirrors apps/mobile's
+// Gold pill badge for Moveee Pro members — mirrors apps/mobile's
 // proBadgePill (FeedItemCard.tsx): solid gold rounded rect with a white
 // ribbon icon, not an outline checkmark seal.
 export default function ProBadge({ size = 14 }: { size?: number }) {
   return (
     <span
-      aria-label="Connect Pro"
+      aria-label="Moveee Pro"
       style={{
         display: "inline-flex",
         alignItems: "center",

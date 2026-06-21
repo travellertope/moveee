@@ -199,7 +199,7 @@ export default function TriviaGameScreen() {
           </View>
           {!isPro && (
             <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={styles.proHintBtn}>
-              <Text style={styles.proHintText}>Connect Pro members get 5 plays/day →</Text>
+              <Text style={styles.proHintText}>Moveee Pro members get 5 plays/day →</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => nav.goBack()}>

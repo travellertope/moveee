@@ -157,7 +157,7 @@ export default function WhoSaidItGameScreen() {
           <Text style={styles.doneSub}>New quotes drop every day.</Text>
           {!isPro && (
             <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={{ marginBottom: 12 }}>
-              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre }}>Connect Pro members get 5 plays/day →</Text>
+              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre }}>Moveee Pro members get 5 plays/day →</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={[styles.primaryBtn, { marginTop: space[4] }]} onPress={() => nav.goBack()}>

@@ -20,7 +20,7 @@ const PatronPrice: React.FC<PatronPriceProps> = ({
     return <span className={className}>...</span>;
   }
 
-  const patronLabel = pricing.patronLabel || "Connect Pro";
+  const patronLabel = pricing.patronLabel || "Moveee Pro";
 
   const getPriceString = (int: "monthly" | "yearly") => {
     const amount = currency === "NGN" 

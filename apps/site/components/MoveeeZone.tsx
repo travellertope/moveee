@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import PatronPrice from "@/components/PatronPrice";
 import WaitlistModal from "@/components/WaitlistModal";
@@ -52,6 +52,10 @@ const FEATURES = [
 
 export default function MoveeeZone() {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
+
+  useEffect(() => {
+    if (window.location.hash === "#download") setWaitlistOpen(true);
+  }, []);
 
   return (
     <div className="mz-zone">
@@ -122,7 +126,7 @@ export default function MoveeeZone() {
             contribution builds your standing — and earns Culture Credits (Cr) you can spend on
             real perks from brands that get it.
           </p>
-          <Link href="/connect" className="mz-link">See how it works →</Link>
+          <Link href="/feed" className="mz-link">See how it works →</Link>
         </div>
 
         {/*
@@ -155,7 +159,7 @@ export default function MoveeeZone() {
         <div className="mz-membership-cards">
           <div className="mz-tier-card">
             <div className="mz-tier-head">
-              <span className="mz-tier-name">Connect Citizen</span>
+              <span className="mz-tier-name">Moveee Citizen</span>
               <span className="mz-tier-pill">Free</span>
             </div>
             <p className="mz-tier-body">
@@ -172,7 +176,7 @@ export default function MoveeeZone() {
             }}
           >
             <div className="mz-tier-head">
-              <span className="mz-tier-name mz-tier-name--white">Connect Pro</span>
+              <span className="mz-tier-name mz-tier-name--white">Moveee Pro</span>
               {/*
                 DEV: Do not hardcode the Pro price — reuse the existing <PatronPrice />
                 component (apps/site/components, already used in the current Connect CTA block)
@@ -191,7 +195,7 @@ export default function MoveeeZone() {
         </div>
 
         {/* ===== JOIN MOVEEE DOWNLOAD STRIP ===== */}
-        <div className="mz-download-strip">
+        <div className="mz-download-strip" id="download">
           <img
             src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=640&q=80&auto=format&fit=crop"
             alt=""

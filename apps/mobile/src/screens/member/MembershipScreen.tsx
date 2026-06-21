@@ -22,7 +22,7 @@ const CITIZEN_PERKS = [
 ];
 
 const PRO_PERKS = [
-  "Everything in Connect Citizen, plus:",
+  "Everything in Moveee Citizen, plus:",
   "Patron-only articles & editorials",
   "10% off in the Moveee Shop",
   "Early access to new product drops",
@@ -30,7 +30,7 @@ const PRO_PERKS = [
   "100 culture credits per day",
   "5 game plays per day",
   "Poll & itinerary post templates",
-  "Connect Pro badge on profile & posts",
+  "Moveee Pro badge on profile & posts",
   "Early access to new features",
 ];
 
@@ -64,7 +64,7 @@ export default function MembershipScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardEyebrow}>FREE FOREVER</Text>
-          <Text style={styles.cardName}>Connect Citizen</Text>
+          <Text style={styles.cardName}>Moveee Citizen</Text>
           <View style={styles.divider} />
           {CITIZEN_PERKS.map((p) => (
             <View key={p} style={styles.perkRow}>
@@ -85,10 +85,10 @@ export default function MembershipScreen() {
 
         <View style={[styles.card, styles.proCard]}>
           <View style={styles.proEyebrowRow}>
-            <Text style={[styles.cardEyebrow, styles.proEyebrow]}>CONNECT PRO</Text>
+            <Text style={[styles.cardEyebrow, styles.proEyebrow]}>MOVEEE PRO</Text>
             <Text style={styles.proStar}>★</Text>
           </View>
-          <Text style={styles.cardName}>Connect Pro</Text>
+          <Text style={styles.cardName}>Moveee Pro</Text>
           <Text style={styles.proPrice}>Upgrade on the web</Text>
           <View style={styles.divider} />
           {PRO_PERKS.map((p) => (

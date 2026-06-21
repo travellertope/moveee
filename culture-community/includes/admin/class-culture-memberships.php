@@ -1,6 +1,6 @@
 <?php
 /**
- * Connect Pro Membership Manager
+ * Moveee Pro Membership Manager
  *
  * Admin page for viewing all Pro subscribers and manually managing
  * patron subscriptions — add, edit, set expiry, upgrade or downgrade.
@@ -112,7 +112,7 @@ class Culture_Memberships {
 		$add_url   = $base_url . '&action=add';
 
 		?>
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Connect Pro Memberships', 'culture-community' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Moveee Pro Memberships', 'culture-community' ); ?></h1>
 		<a href="<?php echo esc_url( $add_url ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add New', 'culture-community' ); ?>
 		</a>

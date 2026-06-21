@@ -29,17 +29,17 @@ export default function ShopSessionSection({
         <div className={`sp-early-access-banner${isPro ? " sp-early-access-banner--open" : ""}`}>
           <span className="sp-ea-badge">★ Pro Early Access</span>
           {isPro ? (
-            <span className="sp-ea-msg">You have early access to this drop as a Connect Pro member.</span>
+            <span className="sp-ea-msg">You have early access to this drop as a Moveee Pro member.</span>
           ) : (
             <>
               <span className="sp-ea-msg">
-                This drop is available to Connect Pro members first.
+                This drop is available to Moveee Pro members first.
                 {earlyAccessUntil && (
                   <> Opens publicly on {new Date(earlyAccessUntil).toLocaleDateString("en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.</>
                 )}
               </span>
               <Link href="/connect/membership" className="sp-ea-upgrade">
-                {isLoggedIn ? "Upgrade to Pro →" : "Join Connect Pro →"}
+                {isLoggedIn ? "Upgrade to Pro →" : "Join Moveee Pro →"}
               </Link>
             </>
           )}

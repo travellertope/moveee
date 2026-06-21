@@ -54,7 +54,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Connect Pro" : "Connect Citizen"}
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
               <span className="mem-sep">·</span>
               <span>{email}</span>

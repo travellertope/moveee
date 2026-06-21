@@ -1,0 +1,143 @@
+/* ===== App download banner (persistent, dismissible) ===== */
+.adb-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 16px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.adb-text strong {
+  color: var(--ochre);
+}
+
+.adb-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adb-cta {
+  color: var(--ochre);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adb-cta:hover {
+  text-decoration: underline;
+}
+
+.adb-dismiss {
+  background: none;
+  border: none;
+  color: var(--paper);
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px;
+}
+
+.adb-dismiss:hover {
+  opacity: 1;
+}
+
+/* ===== App download modal (occasional, never blocking) ===== */
+.adm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9000;
+}
+
+.adm-modal {
+  position: relative;
+  background: var(--paper);
+  border-radius: 8px;
+  max-width: 440px;
+  width: 100%;
+  padding: 32px 28px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.adm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mute);
+  font-size: 14px;
+  padding: 4px;
+}
+
+.adm-eyebrow {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin: 0 0 14px;
+}
+
+.adm-heading {
+  font-family: "Fraunces", serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+.adm-heading em {
+  color: var(--ochre);
+  font-style: italic;
+}
+
+.adm-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 0 24px;
+}
+
+.adm-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.adm-btn-primary {
+  display: inline-block;
+  padding: 11px 22px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.adm-btn-ghost {
+  background: none;
+  border: none;
+  color: var(--mute);
+  text-decoration: underline;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}

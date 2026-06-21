@@ -4,12 +4,12 @@ import { authOptions } from "@/lib/auth";
 import PatronPrice from "@/components/PatronPrice";
 import Link from "next/link";
 import "../../sections.css";
-import "../connect.css";
+import "../../feed/feed.css";
 
 export const metadata: Metadata = {
   title: "Membership — Moveee",
   description:
-    "Join Moveee as a Citizen for free, or upgrade to Connect Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
+    "Join Moveee as a Citizen for free, or upgrade to Moveee Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
 };
 
 export default async function MembershipPage() {
@@ -38,7 +38,7 @@ export default async function MembershipPage() {
               <Link href="/register" className="con-btn-primary">Join free →</Link>
             )}
             {loggedIn && !isPro && (
-              <Link href="/register?upgrade=patron" className="con-btn-primary">Upgrade to Connect Pro →</Link>
+              <Link href="/register?upgrade=patron" className="con-btn-primary">Upgrade to Moveee Pro →</Link>
             )}
             {loggedIn && isPro && (
               <Link href="/member" className="con-btn-primary">Member Dashboard →</Link>
@@ -47,7 +47,7 @@ export default async function MembershipPage() {
         </div>
 
         <nav className="mco-section-nav" aria-label="Connect sections">
-          <Link href="/connect" className="mco-nav-link">Pulse Feed</Link>
+          <Link href="/feed" className="mco-nav-link">Pulse Feed</Link>
           <Link href="/connect/people" className="mco-nav-link">People Near Me</Link>
           <span className="mco-nav-link mco-nav-link--active">Membership</span>
         </nav>
@@ -60,7 +60,7 @@ export default async function MembershipPage() {
           {/* Citizen */}
           <div className="mco-tier-card">
             <div className="mco-tier-eyebrow">Free</div>
-            <h2 className="mco-tier-name">Connect<br />Citizen</h2>
+            <h2 className="mco-tier-name">Moveee<br />Citizen</h2>
             <div className="mco-tier-price">Free forever</div>
             <ul className="mco-tier-perks">
               <li>Pulse feed &amp; community posts</li>
@@ -78,14 +78,14 @@ export default async function MembershipPage() {
               <span className="mco-tier-status">Your current membership</span>
             )}
             {loggedIn && isPro && (
-              <span className="mco-tier-status mco-tier-status--muted">Included in Connect Pro</span>
+              <span className="mco-tier-status mco-tier-status--muted">Included in Moveee Pro</span>
             )}
           </div>
 
-          {/* Connect Pro */}
+          {/* Moveee Pro */}
           <div className="mco-tier-card mco-tier-card--pro">
             <div className="mco-tier-eyebrow">Premium</div>
-            <h2 className="mco-tier-name">Connect<br /><em>Pro</em></h2>
+            <h2 className="mco-tier-name">Moveee<br /><em>Pro</em></h2>
             <div className="mco-tier-price">
               <PatronPrice variant="yearly" /> · <PatronPrice variant="monthly" /> — cancel anytime
             </div>
@@ -98,18 +98,18 @@ export default async function MembershipPage() {
               <li>5 game plays per day (vs 1 for Citizen)</li>
               <li>Poll &amp; itinerary post templates unlocked</li>
               <li>All events — online &amp; in-person</li>
-              <li>Connect Pro badge on your profile &amp; posts</li>
+              <li>Moveee Pro badge on your profile &amp; posts</li>
               <li>Early access to new features</li>
             </ul>
             <Link href="/connect/perks" className="mco-perks-link">See all shop perks →</Link>
             {!loggedIn && (
               <Link href="/register?tier=patron" className="mco-tier-btn mco-tier-btn--pro">
-                Become a Connect Pro →
+                Become a Moveee Pro →
               </Link>
             )}
             {loggedIn && !isPro && (
               <Link href="/register?upgrade=patron" className="mco-tier-btn mco-tier-btn--pro">
-                Upgrade to Connect Pro →
+                Upgrade to Moveee Pro →
               </Link>
             )}
             {loggedIn && isPro && (
@@ -126,7 +126,7 @@ export default async function MembershipPage() {
                 <tr>
                   <th>Feature</th>
                   <th>Citizen</th>
-                  <th>Connect Pro</th>
+                  <th>Moveee Pro</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,7 +143,7 @@ export default async function MembershipPage() {
                   ["Patron-only articles & editorials",              false,    true],
                   ["10% Moveee Shop discount",                       false,    true],
                   ["Early access to new drops",                      false,    true],
-                  ["Connect Pro badge",                              false,    true],
+                  ["Moveee Pro badge",                              false,    true],
                   ["Early access to new features",                   false,    true],
                 ].map(([feature, citizen, pro]) => (
                   <tr key={feature as string}>

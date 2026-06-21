@@ -223,7 +223,7 @@ export default function CrosswordGameScreen() {
           <Text style={styles.doneSub}>Come back tomorrow for a new puzzle.</Text>
           {!isPro && (
             <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={{ marginBottom: 12 }}>
-              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre }}>Connect Pro members get 5 plays/day →</Text>
+              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre }}>Moveee Pro members get 5 plays/day →</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.actionBtn}>

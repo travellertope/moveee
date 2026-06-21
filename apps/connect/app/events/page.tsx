@@ -187,7 +187,7 @@ export default async function EventsPage() {
               <div className="perk"><span className="n">04</span><p>15% off everything in the <em>Lifestyle</em> shop, always</p></div>
             </div>
             <div className="connect-cta">
-              <Link href="/connect" className="btn-gold">Become a Member →</Link>
+              <Link href="/feed" className="btn-gold">Become a Member →</Link>
               <span className="font-serif italic text-paper/50 text-base">from $9 / month</span>
             </div>
           </div>

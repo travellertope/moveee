@@ -388,16 +388,16 @@ export default function DirectorySubmitScreen() {
         </View>
         <View style={styles.gate}>
           <Ionicons name="lock-closed-outline" size={32} color={c.ochre} />
-          <Text style={styles.gateTitle}>Connect Pro required</Text>
+          <Text style={styles.gateTitle}>Moveee Pro required</Text>
           <Text style={styles.gateText}>
-            Directory contributions are a Connect Pro privilege. Upgrade to start adding
+            Directory contributions are a Moveee Pro privilege. Upgrade to start adding
             people, places, and movements to the Culture Directory.
           </Text>
           <TouchableOpacity
             style={styles.upgradeBtn}
             onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
           >
-            <Text style={styles.upgradeBtnLabel}>Upgrade to Connect Pro</Text>
+            <Text style={styles.upgradeBtnLabel}>Upgrade to Moveee Pro</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
