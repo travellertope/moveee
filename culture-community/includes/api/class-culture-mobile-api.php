@@ -378,6 +378,29 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Phase 2 — host mechanisms (election only; appointment is admin-only,
+        // no member-facing endpoint).
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/election/start', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_start' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/election/vote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_vote' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'candidate_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cluster/(?P<id>\d+)/election', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -1850,6 +1873,38 @@ class Culture_Mobile_API {
         Culture_Clusters::leave( $cluster_id, $user_id );
 
         return rest_ensure_response( Culture_Clusters::get_member_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_start( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $result = Culture_Clusters::start_election( $cluster_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_vote( $request ) {
+        $user_id      = get_current_user_id();
+        $cluster_id   = (int) $request->get_param( 'id' );
+        $candidate_id = (int) $request->get_param( 'candidate_id' );
+
+        $result = Culture_Clusters::cast_vote( $cluster_id, $user_id, $candidate_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_status( $request ) {
+        $user_id    = get_current_user_id();
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );

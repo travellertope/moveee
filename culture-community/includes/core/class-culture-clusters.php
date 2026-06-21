@@ -63,6 +63,12 @@ class Culture_Clusters {
             : (int) get_option( 'culture_cluster_default_capacity', 12 );
     }
 
+    public static function election_window_days() : int {
+        return defined( 'CULTURE_CLUSTER_ELECTION_WINDOW_DAYS' )
+            ? (int) CULTURE_CLUSTER_ELECTION_WINDOW_DAYS
+            : (int) get_option( 'culture_cluster_election_window_days', 7 );
+    }
+
     /* ——————————————————————————————————————
      *  Core reads
      * —————————————————————————————————————— */
@@ -120,6 +126,15 @@ class Culture_Clusters {
             'role'     => $is_member ? $row['role'] : null,
             'joinedAt' => $is_member ? $row['joined_at'] : null,
         );
+    }
+
+    public static function get_active_member_ids( int $cluster_id ) : array {
+        global $wpdb;
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM " . self::table() . " WHERE cluster_id = %d AND status = 'active'",
+            $cluster_id
+        ) );
+        return array_map( 'intval', $ids ?: array() );
     }
 
     public static function list_for_user( int $user_id ) : array {
@@ -347,13 +362,69 @@ class Culture_Clusters {
 
     public static function leave( int $cluster_id, int $user_id ) : bool {
         global $wpdb;
+        $host_id  = (int) get_post_meta( $cluster_id, '_cluster_host_id', true );
+        $was_host = ( $host_id === $user_id );
+
         $updated = $wpdb->update(
             self::table(),
             array( 'status' => 'left' ),
             array( 'cluster_id' => $cluster_id, 'user_id' => $user_id ),
             array( '%s' ), array( '%d', '%d' )
         );
+
+        if ( false !== $updated && $was_host ) {
+            self::handle_host_departure( $cluster_id, $user_id );
+        }
+
         return false !== $updated;
+    }
+
+    /**
+     * §3.3 host vacancy handling, run right after the departing host's
+     * membership row is flipped to 'left'. Three branches depending on
+     * what's left of the cluster.
+     */
+    private static function handle_host_departure( int $cluster_id, int $departed_host_id ) {
+        $remaining = self::get_active_member_ids( $cluster_id );
+
+        if ( ! $remaining ) {
+            // No one left to elect/appoint from. Repurpose the departing
+            // host's own (now 'left') membership row's joined_at column as
+            // a "vacancy started" timestamp — the plan doc calls for no new
+            // field, and the grace-period sweep reads this same column.
+            global $wpdb;
+            $wpdb->update(
+                self::table(),
+                array( 'joined_at' => current_time( 'mysql' ) ),
+                array( 'cluster_id' => $cluster_id, 'user_id' => $departed_host_id ),
+                array( '%s' ), array( '%d', '%d' )
+            );
+            return;
+        }
+
+        $election_open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
+        $election_is_open     = $election_open_until && strtotime( $election_open_until ) > time();
+
+        if ( $election_is_open ) {
+            // Strip the departed host's own vote and any votes cast for
+            // them as a candidate — they can't become host having left.
+            $votes_json = get_post_meta( $cluster_id, '_cluster_election_votes', true );
+            $votes      = $votes_json ? json_decode( $votes_json, true ) : array();
+            $votes      = is_array( $votes ) ? $votes : array();
+
+            unset( $votes[ (string) $departed_host_id ] );
+            foreach ( $votes as $voter => $candidate ) {
+                if ( (int) $candidate === $departed_host_id ) {
+                    unset( $votes[ $voter ] );
+                }
+            }
+
+            update_post_meta( $cluster_id, '_cluster_election_votes', wp_json_encode( $votes ) );
+            return;
+        }
+
+        // Other members remain and no election is open — auto-trigger one.
+        self::start_election( $cluster_id, 0, true );
     }
 
     /**
@@ -388,5 +459,259 @@ class Culture_Clusters {
                 array( 'cluster_id' => $cluster_id )
             );
         }
+    }
+
+    /* ——————————————————————————————————————
+     *  Phase 2 — host mechanisms (§2.4.2 appointed, §2.4.3 elected, §3.3 vacancy)
+     * —————————————————————————————————————— */
+
+    /**
+     * @param int  $user_id Member starting the election. 0 + $auto=true for
+     *                       a system-triggered election (host departure).
+     * @return true|WP_Error
+     */
+    public static function start_election( int $cluster_id, int $user_id, bool $auto = false ) {
+        $post = get_post( $cluster_id );
+        if ( ! $post || 'culture_cluster' !== $post->post_type ) {
+            return new WP_Error( 'invalid_cluster', 'This cluster does not exist.', array( 'status' => 400 ) );
+        }
+
+        if ( self::STATUS_ACTIVE !== get_post_meta( $cluster_id, '_cluster_status', true ) ) {
+            return new WP_Error( 'cluster_not_active', 'Elections are only available for active House Fellowships.', array( 'status' => 400 ) );
+        }
+
+        $open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
+        if ( $open_until && strtotime( $open_until ) > time() ) {
+            return new WP_Error( 'election_open', 'An election is already in progress.', array( 'status' => 409 ) );
+        }
+
+        if ( ! $auto && ! in_array( $user_id, self::get_active_member_ids( $cluster_id ), true ) ) {
+            return new WP_Error( 'not_a_member', 'Only members of this House Fellowship can start an election.', array( 'status' => 403 ) );
+        }
+
+        $closes_at = gmdate( 'Y-m-d H:i:s', time() + ( self::election_window_days() * DAY_IN_SECONDS ) );
+        update_post_meta( $cluster_id, '_cluster_election_open_until', $closes_at );
+        update_post_meta( $cluster_id, '_cluster_election_votes', wp_json_encode( array() ) );
+
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            $name = get_post_meta( $cluster_id, '_cluster_name', true );
+            foreach ( self::get_active_member_ids( $cluster_id ) as $member_id ) {
+                Culture_Notifications::add(
+                    $member_id,
+                    'cluster_election_started',
+                    'Host election started',
+                    $name . ' is electing a new host. Cast your vote or put yourself forward.',
+                    '/cluster/' . $cluster_id,
+                    array( 'cluster_id' => $cluster_id )
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Casting a vote for oneself doubles as "I'll run" — no separate
+     * candidacy field, per the plan doc's no-new-storage discipline.
+     * @return true|WP_Error
+     */
+    public static function cast_vote( int $cluster_id, int $voter_id, int $candidate_id ) {
+        $open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
+        if ( ! $open_until || strtotime( $open_until ) <= time() ) {
+            return new WP_Error( 'no_election', 'There is no open election for this House Fellowship.', array( 'status' => 400 ) );
+        }
+
+        $active_ids = self::get_active_member_ids( $cluster_id );
+        if ( ! in_array( $voter_id, $active_ids, true ) ) {
+            return new WP_Error( 'not_a_member', 'Only members of this House Fellowship can vote.', array( 'status' => 403 ) );
+        }
+        if ( ! in_array( $candidate_id, $active_ids, true ) ) {
+            return new WP_Error( 'invalid_candidate', 'That member is not eligible to be host.', array( 'status' => 400 ) );
+        }
+
+        $votes_json = get_post_meta( $cluster_id, '_cluster_election_votes', true );
+        $votes      = $votes_json ? json_decode( $votes_json, true ) : array();
+        $votes      = is_array( $votes ) ? $votes : array();
+
+        $votes[ (string) $voter_id ] = $candidate_id;
+        update_post_meta( $cluster_id, '_cluster_election_votes', wp_json_encode( $votes ) );
+
+        return true;
+    }
+
+    public static function get_election_status( int $cluster_id, int $viewer_id = 0 ) : array {
+        $open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
+        $is_open    = $open_until && strtotime( $open_until ) > time();
+
+        $votes_json = get_post_meta( $cluster_id, '_cluster_election_votes', true );
+        $votes      = $votes_json ? json_decode( $votes_json, true ) : array();
+        $votes      = is_array( $votes ) ? $votes : array();
+
+        $tallies = array();
+        foreach ( $votes as $candidate_id ) {
+            $candidate_id = (int) $candidate_id;
+            $tallies[ $candidate_id ] = ( $tallies[ $candidate_id ] ?? 0 ) + 1;
+        }
+
+        $candidates = array();
+        foreach ( $tallies as $candidate_id => $count ) {
+            $user = get_userdata( $candidate_id );
+            if ( ! $user ) {
+                continue;
+            }
+            $candidates[] = array(
+                'id'        => $candidate_id,
+                'name'      => $user->display_name,
+                'voteCount' => $count,
+            );
+        }
+        usort( $candidates, function( $a, $b ) {
+            return $b['voteCount'] <=> $a['voteCount'];
+        } );
+
+        return array(
+            'open'       => $is_open,
+            'openUntil'  => $is_open ? $open_until : null,
+            'candidates' => $candidates,
+            'myVote'     => $viewer_id && isset( $votes[ (string) $viewer_id ] ) ? (int) $votes[ (string) $viewer_id ] : null,
+            'totalVotes' => count( $votes ),
+        );
+    }
+
+    /**
+     * Cron-invoked. Tallies an expired election, sets the plurality winner
+     * as host, and notifies members. Ties broken by earliest signup.
+     */
+    public static function tally_election( int $cluster_id ) {
+        $votes_json = get_post_meta( $cluster_id, '_cluster_election_votes', true );
+        $votes      = $votes_json ? json_decode( $votes_json, true ) : array();
+        $votes      = is_array( $votes ) ? $votes : array();
+
+        $active_ids = self::get_active_member_ids( $cluster_id );
+
+        $tallies = array();
+        foreach ( $votes as $voter_id => $candidate_id ) {
+            $voter_id     = (int) $voter_id;
+            $candidate_id = (int) $candidate_id;
+            if ( ! in_array( $voter_id, $active_ids, true ) || ! in_array( $candidate_id, $active_ids, true ) ) {
+                continue;
+            }
+            $tallies[ $candidate_id ] = ( $tallies[ $candidate_id ] ?? 0 ) + 1;
+        }
+
+        $winner_id = 0;
+        if ( $tallies ) {
+            $top_count    = max( $tallies );
+            $top_ids      = array_keys( array_filter( $tallies, function( $c ) use ( $top_count ) {
+                return $c === $top_count;
+            } ) );
+            $winner_id = count( $top_ids ) === 1 ? $top_ids[0] : self::earliest_signup_among( $top_ids );
+        }
+
+        if ( ! $winner_id ) {
+            $winner_id = self::longest_standing_member( $cluster_id );
+        }
+
+        update_post_meta( $cluster_id, '_cluster_election_votes', wp_json_encode( array() ) );
+        delete_post_meta( $cluster_id, '_cluster_election_open_until' );
+
+        if ( ! $winner_id ) {
+            return;
+        }
+
+        update_post_meta( $cluster_id, '_cluster_host_id', $winner_id );
+        update_post_meta( $cluster_id, '_cluster_host_mechanism', 'elected' );
+        self::promote_to_host_role( $cluster_id, $winner_id );
+
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            $name   = get_post_meta( $cluster_id, '_cluster_name', true );
+            $winner = get_userdata( $winner_id );
+            foreach ( $active_ids as $member_id ) {
+                Culture_Notifications::add(
+                    $member_id,
+                    'cluster_new_host',
+                    'New host elected',
+                    ( $winner ? $winner->display_name : 'A member' ) . ' is now the host of ' . $name . '.',
+                    '/cluster/' . $cluster_id,
+                    array( 'cluster_id' => $cluster_id )
+                );
+            }
+        }
+    }
+
+    /**
+     * Admin-only operator tool (§2.4.2) — directly reassigns the host,
+     * no member-facing trigger.
+     * @return true|WP_Error
+     */
+    public static function appoint_host( int $cluster_id, int $new_host_id ) {
+        $post = get_post( $cluster_id );
+        if ( ! $post || 'culture_cluster' !== $post->post_type ) {
+            return new WP_Error( 'invalid_cluster', 'This cluster does not exist.', array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $new_host_id, self::get_active_member_ids( $cluster_id ), true ) ) {
+            return new WP_Error( 'not_a_member', 'That user is not an active member of this House Fellowship.', array( 'status' => 400 ) );
+        }
+
+        update_post_meta( $cluster_id, '_cluster_host_id', $new_host_id );
+        update_post_meta( $cluster_id, '_cluster_host_mechanism', 'appointed' );
+        self::promote_to_host_role( $cluster_id, $new_host_id );
+
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            Culture_Notifications::add(
+                $new_host_id,
+                'cluster_new_host',
+                'You are now the host',
+                'You have been appointed host of ' . get_post_meta( $cluster_id, '_cluster_name', true ) . '.',
+                '/cluster/' . $cluster_id,
+                array( 'cluster_id' => $cluster_id )
+            );
+        }
+
+        return true;
+    }
+
+    private static function earliest_signup_among( array $user_ids ) : int {
+        $best_id   = 0;
+        $best_time = null;
+        foreach ( $user_ids as $user_id ) {
+            $user = get_userdata( $user_id );
+            if ( ! $user ) {
+                continue;
+            }
+            $registered = strtotime( $user->user_registered );
+            if ( null === $best_time || $registered < $best_time ) {
+                $best_time = $registered;
+                $best_id   = $user_id;
+            }
+        }
+        return $best_id;
+    }
+
+    private static function longest_standing_member( int $cluster_id ) : int {
+        global $wpdb;
+        $user_id = $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM " . self::table() . " WHERE cluster_id = %d AND status = 'active' ORDER BY joined_at ASC LIMIT 1",
+            $cluster_id
+        ) );
+        return $user_id ? (int) $user_id : 0;
+    }
+
+    private static function promote_to_host_role( int $cluster_id, int $new_host_id ) {
+        global $wpdb;
+        $table = self::table();
+        $wpdb->update(
+            $table,
+            array( 'role' => 'member' ),
+            array( 'cluster_id' => $cluster_id, 'role' => 'host' ),
+            array( '%s' ), array( '%d', '%s' )
+        );
+        $wpdb->update(
+            $table,
+            array( 'role' => 'host' ),
+            array( 'cluster_id' => $cluster_id, 'user_id' => $new_host_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
     }
 }

@@ -10,8 +10,9 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
-import type { Cluster, ClusterStatus } from "../../types";
+import type { Cluster, ClusterStatus, ClusterElectionStatus } from "../../types";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import { useAuthStore } from "../../auth/authStore";
 
 function capitalize(s: string) {
   return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -55,6 +56,32 @@ function createStyles(c: ColorPalette) {
     leaveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
     memberLabel: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
     errorText: { fontFamily: fonts.sans, fontSize: 12, color: "#C62828" },
+    hostRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    hostBadge: {
+      backgroundColor: c.ochre, borderRadius: radius.full,
+      paddingHorizontal: 8, paddingVertical: 2,
+    },
+    hostBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: c.paper, textTransform: "uppercase" },
+    candidateRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    candidateName: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
+    candidateVotes: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    voteBtn: {
+      borderWidth: 1, borderColor: c.ochre, borderRadius: radius.full,
+      paddingHorizontal: 12, paddingVertical: 4,
+    },
+    voteBtnActive: { backgroundColor: c.ochre },
+    voteBtnText: { fontFamily: fonts.sansBold, fontSize: 11, color: c.ochre },
+    voteBtnTextActive: { color: c.paper },
+    runLink: { alignItems: "center", paddingVertical: 8, marginTop: 4 },
+    runLinkText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
+    startElectionBtn: {
+      borderWidth: 1, borderColor: c.ochre, borderRadius: radius.full,
+      height: 44, alignItems: "center", justifyContent: "center", marginTop: 4,
+    },
+    startElectionBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
   });
 }
 
@@ -62,15 +89,27 @@ export default function ClusterScreen() {
   const route = useRoute<any>();
   const nav = useNav();
   const c = useColors();
+  const myUserId = Number(useAuthStore((s) => s.user?.id) ?? 0);
   const styles = useMemo(() => createStyles(c), [c]);
   const clusterId: number = route.params?.id;
 
   const [cluster, setCluster] = useState<Cluster | null>(null);
   const [status, setStatus] = useState<ClusterStatus | null>(null);
+  const [election, setElection] = useState<ClusterElectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [electionBusy, setElectionBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const loadElection = async () => {
+    try {
+      const res = await api.get<ClusterElectionStatus>(`${MOBILE_API}/cluster/${clusterId}/election`);
+      setElection(res ?? null);
+    } catch {
+      // non-fatal — election section just won't render
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -81,6 +120,9 @@ export default function ClusterScreen() {
         ]);
         setCluster(clusterRes ?? null);
         setStatus(statusRes ?? { isMember: false, role: null, joinedAt: null });
+        if (clusterRes?.status === "active") {
+          await loadElection();
+        }
       } catch {
         setCluster(null);
       } finally {
@@ -88,6 +130,32 @@ export default function ClusterScreen() {
       }
     })();
   }, [clusterId]);
+
+  const startElection = async () => {
+    setElectionBusy(true);
+    setError("");
+    try {
+      await api.post(`${MOBILE_API}/cluster/${clusterId}/election/start`, {});
+      await loadElection();
+    } catch {
+      setError("Could not start an election right now.");
+    } finally {
+      setElectionBusy(false);
+    }
+  };
+
+  const castVote = async (candidateId: number) => {
+    setElectionBusy(true);
+    setError("");
+    try {
+      await api.post(`${MOBILE_API}/cluster/${clusterId}/election/vote`, { candidate_id: candidateId });
+      await loadElection();
+    } catch {
+      setError("Could not cast your vote right now.");
+    } finally {
+      setElectionBusy(false);
+    }
+  };
 
   const join = async () => {
     setBusy(true);
@@ -150,6 +218,15 @@ export default function ClusterScreen() {
             </Text>
           </View>
 
+          {cluster.hostName ? (
+            <View style={styles.hostRow}>
+              <Text style={styles.memberLabel}>Host: {cluster.hostName}</Text>
+              <View style={styles.hostBadge}>
+                <Text style={styles.hostBadgeText}>{cluster.hostMechanism?.replace("_", " ") || "host"}</Text>
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Meeting</Text>
             <Text style={styles.cardBody}>
@@ -186,6 +263,49 @@ export default function ClusterScreen() {
               </>
             )}
           </View>
+
+          {cluster.status === "active" && status?.isMember ? (
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Host Election</Text>
+              {election?.open ? (
+                <>
+                  {election.candidates.length === 0 ? (
+                    <Text style={styles.cardBody}>No votes yet — be the first to put yourself forward.</Text>
+                  ) : (
+                    election.candidates.map((cand) => (
+                      <View key={cand.id} style={styles.candidateRow}>
+                        <View>
+                          <Text style={styles.candidateName}>{cand.name}</Text>
+                          <Text style={styles.candidateVotes}>{cand.voteCount} vote{cand.voteCount === 1 ? "" : "s"}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.voteBtn, election.myVote === cand.id && styles.voteBtnActive]}
+                          onPress={() => castVote(cand.id)}
+                          disabled={electionBusy}
+                        >
+                          <Text style={[styles.voteBtnText, election.myVote === cand.id && styles.voteBtnTextActive]}>
+                            {election.myVote === cand.id ? "Voted" : "Vote"}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))
+                  )}
+                  {election.myVote !== myUserId ? (
+                    <TouchableOpacity style={styles.runLink} onPress={() => castVote(myUserId)} disabled={electionBusy}>
+                      <Text style={styles.runLinkText}>I'll run →</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.cardBody}>No election in progress.</Text>
+                  <TouchableOpacity style={styles.startElectionBtn} onPress={startElection} disabled={electionBusy}>
+                    <Text style={styles.startElectionBtnText}>{electionBusy ? "Starting…" : "Start a host election"}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          ) : null}
         </ScrollView>
       )}
 

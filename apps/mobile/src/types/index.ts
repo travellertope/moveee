@@ -88,6 +88,9 @@ export interface Cluster {
   street: string;
   country: string;
   status: 'forming' | 'active' | 'archived';
+  hostId: number;
+  hostName: string;
+  hostMechanism: 'self_nominated' | 'appointed' | 'elected' | '';
   memberCount: number;
   capacity: number;
   meetingDay: string;
@@ -99,6 +102,20 @@ export interface ClusterStatus {
   isMember: boolean;
   role: string | null;
   joinedAt: string | null;
+}
+
+export interface ClusterElectionCandidate {
+  id: number;
+  name: string;
+  voteCount: number;
+}
+
+export interface ClusterElectionStatus {
+  open: boolean;
+  openUntil: string | null;
+  candidates: ClusterElectionCandidate[];
+  myVote: number | null;
+  totalVotes: number;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────

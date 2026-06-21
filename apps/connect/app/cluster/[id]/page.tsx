@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClusterActions from "./ClusterActions";
+import ClusterElection from "./ClusterElection";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ interface Cluster {
   street: string;
   country: string;
   status: string;
+  hostId: number;
+  hostName: string;
+  hostMechanism: string;
   memberCount: number;
   capacity: number;
   meetingDay: string;
@@ -28,6 +32,20 @@ interface ClusterStatus {
   isMember: boolean;
   role: string | null;
   joinedAt: string | null;
+}
+
+interface ClusterElectionCandidate {
+  id: number;
+  name: string;
+  voteCount: number;
+}
+
+interface ClusterElectionStatus {
+  open: boolean;
+  openUntil: string | null;
+  candidates: ClusterElectionCandidate[];
+  myVote: number | null;
+  totalVotes: number;
 }
 
 async function fetchCluster(id: string): Promise<Cluster | null> {
@@ -56,6 +74,19 @@ async function fetchStatus(id: string, userId: number): Promise<ClusterStatus> {
   }
 }
 
+async function fetchElection(id: string, userId: number): Promise<ClusterElectionStatus | null> {
+  try {
+    const res = await fetch(
+      `${WP_URL}/wp-json/culture/v1/cluster/${id}/election?user_id=${userId}`,
+      { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 function capitalize(s: string) {
   return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
@@ -79,6 +110,9 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
   }
 
   const status = await fetchStatus(id, Number(session.user.id));
+  const election = cluster.status === "active" && status.isMember
+    ? await fetchElection(id, Number(session.user.id))
+    : null;
 
   return (
     <>
@@ -104,6 +138,23 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
           <Link href="/connect/people" className="mem-settings-back-link">← Back to People Near Me</Link>
         </div>
 
+        {cluster.hostName && (
+          <section className="mem-card" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="mem-card-desc" style={{ margin: 0, fontWeight: 600 }}>Host: {cluster.hostName}</span>
+            {cluster.hostMechanism && (
+              <span
+                style={{
+                  background: "var(--ochre)", color: "var(--paper)", borderRadius: 999,
+                  padding: "2px 8px", fontSize: "0.65rem", textTransform: "uppercase",
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.04em",
+                }}
+              >
+                {cluster.hostMechanism.replace("_", " ")}
+              </span>
+            )}
+          </section>
+        )}
+
         <section className="mem-card">
           <div className="mem-card-label">Meeting</div>
           <p className="mem-card-desc" style={{ margin: 0 }}>
@@ -124,6 +175,16 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
         <section className="mem-card">
           <ClusterActions clusterId={cluster.id} initialIsMember={status.isMember} />
         </section>
+
+        {cluster.status === "active" && status.isMember && (
+          <section className="mem-card">
+            <ClusterElection
+              clusterId={cluster.id}
+              myUserId={Number(session.user.id)}
+              initialElection={election}
+            />
+          </section>
+        )}
       </div>
     </>
   );
