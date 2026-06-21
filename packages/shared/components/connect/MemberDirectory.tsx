@@ -24,18 +24,16 @@ const DISCIPLINES = [
   "Designer", "Musician", "Photographer", "Tech", "Legal", "Finance", "Academic",
 ];
 
-const LOCATIONS = [
-  "All", "Nigeria", "United Kingdom", "United States", "Ghana",
-  "South Africa", "Kenya", "France", "Canada", "Other",
-];
+interface Props {
+  viewerCity?: string;
+  viewerCountry?: string;
+}
 
-export default function MemberDirectory() {
+export default function MemberDirectory({ viewerCity = "", viewerCountry = "" }: Props) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [discipline, setDiscipline] = useState("All");
-  const [location, setLocation] = useState("All");
-  const [cityFilter, setCityFilter] = useState("");
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -43,32 +41,32 @@ export default function MemberDirectory() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (discipline !== "All") params.set("discipline", discipline);
-      if (location !== "All") params.set("location", location);
-      const res = await fetch(`/api/connect/members?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMembers(data.members ?? []);
+      // People Near Me: scope to the viewer's own city first, falling back to
+      // their country if nobody in their exact city matches.
+      if (viewerCity) params.set("location", viewerCity);
+      else if (viewerCountry) params.set("location", viewerCountry);
+
+      let res = await fetch(`/api/connect/members?${params}`);
+      let data = res.ok ? await res.json() : { members: [] };
+
+      if (viewerCity && viewerCountry && (data.members ?? []).length === 0) {
+        params.set("location", viewerCountry);
+        res = await fetch(`/api/connect/members?${params}`);
+        data = res.ok ? await res.json() : { members: [] };
       }
+
+      setMembers(data.members ?? []);
     } catch {
       setMembers([]);
     } finally {
       setLoading(false);
     }
-  }, [search, discipline, location]);
+  }, [search, discipline, viewerCity, viewerCountry]);
 
   useEffect(() => {
     const timer = setTimeout(fetchMembers, search ? 350 : 0);
     return () => clearTimeout(timer);
   }, [fetchMembers, search]);
-
-  // Unique cities from loaded members (non-empty)
-  const uniqueCities = Array.from(
-    new Set(members.map(m => m.city).filter(Boolean))
-  ).sort();
-
-  const filteredMembers = cityFilter
-    ? members.filter(m => m.city === cityFilter)
-    : members;
 
   return (
     <div className="mco-dir">
@@ -76,7 +74,7 @@ export default function MemberDirectory() {
         <div className="mco-dir-search-wrap">
           <input
             type="search"
-            placeholder="Search by name, role, or location…"
+            placeholder="Search by name or role…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="mco-dir-search"
@@ -88,31 +86,10 @@ export default function MemberDirectory() {
             value={discipline}
             onChange={e => setDiscipline(e.target.value)}
             className="mco-dir-select"
-            aria-label="Filter by discipline"
+            aria-label="Filter by industry"
           >
             {DISCIPLINES.map(d => (
-              <option key={d} value={d}>{d === "All" ? "All disciplines" : d}</option>
-            ))}
-          </select>
-          <select
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            className="mco-dir-select"
-            aria-label="Filter by location"
-          >
-            {LOCATIONS.map(l => (
-              <option key={l} value={l}>{l === "All" ? "All locations" : l}</option>
-            ))}
-          </select>
-          <select
-            value={cityFilter}
-            onChange={e => setCityFilter(e.target.value)}
-            className="mco-dir-select"
-            aria-label="Filter by city"
-          >
-            <option value="">All cities</option>
-            {uniqueCities.map(c => (
-              <option key={c} value={c}>{c}</option>
+              <option key={d} value={d}>{d === "All" ? "All industries" : d}</option>
             ))}
           </select>
         </div>
@@ -126,17 +103,16 @@ export default function MemberDirectory() {
         </div>
       ) : members.length === 0 ? (
         <div className="mco-dir-empty">
-          <p className="mco-dir-empty-title">The directory is growing.</p>
+          <p className="mco-dir-empty-title">No one near you yet.</p>
           <p className="mco-dir-empty-body">
-            Members who have opted into the directory will appear here — the Lagos photographer,
-            the UK art director, the Nigerian lawyer in New York. Join Moveee and opt in
-            from your profile settings to be listed.
+            Members who have opted into the directory will appear here once someone near you
+            joins. Join Moveee and opt in from your profile settings to be listed.
           </p>
           <Link href="/register" className="mco-dir-empty-cta">Join &amp; get listed →</Link>
         </div>
       ) : (
         <div className="mco-dir-grid">
-          {filteredMembers.map(member => (
+          {members.map(member => (
             <MemberCard key={member.id} member={member} />
           ))}
         </div>

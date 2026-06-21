@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const params = new URLSearchParams();
 
-  for (const key of ["q", "type", "region", "sort", "page", "per_page"]) {
+  for (const key of ["q", "type", "region", "sort", "seed", "page", "per_page"]) {
     const v = searchParams.get(key);
     if (v) params.set(key, v);
   }
