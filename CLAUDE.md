@@ -616,6 +616,39 @@ either path on themoveee.com correctly forwards to web.themoveee.com.
 
 ---
 
+## App download nudge (Connect web only, June 2026)
+
+`apps/connect` (web.themoveee.com) shows a non-blocking nudge encouraging visitors to use
+the native Moveee app instead of the web app — "TikTok-style" but explicitly never
+blocking. `apps/site` (themoveee.com) does **not** get this — it already has its own
+download section (`.mz-download-strip` in `MoveeeZone.tsx`).
+
+Two pieces, both mounted globally in `apps/connect/app/layout.tsx` (alongside
+`ConnectHeader`/`Footer`):
+- `components/AppDownloadBanner.tsx` — persistent top banner, dismissible (✕ button writes
+  `sessionStorage["moveee_app_banner_dismissed"]` — reappears next session, never permanently
+  gone).
+- `components/AppDownloadModal.tsx` — occasional soft modal, shown at most once per session
+  after `PAGE_VIEW_THRESHOLD` (3) page views (`usePathname` change increments a
+  `sessionStorage` counter). Strong messaging ("The full experience to connect to culture is
+  on the app.") but always offers a de-emphasized "Continue in browser" dismiss — never a
+  hard wall, per explicit product decision not to block.
+- Styles: `components/app-download-nudge.css`, imported once from `app/layout.tsx`.
+
+**CTA destination — the app is pre-launch (no real App Store/Play Store listing yet).**
+Both components link to `https://themoveee.com/#download` rather than a store URL — this
+reuses Site A's existing waitlist flow (`MoveeeZone.tsx`'s `.mz-download-strip` +
+`WaitlistModal.tsx`) instead of duplicating email-capture infrastructure in `apps/connect`
+(which has no anonymous newsletter-subscribe route — only member-scoped
+`NewsletterPreferences.tsx`). `MoveeeZone.tsx` has an `id="download"` anchor on the strip and
+a mount-time `useEffect` that auto-opens `WaitlistModal` when the page loads with
+`#download` in the URL, so the cross-domain link lands the visitor straight on the waitlist
+form rather than just scrolling them to it. **Once the app actually ships to the stores,
+swap these href targets for real store URLs** (same TODO as the `DEV:` comment already in
+`MoveeeZone.tsx` for its own store badges) rather than leaving the waitlist redirect in place.
+
+---
+
 ## Plugin DB table auto-upgrade (critical — June 2026)
 
 `culture-community.php` deploys via direct file sync to the Lightsail server, not
