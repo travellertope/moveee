@@ -41,13 +41,7 @@ interface FeedCardProps {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-// Full-bleed photo carousels (CreativeShowcaseCard) size each slide so a fixed
-// sliver of the next one is always visible, signalling the strip is scrollable
-// instead of looking like a single static image.
 const SCREEN_W = Dimensions.get("window").width;
-const CAROUSEL_PEEK = 32;
-const CAROUSEL_GAP = 8;
-const CAROUSEL_ITEM_W = SCREEN_W - 32 /* card margins */ - 14 /* left padding */ - CAROUSEL_PEEK;
 
 function timeAgo(d: string): string {
   if (!d) return "";
@@ -655,14 +649,6 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.sansBold,
       fontSize: fontSize.sm,
       color: "#FFFFFF",
-    },
-    // photo counter
-    photoCounter: {
-      fontFamily: fonts.mono,
-      fontSize: fontSize.tiny,
-      color: c.ghost,
-      textAlign: "center" as const,
-      marginTop: 4,
     },
     // editorial card
     editorialCategoryChip: {
@@ -1479,10 +1465,8 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMen
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
-  const count = gallery.length;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   return (
@@ -1502,28 +1486,8 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMen
             <HashtagText text={item.title} style={styles.cardBody} onMentionPress={handleMentionPress} />
           </View>
         ) : null}
-        {count > 0 ? (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginTop: 10, height: 200 }}
-              contentContainerStyle={{ gap: CAROUSEL_GAP, paddingHorizontal: 14 }}
-              snapToInterval={CAROUSEL_ITEM_W + CAROUSEL_GAP}
-              decelerationRate="fast"
-              onMomentumScrollEnd={(e) => {
-                const idx = Math.round(e.nativeEvent.contentOffset.x / (CAROUSEL_ITEM_W + CAROUSEL_GAP));
-                setActiveIdx(Math.min(idx, count - 1));
-              }}
-            >
-              {gallery.map((src, i) => (
-                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={CAROUSEL_ITEM_W} onPress={() => setLightboxIdx(i)} />
-              ))}
-            </ScrollView>
-            <Text style={styles.photoCounter}>
-              {activeIdx + 1} of {count} photo{count !== 1 ? "s" : ""}
-            </Text>
-          </>
+        {gallery.length > 0 ? (
+          <GalleryStrip images={gallery} height={220} width={220} onTap={(i) => setLightboxIdx(i)} />
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
