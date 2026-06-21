@@ -1,6 +1,9 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
 Status: **Phases 1–3 complete end-to-end (backend + mobile + web). Phase 4 next.**
+Ground rules (§7) and conflict resolution (§8) are now fully specified
+(added 2026-06-21) as Phase 6 — see §9 for where they sit in build order.
+Not yet built.
 This document is the single source of truth for building this feature. Do not
 begin implementation on any later phase until this document is read in full —
 it exists specifically to prevent scope creep and to avoid omitting load-bearing
@@ -74,7 +77,14 @@ members (Citizen and Pro — no tier gating anywhere in this feature):
     as the existing editorial RSVP system already supports).
   - Cross-city cluster directory/search beyond what's specified in §4.
   - Any moderation tooling beyond the existing report/blocklist system
-    already in place for community content.
+    already in place for community content — **superseded for House
+    Fellowship specifically by §8 (Conflict resolution)**, which defines a
+    dedicated cluster-dispute mechanism; the general community report/
+    blocklist system is unaffected and still governs ordinary content
+    moderation everywhere else.
+  - Real-money handling of any kind (member contributions toward planned
+    cluster activities) — coordination only, no payment/escrow build. Not
+    revisited in this pass; flag separately if this needs scoping later.
   - Push notifications beyond the existing notification-bell pipeline (no
     SMS/WhatsApp reminders in v1).
 
@@ -609,7 +619,188 @@ type added without a routing case.
 
 ---
 
-## 7. Implementation order (phases — build strictly in this order)
+## 7. Ground rules
+
+### 7.1 City-wide baseline rules (admin-owned, immutable to hosts/members)
+
+A single global Code of Conduct for House Fellowship, not per-city or
+per-cluster — same "one canonical instance" posture as other static
+policy-style content in this codebase. Stored as a new WP option,
+`culture_house_fellowship_ground_rules` (rich text), edited in WP Admin →
+Culture Community → General → the existing "Literati Connect / House
+Fellowship" section introduced in §2.5 (one more field in the same
+section, not a new admin screen). Covers safety, mutual respect, and
+expected conduct at meetings — actual wording is an editorial/legal
+decision outside this doc's scope; this doc only specifies the storage and
+gating mechanism.
+
+### 7.2 Optional per-cluster supplemental note
+
+New `culture_cluster` CPT meta key `_cluster_ground_rules_note` (string,
+optional, host-editable, same free-text pattern as
+`_cluster_meeting_location_note`) — e.g. "vegetarian-friendly potluck
+only, no plus-ones without asking first." Always shown directly below the
+global rules wherever they appear, never replaces them.
+
+### 7.3 Acceptance gating at join time
+
+- `wp_culture_cluster_members` gains one new nullable column,
+  `ground_rules_accepted_at` (datetime), via an `ALTER`-equivalent
+  `dbDelta` change inside the existing `create_tables()` definition for
+  this table (dbDelta handles adding a column to an existing table the
+  same way it handles a brand-new table — bump `CULTURE_VERSION` as usual
+  so `culture_community_maybe_upgrade()` picks it up).
+- `Culture_Clusters::join()` gains a required `$accepted_ground_rules`
+  bool param. If false/missing, `join()` does **not** upsert the
+  membership row — it instead returns
+  `{ requiresAcknowledgment: true, groundRules: <global text>, clusterNote: <cluster's optional note> }`.
+  The caller (mobile/web) is expected to show the rules and re-submit
+  `join()` with `accepted_ground_rules: true` once the member confirms.
+- This is a two-call flow (call `join()`, get told to acknowledge, call
+  `join()` again) rather than a separate `GET` to fetch rules first —
+  keeps `Culture_Clusters::join()` the single entry point, consistent with
+  every other action in §3.1 being one method per action.
+- Acceptance is permanent per user once recorded — re-joining after
+  leaving (the existing upsert-not-duplicate pattern, §2.2) does **not**
+  clear `ground_rules_accepted_at`, so a returning member isn't re-gated.
+
+### 7.4 Where the rules are shown (read-only, no gating)
+
+- Cluster discovery preview (§4.2) — a read-only "House Fellowship ground
+  rules" expander, visible even to non-members, so people know what
+  they're agreeing to before tapping Join.
+- Cluster home screen (§4.4) — the same content always visible (e.g. a
+  collapsed "Ground Rules" row) so members can refer back to it any time,
+  not just at the join moment.
+
+---
+
+## 8. Conflict resolution
+
+### 8.1 Why a dedicated mechanism, not the existing report/blocklist system
+
+The existing community report system targets *content* — a reporter flags
+a specific post, and a report-count threshold on that post triggers
+auto-pending. A House Fellowship dispute is about a **member's conduct**
+within an ongoing small group, not a single piece of content, and needs a
+real workflow (open → host review → possibly escalate → resolved), not a
+count threshold. That's a deliberate, justified exception to this
+project's general "don't add a table you don't need" judgment call (see
+§2.2's reasoning for why election votes stay a JSON blob, not a table):
+multiple concurrent disputes per cluster, each needing independent status
+tracking and an audit trail, is exactly the shape that needs its own rows.
+
+### 8.2 New DB table: `wp_culture_cluster_reports`
+
+Created in `Culture_Activator::create_tables()` (mandatory — see the
+dbDelta gotcha already documented in CLAUDE.md), bump `CULTURE_VERSION`.
+
+```
+id, cluster_id, reporter_id, reported_user_id (nullable — a report can be
+about the cluster/a meeting in general rather than one named member),
+reason ('safety'|'harassment'|'disrespect'|'repeated_absence'|'other'),
+detail (text, free-form elaboration),
+status ('open'|'host_reviewing'|'escalated'|'resolved'|'dismissed'),
+created_at, resolved_at (nullable), resolved_by (nullable int),
+resolution_note (nullable text)
+KEY (cluster_id, status)
+KEY (reported_user_id)
+```
+
+Financial disagreements between members over informally-coordinated
+activity costs (explicitly out of scope per §0) can still be reported here
+under `reason = 'other'` if the disagreement itself becomes a conduct
+issue — this table is about resolving interpersonal conflict, not about
+adjudicating money.
+
+### 8.3 Escalation ladder (three tiers, mirrors §2.4's three host mechanisms)
+
+**Tier 1 — Host review (default for every new report)**
+- Filing a report (any active cluster member, about any other member or
+  the cluster generally) notifies the host (`cluster_report_filed`) —
+  unless the host themselves is `reported_user_id`, in which case it skips
+  straight to Tier 2 rather than notifying the person it's about.
+- The host sees an own-cluster-only reports panel on the cluster screen
+  (same host-only-panel pattern already used for check-in management,
+  §4.4) and can mark a report `host_reviewing`, then `resolved` or
+  `dismissed`.
+- Auto-escalation safety net: a daily cron sweep (joins the existing daily
+  cluster-sweep jobs from §6.3) promotes any report still
+  `open`/`host_reviewing` after `culture_cluster_report_escalation_days`
+  (admin-configurable, default 5, same getter pattern as §2.5's settings)
+  to `escalated` automatically — host inaction must never leave a safety
+  complaint stuck indefinitely.
+
+**Tier 2 — City Convener review**
+- Each city may have one appointed **City Convener** — a trusted member,
+  admin-appointed (same *appointed* mechanism as §2.4.2's host
+  appointment, just scoped to a whole city rather than one cluster).
+  Mapping stored as a new WP option, `culture_city_conveners` (array,
+  `city => user_id`), managed from the existing Clusters admin screen
+  (`class-culture-clusters-admin.php`) — a new section on that same
+  screen, not a new admin page.
+- Reports at `status = escalated` appear in a Convener-only "City Reports"
+  panel scoped to every cluster in their assigned city. This is the only
+  place in the feature where someone outside a cluster's own
+  members/host sees that cluster's internal data — the intentional
+  intercluster/city-wide oversight role the original feature request
+  asked for.
+- Convener actions: `resolve`, `dismiss`, or escalate further to Tier 3.
+  Conveners are not granted any account-moderation capability themselves
+  (no suspend/ban power) — only WP Admin has that, by design.
+
+**Tier 3 — Platform admin**
+- Anything escalated to Tier 3 surfaces in the same Clusters admin screen's
+  reports panel, unfiltered by city, where existing admin/account
+  moderation tools apply. No new admin moderation capability is introduced
+  here — this tier just routes cluster disputes into the existing admin
+  surface rather than building a parallel one.
+
+### 8.4 REST endpoints (mirrored mobile/web, same convention as §3.2)
+
+| Mobile (`/mobile/cluster/...`, JWT) | Web (`/cluster/...`, API key) | Purpose |
+|---|---|---|
+| `POST {id}/report` | `POST {id}/report` | File a report (§8.2 fields) |
+| `GET {id}/reports` | `GET {id}/reports` | Host-only: reports for this cluster |
+| `POST {id}/report/{reportId}/resolve` | same | Host or Convener: set `resolved`/`dismissed` + `resolution_note` |
+| `POST {id}/report/{reportId}/escalate` | same | Host: manually escalate before the auto-sweep |
+| `GET city-reports` | `GET city-reports` | Convener-only: escalated reports across their assigned city |
+
+All delegate to new `Culture_Clusters` methods (`file_report`,
+`get_reports_for_cluster`, `resolve_report`, `escalate_report`,
+`get_reports_for_city`) — no duplicated business logic between the mobile
+and web handlers, same discipline as every other method in §3.1.
+
+### 8.5 Notifications
+
+Add to `Culture_Notifications::TYPES`: `cluster_report_filed` (to the
+host, or directly to the Convener if Tier 1 was skipped per §8.3),
+`cluster_report_escalated` (to the Convener), `cluster_report_resolved`
+(to the original reporter **only** — the outcome is never broadcast to
+the whole cluster, to avoid turning a dispute into a cluster-wide
+spectacle, the same posture §5.3 already takes against public attendance
+leaderboards). Same mandatory three-icon-map-plus-deep-link-routing
+requirement as §6.4's notification types.
+
+### 8.6 What's explicitly not built
+
+- No anonymous reporting — `reporter_id` is always recorded (same as the
+  existing community-post report system). Hosts/Conveners see who filed a
+  report; a small in-person group needs real accountability for a
+  complaint, not anonymity that could itself be abused.
+- No automatic member removal on report count, unlike the existing
+  auto-pending-after-3-reports behavior for community posts — cluster
+  membership removal always requires an explicit host/Convener/admin
+  decision. A retaliatory mass-report must never be able to auto-eject
+  someone from their own social group.
+- No in-app appeals workflow in v1 — a member sanctioned as a result of a
+  resolved report has no formal in-app appeal beyond contacting the City
+  Convener or admin directly, the same "reach out directly" pattern this
+  codebase already uses everywhere it lacks a formal appeals system.
+
+---
+
+## 9. Implementation order (phases — build strictly in this order)
 
 1. **Phase 1 — Data model & core membership.** `culture_cluster` CPT, both
    new tables, `Culture_Clusters` core methods (`create_cluster`, `join`,
@@ -633,6 +824,17 @@ type added without a routing case.
    editorial-CPT meta flag and badge, the attendance-sweep cron and its
    reward, the Discover/Events rail, and the House Fellowship feed-injected
    reminder card (§4.5).
+6. **Phase 6 — Ground rules & conflict resolution.** §7's global rules
+   option, the optional per-cluster note field, the join-time acceptance
+   gate (incl. the `wp_culture_cluster_members` column addition). §8's
+   `wp_culture_cluster_reports` table, all five `Culture_Clusters` report
+   methods and mirrored REST endpoints, the Tier 1→2→3 escalation cron
+   sweep, the City Convener admin mapping + admin reports panel, and the
+   three new notification types incl. icon-map and deep-link updates. Can
+   ship independently of Phase 4/5 (no dependency either direction) but
+   should land before House Fellowship is opened to the general public at
+   scale — ground rules and a dispute path are expected to exist from a
+   cluster's very first real-world meeting, not bolted on after growth.
 
 Do not start a phase before the previous one is fully working
 end-to-end (backend + both frontends) on a dev/staging build. Do not
@@ -641,7 +843,7 @@ document — that's the scope-creep guardrail this doc exists to provide.
 
 ---
 
-## 8. Open items deliberately deferred (not blockers, just not v1)
+## 10. Open items deliberately deferred (not blockers, just not v1)
 
 - Cross-city "find clusters while traveling" mode.
 - In-app cluster chat (today: members coordinate location details via
@@ -654,3 +856,6 @@ document — that's the scope-creep guardrail this doc exists to provide.
   too slow in practice.
 - Public attendance leaderboards — deliberately excluded per §5.3's
   reasoning, not an oversight.
+- In-app appeals workflow for resolved conflict reports — see §8.6.
+- Real-money handling for cluster activity contributions — explicitly out
+  of scope per §0; not part of this revision.
