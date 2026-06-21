@@ -62,7 +62,7 @@ piece of metadata:
   both web (`HappeningCard` in `FeedCard.tsx`, `HappeningDetailModal.tsx`)
   and mobile (`EventsScreen.tsx`, `EventDetailScreen.tsx`).
 - Discoverability: a "Literati Connect near you" rail is added to the
-  existing Discover/Events surfaces (see §4.3), filtered by
+  existing Events surface (see §4.3), filtered by
   `_culture_event_is_literati = 1` and the user's city/region (existing
   region-matching utilities — see §3.4).
 - Reward: attending (RSVP'd + event date has passed, no explicit check-in
@@ -154,19 +154,20 @@ active ──(host leaves with no successor and no members remain after 14-day g
   member #1 automatically on creation.
 - `forming` clusters are visible only to the founder and anyone the founder
   has explicitly invited (via a shareable invite link — see §4.2). They do
-  **not** appear in any public Discover/search surface.
+  **not** appear in any public people/members-near-me search surface.
 - `active` clusters are publicly discoverable (see §4) and joinable by
   anyone, subject to capacity (see §2.6 for overflow behavior).
 - `archived` clusters are read-only history — visible on the former
-  founder/host's profile as a past cluster, not joinable, not shown in
-  Discover. They are never hard-deleted (consistent with the project's
-  general no-hard-delete posture for user-generated structures, e.g.
-  Follow/RSVP soft-cancel patterns).
+  founder/host's profile as a past cluster, not joinable, not shown in the
+  people/members-near-me discovery section. They are never hard-deleted
+  (consistent with the project's general no-hard-delete posture for
+  user-generated structures, e.g. Follow/RSVP soft-cancel patterns).
 - A WP-Cron job (daily, mirroring the existing `culture_check_perk_expiry`
   hourly-job pattern) sweeps `forming` clusters past their 30-day window
   and flips them to `archived`, notifying the founder (new notification
   type `cluster_forming_expired`, see §6.4) with a CTA to merge into a
-  nearby active cluster instead (links to Discover, pre-filtered by city).
+  nearby active cluster instead (links to the people/members-near-me
+  House Fellowship section, pre-filtered by city).
 
 ### 2.4 Host-selection mechanisms (all three, coherently sequenced)
 
@@ -258,8 +259,9 @@ This is the mechanism for how a cluster comes to exist before anyone has
 joined it:
 
 1. Any member (Citizen or Pro — no gating) taps **"Start a House
-   Fellowship"** from Discover or from the empty-state shown when their
-   street has no cluster (see §4.1/§4.2 for exact entry points).
+   Fellowship"** from the people/members-near-me screen or from the
+   empty-state shown when their street has no cluster (see §4.1/§4.2 for
+   exact entry points).
 2. A short form: cluster name (pre-filled from their profile
    street/neighbourhood, editable), city/street/country (pre-filled from
    profile, editable — handles people who want to found a cluster
@@ -376,11 +378,14 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
 
 ### 4.1 Entry points
 
-- New **"House Fellowship"** section inside the existing Discover surface
-  (`DiscoverScreen.tsx` / `DiscoverBrowser.tsx`) — not a separate nav item,
-  to avoid adding a 7th tab. Reuses Discover's existing search/filter
-  shell (§3.1's `discover()` plugs into the same paginated-grid pattern
-  the directory browse already uses).
+- New **"House Fellowship"** section inside the existing people/members-near-me
+  surface — `MemberDirectoryScreen.tsx` on mobile, `app/connect/people/page.tsx`
+  on web. Not Discover: Discover's mental model is content browsing (places,
+  books, films, the `culture_directory` entry types), whereas a cluster is
+  fundamentally about *who's near you*, which is exactly what the people
+  directory already represents. Placed as a dedicated section/tab at the top
+  of that screen (e.g. a "Your Street" segment above the regular member grid),
+  not a separate nav item.
 - A **dashboard quick link** ("My House Fellowship" or "Find your House
   Fellowship" depending on membership state) on `MemberDashboardScreen.tsx`
   / `app/member/page.tsx`'s quick links — same slot pattern as the
@@ -388,6 +393,12 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
 - If the user has no cluster and their street has none either, an
   empty-state card with the "Start a House Fellowship" CTA (§2.7) appears
   in both of the above locations.
+- Unlike Discover (which already has a reusable paginated search/filter
+  shell), the people/members-near-me screens have less existing
+  infrastructure to lean on — §3.1's `discover()` endpoint still mirrors
+  `Culture_Directory::handle_browse()`'s shape for consistency, but the
+  client-side list/grid UI for clusters is new work on both platforms, not
+  a drop-in reuse of an existing component.
 
 ### 4.2 Cluster discovery screen
 
@@ -404,10 +415,12 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
 
 ### 4.3 Literati Connect rail
 
-A horizontal rail of upcoming `_culture_event_is_literati = 1` events,
-placed on the same Discover screen above the House Fellowship section (or
-directly in the Events tab/screen) — reuses existing `HappeningCard`
-rendering, not a new card component.
+A horizontal rail of upcoming `_culture_event_is_literati = 1` events. Since
+House Fellowship discovery now lives on the people/members-near-me screen
+(§4.1) rather than Discover, this rail is placed directly in the Events
+tab/screen instead (it's a city-wide *event*, not a people-near-you concept,
+so Events is the better fit regardless of where clusters live) — reuses
+existing `HappeningCard` rendering, not a new card component.
 
 ### 4.4 Cluster home screen (for members)
 
