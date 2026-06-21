@@ -1,0 +1,656 @@
+/* ===================================================================
+   MOVEEE ZONE — Hero, What is Moveee, Feature Grid, Membership,
+   Join Moveee download strip, Magazine Spotlight.
+
+   DEV: This zone intentionally uses the warm paper token (#F3ECE0) to
+   bridge Site A's white magazine background with Site B/Connect's
+   visual language — scoped locally here, the global --paper variable
+   in globals.css is untouched.
+   =================================================================== */
+
+.mz-zone {
+  --mz-paper-warm: #f3ece0;
+  --mz-white: #ffffff;
+  --mz-ink: #14110d;
+  --mz-ink-soft: #3a342b;
+  --mz-ochre: #c5491f;
+  --mz-gold: #b38238;
+  --mz-ghost: #c8bfb0;
+  --mz-mute: #7a6f5c;
+  --mz-success: #2d6a4f;
+  --mz-radius-md: 4px;
+  --mz-radius-lg: 6px;
+  --mz-radius-xl: 12px;
+  --mz-radius-2xl: 20px;
+  --mz-radius-full: 9999px;
+  --mz-shadow-card: 0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04);
+
+  background: var(--mz-paper-warm);
+}
+
+/* ---------- HERO ---------- */
+.mz-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  padding: 56px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.mz-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mz-ochre);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.mz-eyebrow--centred {
+  text-align: center;
+}
+
+.mz-h1 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--mz-ink);
+  line-height: 1.1;
+  margin: 16px 0 0;
+}
+
+.mz-h1 em {
+  font-style: italic;
+}
+
+.mz-subhead {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--mz-ink-soft);
+  line-height: 1.5;
+  margin: 20px 0 0;
+  max-width: 560px;
+}
+
+.mz-hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.mz-btn-primary,
+.mz-btn-secondary,
+.mz-btn-ghost,
+.mz-btn-gold,
+.ms-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 24px;
+  border-radius: var(--mz-radius-full);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.mz-btn-primary,
+.ms-btn-primary {
+  background: var(--mz-ink);
+  color: #fff;
+}
+
+.mz-btn-secondary {
+  background: var(--mz-white);
+  color: var(--mz-ochre);
+  border: 1px solid var(--mz-ochre);
+}
+
+.mz-btn-ghost {
+  background: transparent;
+  color: var(--mz-ink);
+  border: 1px solid var(--mz-ghost);
+  width: 100%;
+}
+
+.mz-btn-gold {
+  background: var(--mz-gold);
+  color: var(--mz-ink);
+  width: 100%;
+}
+
+.mz-btn-primary:hover,
+.mz-btn-secondary:hover,
+.mz-btn-ghost:hover,
+.mz-btn-gold:hover,
+.ms-btn-primary:hover {
+  opacity: 0.85;
+}
+
+.mz-trust {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mz-ghost);
+  margin-top: 12px;
+}
+
+.mz-hero-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mz-hero-visual-card {
+  background: var(--mz-white);
+  border-radius: var(--mz-radius-xl);
+  box-shadow: var(--mz-shadow-card);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mz-ink-soft);
+}
+
+.mz-hero-visual-card--2 {
+  background: var(--mz-ink);
+  color: #fff;
+}
+
+/* ---------- SECTIONS ---------- */
+.mz-section {
+  padding: 56px 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.mz-section--bordered {
+  border-top: 1px solid var(--mz-ghost);
+}
+
+.mz-intro {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.mz-h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--mz-ink);
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.mz-body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--mz-ink-soft);
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+
+.mz-body--centred {
+  text-align: center;
+}
+
+.mz-link {
+  display: inline-block;
+  margin-top: 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mz-ochre);
+  text-decoration: none;
+}
+
+/* ---------- FEATURE GRID ---------- */
+.mz-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 48px;
+}
+
+.mz-feature-card {
+  background: var(--mz-white);
+  border-radius: var(--mz-radius-xl);
+  box-shadow: var(--mz-shadow-card);
+  padding: 28px;
+}
+
+.mz-feature-icon {
+  font-size: 32px;
+  display: block;
+}
+
+.mz-feature-title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mz-ochre);
+  text-transform: uppercase;
+  margin-top: 16px;
+}
+
+.mz-feature-hook {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mz-ink);
+  margin-top: 6px;
+}
+
+.mz-feature-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mz-ink-soft);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* ---------- MEMBERSHIP ---------- */
+.mz-membership-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.mz-tier-card {
+  background: var(--mz-white);
+  border-radius: var(--mz-radius-xl);
+  box-shadow: var(--mz-shadow-card);
+  padding: 28px;
+}
+
+.mz-tier-card--pro {
+  background: var(--mz-ink);
+  border: 2px solid var(--mz-gold);
+}
+
+.mz-tier-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mz-tier-name {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mz-ink);
+}
+
+.mz-tier-name--white {
+  color: #fff;
+}
+
+.mz-tier-pill {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mz-ochre);
+  background: rgba(197, 73, 31, 0.1);
+  border-radius: var(--mz-radius-full);
+  padding: 4px 10px;
+}
+
+.mz-tier-pill--gold {
+  color: var(--mz-gold);
+  background: rgba(179, 130, 56, 0.15);
+}
+
+.mz-tier-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mz-ink-soft);
+  line-height: 1.5;
+  margin-top: 12px;
+}
+
+.mz-tier-body--light {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.mz-tier-card .mz-btn-ghost,
+.mz-tier-card .mz-btn-gold {
+  margin-top: 20px;
+}
+
+/* ---------- JOIN MOVEEE DOWNLOAD STRIP ---------- */
+.mz-download-strip {
+  background: var(--mz-white);
+  border-radius: var(--mz-radius-2xl);
+  box-shadow: var(--mz-shadow-card);
+  padding: 36px 28px;
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.mz-download-h3 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--mz-ink);
+  margin-top: 8px;
+}
+
+.mz-download-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mz-store-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 42px;
+  border-radius: var(--mz-radius-md);
+  background: var(--mz-ink);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.mz-store-badge:hover {
+  opacity: 0.85;
+}
+
+.mz-qr-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mz-qr-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--mz-radius-md);
+  background: repeating-linear-gradient(45deg, var(--mz-ghost) 0 4px, transparent 4px 8px);
+  border: 1px solid var(--mz-ghost);
+}
+
+.mz-qr-caption {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--mz-mute);
+  text-align: center;
+}
+
+/* ---------- WAITLIST MODAL ---------- */
+.mz-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.mz-modal {
+  position: relative;
+  background: #fff;
+  border-radius: var(--mz-radius-xl, 12px);
+  box-shadow: var(--mz-shadow-card, 0px 1px 3px rgba(20, 17, 13, 0.08));
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.mz-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #7a6f5c;
+  cursor: pointer;
+}
+
+.mz-modal-h3 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: #14110d;
+  margin: 12px 0 0;
+}
+
+.mz-modal-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #3a342b;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.mz-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.mz-modal-input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--mz-radius-md, 4px);
+  border: 1px solid #c8bfb0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.mz-modal-error {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #c5491f;
+}
+
+.mz-modal-success {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #2d6a4f;
+  margin-top: 20px;
+}
+
+/* ---------- MAGAZINE SPOTLIGHT (back to white magazine zone) ---------- */
+.ms-section {
+  background: var(--color-paper, #fff);
+  padding: 56px 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.ms-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #c5491f;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.ms-h2 {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-ink, #14110d);
+  margin: 12px 0 0;
+}
+
+.ms-body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--color-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin: 16px 0 0;
+  max-width: 600px;
+}
+
+.ms-issue-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04);
+  border: 1px solid #c8bfb0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-issue-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding-top: 100%;
+}
+
+.ms-issue-text {
+  padding: 24px;
+}
+
+.ms-issue-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #7a6f5c;
+  text-transform: uppercase;
+}
+
+.ms-issue-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink, #14110d);
+  margin: 8px 0 0;
+}
+
+.ms-issue-dek {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-ink-soft, #3a342b);
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+
+.ms-issue-excerpt {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.ms-archive-link {
+  display: block;
+  margin-top: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: #c5491f;
+  text-decoration: none;
+}
+
+/* =====================================================================
+   DESKTOP BREAKPOINT
+   ===================================================================== */
+@media (min-width: 1024px) {
+  .mz-hero {
+    grid-template-columns: 60% 40%;
+    align-items: center;
+    padding: 80px 64px;
+  }
+
+  .mz-h1 {
+    font-size: 56px;
+    max-width: 640px;
+  }
+
+  .mz-hero-cta {
+    flex-direction: row;
+  }
+
+  .mz-section {
+    padding: 80px 64px;
+  }
+
+  .mz-h2 {
+    font-size: 40px;
+  }
+
+  .mz-feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .mz-membership-cards {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .mz-tier-card {
+    width: 480px;
+  }
+
+  .mz-download-strip {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 48px;
+  }
+
+  .mz-download-badges {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .ms-section {
+    flex-direction: row;
+    align-items: center;
+    padding: 80px 64px;
+  }
+
+  .ms-intro {
+    flex: 1;
+  }
+
+  .ms-issue-card {
+    flex-direction: row;
+    width: 560px;
+    flex-shrink: 0;
+  }
+
+  .ms-issue-cover {
+    width: 220px;
+    flex-shrink: 0;
+    padding-top: 0;
+    height: 280px;
+  }
+
+  .ms-issue-text {
+    flex: 1;
+  }
+}

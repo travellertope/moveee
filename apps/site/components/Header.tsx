@@ -70,11 +70,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <header className="masthead">
           {/* Desktop left nav */}
           <nav className="masthead-left">
+            <a    href={CONNECT_URL}>Feed</a>
+            <a    href={`${CONNECT_URL}/discover`}>Discover</a>
             <Link href="/magazine"            data-active={active("/magazine")}>Editorials</Link>
-            <a    href={`${CONNECT_URL}/events`}>Happenings</a>
-            <Link href="/journeys"            data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"                data-active={active("/shop")}>Lifestyle</Link>
-            <a    href={CONNECT_URL}>Connect</a>
           </nav>
 
           {/* Wordmark */}
@@ -159,16 +157,14 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         {/* Mobile dropdown */}
         <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
           <div className="mobile-menu-links">
+            <a    href={CONNECT_URL}           onClick={() => setMobileMenuOpen(false)}>Feed</a>
+            <a    href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
             <Link href="/magazine"            onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
-            <a    href={`${CONNECT_URL}/events`} onClick={() => setMobileMenuOpen(false)}>Happenings</a>
-            <Link href="/journeys"            onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"                onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
-            <a    href={CONNECT_URL}           onClick={() => setMobileMenuOpen(false)}>Connect</a>
           </div>
 
           <div className="mobile-menu-actions">
             <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
-              Join Connect →
+              Join Moveee →
             </a>
           </div>
         </nav>

@@ -4,6 +4,7 @@ import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
 import "@/app/homepage.css";
+import "@/app/moveee-zone.css";
 
 export const revalidate = 300;
 export const dynamicParams = true;
