@@ -138,7 +138,7 @@ export default function EventSpotlightCarousel({ events }: { events: FeedItem[] 
           See all →
         </Link>
       </div>
-      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px 4px", scrollSnapType: "x mandatory" }}>
+      <div className="hide-scrollbar" style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px 4px", scrollSnapType: "x mandatory" }}>
         {events.map(item => (
           <SpotlightCard key={item.id} item={item} onOpen={() => setActiveItem(item)} />
         ))}

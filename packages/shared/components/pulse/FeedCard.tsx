@@ -10,6 +10,7 @@ import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
+import ProBadge from "@/components/ProBadge";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -249,6 +250,7 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
     <div style={{ marginBottom: "0.6rem", border: "1px solid #e8e2d8", borderRadius: "8px", overflow: "hidden" }}>
       {/* Scrollable carousel row */}
       <div
+        className="hide-scrollbar"
         style={{
           display: "flex",
           overflowX: "auto",
@@ -510,12 +512,7 @@ export default function FeedCard({
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
-              {isPro && (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
-                  <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
-                  <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                </svg>
-              )}
+              {isPro && <ProBadge size={13} />}
               <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
               <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
               {item.communityTag && (

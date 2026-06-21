@@ -146,6 +146,15 @@ body {
     radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
 }
 
+/* Utility: hide native scrollbar on horizontal carousels/rails while keeping them scrollable */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Subtle paper grain */
 body::before {
   content: '';

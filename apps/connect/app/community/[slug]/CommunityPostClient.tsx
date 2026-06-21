@@ -293,7 +293,7 @@ export default function CommunityPostClient({
 
       {/* Gallery */}
       {galleryImages && galleryImages.length >= 1 && (
-        <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "1rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+        <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "1rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
           {galleryImages.map((img, i) => (
             <img key={i} src={img} alt="" style={{ height: "240px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
           ))}

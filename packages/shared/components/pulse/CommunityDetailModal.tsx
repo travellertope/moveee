@@ -9,6 +9,7 @@ import HashtagText from "./HashtagText";
 import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
+import ProBadge from "@/components/ProBadge";
 
 function AuthorFollowToggle({ username }: { username: string }) {
   const { data: session, status } = useSession();
@@ -313,12 +314,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 600 }}>
                   {item.communityAuthor || "Community Member"}
                 </span>
-                {item.communityTier === "patron" && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
-                    <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
-                    <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                  </svg>
-                )}
+                {item.communityTier === "patron" && <ProBadge size={13} />}
               </div>
               <span style={{ color: "#999", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
@@ -435,7 +431,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Gallery */}
           {item.galleryImages && item.galleryImages.length >= 1 && (
-            <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+            <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
               {item.galleryImages.map((img: string, i: number) => (
                 <img key={i} src={img} alt="" style={{ height: "220px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
               ))}
