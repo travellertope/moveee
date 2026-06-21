@@ -11,36 +11,42 @@ const FEATURES = [
     title: "Pulse Feed",
     hook: "Nine ways to share",
     body: "A hidden gem. A hot take. A poll. An itinerary. Post however the moment calls for it — not just another caption.",
+    image: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=640&q=80&auto=format&fit=crop",
   },
   {
     icon: "🏆",
     title: "Culture Credits & Reputation Points",
     hook: "Get rewarded for having taste",
     body: "Every post, comment and validated tip earns Culture Credits (Cr). Build Reputation Points (Pt) and climb from Member to Culture Authority — title and all.",
+    image: "https://images.unsplash.com/photo-1556656793-08538906a9f8?w=640&q=80&auto=format&fit=crop",
   },
   {
     icon: "🎁",
     title: "Partner Perks & Wallet",
     hook: "Spend it, or cash it out",
     body: "Redeem Culture Credits (Cr) for real discounts at partner spots across the city, or convert them straight to cash.",
+    image: "https://images.unsplash.com/photo-1543007631-283050bb3e8c?w=640&q=80&auto=format&fit=crop",
   },
   {
     icon: "🧭",
     title: "Discover",
     hook: "The map only the community could write",
     body: "People, places, dishes, films, movements — a living archive, browsable by type and city.",
+    image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=640&q=80&auto=format&fit=crop",
   },
   {
     icon: "📅",
     title: "Events",
     hook: "Know what's actually happening",
     body: "RSVP to the shows, pop-ups and talks worth your night — curated by us, submitted by you.",
+    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=640&q=80&auto=format&fit=crop",
   },
   {
     icon: "🎮",
     title: "Daily Games",
     hook: "Keep your culture IQ sharp",
     body: "Trivia and Who Said It? — two minutes a day, bragging rights forever.",
+    image: "https://images.unsplash.com/photo-1496307653780-42ee777d4833?w=640&q=80&auto=format&fit=crop",
   },
 ];
 
@@ -82,6 +88,12 @@ export default function MoveeeZone() {
           <p className="mz-trust">Free to join · iOS &amp; Android · No spam, ever</p>
         </div>
         <div className="mz-hero-visual" aria-hidden="true">
+          <img
+            src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=900&q=80&auto=format&fit=crop"
+            alt=""
+            className="mz-hero-photo"
+            loading="eager"
+          />
           <div className="mz-hero-visual-card mz-hero-visual-card--1">
             <span className="mz-hero-visual-tag">🌊 Pulse Feed</span>
             <span className="mz-hero-visual-react">🔥 24 · 💬 6</span>
@@ -122,6 +134,7 @@ export default function MoveeeZone() {
         <div className="mz-feature-grid">
           {FEATURES.map((f) => (
             <div key={f.title} className="mz-feature-card">
+              <img src={f.image} alt="" className="mz-feature-photo" loading="lazy" />
               <span className="mz-feature-icon">{f.icon}</span>
               <div className="mz-feature-title">{f.title}</div>
               <div className="mz-feature-hook">{f.hook}</div>
@@ -151,7 +164,13 @@ export default function MoveeeZone() {
             </p>
             <Link href="/connect/membership" className="mz-btn-ghost">Compare plans</Link>
           </div>
-          <div className="mz-tier-card mz-tier-card--pro">
+          <div
+            className="mz-tier-card mz-tier-card--pro"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(20,17,13,0.86), rgba(20,17,13,0.92)), url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=900&q=80&auto=format&fit=crop')",
+            }}
+          >
             <div className="mz-tier-head">
               <span className="mz-tier-name mz-tier-name--white">Connect Pro</span>
               {/*
@@ -173,6 +192,12 @@ export default function MoveeeZone() {
 
         {/* ===== JOIN MOVEEE DOWNLOAD STRIP ===== */}
         <div className="mz-download-strip">
+          <img
+            src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=640&q=80&auto=format&fit=crop"
+            alt=""
+            className="mz-download-photo"
+            loading="lazy"
+          />
           <div className="mz-download-text">
             <p className="mz-eyebrow">Join Moveee</p>
             <h3 className="mz-download-h3">Carry the culture in your pocket.</h3>
