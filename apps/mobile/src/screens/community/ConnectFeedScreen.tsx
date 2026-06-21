@@ -34,6 +34,7 @@ import { api, MOBILE_API } from "../../api/client";
 import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import EventSpotlightCarousel from "../../components/community/EventSpotlightCarousel";
+import HouseFellowshipReminderCard from "../../components/community/HouseFellowshipReminderCard";
 import { getSpotlightEvents, isEventItem } from "../../features/community/eventSpotlight";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
@@ -43,6 +44,7 @@ import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
 
 const SPOTLIGHT_MARKER_ID = "__event-spotlight__";
+const FELLOWSHIP_REMINDER_MARKER_ID = "__house-fellowship-reminder__";
 
 function feedItemToPostId(item: FeedItem): string {
   return (item as any).wpId ?? item.id.replace(/^community-/, "");
@@ -236,10 +238,17 @@ export default function ConnectFeedScreen() {
   const spotlightEvents = spotlightLockRef.current ?? [];
 
   const listData = useMemo(() => {
-    if (spotlightEvents.length < 2 || visibleItems.length <= 5) return visibleItems;
-    const marker = { id: SPOTLIGHT_MARKER_ID, type: "spotlight" } as unknown as FeedItem;
-    return [...visibleItems.slice(0, 5), marker, ...visibleItems.slice(5)];
-  }, [visibleItems, spotlightEvents]);
+    if (visibleItems.length <= 5) return visibleItems;
+    const extras: FeedItem[] = [];
+    if (spotlightEvents.length >= 2) {
+      extras.push({ id: SPOTLIGHT_MARKER_ID, type: "spotlight" } as unknown as FeedItem);
+    }
+    if (user) {
+      extras.push({ id: FELLOWSHIP_REMINDER_MARKER_ID, type: "fellowship-reminder" } as unknown as FeedItem);
+    }
+    if (extras.length === 0) return visibleItems;
+    return [...visibleItems.slice(0, 5), ...extras, ...visibleItems.slice(5)];
+  }, [visibleItems, spotlightEvents, user]);
 
   const handleFilter = (label: string) => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -278,6 +287,9 @@ export default function ConnectFeedScreen() {
   const renderItem = ({ item }: { item: FeedItem }) => {
     if (item.id === SPOTLIGHT_MARKER_ID) {
       return <EventSpotlightCarousel events={spotlightEvents} onOpenCommunity={setSheetItem} />;
+    }
+    if (item.id === FELLOWSHIP_REMINDER_MARKER_ID) {
+      return <HouseFellowshipReminderCard />;
     }
     const forYouBadge =
       forYou && hasInterests && matchesInterests(item, interestTagSet);

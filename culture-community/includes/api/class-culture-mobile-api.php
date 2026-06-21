@@ -2684,6 +2684,7 @@ class Culture_Mobile_API {
                 'organiserSlug' => $organiser_slug,
                 'organiserDirectoryId' => $organiser_id ?: null,
                 'isFeatured'    => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
+                'isLiterati'    => (bool) get_post_meta( $post->ID, '_culture_event_is_literati', true ),
                 'rsvpCount'     => self::get_editorial_event_rsvp_count( $post->post_name ),
             );
         }, $query->posts );

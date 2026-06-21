@@ -1,6 +1,6 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
-Status: **Phases 1–4 complete end-to-end (backend + mobile + web). Phase 5 next.**
+Status: **Phases 1–5 complete end-to-end (backend + mobile + web). Feature fully shipped.**
 This document is the single source of truth for building this feature. Do not
 begin implementation on any later phase until this document is read in full —
 it exists specifically to prevent scope creep and to avoid omitting load-bearing
@@ -60,17 +60,40 @@ in mobile's `openNotification()` (routes to `ClusterScreen`, same as the
 other four cluster types — all four of those were already fully wired in
 Phases 1–3, confirmed during this pass).
 
-**Note on `literati_connect_attended` (deferred to Phase 5):** this doc's §6.1
-table lists it as a Phase 4 action key, but §7's implementation order
-explicitly assigns "the attendance-sweep cron and its reward" for Literati
-Connect to Phase 5, alongside the `_culture_event_is_literati` editorial-CPT
-meta flag from §1 that the sweep depends on (also Phase 5 scope, not yet
-built). Since the action key's only real trigger doesn't exist yet, it was
-deliberately left out of `POINTS`/`CREDIT_BONUSES` in this pass rather than
-added as dead config — add it together with the `culture_sweep_literati_attendance`
-cron job and the §1 meta flag when Phase 5 is built, not before.
-
-**Phase 5 (Literati Connect integration + feed surfacing) — not started, up next.**
+**Phase 5 (Literati Connect integration + feed surfacing) — done.** Closed the
+`literati_connect_attended` gap flagged above: `literati_connect_attended`
+added to both `Culture_Gamification::POINTS` (20) and `::CREDIT_BONUSES` (3).
+New daily cron `culture_sweep_literati_attendance`
+(`Culture_Cron::sweep_literati_attendance()`, `HOOK_LITERATI_ATTENDANCE`)
+queries `culture_event` posts flagged `_culture_event_is_literati` (the §1
+editorial-CPT meta flag — already registered/exposed via REST in
+`class-culture-post-types.php`) whose `_culture_event_date` fell in the last
+48h, cross-references confirmed rows in `wp_culture_event_rsvp` by
+`event_slug`, resolves each row's free-text `email` to a WP user via
+`get_user_by('email', ...)` (that table has no `user_id` column — same
+lookup `Culture_Event_RSVP::handle_submit()` already uses), and awards
+reputation + credits once per event per attendee via direct
+`award_reputation()`/`award_credits()` calls with `source_id = $event_id`,
+guarded by `Culture_Gamification::ledger_has_entry()` (exact match, no time
+window — correct here since this is a true once-per-event award, unlike the
+monthly `cluster_host_served` cron which needs a time-windowed check
+instead). Discover/Events rail: web `apps/connect/app/events/page.tsx`
+("Literati Connect" rail, city-nearby-first with all-events fallback, capped
+at 10) and mobile `EventsScreen.tsx` (`LiteratiRail` component, same
+filtering logic, `mapEvent()` populates `isLiterati` from
+`cem.is_literati`/`_culture_event_is_literati`). House Fellowship
+feed-injected reminder card (§4.5): web
+`packages/shared/components/pulse/HouseFellowshipReminderCard.tsx`, inserted
+into `PulseFeed.tsx` via the same stable array-slice-after-5th-item pattern
+already used by the Event Spotlight carousel; mobile
+`components/community/HouseFellowshipReminderCard.tsx`, spliced into
+`ConnectFeedScreen.tsx`'s `FlatList` via a second marker id
+(`__house-fellowship-reminder__`) alongside the existing spotlight marker.
+Both reminder cards self-fetch `GET cluster/my-clusters` (mobile JWT, web via
+the existing `/api/cluster/my-clusters` proxy), filter client-side for a
+cluster whose `meetingDay` matches today, and render nothing if none match —
+CTA links to the cluster's existing check-in surface (web `/cluster/{id}`,
+mobile `ClusterScreen` with `{ id }`), not a new route.
 
 Two related but distinct offerings, both physical/IRL, both open to **all**
 members (Citizen and Pro — no tier gating anywhere in this feature):

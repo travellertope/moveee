@@ -72,6 +72,15 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "2px",
             }}>Happening</span>
+            {item.isLiterati && (
+              <span style={{
+                fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
+                textTransform: "uppercase", color: "#b38238", background: "#f3ece0",
+                border: "1px solid #b38238", borderRadius: "2px", padding: "0.18rem 0.45rem",
+              }}>
+                🪶 Literati Connect
+              </span>
+            )}
             {item.eventCategory && (
               <span style={{ fontSize: "0.62rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.eventCategory}

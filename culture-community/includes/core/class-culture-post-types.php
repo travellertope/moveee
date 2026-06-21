@@ -45,6 +45,7 @@ class Culture_Post_Types {
             '_culture_ticketing_url'      => array( 'type' => 'string' ),
             '_culture_tagline'            => array( 'type' => 'string' ),
             '_culture_is_featured'        => array( 'type' => 'string' ),
+            '_culture_event_is_literati'  => array( 'type' => 'string' ),
             '_culture_event_image_url'    => array( 'type' => 'string' ),
             '_culture_opening_hours'      => array( 'type' => 'string' ),
             '_culture_event_organiser_id'  => array( 'type' => 'integer' ),
@@ -112,6 +113,7 @@ class Culture_Post_Types {
                         return $oid ? get_post_field( 'post_name', $oid ) : null;
                     } )(),
                     'is_featured'  => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                    'is_literati'  => (bool) get_post_meta( $id, '_culture_event_is_literati', true ),
                     'rsvp_count'   => ( function() use ( $post_arr ) {
                         global $wpdb;
                         $t = $wpdb->prefix . 'culture_event_rsvp';
@@ -566,6 +568,7 @@ class Culture_Post_Types {
             'location'     => array( 'type' => 'String',  'acf_key' => 'location',    'meta_key' => '_culture_location' ),
             'admission'    => array( 'type' => 'String',  'acf_key' => 'admission',   'meta_key' => '_culture_admission' ),
             'isFeatured'     => array( 'type' => 'Boolean', 'acf_key' => 'is_featured',    'meta_key' => '_culture_is_featured' ),
+            'isLiterati'     => array( 'type' => 'Boolean', 'acf_key' => 'event_is_literati', 'meta_key' => '_culture_event_is_literati' ),
             'isAiGenerated'  => array( 'type' => 'Boolean', 'acf_key' => 'ai_generated',  'meta_key' => '_culture_ai_generated' ),
             'tagline'      => array( 'type' => 'String',  'acf_key' => 'tagline',     'meta_key' => '_culture_tagline' ),
             'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),

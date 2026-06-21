@@ -348,6 +348,7 @@ class Culture_Gamification {
         'cluster_founded'        => 50,
         'cluster_checked_in'     => 5,
         'cluster_host_served'    => 25,
+        'literati_connect_attended' => 20,
     );
 
     /**
@@ -380,6 +381,7 @@ class Culture_Gamification {
         'cluster_founded'       => 15,
         'cluster_checked_in'    => 2,
         'cluster_host_served'   => 8,
+        'literati_connect_attended' => 3,
     );
 
     const DAILY_CREDIT_CAP = 50;
