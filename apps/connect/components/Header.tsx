@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import NotificationBell from "@/components/NotificationBell";
+import { useTheme } from "@/context/ThemeContext";
 import "./header.css";
 
 const SITE_URL = "https://themoveee.com";
@@ -20,6 +21,7 @@ const NAV = [
 
 export default function ConnectHeader() {
   const { data: session, status } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -99,7 +101,7 @@ export default function ConnectHeader() {
                 padding: "6px",
                 display: "flex",
                 alignItems: "center",
-                color: "#14110d",
+                color: "var(--ink)",
                 lineHeight: 1,
               }}
             >
@@ -108,6 +110,32 @@ export default function ConnectHeader() {
                 <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
               </svg>
             </Link>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                color: "var(--ink)",
+                lineHeight: 1,
+              }}
+            >
+              {theme === "dark" ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
             {status === "authenticated" && user ? (
               <>
                 <NotificationBell />

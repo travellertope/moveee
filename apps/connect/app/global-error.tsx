@@ -65,7 +65,7 @@ export default function GlobalError({
         >
           We hit an unexpected snag. Please try refreshing, or visit{" "}
           <a href="/connect" style={{ color: "#b38238" }}>
-            connect.themoveee.com
+            web.themoveee.com
           </a>{" "}
           to start over.
         </p>

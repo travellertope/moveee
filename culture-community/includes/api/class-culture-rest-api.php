@@ -3369,7 +3369,7 @@ class Culture_REST_API {
 
         return rest_ensure_response( array(
             'referralCode'            => $code,
-            'referralUrl'             => 'https://connect.themoveee.com/register?ref=' . $code,
+            'referralUrl'             => 'https://web.themoveee.com/register?ref=' . $code,
             'referralCount'           => $count,
             'repPerReferral'          => $rep_per_referral,
             'creditsPerReferral'      => $credits_per_referral,
@@ -4916,7 +4916,7 @@ class Culture_REST_API {
         }
         $token = bin2hex( random_bytes( 16 ) );
         update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
         return rest_ensure_response( array(
             'token'       => $token,
             'checkin_url' => $url,
@@ -5054,7 +5054,7 @@ class Culture_REST_API {
         $event_id = (int) $_POST['event_id'];
         $token    = bin2hex( random_bytes( 16 ) );
         update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
         wp_send_json_success( array( 'checkin_url' => $url, 'token' => $token ) );
     }
 }

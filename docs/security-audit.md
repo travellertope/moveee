@@ -319,7 +319,7 @@
 ### 17: Medium | Session Cookie Not Configured for Cross-Subdomain Auth
 
 - **Location:** `packages/shared/lib/auth.ts` — no `cookies` configuration
-- **The Loophole:** Without explicit `domain: ".themoveee.com"`, cookies are scoped to the exact hostname. Users logged in on `themoveee.com` are not logged in on `connect.themoveee.com`. If `domain` is later added without `sameSite` tuning, any subdomain takeover leaks session cookies.
+- **The Loophole:** Without explicit `domain: ".themoveee.com"`, cookies are scoped to the exact hostname. Users logged in on `themoveee.com` are not logged in on `web.themoveee.com`. If `domain` is later added without `sameSite` tuning, any subdomain takeover leaks session cookies.
 - **Impact:** Auth fragmentation between Site A and B; session theft risk.
 - **Remediation:**
   ```typescript

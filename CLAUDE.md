@@ -31,7 +31,7 @@ stale history.
 | Surface | Brand name | Domain |
 |---|---|---|
 | `apps/site` | **Moveee Magazine** | `themoveee.com` |
-| `apps/connect` | **Moveee** | `connect.themoveee.com` |
+| `apps/connect` | **Moveee** | `web.themoveee.com` |
 | `apps/mobile` | **Moveee** | iOS / Android |
 
 - `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
@@ -62,7 +62,7 @@ Key paths:
   - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
   - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
   - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
-- `apps/connect/` — Site B: Moveee at connect.themoveee.com (Community + Auth)
+- `apps/connect/` — Site B: Moveee at web.themoveee.com (Community + Auth)
   - `app/` — auth, member, community, events, games, directory pages
   - No local lib/ or components/ — all resolved from packages/shared
 - `apps/mobile/` — React Native app (Expo) for iOS + Android
@@ -82,7 +82,7 @@ Key paths:
 
 **Vercel setup:**
 - Site A project: Root Directory = `apps/site` → deploys to themoveee.com
-- Site B project: Root Directory = `apps/connect` → deploys to connect.themoveee.com
+- Site B project: Root Directory = `apps/connect` → deploys to web.themoveee.com
 - Both share the same GitHub repo (travellertope/moveee)
 
 **Shared code resolution:** Both Next.js apps resolve `@/*` via tsconfig paths array:
@@ -524,8 +524,8 @@ Two Vercel projects, one monorepo:
 
 - **Site A (`themoveee.com`)** — Editorial + Shop. No auth. Fully cacheable.
   - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`, `/makers`, `/visuals`
-  - proxy.ts 308-redirects all auth/community/vendor paths → connect.themoveee.com
-- **Site B (`connect.themoveee.com`)** — Community + Auth + Vendor.
+  - proxy.ts 308-redirects all auth/community/vendor paths → web.themoveee.com
+- **Site B (`web.themoveee.com`)** — Community + Auth + Vendor.
   - `/login`, `/register`, `/forgot-password`, `/reset-password`
   - `/vendor/*` — vendor dashboard (moved from Site A)
   - `/member/*`, `/connect`, `/events`, `/community`, `/directory`, `/games`, `/pulse`, `/quotes`
@@ -1718,7 +1718,7 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ### Google Cloud Console setup (one-time, by a human with console access)
 1. Create an OAuth 2.0 **Web application** client. Authorized redirect URI:
-   `https://connect.themoveee.com/api/auth/callback/google`. Use its
+   `https://web.themoveee.com/api/auth/callback/google`. Use its
    Client ID/Secret for `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (Vercel
    env vars, Site B project) and its Client ID for the WP Admin "Web
    Client ID" field.

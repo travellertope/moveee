@@ -235,7 +235,7 @@ export default async function CommunityPostPage({
 
                 {/* Gallery (template-specific) */}
                 {galleryImages && galleryImages.length >= 1 && (
-                  <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.65rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+                  <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.65rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
                     {galleryImages.map((img: string, i: number) => (
                       <img key={i} src={img} alt="" style={{ height: "260px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
                     ))}

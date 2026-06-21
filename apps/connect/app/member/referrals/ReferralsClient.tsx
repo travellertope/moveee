@@ -104,7 +104,7 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
           </div>
           <p style={{ fontSize: 12, color: "var(--mute)", marginTop: 8 }}>
             Or share the short URL:{" "}
-            <strong>connect.themoveee.com/r/{data.referralCode}</strong>
+            <strong>web.themoveee.com/r/{data.referralCode}</strong>
           </p>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
         <div style={{ padding: "1.25rem 1.5rem" }}>
           {[
             { n: "1", text: `Share your link — send it via WhatsApp, Instagram DMs, or email.` },
-            { n: "2", text: `Your friend signs up at connect.themoveee.com using your link.` },
+            { n: "2", text: `Your friend signs up at web.themoveee.com using your link.` },
             { n: "3", text: `You instantly earn +${repPerReferral} reputation and +${creditsPerReferral} credits. No waiting.` },
             { n: "4", text: `Refer 3 friends → Connector badge. Refer 10 → Super Connector badge.` },
           ].map(({ n, text }) => (

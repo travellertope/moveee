@@ -12,7 +12,7 @@ import { REGIONAL_SLUGS } from "@/lib/editions";
 
 /**
  * Fetch all data needed for a homepage edition (editorial only).
- * Events, directory, quotes, and pulse stories have moved to connect.themoveee.com.
+ * Events, directory, quotes, and pulse stories have moved to web.themoveee.com.
  */
 export async function fetchHomepageData(editionTag?: string) {
   let stories: any[] = [];

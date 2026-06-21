@@ -10,6 +10,7 @@ import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
+import ProBadge from "@/components/ProBadge";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -226,7 +227,6 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
 }
 
 function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
-  const [activeIdx, setActiveIdx] = useState(0);
   const count = images.length;
 
   if (count === 0) return null;
@@ -245,70 +245,38 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
     );
   }
 
+  // Multi-image strip — fixed-size square thumbnails, several visible at once
+  // (mirrors apps/mobile's GalleryStrip rather than a one-slide-per-view carousel).
   return (
-    <div style={{ marginBottom: "0.6rem", border: "1px solid #e8e2d8", borderRadius: "8px", overflow: "hidden" }}>
-      {/* Scrollable carousel row */}
-      <div
-        style={{
-          display: "flex",
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-        }}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          const idx = Math.round(el.scrollLeft / el.clientWidth);
-          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
-        }}
-      >
-        {images.map((img, i) => (
-          <img
-            key={i}
-            src={img}
-            alt=""
-            onClick={() => onTap(img)}
-            style={{
-              flex: "0 0 100%",
-              width: "100%",
-              height: "260px",
-              objectFit: "cover",
-              display: "block",
-              scrollSnapAlign: "start",
-              cursor: "zoom-in",
-            }}
-            loading="lazy"
-          />
-        ))}
-      </div>
-      {/* Dots + counter */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "6px 12px", gap: "6px", position: "relative",
-        borderTop: "1px solid #e8e2d8", backgroundColor: "var(--paper, #f3ece0)",
-      }}>
-        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-          {images.map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: i === activeIdx ? "16px" : "6px",
-                height: "6px",
-                borderRadius: "3px",
-                backgroundColor: i === activeIdx ? "var(--ochre, #b38238)" : "#c8bfaf",
-                transition: "width 0.2s ease",
-              }}
-            />
-          ))}
-        </div>
-        <span style={{
-          position: "absolute", right: "12px",
-          fontFamily: "var(--font-mono, monospace)",
-          fontSize: "10px", color: "#9e9e9e",
-        }}>
-          {activeIdx + 1} / {count}
-        </span>
-      </div>
+    <div
+      className="hide-scrollbar"
+      style={{
+        display: "flex",
+        gap: "6px",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        marginBottom: "0.6rem",
+      }}
+    >
+      {images.map((img, i) => (
+        <img
+          key={i}
+          src={img}
+          alt=""
+          onClick={() => onTap(img)}
+          style={{
+            height: "200px",
+            width: "200px",
+            objectFit: "cover",
+            display: "block",
+            flexShrink: 0,
+            borderRadius: "8px",
+            border: "1px solid #e8e2d8",
+            cursor: "zoom-in",
+          }}
+          loading="lazy"
+        />
+      ))}
     </div>
   );
 }
@@ -510,12 +478,7 @@ export default function FeedCard({
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
-              {isPro && (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
-                  <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
-                  <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                </svg>
-              )}
+              {isPro && <ProBadge size={13} />}
               <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
               <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
               {item.communityTag && (

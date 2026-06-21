@@ -30,7 +30,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const [bookmarked, setBookmarked] = useState(false);
   const { cardRef, share: shareCard } = useScoreCardShare();
 
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://connect.themoveee.com/quotes";
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://web.themoveee.com/quotes";
   const sharingReason = item.quoteSharingReason || undefined;
 
   const handleAuthorPress = () => {
