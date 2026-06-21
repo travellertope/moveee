@@ -13,10 +13,9 @@ const LOGO_URL =
   "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png";
 
 const NAV = [
-  { href: "/connect",   label: "Feed"      },
-  { href: "/events",    label: "Events"    },
-  { href: "/directory", label: "Directory" },
-  { href: "/games",     label: "Games"     },
+  { href: "/connect", label: "Feed"   },
+  { href: "/events",  label: "Events" },
+  { href: "/games",   label: "Games"  },
 ];
 
 export default function ConnectHeader() {

@@ -220,7 +220,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     <div className="dir-wiki-page">
       {/* ── Back link ── */}
       <div className="dir-wiki-topbar">
-        <Link href="/directory" className="dir-back">← Culture Directory</Link>
+        <Link href="/discover" className="dir-back">← Discover</Link>
       </div>
 
       {/* ── Three-column layout ── */}
@@ -249,7 +249,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               </ul>
             )}
             <div className="dir-wiki-sidebar-footer">
-              <Link href={`/directory?type=${typeSlug}`} className="dir-wiki-see-all">
+              <Link href={`/discover?type=${typeSlug}`} className="dir-wiki-see-all">
                 See all {typeLabel}s →
               </Link>
             </div>

@@ -188,7 +188,7 @@ export default async function MemberPage() {
               { label: "Newsletters",      href: "https://themoveee.com/newsletter" },
               { label: "Upcoming Events",  href: "/events" },
               { label: "Magazine",         href: "https://themoveee.com/magazine" },
-              { label: "Culture Directory",href: "/directory" },
+              { label: "Discover",         href: "/discover" },
               { label: "Quotes Archive",   href: "/quotes" },
               { label: "Sign out",         href: "/api/auth/signout", muted: true },
             ]} />
