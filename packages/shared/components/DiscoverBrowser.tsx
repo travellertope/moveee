@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "@/app/discover.css";
+import { interestsToTagSet } from "@/lib/interest-mappings";
 
 export interface DiscoverEntry {
   id: number;
@@ -63,6 +64,18 @@ function daysAgo(dateStr: string): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
+// Loose substring match against an entry's type/subtype — same approach as
+// the feed's matchesInterests(), since Discover entries have no canonical
+// interest-slug field, only a freeform subtype name.
+function matchesInterestTags(entry: DiscoverEntry, tagSet: Set<string>): boolean {
+  if (tagSet.size === 0) return false;
+  const haystack = `${entry.type} ${entry.subtype ?? ""}`.toLowerCase();
+  for (const tag of tagSet) {
+    if (haystack.includes(tag)) return true;
+  }
+  return false;
+}
+
 function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean }) {
   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
   return (
@@ -100,10 +113,13 @@ function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean })
 export default function DiscoverBrowser({
   initialType = null,
   initialRegion = null,
+  viewerInterests = [],
 }: {
   initialType?: string | null;
   initialRegion?: string | null;
+  viewerInterests?: string[];
 }) {
+  const interestTags = interestsToTagSet(viewerInterests);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(initialType);
@@ -117,6 +133,7 @@ export default function DiscoverBrowser({
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
   const [trending, setTrending] = useState<DiscoverEntry[]>([]);
+  const [recommended, setRecommended] = useState<DiscoverEntry[]>([]);
   const [entries, setEntries] = useState<DiscoverEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -154,6 +171,26 @@ export default function DiscoverBrowser({
       .then((r) => r.json())
       .then((d: BrowseResponse) => setTrending(d?.entries ?? []))
       .catch(() => setTrending([]));
+  }, [type, region]);
+
+  // Picked for You rail — no filter UI, just a quiet personalization layer:
+  // sample a larger recent batch and keep only entries matching the
+  // viewer's interest tags. Hidden entirely when there's no real match.
+  useEffect(() => {
+    if (interestTags.size === 0) { setRecommended([]); return; }
+    const params = new URLSearchParams();
+    if (type) params.set("type", type);
+    if (region) params.set("region", region);
+    params.set("sort", "recent");
+    params.set("per_page", "30");
+    fetch(`/api/directory/browse?${params.toString()}`)
+      .then((r) => r.json())
+      .then((d: BrowseResponse) => {
+        const matches = (d?.entries ?? []).filter((e) => matchesInterestTags(e, interestTags));
+        setRecommended(matches.slice(0, 10));
+      })
+      .catch(() => setRecommended([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, region]);
 
   async function fetchPage(pageNum: number, replace: boolean) {
@@ -286,6 +323,17 @@ export default function DiscoverBrowser({
           ⚙ Filters
         </button>
       </div>
+
+      {recommended.length > 0 && (
+        <>
+          <div className="disc-rail-heading">Picked for You</div>
+          <div className="disc-rail">
+            {recommended.map((e) => (
+              <DiscoverCard key={`recommended-${e.id}`} entry={e} rail />
+            ))}
+          </div>
+        </>
+      )}
 
       {recent.length > 0 && (
         <>

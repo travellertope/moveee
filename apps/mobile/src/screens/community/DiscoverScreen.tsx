@@ -17,10 +17,35 @@ import type { ColorPalette } from "../../theme";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { api, CULTURE_API } from "../../api/client";
 import { decodeHtml } from "../../utils/decodeHtml";
+import { useAuthStore } from "../../auth/authStore";
+import { interestsToTagSet } from "@moveee/utils/interest-mappings";
 import DiscoverCard, { DiscoverEntry, TYPE_BADGE } from "../../components/community/DiscoverCard";
 import DiscoverFilterSheet, { SortOption } from "../../components/community/DiscoverFilterSheet";
 
 const PER_PAGE = 20;
+
+// Mirrors REGION_CITY_KEYWORDS in class-culture-directory.php — keep in sync.
+function detectRegion(country: string): string | null {
+  const c = country.toLowerCase();
+  if (/nigeria/.test(c)) return "nigeria";
+  if (/ghana/.test(c)) return "ghana";
+  if (/united kingdom|^uk$|britain/.test(c)) return "uk";
+  if (/united states|^usa$/.test(c)) return "usa";
+  if (/senegal|kenya|south africa|africa/.test(c)) return "pan-african";
+  return null;
+}
+
+// Loose substring match against an entry's type/subtype — same approach as
+// the feed's matchesInterests(), since Discover entries have no canonical
+// interest-slug field, only a freeform subtype name.
+function matchesInterestTags(entry: DiscoverEntry, tagSet: Set<string>): boolean {
+  if (tagSet.size === 0) return false;
+  const haystack = `${entry.type} ${entry.subtype ?? ""}`.toLowerCase();
+  for (const tag of tagSet) {
+    if (haystack.includes(tag)) return true;
+  }
+  return false;
+}
 
 interface BrowseResponse {
   entries: DiscoverEntry[];
@@ -50,16 +75,23 @@ export default function DiscoverScreen() {
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<AppParamList, "Discover">>();
+  const { user } = useAuthStore() as any;
+  const interestTags = useMemo(() => interestsToTagSet(user?.interests ?? []), [user?.interests]);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(route.params?.type ?? null);
-  const [region, setRegion] = useState<string | null>(route.params?.region ?? null);
+  // Auto-scope to the viewer's region on first visit — still fully
+  // overridable via the existing filter sheet, just a smarter default.
+  const [region, setRegion] = useState<string | null>(
+    route.params?.region ?? detectRegion(user?.countryOfResidence ?? "")
+  );
   const [sort, setSort] = useState<SortOption>("relevant");
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
   const [trending, setTrending] = useState<DiscoverEntry[]>([]);
+  const [recommended, setRecommended] = useState<DiscoverEntry[]>([]);
   const [entries, setEntries] = useState<DiscoverEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -120,6 +152,35 @@ export default function DiscoverScreen() {
       cancelled = true;
     };
   }, [type, region]);
+
+  // "Picked for You" rail — no filter UI, just a quiet personalization layer:
+  // sample a larger recent batch and keep only entries matching the
+  // viewer's interest tags. Hidden entirely when there's no real match.
+  useEffect(() => {
+    if (interestTags.size === 0) { setRecommended([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (type) params.set("type", type);
+        if (region) params.set("region", region);
+        params.set("sort", "recent");
+        params.set("per_page", "30");
+        const data = await api.get<BrowseResponse>(
+          `${CULTURE_API}/directory/browse?${params.toString()}`,
+          false
+        );
+        if (cancelled) return;
+        const matches = decodeEntries(data?.entries ?? []).filter((e) => matchesInterestTags(e, interestTags));
+        setRecommended(matches.slice(0, 10));
+      } catch {
+        if (!cancelled) setRecommended([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [type, region, interestTags]);
 
   const fetchPage = useCallback(
     async (pageNum: number, replace: boolean) => {
@@ -263,9 +324,24 @@ export default function DiscoverScreen() {
         onEndReached={loadMore}
         ListHeaderComponent={
           <View style={styles.railSection}>
+            {recommended.length > 0 && (
+              <>
+                <Text style={styles.railHeading}>Picked for You</Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={recommended}
+                  keyExtractor={(item) => `recommended-${item.id}`}
+                  contentContainerStyle={styles.railContent}
+                  renderItem={({ item }) => (
+                    <DiscoverCard entry={item} c={c} compact onPress={openEntry} />
+                  )}
+                />
+              </>
+            )}
             {recent.length > 0 && (
               <>
-                <Text style={styles.railHeading}>Recently Added</Text>
+                <Text style={[styles.railHeading, recommended.length > 0 && { marginTop: space[4] }]}>Recently Added</Text>
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
