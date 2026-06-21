@@ -556,6 +556,14 @@
   margin: 8px 0 0;
 }
 
+.ms-issue-excerpt {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-ink-soft, #3a342b);
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
 .ms-archive-link {
   display: block;
   margin-top: 12px;

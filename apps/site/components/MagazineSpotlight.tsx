@@ -15,10 +15,16 @@ interface Props {
 export default function MagazineSpotlight({ latestIssue }: Props) {
   if (!latestIssue) return null;
 
+  const editorialExcerpt = (() => {
+    const src = latestIssue.meta?.issue_editorial_note || "";
+    const plain = src.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return plain.length > 180 ? plain.slice(0, 180).replace(/\s\S+$/, "") + "…" : plain;
+  })();
+
   return (
     <section className="ms-section">
       <div className="ms-intro">
-        <p className="ms-eyebrow">Moveee Magazine — Our Editorial Arm</p>
+        <p className="ms-eyebrow">Moveee Magazine</p>
         <h2 className="ms-h2">The reporting behind the community.</h2>
         <p className="ms-body">
           Everything Moveee&apos;s community surfaces starts somewhere — Moveee Magazine is our
@@ -45,6 +51,9 @@ export default function MagazineSpotlight({ latestIssue }: Props) {
           <h3 className="ms-issue-title">{latestIssue.name}</h3>
           {latestIssue.meta?.issue_subtitle && (
             <p className="ms-issue-dek">{latestIssue.meta.issue_subtitle}</p>
+          )}
+          {editorialExcerpt && (
+            <p className="ms-issue-excerpt">{editorialExcerpt}</p>
           )}
           <Link href={`/magazine/issues/${latestIssue.slug}`} className="ms-btn-primary">
             Read the latest issue
