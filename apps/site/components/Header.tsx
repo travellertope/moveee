@@ -71,9 +71,6 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           {/* Desktop left nav */}
           <nav className="masthead-left">
             <Link href="/magazine"            data-active={active("/magazine")}>Editorials</Link>
-            <a    href={`${CONNECT_URL}/events`}>Happenings</a>
-            <Link href="/journeys"            data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"                data-active={active("/shop")}>Lifestyle</Link>
             <a    href={CONNECT_URL}>Moveee</a>
           </nav>
 
@@ -160,9 +157,6 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
           <div className="mobile-menu-links">
             <Link href="/magazine"            onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
-            <a    href={`${CONNECT_URL}/events`} onClick={() => setMobileMenuOpen(false)}>Happenings</a>
-            <Link href="/journeys"            onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"                onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
             <a    href={CONNECT_URL}           onClick={() => setMobileMenuOpen(false)}>Moveee</a>
           </div>
 
