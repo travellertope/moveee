@@ -81,11 +81,9 @@ export default function DiscoverScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(route.params?.type ?? null);
-  // Auto-scope to the viewer's region on first visit — still fully
-  // overridable via the existing filter sheet, just a smarter default.
-  const [region, setRegion] = useState<string | null>(
-    route.params?.region ?? detectRegion(user?.countryOfResidence ?? "")
-  );
+  const autoRegion = route.params?.region ?? detectRegion(user?.countryOfResidence ?? "");
+  const [region, setRegion] = useState<string | null>(autoRegion);
+  const [regionManuallySet, setRegionManuallySet] = useState(false);
   const [sort, setSort] = useState<SortOption>("relevant");
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
@@ -226,6 +224,16 @@ export default function DiscoverScreen() {
     }, 300);
     return () => clearTimeout(debounceRef.current);
   }, [query, type, region, sort, fetchPage]);
+
+  // Fallback: if auto-detected region yields zero results across all sections,
+  // widen to global scope so the page never loads completely empty.
+  useEffect(() => {
+    if (regionManuallySet || !region) return;
+    const allEmpty = entries.length === 0 && recent.length === 0 && trending.length === 0;
+    if (!loading && allEmpty) {
+      setRegion(null);
+    }
+  }, [loading, entries.length, recent.length, trending.length, region, regionManuallySet]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || loading || entries.length >= total) return;
@@ -408,6 +416,7 @@ export default function DiscoverScreen() {
           setType(filters.type);
           setRegion(filters.region);
           setSort(filters.sort);
+          setRegionManuallySet(true);
           setFilterSheetOpen(false);
         }}
       />
@@ -459,7 +468,7 @@ const createStyles = (c: ColorPalette) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
     },
-    chipActive: { backgroundColor: c.ink, borderColor: c.ink },
+    chipActive: { backgroundColor: c.ochre, borderColor: c.ochre },
     chipText: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.ink },
     chipTextActive: { color: "#FFFFFF" },
     filterBtn: {

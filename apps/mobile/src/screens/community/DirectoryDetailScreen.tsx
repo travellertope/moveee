@@ -516,7 +516,7 @@ export default function DirectoryDetailScreen() {
             onPress={handleShare}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="share-social-outline" size={20} color="#ffffff" style={{ textShadowColor: "rgba(0,0,0,0.4)", textShadowRadius: 4 }} />
+            <Ionicons name="share-outline" size={20} color="#ffffff" style={{ textShadowColor: "rgba(0,0,0,0.4)", textShadowRadius: 4 }} />
           </TouchableOpacity>
         </View>
 
