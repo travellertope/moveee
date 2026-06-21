@@ -35,6 +35,7 @@ export default {
         "NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
+        "CAMERA",
       ],
     },
     plugins: [
@@ -45,6 +46,13 @@ export default {
         {
           photosPermission:
             "Allow Moveee to access your photos so you can share images in Connect posts.",
+        },
+      ],
+      [
+        "expo-camera",
+        {
+          cameraPermission:
+            "Allow Moveee to access your camera to scan House Fellowship check-in codes.",
         },
       ],
       "@react-native-community/datetimepicker",

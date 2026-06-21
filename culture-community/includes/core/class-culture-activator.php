@@ -203,6 +203,9 @@ class Culture_Activator {
         // House Fellowship cluster membership table (Literati Connect plan, Phase 1).
         Culture_Clusters::create_table();
 
+        // House Fellowship check-in/attendance table (Literati Connect plan, Phase 3).
+        Culture_Clusters::create_checkins_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

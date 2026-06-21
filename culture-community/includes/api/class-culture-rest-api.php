@@ -14,9 +14,6 @@ class Culture_REST_API {
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
-        // Event check-in admin meta box.
-        add_action( 'add_meta_boxes', array( __CLASS__, 'add_event_checkin_metabox' ) );
-        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
     }
 
     /**
@@ -1375,6 +1372,84 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Phase 2 — host mechanisms (election only; appointment is admin-only,
+        // no member-facing endpoint).
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/election/start', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_start' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/election/vote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_vote' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'candidate_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/election', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_election_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Phase 3 — check-in & attendance (QR + manual host fallback). Mirrors
+        // /mobile/cluster/{id}/... in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_members' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/host-qr', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_host_qr' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/checkin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_checkin' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'meeting_date' => array( 'required' => true, 'type' => 'string' ),
+                'expires_at'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'token'        => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/checkin-manual', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_checkin_manual' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'        => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'member_user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/attendance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_attendance' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -1756,6 +1831,104 @@ class Culture_REST_API {
         Culture_Clusters::leave( $cluster_id, $user_id );
 
         return rest_ensure_response( Culture_Clusters::get_member_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_start( $request ) {
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $result = Culture_Clusters::start_election( $cluster_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_vote( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $cluster_id   = (int) $request->get_param( 'id' );
+        $candidate_id = (int) $request->get_param( 'candidate_id' );
+
+        $result = Culture_Clusters::cast_vote( $cluster_id, $user_id, $candidate_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_election_status( $request ) {
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( Culture_Clusters::get_election_status( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_members( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( array( 'members' => Culture_Clusters::get_members( $cluster_id ) ) );
+    }
+
+    public static function handle_cluster_host_qr( $request ) {
+        $host_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $result = Culture_Clusters::generate_host_qr( $cluster_id, $host_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_checkin( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $cluster_id   = (int) $request->get_param( 'id' );
+        $meeting_date = (string) $request->get_param( 'meeting_date' );
+        $expires_at   = (int) $request->get_param( 'expires_at' );
+        $token        = (string) $request->get_param( 'token' );
+
+        $verified = Culture_Clusters::verify_checkin_qr( $cluster_id, $meeting_date, $expires_at, $token );
+        if ( is_wp_error( $verified ) ) {
+            return $verified;
+        }
+
+        $result = Culture_Clusters::check_in( $cluster_id, $user_id, 'qr', $meeting_date );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_checkin_manual( $request ) {
+        $host_id        = (int) $request->get_param( 'user_id' );
+        $cluster_id     = (int) $request->get_param( 'id' );
+        $member_user_id = (int) $request->get_param( 'member_user_id' );
+
+        $cluster = Culture_Clusters::get_cluster( $cluster_id );
+        if ( ! $cluster ) {
+            return new WP_Error( 'not_found', 'House Fellowship not found.', array( 'status' => 404 ) );
+        }
+        if ( (int) $cluster['hostId'] !== $host_id ) {
+            return new WP_Error( 'forbidden', 'Only the current host can record manual check-ins.', array( 'status' => 403 ) );
+        }
+
+        $result = Culture_Clusters::check_in( $cluster_id, $member_user_id, 'host_manual' );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cluster_attendance( $request ) {
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        return rest_ensure_response( Culture_Clusters::get_attendance_history( $cluster_id, $user_id ) );
     }
 
     /* ——————————————————————————————————————
@@ -5140,61 +5313,5 @@ class Culture_REST_API {
             'rep_earned'     => $rep_earned,
             'credits_earned' => $credits_earned,
         ) );
-    }
-
-    /* ——————————————————————————————————————
-     *  Phase 9 — Admin meta box for event QR
-     * —————————————————————————————————————— */
-
-    public static function add_event_checkin_metabox() {
-        add_meta_box(
-            'culture-event-checkin',
-            'Event Check-in QR',
-            array( __CLASS__, 'render_event_checkin_metabox' ),
-            'culture_event',
-            'side',
-            'high'
-        );
-    }
-
-    public static function render_event_checkin_metabox( $post ) {
-        $token_hash = get_post_meta( $post->ID, '_event_checkin_token_hash', true );
-        $has_token  = ! empty( $token_hash );
-        ?>
-        <div id="culture-checkin-box">
-          <?php if ( $has_token ) : ?>
-            <p style="color:green">&#10003; QR token generated</p>
-          <?php endif; ?>
-          <button type="button" class="button" onclick="cultureGenerateCheckinToken(<?php echo (int) $post->ID; ?>)">
-            <?php echo $has_token ? 'Regenerate QR Token' : 'Generate QR Token'; ?>
-          </button>
-          <div id="culture-checkin-qr-result" style="margin-top:10px"></div>
-        </div>
-        <script>
-        function cultureGenerateCheckinToken(eventId) {
-          fetch(ajaxurl + '?action=culture_generate_checkin_token&event_id=' + eventId + '&nonce=<?php echo wp_create_nonce( 'culture_checkin_nonce' ); ?>', { method: 'POST' })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-              if (d.success) {
-                document.getElementById('culture-checkin-qr-result').innerHTML =
-                  '<p><strong>Check-in URL:</strong><br><small>' + d.data.checkin_url + '</small></p>' +
-                  '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(d.data.checkin_url) + '" style="max-width:200px;margin-top:8px">';
-              }
-            });
-        }
-        </script>
-        <?php
-    }
-
-    public static function ajax_generate_checkin_token() {
-        check_ajax_referer( 'culture_checkin_nonce', 'nonce' );
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_send_json_error( 'Unauthorized' );
-        }
-        $event_id = (int) $_POST['event_id'];
-        $token    = bin2hex( random_bytes( 16 ) );
-        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
-        wp_send_json_success( array( 'checkin_url' => $url, 'token' => $token ) );
     }
 }

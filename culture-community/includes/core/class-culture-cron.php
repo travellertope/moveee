@@ -32,7 +32,9 @@ class Culture_Cron {
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
     const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
-    const HOOK_CLUSTER_SWEEP    = 'culture_check_cluster_forming_expiry';
+    const HOOK_CLUSTER_SWEEP           = 'culture_check_cluster_forming_expiry';
+    const HOOK_CLUSTER_ELECTION_TALLY  = 'culture_check_cluster_elections';
+    const HOOK_CLUSTER_GRACE_SWEEP     = 'culture_check_cluster_host_vacancy_grace';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
@@ -47,6 +49,8 @@ class Culture_Cron {
         add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
         add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
         add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
+        add_action( self::HOOK_CLUSTER_ELECTION_TALLY, array( __CLASS__, 'tally_cluster_elections' ) );
+        add_action( self::HOOK_CLUSTER_GRACE_SWEEP,    array( __CLASS__, 'sweep_cluster_host_vacancy' ) );
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -105,8 +109,10 @@ class Culture_Cron {
             self::HOOK_REFRESH_PULSE    => 'daily',
             self::HOOK_SEED_EVENTS      => 'daily',
             self::HOOK_SEED_QUOTES      => 'weekly',
-            'culture_check_perk_expiry' => 'hourly',
-            self::HOOK_CLUSTER_SWEEP    => 'daily',
+            'culture_check_perk_expiry'        => 'hourly',
+            self::HOOK_CLUSTER_SWEEP           => 'daily',
+            self::HOOK_CLUSTER_ELECTION_TALLY  => 'daily',
+            self::HOOK_CLUSTER_GRACE_SWEEP     => 'daily',
         );
 
         foreach ( $jobs as $hook => $recurrence ) {
@@ -128,6 +134,8 @@ class Culture_Cron {
             self::HOOK_SEED_QUOTES,
             'culture_check_perk_expiry',
             self::HOOK_CLUSTER_SWEEP,
+            self::HOOK_CLUSTER_ELECTION_TALLY,
+            self::HOOK_CLUSTER_GRACE_SWEEP,
         );
 
         foreach ( $hooks as $hook ) {
@@ -292,6 +300,98 @@ class Culture_Cron {
                     'cluster_forming_expired',
                     'Your House Fellowship didn\'t reach activation',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby House Fellowship instead.',
+                    '/connect/people',
+                    array( 'cluster_id' => $cluster_id, 'archived' => true )
+                );
+            }
+        }
+    }
+
+    /**
+     * Tally any House Fellowship host election whose voting window has
+     * closed. Runs daily. Pure WP-side logic, no Next.js call.
+     */
+    public static function tally_cluster_elections() {
+        if ( ! class_exists( 'Culture_Clusters' ) ) {
+            return;
+        }
+
+        $now = gmdate( 'Y-m-d H:i:s' );
+
+        $expired_ids = get_posts( array(
+            'post_type'      => 'culture_cluster',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'     => '_cluster_election_open_until',
+                    'value'   => $now,
+                    'compare' => '<=',
+                    'type'    => 'DATETIME',
+                ),
+            ),
+        ) );
+
+        foreach ( $expired_ids as $cluster_id ) {
+            Culture_Clusters::tally_election( $cluster_id );
+        }
+    }
+
+    /**
+     * Archive 'active' House Fellowships that have had zero members for
+     * longer than the 14-day grace period. The grace-period start is read
+     * from the departed host's own (now 'left') membership row's joined_at
+     * column, repurposed as a vacancy marker by
+     * Culture_Clusters::handle_host_departure() — no new field needed.
+     * Runs daily.
+     */
+    public static function sweep_cluster_host_vacancy() {
+        if ( ! class_exists( 'Culture_Clusters' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $grace_days = 14;
+        $cutoff     = gmdate( 'Y-m-d H:i:s', strtotime( '-' . $grace_days . ' days' ) );
+        $table      = Culture_Clusters::table();
+
+        $active_ids = get_posts( array(
+            'post_type'      => 'culture_cluster',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_cluster_status',
+                    'value' => Culture_Clusters::STATUS_ACTIVE,
+                ),
+            ),
+        ) );
+
+        foreach ( $active_ids as $cluster_id ) {
+            if ( Culture_Clusters::get_member_count( $cluster_id ) > 0 ) {
+                continue;
+            }
+
+            $last_row = $wpdb->get_row( $wpdb->prepare(
+                "SELECT user_id, joined_at FROM {$table} WHERE cluster_id = %d ORDER BY joined_at DESC LIMIT 1",
+                $cluster_id
+            ), ARRAY_A );
+
+            if ( ! $last_row || strtotime( $last_row['joined_at'] ) > strtotime( $cutoff ) ) {
+                continue; // not stale yet
+            }
+
+            update_post_meta( $cluster_id, '_cluster_status', 'archived' );
+
+            $last_user_id = (int) $last_row['user_id'];
+            if ( $last_user_id && class_exists( 'Culture_Notifications' ) ) {
+                Culture_Notifications::add(
+                    $last_user_id,
+                    'cluster_forming_expired',
+                    'Your House Fellowship has been archived',
+                    get_post_meta( $cluster_id, '_cluster_name', true ) . ' had no remaining members for 14 days and has been archived.',
                     '/connect/people',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );

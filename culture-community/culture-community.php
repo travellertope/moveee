@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.5.0' );
+define( 'CULTURE_VERSION', '2.6.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -70,6 +70,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-directory-tools.
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-acf-fields.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-redirects.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-rsvp-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-clusters-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 
 // Payment includes.
@@ -145,6 +146,8 @@ function culture_community_init() {
     Culture_Event_RSVP::init();
     Culture_RSVP_Admin::init();
     Culture_RSVP_Admin::init_post_handlers();
+    Culture_Clusters_Admin::init();
+    Culture_Clusters_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
     Culture_Shop_Checkout::init();
     Culture_Tickets_Admin::init();

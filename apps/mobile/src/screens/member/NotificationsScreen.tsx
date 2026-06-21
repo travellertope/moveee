@@ -67,6 +67,14 @@ async function openNotification(item: Notification, nav: AppNavProp): Promise<Fe
     case "event_rsvp":
       nav.navigate("MyEvents");
       break;
+    case "cluster_activated":
+    case "cluster_forming_expired":
+    case "cluster_new_host":
+    case "cluster_election_started": {
+      const clusterId = meta.cluster_id;
+      if (clusterId) nav.navigate("ClusterScreen", { id: Number(clusterId) });
+      break;
+    }
     case "system":
     default:
       break;
@@ -92,6 +100,10 @@ function getTypeMeta(c: ColorPalette) {
     new_follower:      { emoji: "👤", accent: c.gold,     border: false },
     new_follower_post: { emoji: "📰", accent: c.gold,     border: false },
     event_rsvp:        { emoji: "🎫", accent: c.ochre,    border: false },
+    cluster_activated:        { emoji: "🏘️", accent: c.success, border: false },
+    cluster_forming_expired:  { emoji: "⌛", accent: c.warning, border: false },
+    cluster_new_host:         { emoji: "🗳️", accent: c.gold,    border: false },
+    cluster_election_started: { emoji: "🏛️", accent: c.ochre,   border: false },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

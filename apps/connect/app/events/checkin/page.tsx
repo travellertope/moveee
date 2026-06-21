@@ -6,9 +6,9 @@ import EventCheckinClient from "./EventCheckinClient";
 export default async function EventCheckinPage({
   searchParams,
 }: {
-  searchParams: { id?: string; t?: string };
+  searchParams: Promise<{ id?: string; t?: string }>;
 }) {
-  const { id, t } = searchParams;
+  const { id, t } = await searchParams;
 
   if (!id || !t) {
     redirect("/events");

@@ -1178,6 +1178,51 @@ reads from the raw `items` array (not the already-filtered `visibleItems`), sinc
 the event items it needs have been stripped out of `visibleItems` by this exact
 filter.
 
+## Editorial event self-checkin (`culture_event` CPT — separate from Literati Connect / House Fellowship)
+
+This is **unrelated** to the Literati Connect / House Fellowship check-in system (which uses
+HMAC-signed QR on `culture_cluster` posts, see `docs/literati-connect-plan.md`). This one is a
+simple SHA-256-hash check-in token on editorial `culture_event` posts.
+
+- WP Admin edit screen for `culture_event` shows a "Generate QR Token" button
+  (`render_event_checkin_meta_box()` in `class-culture-post-types.php`) → AJAX
+  `culture_generate_checkin_token` → generates a token, stores `hash('sha256', $token)` as
+  `_event_checkin_token_hash` post meta, builds
+  `https://web.themoveee.com/events/checkin?id={eventId}&t={token}`, renders the QR as an
+  `<img src="https://api.qrserver.com/...">` (third-party QR image API, no local QR library).
+- **`class-culture-rest-api.php` used to register a second, duplicate copy of this exact metabox
+  + AJAX handler** (`add_event_checkin_metabox`/`render_event_checkin_metabox`/
+  `ajax_generate_checkin_token`, registered on the identical `wp_ajax_culture_generate_checkin_token`
+  hook with a different, non-per-post nonce). Because WordPress only runs the first callback that
+  calls `wp_die()` (which `wp_send_json_success`/`_error` do internally) on a shared action hook,
+  and `class-culture-post-types.php` loads first in `culture-community.php`, the rest-api.php copy
+  was unreachable dead code that also produced a second, confusing "Event Check-in QR" metabox on
+  the same edit screen — clicking its button hit the post-types.php handler with the wrong nonce
+  format and failed. **Removed (fixed 2026-06-21)** — the canonical implementation is the one in
+  `class-culture-post-types.php` only. If you ever need to touch this metabox again, there should
+  be exactly one `add_meta_box('culture_event_checkin', ...)` registration and one
+  `wp_ajax_culture_generate_checkin_token` handler — check both files if something seems off.
+- Member-facing check-in flow: scanning/visiting the URL hits
+  `apps/connect/app/events/checkin/page.tsx` → `EventCheckinClient.tsx` → `POST /api/events/checkin`
+  → WP `POST /culture/v1/events/self-checkin` (`handle_self_checkin()`), which verifies the token
+  hash and records the check-in. **Gotcha (fixed 2026-06-21): `page.tsx`'s `searchParams` prop is a
+  `Promise` in this Next.js version (same convention as `params` elsewhere, e.g.
+  `app/discover/page.tsx`, `app/cluster/[id]/page.tsx`) — it must be `await`ed.** The page previously
+  destructured it synchronously, so `id`/`t` were always `undefined`, tripping the
+  `if (!id || !t) redirect("/events")` guard before the session/login check or the actual check-in
+  ever ran — symptom: scanning the QR silently bounced to `/events` with no login prompt and no
+  check-in confirmation, for both logged-in and logged-out users.
+- This feature is **not** the same as `/culture/v1/check-in` (`handle_checkin()`, gated by the
+  `culture_scan_qr` capability, table `wp_culture_attendance`) — that's a separate "staff scans
+  member" tool. It is **not dead code** despite having no scanning UI inside this same admin
+  metabox area: it backs the WP Admin "Chapter Leader" dashboard
+  (`class-culture-leader-dashboard.php`, submenu pages "QR Scanner" + "Attendance", gated on
+  `culture_scan_qr`/`culture_view_attendance` capabilities), wired up via `.js-culture-checkin-btn`
+  / `.js-culture-qr-checkin-btn` handlers in `culture-admin.js`. `wp_culture_attendance` is also
+  read by `class-culture-gamification.php`, `class-culture-ticket-payment.php`'s permission checks,
+  `templates/single-culture_event.php`, and WP Admin analytics (`class-culture-analytics.php`) — do
+  not remove it without checking all of these.
+
 ## Event system enhancements
 
 ### Organiser field
