@@ -100,7 +100,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
             <span>Curated Cultural Journey</span>
           </div>
           <h1 className="journey-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(journey.title) }} />
-          <p className="journey-hero-sub">{journey.excerpt?.replace(/<[^>]*>/g, "") || "A culturally anchored journey through Africa and the diaspora."}</p>
+          <p className="journey-hero-sub">{journey.excerpt?.replace(/<[^>]*>/g, "") || "A culturally anchored journey around the world."}</p>
           <div className="journey-hero-row">
             <Link href="/journeys" className="btn-ghost-paper">← Back to Origins</Link>
             <Link href="#booking" className="btn-gold">Book this journey →</Link>

@@ -1,7 +1,7 @@
 /**
  * GET/POST /api/pulse/refresh?secret=...
  *
- * Fetches fresh articles from 40+ RSS feeds across African and diaspora
+ * Fetches fresh articles from 40+ RSS feeds across global culture
  * media, then uses Gemini (no grounding — free tier compatible) to select
  * and editorially rewrite the most culturally relevant stories, saving them
  * to WordPress as pulse_story posts.

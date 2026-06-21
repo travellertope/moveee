@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         <h3>Information you give us directly</h3>
         <ul>
           <li><strong>Newsletter registration</strong> — your email address when you subscribe to our weekly dispatch or any editorial series.</li>
-          <li><strong>Community membership</strong> — name, email, and profile information when you join The Moveee Connect community.</li>
+          <li><strong>Community membership</strong> — name, email, and profile information when you join The Moveee community.</li>
           <li><strong>Shop & orders</strong> — billing and shipping address, payment details (processed securely by our payment provider; we do not store card data), and order history.</li>
           <li><strong>Events</strong> — name, contact details, and any accessibility or dietary preferences submitted during event registration.</li>
           <li><strong>Contact forms</strong> — any information you voluntarily provide when reaching out to us.</li>

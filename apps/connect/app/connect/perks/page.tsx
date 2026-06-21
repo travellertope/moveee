@@ -8,7 +8,7 @@ import "./perks.css";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Perks — Moveee Connect",
+  title: "Perks — Moveee",
   description: "Spend your Moveee Credits at partner venues. Browse perks, redeem, and get your QR coupon.",
 };
 

@@ -5,7 +5,7 @@ import "@/app/games.css";
 
 export const metadata: Metadata = {
   title: { absolute: "Daily Crossword — The Moveee Games" },
-  description: "A new African culture crossword every day. Same puzzle for every player.",
+  description: "A new global culture crossword every day. Same puzzle for every player.",
 };
 
 export default function CrosswordPage() {

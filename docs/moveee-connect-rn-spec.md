@@ -1,4 +1,4 @@
-# Moveee Connect — React Native Implementation Spec
+# Moveee — React Native Implementation Spec
 
 > **Purpose:** This document is the single source of truth for implementing the full Connect feed, member directory, profiles, and membership system inside `moveee-connect/`. Every design detail, component behaviour, API shape, and interaction pattern from the web app is captured here. Work through each section in order. Do not invent — replicate exactly.
 

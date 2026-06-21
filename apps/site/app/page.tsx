@@ -6,9 +6,9 @@ import "@/app/homepage.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "The Moveee — Best in African Culture",
+  title: "The Moveee — Best in Global Culture",
   description:
-    "The Moveee is an independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
+    "The Moveee is an independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
   alternates: {
     canonical: "https://www.themoveee.com",
     languages: {
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "The Moveee — Best in African Culture",
+    title: "The Moveee — Best in Global Culture",
     description:
-      "An independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
+      "An independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
     url: "https://www.themoveee.com",
     siteName: "The Moveee",
     locale: "en_GB",
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in African Culture",
+    title: "The Moveee — Best in Global Culture",
     description:
-      "An independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
+      "An independent magazine celebrating the best of culture worldwide — editorials, happenings, travel, lifestyle, and community, worldwide.",
   },
 };
 

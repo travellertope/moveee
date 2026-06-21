@@ -60,21 +60,21 @@ export async function generateMetadata(
 
   const repLabel = REP_TIER_LABELS[profile.reputation_tier] ?? "Member";
   const description = profile.bio
-    ? `${profile.bio} — ${repLabel} on Moveee Connect.`
-    : `${profile.display_name}'s profile on Moveee Connect — ${repLabel}.`;
+    ? `${profile.bio} — ${repLabel} on Moveee.`
+    : `${profile.display_name}'s profile on Moveee — ${repLabel}.`;
 
   return {
-    title: `${profile.display_name} | Moveee Connect`,
+    title: `${profile.display_name} | Moveee`,
     description,
     openGraph: {
-      title: `${profile.display_name} | Moveee Connect`,
+      title: `${profile.display_name} | Moveee`,
       description,
       url: `${SITE_URL}/connect/${profile.username}`,
       images: profile.avatar_url ? [{ url: profile.avatar_url }] : [],
     },
     twitter: {
       card: "summary",
-      title: `${profile.display_name} | Moveee Connect`,
+      title: `${profile.display_name} | Moveee`,
       description,
       images: profile.avatar_url ? [profile.avatar_url] : [],
     },

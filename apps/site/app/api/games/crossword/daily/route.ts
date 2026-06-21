@@ -82,7 +82,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Pan-African Pulse",
+    title: "Global Culture Pulse",
     grid: [
       "ACCRA..",
       "F.CAIRO",
@@ -104,7 +104,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Voices",
+    title: "World Voices",
     grid: [
       "GHANA..",
       "R.BATIK",

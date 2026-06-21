@@ -86,7 +86,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
         <div>
           <div className="mem-field-label">Show me in the directory</div>
           <div className="mem-field-value mem-field-value--muted">
-            Your name, role, and location will be visible to all Moveee Connect members
+            Your name, role, and location will be visible to all Moveee members
           </div>
         </div>
         <button

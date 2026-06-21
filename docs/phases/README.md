@@ -1,6 +1,6 @@
-# Moveee Connect — Product Upgrade Phases
+# Moveee — Product Upgrade Phases
 
-Implementation plan for upgrading Moveee Connect based on the comprehensive
+Implementation plan for upgrading Moveee based on the comprehensive
 PRD (June 2026). Each phase is a self-contained feature set with clear
 dependencies.
 

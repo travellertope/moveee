@@ -305,7 +305,7 @@ export default async function MagazineArchiveWrapper({
                 <h3>The Moveee <em>Newsletter</em></h3>
               </div>
               <div className="cta-band-mid">
-                <p>Culture, art, heritage, and the stories worth reading — curated from Lagos, London, Accra, and the diaspora. In your inbox every Friday.</p>
+                <p>Culture, art, heritage, and the stories worth reading — curated from Lagos, London, Accra, and beyond. In your inbox every Friday.</p>
                 <div className="cta-band-tags"><span>Film</span><span>Art</span><span>Fashion</span><span>Heritage</span><span>Music</span></div>
               </div>
               <div className="cta-band-right">

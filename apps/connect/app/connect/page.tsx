@@ -11,9 +11,9 @@ import "./connect.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Moveee Connect — Community for Black & Diaspora Creatives",
+  title: "Moveee — Community for Global Creatives",
   description:
-    "Where Black and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
+    "Where creatives from around the world, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
 };
 
 export default async function ConnectPage() {
@@ -32,7 +32,7 @@ export default async function ConnectPage() {
         <section className="mco-hero">
           <div className="mco-hero-inner">
             <div className="mco-hero-text">
-              <p className="mco-eyebrow">Moveee Connect</p>
+              <p className="mco-eyebrow">Moveee</p>
               <h1 className="mco-headline">
                 Where culture <em>gathers.</em>
               </h1>
@@ -41,7 +41,7 @@ export default async function ConnectPage() {
               </p>
             </div>
             <div className="mco-hero-cta">
-              <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
+              <Link href="/register" className="con-btn-primary">Join Moveee →</Link>
               <Link href="/login?callbackUrl=/connect" className="con-btn-ghost">Already a member? Sign in</Link>
             </div>
           </div>

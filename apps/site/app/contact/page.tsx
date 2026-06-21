@@ -57,13 +57,13 @@ export default function ContactPage() {
           <div className="contact-card">
             <div className="contact-card-label">Events</div>
             <h3>Events Team</h3>
-            <p>Cultural events, screenings, talks, and community gatherings across Lagos and the diaspora. Venue and production partnerships welcome.</p>
+            <p>Cultural events, screenings, talks, and community gatherings across Lagos and beyond. Venue and production partnerships welcome.</p>
             <a href="mailto:events@themoveee.com">events@themoveee.com</a>
           </div>
           <div className="contact-card">
             <div className="contact-card-label">Travel & Journeys</div>
             <h3>Origins</h3>
-            <p>Cultural travel, origins programmes, and destination partnerships across the continent and diaspora.</p>
+            <p>Cultural travel, origins programmes, and destination partnerships across our markets.</p>
             <a href="mailto:origins@themoveee.com">origins@themoveee.com</a>
           </div>
         </div>

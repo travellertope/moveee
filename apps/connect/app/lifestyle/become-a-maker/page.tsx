@@ -108,7 +108,7 @@ export default function BecomeAMakerPage() {
           <p className="bam-eyebrow">Moveee Lifestyle · Become a Maker</p>
           <h1 className="bam-headline">Sell your work to<br />a culture-first community.</h1>
           <p className="bam-lede">
-            Moveee is where Black and diaspora creatives earn. List your products,
+            Moveee is where global creatives earn. List your products,
             reach an audience that already cares, and keep the majority of every sale.
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function BecomeAMakerPage() {
               <div className="bam-why-card">
                 <div className="bam-why-icon">✦</div>
                 <h3>Culture-aligned audience</h3>
-                <p>Your products sit alongside editorial, events, and community — reaching people already invested in Black creativity.</p>
+                <p>Your products sit alongside editorial, events, and community — reaching people already invested in global creativity.</p>
               </div>
               <div className="bam-why-card">
                 <div className="bam-why-icon">◈</div>

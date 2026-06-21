@@ -121,7 +121,7 @@ export default function HomepageContent({
                 <div className="hp-game-icon">🧠</div>
                 <div>
                   <div className="hp-game-name">Culture Trivia</div>
-                  <div className="hp-game-desc">10 daily questions on African culture</div>
+                  <div className="hp-game-desc">10 daily questions on global culture</div>
                 </div>
               </Link>
               <Link href="/games/who-said-it" className="hp-game-item">
@@ -142,7 +142,7 @@ export default function HomepageContent({
                 <div className="hp-game-icon">✏️</div>
                 <div>
                   <div className="hp-game-name">Daily Crossword</div>
-                  <div className="hp-game-desc">African culture mini-crossword</div>
+                  <div className="hp-game-desc">World culture mini-crossword</div>
                 </div>
               </Link>
             </div>

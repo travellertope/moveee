@@ -20,7 +20,7 @@ const Hero = () => {
           
           <h2 className="text-6xl md:text-8xl lg:text-[110px] leading-[0.9] font-serif font-medium tracking-tight text-ink">
             Culture, <span className="italic font-light text-mute">Curated.</span> <br />
-            Diaspora, <span className="underline decoration-ochre decoration-2 underline-offset-[16px]">Defined.</span>
+            World, <span className="underline decoration-ochre decoration-2 underline-offset-[16px]">Defined.</span>
           </h2>
 
           <p className="text-lg md:text-xl text-ink-soft leading-relaxed max-w-lg mt-4">

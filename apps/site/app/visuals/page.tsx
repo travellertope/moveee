@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Visuals | The Moveee" },
-  description: "A curated library of illustrations documenting African and diaspora culture — people, places, movements, and moments. Free for creative use.",
+  description: "A curated library of illustrations documenting global culture — people, places, movements, and moments. Free for creative use.",
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -32,8 +32,8 @@ export default async function VisualsPage() {
       <section className="visuals-hero">
         <h1 className="visuals-title">Moveee Visuals</h1>
         <p className="visuals-subtitle">
-          A living archive of AI-generated illustrations celebrating African and
-          diaspora culture. Curated from our directory. Available for your creative projects.
+          A living archive of AI-generated illustrations celebrating global
+          culture. Curated from our directory. Available for your creative projects.
         </p>
       </section>
 

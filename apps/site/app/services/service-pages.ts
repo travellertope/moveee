@@ -29,10 +29,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
   africa: {
     editorial: {
       headline: "Tell Your Story Where It Actually Lands",
-      tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that know their audience is African.",
+      tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that know their audience is culturally engaged.",
       intro: [
         "Most PR placements treat Nigeria and the wider continent as an afterthought — a single paragraph in a global roundup, a stock photo that could be anywhere. The Moveee Sponsored Content package is built differently. We write a 800–1,200 word feature that places your brand, product, or story in genuine cultural context, shaped by writers who actually live this market.",
-        "Every editorial feature is distributed through GetMeLit, our newsletter read by Nigerian and Pan-African professionals across Lagos, Abuja, Accra, Nairobi, and the diaspora. Alongside that, three native social posts go out across our platforms — copy and creative direction included. You brief us, we handle the craft.",
+        "Every editorial feature is distributed through GetMeLit, our newsletter read by Nigerian and international professionals across Lagos, Abuja, Accra, Nairobi, and beyond. Alongside that, three native social posts go out across our platforms — copy and creative direction included. You brief us, we handle the craft.",
         "If you need to push further, our Amplify tiers extend reach through paid social and influencer networks. But the foundation — the feature, the newsletter, the social — is complete on its own. ₦200,000 flat, no hidden add-ons.",
       ],
       howItWorks: [
@@ -60,7 +60,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Culturally Grounded Writing",
-          body: "Our writers know the difference between Lagos Island and the mainland, understand how Afrobeats, Nollywood, and fashion intersect, and won't flatten your brand into generic African-market clichés.",
+          body: "Our writers know the difference between Lagos Island and the mainland, understand how Afrobeats, Nollywood, and fashion intersect, and won't flatten your brand into generic market clichés.",
         },
         {
           title: "Newsletter Distribution That Reaches Decision-Makers",
@@ -107,7 +107,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     lifestyle: {
       headline: "Your Brand, Inside the Culture",
-      tagline: "Curated commerce and editorial for African consumer brands that deserve more than a product listing.",
+      tagline: "Curated commerce and editorial for consumer brands that deserve more than a product listing.",
       intro: [
         "The Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's the lowest-friction way to get in front of our audience.",
         "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up that frames your product in genuine cultural context, plus GetMeLit newsletter distribution and social promotion. Seasonal Drop takes it further — at Detty December, Lagos Fashion Week, and other high-traffic cultural moments, we build full editorial commerce campaigns around a select group of brands.",
@@ -165,7 +165,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What product categories do you accept?",
-          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and African-made tech accessories. We don't currently list services or digital-only products in the shop, though these may be featured editorially.",
+          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and locally-made tech accessories. We don't currently list services or digital-only products in the shop, though these may be featured editorially.",
         },
         {
           question: "Is there exclusivity — can competitors also be listed?",
@@ -269,7 +269,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     partnership: {
       headline: "For Publishers, Galleries, Theatres, and Institutions That Take Culture Seriously",
-      tagline: "A sustained media partnership for African cultural organisations — not a one-off feature, but a media relationship.",
+      tagline: "A sustained media partnership for cultural organisations — not a one-off feature, but a media relationship.",
       intro: [
         "Books launched in Nigeria deserve reviews. Art exhibitions deserve critical attention. Theatre productions deserve audiences who knew the show was happening before opening night. The Moveee Media Partnership exists because cultural institutions — publishers, galleries, theatres, museums, literary festivals — are chronically underserved by media that reaches the audiences they need.",
         "This isn't a sponsorship arrangement where you pay for logo placement. It's an editorial partnership: book reviews written by readers who understand the genre, author interviews given proper length and context, news releases for your launches and events, and social media presence tied to your actual programming calendar.",
@@ -307,8 +307,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           body: "Our reviews are written as reviews. They have opinions. They contextualise a book or exhibition within the wider landscape. That's what makes them worth reading — and worth having attached to your institution's name.",
         },
         {
-          title: "Reach Across Nigeria and the Diaspora",
-          body: "GetMeLit reaches Nigerian readers at home and in the diaspora. If you're a Lagos gallery with international aspirations, or a publisher whose titles circulate in London and Houston, your coverage travels with your audience.",
+          title: "Reach Across Nigeria and Beyond",
+          body: "GetMeLit reaches Nigerian readers at home and internationally. If you're a Lagos gallery with international aspirations, or a publisher whose titles circulate in London and Houston, your coverage travels with your audience.",
         },
         {
           title: "Add-Ons for Landmark Moments",
@@ -347,7 +347,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     events: {
       headline: "Your Event Deserves More Than a Mention.",
-      tagline: "Official media partner status for Nigerian and Pan-African events — pre-event build-up, live coverage, and post-event editorial.",
+      tagline: "Official media partner status for Nigerian and global events — pre-event build-up, live coverage, and post-event editorial.",
       intro: [
         "Detty December. Lagos Fashion Week. Afropunk. GTCO Food & Drink Festival. The best events in Nigeria succeed in part because people knew about them, talked about them, and showed up ready. The Moveee Happenings partnership gives your event official media partner status — pre-event editorial build-up, live coverage, post-event write-up, and a media badge you can use in your own comms.",
         "This is media partnership, not advertising. The Moveee editorial team attends, covers, and writes about events we believe in — which is why our coverage means something to readers who've learned to trust our taste.",
@@ -383,7 +383,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Status",
-          body: "The Moveee media partner badge signals editorial endorsement. Use it on your event page, in sponsor decks, and in marketing. It tells your audience the event has been covered by a credible Black media brand.",
+          body: "The Moveee media partner badge signals editorial endorsement. Use it on your event page, in sponsor decks, and in marketing. It tells your audience the event has been covered by a credible culture media brand.",
         },
         {
           title: "Pre, During, and Post Coverage",
@@ -395,7 +395,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "GetMeLit Distribution",
-          body: "Your event or travel experience reaches GetMeLit subscribers — Nigerian and Pan-African professionals who travel, attend cultural events, and have disposable income. This is not a general-interest audience.",
+          body: "Your event or travel experience reaches GetMeLit subscribers — Nigerian and internationally-minded professionals who travel, attend cultural events, and have disposable income. This is not a general-interest audience.",
         },
       ],
       faqs: [
@@ -424,7 +424,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Put Your Tour in Front of the People Most Likely to Book It.",
       tagline: "Commission-based listing and editorial coverage for cultural tour operators and heritage travel experiences across Nigeria and West Africa.",
       intro: [
-        "Moveee Origins is the travel arm of The Moveee — curated cultural and heritage tour listings for Nigerian and Pan-African audiences who want to travel with intention. If you run homecoming trips, heritage trails, festival packages, or cultural immersion experiences, this is where your audience already comes to discover what's worth booking.",
+        "Moveee Origins is the travel arm of The Moveee — curated cultural and heritage tour listings for Nigerian and globally-minded audiences who want to travel with intention. If you run homecoming trips, heritage trails, festival packages, or cultural immersion experiences, this is where your audience already comes to discover what's worth booking.",
         "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a ₦50,000 flat fee gets you a full write-up, GetMeLit newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
@@ -448,7 +448,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "The Right Audience",
-          body: "GetMeLit subscribers are Nigerian and Pan-African professionals with disposable income who travel for culture, family, and experience. They are not bargain hunters — they're the ideal customer for a meaningful heritage trip.",
+          body: "GetMeLit subscribers are Nigerian and internationally-minded professionals with disposable income who travel for culture, family, and experience. They are not bargain hunters — they're the ideal customer for a meaningful heritage trip.",
         },
         {
           title: "Zero Inventory Risk",
@@ -462,7 +462,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "What kinds of experiences qualify for Origins listing?",
-          answer: "Cultural and heritage tours, homecoming trips, festival travel packages, food and craft experiences, and immersive diaspora reconnection experiences across Nigeria and West Africa. We assess editorial fit on enquiry.",
+          answer: "Cultural and heritage tours, homecoming trips, festival travel packages, food and craft experiences, and immersive heritage reconnection experiences across Nigeria and West Africa. We assess editorial fit on enquiry.",
         },
         {
           question: "How does booking tracking work?",
@@ -479,17 +479,17 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     connect: {
       headline: "Inside the Room Where the Culture Happens",
-      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Nigerian and Pan-African creatives, entrepreneurs, and professionals.",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Nigerian and global creatives, entrepreneurs, and professionals.",
       intro: [
-        "Moveee Connect is the community layer of The Moveee — a curated, semi-private space where Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers gather. Not a general public audience. A self-selected, high-intent community of people who care about African and diaspora culture deeply enough to opt in.",
-        "When you buy a Moveee Connect sponsorship, you're not buying an ad. You're buying trust-transferred access — the ability to show up inside a community that already has a relationship with The Moveee, in a way that feels curated rather than intrusive. The Moveee team introduces you. Your content has to earn its place. Your member offer has to genuinely serve the people receiving it.",
+        "Moveee is the community layer of The Moveee — a curated, semi-private space where Nigerian and global creatives, entrepreneurs, professionals, and culture lovers gather. Not a general public audience. A self-selected, high-intent community of people who care about culture deeply enough to opt in.",
+        "When you buy a Moveee sponsorship, you're not buying an ad. You're buying trust-transferred access — the ability to show up inside a community that already has a relationship with The Moveee, in a way that feels curated rather than intrusive. The Moveee team introduces you. Your content has to earn its place. Your member offer has to genuinely serve the people receiving it.",
         "₦100,000 per quarter gets you a warm community introduction, one sponsored content slot, and an exclusive member offer. For brands that can't reach this audience through mainstream Nigerian media — and most can't — this is the most direct route in.",
       ],
       howItWorks: [
         {
           step: "01",
           title: "Enquire and Brief",
-          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect, and we won't place a brand whose offer doesn't serve the community.",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee, and we won't place a brand whose offer doesn't serve the community.",
         },
         {
           step: "02",
@@ -504,7 +504,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "04",
           title: "Exclusive Member Offer",
-          body: "An offer, discount, or experience available only to Moveee Connect members. This creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+          body: "An offer, discount, or experience available only to Moveee members. This creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
         },
       ],
       benefits: [
@@ -514,11 +514,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Self-Selected, High-Intent Audience",
-          body: "Moveee Connect members opted in. They're not passively scrolling a timeline. They're engaged participants in a space they chose to join — which means your message lands differently.",
+          body: "Moveee members opted in. They're not passively scrolling a timeline. They're engaged participants in a space they chose to join — which means your message lands differently.",
         },
         {
           title: "Reach Buyers Mainstream Media Can't Reach",
-          body: "Financial services targeting diaspora professionals, legal services, education providers, real estate developers marketing to diaspora buyers, event promoters, recruiters — these buyers can't easily find this audience through mainstream Nigerian media. Moveee Connect is the direct line.",
+          body: "Financial services targeting internationally-minded professionals, legal services, education providers, real estate developers marketing to overseas buyers, event promoters, recruiters — these buyers can't easily find this audience through mainstream Nigerian media. Moveee is the direct line.",
         },
         {
           title: "Value-First Commercial Format",
@@ -527,12 +527,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       faqs: [
         {
-          question: "What exactly is Moveee Connect?",
-          answer: "A curated, semi-private community — think a well-moderated Telegram group, Discord, or similar platform — where Nigerian and Pan-African creatives, entrepreneurs, and professionals gather around shared interest in African and diaspora culture. Membership is opt-in and deliberately kept high-quality.",
+          question: "What exactly is Moveee?",
+          answer: "A curated, semi-private community — think a well-moderated Telegram group, Discord, or similar platform — where Nigerian and global creatives, entrepreneurs, and professionals gather around shared interest in culture. Membership is opt-in and deliberately kept high-quality.",
         },
         {
           question: "Who is in the community?",
-          answer: "Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range 20–40, career-building and culturally driven.",
+          answer: "Nigerian and global creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range 20–40, career-building and culturally driven.",
         },
         {
           question: "What counts as a 'sponsored content slot'?",
@@ -540,11 +540,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Is this available across other Moveee markets?",
-          answer: "Yes. Moveee Connect operates in Nigeria/Africa, the UK, and the US. Each market has its own community. You can sponsor one or multiple markets — pricing is per market, per quarter.",
+          answer: "Yes. Moveee operates in Nigeria/Africa, the UK, and the US. Each market has its own community. You can sponsor one or multiple markets — pricing is per market, per quarter.",
         },
         {
           question: "How is this different from a sponsored post on social?",
-          answer: "A sponsored social post reaches a broad, passive audience. Moveee Connect reaches a small, active, high-intent community. The format is conversational and contextualised, not a standard ad unit. The community knows who sponsors it and why.",
+          answer: "A sponsored social post reaches a broad, passive audience. Moveee reaches a small, active, high-intent community. The format is conversational and contextualised, not a standard ad unit. The community knows who sponsors it and why.",
         },
         {
           question: "Can I renew after the first quarter?",
@@ -559,7 +559,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee.",
       intro: [
         "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee. We don't amplify external content — only work published on our own platform.",
-        "Once your feature is live, Amplify extends its reach through paid social ads targeting Nigerian and Pan-African audiences, influencer shares within our network, and extended newsletter distribution. You choose the tier that matches your budget and reach objectives.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting Nigerian and global audiences, influencer shares within our network, and extended newsletter distribution. You choose the tier that matches your budget and reach objectives.",
         "Think of the editorial feature as the foundation — Amplify is what you build on top of it when you want the story to travel further and faster than organic reach alone will take it.",
       ],
       howItWorks: [
@@ -582,7 +582,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Targeted Reach, Not Spray and Pray",
-          body: "Every paid placement targets Nigerian and Pan-African audiences — the same people who already read The Moveee. No wasted impressions on audiences who don't care about your category.",
+          body: "Every paid placement targets Nigerian and global audiences — the same people who already read The Moveee. No wasted impressions on audiences who don't care about your category.",
         },
         {
           title: "Influencer Network Built In",
@@ -618,10 +618,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
   uk: {
     editorial: {
-      headline: "Black British Stories, Told With the Weight They Deserve",
-      tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand the Black British market isn't a segment — it's a culture.",
+      headline: "UK Stories, Told With the Weight They Deserve",
+      tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand culture isn't a segment — it's a craft.",
       intro: [
-        "The Black British market — across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
+        "The UK's culturally engaged audience — across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious in the country. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
         "The flat rate is £600, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
@@ -650,11 +650,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Writing That Reflects the Audience",
-          body: "Our UK writers understand the nuances of Black British identity — Caribbean heritage, African heritage, second and third generation experiences, and the institutions (Notting Hill Carnival, Black History Month, the grime-to-Afrobeats pipeline) that shape cultural reference.",
+          body: "Our UK writers understand the nuances of Britain's diverse cultural identities — Caribbean heritage, African heritage, second and third generation experiences, and the institutions (Notting Hill Carnival, Black History Month, the grime-to-Afrobeats pipeline) that shape cultural reference.",
         },
         {
           title: "Newsletter Reach Across the UK",
-          body: "Our UK newsletter reaches Black British professionals and creatives in London, Birmingham, Manchester, and Bristol. These are engaged readers, not passive scrollers.",
+          body: "Our UK newsletter reaches culturally engaged professionals and creatives in London, Birmingham, Manchester, and Bristol. These are engaged readers, not passive scrollers.",
         },
         {
           title: "Full Execution From Brief to Distribution",
@@ -696,8 +696,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     lifestyle: {
-      headline: "Black British Shoppers Are Intentional. Meet Them Where They Are.",
-      tagline: "Curated commerce and editorial for brands the Black British community actually wants — not brands that want to be seen in it.",
+      headline: "Our Shoppers Are Intentional. Meet Them Where They Are.",
+      tagline: "Curated commerce and editorial for brands our community actually wants — not brands that want to be seen in it.",
       intro: [
         "The British Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
         "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit UK newsletter distribution, and social promotion for £250 flat. Seasonal Drop takes it further — at Black History Month, Christmas gifting season, and other high-intent cultural moments, we build coordinated editorial campaigns around a select group of brands.",
@@ -733,11 +733,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Editorial Selection Signals Quality",
-          body: "A Moveee listing tells Black British consumers this brand has been reviewed and chosen — not paid for placement in a general directory. That distinction matters in a market with high brand literacy.",
+          body: "A Moveee listing tells UK consumers this brand has been reviewed and chosen — not paid for placement in a general directory. That distinction matters in a market with high brand literacy.",
         },
         {
           title: "Black History Month Campaign Placement",
-          body: "October in the UK is the highest-intent Black commerce moment of the year. Our Seasonal Drop campaigns are planned months in advance. Applications for BHM are competitive and open early.",
+          body: "October in the UK is one of the highest-intent commerce moments of the year. Our Seasonal Drop campaigns are planned months in advance. Applications for BHM are competitive and open early.",
         },
         {
           title: "Commission-Aligned Promotion",
@@ -745,13 +745,13 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Audience With Real Purchasing Power",
-          body: "Black British consumers in London alone represent significant discretionary spending. Our newsletter audience skews professional, creative, and brand-aware. They buy from brands they trust, and they trust brands we feature.",
+          body: "Our consumers in London alone represent significant discretionary spending. Our newsletter audience skews professional, creative, and brand-aware. They buy from brands they trust, and they trust brands we feature.",
         },
       ],
       faqs: [
         {
           question: "What product categories do you list?",
-          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and Black British or African-founded lifestyle brands. We assess each application individually.",
+          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and independently or internationally-founded lifestyle brands. We assess each application individually.",
         },
         {
           question: "How does the affiliate commission work?",
@@ -776,7 +776,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     presskit: {
       headline: "Build a Consistent Media Presence in the UK.",
-      tagline: "Monthly PR subscription for UK-based Black brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
+      tagline: "Monthly PR subscription for UK-based brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
       intro: [
         "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: press release writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the foundational brand narrative work to make every pitch count. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building over time.",
@@ -858,10 +858,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     events: {
-      headline: "Your Event Is Part of Black British Culture. Cover It Like It Is.",
-      tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for the Black British community.",
+      headline: "Your Event Is Part of UK Culture. Cover It Like It Is.",
+      tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for our community.",
       intro: [
-        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define Black British cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The British Moveee Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
+        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define the UK's cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The British Moveee Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
         "We partner with events we believe in editorially. That selectivity is what makes our coverage credible — and what makes readers trust our recommendations enough to show up.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -895,15 +895,15 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the British Moveee media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected Black British media brand.",
+          body: "Use the British Moveee media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected UK media brand.",
         },
         {
           title: "Three Editorial Touchpoints",
           body: "Pre-event build-up, live coverage, and post-event write-up. Most events get covered once. Ours get covered in three distinct editorial moments.",
         },
         {
-          title: "Travel Listings for Black British Audiences",
-          body: "Black British travellers are significant consumers of cultural travel — heritage tours, African city breaks, Caribbean diaspora journeys. Our audience is primed for culturally resonant travel content.",
+          title: "Travel Listings for a Culturally Engaged Audience",
+          body: "Our travellers are significant consumers of cultural travel — heritage tours, international city breaks, Caribbean journeys. Our audience is primed for culturally resonant travel content.",
         },
         {
           title: "Commission-Based Travel Listing",
@@ -917,7 +917,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of events qualify?",
-          answer: "Cultural events, music festivals, creative industry conferences, brand activations with cultural programming, art exhibitions, film premieres, and community gatherings that serve the Black British community. We assess editorial fit on enquiry.",
+          answer: "Cultural events, music festivals, creative industry conferences, brand activations with cultural programming, art exhibitions, film premieres, and community gatherings that serve our UK community. We assess editorial fit on enquiry.",
         },
         {
           question: "Can I use The Moveee coverage in my own marketing?",
@@ -934,9 +934,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     travel: {
       headline: "Heritage Travel, Listed Where Your Audience Already Looks.",
-      tagline: "Commission-based listing and editorial coverage for Black British cultural travel operators and diaspora heritage experiences.",
+      tagline: "Commission-based listing and editorial coverage for UK cultural travel operators and heritage experiences.",
       intro: [
-        "Black British travellers are significant consumers of culturally intentional travel — homecoming trips to Nigeria, Ghana, Jamaica, and beyond. Diaspora city breaks. Heritage trails. Festival packages built around Afropunk, GTCO, or carnival season. The Moveee Origins UK lists the experiences worth booking for an audience that travels with purpose.",
+        "Our UK travellers are significant consumers of culturally intentional travel — homecoming trips to Nigeria, Ghana, Jamaica, and beyond. International city breaks. Heritage trails. Festival packages built around Afropunk, GTCO, or carnival season. The Moveee Origins UK lists the experiences worth booking for an audience that travels with purpose.",
         "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins UK directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a £120 flat fee gets you a full write-up, GetMeLit UK newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
@@ -960,7 +960,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "The Right Audience",
-          body: "GetMeLit UK subscribers are Black British professionals with disposable income who travel intentionally. They are looking for heritage and cultural experiences — your exact customer.",
+          body: "GetMeLit UK subscribers are culturally engaged professionals with disposable income who travel intentionally. They are looking for heritage and cultural experiences — your exact customer.",
         },
         {
           title: "Zero Inventory Risk",
@@ -974,7 +974,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "What kinds of experiences qualify?",
-          answer: "Homecoming heritage tours, Afrobeats and carnival festival travel packages, roots tourism, cultural city breaks, and immersive diaspora reconnection experiences. We assess editorial fit on enquiry.",
+          answer: "Homecoming heritage tours, Afrobeats and carnival festival travel packages, roots tourism, cultural city breaks, and immersive heritage reconnection experiences. We assess editorial fit on enquiry.",
         },
         {
           question: "How does booking tracking work?",
@@ -990,33 +990,33 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     connect: {
-      headline: "The Room Where Black British Culture Does Business",
-      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Black British and diaspora creatives, professionals, and entrepreneurs.",
+      headline: "The Room Where UK Culture Does Business",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to creatives, professionals, and entrepreneurs across the UK.",
       intro: [
-        "Moveee Connect UK is the community layer of The Moveee — a curated, semi-private space where Black British and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about Black culture enough to opt in and actively participate.",
+        "Moveee UK is the community layer of The Moveee — a curated, semi-private space where UK creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about culture enough to opt in and actively participate.",
         "A quarterly sponsorship isn't an ad placement. It's trust-transferred access — you show up inside a community that already has a relationship with The Moveee, introduced by the team, in a format that feels curated and useful rather than intrusive. The community knows who's in the room and why.",
-        "£200 per quarter. A warm introduction, one sponsored content slot, one exclusive member offer. For brands that can't easily reach Black British professionals and creatives through mainstream UK media — which is most — Moveee Connect is the most direct route in.",
+        "£200 per quarter. A warm introduction, one sponsored content slot, one exclusive member offer. For brands that can't easily reach culturally engaged professionals and creatives through mainstream UK media — which is most — Moveee is the most direct route in.",
       ],
       howItWorks: [
         {
           step: "01",
           title: "Enquire and Brief",
-          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect UK, and we won't place a brand whose offer doesn't genuinely serve the community.",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee UK, and we won't place a brand whose offer doesn't genuinely serve the community.",
         },
         {
           step: "02",
           title: "Community Introduction",
-          body: "We write and post an introduction to the community: who you are, why we're working with you this quarter, and why we think you're relevant to Black British and diaspora community members. Our voice vouches for you. That matters.",
+          body: "We write and post an introduction to the community: who you are, why we're working with you this quarter, and why we think you're relevant to our community members. Our voice vouches for you. That matters.",
         },
         {
           step: "03",
           title: "Your Sponsored Content Slot",
-          body: "One piece of genuinely useful content shared to the community. A legal services firm might share '5 things diaspora entrepreneurs get wrong about UK company formation.' A fashion brand might share how to get stocked in UK independent boutiques. Value-first, brand second.",
+          body: "One piece of genuinely useful content shared to the community. A legal services firm might share '5 things international entrepreneurs get wrong about UK company formation.' A fashion brand might share how to get stocked in UK independent boutiques. Value-first, brand second.",
         },
         {
           step: "04",
           title: "Exclusive Member Offer",
-          body: "An offer, discount, or experience available only to Moveee Connect UK members. Creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+          body: "An offer, discount, or experience available only to Moveee UK members. Creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
         },
       ],
       benefits: [
@@ -1026,11 +1026,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Self-Selected, High-Intent Community",
-          body: "These are people who chose to be here — not passive social scrollers. Black British and diaspora professionals who are culturally engaged, economically active, and receptive to brands that understand their context.",
+          body: "These are people who chose to be here — not passive social scrollers. Internationally-minded professionals who are culturally engaged, economically active, and receptive to brands that understand their context.",
         },
         {
           title: "Buyers Mainstream UK Media Struggles to Reach",
-          body: "Financial services targeting diaspora professionals, immigration lawyers, Caribbean and African property, education providers, recruiters, fintechs — there's no efficient way to reach Black British and diaspora audiences in mainstream UK media. Moveee Connect is the direct line.",
+          body: "Financial services targeting internationally-minded professionals, immigration lawyers, overseas property, education providers, recruiters, fintechs — there's no efficient way to reach this audience in mainstream UK media. Moveee is the direct line.",
         },
         {
           title: "Value-First Format That Builds Brand Memory",
@@ -1039,12 +1039,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       faqs: [
         {
-          question: "What is Moveee Connect UK?",
-          answer: "A curated semi-private community — a moderated group space on Telegram, Discord, or a similar platform — for Black British and diaspora creatives, entrepreneurs, and professionals. Membership is opt-in and quality-controlled.",
+          question: "What is Moveee UK?",
+          answer: "A curated semi-private community — a moderated group space on Telegram, Discord, or a similar platform — for UK creatives, entrepreneurs, and professionals. Membership is opt-in and quality-controlled.",
         },
         {
           question: "Who are the members?",
-          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the Black community in the UK who engage with The Moveee's editorial content. Age range 20–40, career-building and culturally engaged.",
+          answer: "UK-based creatives, entrepreneurs, and professionals who engage with The Moveee's editorial content. Age range 20–40, career-building and culturally engaged.",
         },
         {
           question: "What does the sponsored content slot look like in practice?",
@@ -1056,7 +1056,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "How is this different from a standard sponsored post?",
-          answer: "A sponsored post on social reaches a passive, broad audience with no particular reason to trust you. Moveee Connect reaches an active, self-selected community that trusts The Moveee's endorsement. Very different starting point for a brand relationship.",
+          answer: "A sponsored post on social reaches a passive, broad audience with no particular reason to trust you. Moveee reaches an active, self-selected community that trusts The Moveee's endorsement. Very different starting point for a brand relationship.",
         },
         {
           question: "Can I renew quarter to quarter?",
@@ -1071,7 +1071,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The British Moveee.",
       intro: [
         "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The British Moveee. We don't amplify external content — only work published on our own platform.",
-        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black British audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting culturally engaged audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right people, faster than organic reach alone will manage.",
       ],
       howItWorks: [
@@ -1093,8 +1093,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       benefits: [
         {
-          title: "Black British Audience Targeting",
-          body: "Every paid placement targets Black British audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
+          title: "UK Audience Targeting",
+          body: "Every paid placement targets culturally engaged UK audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
         },
         {
           title: "Credibility That Travels",
@@ -1102,7 +1102,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Influencer Reach Within the Community",
-          body: "Higher tiers include coordinated shares from influencers connected to our network — people the Black British community already follows, not unfamiliar sponsored accounts.",
+          body: "Higher tiers include coordinated shares from influencers connected to our network — people our community already follows, not unfamiliar sponsored accounts.",
         },
       ],
       faqs: [
@@ -1126,10 +1126,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
   us: {
     editorial: {
-      headline: "For Brands That Know the Diaspora Isn't One Story",
-      tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and diaspora communities with substance.",
+      headline: "For Brands That Know Global Culture Isn't One Story",
+      tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage culturally engaged communities with substance.",
       intro: [
-        "The Black diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
+        "Our audience in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's creative economy and the Nigerian American professional community in the DMV.",
         "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $800 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],
@@ -1142,7 +1142,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Feature",
-          body: "Our US editorial team produces an 800–1,200 word original piece. Not a formatted press release — original editorial that earns its place in front of a discerning diaspora audience. You review a draft for factual accuracy.",
+          body: "Our US editorial team produces an 800–1,200 word original piece. Not a formatted press release — original editorial that earns its place in front of a discerning, culturally engaged audience. You review a draft for factual accuracy.",
         },
         {
           step: "03",
@@ -1161,8 +1161,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           body: "Our US editorial team knows how Afrobeats landed in Atlanta before it crossed over, how Caribbean heritage shapes Brooklyn's cultural institutions, and how the Nigerian American professional community in DC and Houston thinks about representation. That knowledge is in the writing.",
         },
         {
-          title: "Newsletter Reach Across Five Diaspora Cities",
-          body: "NYC, Atlanta, Houston, DC, and LA. Our US newsletter reaches Black diaspora readers who are professionally established, culturally engaged, and brand-literate.",
+          title: "Newsletter Reach Across Five Major Cities",
+          body: "NYC, Atlanta, Houston, DC, and LA. Our US newsletter reaches culturally engaged readers who are professionally established and brand-literate.",
         },
         {
           title: "One Brief, Complete Execution",
@@ -1204,10 +1204,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     lifestyle: {
-      headline: "The Diaspora Shops With Intention. Be Worth Discovering.",
-      tagline: "Curated commerce and editorial for brands that deserve a place in the Black diaspora's cultural conversation.",
+      headline: "Our Audience Shops With Intention. Be Worth Discovering.",
+      tagline: "Curated commerce and editorial for brands that deserve a place in the cultural conversation.",
       intro: [
-        "The Moveee America Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of the diaspora audience with zero risk.",
+        "The Moveee America Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of our audience with zero risk.",
         "When you're ready for full editorial treatment, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit US newsletter distribution, and social promotion for $450 flat. Seasonal Drop positions your brand inside Juneteenth, Black History Month, and holiday gifting season — coordinated editorial campaigns built around high-intent cultural moments.",
         "At every tier, we earn on confirmed conversions. Our incentives are aligned with yours.",
       ],
@@ -1241,25 +1241,25 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Editorial Curation as a Quality Signal",
-          body: "A Moveee listing means your brand has been reviewed and chosen. In a market where diaspora consumers have strong filters and high brand literacy, that editorial stamp means something.",
+          body: "A Moveee listing means your brand has been reviewed and chosen. In a market where consumers have strong filters and high brand literacy, that editorial stamp means something.",
         },
         {
           title: "Juneteenth and Black History Month Campaigns",
-          body: "These are the highest-intent Black commerce moments in the US calendar. Our Seasonal Drop campaigns are planned well in advance. Application spots are competitive.",
+          body: "These are some of the highest-intent commerce moments in the US calendar. Our Seasonal Drop campaigns are planned well in advance. Application spots are competitive.",
         },
         {
           title: "Commission-Aligned Promotion",
           body: "We earn on sales, not traffic. Our copy and placement decisions prioritise conversion.",
         },
         {
-          title: "Five-City Diaspora Reach",
-          body: "NYC, Atlanta, Houston, DC, LA. These are markets where diaspora purchasing power is concentrated and brand discovery through trusted community media is how buying decisions get made.",
+          title: "Five-City Reach",
+          body: "NYC, Atlanta, Houston, DC, LA. These are markets where purchasing power is concentrated and brand discovery through trusted community media is how buying decisions get made.",
         },
       ],
       faqs: [
         {
           question: "What product categories do you accept?",
-          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and Black diaspora-founded lifestyle brands. Each application is assessed individually.",
+          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and internationally-founded lifestyle brands. Each application is assessed individually.",
         },
         {
           question: "How does the affiliate commission work?",
@@ -1284,11 +1284,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     presskit: {
       headline: "Build a Consistent Media Presence Across the US.",
-      tagline: "Monthly PR subscription for Black diaspora brands who need steady press coverage — not a one-off announcement.",
+      tagline: "Monthly PR subscription for brands who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as a Black diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
+        "Getting consistent press coverage as a brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
-        "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the diaspora audiences they reach.",
+        "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the audiences they reach.",
       ],
       howItWorks: [
         {
@@ -1358,7 +1358,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Do you work with brands based outside the US?",
-          answer: "Yes. Black diaspora brands targeting the US market are welcome. Many of our clients are headquartered elsewhere and use MoveeePR US to build name recognition with American diaspora audiences specifically.",
+          answer: "Yes. Internationally-founded brands targeting the US market are welcome. Many of our clients are headquartered elsewhere and use MoveeePR US to build name recognition with American audiences specifically.",
         },
       ],
       ctaLabel: "Book a strategy call →",
@@ -1366,10 +1366,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     events: {
-      headline: "Diaspora Events Deserve More Than an Instagram Post",
-      tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for the Black diaspora.",
+      headline: "Cultural Events Deserve More Than an Instagram Post",
+      tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for a culturally engaged audience.",
       intro: [
-        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Diaspora events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee America Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
+        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Cultural events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee America Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
         "We partner with events editorially. That selectivity is the reason our coverage carries weight with readers who've learned to trust our recommendations.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -1397,21 +1397,21 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "05",
           title: "Post-Event Write-Up",
-          body: "A longform editorial on what happened, why it mattered, and what it says about the state of diaspora culture. The permanent record of your event on The Moveee.",
+          body: "A longform editorial on what happened, why it mattered, and what it says about the state of the culture. The permanent record of your event on The Moveee.",
         },
       ],
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the Moveee America media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected Black diaspora media brand.",
+          body: "Use the Moveee America media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected culture media brand.",
         },
         {
           title: "Editorial Across Three Time Horizons",
           body: "Before, during, and after. Most events get a single moment of coverage. Ours get three distinct editorial touchpoints that build anticipation, document the event, and extend its cultural life.",
         },
         {
-          title: "Diaspora Travel Is a Growing Market",
-          body: "Black diaspora travel — heritage journeys, cultural tours, homeland visits — is a growing sector. Our Origins/Tours listing puts your experience in front of an audience actively looking for it.",
+          title: "Heritage Travel Is a Growing Market",
+          body: "Heritage travel — heritage journeys, cultural tours, homeland visits — is a growing sector. Our Origins/Tours listing puts your experience in front of an audience actively looking for it.",
         },
         {
           title: "Commission-Aligned Travel Promotion",
@@ -1425,7 +1425,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of events qualify for Happenings coverage?",
-          answer: "Cultural festivals, music events, creative industry conferences, art exhibitions, film premieres, brand activations with genuine cultural programming, and community gatherings serving the Black and diaspora community in the US. Editorial fit is assessed on enquiry.",
+          answer: "Cultural festivals, music events, creative industry conferences, art exhibitions, film premieres, brand activations with genuine cultural programming, and community gatherings serving our community in the US. Editorial fit is assessed on enquiry.",
         },
         {
           question: "Do you cover events outside New York?",
@@ -1441,10 +1441,10 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     travel: {
-      headline: "Heritage Travel, Listed Where the Diaspora Already Looks.",
-      tagline: "Commission-based listing and editorial coverage for cultural travel operators serving the Black diaspora across the United States.",
+      headline: "Heritage Travel, Listed Where Our Audience Already Looks.",
+      tagline: "Commission-based listing and editorial coverage for cultural travel operators serving a culturally engaged audience across the United States.",
       intro: [
-        "Black diaspora Americans are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
+        "Our readers across the United States are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
         "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins US directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a $180 flat fee gets you a full write-up, GetMeLit US newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
@@ -1457,7 +1457,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Feature",
-          body: "Our editorial team writes a feature on your experience — where it goes, what it means culturally, and why it's worth booking for a diaspora traveller. You review the facts before publication.",
+          body: "Our editorial team writes a feature on your experience — where it goes, what it means culturally, and why it's worth booking for a culturally engaged traveller. You review the facts before publication.",
         },
         {
           step: "03",
@@ -1468,11 +1468,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "The Right Audience",
-          body: "GetMeLit US subscribers are Black diaspora professionals with disposable income who travel intentionally — homecomings, cultural trips, festival travel. They are your exact customer.",
+          body: "GetMeLit US subscribers are culturally engaged professionals with disposable income who travel intentionally — homecomings, cultural trips, festival travel. They are your exact customer.",
         },
         {
           title: "Massive Underserved Market",
-          body: "Diaspora travel to West Africa and the Caribbean is a multi-billion dollar market that mainstream US travel media largely ignores. The Moveee speaks directly to the people making those bookings.",
+          body: "Heritage travel to West Africa and the Caribbean is a multi-billion dollar market that mainstream US travel media largely ignores. The Moveee speaks directly to the people making those bookings.",
         },
         {
           title: "Zero Inventory Risk",
@@ -1480,13 +1480,13 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Editorial Credibility",
-          body: "A Moveee Origins feature reads as editorial recommendation, not a paid listing. That distinction matters to diaspora travellers who are discerning about who they trust with a significant trip.",
+          body: "A Moveee Origins feature reads as editorial recommendation, not a paid listing. That distinction matters to culturally engaged travellers who are discerning about who they trust with a significant trip.",
         },
       ],
       faqs: [
         {
           question: "What kinds of experiences qualify?",
-          answer: "Heritage tours to West Africa or the Caribbean, Afrobeats and carnival festival travel packages, roots tourism, diaspora homecoming trips, cultural city breaks, and immersive reconnection experiences. We assess editorial fit on enquiry.",
+          answer: "Heritage tours to West Africa or the Caribbean, Afrobeats and carnival festival travel packages, roots tourism, homecoming trips, cultural city breaks, and immersive reconnection experiences. We assess editorial fit on enquiry.",
         },
         {
           question: "How does booking tracking work?",
@@ -1498,7 +1498,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Do I need to be US-based to list?",
-          answer: "No. Tour operators based in Nigeria, Ghana, Jamaica, or anywhere else can list on Origins US as long as the experience serves diaspora travellers departing from or returning to the US.",
+          answer: "No. Tour operators based in Nigeria, Ghana, Jamaica, or anywhere else can list on Origins US as long as the experience serves travellers departing from or returning to the US.",
         },
       ],
       ctaLabel: "List your experience →",
@@ -1506,23 +1506,23 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     connect: {
-      headline: "Access the Diaspora Community That Mainstream Doesn't Reach",
-      tagline: "Quarterly community sponsorship for brands targeting Black diaspora professionals and creatives across the United States.",
+      headline: "Access the Community That Mainstream Doesn't Reach",
+      tagline: "Quarterly community sponsorship for brands targeting internationally-minded professionals and creatives across the United States.",
       intro: [
-        "Moveee Connect US is the community layer of The Moveee — a curated, semi-private space where Black diaspora creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about their culture.",
+        "Moveee US is the community layer of The Moveee — a curated, semi-private space where creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about the culture.",
         "A quarterly sponsorship is trust-transferred access. You're introduced to the community by The Moveee team — in a context where the audience already trusts our editorial judgement. Your content has to be genuinely useful. Your member offer has to serve the people receiving it. In exchange, you reach an audience that mainstream US media rarely gets to accurately.",
-        "$250 per quarter. One warm community introduction, one sponsored content slot, one exclusive member offer. For financial services, professional firms, technology companies, and brands that need to reach diaspora professionals — and can't find them through mainstream channels — this is the most direct route.",
+        "$250 per quarter. One warm community introduction, one sponsored content slot, one exclusive member offer. For financial services, professional firms, technology companies, and brands that need to reach internationally-minded professionals — and can't find them through mainstream channels — this is the most direct route.",
       ],
       howItWorks: [
         {
           step: "01",
           title: "Enquire and Brief",
-          body: "Tell us about your brand, your offer for the community, and your goals for the quarter. We assess editorial fit — we won't place a brand whose product or offer doesn't genuinely serve the community. Diaspora fintech, professional services, cultural brands, education providers, and event promoters typically fit well.",
+          body: "Tell us about your brand, your offer for the community, and your goals for the quarter. We assess editorial fit — we won't place a brand whose product or offer doesn't genuinely serve the community. International fintech, professional services, cultural brands, education providers, and event promoters typically fit well.",
         },
         {
           step: "02",
           title: "Community Introduction",
-          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to Black diaspora professionals in the US. Our voice vouches for you. That's the whole point.",
+          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to internationally-minded professionals in the US. Our voice vouches for you. That's the whole point.",
         },
         {
           step: "03",
@@ -1532,7 +1532,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "04",
           title: "Exclusive Member Offer",
-          body: "An offer, discount, or experience available only to Moveee Connect US members. Creates reciprocity — the community feels rewarded, and you create real commercial action. Offer parameters are confirmed at briefing.",
+          body: "An offer, discount, or experience available only to Moveee US members. Creates reciprocity — the community feels rewarded, and you create real commercial action. Offer parameters are confirmed at briefing.",
         },
       ],
       benefits: [
@@ -1542,11 +1542,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "A Highly Specific Audience That's Hard to Buy Elsewhere",
-          body: "Black diaspora professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee Connect is a direct channel to exactly these people.",
+          body: "Internationally-minded professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee is a direct channel to exactly these people.",
         },
         {
           title: "Buyers No Other Channel Gets Right",
-          body: "Diaspora remittance and fintech, immigration legal services, African property for diaspora buyers, Black food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
+          body: "International remittance and fintech, immigration legal services, overseas property for international buyers, global food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
         },
         {
           title: "Value-First Format That Builds Real Brand Memory",
@@ -1555,12 +1555,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       faqs: [
         {
-          question: "What is Moveee Connect US?",
-          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for Black diaspora creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
+          question: "What is Moveee US?",
+          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
         },
         {
           question: "Who are the members?",
-          answer: "Black diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
+          answer: "Creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about the culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
         },
         {
           question: "What does the sponsored content slot look like?",
@@ -1568,11 +1568,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of brands fit well?",
-          answer: "Diaspora fintech and remittance, legal and professional services targeting Black professionals, US real estate or diaspora property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
+          answer: "International fintech and remittance, legal and professional services targeting global professionals, US real estate or overseas property for international buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine cultural relevance.",
         },
         {
           question: "Can I sponsor multiple markets?",
-          answer: "Yes. Moveee Connect operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach at scale. Each market is priced independently per quarter.",
+          answer: "Yes. Moveee operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach at scale. Each market is priced independently per quarter.",
         },
         {
           question: "Can I renew quarter to quarter?",
@@ -1587,8 +1587,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee America.",
       intro: [
         "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee America. We don't amplify external content — only work published on our own platform.",
-        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black diaspora audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
-        "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right diaspora audience, faster than organic reach alone will manage.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting culturally engaged audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
+        "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right audience, faster than organic reach alone will manage.",
       ],
       howItWorks: [
         {
@@ -1609,16 +1609,16 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       benefits: [
         {
-          title: "Diaspora-Specific Targeting",
-          body: "Every paid placement targets Black diaspora audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
+          title: "Culturally Specific Targeting",
+          body: "Every paid placement targets culturally engaged audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
         },
         {
           title: "Editorial Credibility Behind Every Promotion",
-          body: "Amplifying a Moveee feature carries more weight than a cold ad. Diaspora audiences trust editorial recommendations — promoting something they might have already read in The Moveee has a different response rate.",
+          body: "Amplifying a Moveee feature carries more weight than a cold ad. Our audiences trust editorial recommendations — promoting something they might have already read in The Moveee has a different response rate.",
         },
         {
-          title: "Influencer Distribution in Diaspora Spaces",
-          body: "Higher tiers include coordinated shares from influencers connected to our Black diaspora network — authentic voices, not unfamiliar sponsored accounts.",
+          title: "Influencer Distribution Across Our Network",
+          body: "Higher tiers include coordinated shares from influencers connected to our network — authentic voices, not unfamiliar sponsored accounts.",
         },
       ],
       faqs: [

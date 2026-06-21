@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function PulseAdminPage() {
   const { data: session, status } = useSession();
-  const [topic, setTopic] = useState("African and Black diaspora culture news");
+  const [topic, setTopic] = useState("global culture news");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     success?: boolean;

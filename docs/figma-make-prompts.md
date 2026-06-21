@@ -1,4 +1,4 @@
-# Figma Make Prompts — Moveee Connect Mobile App
+# Figma Make Prompts — Moveee Mobile App
 ## Complete UI/UX Design System & Screen Prompts for iOS & Android
 
 > **Important — Read First:**
@@ -75,7 +75,7 @@ Target: 1–3 screens per prompt, never 10+ at once.
 ### PROMPT 0 — Global Design System
 
 ```
-You are a senior mobile UX designer working on "Moveee Connect" — a premium cultural
+You are a senior mobile UX designer working on "Moveee" — a premium cultural
 community app for Black and African diaspora audiences worldwide. It combines a social
 feed, cultural magazine, events, games, and a member dashboard with a points/perks economy.
 
@@ -166,7 +166,7 @@ Do not invent any additional colours or type styles beyond those listed above.
 ### PROMPT 1A — Buttons, Inputs & Avatars
 
 ```
-You are a senior mobile UX designer for Moveee Connect (cultural community app).
+You are a senior mobile UX designer for Moveee (cultural community app).
 Brand: paper-warm bg #F3ECE0, ochre primary #C5491F, gold Pro tier #B38238,
 ink text #14110D, DM Sans UI font, Fraunces display font.
 
@@ -214,7 +214,7 @@ Android: 64px height, white fill, top ghost 1px border
 Active tab: icon + label in ochre. Inactive: icon + label in mute (DM Sans 11px labels).
 Pro member variant: "Me" tab shows gold star-person icon.
 
-All components should use exact hex values from the Moveee Connect design system.
+All components should use exact hex values from the Moveee design system.
 No generic greys or blues — this brand has very specific warm neutral tones.
 ```
 
@@ -223,7 +223,7 @@ No generic greys or blues — this brand has very specific warm neutral tones.
 ### PROMPT 1B — Feed Cards & Badge System
 
 ```
-Senior mobile UX designer for Moveee Connect. Brand tokens:
+Senior mobile UX designer for Moveee. Brand tokens:
 ochre #C5491F, gold #B38238, paper-warm #F3ECE0, ink #14110D,
 DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
@@ -417,7 +417,7 @@ Total canvas: 390×3200px. Paper-warm background.
 
 ```
 You are a senior mobile UX/UI designer. Create 4 sequential screens for the
-Moveee Connect app onboarding flow. Platform: iOS mobile, 390×844px frames.
+Moveee app onboarding flow. Platform: iOS mobile, 390×844px frames.
 
 Brand: Fraunces serif for headlines, DM Sans for body, background paper-warm #F3ECE0,
 primary ochre #C5491F, gold accent #B38238, ink #14110D. Editorial, sophisticated aesthetic.
@@ -479,7 +479,7 @@ Strictly use only the brand colours specified above.
 ### PROMPT 2B — Login & Register Screens
 
 ```
-Senior mobile UX/UI designer — Moveee Connect app. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee app. iOS, 390×844px.
 Brand: paper-warm bg #F3ECE0, ochre #C5491F, ink #14110D, DM Sans UI font, Fraunces display font.
 Ghost border colour: #C8BFB0. Card bg: white #FFFFFF. Mute text: #7A6F5C.
 
@@ -582,7 +582,7 @@ Output all 5 frames in a 2-3 grid layout. Label each clearly.
 ### PROMPT 3 — Connect Feed Screen
 
 ```
-Senior mobile UX/UI designer — Moveee Connect. Platform iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee. Platform iOS, 390×844px.
 Brand: paper-warm bg #F3ECE0, cards white #FFFFFF, ochre #C5491F, ink #14110D,
 DM Sans 15px body, Fraunces display, JetBrains Mono data/timestamps.
 
@@ -664,7 +664,7 @@ Show ochre spinner at top of feed area + "Refreshing..." JetBrains Mono 10px mut
 ### PROMPT 3B — Happenings Spotlight Carousel (replaces inline Happening cards)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect feed. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee feed. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
 ghost #C8BFB0, mute #7A6F5C, success #2D6A4F. DM Sans + Fraunces + JetBrains Mono.
 
@@ -780,7 +780,7 @@ Output 2 frames stacked vertically: Frame 1 (in-feed context), Frame 2 (componen
 ### PROMPT 4A — Template Picker Sheet
 
 ```
-Senior mobile UX/UI designer — Moveee Connect new post template picker. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee new post template picker. iOS, 390×844px.
 Brand: white bg, paper-warm #F3ECE0 accents, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
@@ -844,7 +844,7 @@ Output 2 frames side by side. Label each below in JetBrains Mono 11px mute:
 ### PROMPT 4B — Post Composer (All 10 Templates)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect new post composer. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee new post composer. iOS, 390×844px.
 Brand: white bg, paper-warm #F3ECE0 accents, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
@@ -1240,7 +1240,7 @@ Label each frame below in JetBrains Mono 11px mute:
 ### PROMPT 5A — Magazine Home & Browse
 
 ```
-Senior mobile UX/UI designer — Moveee Connect magazine section. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee magazine section. iOS, 390×844px.
 Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 Fraunces (editorial headlines) + DM Sans (UI) + JetBrains Mono (metadata/labels).
 
@@ -1374,7 +1374,7 @@ Output 3 frames: Frame 1 alone top, Frames 2–3 side by side below.
 ### PROMPT 5B — Article Detail (Full Scroll States)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect article detail page. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee article detail page. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white content card, ochre #C5491F, gold #B38238, ink #14110D.
 Fraunces (headlines/pull quotes) + DM Sans (body/UI) + JetBrains Mono (meta/labels).
 
@@ -1631,7 +1631,7 @@ Output 5 frames. Layout: Frame 1 alone, Frames 2–3 side by side, Frames 4–5 
 ### PROMPT 6 — Events List & Event Detail
 
 ```
-Senior mobile UX/UI designer — Moveee Connect events section. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee events section. iOS, 390×844px.
 Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, gold #B38238, ink #14110D,
 DM Sans + Fraunces + JetBrains Mono.
 
@@ -1717,7 +1717,7 @@ Output 3 frames in a row. Label each.
 ### PROMPT 6B — Events: Timeline + Calendar View, Filter Sheet (Redesign)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect events section redesign. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee events section redesign. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0, mute #7A6F5C, success #2D6A4F.
 Typography: Fraunces (display), DM Sans (body/UI), JetBrains Mono (dates/meta/counts).
 Radius: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
@@ -1868,7 +1868,7 @@ replaces only Prompt 6's Frame 1 (Events List) with the timeline/calendar system
 ### PROMPT 7 — Games Hub & Trivia Gameplay
 
 ```
-Senior mobile UX/UI designer — Moveee Connect games section. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee games section. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, DM Sans + Fraunces + JetBrains Mono.
 
 FRAME 1 — GAMES HUB:
@@ -1985,7 +1985,7 @@ Output 5 frames. Layout: Frame 1 alone top row, Frames 2-3-4 bottom row, Frame 5
 ### PROMPT 8 — Member Dashboard (Pro & Citizen Variants)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect member dashboard. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee member dashboard. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
 DM Sans + Fraunces + JetBrains Mono. CONNECT PRO = patron tier (gold).
 
@@ -2072,7 +2072,7 @@ Output 2 frames side by side.
 ### PROMPT 9 — Member Settings All 5 Tabs
 
 ```
-Senior mobile UX/UI designer — Moveee Connect member settings. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee member settings. iOS, 390×844px.
 White background for settings screens. Brand tokens as per design system.
 
 Design 5 frames — one per settings tab content.
@@ -2195,7 +2195,7 @@ Output 5 frames in a horizontal row. All share the same top header and tab bar.
 ### PROMPT 10A — Wallet Screen
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Wallet. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Wallet. iOS, 390×844px.
 Brand tokens: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 
 FRAME 1 — WALLET HISTORY:
@@ -2257,7 +2257,7 @@ Output 2 frames side by side.
 ### PROMPT 10B — Perks & Coupons
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Perks and Coupons. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Perks and Coupons. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 
 FRAME 1 — PERKS BROWSE:
@@ -2332,7 +2332,7 @@ Output 3 frames.
 ### PROMPT 11 — Directory & Profile Screens
 
 ```
-Senior mobile UX/UI designer — Moveee Connect member directory. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee member directory. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 
 FRAME 1 — MEMBER DIRECTORY:
@@ -2456,7 +2456,7 @@ Output 3 frames side by side.
 ### PROMPT 11B — Directory Entry Detail Page (All 11 Entry Types)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect directory entry detail. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee directory entry detail. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0, mute #7A6F5C.
 Typography: Fraunces (display), DM Sans (body/UI), JetBrains Mono (labels/meta).
 Radius system: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
@@ -2802,7 +2802,7 @@ Entry type badge on HERO uses the colour table defined above.
 ### PROMPT 11C — "Discover" Tab + Feed Reference Chips (Directory removed from inline feed)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect, Discover surface. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee, Discover surface. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0,
 mute #7A6F5C, success #2D6A4F. DM Sans + Fraunces + JetBrains Mono.
 
@@ -2956,7 +2956,7 @@ Output 4 frames: Entry Point inset, Discover Home, Feed Treatments, Filter Sheet
 ### PROMPT 12A — Notifications Screen
 
 ```
-Senior mobile UX/UI designer — Moveee Connect notifications. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee notifications. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white bg, ochre #C5491F, gold #B38238, ink #14110D.
 
 FRAME 1 — NOTIFICATIONS LIST:
@@ -3026,7 +3026,7 @@ Output 2 frames.
 ### PROMPT 12B — Analytics Dashboard
 
 ```
-Senior mobile UX/UI designer — Moveee Connect member analytics. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee member analytics. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 
 Header: back chevron + "My Analytics" centred.
@@ -3090,7 +3090,7 @@ Output 1 full-length scrollable screen frame.
 ### PROMPT 13 — Modals, Sheets & Toast Notifications
 
 ```
-Senior mobile UX/UI designer — Moveee Connect overlay components. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee overlay components. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white fills, ochre #C5491F, ink #14110D, DM Sans + Fraunces.
 Show all components on a large canvas with a dimmed background (ink #14110D at 45% opacity).
 
@@ -3134,7 +3134,7 @@ Button row: "Cancel" secondary · "Sign out" destructive (#C62828 fill, white te
 5. PASSKEY PROMPT SHEET (280px height):
 White fill, radius-2xl top corners, drag handle.
 Fingerprint icon (iOS-style): 48×48px, face ID / fingerprint outline in system blue (#007AFF), centred.
-"Moveee Connect" DM Sans 12px mute centred.
+"Moveee" DM Sans 12px mute centred.
 "Sign in with Face ID" DM Sans 16px bold ink centred, 12px below icon.
 "Use your biometric to log in securely." DM Sans 14px mute centred, 8px below.
 "Cancel" ghost link DM Sans 14px mute centred, 16px below.
@@ -3183,7 +3183,7 @@ Arrange all 9 components on a large canvas with the dimmed app background behind
 ### PROMPT 14A — Dark Mode Core Screens
 
 ```
-Senior mobile UX/UI designer — Moveee Connect dark mode. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee dark mode. iOS, 390×844px.
 Produce 8 frames showing the full app in dark mode. All layouts, spacing, and typography
 are IDENTICAL to light mode — only colours change. Do not redesign any layout.
 
@@ -3493,7 +3493,7 @@ Label each frame with its name in JetBrains Mono 11px below the phone.
 ### PROMPT 14B — Loading & Skeleton States
 
 ```
-Senior mobile UX/UI designer — Moveee Connect skeleton loading states. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee skeleton loading states. iOS, 390×844px.
 Light mode. Background: paper-warm #F3ECE0.
 
 ════════════════════════════════════════════
@@ -3717,7 +3717,7 @@ Logo lockup:
   "Loading your culture…" JetBrains Mono 11px #9E9288.
 
 Bottom of screen:
-  "Moveee Connect" DM Sans 10px #C8BFB0, centred, 32px from bottom.
+  "Moveee" DM Sans 10px #C8BFB0, centred, 32px from bottom.
 
 ════════════════════════════════════════════
 Output 9 frames in a 3-column grid (3 rows × 3 columns).
@@ -3814,7 +3814,7 @@ hosted checkout at cms.themoveee.com. Cart is managed via the WooCommerce Store 
 ### PROMPT 16A — Shop Home (Lifestyle Tab)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle Shop. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle Shop. iOS, 390×844px.
 Brand: paper-warm bg #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
 Fraunces for editorial headlines, DM Sans for UI, JetBrains Mono for prices/metadata.
 
@@ -3912,7 +3912,7 @@ Output 1 full-length screen frame showing all sections.
 ### PROMPT 16B — Product Listing / Category Browse
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle shop listing. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle shop listing. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
 Fraunces + DM Sans + JetBrains Mono.
 
@@ -3998,7 +3998,7 @@ Output 3 frames labelled Grid, List, Empty.
 ### PROMPT 16C — Product Detail Page
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle product detail. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle product detail. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white bg, ochre #C5491F, gold #B38238, ink #14110D,
 Fraunces editorial headlines, DM Sans UI, JetBrains Mono metadata.
 
@@ -4132,7 +4132,7 @@ Output 2 frames: Standard (non-Pro user, Pro price visible as incentive) + Pro M
 ### PROMPT 16D — Cart & Checkout Flow
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle cart. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle cart. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white fills, ochre #C5491F, gold #B38238, ink #14110D.
 
 Design 4 frames: Cart Screen, Cart Empty, Checkout Handoff, and Cart Drawer (slide-in overlay).
@@ -4232,7 +4232,7 @@ Output 4 frames. Cart Screen and Cart Drawer should look most polished — these
 ### PROMPT 16E — Maker / Brand Profile Page
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle maker profile. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle maker profile. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 
 Design the Maker/Brand profile page. This shows a vetted independent maker's full profile,
@@ -4293,7 +4293,7 @@ Output 1 full-length frame showing all sections.
 ### PROMPT 16F — The Moveee Edit (Curated Picks)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect Lifestyle "The Edit" curated page. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee Lifestyle "The Edit" curated page. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
 This page feels like a curated fashion/lifestyle editorial — think Ssense, System Magazine, or
 a high-end editorial supplement. Not a standard shop grid.
@@ -4354,7 +4354,7 @@ Output 1 full-length frame showing all sections.
 ### PROMPT 16G — Shop Search & Pro Early Access States
 
 ```
-Senior mobile UX/UI designer — Moveee Connect shop utility screens. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee shop utility screens. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D, DM Sans + Fraunces.
 
 Create 4 utility frames:
@@ -4474,7 +4474,7 @@ Output 4 frames.
 ### PROMPT 17A — Bottom Sheet Shell & Anatomy
 
 ```
-Senior mobile UX/UI designer — Moveee Connect bottom sheet system. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee bottom sheet system. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white #FFFFFF, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (body) + Fraunces (display) + JetBrains Mono (meta/labels).
 
@@ -4565,7 +4565,7 @@ Output 3 frames side by side.
 ### PROMPT 17B — Community Post Template Sheets (All 10 Types)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect community post bottom sheets. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee community post bottom sheets. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white #FFFFFF, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (body/UI) + Fraunces (display/headings) + JetBrains Mono (meta/counts/labels).
 
@@ -5036,7 +5036,7 @@ All frames at full 92%-height open state. Warm backdrop visible behind each.
 ### PROMPT 17C — Other Feed Card Detail Sheets
 
 ```
-Senior mobile UX/UI designer — Moveee Connect non-community card bottom sheets. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee non-community card bottom sheets. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans + Fraunces + JetBrains Mono.
 
@@ -5181,7 +5181,7 @@ Label each below: "Editorial" · "Quote" · "Happening" · "Directory" — JetBr
 ### PROMPT 17D — Bottom Sheet Micro-interaction & Edge Cases
 
 ```
-Senior mobile UX/UI designer — Moveee Connect bottom sheet states and edge cases. iOS, 390×844px.
+Senior mobile UX/UI designer — Moveee bottom sheet states and edge cases. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D.
 
 Design 4 edge-case frames that complete the bottom sheet system:
@@ -5559,6 +5559,6 @@ Complete list of screens to design:
 
 ---
 
-*Generated for travellertope/moveee — Moveee Connect mobile app (apps/mobile/)*
+*Generated for travellertope/moveee — Moveee mobile app (apps/mobile/)*
 *Codebase reference date: June 2026*
 *Brand system: Fraunces + DM Sans + JetBrains Mono · Ochre #C5491F · Gold #B38238 · Paper-warm #F3ECE0*

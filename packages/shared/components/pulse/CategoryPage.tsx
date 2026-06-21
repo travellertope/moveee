@@ -8,16 +8,16 @@ import FeedCard from "@/components/pulse/FeedCard";
 import SubmitPost from "@/components/pulse/SubmitPost";
 
 const ALL_CATEGORIES = [
-  { slug: "music",      label: "Music",       desc: "Artists, releases, and the sounds shaping the diaspora." },
+  { slug: "music",      label: "Music",       desc: "Artists, releases, and the sounds shaping global culture." },
   { slug: "fashion",    label: "Fashion",     desc: "Designers, style movements, and cultural identity." },
   { slug: "art",        label: "Art",         desc: "Visual art, exhibitions, and creative voices." },
   { slug: "film",       label: "Film",        desc: "Cinema, directors, and storytelling on screen." },
   { slug: "food",       label: "Food",        desc: "Cuisine, chefs, and the culture on the plate." },
   { slug: "sport",      label: "Sport",       desc: "Athletes, competitions, and sport as culture." },
-  { slug: "travel",     label: "Travel",      desc: "Destinations, journeys, and where the diaspora roams." },
+  { slug: "travel",     label: "Travel",      desc: "Destinations, journeys, and where the world roams." },
   { slug: "literature", label: "Literature",  desc: "Books, writers, and the written word." },
   { slug: "design",     label: "Design",      desc: "Architecture, product, and creative direction." },
-  { slug: "tech",       label: "Tech",        desc: "Innovation, startups, and technology from Africa and the diaspora." },
+  { slug: "tech",       label: "Tech",        desc: "Innovation, startups, and technology from around the world." },
 ];
 
 interface Props {

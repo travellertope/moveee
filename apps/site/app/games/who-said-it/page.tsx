@@ -6,7 +6,7 @@ import "@/app/games.css";
 export const metadata: Metadata = {
   title: { absolute: "Who Said It? — Culture Games · The Moveee" },
   description:
-    "Read a quote and guess the African or diaspora figure who said it. 10 rounds, live from our verified quote archive.",
+    "Read a quote and guess the global figure who said it. 10 rounds, live from our verified quote archive.",
 };
 
 export default function WhoSaidItPage() {

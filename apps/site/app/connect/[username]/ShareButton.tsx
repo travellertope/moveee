@@ -10,7 +10,7 @@ export default function ShareButton({ url, name }: Props) {
   async function handleShare() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: `${name} | Moveee Connect`, url });
+        await navigator.share({ title: `${name} | Moveee`, url });
         return;
       } catch {
         // fall through to clipboard

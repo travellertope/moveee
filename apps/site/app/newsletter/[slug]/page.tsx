@@ -226,8 +226,8 @@ export default async function GmlIssuePage({
             <div className="gml-sidebar-label">★ GetMeLit · Biweekly</div>
             <h4>Culture in your inbox, every other Friday.</h4>
             <p>
-              Essays, picks, music, and events from across the African
-              diaspora.
+              Essays, picks, music, and events from across global
+              culture.
             </p>
             <NewsletterSubscribeWidget
               placeholder="your@email.com"

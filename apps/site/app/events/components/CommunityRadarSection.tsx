@@ -222,7 +222,7 @@ export default function CommunityRadarSection({ events }: CommunityRadarSectionP
             <span className="disc-eyebrow">Community Radar</span>
             <h2 className="disc-heading">More <em>Happenings</em></h2>
             <p className="disc-subhead">
-              AI-discovered events across the diaspora — sourced from the web and curated for our community.
+              AI-discovered events around the world — sourced from the web and curated for our community.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.75rem" }}>

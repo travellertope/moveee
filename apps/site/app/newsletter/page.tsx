@@ -12,7 +12,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: { absolute: "Newsletters — The Moveee" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into African and diasporan culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
 };
 
 const NL_LABELS: Record<string, string> = {
@@ -79,7 +79,7 @@ export default async function NewsletterArchive({
               Culture <em>Drop</em>
             </h2>
             <p className="nl-card-desc">
-              The weekly dispatch on contemporary African and diasporan
+              The weekly dispatch on contemporary global
               culture. One deep essay, curated picks, a music dispatch, and
               what&apos;s happening across Lagos, London, New York, and Accra.
               Written to make you think, not just scroll.
@@ -109,15 +109,15 @@ export default async function NewsletterArchive({
             </h2>
             <p className="nl-card-desc">
               A weekly letter for the literary mind. Stories, poems, essay
-              excerpts, and opportunities for writers and authors across
-              Africa and the diaspora — curated to keep you reading, writing,
+              excerpts, and opportunities for writers and authors from
+              around the world — curated to keep you reading, writing,
               and discovering.
             </p>
             <ul className="nl-card-features">
               <li>A story or poem — fiction and poetry you&apos;ll want to share</li>
               <li>The reading list — new books &amp; essays worth your time</li>
               <li>Opportunities — calls for submissions, residencies, grants</li>
-              <li>Author spotlight — voices shaping African literature</li>
+              <li>Author spotlight — voices shaping world literature</li>
             </ul>
             <div className="nl-card-form">
               <small className="nl-card-form-label">Subscribe free</small>
@@ -153,7 +153,7 @@ export default async function NewsletterArchive({
             <p className="gml-pc-desc">
               One long-form cultural essay or commentary — the thing
               you&apos;ll forward to a friend. Art, identity, ambition, the
-              modern African experience. Written to make you think.
+              modern global cultural experience. Written to make you think.
             </p>
           </div>
           <div className="gml-pillar-card">
@@ -170,8 +170,8 @@ export default async function NewsletterArchive({
             <div className="gml-pc-name">What&apos;s <em>Playing</em></div>
             <p className="gml-pc-desc">
               A sound dispatch. New releases, overlooked gems, playlists,
-              and the occasional hot take on what&apos;s moving in African
-              and diasporan music right now.
+              and the occasional hot take on what&apos;s moving in global
+              music right now.
             </p>
           </div>
           <div className="gml-pillar-card">
@@ -193,7 +193,7 @@ export default async function NewsletterArchive({
           <blockquote className="gml-pull-quote">
             We don&apos;t just tell you what&apos;s happening — we explore{" "}
             <strong>why it matters</strong>. Sharp cultural commentary on the
-            modern African experience, delivered every week.
+            modern global cultural experience, delivered every week.
           </blockquote>
           <cite className="gml-pull-cite">
             — The editorial mission of Culture Drop
@@ -265,7 +265,7 @@ export default async function NewsletterArchive({
             <div className="nl-cdf-rows">
               <div className="nl-cdf-row">
                 <span className="nl-cdf-row-num">Stories</span>
-                <span className="nl-cdf-row-label">Fiction &amp; poetry from African and diasporan voices</span>
+                <span className="nl-cdf-row-label">Fiction &amp; poetry from voices around the world</span>
               </div>
               <div className="nl-cdf-row">
                 <span className="nl-cdf-row-num">Books</span>

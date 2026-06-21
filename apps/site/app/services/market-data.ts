@@ -69,9 +69,9 @@ export type ConnectBar = {
 // ── Connect bar (shared) ──────────────────────────────────────────────────────
 
 export const CONNECT_BAR: ConnectBar = {
-  title: "Moveee Connect — Community Sponsorship",
+  title: "Moveee — Community Sponsorship",
   description:
-    "Brands and service providers wanting direct access to The Moveee's Black and diaspora professional community. Available across all three markets as a quarterly sponsorship. Includes community feature, sponsored content slot, and member offer.",
+    "Brands and service providers wanting direct access to The Moveee's global professional community. Available across all three markets as a quarterly sponsorship. Includes community feature, sponsored content slot, and member offer.",
   price: "₦100k · £200 · $250",
   priceNote: "per quarter, per market",
 };
@@ -91,7 +91,7 @@ const amplifyAfrica: TierService = {
   name: "Moveee Amplify",
   eyebrow: "Media Amplification",
   description:
-    "Supercharge your feature across Nigeria and Pan-Africa. Moveee Amplify distributes your story to a targeted, culturally engaged audience through social media, newsletters, influencer networks, and newspaper syndication — putting your brand in front of the exact people who matter most to you.",
+    "Supercharge your feature across Nigeria and beyond. Moveee Amplify distributes your story to a targeted, culturally engaged audience through social media, newsletters, influencer networks, and newspaper syndication — putting your brand in front of the exact people who matter most to you.",
   packages: [
     {
       name: "Priority",
@@ -113,7 +113,7 @@ const amplifyAfrica: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "150k", currency: "₦",
       features: [
-        { label: "Paid social boost — Nigeria + diaspora channels", included: true },
+        { label: "Paid social boost — Nigeria + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit newsletter premium slot", included: false },
@@ -129,7 +129,7 @@ const amplifyAfrica: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "260k", currency: "₦",
       features: [
-        { label: "Paid social boost — Nigeria + diaspora channels", included: true },
+        { label: "Paid social boost — Nigeria + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit newsletter premium slot", included: true },
@@ -144,7 +144,7 @@ const amplifyAfrica: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "650k", currency: "₦",
       features: [
-        { label: "Paid social boost — Nigeria + diaspora channels", included: true },
+        { label: "Paid social boost — Nigeria + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit newsletter premium slot", included: true },
@@ -162,7 +162,7 @@ const amplifyUK: TierService = {
   name: "Moveee Amplify Britain",
   eyebrow: "Media Amplification",
   description:
-    "Amplify your story across the UK's Black community and diaspora. From London to Birmingham and Manchester, Moveee Amplify Britain distributes your feature to the Black British audiences who are actively shaping culture — through targeted social, newsletter, influencer, and press channels.",
+    "Amplify your story across the UK's culturally engaged community. From London to Birmingham and Manchester, Moveee Amplify Britain distributes your feature to the audiences who are actively shaping culture — through targeted social, newsletter, influencer, and press channels.",
   packages: [
     {
       name: "Priority",
@@ -173,7 +173,7 @@ const amplifyUK: TierService = {
         { label: "Audience location & interest targeting", included: false },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit UK newsletter premium slot", included: false },
-        { label: "Black British micro-influencer broadcast", included: false },
+        { label: "UK micro-influencer broadcast", included: false },
         { label: "UK digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
@@ -184,11 +184,11 @@ const amplifyUK: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "140", currency: "£",
       features: [
-        { label: "Paid social boost — UK + diaspora channels", included: true },
+        { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit UK newsletter premium slot", included: false },
-        { label: "Black British micro-influencer broadcast", included: false },
+        { label: "UK micro-influencer broadcast", included: false },
         { label: "UK digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
@@ -200,11 +200,11 @@ const amplifyUK: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "145", currency: "£",
       features: [
-        { label: "Paid social boost — UK + diaspora channels", included: true },
+        { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit UK newsletter premium slot", included: true },
-        { label: "Black British micro-influencer broadcast", included: false },
+        { label: "UK micro-influencer broadcast", included: false },
         { label: "UK digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
@@ -215,11 +215,11 @@ const amplifyUK: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "350", currency: "£",
       features: [
-        { label: "Paid social boost — UK + diaspora channels", included: true },
+        { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit UK newsletter premium slot", included: true },
-        { label: "1× Black British micro-influencer broadcast", included: true },
+        { label: "1× UK micro-influencer broadcast", included: true },
         { label: "1× UK digital press syndication", included: true },
         { label: "Full demographic analytics breakdown", included: true },
       ],
@@ -233,7 +233,7 @@ const amplifyUS: TierService = {
   name: "Moveee Amplify America",
   eyebrow: "Media Amplification",
   description:
-    "Put your story in front of the Black community and diaspora across the United States. Moveee Amplify America reaches Black American, Nigerian-American, Ghanaian-American, and Caribbean audiences in NYC, Atlanta, Houston, DC, and LA — through targeted social, newsletter, influencer, and press distribution.",
+    "Put your story in front of a culturally engaged audience across the United States. Moveee Amplify America reaches global, multicultural audiences in NYC, Atlanta, Houston, DC, and LA — through targeted social, newsletter, influencer, and press distribution.",
   packages: [
     {
       name: "Priority",
@@ -244,8 +244,8 @@ const amplifyUS: TierService = {
         { label: "Audience location & interest targeting", included: false },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit US newsletter premium slot", included: false },
-        { label: "US diaspora micro-influencer broadcast", included: false },
-        { label: "US diaspora digital press syndication", included: false },
+        { label: "US micro-influencer broadcast", included: false },
+        { label: "US digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
       cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
@@ -255,12 +255,12 @@ const amplifyUS: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "190", currency: "$",
       features: [
-        { label: "Paid social boost — US + diaspora channels", included: true },
+        { label: "Paid social boost — US + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit US newsletter premium slot", included: false },
-        { label: "US diaspora micro-influencer broadcast", included: false },
-        { label: "US diaspora digital press syndication", included: false },
+        { label: "US micro-influencer broadcast", included: false },
+        { label: "US digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
       cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
@@ -271,12 +271,12 @@ const amplifyUS: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "300", currency: "$",
       features: [
-        { label: "Paid social boost — US + diaspora channels", included: true },
+        { label: "Paid social boost — US + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit US newsletter premium slot", included: true },
-        { label: "US diaspora micro-influencer broadcast", included: false },
-        { label: "US diaspora digital press syndication", included: false },
+        { label: "US micro-influencer broadcast", included: false },
+        { label: "US digital press syndication", included: false },
         { label: "Performance analytics report", included: true },
       ],
       cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
@@ -286,12 +286,12 @@ const amplifyUS: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "575", currency: "$",
       features: [
-        { label: "Paid social boost — US + diaspora channels", included: true },
+        { label: "Paid social boost — US + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
         { label: "1-week Instagram Feed pin", included: true },
         { label: "GetMeLit US newsletter premium slot", included: true },
-        { label: "1× US diaspora micro-influencer broadcast", included: true },
-        { label: "1× US diaspora digital press syndication", included: true },
+        { label: "1× US micro-influencer broadcast", included: true },
+        { label: "1× US digital press syndication", included: true },
         { label: "Full demographic analytics breakdown", included: true },
       ],
       cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
@@ -357,7 +357,7 @@ const moveeeProUK: TierService = {
   name: "Media Partnership Britain",
   eyebrow: "Media Partnership",
   description:
-    "A dedicated visibility package for Black British and diaspora creative organisations — independent publishers, art galleries, theatres, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged Black British audience most likely to engage, attend, and buy.",
+    "A dedicated visibility package for UK creative organisations — independent publishers, art galleries, theatres, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged UK audience most likely to engage, attend, and buy.",
   packages: [
     {
       name: "Publishers — Debut",
@@ -408,7 +408,7 @@ const moveeeProUS: TierService = {
   name: "Media Partnership America",
   eyebrow: "Media Partnership",
   description:
-    "A dedicated visibility package for Black diaspora creative organisations in the US — independent publishers, art galleries, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged diaspora audience across NYC, Atlanta, Houston, DC, and LA.",
+    "A dedicated visibility package for creative organisations in the US — independent publishers, art galleries, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged audience across NYC, Atlanta, Houston, DC, and LA.",
   packages: [
     {
       name: "Publishers — Debut",
@@ -461,11 +461,11 @@ export const MARKETS: Market[] = [
     id: "africa",
     name: "Moveee Africa",
     flag: "🌍",
-    tagline: "Editorial, commerce, events, and media services for Nigerian and Pan-African audiences.",
+    tagline: "Editorial, commerce, events, and media services for Nigerian and global audiences.",
     currency: "₦",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "cards",
+        id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and global audiences", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
@@ -525,7 +525,7 @@ export const MARKETS: Market[] = [
             priceNote: "per month · 3-month minimum",
             includes: [
               "2 press releases + 1 op-ed or thought leadership piece per month",
-              "Media outreach to Nigerian and Pan-African publications",
+              "Media outreach to Nigerian and international publications",
               "Monthly strategy call + performance report",
               "1 × Moveee editorial feature per quarter",
             ],
@@ -550,19 +550,19 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Nigerian creative professionals", kind: "cards",
+        id: "connect", label: "Moveee", audience: "For brands seeking community-level access to Nigerian creative professionals", kind: "cards",
         cards: [
           {
-            name: "Moveee Connect — Nigeria/Africa",
+            name: "Moveee — Nigeria/Africa",
             tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee’s curated community of Nigerian and Pan-African creatives, entrepreneurs, and professionals. Trust-transferred access — not a cold ad.",
+            description: "Quarterly sponsorship inside The Moveee’s curated community of Nigerian and global creatives, entrepreneurs, and professionals. Trust-transferred access — not a cold ad.",
             price: "₦100,000",
             priceNote: "per quarter",
             includes: [
               "Community introduction post by The Moveee team",
               "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect community",
-              "Access to self-selected, high-intent Black/diaspora audience",
+              "Exclusive member offer for Moveee community",
+              "Access to self-selected, high-intent, culturally engaged audience",
             ],
           },
         ],
@@ -585,7 +585,7 @@ export const MARKETS: Market[] = [
           {
             name: "Brand Feature",
             tag: "lifestyle", tagLabel: "Featured",
-            description: "Curated ‘Shop African’ product collection with a full editorial write-up — brand story, product spotlight, newsletter distribution, and social promotion.",
+            description: "Curated ‘Shop the Culture’ product collection with a full editorial write-up — brand story, product spotlight, newsletter distribution, and social promotion.",
             price: "₦80,000",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -605,7 +605,7 @@ export const MARKETS: Market[] = [
               "Dedicated seasonal campaign feature",
               "Multi-post social series (5–8 posts)",
               "Priority GetMeLit placement (top-of-edition)",
-              "Moveee Connect community promotion",
+              "Moveee community promotion",
             ],
           },
         ],
@@ -695,7 +695,7 @@ export const MARKETS: Market[] = [
               "Curated itinerary feature on Moveee Origins",
               "Editorial write-up (cultural context + itinerary)",
               "GetMeLit newsletter promotion",
-              "Moveee Connect community promotion",
+              "Moveee community promotion",
             ],
           },
         ],
@@ -711,17 +711,17 @@ export const MARKETS: Market[] = [
     id: "uk",
     name: "The British Moveee",
     flag: "🇬🇧",
-    tagline: "Editorial, commerce, and media services for the Black community and diaspora across Britain.",
+    tagline: "Editorial, commerce, and media services for our community across Britain.",
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the Black community and diaspora across Britain", kind: "cards",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting a culturally engaged audience across Britain", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
             name: "Cultural Spotlight Package",
             tag: "editorial", tagLabel: "Sponsored Content",
-            description: "Longform editorial feature + social amplification + GetMeLit UK newsletter. Ideal for UK Afrobeats labels, Black-owned fashion brands, and events promoters.",
+            description: "Longform editorial feature + social amplification + GetMeLit UK newsletter. Ideal for UK Afrobeats labels, independent fashion brands, and events promoters.",
             price: "£600",
             priceNote: "per package",
             includes: [
@@ -756,7 +756,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR Britain — Starter",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "Monthly PR subscription for UK-based Black founders, creatives, and brands building their first media presence.",
+            description: "Monthly PR subscription for UK-based founders, creatives, and brands building their first media presence.",
             price: "£300",
             priceNote: "per month · rolling subscription",
             includes: [
@@ -770,7 +770,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR Britain — Growth",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "For established UK-based Black brands and public figures needing consistent media presence and strategic visibility.",
+            description: "For established UK-based brands and public figures needing consistent media presence and strategic visibility.",
             price: "£575",
             priceNote: "per month · 3-month minimum",
             includes: [
@@ -800,25 +800,25 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Black British and diaspora professionals", kind: "cards",
+        id: "connect", label: "Moveee", audience: "For brands seeking community-level access to creative professionals in the UK", kind: "cards",
         cards: [
           {
-            name: "Moveee Connect — UK",
+            name: "Moveee — UK",
             tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee's curated community of Black British and diaspora creatives, entrepreneurs, and professionals. Trusted access — not a cold ad.",
+            description: "Quarterly sponsorship inside The Moveee's curated community of UK creatives, entrepreneurs, and professionals. Trusted access — not a cold ad.",
             price: "£200",
             priceNote: "per quarter",
             includes: [
               "Community introduction post by The Moveee team",
               "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect UK community",
-              "Access to self-selected, high-intent Black British/diaspora audience",
+              "Exclusive member offer for Moveee UK community",
+              "Access to self-selected, high-intent, culturally engaged audience",
             ],
           },
         ],
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For independent consumer brands, retailers, and artisans in the UK", kind: "cards",
         cards: [
           {
             name: "Directory Listing",
@@ -855,7 +855,7 @@ export const MARKETS: Market[] = [
               "Dedicated seasonal campaign feature",
               "Multi-post social series (5–8 posts)",
               "Top-of-edition GetMeLit UK placement",
-              "Moveee Connect UK community promotion",
+              "Moveee UK community promotion",
             ],
           },
         ],
@@ -866,7 +866,7 @@ export const MARKETS: Market[] = [
           {
             name: "Happenings UK Partner — Single Day",
             tag: "events", tagLabel: "Events",
-            description: "Official media partner for Afrobeats nights, Caribbean food festivals, concerts, and single-day diaspora events across Britain.",
+            description: "Official media partner for Afrobeats nights, Caribbean food festivals, concerts, and single-day cultural events across Britain.",
             price: "£600",
             priceNote: "per event",
             includes: [
@@ -921,7 +921,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "travel", label: "Travel & Tours", audience: "For UK diaspora travel operators and heritage experience providers", kind: "cards",
+        id: "travel", label: "Travel & Tours", audience: "For UK-based travel operators and heritage experience providers", kind: "cards",
         cards: [
           {
             name: "Basic Listing",
@@ -945,7 +945,7 @@ export const MARKETS: Market[] = [
               "Heritage itinerary featured on Moveee Origins UK",
               "Editorial write-up (cultural context + itinerary)",
               "GetMeLit UK newsletter promotion",
-              "Moveee Connect UK community promotion",
+              "Moveee UK community promotion",
             ],
           },
         ],
@@ -961,17 +961,17 @@ export const MARKETS: Market[] = [
     id: "us",
     name: "The Moveee America",
     flag: "🇺🇸",
-    tagline: "Editorial, commerce, and media services for the Black community and diaspora across the United States.",
+    tagline: "Editorial, commerce, and media services for a global, culturally engaged community across the United States.",
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the Black community and diaspora across the US", kind: "cards",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting a culturally engaged audience across the US", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
             name: "Brand Culture Partnership",
             tag: "editorial", tagLabel: "Sponsored Content",
-            description: "Sponsored editorial + newsletter placement for US brands targeting Black diaspora audiences. The culturally-specific alternative to The Root or Essence.",
+            description: "Sponsored editorial + newsletter placement for US brands targeting a culturally engaged audience. The culturally-specific alternative to The Root or Essence.",
             price: "$800",
             priceNote: "per package",
             includes: [
@@ -989,7 +989,7 @@ export const MARKETS: Market[] = [
         service: moveeeProUS,
       },
       {
-        id: "presskit", label: "Presskit (PR)", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For US-based, internationally-minded founders, creatives, and brands", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -1006,7 +1006,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR America — Starter",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "Monthly PR subscription for African and diaspora-founded brands in the US building their first media presence.",
+            description: "Monthly PR subscription for internationally-founded brands in the US building their first media presence.",
             price: "$500",
             priceNote: "per month · rolling subscription",
             includes: [
@@ -1020,7 +1020,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR America — Growth",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "For established US-based African diaspora brands and public figures who need consistent media presence and strategic visibility.",
+            description: "For established US-based brands and public figures who need consistent media presence and strategic visibility.",
             price: "$950",
             priceNote: "per month · 3-month minimum",
             includes: [
@@ -1050,25 +1050,25 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to African diaspora professionals in the US", kind: "cards",
+        id: "connect", label: "Moveee", audience: "For brands seeking community-level access to internationally-minded professionals in the US", kind: "cards",
         cards: [
           {
-            name: "Moveee Connect — US",
+            name: "Moveee — US",
             tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee’s curated community of Black diaspora creatives, entrepreneurs, and professionals across the United States.",
+            description: "Quarterly sponsorship inside The Moveee’s curated community of globally-minded creatives, entrepreneurs, and professionals across the United States.",
             price: "$250",
             priceNote: "per quarter",
             includes: [
               "Community introduction post by The Moveee team",
               "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect US community",
-              "Access to self-selected, high-intent diaspora audience in NYC, Atlanta, Houston, DC, and LA",
+              "Exclusive member offer for Moveee US community",
+              "Access to self-selected, high-intent audience in NYC, Atlanta, Houston, DC, and LA",
             ],
           },
         ],
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For independent consumer brands, retailers, and artisans in the US", kind: "cards",
         cards: [
           {
             name: "Directory Listing",
@@ -1105,7 +1105,7 @@ export const MARKETS: Market[] = [
               "Dedicated seasonal campaign editorial",
               "Multi-post social series (5–8 posts)",
               "Top-of-edition GetMeLit US placement",
-              "Moveee Connect US community promotion",
+              "Moveee US community promotion",
             ],
           },
         ],
@@ -1171,7 +1171,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the Black diaspora in the US", kind: "cards",
+        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers in the US", kind: "cards",
         cards: [
           {
             name: "Basic Listing",
@@ -1188,14 +1188,14 @@ export const MARKETS: Market[] = [
           {
             name: "Editorial Feature",
             tag: "travel", tagLabel: "Featured",
-            description: "Full editorial write-up of your diaspora travel experience — cultural context, itinerary story, and photography — distributed through GetMeLit US and promoted across our social channels.",
+            description: "Full editorial write-up of your travel experience — cultural context, itinerary story, and photography — distributed through GetMeLit US and promoted across our social channels.",
             price: "$180",
             priceNote: "flat fee · 12% commission on confirmed bookings",
             includes: [
               "Curated experience featured on Moveee Origins US",
               "Editorial write-up (cultural context + itinerary)",
               "GetMeLit US newsletter promotion",
-              "Moveee Connect US community promotion",
+              "Moveee US community promotion",
             ],
           },
         ],

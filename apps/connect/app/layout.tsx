@@ -29,10 +29,10 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://connect.themoveee.com"),
   title: {
-    default: "Moveee Connect — Community",
-    template: "%s | Moveee Connect",
+    default: "Moveee — Community",
+    template: "%s | Moveee",
   },
-  description: "Moveee Connect — the community hub for culture, events, and creative networks.",
+  description: "Moveee — the community hub for culture, events, and creative networks.",
 };
 
 export default function RootLayout({

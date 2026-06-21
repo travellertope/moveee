@@ -2,7 +2,7 @@
 
 ## Goal
 
-Give every Moveee Connect member a public profile page at
+Give every Moveee member a public profile page at
 `/connect/[username]` with two tabs: a historical feed of their community
 contributions and a curated creative portfolio. This transforms the platform
 into a professional tool — users share their Moveee profile as a living
@@ -209,8 +209,8 @@ or by username (public)
 ### 5.2 OpenGraph Meta
 
 ```html
-<meta property="og:title" content="Adetola Ogundimu | Moveee Connect" />
-<meta property="og:description" content="Fashion designer & culture writer. Taste Maker on Moveee Connect." />
+<meta property="og:title" content="Adetola Ogundimu | Moveee" />
+<meta property="og:description" content="Fashion designer & culture writer. Taste Maker on Moveee." />
 <meta property="og:image" content="[avatar or generated OG image]" />
 <meta property="og:url" content="https://themoveee.com/connect/adetola" />
 ```

@@ -22,8 +22,8 @@ export default function TermsPage() {
 
         <h2>1. About The Moveee</h2>
         <p>
-          The Moveee is an independent editorial and lifestyle platform dedicated to African and
-          diaspora culture. We publish long-form journalism, curate cultural events, facilitate origin
+          The Moveee is an independent editorial and lifestyle platform dedicated to global
+          culture. We publish long-form journalism, curate cultural events, facilitate origin
           journeys, and operate a vetted commerce platform. Moveee Media Ltd is registered and
           primarily operates in the Federal Republic of Nigeria, with presence across Lagos, London,
           Accra, and New York.

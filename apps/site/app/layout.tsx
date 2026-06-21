@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     default: "The Moveee — Best in Culture",
     template: "%s | The Moveee",
   },
-  description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+  description: "The Moveee is an independent magazine and community celebrating the best of culture worldwide — editorials, music, film, travel, lifestyle, and more.",
   alternates: {
     canonical: "/",
   },
@@ -54,14 +54,14 @@ export const metadata: Metadata = {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "The Moveee — Best in African Culture",
+        alt: "The Moveee — Best in Global Culture",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in African Culture",
-    description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+    title: "The Moveee — Best in Global Culture",
+    description: "The Moveee is an independent magazine and community celebrating the best of culture worldwide — editorials, music, film, travel, lifestyle, and more.",
     images: ["/og-fallback.png"],
   },
 };

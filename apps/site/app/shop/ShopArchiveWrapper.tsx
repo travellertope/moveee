@@ -399,7 +399,7 @@ export default async function ShopArchiveWrapper({
           <div className="mb-left">
             <h3>Connect <em>Members</em></h3>
             <p>
-              Join Moveee Connect for early access to new makers, exclusive
+              Join Moveee for early access to new makers, exclusive
               editions, and 10% off every purchase in the shop.
             </p>
             <div className="mb-perks">

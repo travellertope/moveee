@@ -9,7 +9,7 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Origins · Curated Journeys · The Moveee" },
-  description: "Curated cultural journeys across Africa and the diaspora. Not tours. Slow, deep, culturally anchored experiences.",
+  description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
 };
 
 export default async function OriginsPage() {
@@ -139,7 +139,7 @@ export default async function OriginsPage() {
         <div className="origins-js-header">
           <h3>Every place we&rsquo;ve <em>been.</em></h3>
           {journeys.length > 0 && (
-            <p>{journeys.length} {journeys.length === 1 ? "journey" : "journeys"} · Africa &amp; Diaspora</p>
+            <p>{journeys.length} {journeys.length === 1 ? "journey" : "journeys"} · Around the World</p>
           )}
         </div>
 
@@ -242,7 +242,7 @@ export default async function OriginsPage() {
       {/* ── CONNECT CTA ── */}
       <section className="origins-connect-band">
         <div className="origins-cb-left">
-          <div className="origins-sec-tag">Moveee Connect</div>
+          <div className="origins-sec-tag">Moveee</div>
           <h3>Members go <em>first.</em></h3>
           <p>Connect members get priority booking on all Origins journeys, early access 48 hours before the public, and 15% off all prices — always.</p>
           <div className="origins-cb-perks">
@@ -279,7 +279,7 @@ export default async function OriginsPage() {
             <text x="40" y="320" fontFamily="serif" fontSize="48" fontStyle="italic" fontWeight="300" fill="rgba(243,236,224,0.07)">Connect</text>
           </svg>
           <div className="origins-cb-float">
-            <div className="origins-cb-float-tag">Moveee Connect</div>
+            <div className="origins-cb-float-tag">Moveee</div>
             <p className="origins-cb-float-text">The culture doesn&rsquo;t wait. Neither should you.</p>
           </div>
         </div>
