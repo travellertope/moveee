@@ -132,7 +132,7 @@ export default function PostDetailScreen() {
             <TouchableOpacity
               style={styles.openFullBtn}
               onPress={() => {
-                const url = `https://connect.themoveee.com/community/${item.slug}`;
+                const url = `https://web.themoveee.com/community/${item.slug}`;
                 Share.share(
                   Platform.OS === "ios"
                     ? { url, message: `${item.communityAuthor ?? "Someone"}'s post on Moveee` }

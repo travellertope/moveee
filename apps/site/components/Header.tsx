@@ -9,7 +9,7 @@ import SearchOverlay from "./SearchOverlay";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 
-const CONNECT_URL = "https://connect.themoveee.com";
+const CONNECT_URL = "https://web.themoveee.com";
 
 interface HeaderProps {
   variant?: "light" | "dark";

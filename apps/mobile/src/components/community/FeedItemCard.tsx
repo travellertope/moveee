@@ -66,9 +66,9 @@ function starsText(n?: number): string {
 
 function shareUrlFor(item: FeedItem): string | undefined {
   if (!item.slug) return undefined;
-  if (item.type === "pulse") return `https://connect.themoveee.com/pulse/${item.slug}`;
+  if (item.type === "pulse") return `https://web.themoveee.com/pulse/${item.slug}`;
   if (item.type === "editorial") return `https://themoveee.com/magazine/${item.slug}`;
-  return `https://connect.themoveee.com/community/${item.slug}`;
+  return `https://web.themoveee.com/community/${item.slug}`;
 }
 
 function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): string | undefined {

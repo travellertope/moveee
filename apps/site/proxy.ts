@@ -62,7 +62,7 @@ async function getWPRedirects() {
 
 // Routes that exist (or will exist) in the Next.js app.
 // Add to this set as you create new pages.
-// Site A routes only — community/auth routes live on connect.themoveee.com
+// Site A routes only — community/auth routes live on web.themoveee.com
 const APP_ROUTES = new Set([
   'magazine',
   'journeys',
@@ -170,8 +170,8 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── Site B redirects — moved to connect.themoveee.com ───────────
-  const CONNECT = 'https://connect.themoveee.com'
+  // ── Site B redirects — moved to web.themoveee.com ───────────
+  const CONNECT = 'https://web.themoveee.com'
   const connectPrefixes = [
     '/connect', '/events', '/community', '/pulse', '/directory',
     '/quotes', '/games', '/member', '/vendor',

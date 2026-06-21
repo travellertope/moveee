@@ -435,7 +435,7 @@ export default function MemberProfileScreen() {
 
   const handleShare = async () => {
     if (!profile?.username) return;
-    const url = `https://connect.themoveee.com/${profile.username}`;
+    const url = `https://web.themoveee.com/${profile.username}`;
     try {
       await Share.share({ message: `Check out ${profile.displayName} on Moveee: ${url}`, url });
     } catch { /* user cancelled */ }

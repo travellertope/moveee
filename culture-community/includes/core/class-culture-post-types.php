@@ -1272,7 +1272,7 @@ class Culture_Post_Types {
         }
         $token = bin2hex( random_bytes( 16 ) );
         update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
         wp_send_json_success( array( 'checkin_url' => $url ) );
     }
 

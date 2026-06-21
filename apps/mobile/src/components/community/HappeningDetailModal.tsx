@@ -54,7 +54,7 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
   };
 
   const handleUpgrade = () => {
-    openInApp("https://connect.themoveee.com/register?upgrade=patron");
+    openInApp("https://web.themoveee.com/register?upgrade=patron");
   };
 
   const handleCalendar = () => {

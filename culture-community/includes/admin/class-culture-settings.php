@@ -974,7 +974,7 @@ class Culture_Settings {
                     <input type="text" id="culture_google_client_id_web" name="culture_google_client_id_web"
                            value="<?php echo esc_attr( self::get( 'culture_google_client_id_web' ) ); ?>" class="large-text"
                            placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
-                    <p class="description"><?php esc_html_e( 'Used by the Next.js (connect.themoveee.com) NextAuth Google provider. Must match the GOOGLE_CLIENT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'Used by the Next.js (web.themoveee.com) NextAuth Google provider. Must match the GOOGLE_CLIENT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
                 </td>
             </tr>
             <tr>

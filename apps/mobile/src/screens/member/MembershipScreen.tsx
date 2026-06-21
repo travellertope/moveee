@@ -43,7 +43,7 @@ export default function MembershipScreen() {
   const styles = useMemo(() => createStyles(c), [c]);
 
   const handleUpgrade = () => {
-    openInApp("https://connect.themoveee.com/register?upgrade=patron");
+    openInApp("https://web.themoveee.com/register?upgrade=patron");
   };
 
   const handleJoinFree = () => {

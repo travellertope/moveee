@@ -10,7 +10,7 @@ Status: Pre-implementation — complete this document before writing any code.
 | Surface | Brand name | Domain | Tagline |
 |---|---|---|---|
 | `apps/site` | **Moveee Magazine** | `themoveee.com` | Connect to Culture |
-| `apps/connect` | **Moveee** | `connect.themoveee.com` | Connect to Culture |
+| `apps/connect` | **Moveee** | `web.themoveee.com` | Connect to Culture |
 
 **Description framing (universal — use this in all metadata):**  
 *"An independent magazine and community for people who live for culture — music, film, art, food, travel, and ideas."*
@@ -275,13 +275,13 @@ Delete `public/robots.txt` once `app/robots.ts` is live.
 
 ---
 
-## Part 2 — Moveee (`apps/connect` / `connect.themoveee.com`)
+## Part 2 — Moveee (`apps/connect` / `web.themoveee.com`)
 
 ### What this site is
 
 Community + auth platform. Public pages: events, directory, games, quotes, pulse stories, community posts, public member profiles, membership info. Private pages: `/member/*` (dashboard, wallet, settings, analytics).
 
-**SEO philosophy for connect.themoveee.com:** Index public discovery pages aggressively. Strictly noindex everything behind `/member/`. The community content (events, directory entries, quotes, public profiles) is the SEO value here — these are long-tail discovery pages.
+**SEO philosophy for web.themoveee.com:** Index public discovery pages aggressively. Strictly noindex everything behind `/member/`. The community content (events, directory entries, quotes, public profiles) is the SEO value here — these are long-tail discovery pages.
 
 ---
 
@@ -291,7 +291,7 @@ Community + auth platform. Public pages: events, directory, games, quotes, pulse
 
 **Target state:**
 ```ts
-metadataBase: new URL("https://connect.themoveee.com"),
+metadataBase: new URL("https://web.themoveee.com"),
 title: {
   default: "Moveee — Connect to Culture",
   template: "%s | Moveee",
@@ -400,7 +400,7 @@ Pages affected:
   "location": { "@type": "Place", "name": "{event.venue}", "address": "{event.city}" },
   "organizer": { "@type": "Organization", "name": "{event.organiser}" },
   "image": "{event.featuredImage}",
-  "url": "https://connect.themoveee.com/events/{event.slug}"
+  "url": "https://web.themoveee.com/events/{event.slug}"
 }
 ```
 
@@ -413,7 +413,7 @@ Pages affected:
   "description": "{entry.excerpt}",
   "image": "{entry.featuredImage}",
   "address": { "@type": "PostalAddress", "addressLocality": "{entry.city}" },
-  "url": "https://connect.themoveee.com/directory/{entry.slug}"
+  "url": "https://web.themoveee.com/directory/{entry.slug}"
 }
 ```
 
@@ -466,7 +466,7 @@ export default function robots() {
         ],
       },
     ],
-    sitemap: "https://connect.themoveee.com/sitemap.xml",
+    sitemap: "https://web.themoveee.com/sitemap.xml",
   }
 }
 ```
@@ -499,7 +499,7 @@ Instead ensure every indexable page uses the most specific image available:
 
 ### 3.3 Cross-site linking
 
-Google treats `themoveee.com` and `connect.themoveee.com` as separate domains for authority purposes. Internal links between them should use full absolute URLs and `rel="noopener"` (not internal `<Link>` components). Both sites should have a clear canonical home — Moveee Magazine at `themoveee.com` should be the authority domain.
+Google treats `themoveee.com` and `web.themoveee.com` as separate domains for authority purposes. Internal links between them should use full absolute URLs and `rel="noopener"` (not internal `<Link>` components). Both sites should have a clear canonical home — Moveee Magazine at `themoveee.com` should be the authority domain.
 
 ---
 

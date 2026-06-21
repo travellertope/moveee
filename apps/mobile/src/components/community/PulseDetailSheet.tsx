@@ -59,7 +59,7 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
 
   const handleShare = () => {
     if (!item.slug) return;
-    const url = `https://connect.themoveee.com/pulse/${item.slug}`;
+    const url = `https://web.themoveee.com/pulse/${item.slug}`;
     Share.share(
       Platform.OS === "ios"
         ? { url, message: item.title ?? "Check this out on Moveee" }

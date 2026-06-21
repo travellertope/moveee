@@ -45,7 +45,7 @@ export default async function MemberPage() {
   const displayName = user.displayName || user.name || user.username || "Member";
   const initial = displayName.charAt(0).toUpperCase();
   const referralUrl = user.referralCode
-    ? `https://connect.themoveee.com/register?ref=${user.referralCode}`
+    ? `https://web.themoveee.com/register?ref=${user.referralCode}`
     : null;
 
   return (
