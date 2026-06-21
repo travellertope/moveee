@@ -204,7 +204,7 @@ function buildDailyPrompt(date: string, seed: number): string {
   const topics = seededShuffle(TOPIC_POOL, seed).slice(0, 10);
   const topicList = topics.map((t, i) => `${i + 1}. ${t}`).join("\n");
 
-  return `You are the question writer for Culture Games — a daily trivia game on The Moveee, celebrating global culture.
+  return `You are the question writer for Culture Games — a daily trivia game on The Moveee, celebrating African and global diaspora culture.
 
 Today is ${date}. Generate exactly 10 trivia questions — one for each topic assigned below. You MUST write one question per topic, in order.
 

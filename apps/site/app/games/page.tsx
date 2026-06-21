@@ -5,7 +5,7 @@ import "@/app/games.css";
 export const metadata: Metadata = {
   title: { absolute: "Culture Games — The Moveee" },
   description:
-    "Test your knowledge of global culture through trivia, quotes, and daily challenges.",
+    "Test your knowledge of African and diaspora culture through trivia, quotes, and daily challenges.",
 };
 
 const GAMES = [
@@ -26,7 +26,7 @@ const GAMES = [
     href:        "/games/trivia",
     name:        "Culture Trivia",
     tagline:
-      "10 daily questions spanning Afrobeats, Nollywood, literature, history, and world art. Fresh questions every day.",
+      "10 daily questions spanning Afrobeats, Nollywood, literature, history, and African art. Fresh questions every day.",
     icon:        "🧠",
     badge:       "Daily",
     accentColor: "#3d4a2a",
@@ -52,7 +52,7 @@ const GAMES = [
     href:        "/games/crossword",
     name:        "Daily Crossword",
     tagline:
-      "A new global culture mini-crossword every day. Test your knowledge of people, places, and traditions.",
+      "A new African culture mini-crossword every day. Test your knowledge of people, places, and traditions.",
     icon:        "✏️",
     badge:       "Culture",
     accentColor: "#5c3a1a",
@@ -71,7 +71,7 @@ export default function GamesHub() {
           <p className="games-hub__eyebrow">Culture Games</p>
           <h1 className="games-hub__title">Play. Learn.&nbsp;Connect.</h1>
           <p className="games-hub__subtitle">
-            Test your knowledge of global culture — music, film,
+            Test your knowledge of African and diaspora culture — music, film,
             literature, history, and everything in between.
           </p>
         </div>

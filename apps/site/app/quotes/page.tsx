@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: { absolute: 'Quotes | The Moveee' },
-  description: 'Words that define the culture. A growing archive of quotes from global thinkers, artists, writers, and leaders — submitted and verified by the community.',
+  description: 'Words that define the culture. A growing archive of quotes from African and diaspora thinkers, artists, writers, and leaders — submitted and verified by the community.',
 };
 
 const WP_GRAPHQL_URL =
@@ -94,7 +94,7 @@ export default async function QuoteHub() {
       <header className="quote-header">
         <h1>Moveee <em>Quotes</em></h1>
         <p>
-          A collective archive of words that move us. From world literature to global cinema, captured by the community.
+          A collective archive of words that move us. From African literature to global cinema, captured by the community.
         </p>
 
         <div className="search-wrap max-w-xl mx-auto">

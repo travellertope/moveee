@@ -219,7 +219,7 @@ function buildImageMetadata(entryType: string): { title: string; description: st
   };
 }
 
-const SYSTEM_PROMPT = `You are a knowledgeable curator for The Moveee's Culture Directory — a wiki-like reference celebrating global culture.
+const SYSTEM_PROMPT = `You are a knowledgeable curator for The Moveee's Culture Directory — a wiki-like reference celebrating African and diaspora culture.
 
 Given a topic name, generate a concise, factual entry stub. Return ONLY valid JSON — no markdown, no code fences, no explanation.
 
@@ -251,7 +251,7 @@ The JSON must match this exact structure:
   }
 }
 
-Focus on diverse global contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, only include values you are confident are accurate — leave a field out entirely rather than guessing.`;
+Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, only include values you are confident are accurate — leave a field out entirely rather than guessing.`;
 
 /**
  * Extract the first complete JSON value (object or array) from a string.
@@ -331,7 +331,7 @@ function classifyTemplateType(
   return "scene";
 }
 
-const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates global culture.
+const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates African and Black diasporan culture.
 
 Given a directory entry, write a single illustration brief (2–4 sentences) describing WHAT TO DRAW. Be highly specific to this exact subject — extract concrete visual elements from the content: specific objects, garments, architecture, instruments, landscapes, gestures, cultural symbols, time period, geography. No generic descriptions.
 
@@ -564,7 +564,7 @@ export async function generateTopicSuggestions(
 ): Promise<string[]> {
   const sample = existingTitles.slice(0, 80).join(", ");
 
-  const prompt = `You are a curator for The Moveee's Culture Directory — a growing wiki celebrating global culture.
+  const prompt = `You are a curator for The Moveee's Culture Directory — a growing wiki celebrating African and diaspora culture globally.
 
 The directory already has entries for: ${sample}${existingTitles.length > 80 ? ` … and ${existingTitles.length - 80} more` : ""}.
 
@@ -575,7 +575,7 @@ Suggest 20 NEW topics not yet covered. Prioritise:
 - Foods, textiles, crafts, and fashion traditions
 - Films, novels, or artworks of lasting cultural importance
 
-Aim for geographic diversity across regions and cultures worldwide. The Moveee audience is culturally curious, internationally minded, and broadly aged 25-40.
+Aim for geographic diversity across West Africa, East Africa, Southern Africa, the Caribbean, Black Britain, the US, Brazil, and the wider diaspora. The Moveee audience is culturally curious, internationally minded, and broadly aged 25-40.
 
 Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
 ["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
@@ -596,8 +596,8 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
 }
 
 /**
- * Ask Gemini to suggest high-impact, culturally relevant quotes from
- * thinkers, artists, and leaders from around the world.
+ * Ask Gemini to suggest high-impact, culturally relevant quotes from 
+ * African and Diaspora thinkers, artists, and leaders.
  *
  * Returns an array of { text, author, source }.
  */
@@ -606,7 +606,7 @@ export async function generateSeedQuotes(
 ): Promise<Array<{ text: string; author: string; source: string }>> {
   const prompt = `You are a curator for The Moveee's Quote Archive — a place for wisdom, creativity, and cultural reflection.
 
-Generate ${count} unique, high-impact quotes from notable global figures (writers, musicians, leaders, artists, activists).
+Generate ${count} unique, high-impact quotes from notable African, Caribbean, or Diaspora figures (writers, musicians, leaders, artists, activists). 
 
 Focus on themes of:
 - Heritage and Identity
@@ -660,7 +660,7 @@ export async function searchAndExtractQuotes(
     results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet }))
   );
 
-  const prompt = `You are a quote verification assistant for The Moveee — a global culture platform.
+  const prompt = `You are a quote verification assistant for The Moveee — an African and diaspora culture platform.
 
 You have been given ${results.length} web search results that may contain real quotes by ${author}.
 
@@ -743,7 +743,7 @@ export async function verifyExistingQuote(
       )
     : "[]";
 
-  const prompt = `You are a quote fact-checker for The Moveee — a global culture platform. Your job is to assess whether a quote in our database is authentic.
+  const prompt = `You are a quote fact-checker for The Moveee — an African and diaspora culture platform. Your job is to assess whether a quote in our database is authentic.
 
 Quote to verify:
   Text:   "${quoteText}"
@@ -836,14 +836,14 @@ export async function enrichEventContent(
   eventDate: string,
   originalExcerpt: string
 ): Promise<string> {
-  const prompt = `You are the editorial writer for The Moveee — a global cultural platform. Use Google Search to research this event and write a rich editorial description for its detail page.
+  const prompt = `You are the editorial writer for The Moveee — a cultural platform for the African and global diaspora. Use Google Search to research this event and write a rich editorial description for its detail page.
 
 Event: "${title}"
 City: ${city}
 Date: ${eventDate}
 
 Write 1–2 paragraphs (total ~80–120 words) covering:
-1. What the event is, who's involved, and why it matters to our global community
+1. What the event is, who's involved, and why it matters to the African/diaspora community
 2. What to expect: highlights, atmosphere, and why it's worth attending
 
 Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
@@ -876,14 +876,14 @@ export async function evaluateAndExtractEvents(
     results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet, article_published: r.date ?? "" }))
   );
 
-  const prompt = `You are the events curator for The Moveee — an independent global cultural platform. Today's date is ${currentDate}.
+  const prompt = `You are the events curator for The Moveee — an independent cultural platform for the African and global diaspora community. Today's date is ${currentDate}.
 
 You have been given ${results.length} web search results about events in ${city}. Your job is to:
 
 1. FILTER: Only include events that are:
    - Genuinely upcoming (start date is after ${currentDate}) — skip past events
    - Actually a discrete event (not a listicle, news article, venue homepage, or general "things to do" guide)
-   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings — excellent events of any kind from any region are welcome.
+   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Especially relevant if connected to African, Caribbean, diaspora, or global South culture — but excellent events of any kind are welcome.
 
 2. EXTRACT DATES — this is the most critical step:
    The \`article_published\` field is when the web page was crawled by Google — it is NEVER the event date. Ignore it for date purposes.

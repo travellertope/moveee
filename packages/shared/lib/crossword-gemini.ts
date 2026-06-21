@@ -28,7 +28,7 @@ export async function generateCrosswordWithGemini(): Promise<GeminiCrosswordResp
     safetySettings: SAFETY_SETTINGS,
   });
 
-  const prompt = `You are a crossword master specializing in global culture.
+  const prompt = `You are a crossword master specializing in African and Black diaspora culture.
 Generate a high-quality 7x7 mini crossword puzzle.
 
 Return ONLY a raw JSON object — no markdown, no backticks, no explanation.
@@ -57,7 +57,7 @@ RULES:
 2. Use '.' for black cells and UPPERCASE letters for letters.
 3. Every word must be at least 3 letters long.
 4. IMPORTANT: Every clue in your 'clues' list MUST be physically present in your 'grid' string array.
-5. All words and clues must relate to global culture (people, places, food, music, history, traditions).
+5. All words and clues must relate to African/Black diaspora culture (people, places, food, music, history, traditions).
 6. Ensure the puzzle is solvable and interconnected (words should overlap where possible).
 7. Return ONLY the JSON object.`;
 
