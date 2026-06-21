@@ -123,6 +123,10 @@ function parseCommunityData(
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
+// Magazine/editorial content only lives on Site A (apps/site) — this feed mapper is shared
+// with apps/connect (Site B, web.themoveee.com), which has no local /magazine route, so
+// editorial hrefs must always be absolute rather than resolving against the current app's origin.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
 /** Fetch the latest community posts from the culture_post CPT. */
 export async function getCommunityPosts(): Promise<FeedItem[]> {
@@ -276,7 +280,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         date: post.date,
         excerpt: stripHtml(post.excerpt ?? ""),
         image: post.featuredImage?.node?.sourceUrl,
-        href: `/magazine/${post.slug}`,
+        href: `${SITE_URL}/magazine/${post.slug}`,
         category: post.categories?.nodes?.[0]?.name ?? "",
       });
     }
