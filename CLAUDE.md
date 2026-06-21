@@ -2096,7 +2096,7 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
 - `patron` = Moveee Pro DB value — never rename in code
 - `react-native-passkeys` replaces `@simplewebauthn/browser` for WebAuthn in RN
 - `react-native-qrcode-svg` for rendering perk QR codes
-- Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
+- Cashout fee is flat 40% (not tiered, see `Culture_Perks::cashout_fee_percent()`); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
 - **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = **10% off** regular price (not 7%). Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
