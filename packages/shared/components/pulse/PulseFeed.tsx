@@ -262,7 +262,7 @@ const handleType = (type: FeedItemType | "all") => {
               <SidebarHeading>Sections</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {[
-                  { label: "Members Directory", href: "/connect/people" },
+                  { label: "People Near Me", href: "/connect/people" },
                   { label: "Membership",        href: "/connect/membership" },
                 ].map(({ label, href }) => (
                   <li key={label} style={{ listStyle: "none" }}>
@@ -395,7 +395,7 @@ const handleType = (type: FeedItemType | "all") => {
                 {/* Connect sections row */}
                 <div style={{ display: "flex", borderBottom: "1px solid #e8e2d8" }}>
                   {[
-                    { label: "Members Directory", href: "/connect/people" },
+                    { label: "People Near Me", href: "/connect/people" },
                     { label: "Membership",        href: "/connect/membership" },
                   ].map(({ label, href }, i, arr) => (
                     <Link

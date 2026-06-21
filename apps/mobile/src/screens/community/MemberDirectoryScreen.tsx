@@ -17,11 +17,6 @@ const DISCIPLINES = [
   "Film", "Literature", "Architecture", "Design", "Tech",
 ];
 
-const LOCATIONS = [
-  "All", "Nigeria", "United Kingdom", "United States",
-  "Ghana", "Kenya", "Canada", "South Africa",
-];
-
 function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
@@ -109,61 +104,37 @@ export default function MemberDirectoryScreen() {
   const [loading,    setLoading]    = useState(true);
   const [search,     setSearch]     = useState("");
   const [discipline, setDiscipline] = useState("All");
-  // Default location to user's country so they see local members first
-  const [location, setLocation] = useState(() => {
-    const c = user?.countryOfResidence ?? "";
-    if (!c) return "All";
-    if (/nigeria/i.test(c)) return "Nigeria";
-    if (/united kingdom|uk|gb/i.test(c)) return "United Kingdom";
-    if (/united states|usa/i.test(c)) return "United States";
-    if (/ghana/i.test(c)) return "Ghana";
-    if (/kenya/i.test(c)) return "Kenya";
-    if (/canada/i.test(c)) return "Canada";
-    if (/south africa/i.test(c)) return "South Africa";
-    return "All";
-  });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [discOpen,   setDiscOpen]   = useState(false);
-  const [locOpen,    setLocOpen]    = useState(false);
-  const [cityOpen,   setCityOpen]   = useState(false);
-  const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
     api.get<Member[]>(`${MOBILE_API}/members?per_page=100`)
-      .then((data) => { setMembers(data ?? []); setFiltered(data ?? []); })
+      .then((data) => { setMembers(data ?? []); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  // Derive city list from loaded members in the active location — user's city first
-  const availableCities = useMemo(() => {
-    const userCity = (user?.city ?? "").trim();
-    const seen = new Set<string>();
-    const cities: string[] = ["All"];
-    if (userCity) { cities.push(userCity); seen.add(userCity.toLowerCase()); }
-    members
-      .filter((m) =>
-        location === "All" ||
-        (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase())
-      )
-      .forEach((m) => {
-        const c = (m.city ?? "").trim();
-        if (c && !seen.has(c.toLowerCase())) { seen.add(c.toLowerCase()); cities.push(c); }
-      });
-    return cities;
-  }, [members, user?.city, location]);
+  // People Near Me: scope to the viewer's own city first, falling back to
+  // their country if nobody in their exact city matches.
+  const nearbyMembers = useMemo(() => {
+    const userCity = (user?.city ?? "").trim().toLowerCase();
+    const userCountry = (user?.countryOfResidence ?? "").trim().toLowerCase();
+    if (!userCity && !userCountry) return members;
 
-  // Reset city filter if it's no longer a valid option after a location change
-  useEffect(() => {
-    if (cityFilter !== "All" && !availableCities.some((c) => c.toLowerCase() === cityFilter.toLowerCase())) {
-      setCityFilter("All");
+    if (userCity) {
+      const cityMatches = members.filter((m) => (m.city ?? "").trim().toLowerCase() === userCity);
+      if (cityMatches.length > 0) return cityMatches;
     }
-  }, [availableCities, cityFilter]);
+    if (userCountry) {
+      return members.filter((m) => (m.countryOfResidence ?? "").trim().toLowerCase() === userCountry);
+    }
+    return members;
+  }, [members, user?.city, user?.countryOfResidence]);
 
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(
-      members.filter((m) => {
+      nearbyMembers.filter((m) => {
         const matchSearch = !q || (
           (m.displayName || "").toLowerCase().includes(q) ||
           (m.occupation   || "").toLowerCase().includes(q) ||
@@ -172,14 +143,10 @@ export default function MemberDirectoryScreen() {
         const allInterests = [...(m.interests ?? []), ...(m.disciplines ?? [])];
         const matchDisc = discipline === "All" ||
           allInterests.some((d) => d.toLowerCase().includes(discipline.toLowerCase()));
-        const matchLoc = location === "All" ||
-          (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase());
-        const matchCity = cityFilter === "All" ||
-          (m.city || "").toLowerCase() === cityFilter.toLowerCase();
-        return matchSearch && matchDisc && matchLoc && matchCity;
+        return matchSearch && matchDisc;
       })
     );
-  }, [search, discipline, location, cityFilter, members]);
+  }, [search, discipline, nearbyMembers]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,7 +155,7 @@ export default function MemberDirectoryScreen() {
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
           <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Member Directory</Text>
+        <Text style={styles.headerTitle}>People Near Me</Text>
         <View style={styles.headerSideBtn} />
       </View>
 
@@ -204,11 +171,11 @@ export default function MemberDirectoryScreen() {
             onChangeText={setSearch}
           />
           <TouchableOpacity
-            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); setLocOpen(false); setCityOpen(false); }}
+            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); }}
             style={[styles.filterIconBtn, filtersOpen && styles.filterIconBtnActive]}
           >
             <Ionicons name="options-outline" size={20} color={filtersOpen ? c.paper : c.ink} />
-            {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
+            {discipline !== "All" && (
               <View style={styles.filterDot} />
             )}
           </TouchableOpacity>
@@ -216,51 +183,19 @@ export default function MemberDirectoryScreen() {
 
         {/* Filter panel — shown only when filter icon is toggled */}
         {filtersOpen && (
-          <>
-            <View style={styles.chipsRow}>
-              <TouchableOpacity
-                style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
-                onPress={() => {
-                  if (discipline !== "All") { setDiscipline("All"); }
-                  else { setDiscOpen(!discOpen); setLocOpen(false); setCityOpen(false); }
-                }}
-              >
-                <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
-                  {discipline === "All" ? "Discipline ▾" : `${discipline} ✕`}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
-                onPress={() => {
-                  if (location !== "All") { setLocation("All"); }
-                  else { setLocOpen(!locOpen); setDiscOpen(false); setCityOpen(false); }
-                }}
-              >
-                <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
-                  {location === "All" ? "Location ▾" : `${location} ✕`}
-                </Text>
-              </TouchableOpacity>
-              {availableCities.length > 1 && (
-                <TouchableOpacity
-                  style={[styles.filterChip, cityFilter !== "All" && styles.filterChipActive]}
-                  onPress={() => {
-                    if (cityFilter !== "All") { setCityFilter("All"); }
-                    else { setCityOpen(!cityOpen); setDiscOpen(false); setLocOpen(false); }
-                  }}
-                >
-                  <Text style={[styles.filterChipText, cityFilter !== "All" && styles.filterChipTextActive]}>
-                    {cityFilter === "All" ? "City ▾" : `${cityFilter} ✕`}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
-                <TouchableOpacity onPress={() => { setDiscipline("All"); setLocation("All"); setCityFilter("All"); }}>
-                  <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: c.mute }}>Clear all</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-          </>
+          <View style={styles.chipsRow}>
+            <TouchableOpacity
+              style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
+              onPress={() => {
+                if (discipline !== "All") { setDiscipline("All"); }
+                else { setDiscOpen(!discOpen); }
+              }}
+            >
+              <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
+                {discipline === "All" ? "Industry ▾" : `${discipline} ✕`}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -275,8 +210,8 @@ export default function MemberDirectoryScreen() {
           columnWrapperStyle={styles.row}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No members found</Text>
-              <Text style={styles.emptyDesc}>Try adjusting your filters.</Text>
+              <Text style={styles.emptyTitle}>No one near you yet.</Text>
+              <Text style={styles.emptyDesc}>Members who have opted into the directory will appear here once someone near you joins.</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -301,27 +236,6 @@ export default function MemberDirectoryScreen() {
               <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
             </TouchableOpacity>
           ))}
-        </View>
-      )}
-      {filtersOpen && locOpen && (
-        <View style={styles.dropdown}>
-          {LOCATIONS.map((l) => (
-            <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
-              <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-      {filtersOpen && cityOpen && (
-        <View style={styles.dropdown}>
-          {availableCities.map((city) => {
-            const label = city === "All" ? "All cities" : (city === user?.city ? `📍 ${city}` : city);
-            return (
-              <TouchableOpacity key={city} style={styles.dropdownItem} onPress={() => { setCityFilter(city); setCityOpen(false); }}>
-                <Text style={[styles.dropdownItemText, cityFilter === city && { color: c.ochre, fontFamily: fonts.sansBold }]}>{label}</Text>
-              </TouchableOpacity>
-            );
-          })}
         </View>
       )}
     </SafeAreaView>
