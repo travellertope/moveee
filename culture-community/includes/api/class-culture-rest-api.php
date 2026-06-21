@@ -14,9 +14,6 @@ class Culture_REST_API {
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
-        // Event check-in admin meta box.
-        add_action( 'add_meta_boxes', array( __CLASS__, 'add_event_checkin_metabox' ) );
-        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
     }
 
     /**
@@ -5316,61 +5313,5 @@ class Culture_REST_API {
             'rep_earned'     => $rep_earned,
             'credits_earned' => $credits_earned,
         ) );
-    }
-
-    /* ——————————————————————————————————————
-     *  Phase 9 — Admin meta box for event QR
-     * —————————————————————————————————————— */
-
-    public static function add_event_checkin_metabox() {
-        add_meta_box(
-            'culture-event-checkin',
-            'Event Check-in QR',
-            array( __CLASS__, 'render_event_checkin_metabox' ),
-            'culture_event',
-            'side',
-            'high'
-        );
-    }
-
-    public static function render_event_checkin_metabox( $post ) {
-        $token_hash = get_post_meta( $post->ID, '_event_checkin_token_hash', true );
-        $has_token  = ! empty( $token_hash );
-        ?>
-        <div id="culture-checkin-box">
-          <?php if ( $has_token ) : ?>
-            <p style="color:green">&#10003; QR token generated</p>
-          <?php endif; ?>
-          <button type="button" class="button" onclick="cultureGenerateCheckinToken(<?php echo (int) $post->ID; ?>)">
-            <?php echo $has_token ? 'Regenerate QR Token' : 'Generate QR Token'; ?>
-          </button>
-          <div id="culture-checkin-qr-result" style="margin-top:10px"></div>
-        </div>
-        <script>
-        function cultureGenerateCheckinToken(eventId) {
-          fetch(ajaxurl + '?action=culture_generate_checkin_token&event_id=' + eventId + '&nonce=<?php echo wp_create_nonce( 'culture_checkin_nonce' ); ?>', { method: 'POST' })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-              if (d.success) {
-                document.getElementById('culture-checkin-qr-result').innerHTML =
-                  '<p><strong>Check-in URL:</strong><br><small>' + d.data.checkin_url + '</small></p>' +
-                  '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(d.data.checkin_url) + '" style="max-width:200px;margin-top:8px">';
-              }
-            });
-        }
-        </script>
-        <?php
-    }
-
-    public static function ajax_generate_checkin_token() {
-        check_ajax_referer( 'culture_checkin_nonce', 'nonce' );
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_send_json_error( 'Unauthorized' );
-        }
-        $event_id = (int) $_POST['event_id'];
-        $token    = bin2hex( random_bytes( 16 ) );
-        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
-        wp_send_json_success( array( 'checkin_url' => $url, 'token' => $token ) );
     }
 }
