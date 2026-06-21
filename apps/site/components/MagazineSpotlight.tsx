@@ -23,6 +23,7 @@ export default function MagazineSpotlight({ latestIssue }: Props) {
 
   return (
     <section className="ms-section">
+      <div className="ms-section-inner">
       <div className="ms-intro">
         <p className="ms-eyebrow">Moveee Magazine</p>
         <h2 className="ms-h2">The reporting behind the community.</h2>
@@ -60,6 +61,7 @@ export default function MagazineSpotlight({ latestIssue }: Props) {
           </Link>
           <Link href="/magazine/issues" className="ms-archive-link">Browse the archive →</Link>
         </div>
+      </div>
       </div>
     </section>
   );

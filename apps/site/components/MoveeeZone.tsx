@@ -59,6 +59,7 @@ export default function MoveeeZone() {
 
       {/* ===== HERO ===== */}
       <section className="mz-hero">
+        <div className="mz-hero-inner">
         <div className="mz-hero-text">
           <p className="mz-eyebrow">A community that rewards you for being an active part of culture</p>
           <h1 className="mz-h1">Moveee for culture. <em>Discover and engage.</em></h1>
@@ -93,10 +94,12 @@ export default function MoveeeZone() {
             <span className="mz-hero-visual-react">+312 Cr earned</span>
           </div>
         </div>
+        </div>
       </section>
 
       {/* ===== WHAT IS MOVEEE + FEATURE GRID ===== */}
       <section className="mz-section" id="what-is-moveee">
+        <div className="mz-section-inner">
         <div className="mz-intro">
           <p className="mz-eyebrow mz-eyebrow--centred">Moveee</p>
           <h2 className="mz-h2">Your taste, with receipts.</h2>
@@ -126,10 +129,12 @@ export default function MoveeeZone() {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
       {/* ===== MEMBERSHIP TEASER ===== */}
       <section className="mz-section mz-section--bordered">
+        <div className="mz-section-inner">
         <div className="mz-intro">
           <p className="mz-eyebrow mz-eyebrow--centred">Membership</p>
           <h2 className="mz-h2">Free to join. More for the obsessed.</h2>
@@ -193,6 +198,7 @@ export default function MoveeeZone() {
               <span className="mz-qr-caption">Scan to download</span>
             </div>
           </div>
+        </div>
         </div>
       </section>
     </div>
