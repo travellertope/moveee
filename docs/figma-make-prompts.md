@@ -5301,7 +5301,7 @@ spotlight moment further down the page.
 - Link: `See how it works →`
 
 **FEATURE GRID (6 cards — title / one-line hook / body)**
-1. Pulse Feed — *Nine ways to post* — `A hidden gem. A hot take. A poll. An itinerary.
+1. Pulse Feed — *Nine ways to share* — `A hidden gem. A hot take. A poll. An itinerary.
    Post however the moment calls for it — not just another caption.`
 2. Culture Credits & Reputation Points — *Get rewarded for having taste* — `Every post,
    comment and validated tip earns Culture Credits (Cr). Build Reputation Points (Pt) and
@@ -5437,7 +5437,7 @@ FEATURE GRID (3 columns × 2 rows, 64px top margin, 24px gap, max-width 1200px c
       Partner Perks & Wallet · 🧭 Discover · 📅 Events · 🎮 Daily Games.
     Title: DM Sans 12px bold ochre uppercase, 16px top.
     Hook: Fraunces 20px bold ink, 6px top (the italic "hook" line from the copy above, e.g.
-      "Nine ways to post").
+      "Nine ways to share").
     Body: DM Sans 14px ink-soft, line-height 1.5, 8px top, 3 lines max.
   Fill all 6 cards with the exact feature copy supplied above, in the order listed.
 
