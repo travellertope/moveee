@@ -5,6 +5,7 @@ import "./member.css";
 import "./footer.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -68,13 +69,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        {/* Set data-theme before paint to avoid a light/dark flash on load */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("moveee-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}>
         <SessionProvider>
           <CurrencyProvider initialPricing={null}>
             <LanguageProvider>
-              <ConnectHeader />
-              <main>{children}</main>
-              <Footer />
+              <ThemeProvider>
+                <ConnectHeader />
+                <main>{children}</main>
+                <Footer />
+              </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>
         </SessionProvider>
