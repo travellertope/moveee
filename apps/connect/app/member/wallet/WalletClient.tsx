@@ -66,10 +66,12 @@ export default function WalletClient({
   credits,
   creditsPerGbp,
   entries,
+  isPro,
 }: {
   credits: number;
   creditsPerGbp: number;
   entries: LedgerEntry[];
+  isPro: boolean;
 }) {
   const [tab, setTab]               = useState<"history" | "cashout">("history");
   const [cashCredits, setCashCredits] = useState("");
@@ -205,8 +207,25 @@ export default function WalletClient({
       {tab === "cashout" && (
         <section className="mem-card">
           <div className="mem-card-label">Cash Out Credits</div>
+          {!isPro ? (
+            <div style={{ border: "1px solid var(--ochre)", borderRadius: 8, padding: "20px 16px", marginTop: 8 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--ochre)", color: "#fff", fontSize: "0.7rem", fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 10px", borderRadius: 20, marginBottom: 12 }}>
+                Connect Pro
+              </div>
+              <p style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 6px" }}>
+                Cash out your credits
+              </p>
+              <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", margin: "0 0 16px", lineHeight: 1.6 }}>
+                Convert your earned credits to real money — a Connect Pro exclusive. Upgrade to start cashing out.
+              </p>
+              <a href="/connect/membership" style={{ display: "inline-block", background: "var(--ink)", color: "var(--paper)", padding: "10px 20px", borderRadius: 4, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
+                Upgrade to Connect Pro →
+              </a>
+            </div>
+          ) : (
+          <>
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 8px", lineHeight: 1.5 }}>
-            Minimum 100 credits. A flat 30% fee applies.
+            Minimum 100 credits. A flat 40% fee applies.
             Partner perks are fee-free —{" "}
             <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browse perks</a> instead.
           </p>
@@ -348,6 +367,8 @@ export default function WalletClient({
                 {submitting ? "Submitting…" : "Request Cash Out"}
               </button>
             </form>
+          )}
+          </>
           )}
         </section>
       )}

@@ -8,6 +8,7 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
 
   // Contact
@@ -42,6 +43,7 @@ export interface User {
   directoryInstagram: string;
   directoryLinkedIn: string;
   directoryWebsite: string;
+  directoryTwitter: string;
 
   // Interests
   interests: string[];
@@ -62,6 +64,7 @@ export interface Member {
   username: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
   occupation: string;
   city: string;
@@ -71,6 +74,10 @@ export interface Member {
   instagram: string;
   linkedin: string;
   website: string;
+  twitter: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────
@@ -108,24 +115,40 @@ export interface FeedItem {
   eventCategory?: string;
   organiserName?: string;
   organiserSlug?: string;
+  organiserDirectoryId?: number | null;
   city?: string;          // used on happening + directory items
+  isFeatured?: boolean;   // editorial culture_event + community event template
+
+  // Community event RSVP (culture_post CPT, templateType "event" only)
+  rsvpEnabled?: boolean;
+  rsvpCapacity?: number;
+  rsvpCount?: number;
+  rsvpAvailable?: boolean;
 
   // Directory
   entryType?: string;
+  isPartner?: boolean;
 
   // Quote
   quoteSource?: string;
   quoteAuthor?: string;
+  quoteSharingReason?: string;
+  authorName?: string;
+  quoteType?: string;
 
   // Editorial
   category?: string;
+  author?: string;
+  readingTime?: number;
 
   // Community
+  communityAuthorId?: string;
   communityAuthor?: string;
   communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
+  authorRepTier?: string;
   commentCount?: number;
 
   // Community template fields
@@ -135,22 +158,63 @@ export interface FeedItem {
   locationName?: string;
   pollOptions?: PollOption[];
   pollExpiresAt?: string;
+  pollDescription?: string;
   galleryImages?: string[];
   videoUrl?: string;
-  itineraryStops?: ItineraryStop[];
+  // Hidden Gem
+  placeName?: string;
+  placeLocation?: string;
+  priceRange?: string;
+  openingHours?: string;
+  // Cultural Take
+  culturalTakeHeadline?: string;
+  // Food Review
   foodDishName?: string;
   foodRatingTaste?: number;
   foodRatingValue?: number;
   foodRatingVibe?: number;
+  cuisineTag?: string;
+  // Creative Showcase
+  showcaseTitle?: string;
+  showcaseMedium?: string;
+  showcaseCollaborator?: string;
+  showcaseCollaboratorUsername?: string;
+  // Book Review
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookStatus?: string;
+  bookOverallRating?: number;
+  bookRatingWriting?: number;
+  bookRatingStory?: number;
+  bookRatingCharacters?: number;
+  bookRatingPacing?: number;
+  bookFavQuote?: string;
+  bookRecommend?: boolean;
+  bookGenres?: string[];
+  // Itinerary
+  itineraryStops?: ItineraryStop[];
+  itineraryTitle?: string;
+  itineraryCity?: string;
+  itineraryBudget?: string;
+  itineraryDuration?: string;
+  itineraryBestTime?: string;
+  // Community Event (template)
+  isProOnly?: boolean;
+  ticketUrl?: string;
+  eventAddress?: string;
 
   // Reactions
   reactions?: { love: number; fire: number; clap: number };
+  // This user's current reaction on the post, from `_culture_post_reactions`
+  // usermeta — null/undefined means not reacted. Source of truth for
+  // hydrating ReactionBar's initial state instead of always assuming false.
+  userReaction?: "love" | "fire" | "clap" | null;
   wpId?: string;
 }
 
 // ── Community post templates ─────────────────────────────────────────────────
 export type TemplateType =
-  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review'
+  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review'
   | 'creative-showcase' | 'poll' | 'itinerary' | 'event' | 'quote';
 
 export interface PollOption {
@@ -251,6 +315,16 @@ export interface LedgerEntry {
   created_at: string;
 }
 
+export interface GameHistoryEntry {
+  id: number;
+  game_type: "trivia" | "who-said-it";
+  score: number;
+  max_score: number;
+  credits_earned: number;
+  played_date: string;
+  created_at: string;
+}
+
 // ── Phase 7 — Passkeys ────────────────────────────────────────────────────────
 export interface Passkey {
   id: number;
@@ -265,7 +339,9 @@ export interface Passkey {
 export type NotificationType =
   | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
-  | 'comment_received' | 'post_validated' | 'system';
+  | 'comment_received' | 'post_validated' | 'system'
+  | 'referral_received' | 'mention'
+  | 'new_follower' | 'new_follower_post' | 'event_rsvp';
 
 export interface Notification {
   id: number;
@@ -287,5 +363,84 @@ export interface AnalyticsData {
   posts_pending: number;
   badge_count: number;
   top_posts: { ID: number; post_title: string; reactions: number; comment_count: number }[];
-  rep_months: { month: string; reputation: number }[];
+  rep_months: { month: string; rep_earned: number }[];
+}
+
+// ── Shop ─────────────────────────────────────────────────────────────────────
+export type ProductBadge = "new" | "pro_early_access" | "low_stock" | "sale";
+
+export interface ShopProduct {
+  id: number;
+  name: string;
+  slug: string;
+  price: string;
+  regularPrice: string;
+  salePrice: string;
+  proPrice?: string | null;
+  currency: string;
+  currencySymbol: string;
+  imageUrl?: string | null;
+  makerName: string;
+  makerCity: string;
+  badge?: ProductBadge | null;
+  stockStatus: "instock" | "outofstock" | "onbackorder";
+  stockQuantity?: number | null;
+  categories: string[];
+}
+
+export interface ProductVariantColour {
+  name: string;
+  hex: string;
+  available: boolean;
+}
+
+export interface ProductVariantSize {
+  name: string;
+  available: boolean;
+}
+
+export interface ProductVariation {
+  id: number;
+  colour: string | null;
+  size: string | null;
+  inStock: boolean;
+}
+
+export interface HowItsMadeStep {
+  step: number;
+  title: string;
+  duration: string;
+  description: string;
+}
+
+export interface ShopProductDetail extends ShopProduct {
+  images: string[];
+  description: string;
+  shortDescription: string;
+  colours: ProductVariantColour[];
+  sizes: ProductVariantSize[];
+  variations: ProductVariation[];
+  makerBio: string;
+  makerSince: string;
+  makerRating: number;
+  makerProductCount: number;
+  makerAvatarUrl?: string | null;
+  howItsMade: HowItsMadeStep[];
+  asSeenIn?: { title: string; slug: string } | null;
+  relatedProducts: ShopProduct[];
+  vetted: boolean;
+}
+
+export interface ShopCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+export interface ShopVendor {
+  name: string;
+  city: string;
+  productCount: number;
+  logoUrl?: string | null;
 }

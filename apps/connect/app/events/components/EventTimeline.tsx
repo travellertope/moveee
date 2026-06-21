@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { getCategoryImage, getCategoryGradient } from "../utils/categoryImages";
 
 interface TimelineEvent {
   id: string | number;
@@ -101,15 +102,22 @@ function EventRow({ event }: { event: TimelineEvent }) {
   return (
     <Link href={`/events/${event.slug}`} className="etl-row">
       <div className="etl-thumb">
-        {img ? (
-          <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
-        ) : (
-          <div className="etl-thumb-ph" data-cat-ph={catSlug}>
-            <div className="ev-cat-ph">
-              <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
-            </div>
+        <Image
+          src={img || getCategoryImage(catSlug)}
+          alt={event.title}
+          fill
+          style={{ objectFit: "cover" }}
+        />
+        {/* gradient + icon overlay shown only if image fails — CSS hides by default */}
+        <div
+          className="etl-thumb-ph"
+          data-cat-ph={catSlug}
+          style={{ background: getCategoryGradient(catSlug) }}
+        >
+          <div className="ev-cat-ph">
+            <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
           </div>
-        )}
+        </div>
       </div>
       <div className="etl-body">
         <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />

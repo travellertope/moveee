@@ -4,65 +4,94 @@
  *  - Interest match    (0–50)
  *  - Recency           (0–30, half-life ~3 days)
  *  - Engagement        (0–20, reactions + comments)
+ *  - Location          (0–25, same city or same region)
+ *
+ * Location boost is a soft nudge: local content floats up but
+ * non-local content is never hidden. All content visible to all members.
  */
 
 import type { FeedItem } from "@/lib/unified-feed";
 
+const COUNTRY_TO_REGION: Record<string, string> = {
+  nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+  kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+  ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
+  "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+  "united states": "Diaspora US", us: "Diaspora US",
+  canada: "Diaspora US", ca: "Diaspora US",
+  france: "Diaspora Europe", germany: "Diaspora Europe",
+  netherlands: "Diaspora Europe", spain: "Diaspora Europe",
+};
+
+export function detectRegion(countryOfResidence?: string): string | null {
+  if (typeof document !== "undefined") {
+    const edition = document.cookie.split("; ")
+      .find(r => r.startsWith("moveee_edition="))?.split("=")[1];
+    const editionMap: Record<string, string> = { uk: "Diaspora UK", us: "Diaspora US", africa: "Africa" };
+    if (edition && editionMap[edition]) return editionMap[edition];
+  }
+  if (!countryOfResidence) return null;
+  return COUNTRY_TO_REGION[countryOfResidence.toLowerCase().trim()] ?? null;
+}
+
 /** Return a 0–100 relevance score for a single item. */
-export function scoreItem(item: FeedItem, interestTagSet: Set<string>): number {
+export function scoreItem(
+  item: FeedItem,
+  interestTagSet: Set<string>,
+  userCity?: string,
+  userRegion?: string,
+  followedUsernames?: Set<string>,
+): number {
   let score = 0;
 
-  // ── Interest match ──────────────────────────────────────────────────────
+  // ── Interest match (0–50) ───────────────────────────────────────────────
   if (interestTagSet.size > 0) {
-    const candidates = [
-      item.category,
-      item.communityTag,
-      item.entryType,
-      item.arm,
-    ].filter(Boolean).map(s => s!.toLowerCase());
-
-    const matched = candidates.some(c => interestTagSet.has(c));
-    if (matched) score += 50;
+    const candidates = [item.category, item.communityTag, item.entryType, item.arm]
+      .filter(Boolean).map(s => s!.toLowerCase());
+    if (candidates.some(c => interestTagSet.has(c))) score += 50;
   } else {
-    // No interests set — treat all items as neutral (score from recency+eng only)
     score += 25;
   }
 
-  // ── Recency ─────────────────────────────────────────────────────────────
-  const ageMs      = Date.now() - new Date(item.date).getTime();
-  const ageHours   = ageMs / 3_600_000;
-  const halfLifeH  = 72; // 3 days
-  const recency    = 30 * Math.pow(0.5, ageHours / halfLifeH);
-  score += Math.round(recency);
+  // ── Recency (0–30, 3-day half-life) ────────────────────────────────────
+  const ageHours = (Date.now() - new Date(item.date).getTime()) / 3_600_000;
+  score += Math.round(30 * Math.pow(0.5, ageHours / 72));
 
-  // ── Engagement ──────────────────────────────────────────────────────────
-  const totalReactions = (item.reactions?.love ?? 0)
-                       + (item.reactions?.fire ?? 0)
-                       + (item.reactions?.clap ?? 0);
-  const engagement     = Math.min(20, Math.log1p(totalReactions + (item.commentCount ?? 0)) * 4);
-  score += Math.round(engagement);
+  // ── Engagement (0–20) ───────────────────────────────────────────────────
+  const totalReactions = (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0) + (item.reactions?.clap ?? 0);
+  score += Math.round(Math.min(20, Math.log1p(totalReactions + (item.commentCount ?? 0)) * 4));
+
+  // ── Location (0–25) ─────────────────────────────────────────────────────
+  // Same city = strong boost; same region = gentle nudge.
+  // Non-local content still visible — this only re-orders, never hides.
+  if (userCity && item.city && item.city.toLowerCase() === userCity.toLowerCase()) {
+    score += 25;
+  } else if (userRegion && item.region && item.region === userRegion) {
+    score += 15;
+  }
+
+  // ── Followed author (+15) ───────────────────────────────────────────────
+  if (followedUsernames?.size && item.communityAuthorUsername &&
+      followedUsernames.has(item.communityAuthorUsername.toLowerCase())) {
+    score += 15;
+  }
 
   return Math.min(100, Math.max(0, score));
 }
 
-/** Sort feed items by relevance score (descending). Items within the same
- *  interest-match bucket are sorted by recency to keep the feed feeling fresh. */
-export function rankFeed(items: FeedItem[], interestTagSet: Set<string>): FeedItem[] {
-  const scored = items.map(item => ({
-    item,
-    score: scoreItem(item, interestTagSet),
-  }));
-
+export function rankFeed(
+  items: FeedItem[],
+  interestTagSet: Set<string>,
+  userCity?: string,
+  userRegion?: string,
+  followedUsernames?: Set<string>,
+): FeedItem[] {
+  const scored = items.map(item => ({ item, score: scoreItem(item, interestTagSet, userCity, userRegion, followedUsernames) }));
   return scored
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      // Tiebreak: most recent first
-      return new Date(b.item.date).getTime() - new Date(a.item.date).getTime();
-    })
+    .sort((a, b) => b.score !== a.score ? b.score - a.score : new Date(b.item.date).getTime() - new Date(a.item.date).getTime())
     .map(({ item }) => item);
 }
 
-/** Return a "trending" slice: highest combined reaction+comment count, last 7 days. */
 export function getTrending(items: FeedItem[], limit = 5): FeedItem[] {
   const cutoff = Date.now() - 7 * 86_400_000;
   return [...items]
@@ -75,7 +104,6 @@ export function getTrending(items: FeedItem[], limit = 5): FeedItem[] {
     .slice(0, limit);
 }
 
-/** Return true if an item matches the user's interests. */
 export function matchesInterests(item: FeedItem, interestTagSet: Set<string>): boolean {
   if (interestTagSet.size === 0) return false;
   const candidates = [item.category, item.communityTag, item.entryType, item.arm]

@@ -1,13 +1,16 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getUnifiedFeed } from "@/lib/unified-feed";
 import PulseFeed from "@/components/pulse/PulseFeed";
+import ConnectHero from "./ConnectHero";
 import Link from "next/link";
 import "../sections.css";
 import "./connect.css";
 
+// No session dependency in the RSC — hero and per-user features are handled
+// client-side (ConnectHero uses useSession; PulseFeed uses useSession for
+// For You scoring). This allows the full page to be ISR-cached once for all
+// users rather than once per user cookie.
 export const revalidate = 300;
 
 export const metadata: Metadata = {
@@ -17,41 +20,12 @@ export const metadata: Metadata = {
 };
 
 export default async function ConnectPage() {
-  const [items, session] = await Promise.all([
-    getUnifiedFeed(),
-    getServerSession(authOptions),
-  ]);
-
-  const user = session?.user as any;
-  const loggedIn = !!session;
+  const items = await getUnifiedFeed();
 
   return (
     <div>
-      {/* ── HERO + SECTION NAV — logged-out visitors only ── */}
-      {!loggedIn && (
-        <section className="mco-hero">
-          <div className="mco-hero-inner">
-            <div className="mco-hero-text">
-              <p className="mco-eyebrow">Moveee</p>
-              <h1 className="mco-headline">
-                Where culture <em>gathers.</em>
-              </h1>
-              <p className="mco-lede">
-                Village square for culture loving creatives, entrepreneurs, professionals.
-              </p>
-            </div>
-            <div className="mco-hero-cta">
-              <Link href="/register" className="con-btn-primary">Join Moveee →</Link>
-              <Link href="/login?callbackUrl=/connect" className="con-btn-ghost">Already a member? Sign in</Link>
-            </div>
-          </div>
-          <nav className="mco-section-nav" aria-label="Connect sections">
-            <a href="#feed" className="mco-nav-link">Pulse Feed</a>
-            <Link href="/connect/people" className="mco-nav-link">Members Directory</Link>
-            <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
-          </nav>
-        </section>
-      )}
+      {/* ── HERO + SECTION NAV — shown to logged-out visitors only (client-side check) ── */}
+      <ConnectHero />
 
       {/* ── PULSE FEED ── */}
       <section id="feed" className="mco-feed-section">

@@ -108,6 +108,14 @@
   color: var(--color-ink-soft);
 }
 
+.quote-sharing-reason {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin-top: 6px;
+  max-width: 32ch;
+}
+
 .quote-actions {
   display: flex;
   gap: 16px;

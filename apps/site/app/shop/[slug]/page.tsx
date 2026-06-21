@@ -2,15 +2,56 @@ import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PO
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import ProductGallery from "./ProductGallery";
-import ProductSelectors from "./ProductSelectors";
+import ShopSessionSection from "./ShopSessionSection";
 import ProductAccordion from "./ProductAccordion";
 import "../shop.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  let product: any = null;
+  try {
+    const data = await getWPData(GET_PRODUCT_BY_SLUG, { slug });
+    product = data?.product ?? null;
+  } catch { /* CMS unreachable */ }
+
+  if (!product) return {};
+
+  const title = `${product.name} — Moveee Magazine Shop`;
+  const description = product.shortDescription
+    ? product.shortDescription.replace(/<[^>]*>/g, "").trim().slice(0, 155)
+    : `${product.name} — curated by Moveee Magazine.`;
+  const image = product.image?.sourceUrl ?? "/og-fallback.png";
+
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `https://themoveee.com/shop/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `https://themoveee.com/shop/${slug}`,
+      siteName: "Moveee Magazine",
+      type: "website",
+      images: [{ url: image, width: 1200, height: 630, alt: product.name }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      site: "@moveeemedia",
+      creator: "@moveeemedia",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -64,11 +105,7 @@ export default async function ProductPage({
   const vendorProductCount: string = vp.productCount ? String(vp.productCount) : "";
   const vendorAvatarUrl: string = vp.avatarUrl    || "";
 
-  // ── Session — needed for Pro member perks ────────────────────────────────
-  const session = await getServerSession(authOptions);
-  const sessionUser = session?.user as any;
-  const isPro = sessionUser?.tier === "patron";
-  const isLoggedIn = !!session;
+  // Session-dependent Pro perks are rendered client-side in ShopSessionSection
 
   // ── Product editorial meta (set as WooCommerce custom fields) ─────────────
   const pm = product.moveeeMeta ?? {};
@@ -82,8 +119,7 @@ export default async function ProductPage({
   const isEarlyAccessActive = earlyAccessUntil
     ? new Date(earlyAccessUntil) > new Date()
     : false;
-  // Early access: only Pro members can add to cart while the gate is active
-  const isGated = isEarlyAccessActive && !isPro;
+  // isGated / isPro resolved client-side in ShopSessionSection
 
   const variations = product.variations?.nodes ?? [];
 
@@ -140,9 +176,42 @@ export default async function ProductPage({
   ];
 
   const firstCat = product.productCategories?.nodes?.[0];
+  const productUrl = `https://themoveee.com/shop/${slug}`;
+  const productPrice = product.price?.replace(/<[^>]*>/g, "").replace(/[^0-9.]/g, "") || "";
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.shortDescription?.replace(/<[^>]*>/g, "").trim() || product.name,
+    image: product.image?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    url: productUrl,
+    brand: { "@type": "Brand", name: vname || "Moveee Magazine" },
+    ...(productPrice ? {
+      offers: {
+        "@type": "Offer",
+        price: productPrice,
+        priceCurrency: "GBP",
+        availability: "https://schema.org/InStock",
+        url: productUrl,
+        seller: { "@type": "Organization", name: "Moveee Magazine" },
+      },
+    } : {}),
+  };
+  const productBreadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "Shop", item: "https://themoveee.com/shop" },
+      ...(firstCat ? [{ "@type": "ListItem", position: 3, name: firstCat.name, item: `https://themoveee.com/shop/category/${firstCat.slug}` }] : []),
+      { "@type": "ListItem", position: firstCat ? 4 : 3, name: product.name, item: productUrl },
+    ],
+  };
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productBreadcrumbJsonLd) }} />
       {/* ── BREADCRUMB ── */}
       <nav className="sp-breadcrumb" aria-label="Breadcrumb">
         <div>
@@ -187,37 +256,14 @@ export default async function ProductPage({
             />
           )}
 
-          {/* Early access gate banner */}
-          {isEarlyAccessActive && (
-            <div className={`sp-early-access-banner${isPro ? " sp-early-access-banner--open" : ""}`}>
-              <span className="sp-ea-badge">★ Pro Early Access</span>
-              {isPro ? (
-                <span className="sp-ea-msg">You have early access to this drop as a Connect Pro member.</span>
-              ) : (
-                <>
-                  <span className="sp-ea-msg">
-                    This drop is available to Connect Pro members first.
-                    {earlyAccessUntil && (
-                      <> Opens publicly on {new Date(earlyAccessUntil).toLocaleDateString("en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.</>
-                    )}
-                  </span>
-                  <Link href="/connect/membership" className="sp-ea-upgrade">
-                    {isLoggedIn ? "Upgrade to Pro →" : "Join Connect Pro →"}
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
-
-          <ProductSelectors
-            productId={product.databaseId}
+          <ShopSessionSection
+            productId={parseInt(product.databaseId)}
             price={product.price}
             regularPrice={product.regularPrice}
             variations={variations}
             memberPrice={memberPriceHtml}
-            isPro={isPro}
-            isLoggedIn={isLoggedIn}
-            isGated={isGated}
+            isEarlyAccessActive={isEarlyAccessActive}
+            earlyAccessUntil={earlyAccessUntil}
           />
 
           <ProductAccordion items={accordionItems} />

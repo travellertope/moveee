@@ -15,7 +15,9 @@ class Culture_Post_Types {
         self::register_taxonomies();
         self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
+        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
+        add_action( 'acf/save_post', array( __CLASS__, 'cache_event_showcase_urls' ), 20 );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
@@ -45,7 +47,9 @@ class Culture_Post_Types {
             '_culture_is_featured'        => array( 'type' => 'string' ),
             '_culture_event_image_url'    => array( 'type' => 'string' ),
             '_culture_opening_hours'      => array( 'type' => 'string' ),
-            '_culture_event_organiser_id' => array( 'type' => 'integer' ),
+            '_culture_event_organiser_id'  => array( 'type' => 'integer' ),
+            '_culture_event_showcase_urls' => array( 'type' => 'string' ),
+            '_culture_event_pro_only'      => array( 'type' => 'boolean' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
@@ -53,7 +57,7 @@ class Culture_Post_Types {
                 'type'         => 'string',
                 'single'       => true,
                 'show_in_rest' => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
@@ -62,7 +66,7 @@ class Culture_Post_Types {
                 'type'         => $args['type'],
                 'single'       => true,
                 'show_in_rest' => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
@@ -107,6 +111,15 @@ class Culture_Post_Types {
                         $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
                         return $oid ? get_post_field( 'post_name', $oid ) : null;
                     } )(),
+                    'is_featured'  => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                    'rsvp_count'   => ( function() use ( $post_arr ) {
+                        global $wpdb;
+                        $t = $wpdb->prefix . 'culture_event_rsvp';
+                        return (int) $wpdb->get_var( $wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$t} WHERE event_slug = %s AND status = 'confirmed'",
+                            $post_arr['slug']
+                        ) );
+                    } )(),
                 );
             },
             'schema' => null,
@@ -130,15 +143,55 @@ class Culture_Post_Types {
             '_food_rating_taste'   => 'integer',
             '_food_rating_value'   => 'integer',
             '_food_rating_vibe'    => 'integer',
+            // Community-organiser event template (separate from the culture_event CPT above)
+            '_event_date'              => 'string',
+            '_event_end_date'          => 'string',
+            '_event_venue'             => 'string',
+            '_event_city'              => 'string',
+            '_event_address'           => 'string',
+            '_event_admission'         => 'string',
+            '_event_ticket_url'        => 'string',
+            '_event_category'          => 'string',
+            '_culture_event_organiser_id' => 'integer',
+            '_culture_rsvp_enabled'    => 'boolean',
+            '_culture_rsvp_capacity'   => 'integer',
+            '_culture_is_featured'     => 'boolean',
         );
         foreach ( $community_post_meta as $meta_key => $type ) {
             register_post_meta( 'culture_post', $meta_key, array(
                 'type'          => $type,
                 'single'        => true,
                 'show_in_rest'  => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
+
+        // Resolved organiser + RSVP fields for community-organiser events, mirroring
+        // culture_event_meta above. Kept as a single REST field (rather than raw meta)
+        // so the Next.js feed mapper doesn't need a second request per event to resolve
+        // the organiser directory entry or live RSVP count.
+        register_rest_field( 'culture_post', 'community_event_meta', array(
+            'get_callback' => function ( $post_arr ) {
+                $id = $post_arr['id'];
+                if ( get_post_meta( $id, '_template_type', true ) !== 'event' ) {
+                    return null;
+                }
+                $organiser_id = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                $rsvp_enabled = (bool) get_post_meta( $id, '_culture_rsvp_enabled', true );
+                return array(
+                    'organiser_id'   => $organiser_id ?: null,
+                    'organiser_name' => $organiser_id ? get_the_title( $organiser_id ) : null,
+                    'organiser_slug' => $organiser_id ? get_post_field( 'post_name', $organiser_id ) : null,
+                    'rsvp_enabled'   => $rsvp_enabled,
+                    'rsvp_capacity'  => (int) get_post_meta( $id, '_culture_rsvp_capacity', true ),
+                    'rsvp_count'     => $rsvp_enabled && class_exists( 'Culture_Community_RSVP' )
+                        ? Culture_Community_RSVP::get_count( $id )
+                        : 0,
+                    'is_featured'    => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                );
+            },
+            'schema' => null,
+        ) );
 
         // directory entry meta (Phase 3)
         $directory_meta = array(
@@ -148,13 +201,18 @@ class Culture_Post_Types {
             '_partner_status'         => 'string',
             '_partner_perk_template'  => 'string',
             '_entry_city'             => 'string',
+            // Rich detail fields for mobile DirectoryDetailScreen
+            '_about_fields'           => 'string',   // JSON: [{label, value}]
+            '_entry_quote'            => 'string',   // featured quote for Concept/Book blockquote
+            '_selected_works'         => 'string',   // JSON: [{imageUrl?, caption}]
+            '_related_entries'        => 'string',   // JSON: [{id, title, type, slug}]
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(
                 'type'          => $type,
                 'single'        => true,
                 'show_in_rest'  => true,
-                'auth_callback' => '__return_true',
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
     }
@@ -164,9 +222,7 @@ class Culture_Post_Types {
      * can query them.
      */
     public static function register_graphql_fields() {
-        error_log( 'Culture Community: Registering GraphQL fields...' );
         if ( ! function_exists( 'register_graphql_field' ) ) {
-            error_log( 'Culture Community: register_graphql_field function not found!' );
             return;
         }
 
@@ -193,10 +249,12 @@ class Culture_Post_Types {
 
         // 1. Quotes
         $quote_fields = array(
-            'quoteSource'  => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
-            'quoteLikes'   => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
-            'quoteReports' => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
-            'quoteUserId'  => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSource'        => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
+            'quoteLikes'         => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
+            'quoteReports'       => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
+            'quoteUserId'        => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSharingReason' => array( 'type' => 'String', 'meta_key' => '_quote_sharing_reason' ),
+            'quoteType'          => array( 'type' => 'String', 'meta_key' => '_quote_type' ),
         );
 
         foreach ( $quote_fields as $field_name => $config ) {
@@ -1159,13 +1217,65 @@ class Culture_Post_Types {
      */
     public static function register_meta_boxes() {
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
+        add_meta_box( 'culture_event_checkin', __( 'Event Check-in QR', 'culture-community' ), array( __CLASS__, 'render_event_checkin_meta_box' ), 'culture_event', 'side', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
         add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
+        add_meta_box( 'culture_featured_products', __( 'The Edit — Featured Products', 'culture-community' ), array( __CLASS__, 'render_featured_products_meta_box' ), 'post', 'side', 'default' );
+    }
+
+    public static function render_event_checkin_meta_box( $post ) {
+        $has_token = ! empty( get_post_meta( $post->ID, '_event_checkin_token_hash', true ) );
+        $nonce     = wp_create_nonce( 'culture_checkin_nonce_' . $post->ID );
+        ?>
+        <div id="culture-checkin-box">
+            <?php if ( $has_token ) : ?>
+                <p style="color:#16a34a;margin:0 0 8px">✓ Token generated</p>
+            <?php endif; ?>
+            <button type="button" class="button" onclick="cultureGenerateCheckin(<?php echo (int) $post->ID; ?>, '<?php echo esc_js( $nonce ); ?>')">
+                <?php echo $has_token ? 'Regenerate QR' : 'Generate QR Token'; ?>
+            </button>
+            <div id="culture-checkin-result" style="margin-top:12px"></div>
+        </div>
+        <script>
+        function cultureGenerateCheckin(eventId, nonce) {
+            var fd = new FormData();
+            fd.append('action', 'culture_generate_checkin_token');
+            fd.append('event_id', eventId);
+            fd.append('nonce', nonce);
+            fetch(ajaxurl, { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    if (d.success) {
+                        var url = d.data.checkin_url;
+                        document.getElementById('culture-checkin-result').innerHTML =
+                            '<p style="word-break:break-all;font-size:11px;margin:0 0 8px"><strong>URL:</strong><br>' + url + '</p>' +
+                            '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url) + '" style="max-width:180px;display:block">';
+                    } else {
+                        alert('Error generating token');
+                    }
+                });
+        }
+        </script>
+        <?php
     }
 
     /** Saves as_told_to when Gutenberg updates the post via the REST API. */
+    public static function ajax_generate_checkin_token() {
+        $event_id = (int) ( $_POST['event_id'] ?? 0 );
+        if ( ! check_ajax_referer( 'culture_checkin_nonce_' . $event_id, 'nonce', false ) ) {
+            wp_send_json_error( 'Invalid nonce' );
+        }
+        if ( ! current_user_can( 'edit_posts' ) || get_post_type( $event_id ) !== 'culture_event' ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+        $token = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        wp_send_json_success( array( 'checkin_url' => $url ) );
+    }
+
     public static function save_as_told_to_rest( $post, $request ) {
         $params = $request->get_json_params();
         if ( isset( $params['meta']['as_told_to'] ) ) {
@@ -1204,6 +1314,43 @@ class Culture_Post_Types {
         <p class="description" style="font-size:11px;color:#666;">
             <?php esc_html_e( 'When set, the byline reads: "Words by [Guest], as told to [WP Author]".', 'culture-community' ); ?>
         </p>
+        <?php
+    }
+
+    public static function render_featured_products_meta_box( $post ) {
+        wp_nonce_field( 'culture_featured_products', 'culture_featured_products_nonce' );
+        $raw  = get_post_meta( $post->ID, '_culture_featured_products', true );
+        $ids  = $raw ? (array) json_decode( $raw, true ) : array();
+        $ids  = array_filter( array_map( 'absint', $ids ) );
+
+        // Build a label showing each product name if WooCommerce is active.
+        $labels = array();
+        if ( function_exists( 'wc_get_product' ) ) {
+            foreach ( $ids as $pid ) {
+                $p = wc_get_product( $pid );
+                if ( $p ) { $labels[] = $p->get_name() . ' (#' . $pid . ')'; }
+                else      { $labels[] = '#' . $pid; }
+            }
+        }
+        ?>
+        <p style="margin-bottom:4px;font-size:11px;color:#666;">
+            <?php esc_html_e( 'Product IDs to feature in The Edit on the mobile app. Comma-separated. Products must be published WooCommerce products.', 'culture-community' ); ?>
+        </p>
+        <input
+            type="text"
+            id="culture_featured_products"
+            name="culture_featured_products"
+            value="<?php echo esc_attr( implode( ', ', $ids ) ); ?>"
+            style="width:100%;margin-bottom:6px;"
+            placeholder="e.g. 123, 456, 789"
+        >
+        <?php if ( ! empty( $labels ) ) : ?>
+        <ul style="margin:0;padding:0;list-style:none;">
+            <?php foreach ( $labels as $label ) : ?>
+            <li style="font-size:11px;color:#444;padding:2px 0;">✓ <?php echo esc_html( $label ); ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
         <?php
     }
 
@@ -1301,6 +1448,15 @@ class Culture_Post_Types {
     }
 
     public static function save_meta_boxes( $post_id ) {
+        // Nonce verification alone proves the request originated from the
+        // edit screen, not that this user is allowed to edit this specific
+        // post — save_post can still fire from contexts where that capability
+        // isn't guaranteed (e.g. another plugin calling wp_insert_post()
+        // directly). Check it once up front for all nonce-gated blocks below.
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
             if ( isset( $_POST['culture_dir_city'] ) ) {
@@ -1338,12 +1494,55 @@ class Culture_Post_Types {
         if ( isset( $_POST['culture_as_told_to_nonce'] ) && wp_verify_nonce( $_POST['culture_as_told_to_nonce'], 'culture_as_told_to' ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ?? '' ) );
         }
+        if ( isset( $_POST['culture_featured_products_nonce'] ) && wp_verify_nonce( $_POST['culture_featured_products_nonce'], 'culture_featured_products' ) ) {
+            $raw_ids = sanitize_text_field( $_POST['culture_featured_products'] ?? '' );
+            $ids     = array_values( array_filter( array_map( 'absint', explode( ',', $raw_ids ) ) ) );
+            if ( ! empty( $ids ) ) {
+                update_post_meta( $post_id, '_culture_featured_products', wp_json_encode( $ids ) );
+            } else {
+                delete_post_meta( $post_id, '_culture_featured_products' );
+            }
+        }
         // Gutenberg saves via REST — the nonce above won't be present, so also save
         // when the field arrives without a nonce (capability check is sufficient here
         // because register_post_meta auth_callback already guards REST writes).
         if ( ! isset( $_POST['culture_as_told_to_nonce'] ) && isset( $_POST['as_told_to'] ) && current_user_can( 'edit_post', $post_id ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ) );
         }
+    }
+
+    /**
+     * After ACF saves a culture_event, resolve showcase image attachment IDs to
+     * URLs and store them in _culture_event_showcase_urls (JSON). The Next.js
+     * frontend reads this field to avoid batching media API calls at render time.
+     * Runs at acf/save_post priority 20 (after ACF writes its fields at priority 5).
+     */
+    public static function cache_event_showcase_urls( $post_id ) {
+        if ( get_post_type( $post_id ) !== 'culture_event' ) {
+            return;
+        }
+        if ( ! function_exists( 'get_field' ) ) {
+            return;
+        }
+        $showcase = get_field( 'showcase', $post_id );
+        if ( ! is_array( $showcase ) || empty( $showcase ) ) {
+            return;
+        }
+        $urls = array();
+        foreach ( $showcase as $item ) {
+            $img = $item['image'] ?? null;
+            $url = '';
+            if ( is_array( $img ) ) {
+                $url = $img['url'] ?? $img['sizes']['large'] ?? $img['sizes']['full'] ?? '';
+            } elseif ( is_numeric( $img ) ) {
+                $src = wp_get_attachment_image_url( (int) $img, 'large' );
+                $url = $src ?: wp_get_attachment_url( (int) $img ) ?: '';
+            } elseif ( is_string( $img ) ) {
+                $url = $img;
+            }
+            $urls[] = esc_url_raw( $url );
+        }
+        update_post_meta( $post_id, '_culture_event_showcase_urls', wp_json_encode( $urls ) );
     }
 
     // ── Issue taxonomy admin UI ──────────────────────────────────────────
@@ -1429,59 +1628,47 @@ class Culture_Post_Types {
      * Exclude expired culture_event posts from the WP REST API.
      * An event is expired when today is past its end_date, or past its
      * event_date if no end_date is set.
+     *
+     * Implemented as a single raw-SQL lookup (2 LEFT JOINs) rather than a
+     * WP_Query meta_query, which previously expanded into ~5 separate
+     * LEFT JOINs against the unindexed wp_postmeta.meta_value column
+     * (one OR-branch used NOT EXISTS, two used DATE-cast comparisons) and
+     * was timing out in production. See "Raw SQL REST endpoints" in
+     * CLAUDE.md for the established pattern this follows.
      */
     public static function exclude_expired_events( $args, $request ) {
+        global $wpdb;
         $today = gmdate( 'Y-m-d' );
 
-        $expiry_clause = array(
-            'relation' => 'OR',
-            // Has an end_date that is today or in the future
-            array(
-                'key'     => '_culture_event_end_date',
-                'value'   => $today,
-                'compare' => '>=',
-                'type'    => 'DATE',
-            ),
-            // No end_date set — fall back to event_date being today or future
-            array(
-                'relation' => 'AND',
-                array(
-                    'key'     => '_culture_event_end_date',
-                    'value'   => '',
-                    'compare' => 'IN',
-                ),
-                array(
-                    'key'     => '_culture_event_date',
-                    'value'   => $today,
-                    'compare' => '>=',
-                    'type'    => 'DATE',
-                ),
-            ),
-            // end_date meta doesn't exist at all — use event_date
-            array(
-                'relation' => 'AND',
-                array(
-                    'key'     => '_culture_event_end_date',
-                    'compare' => 'NOT EXISTS',
-                ),
-                array(
-                    'key'     => '_culture_event_date',
-                    'value'   => $today,
-                    'compare' => '>=',
-                    'type'    => 'DATE',
-                ),
-            ),
-        );
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT p.ID FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} end_meta ON end_meta.post_id = p.ID AND end_meta.meta_key = '_culture_event_end_date'
+             LEFT JOIN {$wpdb->postmeta} date_meta ON date_meta.post_id = p.ID AND date_meta.meta_key = '_culture_event_date'
+             WHERE p.post_type = 'culture_event'
+               AND (
+                 ( end_meta.meta_value IS NOT NULL AND end_meta.meta_value != '' AND CAST(end_meta.meta_value AS DATE) >= %s )
+                 OR
+                 ( ( end_meta.meta_value IS NULL OR end_meta.meta_value = '' ) AND CAST(date_meta.meta_value AS DATE) >= %s )
+               )",
+            $today,
+            $today
+        ) );
 
-        if ( empty( $args['meta_query'] ) ) {
-            $args['meta_query'] = array( $expiry_clause );
-        } else {
-            $args['meta_query'] = array(
-                'relation' => 'AND',
-                $args['meta_query'],
-                $expiry_clause,
-            );
+        $ids = array_map( 'intval', $ids );
+
+        if ( empty( $ids ) ) {
+            // No upcoming events — force an empty result set (an empty
+            // post__in array is ignored by WP_Query and would return
+            // everything instead of nothing).
+            $ids = array( 0 );
         }
+
+        if ( ! empty( $args['post__in'] ) ) {
+            $ids = array_values( array_intersect( $args['post__in'], $ids ) );
+            if ( empty( $ids ) ) $ids = array( 0 );
+        }
+
+        $args['post__in'] = $ids;
 
         return $args;
     }

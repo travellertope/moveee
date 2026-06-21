@@ -16,6 +16,19 @@
   padding: 48px 48px 0;
 }
 
+.prf-cover {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: rgba(42,36,28,.06);
+}
+.prf-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .prf-identity {
   display: flex;
   gap: 28px;
@@ -38,11 +51,24 @@
   overflow: hidden;
 }
 .prf-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.prf-avatar--patron { background: var(--ochre); }
+.prf-avatar--patron {
+  background: var(--ochre);
+  box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.65);
+  animation: prf-pro-glow 2.6s ease-in-out infinite;
+}
+@keyframes prf-pro-glow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.65); }
+  50% { box-shadow: 0 0 0 3px var(--ochre), 0 0 28px 8px rgba(179,130,56,.35); }
+}
+
+.prf-pro-check { flex-shrink: 0; }
 
 .prf-identity-body { flex: 1; min-width: 0; }
 
 .prf-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-fraunces), serif;
   font-size: clamp(22px, 3vw, 32px);
   font-weight: 300;
@@ -218,6 +244,39 @@
 .prf-share-btn--copied {
   color: var(--ochre);
   border-color: rgba(179,130,56,.3);
+}
+.prf-follow-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.prf-follow-btn--active {
+  color: var(--ochre);
+  border-color: rgba(179,130,56,.4);
+  background: rgba(179,130,56,.06);
+}
+.prf-followers-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+}
+.prf-followers-count strong {
+  color: var(--ink);
+}
+.prf-notify-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.prf-notify-toggle input {
+  cursor: pointer;
 }
 
 /* ── Tabs ── */
@@ -528,4 +587,5 @@
   .prf-identity     { gap: 14px; }
   .prf-avatar       { width: 52px; height: 52px; font-size: 20px; }
   .prf-not-found    { padding: 60px 16px; }
+  .prf-cover        { height: 120px; }
 }

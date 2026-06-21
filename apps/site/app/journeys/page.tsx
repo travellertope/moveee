@@ -10,6 +10,22 @@ export const revalidate = 3600;
 export const metadata = {
   title: { absolute: "Origins · Curated Journeys · The Moveee" },
   description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+  alternates: { canonical: "https://themoveee.com/journeys" },
+  openGraph: {
+    title: "Origins · Curated Journeys · The Moveee",
+    description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+    url: "https://themoveee.com/journeys",
+    siteName: "Moveee",
+    type: "website",
+    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Origins — Curated Journeys" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Origins · Curated Journeys · The Moveee",
+    description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+  },
 };
 
 export default async function OriginsPage() {

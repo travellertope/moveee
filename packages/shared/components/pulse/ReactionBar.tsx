@@ -47,11 +47,33 @@ export default function ReactionBar({
   const [copied, setCopied]   = useState(false);
   const [pending, setPending] = useState(false);
 
-  // Hydrate from localStorage after mount to avoid SSR mismatch.
+  // Hydrate from the server record on mount — this is the real per-user
+  // source of truth (shared with mobile via `_culture_post_reactions`
+  // usermeta). Fall back to the localStorage cache immediately so there's
+  // no flash of "unreacted" while the request is in flight, then reconcile
+  // once the server responds.
   useEffect(() => {
     const stored = getStored();
     setMyReaction(stored[`${itemType}-${itemId}`] ?? null);
-  }, [itemId, itemType]);
+
+    if (!loggedIn) return;
+    let cancelled = false;
+    fetch(`/api/community/react?postId=${encodeURIComponent(itemId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        const serverReaction = (data.userReaction ?? null) as ReactionKey | null;
+        setMyReaction(serverReaction);
+        const next = getStored();
+        next[`${itemType}-${itemId}`] = serverReaction;
+        setStored(next);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemId, itemType, loggedIn]);
 
   async function handleReact(emoji: ReactionKey) {
     if (!loggedIn) {
@@ -61,7 +83,6 @@ export default function ReactionBar({
     if (pending) return;
 
     const isRemoving = myReaction === emoji;
-    const action     = isRemoving ? "remove" : "add";
     const prevCounts = counts;
     const prevReaction = myReaction;
 
@@ -84,29 +105,28 @@ export default function ReactionBar({
 
     setPending(true);
     try {
-      // If switching emoji, first remove old one on server.
-      if (myReaction && myReaction !== emoji) {
-        await fetch("/api/community/react", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ itemId, itemType, emoji: myReaction, action: "remove" }),
-        });
-      }
+      // Server toggles/switches atomically — tapping the same emoji again
+      // un-reacts, tapping a different one switches in one call.
       const res = await fetch("/api/community/react", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, itemType, emoji, action }),
+        body: JSON.stringify({ postId: itemId, type: emoji }),
       });
       if (res.ok) {
         const fresh = await res.json();
-        setCounts(fresh);
+        setCounts(fresh.reactions ?? next);
+        const serverReaction = (fresh.reactionType ?? null) as ReactionKey | null;
+        setMyReaction(serverReaction);
+        const updated = getStored();
+        updated[`${itemType}-${itemId}`] = serverReaction;
+        setStored(updated);
       } else {
         // Rollback on failure.
         setCounts(prevCounts);
         setMyReaction(prevReaction);
-        const stored = getStored();
-        stored[`${itemType}-${itemId}`] = prevReaction;
-        setStored(stored);
+        const reverted = getStored();
+        reverted[`${itemType}-${itemId}`] = prevReaction;
+        setStored(reverted);
       }
     } catch {
       setCounts(prevCounts);

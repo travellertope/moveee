@@ -7,7 +7,7 @@ node_modules/
 coverage
 
 # next.js
-.next/
+/.next/
 /out/
 
 # production
@@ -27,4 +27,6 @@ coverage
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*
 .claude/
+**/.turbo/

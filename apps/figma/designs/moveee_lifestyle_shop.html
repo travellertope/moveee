@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Lifestyle Shop</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Lifestyle Shop Home</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-30 shrink-0 border-b border-ghost">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="h-[56px] flex items-center justify-between px-4">
+                    <h1 class="font-serif text-[20px] font-bold text-ink tracking-tight">Lifestyle</h1>
+                    <div class="flex items-center gap-[16px]">
+                        <button class="text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </button>
+                        <button class="relative text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            <span class="absolute -top-1 -right-1 w-[16px] h-[16px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px] border-[1.5px] border-white">2</span>
+                        </button>
+                    </div>
+                </header>
+            </div>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[96px] bg-paper-warm">
+                
+                <!-- HERO BANNER -->
+                <div class="h-[200px] w-full relative bg-gradient-to-tr from-[#A66C52] via-[#C5491F] to-[#E2A684]">
+                    <!-- Abstract textile pattern placeholder overlay -->
+                    <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#F3ECE0 1px, transparent 1px); background-size: 8px 8px;"></div>
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent"></div>
+                    
+                    <div class="absolute bottom-0 left-0 w-full p-[16px] flex flex-col items-start z-10">
+                        <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-[2px] mb-[6px]">Vetted Makers · Handcrafted Objects</span>
+                        <h2 class="font-serif text-[28px] font-bold text-white leading-tight mb-[4px]">Objects that carry a story.</h2>
+                        <p class="font-sans text-[14px] text-white/80 mb-[12px] max-w-[280px]">Curated from independent makers across the diaspora.</p>
+                        <button class="h-[36px] px-[16px] border border-white/40 bg-white/10 backdrop-blur-sm rounded-full text-white font-sans text-[12px] font-bold">Shop the edit →</button>
+                    </div>
+                </div>
+
+                <!-- CATEGORY SCROLL -->
+                <div class="h-[48px] px-[16px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap mt-[8px]">
+                    <button class="h-[40px] px-[12px] rounded-full bg-ochre text-white text-[13px] font-bold">All</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Ceramics</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Textiles</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Leather</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Jewellery</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Objects</button>
+                    <button class="h-[40px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Paper</button>
+                </div>
+
+                <!-- FEATURED PICKS -->
+                <div class="pt-[24px] pb-[16px]">
+                    <div class="flex justify-between items-center px-[16px] mb-[12px]">
+                        <h3 class="font-sans font-bold text-[14px] text-ink">Featured Picks</h3>
+                        <button class="font-sans text-[13px] text-ochre">The Edit →</button>
+                    </div>
+
+                    <!-- Large Featured Card -->
+                    <div class="mx-[16px] bg-white rounded-xl shadow-card overflow-hidden mb-[12px]">
+                        <div class="w-full h-[200px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] relative">
+                            <!-- New Badge -->
+                            <div class="absolute top-3 right-3 bg-ochre text-white font-sans font-bold text-[9px] px-2 py-1 rounded-full">NEW</div>
+                        </div>
+                        <div class="p-[16px] flex flex-col">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px]">Bisi Ceramics · Lagos</span>
+                            <h4 class="font-serif text-[18px] font-bold text-ink mb-[6px]">Terracotta Ritual Bowl</h4>
+                            <div class="flex flex-col gap-0.5 mb-[16px]">
+                                <span class="font-mono text-[16px] font-bold text-ink">£68</span>
+                                <span class="font-mono text-[13px] text-gold">£61 for Pro ★</span>
+                            </div>
+                            <button class="w-full h-[40px] bg-ochre rounded-full text-white font-sans text-[13px] font-bold">Add to bag</button>
+                        </div>
+                    </div>
+
+                    <!-- 2-Column Small Picks -->
+                    <div class="px-[16px] grid grid-cols-2 gap-[12px]">
+                        <!-- Small Card 1 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] bg-gradient-to-tr from-[#4B6CB7] to-[#182848]"></div>
+                            <div class="p-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Adire Studio</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[6px] line-clamp-2 min-h-[36px]">Indigo Resist-Dye Throw</h4>
+                                <div class="flex flex-col gap-0.5 mb-[12px] mt-auto">
+                                    <span class="font-mono text-[14px] font-bold text-ink">£145</span>
+                                    <span class="font-mono text-[11px] text-gold">£130 for Pro</span>
+                                </div>
+                                <button class="w-full h-[36px] bg-ochre rounded-full text-white font-sans text-[12px] font-bold mt-auto">Add to bag</button>
+                            </div>
+                        </div>
+
+                        <!-- Small Card 2 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6]"></div>
+                            <div class="p-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Craft Co</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[6px] line-clamp-2 min-h-[36px]">Leather Card Holder</h4>
+                                <div class="flex flex-col gap-0.5 mb-[12px] mt-auto">
+                                    <span class="font-mono text-[14px] font-bold text-ink">£42</span>
+                                </div>
+                                <button class="w-full h-[36px] bg-ochre rounded-full text-white font-sans text-[12px] font-bold mt-auto">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDITORIAL BRIDGE -->
+                <div class="h-[64px] px-[16px] flex items-center justify-between border-y border-ghost/40 bg-[#EDE6DA]">
+                    <div class="flex items-center gap-[12px] overflow-hidden flex-1">
+                        <svg class="w-[20px] h-[20px] text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[14px] font-bold text-ink whitespace-nowrap">As seen in The Magazine →</span>
+                            <span class="font-sans text-[12px] text-mute line-clamp-1">Explore the heritage of indigo dyeing techniques.</span>
+                        </div>
+                    </div>
+                    <svg class="w-[16px] h-[16px] text-ink shrink-0 ml-[8px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+
+                <!-- PRODUCT GRID SECTION -->
+                <div class="pt-[24px] pb-[32px]">
+                    <div class="flex justify-between items-center px-[16px] mb-[16px]">
+                        <h3 class="font-sans font-bold text-[14px] text-ink">All Products</h3>
+                        <button class="font-sans text-[13px] text-mute flex items-center gap-1">Sort: Featured <span class="text-[10px]">▼</span></button>
+                    </div>
+
+                    <div class="px-[16px] grid grid-cols-2 gap-[12px]">
+                        
+                        <!-- Product 1 (Terracotta) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <!-- Image -->
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] relative">
+                                <div class="absolute top-2 left-2 bg-ochre text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none">NEW</div>
+                            </div>
+                            <!-- Details -->
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Bisi Ceramics</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Terracotta Ritual Bowl</h4>
+                                <span class="font-mono text-[14px] font-bold text-ink mt-auto">£68</span>
+                            </div>
+                        </div>
+
+                        <!-- Product 2 (Indigo) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#4B6CB7] to-[#182848] relative">
+                                <div class="absolute top-2 left-2 bg-gold text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none">PRO EARLY ACCESS</div>
+                            </div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Adire Studio</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Indigo Resist-Dye Throw</h4>
+                                <span class="font-mono text-[14px] font-bold text-ink mt-auto">£145</span>
+                            </div>
+                        </div>
+
+                        <!-- Product 3 (Leather) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] relative"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Craft Co</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Leather Card Holder</h4>
+                                <span class="font-mono text-[14px] font-bold text-ink mt-auto">£42</span>
+                            </div>
+                        </div>
+
+                        <!-- Product 4 (Silver) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] relative"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Atelier Nne</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Oxidised Silver Cuff</h4>
+                                <div class="mt-auto">
+                                    <span class="font-mono text-[12px] font-normal text-ghost line-through mr-1">£150</span>
+                                    <span class="font-mono text-[14px] font-bold text-ochre">£120</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product 5 (Paper) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#EAECC6] to-[#2BC0E4] relative">
+                                <div class="absolute top-2 left-2 bg-ochre text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none">NEW</div>
+                            </div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Paper Works Lagos</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Hand-Bound Journal</h4>
+                                <span class="font-mono text-[14px] font-bold text-ink mt-auto">£28</span>
+                            </div>
+                        </div>
+
+                        <!-- Product 6 (Brass) -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                            <div class="w-full aspect-square bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] relative">
+                                <div class="absolute bottom-2 left-2 bg-ink text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none shadow-sm">ONLY 2 LEFT</div>
+                            </div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Objects Lagos</span>
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[8px] line-clamp-2 min-h-[36px]">Brass Incense Holder</h4>
+                                <span class="font-mono text-[14px] font-bold text-ink mt-auto">£55</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- VENDOR SHOWCASE -->
+                <div class="pb-[32px]">
+                    <div class="flex justify-between items-center px-[16px] mb-[16px]">
+                        <h3 class="font-sans font-bold text-[14px] text-ink">Meet the Makers</h3>
+                        <button class="font-sans text-[13px] text-ochre">See all →</button>
+                    </div>
+
+                    <div class="px-[16px] flex gap-[12px] overflow-x-auto hide-scrollbar pb-2">
+                        
+                        <!-- Vendor 1 -->
+                        <div class="w-[170px] h-[100px] bg-white rounded-xl shadow-card p-[12px] flex items-center shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] shrink-0 mr-[12px]">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#E2B19B] to-[#C5491F]"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-1">Bisi Ceramics</h4>
+                                <span class="font-sans text-[11px] text-mute mb-[4px]">Lagos</span>
+                                <span class="font-mono text-[10px] text-mute">12 products</span>
+                            </div>
+                        </div>
+
+                        <!-- Vendor 2 -->
+                        <div class="w-[170px] h-[100px] bg-white rounded-xl shadow-card p-[12px] flex items-center shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] shrink-0 mr-[12px]">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#4B6CB7] to-[#182848]"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-1">Adire Studio</h4>
+                                <span class="font-sans text-[11px] text-mute mb-[4px]">Abeokuta</span>
+                                <span class="font-mono text-[10px] text-mute">8 products</span>
+                            </div>
+                        </div>
+
+                        <!-- Vendor 3 -->
+                        <div class="w-[170px] h-[100px] bg-white rounded-xl shadow-card p-[12px] flex items-center shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ghost p-[2px] shrink-0 mr-[12px]">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#8E54E9] to-[#4776E6]"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-1">Craft Co</h4>
+                                <span class="font-sans text-[11px] text-mute mb-[4px]">Accra</span>
+                                <span class="font-mono text-[10px] text-mute">15 products</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CONNECT PRO BAND -->
+                <div class="bg-ochre flex flex-col justify-center items-center px-[16px] py-[48px] text-center">
+                    <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-[2px] mb-[8px] flex items-center gap-1">★ Connect Pro Members</span>
+                    <h2 class="font-serif text-[18px] font-bold text-white mb-[20px]">Early access · Member pricing · Free returns</h2>
+                    <button class="h-[40px] px-[20px] rounded-full border border-white/40 text-white font-sans text-[13px] font-bold transition-colors hover:bg-white/10">Upgrade →</button>
+                </div>
+
+            </div>
+
+            <!-- Bottom Navigation -->
+            <nav class="absolute bottom-0 w-full h-[80px] bg-white border-t border-ghost flex justify-around items-start pt-[12px] z-30 pb-safe">
+                <!-- Feed -->
+                <button class="text-ghost flex flex-col items-center gap-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </button>
+                <!-- Search -->
+                <button class="text-ghost flex flex-col items-center gap-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <!-- Add Post -->
+                <button class="w-[48px] h-[40px] bg-paper-deep rounded-[12px] text-ink flex items-center justify-center -mt-[4px] border border-ghost/50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+                <!-- Lifestyle (Active) -->
+                <button class="text-ochre flex flex-col items-center gap-1">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H2v13c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6h-6zm-6-2h4v2h-4V4zM4 8h16v11H4V8z"/></svg>
+                </button>
+                <!-- Profile -->
+                <button class="text-ghost flex flex-col items-center gap-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </button>
+            </nav>
+
+        </div>
+    </div>
+
+</body>
+</html>

@@ -36,13 +36,16 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
+  verification: {
+    google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
+  },
   title: {
     default: "Moveee — Culture. Discover and Engage.",
     template: "%s | Moveee",
   },
   description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
   alternates: {
-    canonical: "/",
+    canonical: "https://themoveee.com/",
   },
   openGraph: {
     type: "website",
@@ -60,6 +63,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
     title: "Moveee — Culture. Discover and Engage.",
     description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
     images: ["/og-fallback.png"],
@@ -86,8 +91,43 @@ export default async function RootLayout({
     slotHeroSidebar:         rawAds?.slotHeroSidebar         ?? null,
   };
 
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Moveee Magazine",
+    url: "https://themoveee.com",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://themoveee.com/magazine?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Moveee Magazine",
+    url: "https://themoveee.com",
+    logo: "https://themoveee.com/logo.png",
+    sameAs: [
+      "https://twitter.com/moveeemedia",
+      "https://instagram.com/moveeemedia",
+    ],
+    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+      </head>
       <body
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >

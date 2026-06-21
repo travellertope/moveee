@@ -56,8 +56,13 @@ class Culture_Newsletter_Queue {
 
             // Segment filter: if a segment is set, only include subscribers with that segment.
             if ( $nl_segment ) {
-                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-                if ( $sub_segment !== $nl_segment ) continue;
+                if ( 'pro' === $nl_segment ) {
+                    $wp_user = get_user_by( 'email', $e );
+                    if ( ! $wp_user || 'patron' !== get_user_meta( $wp_user->ID, '_culture_membership_tier', true ) ) continue;
+                } else {
+                    $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+                    if ( $sub_segment !== $nl_segment ) continue;
+                }
             }
 
             $emails[] = $e;
@@ -164,7 +169,7 @@ class Culture_Newsletter_Queue {
 
         $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
         $content = self::render_content( $post );
-        $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $nl_list );
+        $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $nl_list, $email );
 
         wp_mail(
             $email,
@@ -435,7 +440,8 @@ class Culture_Newsletter_Queue {
         $is_test        = false,
         $campaign_id    = 0,
         $tracking_token = '',
-        $nl_list        = 'getmelit'
+        $nl_list        = 'getmelit',
+        $email          = ''
     ) {
         $site_name = get_bloginfo( 'name' );
         $nl_labels = array(
@@ -453,7 +459,7 @@ class Culture_Newsletter_Queue {
 
             $content = preg_replace_callback(
                 '/href=(["\'])(https?:\/\/[^"\'>\s]+)\1/i',
-                function ( $m ) use ( $campaign_id, $tracking_token, $track_base ) {
+                function ( $m ) use ( $campaign_id, $tracking_token, $track_base, $email ) {
                     $url = $m[2];
                     if ( strpos( $url, 'culture_unsubscribe' ) !== false
                         || strpos( $url, 'track/click' ) !== false ) {
@@ -463,6 +469,7 @@ class Culture_Newsletter_Queue {
                         'c' => $campaign_id,
                         't' => $tracking_token,
                         'u' => rawurlencode( $url ),
+                        's' => Culture_NL_Analytics::sign_url( $url, $campaign_id, $email ),
                     ), $track_base ) );
                     return 'href=' . $m[1] . $tracked . $m[1];
                 },

@@ -10,17 +10,18 @@ interface Comment {
   liked: boolean;
 }
 
-export function useComments(postId: string) {
+export function useComments(postId: string, enabled = true) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!enabled) return;
     setLoading(true);
     api
       .get<Comment[]>(`${MOBILE_API}/community/comments?post_id=${postId}`)
       .then(setComments)
       .finally(() => setLoading(false));
-  }, [postId]);
+  }, [postId, enabled]);
 
   const addComment = useCallback(
     async (content: string) => {

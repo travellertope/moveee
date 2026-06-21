@@ -10,25 +10,59 @@ function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => vo
   return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
 }
 
-// Circuit breaker: stop hammering the CMS when it's already struggling
-const _cb = { failures: 0, openUntil: 0 };
+// Circuit breaker: stop hammering the CMS when it's already struggling.
+// State is stored in Vercel KV so it's shared across all serverless instances.
+// Falls back to a per-process variable when KV is not configured (local dev).
+const _cbLocal = { failures: 0, openUntil: 0 };
 const CB_THRESHOLD = 3;
 const CB_COOLDOWN = 60_000; // 60s cooldown after 3 consecutive failures
+const CB_KEY = "cb:cms";
 
-function cbCheck(): boolean {
-  if (_cb.openUntil && Date.now() < _cb.openUntil) return false; // circuit open
-  if (_cb.openUntil && Date.now() >= _cb.openUntil) {
-    _cb.openUntil = 0;
-    _cb.failures = 0;
+async function cbCheck(): Promise<boolean> {
+  const kv = await getKV();
+  if (kv) {
+    try {
+      const state = await kv.get<{ openUntil: number; failures: number }>(CB_KEY);
+      if (state?.openUntil && Date.now() < state.openUntil) return false;
+      return true;
+    } catch { return true; }
+  }
+  // Local fallback
+  if (_cbLocal.openUntil && Date.now() < _cbLocal.openUntil) return false;
+  if (_cbLocal.openUntil && Date.now() >= _cbLocal.openUntil) {
+    _cbLocal.openUntil = 0;
+    _cbLocal.failures = 0;
   }
   return true;
 }
-function cbSuccess() { _cb.failures = 0; }
-function cbFail() {
-  _cb.failures++;
-  if (_cb.failures >= CB_THRESHOLD) {
-    _cb.openUntil = Date.now() + CB_COOLDOWN;
-    console.warn(`[circuit-breaker] CMS circuit opened for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+
+async function cbSuccess(): Promise<void> {
+  const kv = await getKV();
+  if (kv) {
+    try { await kv.del(CB_KEY); } catch { /* ignore */ }
+    return;
+  }
+  _cbLocal.failures = 0;
+}
+
+async function cbFail(): Promise<void> {
+  const kv = await getKV();
+  if (kv) {
+    try {
+      const state = (await kv.get<{ openUntil: number; failures: number }>(CB_KEY)) ?? { openUntil: 0, failures: 0 };
+      state.failures++;
+      if (state.failures >= CB_THRESHOLD) {
+        state.openUntil = Date.now() + CB_COOLDOWN;
+        console.warn(`[circuit-breaker] CMS circuit opened (shared) for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+      }
+      await kv.set(CB_KEY, state, { ex: Math.ceil(CB_COOLDOWN / 1000) + 30 });
+    } catch { /* KV write failure: degrade gracefully */ }
+    return;
+  }
+  _cbLocal.failures++;
+  if (_cbLocal.failures >= CB_THRESHOLD) {
+    _cbLocal.openUntil = Date.now() + CB_COOLDOWN;
+    console.warn(`[circuit-breaker] CMS circuit opened (local) for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
   }
 }
 
@@ -55,7 +89,7 @@ function kvKey(query: string, variables: object): string {
 }
 
 async function getWPDataFromCMS(query: string, variables = {}, options: any = {}): Promise<any> {
-  if (!cbCheck()) return null;
+  if (!(await cbCheck())) return null;
 
   const { signal, clear } = wpSignal();
   try {
@@ -70,12 +104,12 @@ async function getWPDataFromCMS(query: string, variables = {}, options: any = {}
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
-      cbFail();
+      await cbFail();
       return null;
     }
 
     const json = await res.json();
-    cbSuccess();
+    await cbSuccess();
 
     if (json.errors) {
       console.warn(`GraphQL partial errors for ${WP_GRAPHQL_URL}:`, json.errors);
@@ -85,7 +119,7 @@ async function getWPDataFromCMS(query: string, variables = {}, options: any = {}
     return json.data;
   } catch (error: any) {
     clear();
-    cbFail();
+    await cbFail();
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message || error);
     return null;
   }
@@ -100,11 +134,19 @@ export async function getWPData(query: string, variables = {}, options: any = {}
     try {
       const cached = await kv.get(key);
       if (cached !== null && cached !== undefined) return cached;
-    } catch { /* KV unavailable — fall through to CMS */ }
+      // Cache miss — log for Vercel function log monitoring
+      console.log(`[wp:kv-miss] ${key.slice(0, 100)}`);
+    } catch {
+      console.warn(`[wp:kv-error] KV read failed for ${key.slice(0, 80)}`);
+    }
 
     const data = await getWPDataFromCMS(query, variables, options);
     if (data) {
-      try { await kv.set(key, data, { ex: ttl }); } catch { /* ignore KV write errors */ }
+      try {
+        await kv.set(key, data, { ex: ttl });
+      } catch (e: any) {
+        console.warn(`[wp:kv-write-fail] ${key.slice(0, 80)}: ${e?.message ?? e}`);
+      }
     }
     return data;
   }
@@ -178,6 +220,7 @@ function mapRestEventToFrontendShape(item: any) {
     city: pick(cem.city, acf.city, meta.city, meta._culture_event_city),
     admission: pick(cem.admission, acf.admission, meta.admission, meta._culture_admission),
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
+    rsvpCount: Number(cem.rsvp_count) || 0,
     isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(cem.ai_generated ?? acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
     openingHours: pick(cem.opening_hours, acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
@@ -298,12 +341,30 @@ function isEventExpired(event: any): boolean {
   return false;
 }
 
+/** REST-only event list fetch for feed/list views — single request, all meta fields. */
+export async function getEventsForFeed(first = 30, options: any = {}): Promise<any[]> {
+  try {
+    const revalidate = options.revalidate !== undefined ? options.revalidate : 300;
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=wp:featuredmedia&_fields=id,slug,title,date,excerpt,content,acf,meta,culture_event_meta,_links,_embedded&orderby=date&order=desc`;
+    const { signal, clear } = wpSignal();
+    const res = await fetch(url, { signal, next: { revalidate } });
+    clear();
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestEventToFrontendShape).filter((e: any) => !isEventExpired(e));
+  } catch {
+    return [];
+  }
+}
+
 export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
   const gqlEvents = (gql?.cultureEvents?.nodes ?? []).filter((e: any) => !isEventExpired(e));
   if (gqlEvents.length > 0) {
-    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch
-    const needsPatch = gqlEvents.some((e: any) => !e.location || !e.city || !e.endDate || !e.venueAddress);
+    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch.
+    // Always patch: rsvpCount has no GraphQL resolver and must stay live, not cached.
+    const needsPatch = true;
     if (needsPatch) {
       try {
         const patchCtrl = new AbortController();
@@ -341,6 +402,8 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
               if (!ev.organiserDirectoryId && cem.organiser_id) ev.organiserDirectoryId = Number(cem.organiser_id);
               if (!ev.organiserName && cem.organiser_name) ev.organiserName = cem.organiser_name;
               if (!ev.organiserSlug && cem.organiser_slug) ev.organiserSlug = cem.organiser_slug;
+              ev.rsvpCount = Number(cem.rsvp_count) || 0;
+              if (!ev.isFeatured) ev.isFeatured = Boolean(cem.is_featured);
             }
           }
         }
@@ -350,7 +413,7 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
   }
 
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=wp:featuredmedia&_fields=id,slug,title,date,excerpt,content,acf,meta,culture_event_meta,_links,_embedded&orderby=date&order=desc`;
     const { signal, clear } = wpSignal();
     const res = await fetch(url, {
       method: "GET",
@@ -377,7 +440,9 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     // WPGraphQL may not resolve ACF/meta fields reliably — patch via REST when missing
     const needsHostPatch = !ev.featuredHost?.title;
     const needsMetaPatch = !ev.location || !ev.city || !ev.eventDate || !ev.endDate || !ev.openingHours || !ev.eventImageUrl;
-    if (needsHostPatch || needsMetaPatch) {
+    const needsShowcasePatch = Array.isArray(ev.showcase) && ev.showcase.some((s: any) => !s.image?.sourceUrl && !s.image?.mediaItemUrl);
+    let precomputedShowcaseUrls: string[] | null = null;
+    if (needsHostPatch || needsMetaPatch || needsShowcasePatch) {
       try {
         const metaRes = await fetch(
           `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta,culture_event_meta`,
@@ -390,7 +455,11 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           const cem = metaJson[0]?.culture_event_meta ?? {};
           const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
 
-          // Patch core event meta fields that WPGraphQL may return as null
+          // Read pre-computed showcase URLs (written by cache_event_showcase_urls PHP hook on save)
+          if (meta._culture_event_showcase_urls) {
+            try { precomputedShowcaseUrls = JSON.parse(meta._culture_event_showcase_urls); } catch { /* ignore */ }
+          }
+
           if (needsMetaPatch) {
             if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
             if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
@@ -407,7 +476,6 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
 
           if (needsHostPatch) {
             const rawHost = acf.featured_host;
-            // ACF returns object, array-of-objects, or bare integer ID depending on return_format
             const hostId = typeof rawHost === "number" ? rawHost
               : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
               : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
@@ -433,29 +501,36 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       } catch { /* non-fatal */ }
     }
 
-    // Resolve missing showcase images via WP media API when GraphQL returns null
+    // Resolve missing showcase images — use pre-computed URLs when available (no media API calls)
     if (Array.isArray(ev.showcase)) {
-      const missing = ev.showcase
-        .map((s: any, i: number) => {
-          if (s.image?.sourceUrl) return null;
-          // Try mediaItemUrl first, then fall back to databaseId fetch
-          if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
-          const id = s.image?.databaseId ?? null;
-          return id ? { i, id } : null;
-        })
-        .filter(Boolean) as { i: number; id: number }[];
-      if (missing.length > 0) {
-        for (let b = 0; b < missing.length; b += 3) {
-          await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
-            try {
-              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-              if (mRes.ok) {
-                const m = await mRes.json();
-                const url = m.source_url ?? m.guid?.rendered;
-                if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
-              }
-            } catch { /* non-fatal */ }
-          }));
+      if (Array.isArray(precomputedShowcaseUrls)) {
+        ev.showcase.forEach((s: any, i: number) => {
+          if (!s.image?.sourceUrl && precomputedShowcaseUrls![i]) {
+            ev.showcase[i] = { ...s, image: { sourceUrl: precomputedShowcaseUrls![i] } };
+          }
+        });
+      } else {
+        const missing = ev.showcase
+          .map((s: any, i: number) => {
+            if (s.image?.sourceUrl) return null;
+            if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
+            const id = s.image?.databaseId ?? null;
+            return id ? { i, id } : null;
+          })
+          .filter(Boolean) as { i: number; id: number }[];
+        if (missing.length > 0) {
+          for (let b = 0; b < missing.length; b += 3) {
+            await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
+              try {
+                const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+                if (mRes.ok) {
+                  const m = await mRes.json();
+                  const url = m.source_url ?? m.guid?.rendered;
+                  if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
+                }
+              } catch { /* non-fatal */ }
+            }));
+          }
         }
       }
     }
@@ -505,24 +580,37 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       }
     }
 
-    // Resolve showcase image IDs → actual URLs
-    const showcaseImageIds: { i: number; id: number }[] = [];
-    (event.showcase ?? []).forEach((s: any, i: number) => {
-      const raw = json[0]?.acf?.showcase?.[i]?.image;
-      if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
-    });
-    if (showcaseImageIds.length > 0) {
-      for (let b = 0; b < showcaseImageIds.length; b += 3) {
-        await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
-          try {
-            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-            if (mRes.ok) {
-              const m = await mRes.json();
-              const url = m.source_url ?? m.guid?.rendered;
-              if (url) event.showcase[i].image = { sourceUrl: url };
-            }
-          } catch { /* non-fatal */ }
-        }));
+    // Resolve showcase image IDs → URLs; prefer pre-computed meta to avoid media API calls
+    const preUrls = (() => {
+      try {
+        const raw = json[0]?.meta?._culture_event_showcase_urls;
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    })();
+
+    if (Array.isArray(preUrls) && Array.isArray(event.showcase)) {
+      event.showcase.forEach((s: any, i: number) => {
+        if (!s.image?.sourceUrl && preUrls[i]) event.showcase[i].image = { sourceUrl: preUrls[i] };
+      });
+    } else {
+      const showcaseImageIds: { i: number; id: number }[] = [];
+      (event.showcase ?? []).forEach((s: any, i: number) => {
+        const raw = json[0]?.acf?.showcase?.[i]?.image;
+        if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
+      });
+      if (showcaseImageIds.length > 0) {
+        for (let b = 0; b < showcaseImageIds.length; b += 3) {
+          await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
+            try {
+              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+              if (mRes.ok) {
+                const m = await mRes.json();
+                const url = m.source_url ?? m.guid?.rendered;
+                if (url) event.showcase[i].image = { sourceUrl: url };
+              }
+            } catch { /* non-fatal */ }
+          }));
+        }
       }
     }
 
@@ -1517,6 +1605,8 @@ const QUOTE_FIELDS_FRAGMENT = `
     date
     quoteSource
     quoteLikes
+    quoteSharingReason
+    quoteType
     quoteAuthors {
       nodes {
         name

@@ -22,21 +22,16 @@ export async function POST(req: NextRequest) {
   try {
     const res = await fetch(WP_URL, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${CULTURE_API_SECRET}`
+        "Authorization": `Bearer ${CULTURE_API_SECRET}`,
       },
-      body: JSON.stringify({ 
-        user_id: user.id, 
-        post_id, 
-        type, 
-        kind 
-      }),
+      body: JSON.stringify({ user_id: user.id, post_id, type, kind }),
     });
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 }

@@ -1,4 +1,4 @@
-import { storage } from "../store/storage";
+import * as SecureStore from "expo-secure-store";
 
 const WP_URL = "https://cms.themoveee.com";
 const WP_REST = `${WP_URL}/wp-json`;
@@ -15,6 +15,19 @@ interface RequestOptions {
   auth?: boolean;
 }
 
+// Called when any authenticated request returns 401 — wired up in authStore.
+let _onUnauthorized: (() => void) | null = null;
+let _handlingUnauthorized = false;
+export function setUnauthorizedHandler(fn: () => void) {
+  _onUnauthorized = fn;
+}
+
+// In-memory token store — avoids writing the JWT to unencrypted AsyncStorage.
+// authStore writes to SecureStore (encrypted) and calls setAuthToken() here.
+let _authToken: string | null = null;
+export function setAuthToken(token: string | null) { _authToken = token; }
+export function getAuthToken(): string | null { return _authToken; }
+
 async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = true } = options;
 
@@ -23,7 +36,7 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   };
 
   if (auth) {
-    const token = storage.getString("auth_token");
+    const token = _authToken;
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -34,6 +47,12 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   });
 
   if (!res.ok) {
+    // Auto-logout on 401 so the user is sent back to login with a fresh token.
+    if (res.status === 401 && auth && _onUnauthorized && !_handlingUnauthorized) {
+      _handlingUnauthorized = true;
+      _onUnauthorized();
+      setTimeout(() => { _handlingUnauthorized = false; }, 5000);
+    }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);
   }
@@ -41,21 +60,22 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   return res.json() as Promise<T>;
 }
 
-/**
- * Uploads a local file URI as multipart/form-data. `name`/`type` describe the
- * file as React Native's fetch expects for FormData entries.
- */
 async function upload<T>(url: string, uri: string, name: string, type: string): Promise<T> {
   const form = new FormData();
   form.append("file", { uri, name, type } as unknown as Blob);
 
   const headers: Record<string, string> = {};
-  const token = storage.getString("auth_token");
+  const token = _authToken;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(url, { method: "POST", headers, body: form });
 
   if (!res.ok) {
+    if (res.status === 401 && _onUnauthorized && !_handlingUnauthorized) {
+      _handlingUnauthorized = true;
+      _onUnauthorized();
+      setTimeout(() => { _handlingUnauthorized = false; }, 5000);
+    }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);
   }
@@ -65,9 +85,20 @@ async function upload<T>(url: string, uri: string, name: string, type: string): 
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
-    super(message);
+    super(sanitizeErrorMessage(message));
     this.name = "ApiError";
   }
+}
+
+// WordPress's fatal-error handler returns its message as HTML (e.g. "<p>There has
+// been a critical error on this website.</p><p><a href=...>Learn more...</a></p>")
+// even inside an otherwise well-formed REST error JSON body. Never show that markup
+// to the user — collapse it to a generic message instead.
+function sanitizeErrorMessage(message: string): string {
+  if (/<[a-z][\s\S]*>/i.test(message)) {
+    return "Something went wrong on our end. Please try again in a moment.";
+  }
+  return message;
 }
 
 export const api = {

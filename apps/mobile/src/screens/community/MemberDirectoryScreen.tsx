@@ -1,91 +1,98 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, Linking,
+  StyleSheet, SafeAreaView, ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
+import { useAuthStore } from "../../auth/authStore";
 
 const DISCIPLINES = [
-  "All", "Creative", "Entrepreneur", "Artist", "Filmmaker",
-  "Writer", "Designer", "Musician", "Photographer", "Tech",
-  "Legal", "Finance", "Academic",
+  "All", "Photography", "Visual Art", "Music Production", "Fashion",
+  "Film", "Literature", "Architecture", "Design", "Tech",
 ];
 
 const LOCATIONS = [
-  "All", "Nigeria", "United Kingdom", "United States", "Ghana",
-  "South Africa", "Kenya", "France", "Canada", "Other",
+  "All", "Nigeria", "United Kingdom", "United States",
+  "Ghana", "Kenya", "Canada", "South Africa",
 ];
 
 function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
 
-function Avatar({ member }: { member: Member }) {
-  return (
-    <View style={[styles.avatar, member.tier === "patron" && styles.avatarPro]}>
-      <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
-    </View>
-  );
-}
-
-function MemberCard({ member, onPress }: { member: Member; onPress: () => void }) {
+function MemberCard({
+  member,
+  onPress,
+  styles,
+  c,
+}: {
+  member: Member;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
+}) {
   const isPro = member.tier === "patron";
+  const interests = member.interests ?? member.disciplines ?? [];
+  const shown  = interests.slice(0, 2);
+  const extra  = interests.length - 2;
+
   return (
-    <TouchableOpacity
-      style={[styles.card, isPro ? styles.cardPro : styles.cardCitizen]}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.cardHeader}>
-        <Avatar member={member} />
-        {isPro && (
-          <View style={styles.proBadge}>
-            <Text style={styles.proBadgeText}>PRO</Text>
-          </View>
-        )}
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+      {/* Avatar */}
+      <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+        <View style={styles.avatarInner}>
+          <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+        </View>
       </View>
 
-      <Text style={styles.name} numberOfLines={1}>{member.displayName}</Text>
+      {/* Identity */}
+      <View style={styles.cardNameRow}>
+        <Text style={styles.cardName} numberOfLines={1}>{member.displayName}</Text>
+        {isPro ? (
+          <Ionicons name="checkmark-circle" size={14} color={c.gold} style={styles.proCheck} />
+        ) : null}
+      </View>
       {member.username ? (
-        <Text style={styles.handle}>@{member.username}</Text>
+        <Text style={styles.cardHandle}>@{member.username}</Text>
       ) : null}
-      {member.city ? (
-        <Text style={styles.location}>{member.city.toUpperCase()}</Text>
+      {(member.city || member.countryOfResidence) ? (
+        <Text style={styles.cardCity}>
+          📍 {[member.city, member.countryOfResidence].filter(Boolean).join(", ")}
+        </Text>
       ) : null}
 
-      {member.disciplines && member.disciplines.length > 0 && (
+      {/* Interest tags */}
+      {shown.length > 0 && (
         <View style={styles.tagsRow}>
-          {member.disciplines.slice(0, 3).map((d) => (
-            <View key={d} style={styles.tag}>
-              <Text style={styles.tagText}>{d}</Text>
+          {shown.map((t) => (
+            <View key={t} style={styles.tag}>
+              <Text style={styles.tagText}>{t}</Text>
             </View>
           ))}
+          {extra > 0 && (
+            <View style={styles.tag}>
+              <Text style={[styles.tagText, { color: c.ghost }]}>+{extra} more</Text>
+            </View>
+          )}
         </View>
       )}
 
-      {member.bio ? (
-        <Text style={styles.bio} numberOfLines={2}>{member.bio}</Text>
-      ) : null}
-
-      <View style={styles.linksRow}>
+      {/* Social icon links */}
+      <View style={styles.socialRow}>
         {member.instagram ? (
-          <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${member.instagram}`)}>
-            <Text style={styles.linkText}>IG</Text>
-          </TouchableOpacity>
+          <Ionicons name="logo-instagram" size={16} color={c.ghost} />
         ) : null}
         {member.linkedin ? (
-          <TouchableOpacity onPress={() => Linking.openURL(member.linkedin)}>
-            <Text style={styles.linkText}>LI</Text>
-          </TouchableOpacity>
+          <Ionicons name="logo-linkedin" size={16} color={c.ghost} />
         ) : null}
         {member.website ? (
-          <TouchableOpacity onPress={() => Linking.openURL(member.website)}>
-            <Text style={styles.linkText}>WEB</Text>
-          </TouchableOpacity>
+          <Ionicons name="globe-outline" size={16} color={c.ghost} />
         ) : null}
       </View>
     </TouchableOpacity>
@@ -93,98 +100,172 @@ function MemberCard({ member, onPress }: { member: Member; onPress: () => void }
 }
 
 export default function MemberDirectoryScreen() {
-  const nav = useNavigation<any>();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [filtered, setFiltered] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const nav = useNav();
+  const { user } = useAuthStore() as any;
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const [members,    setMembers]    = useState<Member[]>([]);
+  const [filtered,   setFiltered]   = useState<Member[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [search,     setSearch]     = useState("");
   const [discipline, setDiscipline] = useState("All");
-  const [location, setLocation] = useState("All");
+  // Default location to user's country so they see local members first
+  const [location, setLocation] = useState(() => {
+    const c = user?.countryOfResidence ?? "";
+    if (!c) return "All";
+    if (/nigeria/i.test(c)) return "Nigeria";
+    if (/united kingdom|uk|gb/i.test(c)) return "United Kingdom";
+    if (/united states|usa/i.test(c)) return "United States";
+    if (/ghana/i.test(c)) return "Ghana";
+    if (/kenya/i.test(c)) return "Kenya";
+    if (/canada/i.test(c)) return "Canada";
+    if (/south africa/i.test(c)) return "South Africa";
+    return "All";
+  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [discOpen,   setDiscOpen]   = useState(false);
+  const [locOpen,    setLocOpen]    = useState(false);
+  const [cityOpen,   setCityOpen]   = useState(false);
+  const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await api.get<Member[]>(`${MOBILE_API}/members?per_page=100`);
-        setMembers(data);
-        setFiltered(data);
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    api.get<Member[]>(`${MOBILE_API}/members?per_page=100`)
+      .then((data) => { setMembers(data ?? []); setFiltered(data ?? []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  // Derive city list from loaded members in the active location — user's city first
+  const availableCities = useMemo(() => {
+    const userCity = (user?.city ?? "").trim();
+    const seen = new Set<string>();
+    const cities: string[] = ["All"];
+    if (userCity) { cities.push(userCity); seen.add(userCity.toLowerCase()); }
+    members
+      .filter((m) =>
+        location === "All" ||
+        (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase())
+      )
+      .forEach((m) => {
+        const c = (m.city ?? "").trim();
+        if (c && !seen.has(c.toLowerCase())) { seen.add(c.toLowerCase()); cities.push(c); }
+      });
+    return cities;
+  }, [members, user?.city, location]);
+
+  // Reset city filter if it's no longer a valid option after a location change
+  useEffect(() => {
+    if (cityFilter !== "All" && !availableCities.some((c) => c.toLowerCase() === cityFilter.toLowerCase())) {
+      setCityFilter("All");
+    }
+  }, [availableCities, cityFilter]);
 
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(
       members.filter((m) => {
         const matchSearch = !q || (
-          m.displayName.toLowerCase().includes(q) ||
-          (m.occupation || "").toLowerCase().includes(q) ||
-          (m.city || "").toLowerCase().includes(q)
+          (m.displayName || "").toLowerCase().includes(q) ||
+          (m.occupation   || "").toLowerCase().includes(q) ||
+          (m.city         || "").toLowerCase().includes(q)
         );
-        const matchDisc = discipline === "All" || (m.disciplines || []).some(
-          (d) => d.toLowerCase() === discipline.toLowerCase()
-        );
-        const matchLoc = location === "All" || (
-          (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase())
-        );
-        return matchSearch && matchDisc && matchLoc;
+        const allInterests = [...(m.interests ?? []), ...(m.disciplines ?? [])];
+        const matchDisc = discipline === "All" ||
+          allInterests.some((d) => d.toLowerCase().includes(discipline.toLowerCase()));
+        const matchLoc = location === "All" ||
+          (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase());
+        const matchCity = cityFilter === "All" ||
+          (m.city || "").toLowerCase() === cityFilter.toLowerCase();
+        return matchSearch && matchDisc && matchLoc && matchCity;
       })
     );
-  }, [search, discipline, location, members]);
+  }, [search, discipline, location, cityFilter, members]);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Member Directory</Text>
+        <View style={styles.headerSideBtn} />
       </View>
 
-      {/* Search */}
-      <View style={styles.searchWrap}>
-        <Ionicons name="search-outline" size={16} color={colors.mute} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search members…"
-          placeholderTextColor={colors.ghost}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
+      {/* Search + filter icon row */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchRow}>
+          <Ionicons name="search-outline" size={16} color={c.mute} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, discipline or city"
+            placeholderTextColor={c.ghost}
+            value={search}
+            onChangeText={setSearch}
+          />
+          <TouchableOpacity
+            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); setLocOpen(false); setCityOpen(false); }}
+            style={[styles.filterIconBtn, filtersOpen && styles.filterIconBtnActive]}
+          >
+            <Ionicons name="options-outline" size={20} color={filtersOpen ? c.paper : c.ink} />
+            {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
+              <View style={styles.filterDot} />
+            )}
+          </TouchableOpacity>
+        </View>
 
-      {/* Filters */}
-      <View style={styles.filtersRow}>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => {
-          const idx = DISCIPLINES.indexOf(discipline);
-          setDiscipline(DISCIPLINES[(idx + 1) % DISCIPLINES.length]);
-        }}>
-          <Text style={styles.filterBtnText}>
-            {discipline === "All" ? "Discipline ▾" : discipline + " ▾"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => {
-          const idx = LOCATIONS.indexOf(location);
-          setLocation(LOCATIONS[(idx + 1) % LOCATIONS.length]);
-        }}>
-          <Text style={styles.filterBtnText}>
-            {location === "All" ? "Location ▾" : location + " ▾"}
-          </Text>
-        </TouchableOpacity>
+        {/* Filter panel — shown only when filter icon is toggled */}
+        {filtersOpen && (
+          <>
+            <View style={styles.chipsRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
+                onPress={() => {
+                  if (discipline !== "All") { setDiscipline("All"); }
+                  else { setDiscOpen(!discOpen); setLocOpen(false); setCityOpen(false); }
+                }}
+              >
+                <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
+                  {discipline === "All" ? "Discipline ▾" : `${discipline} ✕`}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
+                onPress={() => {
+                  if (location !== "All") { setLocation("All"); }
+                  else { setLocOpen(!locOpen); setDiscOpen(false); setCityOpen(false); }
+                }}
+              >
+                <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
+                  {location === "All" ? "Location ▾" : `${location} ✕`}
+                </Text>
+              </TouchableOpacity>
+              {availableCities.length > 1 && (
+                <TouchableOpacity
+                  style={[styles.filterChip, cityFilter !== "All" && styles.filterChipActive]}
+                  onPress={() => {
+                    if (cityFilter !== "All") { setCityFilter("All"); }
+                    else { setCityOpen(!cityOpen); setDiscOpen(false); setLocOpen(false); }
+                  }}
+                >
+                  <Text style={[styles.filterChipText, cityFilter !== "All" && styles.filterChipTextActive]}>
+                    {cityFilter === "All" ? "City ▾" : `${cityFilter} ✕`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
+                <TouchableOpacity onPress={() => { setDiscipline("All"); setLocation("All"); setCityFilter("All"); }}>
+                  <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: c.mute }}>Clear all</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+          </>
+        )}
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={colors.gold} />
-      ) : filtered.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>The directory is growing</Text>
-          <Text style={styles.emptyLink}>Join & get listed →</Text>
-        </View>
+        <ActivityIndicator style={{ marginTop: 40 }} color={c.gold} />
       ) : (
         <FlatList
           data={filtered}
@@ -192,99 +273,156 @@ export default function MemberDirectoryScreen() {
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No members found</Text>
+              <Text style={styles.emptyDesc}>Try adjusting your filters.</Text>
+            </View>
+          }
           renderItem={({ item }) => (
-            <MemberCard
-              member={item}
-              onPress={() => nav.navigate("MemberProfile", { userId: item.id, username: item.username })}
-            />
+            <View style={{ flex: 1 }}>
+              <MemberCard
+                member={item}
+                onPress={() => nav.navigate("MemberProfile", { userId: item.id, username: item.username })}
+                styles={styles}
+                c={c}
+              />
+            </View>
           )}
+          showsVerticalScrollIndicator={false}
         />
+      )}
+
+      {/* Dropdown overlays — rendered last so they paint above the grid on Android */}
+      {filtersOpen && discOpen && (
+        <View style={styles.dropdown}>
+          {DISCIPLINES.map((d) => (
+            <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
+              <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {filtersOpen && locOpen && (
+        <View style={styles.dropdown}>
+          {LOCATIONS.map((l) => (
+            <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
+              <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {filtersOpen && cityOpen && (
+        <View style={styles.dropdown}>
+          {availableCities.map((city) => {
+            const label = city === "All" ? "All cities" : (city === user?.city ? `📍 ${city}` : city);
+            return (
+              <TouchableOpacity key={city} style={styles.dropdownItem} onPress={() => { setCityFilter(city); setCityOpen(false); }}>
+                <Text style={[styles.dropdownItemText, cityFilter === city && { color: c.ochre, fontFamily: fonts.sansBold }]}>{label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       )}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    flexDirection: "row", alignItems: "center", gap: space[3],
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: {
-    fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink,
-  },
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], backgroundColor: c.paper,
+    },
+    headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+    headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
 
-  searchWrap: {
-    flexDirection: "row", alignItems: "center",
-    marginHorizontal: space[4], marginTop: space[3], marginBottom: space[2],
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.lg, paddingHorizontal: space[3], paddingVertical: space[2],
-  },
-  searchIcon: { marginRight: space[2] },
-  searchInput: {
-    flex: 1, fontSize: fontSize.base, fontFamily: fonts.sans, color: colors.ink,
-  },
+    searchSection: {
+      backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.ghost,
+      paddingBottom: 8,
+    },
+    searchRow: {
+      height: 48, flexDirection: "row", alignItems: "center",
+      paddingHorizontal: 16,
+    },
+    searchInput: {
+      flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+    },
+    filterIconBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      alignItems: "center", justifyContent: "center",
+    },
+    filterIconBtnActive: { backgroundColor: c.ink },
+    filterDot: {
+      position: "absolute", top: 4, right: 4,
+      width: 7, height: 7, borderRadius: 4,
+      backgroundColor: c.ochre, borderWidth: 1.5, borderColor: c.paper,
+    },
+    chipsRow: {
+      flexDirection: "row", alignItems: "center", flexWrap: "wrap",
+      paddingHorizontal: 16, gap: 8, paddingVertical: 10,
+    },
+    filterChip: {
+      height: 32, paddingHorizontal: 12, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost, justifyContent: "center",
+    },
+    filterChipActive:     { backgroundColor: c.ochre, borderColor: c.ochre },
+    filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
+    filterChipTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+    dropdown: {
+      position: "absolute", top: 108, left: 16, right: 16, zIndex: 100,
+      backgroundColor: c.paper, borderRadius: 8, ...shadows.card, elevation: 20,
+      borderWidth: 1, borderColor: c.ghost,
+    },
+    dropdownItem:     { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.ghost + "50" },
+    dropdownItemText: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
 
-  filtersRow: {
-    flexDirection: "row", gap: space[2],
-    paddingHorizontal: space[4], marginBottom: space[3],
-  },
-  filterBtn: {
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.full, paddingHorizontal: space[3], paddingVertical: space[1] + 2,
-  },
-  filterBtnText: {
-    fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.inkSoft,
-  },
+    grid: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
+    row:  { gap: 12, marginBottom: 12 },
 
-  grid: { paddingHorizontal: space[3], paddingBottom: space[6] },
-  row: { gap: space[3], marginBottom: space[3] },
+    card: {
+      flex: 1, backgroundColor: c.paper, borderRadius: 12,
+      padding: 12, alignItems: "center", gap: 0, ...shadows.card,
+    },
+    avatarRing: {
+      width: 44, height: 44, borderRadius: 22,
+      borderWidth: 2, padding: 2, marginBottom: 8,
+      backgroundColor: c.paper,
+    },
+    avatarRingPro: {
+      borderColor: c.gold,
+      shadowColor: c.gold,
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
+    },
+    avatarRingCitizen: { borderColor: c.ghost },
+    avatarInner: {
+      flex: 1, borderRadius: 20, backgroundColor: c.paperDeep,
+      justifyContent: "center", alignItems: "center",
+    },
+    avatarText: { fontFamily: fonts.monoBold, fontSize: 12, color: c.inkSoft },
 
-  card: {
-    flex: 1, backgroundColor: colors.paper,
-    borderWidth: 1, borderRadius: radius.lg, padding: space[3],
-    gap: space[1],
-  },
-  cardPro:     { borderColor: colors.gold },
-  cardCitizen: { borderColor: colors.rule },
+    cardNameRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
+    cardName:   { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, textAlign: "center" },
+    proCheck:   { marginTop: 1 },
+    cardHandle: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 2 },
+    cardCity:   { fontFamily: fonts.sans, fontSize: 11, color: c.mute, marginTop: 4 },
 
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: space[1] },
-  avatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.ink, justifyContent: "center", alignItems: "center",
-  },
-  avatarPro: { borderWidth: 1, borderColor: colors.gold },
-  avatarText: { fontFamily: fonts.monoBold, fontSize: fontSize.sm, color: colors.paperWarm },
+    tagsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4, marginTop: 8 },
+    tag: {
+      borderWidth: 1, borderColor: c.ghost, borderRadius: radius.full,
+      paddingHorizontal: 8, paddingVertical: 4,
+    },
+    tagText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.inkSoft },
 
-  proBadge: {
-    backgroundColor: colors.goldLight, borderWidth: 1, borderColor: colors.goldBorder,
-    borderRadius: radius.sm, paddingHorizontal: 5, paddingVertical: 1, alignSelf: "flex-start",
-  },
-  proBadgeText: {
-    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    letterSpacing: 1.5, color: colors.gold,
-  },
+    socialRow: { flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "center" },
 
-  name: { fontFamily: fonts.serifBold, fontSize: fontSize.md - 1, color: colors.ink },
-  handle: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1 },
-  location: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1 },
-
-  tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
-  tag: {
-    backgroundColor: colors.goldLight, borderRadius: radius.sm,
-    paddingHorizontal: 6, paddingVertical: 2,
-  },
-  tagText: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: colors.gold },
-
-  bio: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute, lineHeight: 16 },
-
-  linksRow: { flexDirection: "row", gap: space[2], marginTop: 2 },
-  linkText: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.gold },
-
-  empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: space[2] },
-  emptyTitle: { fontFamily: fonts.serif, fontSize: fontSize.lg, color: colors.inkSoft },
-  emptyLink: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: colors.gold },
-});
+    empty:     { alignItems: "center", paddingTop: 40, gap: 8 },
+    emptyTitle:{ fontFamily: fonts.serifBold, fontSize: 18, color: c.ink },
+    emptyDesc: { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
+  });
+}

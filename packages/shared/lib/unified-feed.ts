@@ -1,6 +1,6 @@
 import {
   getWPData,
-  getEventsWithFallback,
+  getEventsForFeed,
   getWPQuotes,
   GET_STORIES,
   GET_DIRECTORY_ENTRIES,
@@ -39,11 +39,15 @@ export interface FeedItem {
   eventCategory?: string;
   organiserName?: string;
   organiserSlug?: string;
+  isFeatured?: boolean;
+  organiserDirectoryId?: number;
   // directory-specific
   entryType?: string;
   // quote-specific
   quoteSource?: string;
   quoteAuthor?: string;
+  quoteSharingReason?: string;
+  quoteType?: string;
   // editorial-specific
   category?: string;
   // community-specific
@@ -67,13 +71,24 @@ export interface FeedItem {
   foodRatingTaste?: number;
   foodRatingValue?: number;
   foodRatingVibe?: number;
+  // event template + RSVP (community posts)
+  ticketUrl?: string;
+  rsvpEnabled?: boolean;
+  rsvpCapacity?: number;
+  rsvpCount?: number;
   // reactions (community + pulse)
   reactions?: { love: number; fire: number; clap: number };
   wpId?: string;
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, "").trim();
+  // Preserve paragraph breaks before stripping tags — otherwise multi-paragraph
+  // excerpts collapse into one continuous line on feed cards.
+  return html
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .trim();
 }
 
 /** Parse community attribution from a WP post. Prefers proper meta fields;
@@ -110,13 +125,13 @@ const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 
 /** Fetch the latest community posts from the culture_post CPT. */
-async function getCommunityPosts(): Promise<FeedItem[]> {
+export async function getCommunityPosts(): Promise<FeedItem[]> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   let res: Response;
   try {
     res = await fetch(
-      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
       { next: { revalidate: 300 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
@@ -178,6 +193,22 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       foodRatingTaste: m._food_rating_taste ? Number(m._food_rating_taste) : undefined,
       foodRatingValue: m._food_rating_value ? Number(m._food_rating_value) : undefined,
       foodRatingVibe: m._food_rating_vibe ? Number(m._food_rating_vibe) : undefined,
+      // Event template (community-organiser events)
+      eventDate: m._event_date || undefined,
+      endDate: m._event_end_date || undefined,
+      location: m._event_venue || undefined,
+      venueAddress: m._event_address || undefined,
+      city: m._event_city || undefined,
+      admission: m._event_admission || undefined,
+      eventCategory: m._event_category || undefined,
+      ticketUrl: m._event_ticket_url || undefined,
+      organiserName: post.community_event_meta?.organiser_name || undefined,
+      organiserSlug: post.community_event_meta?.organiser_slug || undefined,
+      rsvpEnabled: post.community_event_meta?.rsvp_enabled ?? undefined,
+      rsvpCapacity: post.community_event_meta?.rsvp_capacity ?? undefined,
+      rsvpCount: post.community_event_meta?.rsvp_count ?? undefined,
+      isFeatured: Boolean(post.community_event_meta?.is_featured),
+      organiserDirectoryId: post.community_event_meta?.organiser_id ? Number(post.community_event_meta.organiser_id) : undefined,
     };
   });
 }
@@ -193,7 +224,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
     getWPData(GET_STORIES, { first: 30 }, { revalidate: 300 }),
-    getEventsWithFallback(30, { revalidate: 300 }),
+    getEventsForFeed(30, { revalidate: 300 }),
     getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 300 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
@@ -280,6 +311,9 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
         organiserName: event.organiserName || undefined,
         organiserSlug: event.organiserSlug || undefined,
+        organiserDirectoryId: event.organiserDirectoryId ?? undefined,
+        isFeatured: Boolean(event.isFeatured),
+        rsvpCount: Number(event.rsvpCount) || 0,
       });
     }
   }
@@ -314,6 +348,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         wpId: String(quote.databaseId),
         quoteSource: quote.quoteSource ?? "",
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
+        quoteSharingReason: quote.quoteSharingReason ?? "",
+        quoteType: quote.quoteType ?? "",
       });
     }
   }

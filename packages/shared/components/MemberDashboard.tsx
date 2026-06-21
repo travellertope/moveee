@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Props {
   initialPoints: number;
@@ -14,6 +14,7 @@ interface Props {
 }
 
 const TIER_LABELS: Record<string, string> = {
+  'culture-icon':       'Culture Icon',
   'culture-authority':  'Culture Authority',
   'taste-maker':        'Taste Maker',
   'culture-contributor':'Culture Contributor',
@@ -35,30 +36,42 @@ export default function MemberDashboard({
   const [repTier, setRepTier]       = useState(reputationTier);
   const [dailyLeft, setDailyLeft]   = useState(dailyCreditsRemaining);
   const [badgeCount, setBadgeCount] = useState(initialBadges.length);
+  const [openTooltip, setOpenTooltip] = useState<string | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const TOTAL_BADGES = 18;
 
   useEffect(() => {
-    fetch('/api/user/profile', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.credits === 'number')              setCredits(data.credits);
-        if (typeof data.reputation === 'number')           setReputation(data.reputation);
-        if (typeof data.reputationTier === 'string')       setRepTier(data.reputationTier);
-        if (typeof data.dailyCreditsRemaining === 'number') setDailyLeft(data.dailyCreditsRemaining);
-        if (Array.isArray(data.badges))                    setBadgeCount(data.badges.length);
-      })
-      .catch(() => {});
-  }, []);
+    function handleClick(e: MouseEvent) {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setOpenTooltip(null);
+      }
+    }
+    if (openTooltip) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openTooltip]);
+
 
   const tierLabel = TIER_LABELS[repTier] ?? 'Member';
   const capHit    = dailyCreditsRemaining === 0;
 
   return (
-    <div className="mem-stats">
+    <div className="mem-stats" ref={tooltipRef}>
       {/* Credits */}
       <div className="mem-stat mem-stat--credits">
         <span className="mem-stat-value">{credits}</span>
-        <span className="mem-stat-label">Moveee Credits</span>
+        <span className="mem-stat-label">
+          Moveee Credits
+          <button
+            className="mem-stat-info"
+            aria-label="About credits"
+            onClick={() => setOpenTooltip(openTooltip === 'credits' ? null : 'credits')}
+          >ⓘ</button>
+          {openTooltip === 'credits' && (
+            <div className="mem-tooltip" role="tooltip">
+              <strong>Moveee Credits</strong> are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Connect Pro only, 40% fee). Daily cap: <strong>50 credits</strong>.
+            </div>
+          )}
+        </span>
         {capHit ? (
           <span className="mem-stat-sublabel mem-stat-sublabel--cap">Daily limit reached</span>
         ) : (
@@ -69,7 +82,19 @@ export default function MemberDashboard({
       {/* Reputation */}
       <div className="mem-stat mem-stat--reputation">
         <span className="mem-stat-value">{reputation}</span>
-        <span className="mem-stat-label">Reputation</span>
+        <span className="mem-stat-label">
+          Points
+          <button
+            className="mem-stat-info"
+            aria-label="About points"
+            onClick={() => setOpenTooltip(openTooltip === 'reputation' ? null : 'reputation')}
+          >ⓘ</button>
+          {openTooltip === 'reputation' && (
+            <div className="mem-tooltip" role="tooltip">
+              <strong>Points</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, points cannot be spent.
+            </div>
+          )}
+        </span>
         <span className="mem-stat-sublabel">{tierLabel}</span>
       </div>
 

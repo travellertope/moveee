@@ -400,7 +400,7 @@ function CompleteProfileForm() {
                   label: "Connect Pro",
                   price: currency === "NGN" ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000") : (billingCycle === "monthly" ? "$4" : "$40"),
                   period: billingCycle === "monthly" ? "/ mo" : "/ yr",
-                  perks: ["Everything in Citizen", "All patron-only articles", "Featured directory listing", "Pro badge · priority RSVP"],
+                  perks: ["Everything in Citizen", "All patron-only articles", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],
                 },
               ]
             ).map(({ value, label, price, perks, ...rest }) => (

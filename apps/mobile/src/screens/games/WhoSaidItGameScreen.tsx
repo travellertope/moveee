@@ -1,16 +1,25 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
+import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
+import GameScoreCard from "../../components/games/GameScoreCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
-const PROXY    = "https://themoveee.com/api";
-const KEY_DATE = "wsi_last_played_date";
+const PROXY      = "https://themoveee.com/api";
+const KEY_DATE   = "wsi_last_played_date";
+const KEY_COUNT  = "wsi_play_count";
+const PRO_LIMIT  = 5;
+const FREE_LIMIT = 1;
 
 interface WsiQuestion {
   id:             string;
@@ -23,7 +32,12 @@ interface WsiQuestion {
 type Phase = "loading" | "error" | "played" | "game" | "done";
 
 export default function WhoSaidItGameScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const isPro = user?.tier === "patron";
+  const { cardRef, share: shareScoreCard, sharing } = useScoreCardShare();
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<WsiQuestion[]>([]);
@@ -31,6 +45,7 @@ export default function WhoSaidItGameScreen() {
   const [selected,  setSelected]  = useState<string | null>(null);
   const [answers,   setAnswers]   = useState<(string | null)[]>([]);
   const [score,     setScore]     = useState(0);
+  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
   const [errorMsg,  setErrorMsg]  = useState("");
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -38,13 +53,16 @@ export default function WhoSaidItGameScreen() {
   const init = useCallback(async () => {
     setPhase("loading");
     try {
-      const lastDate = storage.getString(KEY_DATE);
-      if (lastDate === todayStr) {
+      const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
+      if (playedToday >= limit) {
         setPhase("played");
         return;
       }
-      const data = await api.get<{ date: string; questions: WsiQuestion[] }>(
-        `${PROXY}/games/who-said-it/daily`
+      const slot = playedToday + 1;
+      const data = await api.get<{ date: string; slot: number; questions: WsiQuestion[] }>(
+        `${PROXY}/games/who-said-it/daily?slot=${slot}`
       );
       if (!data.questions?.length) throw new Error("no questions");
       setQuestions(data.questions);
@@ -72,12 +90,26 @@ export default function WhoSaidItGameScreen() {
     if (author === currentQ.correct_author) setScore((s) => s + 1);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (qIndex < questions.length - 1) {
       setSelected(null);
       setQIndex((i) => i + 1);
     } else {
-      storage.set(KEY_DATE, todayStr);
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const prev = parseInt(storage.getString(countKey) ?? "0", 10);
+      storage.set(countKey, String(prev + 1));
+      recordPlayedToday();
+      const final = answers.filter((a, i) => a === questions[i]?.correct_author).length;
+      try {
+        const result = await api.post<{ credits_earned: number }>(`${MOBILE_API}/games/complete`, {
+          game_type: "who-said-it",
+          score: final,
+          max_score: questions.length,
+        });
+        setCreditsEarned(result.credits_earned);
+      } catch {
+        setCreditsEarned(null);
+      }
       setPhase("done");
     }
   };
@@ -88,8 +120,8 @@ export default function WhoSaidItGameScreen() {
   if (phase === "loading") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
-        <ActivityIndicator style={{ marginTop: 60 }} color={colors.gold} size="large" />
+        <Header nav={nav} styles={styles} c={c} />
+        <ActivityIndicator style={{ marginTop: 60 }} color={c.gold} size="large" />
       </SafeAreaView>
     );
   }
@@ -98,7 +130,7 @@ export default function WhoSaidItGameScreen() {
   if (phase === "error") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <View style={styles.centred}>
           <Text style={styles.centredText}>{errorMsg}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={init}>
@@ -111,13 +143,23 @@ export default function WhoSaidItGameScreen() {
 
   // ── already played ────────────────────────────────────────────────────────────
   if (phase === "played") {
+    const countKey = `${KEY_COUNT}_${todayStr}`;
+    const playsToday = parseInt(storage.getString(countKey) ?? "0", 10);
+    const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <View style={styles.centred}>
           <Text style={styles.doneEmoji}>✍️</Text>
-          <Text style={styles.doneTitle}>Already played today!</Text>
+          <Text style={styles.doneTitle}>
+            {isPro ? `${playsToday}/${limit} plays used today` : "Already played today!"}
+          </Text>
           <Text style={styles.doneSub}>New quotes drop every day.</Text>
+          {!isPro && (
+            <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre }}>Connect Pro members get 5 plays/day →</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={[styles.primaryBtn, { marginTop: space[4] }]} onPress={() => nav.goBack()}>
             <Text style={styles.primaryBtnText}>Back to Games</Text>
           </TouchableOpacity>
@@ -129,14 +171,18 @@ export default function WhoSaidItGameScreen() {
   // ── done ──────────────────────────────────────────────────────────────────────
   if (phase === "done") {
     const pct = Math.round((finalScore / questions.length) * 100);
+    const cr  = creditsEarned ?? Math.round((finalScore / questions.length) * 30);
     const msg = pct >= 80 ? "You know your quotes! 🎉" : pct >= 50 ? "Not bad! 👍" : "Better luck tomorrow! 💪";
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <ScrollView contentContainerStyle={styles.doneBody}>
           <Text style={styles.doneEmoji}>✍️</Text>
           <Text style={styles.doneTitle}>{msg}</Text>
           <Text style={styles.doneScore}>{finalScore} / {questions.length}</Text>
+          <View style={styles.crPill}>
+            <Text style={styles.crPillText}>+{cr} CR earned</Text>
+          </View>
           <Text style={styles.doneSub}>Come back tomorrow for new quotes.</Text>
           <View style={styles.reviewCard}>
             <Text style={styles.reviewTitle}>Review</Text>
@@ -158,10 +204,37 @@ export default function WhoSaidItGameScreen() {
               );
             })}
           </View>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => nav.goBack()}>
+          <TouchableOpacity
+            style={styles.shareBtn}
+            onPress={shareScoreCard}
+            disabled={sharing}
+          >
+            {sharing ? (
+              <ActivityIndicator color={c.ink} />
+            ) : (
+              <Text style={styles.shareBtnText}>Share result</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.primaryBtn, { marginTop: space[2] }]} onPress={() => nav.goBack()}>
             <Text style={styles.primaryBtnText}>Back to Games</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <View style={styles.offscreen} pointerEvents="none">
+          <GameScoreCard
+            ref={cardRef}
+            gameName="Who Said It?"
+            gameEmoji="💬"
+            score={finalScore}
+            maxScore={questions.length}
+            pct={pct}
+            displayName={user?.displayName ?? ""}
+            username={user?.username ?? "member"}
+            avatarUrl={user?.avatarUrl}
+            dateLabel={new Date().toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
+            qrValue={`https://themoveee.com/games?ref=${encodeURIComponent(user?.username ?? "")}`}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -171,7 +244,7 @@ export default function WhoSaidItGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} progress={`${qIndex + 1} / ${questions.length}`} />
+      <Header nav={nav} progress={`${qIndex + 1} / ${questions.length}`} styles={styles} c={c} />
 
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${((qIndex + 1) / questions.length) * 100}%` as any }]} />
@@ -208,10 +281,10 @@ export default function WhoSaidItGameScreen() {
               >
                 <Text style={[styles.optionText, textStyle]}>{author}</Text>
                 {selected !== null && author === currentQ.correct_author && (
-                  <Ionicons name="checkmark-circle" size={18} color={colors.communityText} />
+                  <Ionicons name="checkmark-circle" size={18} color={c.communityText} />
                 )}
                 {selected === author && selected !== currentQ.correct_author && (
-                  <Ionicons name="close-circle" size={18} color={colors.ochre} />
+                  <Ionicons name="close-circle" size={18} color={c.ochre} />
                 )}
               </TouchableOpacity>
             );
@@ -236,11 +309,11 @@ export default function WhoSaidItGameScreen() {
   );
 }
 
-function Header({ nav, progress }: { nav: any; progress?: string }) {
+function Header({ nav, progress, styles, c }: { nav: any; progress?: string; styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-        <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <Ionicons name="arrow-back" size={22} color={c.ink} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Who Said It?</Text>
       {progress && <Text style={styles.headerProgress}>{progress}</Text>}
@@ -248,81 +321,97 @@ function Header({ nav, progress }: { nav: any; progress?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-    backgroundColor: colors.paperWarm,
-  },
-  backBtn:        { padding: 4, marginRight: space[2] },
-  headerTitle:    { flex: 1, fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink },
-  headerProgress: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
+    header: {
+      flexDirection: "row", alignItems: "center",
+      paddingHorizontal: space[4], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+      backgroundColor: c.paperWarm,
+    },
+    backBtn:        { padding: 4, marginRight: space[2] },
+    headerTitle:    { flex: 1, fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink },
+    headerProgress: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
 
-  progressBar:  { height: 3, backgroundColor: colors.rule },
-  progressFill: { height: 3, backgroundColor: colors.gold },
+    progressBar:  { height: 3, backgroundColor: c.rule },
+    progressFill: { height: 3, backgroundColor: c.gold },
 
-  gameBody: { padding: space[4], gap: space[4], paddingBottom: space[10] },
+    gameBody: { padding: space[4], gap: space[4], paddingBottom: space[10] },
 
-  quoteCard: {
-    backgroundColor: colors.paper, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.rule,
-    padding: space[5], gap: space[2],
-  },
-  quoteMarks:  { fontFamily: fonts.serifBold, fontSize: 48, color: colors.gold, lineHeight: 40, marginTop: -8 },
-  quoteText:   { fontFamily: fonts.serif, fontSize: fontSize.lg, color: colors.ink, lineHeight: 26, fontStyle: "italic" },
-  quoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginTop: space[1] },
+    quoteCard: {
+      backgroundColor: c.paper, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: c.rule,
+      padding: space[5], gap: space[2],
+    },
+    quoteMarks:  { fontFamily: fonts.serifBold, fontSize: 48, color: c.gold, lineHeight: 40, marginTop: -8 },
+    quoteText:   { fontFamily: fonts.serifItalic, fontSize: fontSize.lg, color: c.ink, lineHeight: 26 },
+    quoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: space[1] },
 
-  promptText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
+    promptText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
 
-  options: { gap: space[2] },
-  option: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.lg, paddingHorizontal: space[4], paddingVertical: space[3] + 2,
-  },
-  optionCorrect: { backgroundColor: colors.communityBg, borderColor: colors.communityBorder },
-  optionWrong:   { backgroundColor: "#fef2f2", borderColor: "#fca5a5" },
-  optionDim:     { opacity: 0.45 },
+    options: { gap: space[2] },
+    option: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule,
+      borderRadius: radius.lg, paddingHorizontal: space[4], paddingVertical: space[3] + 2,
+    },
+    optionCorrect: { backgroundColor: c.communityBg, borderColor: c.communityBorder },
+    optionWrong:   { backgroundColor: "#fef2f2", borderColor: "#fca5a5" },
+    optionDim:     { opacity: 0.45 },
 
-  optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.inkSoft },
-  optionTextCorrect: { color: colors.communityText, fontFamily: fonts.sansBold },
-  optionTextWrong:   { color: colors.ochre },
+    optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft },
+    optionTextCorrect: { color: c.communityText, fontFamily: fonts.sansBold },
+    optionTextWrong:   { color: c.ochre },
 
-  bottomRow: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-  },
-  liveScoreLabel: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1.2 },
-  liveScoreValue: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink },
-  nextBtn: {
-    backgroundColor: colors.ink, borderRadius: radius.md,
-    paddingVertical: space[3], paddingHorizontal: space[5],
-  },
-  nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
+    bottomRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    },
+    liveScoreLabel: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: c.mute, letterSpacing: 1.2 },
+    liveScoreValue: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink },
+    nextBtn: {
+      backgroundColor: c.ink, borderRadius: radius.md,
+      paddingVertical: space[3], paddingHorizontal: space[5],
+    },
+    nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
 
-  centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6], gap: space[3] },
-  centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center" },
+    centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6], gap: space[3] },
+    centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center" },
 
-  doneBody:  { padding: space[4], gap: space[4], paddingBottom: space[10], alignItems: "center" },
-  doneEmoji: { fontSize: 56 },
-  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink, textAlign: "center" },
-  doneScore: { fontFamily: fonts.serifBold, fontSize: fontSize["3xl"], color: colors.gold },
-  doneSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, letterSpacing: 0.8, textAlign: "center" },
+    doneBody:  { padding: space[4], gap: space[4], paddingBottom: space[10], alignItems: "center" },
+    doneEmoji: { fontSize: 56 },
+    doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink, textAlign: "center" },
+    doneScore: { fontFamily: fonts.serifBold, fontSize: fontSize["3xl"], color: c.gold },
+    crPill: {
+      backgroundColor: c.gold, borderRadius: radius.full,
+      paddingHorizontal: space[4], paddingVertical: 8,
+      shadowColor: c.gold, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 2,
+    },
+    crPillText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.paper },
+    doneSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.8, textAlign: "center" },
 
-  reviewCard:      { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule, borderRadius: radius.lg, overflow: "hidden", width: "100%" },
-  reviewTitle:     { fontFamily: fonts.serifBold, fontSize: fontSize.base, color: colors.ink, padding: space[3], borderBottomWidth: 1, borderBottomColor: colors.rule },
-  reviewRow:       { flexDirection: "row", alignItems: "flex-start", gap: space[2], padding: space[3] },
-  reviewRowBorder: { borderTopWidth: 1, borderTopColor: colors.rule },
-  reviewDot:        { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
-  reviewDotCorrect: { backgroundColor: colors.communityText },
-  reviewDotWrong:   { backgroundColor: colors.ochre },
-  reviewQuote:      { fontFamily: fonts.serif, fontSize: fontSize.xs, color: colors.mute, marginBottom: 4, fontStyle: "italic" },
-  reviewA:          { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.communityText },
-  reviewAWrong:     { color: colors.ochre },
-  reviewYours:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost, marginTop: 2 },
+    reviewCard:      { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg, overflow: "hidden", width: "100%" },
+    reviewTitle:     { fontFamily: fonts.serifBold, fontSize: fontSize.base, color: c.ink, padding: space[3], borderBottomWidth: 1, borderBottomColor: c.rule },
+    reviewRow:       { flexDirection: "row", alignItems: "flex-start", gap: space[2], padding: space[3] },
+    reviewRowBorder: { borderTopWidth: 1, borderTopColor: c.rule },
+    reviewDot:        { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+    reviewDotCorrect: { backgroundColor: c.communityText },
+    reviewDotWrong:   { backgroundColor: c.ochre },
+    reviewQuote:      { fontFamily: fonts.serifItalic, fontSize: fontSize.xs, color: c.mute, marginBottom: 4 },
+    reviewA:          { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.communityText },
+    reviewAWrong:     { color: c.ochre },
+    reviewYours:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost, marginTop: 2 },
 
-  primaryBtn:     { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: space[3], paddingHorizontal: space[6] },
-  primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
-});
+    primaryBtn:     { backgroundColor: c.ink, borderRadius: radius.md, paddingVertical: space[3], paddingHorizontal: space[6] },
+    primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
+
+    shareBtn: {
+      width: "100%", maxWidth: 200, height: 48,
+      borderWidth: 1.5, borderColor: c.ink, borderRadius: radius.full,
+      alignItems: "center", justifyContent: "center",
+    },
+    shareBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    offscreen: { position: "absolute", top: -9999, left: -9999 },
+  });
+}

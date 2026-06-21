@@ -62,5 +62,16 @@ export async function POST(req: NextRequest) {
   }
 
   const comment = await res.json();
+
+  // Award gamification points for community comment (fire-and-forget)
+  const API_KEY = process.env.CULTURE_API_SECRET ?? "";
+  if (userId && API_KEY) {
+    fetch(`${WP_URL}/wp-json/culture/v1/award-points`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
+      body: JSON.stringify({ user_id: userId, action: "community_comment", post_id: postId }),
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ id: comment.id, author_name: comment.author_name, date: comment.date });
 }

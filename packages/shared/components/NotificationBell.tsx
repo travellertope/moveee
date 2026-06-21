@@ -26,6 +26,11 @@ const TYPE_EMOJI: Record<string, string> = {
   comment_received: "💬",
   post_validated:   "🚀",
   system:           "📣",
+  referral_received: "🎉",
+  mention:           "📌",
+  new_follower:      "👤",
+  new_follower_post: "📰",
+  event_rsvp:        "🎫",
 };
 
 function timeAgo(iso: string): string {
@@ -72,13 +77,13 @@ export default function NotificationBell() {
     }
   }, [loggedIn]);
 
-  // Poll for unread count every 60 s, but skip when the tab is hidden.
+  // Poll for unread count every 120 s, but skip when the tab is hidden.
   useEffect(() => {
     if (!loggedIn) return;
     fetchCount();
     const id = setInterval(() => {
       if (!document.hidden) fetchCount();
-    }, 60000);
+    }, 120000);
     return () => clearInterval(id);
   }, [loggedIn, fetchCount]);
 

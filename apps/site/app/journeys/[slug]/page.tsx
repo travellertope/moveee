@@ -1,4 +1,4 @@
-import { getWPData, GET_JOURNEY_BY_SLUG } from "@/lib/wp";
+import { getWPData, GET_JOURNEY_BY_SLUG, GET_JOURNEYS } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,6 +7,16 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import "@/app/origins.css";
 
 export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  try {
+    const data = await getWPData(GET_JOURNEYS, { first: 50 }, { revalidate: 3600 });
+    const nodes: { slug: string }[] = data?.cultureJourneys?.nodes ?? [];
+    return nodes.map((n) => ({ slug: n.slug }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

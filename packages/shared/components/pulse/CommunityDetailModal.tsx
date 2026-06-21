@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
 import CommentThread from "./CommentThread";
@@ -8,6 +9,55 @@ import HashtagText from "./HashtagText";
 import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
+
+function AuthorFollowToggle({ username }: { username: string }) {
+  const { data: session, status } = useSession();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+  const isSelf = (session?.user as any)?.username === username;
+
+  useEffect(() => {
+    if (status !== "authenticated" || isSelf) return;
+    fetch(`/api/connect/${encodeURIComponent(username)}/follow`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setIsFollowing(!!data.isFollowing); })
+      .finally(() => setReady(true));
+  }, [username, status, isSelf]);
+
+  if (status !== "authenticated" || isSelf) return null;
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/connect/${encodeURIComponent(username)}/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: isFollowing ? "unfollow" : "follow" }),
+      });
+      if (res.ok) setIsFollowing(!isFollowing);
+    } catch {}
+    setBusy(false);
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={busy || !ready}
+      style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: "0.62rem", letterSpacing: "0.08em", textTransform: "uppercase",
+        padding: "2px 9px", borderRadius: "999px", cursor: "pointer",
+        border: isFollowing ? "1px solid rgba(179,130,56,.4)" : "1px solid #d8d2c4",
+        background: isFollowing ? "rgba(179,130,56,.08)" : "transparent",
+        color: isFollowing ? "#b38238" : "#14110d",
+      }}
+    >
+      {isFollowing ? "✓ Following" : "Follow"}
+    </button>
+  );
+}
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -58,6 +108,82 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
   );
 }
 
+function RsvpDisplay({
+  postId,
+  capacity,
+  initialCount,
+}: {
+  postId?: string;
+  capacity?: number;
+  initialCount?: number;
+}) {
+  const [status, setStatus] = useState<{ rsvped: boolean; count: number } | null>(
+    initialCount !== undefined ? { rsvped: false, count: initialCount } : null
+  );
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!postId) return;
+    fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0) });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
+  const count = status?.count ?? initialCount ?? 0;
+  const isFull = !!capacity && capacity > 0 && count >= capacity;
+  const rsvped = !!status?.rsvped;
+
+  async function toggle() {
+    if (loading || !postId) return;
+    if (!rsvped && isFull) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId) }),
+      });
+      if (res.ok) {
+        setStatus((prev) => ({
+          rsvped: !rsvped,
+          count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
+        }));
+      }
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.8rem" }}>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={loading || (!rsvped && isFull)}
+        style={{
+          background: rsvped ? "#fff" : "var(--ochre, #b38238)",
+          color: rsvped ? "#b38238" : "#fff",
+          border: "1px solid #b38238",
+          borderRadius: "4px",
+          padding: "8px 16px",
+          fontSize: "0.8rem",
+          fontWeight: 700,
+          cursor: !rsvped && isFull ? "not-allowed" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
+      </button>
+      <span style={{ fontSize: "0.75rem", color: "#7a6f5c" }}>
+        {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+      </span>
+    </div>
+  );
+}
+
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
   if (!sourceUrl) return text;
   const escaped = sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -67,10 +193,10 @@ function stripTrailingUrl(text: string, sourceUrl?: string): string {
 interface CommunityDetailModalProps {
   item: FeedItem;
   onClose: () => void;
-  onHashtagClick?: (hashtag: string) => void;
+  onMentionClick?: (username: string) => void;
 }
 
-export default function CommunityDetailModal({ item, onClose, onHashtagClick }: CommunityDetailModalProps) {
+export default function CommunityDetailModal({ item, onClose, onMentionClick }: CommunityDetailModalProps) {
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -176,6 +302,7 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
               color: "#2e7d32", fontSize: "0.65rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               overflow: "hidden",
+              ...(item.communityTier === "patron" ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -187,18 +314,21 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
                   {item.communityAuthor || "Community Member"}
                 </span>
                 {item.communityTier === "patron" && (
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: "0.52rem", letterSpacing: "0.14em", textTransform: "uppercase",
-                    color: "#b38238", background: "rgba(179,130,56,.1)",
-                    border: "1px solid rgba(179,130,56,.25)", padding: "1px 5px", lineHeight: 1.6,
-                  }}>Pro</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
+                    <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+                    <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  </svg>
                 )}
               </div>
               <span style={{ color: "#999", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </span>
             </div>
+            {item.communityAuthorUsername && (
+              <div style={{ marginLeft: "auto" }}>
+                <AuthorFollowToggle username={item.communityAuthorUsername} />
+              </div>
+            )}
           </div>
 
           {/* Template badge */}
@@ -229,6 +359,11 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
                   Weekend Route
                 </span>
               )}
+              {item.templateType === "event" && (
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                  Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
+                </span>
+              )}
             </div>
           )}
 
@@ -249,7 +384,7 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
             wordBreak: "break-word",
             overflowWrap: "break-word",
           }}>
-            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} />
+            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={onMentionClick} />
           </div>
 
           {/* Food review ratings */}
@@ -264,6 +399,38 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
           {/* Poll */}
           {item.templateType === "poll" && item.pollOptions && (
             <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
+          )}
+
+          {/* Event details + RSVP */}
+          {item.templateType === "event" && (
+            <div style={{ fontSize: "0.82rem", color: "#7a6f5c", marginBottom: "0.6rem", lineHeight: 1.6 }}>
+              {item.eventDate && (
+                <div>
+                  📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
+                  {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+                </div>
+              )}
+              {(item.location || item.city) && (
+                <div>📍 {[item.location, item.city].filter(Boolean).join(", ")}</div>
+              )}
+              {item.admission && <div>🎟 {item.admission}</div>}
+              {item.organiserName && item.organiserSlug && (
+                <div>
+                  Organised by{" "}
+                  <Link href={`/directory/${item.organiserSlug}`} style={{ color: "#b38238" }}>
+                    {item.organiserName}
+                  </Link>
+                </div>
+              )}
+              {item.ticketUrl && (
+                <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", display: "inline-block", marginTop: "4px" }}>
+                  Get tickets →
+                </a>
+              )}
+            </div>
+          )}
+          {item.templateType === "event" && item.rsvpEnabled && (
+            <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
           )}
 
           {/* Gallery */}

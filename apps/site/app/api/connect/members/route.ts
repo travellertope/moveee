@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
           instagram: m.directory_instagram ?? "",
           linkedin: m.directory_linkedin ?? "",
           website: m.directory_website ?? "",
+          twitter: m.directory_twitter ?? "",
         }))
       : [];
 

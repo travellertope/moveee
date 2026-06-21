@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProfileTabs from "./ProfileTabs";
 import ShareButton from "./ShareButton";
+import FollowButton from "./FollowButton";
 import BadgeShelf from "./BadgeShelf";
 import "./profile.css";
 
@@ -14,6 +15,7 @@ interface Profile {
   username: string;
   display_name: string;
   avatar_url: string;
+  cover_photo_url: string;
   bio: string;
   city: string;
   country: string;
@@ -25,6 +27,7 @@ interface Profile {
   interests: string[];
   joined: string;
   post_count: number;
+  followers_count: number;
 }
 
 async function getProfile(username: string): Promise<Profile | null> {
@@ -41,10 +44,11 @@ async function getProfile(username: string): Promise<Profile | null> {
 }
 
 const REP_TIER_LABELS: Record<string, string> = {
-  member:              "Member",
+  member:                "Member",
   "culture-contributor": "Culture Contributor",
-  "taste-maker":       "Taste Maker",
-  "culture-authority": "Culture Authority",
+  "taste-maker":         "Taste Maker",
+  "culture-authority":   "Culture Authority",
+  "culture-icon":        "Culture Icon",
 };
 
 function formatJoined(iso: string) {
@@ -98,6 +102,11 @@ export default async function PublicProfilePage(
   return (
     <div className="prf-page">
       <div className="prf-header">
+        {profile.cover_photo_url ? (
+          <div className="prf-cover">
+            <img src={profile.cover_photo_url} alt="" className="prf-cover-img" />
+          </div>
+        ) : null}
         <div className="prf-header-inner">
           <div className="prf-identity">
             <div className={`prf-avatar${isPatron ? " prf-avatar--patron" : ""}`}>
@@ -107,7 +116,15 @@ export default async function PublicProfilePage(
             </div>
 
             <div className="prf-identity-body">
-              <h1 className="prf-name">{profile.display_name}</h1>
+              <h1 className="prf-name">
+                {profile.display_name}
+                {isPatron && (
+                  <svg className="prf-pro-check" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro">
+                    <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+                    <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  </svg>
+                )}
+              </h1>
 
               <p className="prf-handle-line">
                 <span>@{profile.username}</span>
@@ -126,9 +143,6 @@ export default async function PublicProfilePage(
               </p>
 
               <div className="prf-badges">
-                <span className={`prf-tier-badge prf-tier-badge--${isPatron ? "patron" : "citizen"}`}>
-                  {isPatron ? "Connect Pro" : "Connect Citizen"}
-                </span>
                 {profile.reputation_tier !== "member" && (
                   <span className="prf-rep-badge">{repLabel}</span>
                 )}
@@ -139,12 +153,13 @@ export default async function PublicProfilePage(
               {profile.bio && <p className="prf-bio">{profile.bio}</p>}
 
               <div className="prf-stats">
-                <span className="prf-stat"><strong>{profile.reputation.toLocaleString()}</strong> rep</span>
+                <span className="prf-stat"><strong>{profile.reputation.toLocaleString()}</strong> pts</span>
                 <span className="prf-stat"><strong>{profile.post_count}</strong> posts</span>
                 <span className="prf-stat">Joined <strong>{formatJoined(profile.joined)}</strong></span>
               </div>
 
               <div className="prf-actions">
+                <FollowButton username={profile.username} initialFollowersCount={profile.followers_count} />
                 <ShareButton url={profileUrl} name={profile.display_name} />
                 <Link href="/connect/people" className="prf-share-btn" style={{ textDecoration: "none" }}>
                   ← Directory

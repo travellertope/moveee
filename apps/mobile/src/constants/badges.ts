@@ -1,0 +1,48 @@
+// Canonical badge metadata — slugs and copy must mirror
+// Culture_Gamification::BADGES in culture-community/includes/core/class-culture-gamification.php
+export const BADGE_META: Record<string, { name: string; emoji: string; description: string }> = {
+  first_steps:               { name: "First Steps",           emoji: "🚩", description: "Attended your first event." },
+  regular:                   { name: "Regular",                emoji: "🎖️", description: "Attended 5 events." },
+  culture_vulture:            { name: "Culture Vulture",        emoji: "🦅", description: "Attended 25 events." },
+  explorer:                   { name: "Explorer",               emoji: "🌍", description: "Attended events in 3 different cities." },
+  globetrotter:                { name: "Globetrotter",           emoji: "✈️", description: "Attended events in 10 different cities." },
+  commentator:                 { name: "Commentator",            emoji: "💬", description: "Left 10 comments on Moveee newsletters." },
+  century_club:                 { name: "Century Club",           emoji: "💯", description: "Earned 100 culture points." },
+  wordsmith:                    { name: "Wordsmith",              emoji: "✍️", description: "Shared your first quote." },
+  librarian:                    { name: "Librarian",              emoji: "📚", description: "Shared 10 quotes." },
+  philosopher:                  { name: "Philosopher",            emoji: "🧠", description: "Shared 50 quotes." },
+  influencer:                   { name: "Influencer",             emoji: "👍", description: "Your quotes received 10 likes." },
+  thought_leader:                { name: "Thought Leader",         emoji: "📣", description: "Your quotes received 100 likes." },
+  culture_archivist:             { name: "Culture Archivist",      emoji: "🗂️", description: "Submitted your first Culture Directory entry." },
+  knowledge_keeper:               { name: "Knowledge Keeper",       emoji: "📖", description: "Submitted 5 Culture Directory entries." },
+  cultural_encyclopaedist:         { name: "Cultural Encyclopaedist", emoji: "🏛️", description: "Submitted 20 Culture Directory entries." },
+  cultural_specialist:             { name: "Cultural Specialist",    emoji: "🎓", description: "Left 10 total comments on articles." },
+  deep_diver:                       { name: "Deep Diver",             emoji: "🔍", description: "Read 10 Magazine articles." },
+  culture_liaison:                  { name: "Culture Liaison",        emoji: "🤝", description: "Shared 10 Magazine articles." },
+  first_post:                        { name: "First Post",             emoji: "📝", description: "Made your first community post." },
+  prolific_poster:                    { name: "Prolific Poster",        emoji: "✏️", description: "Created 10 community posts." },
+  century_scribe:                      { name: "Century Scribe",         emoji: "📜", description: "Created 50 community posts." },
+  conversationalist:                    { name: "Conversationalist",      emoji: "🗣️", description: "Left 25 comments in the community." },
+  food_critic:                           { name: "Food Critic",            emoji: "🍽️", description: "Posted 10 food reviews." },
+  culture_guide:                          { name: "Culture Guide",          emoji: "💡", description: "Posted 5 cultural takes." },
+  itinerary_master:                        { name: "Itinerary Master",       emoji: "🗺️", description: "Created 3 travel itineraries." },
+  poll_champion:                            { name: "Poll Champion",          emoji: "📊", description: "Created 5 community polls." },
+  gem_hunter:                                { name: "Gem Hunter",             emoji: "💎", description: "Shared 5 hidden gems." },
+  connector:                                  { name: "Connector",              emoji: "🔗", description: "Successfully referred 3 new members." },
+  super_connector:                             { name: "Super Connector",        emoji: "🌐", description: "Successfully referred 10 new members." },
+  profile_complete:                             { name: "Profile Complete",       emoji: "🪪", description: "Completed your Moveee profile." },
+  directory_member:                              { name: "In the Directory",       emoji: "📇", description: "Opted into the Moveee member directory." },
+  newsletter_subscriber:                          { name: "Newsletter Subscriber",  emoji: "📬", description: "Subscribed to a Moveee newsletter." },
+  monthly_member:                                  { name: "Monthly Member",         emoji: "📅", description: "Been a Moveee member for 30 days." },
+  veteran:                                          { name: "Veteran",                emoji: "🛡️", description: "Been a Moveee member for 180 days." },
+  annual_advocate:                                   { name: "Annual Advocate",        emoji: "⭐", description: "Been a Moveee member for a full year." },
+  rising_star:                                        { name: "Rising Star",            emoji: "🌟", description: "Earned 250 points." },
+  culture_contributor_badge:                           { name: "Culture Contributor",    emoji: "🥉", description: "Earned 500 points — officially a Culture Contributor." },
+  taste_maker_badge:                                    { name: "Taste Maker",            emoji: "👑", description: "Earned 2,500 points — reached Taste Maker tier." },
+  culture_authority_badge:                               { name: "Culture Authority",      emoji: "🏆", description: "Earned 10,000 reputation — reached Culture Authority tier." },
+  culture_icon_badge:                                     { name: "Culture Icon",           emoji: "🦁", description: "Earned 25,000 reputation and nominated by the community." },
+};
+
+export function badgeTitleCase(slug: string): string {
+  return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}

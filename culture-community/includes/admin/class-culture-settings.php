@@ -35,16 +35,32 @@ class Culture_Settings {
         'culture_stripe_price_monthly_usd'     => '',
         'culture_stripe_price_yearly_usd'      => '',
 
-        // Gamification – point values.
-        'culture_points_event_rsvp'          => 5,
-        'culture_points_event_checkin'       => 15,
-        'culture_points_newsletter_comment'  => 10,
-        'culture_points_newsletter_reaction' => 2,
-        'culture_points_referral'            => 25,
-        'culture_points_quote_submission'    => 10,
-        'culture_points_quote_like'          => 1,
-        'culture_points_magazine_read'       => 5,
-        'culture_points_magazine_share'      => 5,
+        // Shop.
+        'culture_shop_fx_ngn_per_gbp'          => 1900,
+        'culture_shop_flat_shipping_gbp'       => 4.99,
+
+        // Gamification – point values. Every action awards both points and
+        // credits — keep these in sync with Culture_Gamification::POINTS.
+        'culture_points_event_rsvp'             => 5,
+        'culture_points_event_checkin'          => 20,
+        'culture_points_magazine_comment'       => 5,
+        'culture_points_newsletter_comment'     => 10,
+        'culture_points_newsletter_reaction'    => 1,
+        'culture_points_referral'               => 30,
+        'culture_points_quote_submission'       => 10,
+        'culture_points_quote_like'             => 1,
+        'culture_points_magazine_read'          => 1,
+        'culture_points_magazine_share'         => 2,
+        'culture_points_community_comment'      => 8,
+        'culture_points_community_like'         => 1,
+        'culture_points_directory_entry'        => 20,
+        'culture_points_game_completed'         => 1,
+        'culture_points_community_post'         => 10,
+        'culture_points_profile_completed'      => 15,
+        'culture_points_email_verified'         => 5,
+        'culture_points_directory_opt_in'       => 10,
+        'culture_points_newsletter_subscribed'  => 5,
+        'culture_points_poll_vote'              => 1,
 
         // Gamification – badge thresholds.
         'culture_badge_first_steps'              => 1,
@@ -84,16 +100,11 @@ class Culture_Settings {
         'culture_frontend_url'         => '',
         'culture_api_secret'           => '',
         'culture_cron_secret'          => '',
+        'culture_google_client_id_web'     => '',
+        'culture_google_client_id_ios'      => '',
+        'culture_google_client_id_android'  => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
-
-        // Automation — Twitter / X.
-        'culture_twitter_enabled'             => '0',
-        'culture_twitter_api_key'             => '',
-        'culture_twitter_api_secret'          => '',
-        'culture_twitter_access_token'        => '',
-        'culture_twitter_access_token_secret' => '',
-        'culture_twitter_interval'            => 'thirtyminutes',
 
         // Advertising — Google Ads / AdSense.
         'culture_ads_enabled'                    => '0',
@@ -135,73 +146,22 @@ class Culture_Settings {
      * @return int
      */
     public static function get_badge_threshold( $badge_slug ) {
-        $key     = 'culture_badge_' . $badge_slug;
-        $default = isset( self::$defaults[ $key ] ) ? self::$defaults[ $key ] : 0;
-        return (int) get_option( $key, $default );
+        $key = 'culture_badge_' . $badge_slug;
+        // Use the BADGES constant threshold as the canonical default
+        $default = 0;
+        if ( class_exists( 'Culture_Gamification' ) && isset( Culture_Gamification::BADGES[ $badge_slug ]['threshold'] ) ) {
+            $default = (int) Culture_Gamification::BADGES[ $badge_slug ]['threshold'];
+        } elseif ( isset( self::$defaults[ $key ] ) ) {
+            $default = (int) self::$defaults[ $key ];
+        }
+        $saved = get_option( $key, null );
+        return ( $saved !== null && (int) $saved > 0 ) ? (int) $saved : $default;
     }
 
     public static function init() {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
         add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-        add_action( 'wp_ajax_culture_test_tweet', array( __CLASS__, 'ajax_test_tweet' ) );
-    }
-
-    /**
-     * AJAX: test Twitter credentials by posting a test tweet.
-     */
-    public static function ajax_test_tweet() {
-        check_ajax_referer( 'culture_test_tweet' );
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Unauthorised.' );
-        }
-
-        if ( ! class_exists( 'Culture_Twitter' ) ) {
-            wp_send_json_error( 'Culture_Twitter class not loaded.' );
-        }
-
-        // Build a test tweet with a timestamp so it never duplicates.
-        $test_text = '[Test] Moveee auto-poster connection check — ' . gmdate( 'Y-m-d H:i:s' ) . ' UTC';
-
-        // Temporarily capture the raw response for diagnostics.
-        $body     = wp_json_encode( array( 'text' => $test_text ) );
-        $auth     = Culture_Twitter::build_oauth_header_public( 'POST', 'https://api.twitter.com/2/tweets' );
-
-        $response = wp_remote_post( 'https://api.twitter.com/2/tweets', array(
-            'timeout' => 20,
-            'headers' => array(
-                'Content-Type'  => 'application/json',
-                'Authorization' => $auth,
-            ),
-            'body' => $body,
-        ) );
-
-        if ( is_wp_error( $response ) ) {
-            wp_send_json_error( 'WP_Error: ' . $response->get_error_message() );
-        }
-
-        $code     = wp_remote_retrieve_response_code( $response );
-        $resp_body = wp_remote_retrieve_body( $response );
-
-        if ( $code >= 200 && $code < 300 ) {
-            wp_send_json_success( 'Tweet posted successfully (HTTP ' . $code . ').' );
-        } else {
-            // Decode and surface the Twitter error message.
-            $decoded = json_decode( $resp_body, true );
-            $msg     = isset( $decoded['detail'] ) ? $decoded['detail']
-                     : ( isset( $decoded['errors'][0]['message'] ) ? $decoded['errors'][0]['message']
-                     : $resp_body );
-            wp_send_json_error( 'HTTP ' . $code . ': ' . $msg );
-        }
-    }
-
-    /** Check if Twitter credentials are fully configured. */
-    private static function is_twitter_configured() {
-        return '1' === self::get( 'culture_twitter_enabled' )
-            && '' !== self::get( 'culture_twitter_api_key' )
-            && '' !== self::get( 'culture_twitter_api_secret' )
-            && '' !== self::get( 'culture_twitter_access_token' )
-            && '' !== self::get( 'culture_twitter_access_token_secret' );
     }
 
     /**
@@ -265,21 +225,64 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
 
-        // Gamification – points.
-        register_setting( 'culture_settings_gamification', 'culture_points_event_rsvp', $int );
-        register_setting( 'culture_settings_gamification', 'culture_points_event_checkin', $int );
-        register_setting( 'culture_settings_gamification', 'culture_points_newsletter_comment', $int );
-        register_setting( 'culture_settings_gamification', 'culture_points_newsletter_reaction', $int );
-        register_setting( 'culture_settings_gamification', 'culture_points_referral', $int );
+        // Shop (multi-currency + flat-rate fallback shipping).
+        register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
 
-        // Gamification – badge thresholds.
-        register_setting( 'culture_settings_gamification', 'culture_badge_first_steps', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_regular', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_culture_vulture', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_explorer', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_globetrotter', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_commentator', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_century_club', $int );
+        // Credits – per action bonuses. Every action awards both credits and
+        // reputation, so this list mirrors the Reputation tab's action list.
+        $credit_keys = array(
+            'culture_credits_event_rsvp', 'culture_credits_event_checkin',
+            'culture_credits_referral', 'culture_credits_newsletter_comment',
+            'culture_credits_newsletter_reaction',
+            'culture_credits_quote_submission', 'culture_credits_quote_like',
+            'culture_credits_magazine_read',
+            'culture_credits_magazine_share', 'culture_credits_directory_entry',
+            'culture_credits_community_comment', 'culture_credits_community_like',
+            'culture_credits_game_completed', 'culture_credits_community_post',
+            'culture_credits_profile_completed', 'culture_credits_email_verified',
+            'culture_credits_directory_opt_in', 'culture_credits_newsletter_subscribed',
+            'culture_credits_poll_vote',
+        );
+        foreach ( $credit_keys as $key ) {
+            register_setting( 'culture_settings_credits', $key, $int );
+        }
+        register_setting( 'culture_settings_credits', 'culture_daily_credit_cap', $int );
+        register_setting( 'culture_settings_credits', 'culture_credits_per_gbp', $int );
+        register_setting( 'culture_settings_credits', 'culture_credits_per_usd', $int );
+        register_setting( 'culture_settings_credits', 'culture_credits_per_ngn', $int );
+        register_setting( 'culture_settings_credits', 'culture_credits_post_validated_standard', $int );
+        register_setting( 'culture_settings_credits', 'culture_credits_post_validated_special', $int );
+
+        // Reputation – per action. Uses the culture_points_* option prefix —
+        // this is the prefix actually read at award time by
+        // Culture_Gamification::get_point_value()/award_points(). (The legacy
+        // culture_rep_* per-action keys were never read anywhere and have been
+        // retired; culture_rep_tier_* below is unrelated and still live.)
+        $rep_keys = array(
+            'culture_points_event_rsvp', 'culture_points_event_checkin',
+            'culture_points_newsletter_comment', 'culture_points_newsletter_reaction',
+            'culture_points_referral', 'culture_points_quote_submission', 'culture_points_quote_like',
+            'culture_points_magazine_read', 'culture_points_magazine_share',
+            'culture_points_community_comment', 'culture_points_community_like',
+            'culture_points_directory_entry', 'culture_points_game_completed',
+            'culture_points_community_post', 'culture_points_profile_completed',
+            'culture_points_email_verified', 'culture_points_directory_opt_in',
+            'culture_points_newsletter_subscribed', 'culture_points_poll_vote',
+        );
+        foreach ( $rep_keys as $key ) {
+            register_setting( 'culture_settings_reputation', $key, $int );
+        }
+        register_setting( 'culture_settings_reputation', 'culture_rep_tier_contributor', $int );
+        register_setting( 'culture_settings_reputation', 'culture_rep_tier_taste-maker', $int );
+        register_setting( 'culture_settings_reputation', 'culture_rep_tier_authority', $int );
+
+        // Gamification – badge thresholds, dynamically registered from BADGES constant.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            foreach ( array_keys( Culture_Gamification::BADGES ) as $slug ) {
+                register_setting( 'culture_settings_gamification', 'culture_badge_' . $slug, $int );
+            }
+        }
 
         // Referrals.
         register_setting( 'culture_settings_referrals', 'culture_referral_cookie_days', $int );
@@ -299,17 +302,19 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
         register_setting( 'culture_settings_general', 'culture_api_secret', $text );
         register_setting( 'culture_settings_general', 'culture_cron_secret', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_web', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_ios', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_android', $text );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
-        // Automation — Twitter.
-        $bool = array( 'sanitize_callback' => 'absint' );
-        register_setting( 'culture_settings_automation', 'culture_twitter_enabled',             $bool );
-        register_setting( 'culture_settings_automation', 'culture_twitter_api_key',             $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_api_secret',          $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_access_token',        $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_access_token_secret', $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_interval',            $text );
+        // Cloudflare R2 storage (mobile media uploads).
+        register_setting( 'culture_settings_general', 'culture_r2_account_id', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_access_key_id', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_secret_access_key', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_bucket_name', $text );
+        register_setting( 'culture_settings_general', 'culture_r2_public_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+
 
         // Advertising.
         register_setting( 'culture_settings_moderation', 'culture_community_blocklist', array(
@@ -334,12 +339,13 @@ class Culture_Settings {
         $tabs = array(
             'payment'      => __( 'Payment', 'culture-community' ),
             'gamification' => __( 'Gamification', 'culture-community' ),
+            'credits'      => __( 'Credits', 'culture-community' ),
+            'reputation'   => __( 'Reputation', 'culture-community' ),
             'referrals'    => __( 'Referrals', 'culture-community' ),
             'emails'       => __( 'Emails', 'culture-community' ),
             'membership'   => __( 'Membership', 'culture-community' ),
             'general'      => __( 'General', 'culture-community' ),
             'moderation'   => __( 'Moderation', 'culture-community' ),
-            'automation'   => __( 'Automation', 'culture-community' ),
             'advertising'  => __( 'Advertising', 'culture-community' ),
         );
         ?>
@@ -363,6 +369,12 @@ class Culture_Settings {
                     case 'gamification':
                         self::render_gamification_tab();
                         break;
+                    case 'credits':
+                        self::render_credits_tab();
+                        break;
+                    case 'reputation':
+                        self::render_reputation_tab();
+                        break;
                     case 'referrals':
                         self::render_referrals_tab();
                         break;
@@ -377,9 +389,6 @@ class Culture_Settings {
                         break;
                     case 'moderation':
                         self::render_moderation_tab();
-                        break;
-                    case 'automation':
-                        self::render_automation_tab();
                         break;
                     case 'advertising':
                         self::render_advertising_tab();
@@ -498,59 +507,271 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Lifestyle Shop', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Shop products are priced in GBP (the WooCommerce store currency). Nigerian shoppers are shown a converted NGN price and pay via Paystack at this rate; everyone else pays in GBP via Stripe. The underlying order is always recorded in GBP.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_shop_fx_ngn_per_gbp"><?php esc_html_e( 'NGN per GBP exchange rate', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_fx_ngn_per_gbp" name="culture_shop_fx_ngn_per_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_fx_ngn_per_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Update periodically to track the market rate. Used to convert GBP shop prices to NGN for display and Paystack charges.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_shop_flat_shipping_gbp"><?php esc_html_e( 'Fallback flat shipping (GBP)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_flat_shipping_gbp" name="culture_shop_flat_shipping_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_flat_shipping_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Used only for a package if no WooCommerce shipping zone matches the destination address.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
         <?php
     }
 
     private static function render_gamification_tab() {
+        if ( ! class_exists( 'Culture_Gamification' ) ) return;
+        $badges = Culture_Gamification::BADGES;
+
+        // Human-readable unit label per trigger type
+        $trigger_labels = array(
+            'event_count'           => __( 'events attended', 'culture-community' ),
+            'city_count'            => __( 'different cities visited', 'culture-community' ),
+            'comment_count'         => __( 'newsletter comments', 'culture-community' ),
+            'points'                => __( 'total reputation', 'culture-community' ),
+            'quote_count'           => __( 'quotes shared', 'culture-community' ),
+            'quote_likes_count'     => __( 'quote likes received', 'culture-community' ),
+            'dir_entry_count'       => __( 'directory entries submitted', 'culture-community' ),
+            'total_comment_count'   => __( 'total comments', 'culture-community' ),
+            'magazine_read_count'   => __( 'articles read', 'culture-community' ),
+            'magazine_share_count'  => __( 'articles shared', 'culture-community' ),
+            'community_post_count'  => __( 'community posts', 'culture-community' ),
+            'community_comment_count' => __( 'community comments', 'culture-community' ),
+            'food_review_count'     => __( 'food reviews', 'culture-community' ),
+            'cultural_take_count'   => __( 'cultural takes', 'culture-community' ),
+            'itinerary_count'       => __( 'itineraries created', 'culture-community' ),
+            'poll_count'            => __( 'polls created', 'culture-community' ),
+            'hidden_gem_count'      => __( 'hidden gems shared', 'culture-community' ),
+            'referral_count'        => __( 'successful referrals', 'culture-community' ),
+            'profile_completed'     => __( 'profile completed (boolean)', 'culture-community' ),
+            'directory_opted_in'    => __( 'opted into directory (boolean)', 'culture-community' ),
+            'post_reactions_count'  => __( 'reactions received on posts', 'culture-community' ),
+            'passkey_registered'    => __( 'passkey registered (boolean)', 'culture-community' ),
+            'like_count'            => __( 'likes given', 'culture-community' ),
+        );
         ?>
-        <h2><?php esc_html_e( 'Point Values', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Set how many Culture Points members earn for each action.', 'culture-community' ); ?></p>
+        <h2><?php esc_html_e( 'Badge Thresholds', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Set the threshold required to unlock each badge. Credit and reputation values per action are configured in the Credits and Reputation tabs.', 'culture-community' ); ?></p>
         <table class="form-table">
-            <?php
-            $point_fields = array(
-                'culture_points_event_rsvp'          => __( 'Event RSVP', 'culture-community' ),
-                'culture_points_event_checkin'       => __( 'Event Check-in', 'culture-community' ),
-                'culture_points_newsletter_comment'  => __( 'Newsletter Comment', 'culture-community' ),
-                'culture_points_newsletter_reaction' => __( 'Newsletter Reaction', 'culture-community' ),
-                'culture_points_referral'            => __( 'Successful Referral', 'culture-community' ),
-            );
-            foreach ( $point_fields as $key => $label ) :
+            <?php foreach ( $badges as $slug => $badge ) :
+                $key     = 'culture_badge_' . $slug;
+                $default = (int) $badge['threshold'];
+                $saved   = get_option( $key, null );
+                $display = ( $saved !== null && (int) $saved > 0 ) ? (int) $saved : $default;
+                $unit    = isset( $trigger_labels[ $badge['trigger'] ] ) ? $trigger_labels[ $badge['trigger'] ] : $badge['trigger'];
+            ?>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $badge['name'] ); ?></label></th>
+                    <td>
+                        <input type="number" id="<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>"
+                               value="<?php echo esc_attr( $display ); ?>" min="1" step="1" class="small-text" />
+                        <span class="description"><?php echo esc_html( $unit ); ?>
+                            <em style="color:#888;margin-left:4px;">(default: <?php echo (int) $default; ?>)</em>
+                        </span>
+                        <p class="description" style="color:#999;font-size:11px;margin-top:2px;"><?php echo esc_html( $badge['description'] ); ?></p>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+        <?php
+    }
+
+    private static function render_credits_tab() {
+        // Helper: resolve default from CREDIT_BONUSES constant if class exists.
+        $credit_defaults = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::CREDIT_BONUSES : array();
+
+        $credit_actions = array(
+            'event_rsvp'             => __( 'Event RSVP', 'culture-community' ),
+            'event_checkin'          => __( 'Event Check-in', 'culture-community' ),
+            'referral'               => __( 'Successful Referral', 'culture-community' ),
+            'newsletter_comment'     => __( 'Newsletter Comment', 'culture-community' ),
+            'newsletter_reaction'    => __( 'Newsletter Reaction', 'culture-community' ),
+            'quote_submission'       => __( 'Quote Submitted', 'culture-community' ),
+            'quote_like'             => __( 'Quote Liked by Others', 'culture-community' ),
+            'magazine_read'          => __( 'Magazine Article Read', 'culture-community' ),
+            'magazine_share'         => __( 'Magazine Article Shared', 'culture-community' ),
+            'directory_entry'        => __( 'Directory Entry Submitted', 'culture-community' ),
+            'community_comment'      => __( 'Community Comment', 'culture-community' ),
+            'community_like'         => __( 'Community Reaction', 'culture-community' ),
+            'game_completed'         => __( 'Game Completed', 'culture-community' ),
+            'community_post'         => __( 'Community Post Submitted', 'culture-community' ),
+            'profile_completed'      => __( 'Profile Completed', 'culture-community' ),
+            'email_verified'         => __( 'Email Verified', 'culture-community' ),
+            'directory_opt_in'       => __( 'Opted into Member Directory', 'culture-community' ),
+            'newsletter_subscribed'  => __( 'Newsletter Subscribed', 'culture-community' ),
+            'poll_vote'              => __( 'Poll Vote', 'culture-community' ),
+        );
+        ?>
+        <h2><?php esc_html_e( 'Credit Bonuses per Action', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Credits are spendable and capped daily. Set how many credits each action awards.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <?php foreach ( $credit_actions as $action => $label ) :
+                $key     = 'culture_credits_' . $action;
+                $default = isset( $credit_defaults[ $action ] ) ? $credit_defaults[ $action ] : 0;
+                $value   = get_option( $key, $default );
             ?>
                 <tr>
                     <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
                     <td>
                         <input type="number" id="<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>"
-                               value="<?php echo esc_attr( self::get( $key ) ); ?>" min="0" step="1" class="small-text" />
-                        <span class="description"><?php esc_html_e( 'points', 'culture-community' ); ?></span>
+                               value="<?php echo esc_attr( $value ); ?>" min="0" step="1" class="small-text" />
+                        <span class="description"><?php esc_html_e( 'credits', 'culture-community' ); ?></span>
                     </td>
                 </tr>
             <?php endforeach; ?>
         </table>
 
-        <h2><?php esc_html_e( 'Badge Thresholds', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Set the thresholds required to unlock each badge.', 'culture-community' ); ?></p>
+        <h2><?php esc_html_e( 'Post Validation Credits', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Credits awarded when a community post reaches the validation threshold (5 reactions or 3 unique commenters).', 'culture-community' ); ?></p>
         <table class="form-table">
-            <?php
-            $badge_fields = array(
-                'culture_badge_first_steps'     => array( __( 'First Steps', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_regular'         => array( __( 'Regular', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_culture_vulture' => array( __( 'Culture Vulture', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_explorer'        => array( __( 'Explorer', 'culture-community' ), __( 'different chapters visited', 'culture-community' ) ),
-                'culture_badge_globetrotter'    => array( __( 'Globetrotter', 'culture-community' ), __( 'different chapters visited', 'culture-community' ) ),
-                'culture_badge_commentator'     => array( __( 'Commentator', 'culture-community' ), __( 'digest comments', 'culture-community' ) ),
-                'culture_badge_century_club'    => array( __( 'Century Club', 'culture-community' ), __( 'total points', 'culture-community' ) ),
-            );
-            foreach ( $badge_fields as $key => $meta ) :
+            <tr>
+                <th scope="row"><label for="culture_credits_post_validated_standard"><?php esc_html_e( 'Standard Post', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_credits_post_validated_standard" name="culture_credits_post_validated_standard"
+                           value="<?php echo esc_attr( get_option( 'culture_credits_post_validated_standard', 10 ) ); ?>" min="0" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits (default: 10)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_credits_post_validated_special"><?php esc_html_e( 'Special Posts (Hidden Gem, Food Review)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_credits_post_validated_special" name="culture_credits_post_validated_special"
+                           value="<?php echo esc_attr( get_option( 'culture_credits_post_validated_special', 15 ) ); ?>" min="0" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits (default: 15)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Daily Credit Cap', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Maximum credits a member can earn in a single calendar day, across all actions.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_daily_credit_cap"><?php esc_html_e( 'Daily Cap', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_daily_credit_cap" name="culture_daily_credit_cap"
+                           value="<?php echo esc_attr( get_option( 'culture_daily_credit_cap', 50 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits per day (default: 50)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Currency Exchange Rates', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'How many credits equal 1 unit of each currency. Used for cashout calculations.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_credits_per_gbp"><?php esc_html_e( 'Credits per £1 GBP', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_credits_per_gbp" name="culture_credits_per_gbp"
+                           value="<?php echo esc_attr( get_option( 'culture_credits_per_gbp', 10 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits = £1 (default: 10)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_credits_per_usd"><?php esc_html_e( 'Credits per $1 USD', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_credits_per_usd" name="culture_credits_per_usd"
+                           value="<?php echo esc_attr( get_option( 'culture_credits_per_usd', 13 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits = $1 (default: 13)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_credits_per_ngn"><?php esc_html_e( 'Credits per ₦1,000 NGN', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_credits_per_ngn" name="culture_credits_per_ngn"
+                           value="<?php echo esc_attr( get_option( 'culture_credits_per_ngn', 8 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits = ₦1,000 (default: 8)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    private static function render_reputation_tab() {
+        // Helper: resolve defaults from POINTS constant if class exists.
+        $rep_defaults = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::POINTS : array();
+
+        $rep_actions = array(
+            'event_rsvp'             => __( 'Event RSVP', 'culture-community' ),
+            'event_checkin'          => __( 'Event Check-in', 'culture-community' ),
+            'referral'               => __( 'Successful Referral', 'culture-community' ),
+            'newsletter_comment'     => __( 'Newsletter Comment', 'culture-community' ),
+            'newsletter_reaction'    => __( 'Newsletter Reaction', 'culture-community' ),
+            'quote_submission'       => __( 'Quote Submitted', 'culture-community' ),
+            'quote_like'             => __( 'Quote Liked by Others', 'culture-community' ),
+            'magazine_read'          => __( 'Magazine Article Read', 'culture-community' ),
+            'magazine_share'         => __( 'Magazine Article Shared', 'culture-community' ),
+            'community_comment'      => __( 'Community Comment', 'culture-community' ),
+            'community_like'         => __( 'Community Reaction', 'culture-community' ),
+            'directory_entry'        => __( 'Directory Entry Submitted', 'culture-community' ),
+            'game_completed'         => __( 'Game Completed', 'culture-community' ),
+            'community_post'         => __( 'Community Post Submitted', 'culture-community' ),
+            'profile_completed'      => __( 'Profile Completed', 'culture-community' ),
+            'email_verified'         => __( 'Email Verified', 'culture-community' ),
+            'directory_opt_in'       => __( 'Opted into Member Directory', 'culture-community' ),
+            'newsletter_subscribed'  => __( 'Newsletter Subscribed', 'culture-community' ),
+            'poll_vote'              => __( 'Poll Vote', 'culture-community' ),
+        );
+
+        ?>
+        <h2><?php esc_html_e( 'Reputation per Action', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Reputation is permanent — it never decreases and cannot be spent. Every action awards both reputation and credits (see the Credits tab).', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <?php foreach ( $rep_actions as $action => $label ) :
+                $key     = 'culture_points_' . $action;
+                $default = isset( $rep_defaults[ $action ] ) ? $rep_defaults[ $action ] : 0;
+                $value   = get_option( $key, $default );
             ?>
                 <tr>
-                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $meta[0] ); ?></label></th>
+                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
                     <td>
                         <input type="number" id="<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>"
-                               value="<?php echo esc_attr( self::get( $key ) ); ?>" min="1" step="1" class="small-text" />
-                        <span class="description"><?php echo esc_html( $meta[1] ); ?></span>
+                               value="<?php echo esc_attr( $value ); ?>" min="0" step="1" class="small-text" />
+                        <span class="description"><?php esc_html_e( 'reputation', 'culture-community' ); ?></span>
                     </td>
                 </tr>
             <?php endforeach; ?>
+        </table>
+
+        <h2><?php esc_html_e( 'Reputation Tier Thresholds', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'The minimum reputation score required to reach each tier. Tiers are evaluated in descending order — a member reaches the highest tier their score qualifies for.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_rep_tier_contributor"><?php esc_html_e( 'Culture Contributor', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_rep_tier_contributor" name="culture_rep_tier_contributor"
+                           value="<?php echo esc_attr( get_option( 'culture_rep_tier_contributor', 100 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'reputation (default: 100)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_rep_tier_taste-maker"><?php esc_html_e( 'Taste Maker', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_rep_tier_taste-maker" name="culture_rep_tier_taste-maker"
+                           value="<?php echo esc_attr( get_option( 'culture_rep_tier_taste-maker', 500 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'reputation (default: 500)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_rep_tier_authority"><?php esc_html_e( 'Culture Authority', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_rep_tier_authority" name="culture_rep_tier_authority"
+                           value="<?php echo esc_attr( get_option( 'culture_rep_tier_authority', 1500 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'reputation (default: 1500)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
         </table>
         <?php
     }
@@ -685,12 +906,12 @@ class Culture_Settings {
             </thead>
             <tbody>
                 <tr><td><?php esc_html_e( 'Virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Physical events', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Primary chapter', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Secondary chapter', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'GetMeLit & Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Priority RSVP', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Points & badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Physical &amp; virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'GetMeLit &amp; Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Cash out credits', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td>50</td><td>100</td></tr>
+                <tr><td><?php esc_html_e( 'Games plays per day', 'culture-community' ); ?></td><td>1</td><td>5</td></tr>
+                <tr><td><?php esc_html_e( 'Points &amp; badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
             </tbody>
         </table>
@@ -740,6 +961,82 @@ class Culture_Settings {
                     <input type="url" id="culture_registration_page" name="culture_registration_page"
                            value="<?php echo esc_attr( self::get( 'culture_registration_page' ) ); ?>" class="large-text" placeholder="<?php echo esc_attr( home_url( '/register/' ) ); ?>" />
                     <p class="description"><?php esc_html_e( 'The URL of your registration/sign-up page. Used in referral links and email CTAs.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Google Sign-In', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'OAuth Client IDs from Google Cloud Console, used to validate Google ID tokens on login. Leave a field blank to disable Google Sign-In for that surface.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_web"><?php esc_html_e( 'Web Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_web" name="culture_google_client_id_web"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_web' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the Next.js (connect.themoveee.com) NextAuth Google provider. Must match the GOOGLE_CLIENT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_ios"><?php esc_html_e( 'iOS Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_ios" name="culture_google_client_id_ios"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_ios' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on iOS via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_android"><?php esc_html_e( 'Android Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_android" name="culture_google_client_id_android"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_android' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on Android via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Cloudflare R2 Storage', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Credentials for the shared media bucket. Mobile app uploads (community post images, avatars, cover photos) are stored here, the same bucket used by the web app.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_r2_account_id"><?php esc_html_e( 'Account ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_r2_account_id" name="culture_r2_account_id"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_account_id' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Must match the R2_ACCOUNT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_access_key_id"><?php esc_html_e( 'Access Key ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_r2_access_key_id" name="culture_r2_access_key_id"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_access_key_id' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_secret_access_key"><?php esc_html_e( 'Secret Access Key', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_r2_secret_access_key" name="culture_r2_secret_access_key"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_secret_access_key' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_bucket_name"><?php esc_html_e( 'Bucket Name', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_r2_bucket_name" name="culture_r2_bucket_name"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_bucket_name' ) ); ?>" class="regular-text" placeholder="moveee-media" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_r2_public_url"><?php esc_html_e( 'Public URL', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="url" id="culture_r2_public_url" name="culture_r2_public_url"
+                           value="<?php echo esc_attr( self::get( 'culture_r2_public_url' ) ); ?>" class="large-text" placeholder="https://media.themoveee.com" />
+                    <p class="description"><?php esc_html_e( 'Public base URL the bucket is served from. Must match R2_PUBLIC_URL on Vercel.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -826,126 +1123,6 @@ class Culture_Settings {
         <?php
     }
 
-    private static function render_automation_tab() {
-        $next_dir    = wp_next_scheduled( 'culture_seed_directory' );
-        $next_pulse  = wp_next_scheduled( 'culture_refresh_pulse' );
-        $next_events = wp_next_scheduled( 'culture_seed_events' );
-        $next_quotes = wp_next_scheduled( 'culture_seed_quotes' );
-        $next_tweet  = wp_next_scheduled( 'culture_tweet_pulse' );
-        ?>
-        <h2><?php esc_html_e( 'Scheduled Jobs', 'culture-community' ); ?></h2>
-        <p class="description">
-            <?php esc_html_e( 'All automation is handled by WordPress Cron, triggered by a real server cron on Lightsail every 30 minutes. Make sure DISABLE_WP_CRON is set to true in wp-config.php.', 'culture-community' ); ?>
-        </p>
-        <table class="widefat fixed striped" style="max-width:700px;margin-bottom:2em;">
-            <thead>
-                <tr>
-                    <th><?php esc_html_e( 'Job', 'culture-community' ); ?></th>
-                    <th><?php esc_html_e( 'Frequency', 'culture-community' ); ?></th>
-                    <th><?php esc_html_e( 'Next Run', 'culture-community' ); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $jobs = array(
-                    array( __( 'Directory Seed', 'culture-community' ),  __( 'Weekly', 'culture-community' ),       $next_dir ),
-                    array( __( 'Pulse Refresh', 'culture-community' ),   __( 'Daily', 'culture-community' ),        $next_pulse ),
-                    array( __( 'Events Seed', 'culture-community' ),     __( 'Daily', 'culture-community' ),        $next_events ),
-                    array( __( 'Quotes Seed', 'culture-community' ),     __( 'Weekly', 'culture-community' ),       $next_quotes ),
-                    array( __( 'Tweet Pulse', 'culture-community' ),     __( 'Every 30 min', 'culture-community' ), $next_tweet ),
-                );
-                foreach ( $jobs as $job ) :
-                    $ts  = $job[2];
-                    $due = $ts ? esc_html( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $ts ), 'Y-m-d H:i:s' ) ) : '<span style="color:#d63638">' . esc_html__( 'Not scheduled', 'culture-community' ) . '</span>';
-                ?>
-                <tr>
-                    <td><?php echo esc_html( $job[0] ); ?></td>
-                    <td><?php echo esc_html( $job[1] ); ?></td>
-                    <td><?php echo wp_kses_post( $due ); ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-
-        <h2><?php esc_html_e( 'Twitter / X Auto-Posting', 'culture-community' ); ?></h2>
-        <p class="description">
-            <?php esc_html_e( 'When enabled, the latest unposted Pulse story is tweeted every 30 minutes. Requires a Twitter Developer App with Read & Write permissions and an Access Token generated for your posting account.', 'culture-community' ); ?>
-        </p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><?php esc_html_e( 'Enable Auto-Posting', 'culture-community' ); ?></th>
-                <td>
-                    <label>
-                        <input type="checkbox" name="culture_twitter_enabled" value="1"
-                               <?php checked( '1', Culture_Settings::get( 'culture_twitter_enabled' ) ); ?> />
-                        <?php esc_html_e( 'Post new Pulse stories to X / Twitter automatically', 'culture-community' ); ?>
-                    </label>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_api_key"><?php esc_html_e( 'API Key (Consumer Key)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_api_key" name="culture_twitter_api_key"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_key' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_api_secret"><?php esc_html_e( 'API Secret (Consumer Secret)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_api_secret" name="culture_twitter_api_secret"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_secret' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_access_token"><?php esc_html_e( 'Access Token', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_access_token" name="culture_twitter_access_token"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_access_token_secret"><?php esc_html_e( 'Access Token Secret', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_access_token_secret" name="culture_twitter_access_token_secret"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token_secret' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                    <p class="description">
-                        <?php esc_html_e( 'Get these from developer.twitter.com → Your App → Keys and Tokens. Generate an Access Token for your @Moveee account under "Authentication Tokens".', 'culture-community' ); ?>
-                    </p>
-                </td>
-            </tr>
-        </table>
-
-        <hr />
-        <h3><?php esc_html_e( 'Test Connection', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'Send a test tweet immediately. The result shows the exact API error from Twitter.', 'culture-community' ); ?></p>
-        <?php if ( ! self::is_twitter_configured() ) : ?>
-            <p style="color:#d63638;"><strong><?php esc_html_e( 'Save credentials and enable auto-posting first.', 'culture-community' ); ?></strong></p>
-        <?php else : ?>
-        <button type="button" class="button button-secondary" id="culture-test-tweet"><?php esc_html_e( 'Send Test Tweet Now', 'culture-community' ); ?></button>
-        <span id="culture-test-tweet-result" style="margin-left:12px;font-weight:600;"></span>
-        <script>
-        document.getElementById('culture-test-tweet').addEventListener('click', function() {
-            var btn = this, res = document.getElementById('culture-test-tweet-result');
-            btn.disabled = true; res.textContent = 'Sending…'; res.style.color = '#888';
-            var d = new URLSearchParams();
-            d.append('action', 'culture_test_tweet');
-            d.append('_wpnonce', '<?php echo esc_js( wp_create_nonce( "culture_test_tweet" ) ); ?>');
-            fetch(ajaxurl, { method: 'POST', body: d }).then(function(r){ return r.json(); })
-            .then(function(j) {
-                btn.disabled = false;
-                res.textContent = (j.success ? '✓ ' : '✗ ') + j.data;
-                res.style.color = j.success ? '#0a7227' : '#d63638';
-            }).catch(function(e){ btn.disabled = false; res.textContent = '✗ ' + e.message; res.style.color = '#d63638'; });
-        });
-        </script>
-        <?php endif; ?>
-
-        <?php
-    }
 
     private static function render_advertising_tab() {
         ?>

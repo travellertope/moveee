@@ -9,7 +9,6 @@ function wpAuthHeaders() {
   return {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${secret}`,
-    "X-Culture-API-Secret": secret,
   };
 }
 
@@ -100,7 +99,7 @@ export async function PATCH(req: NextRequest) {
     "display_name", "phone", "whatsapp", "gender",
     "date_of_birth", "nationality", "country_of_residence", "city", "occupation",
     "directory_opt_in", "directory_bio", "directory_disciplines",
-    "directory_instagram", "directory_linkedin", "directory_website",
+    "directory_instagram", "directory_linkedin", "directory_website", "directory_twitter",
   ];
 
   const payload: Record<string, unknown> = { user_id: String(u.id) };

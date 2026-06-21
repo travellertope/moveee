@@ -10,12 +10,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized. Please sign in to submit a quote." }, { status: 401 });
   }
 
-  let text, author, source;
+  let text, author, source, sharingReason, quoteType;
   try {
     const body = await req.json();
     text = body?.text?.trim();
     author = body?.author?.trim();
     source = body?.source?.trim();
+    sharingReason = body?.sharing_reason?.trim();
+    quoteType = body?.quote_type;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -32,11 +34,13 @@ export async function POST(req: NextRequest) {
         "Authorization": `Bearer ${process.env.CULTURE_API_SECRET}`,
         "X-Culture-API-Secret": process.env.CULTURE_API_SECRET || ""
       },
-      body: JSON.stringify({ 
-        text, 
-        author, 
-        source, 
-        user_id: parseInt((session.user as any).id) 
+      body: JSON.stringify({
+        text,
+        author,
+        source,
+        sharing_reason: sharingReason,
+        quote_type: quoteType,
+        user_id: parseInt((session.user as any).id)
       }),
     });
 

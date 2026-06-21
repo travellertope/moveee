@@ -2,15 +2,22 @@ import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ContentGate from "@/components/ContentGate";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getAccessLevel, canViewContent } from "@/lib/access";
+import ArticleContentGate from "@/components/ArticleContentGate";
+import { getAccessLevel } from "@/lib/access";
 import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const entries = await getDirectoryEntriesWithFallback(200, { revalidate: 300 });
+    return entries.map((e: any) => ({ slug: e.slug }));
+  } catch {
+    return [];
+  }
+}
 
 const TYPE_LABELS: Record<string, string> = {
   person:   "Person",
@@ -50,11 +57,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const entry = data?.cultureDirectory;
   if (!entry) notFound();
 
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
+  // Access level — session check deferred to ArticleContentGate client component
   const accessLevel = getAccessLevel(entry);
-  const canView = canViewContent(accessLevel, user);
-  const isLoggedIn = !!user;
 
   const typeNode = entry.cultureDirectoryTypes?.nodes?.[0];
   const typeSlug = typeNode?.slug ?? "";
@@ -279,15 +283,17 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           {/* Body content */}
           <div className="dir-wiki-divider" />
 
-          {canView ? (
-            entry.content ? (
-              <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
-            ) : (
-              <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
-            )
-          ) : (
-            <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
-          )}
+          <ArticleContentGate
+            accessLevel={accessLevel}
+            callbackUrl={`/directory/${slug}`}
+            fullContent={
+              entry.content ? (
+                <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
+              ) : (
+                <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
+              )
+            }
+          />
 
           {/* Interests / tags */}
           {interests.length > 0 && (

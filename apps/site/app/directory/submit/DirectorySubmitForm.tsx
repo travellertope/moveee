@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import PatronPrice from "@/components/PatronPrice";
 
@@ -32,13 +33,14 @@ interface Props {
 }
 
 export default function DirectorySubmitForm({
-  isLoggedIn,
-  userTier,
   improvingSlug,
   entryTypes,
 }: Props) {
+  const { data: session } = useSession();
+  const u = session?.user as any;
+  const isLoggedIn = !!u;
+  const isPatron = u?.tier === "patron";
   const isImproveMode = !!improvingSlug;
-  const isPatron = userTier === "patron";
   const ENTRY_TYPES = entryTypes?.length ? entryTypes : FALLBACK_ENTRY_TYPES;
 
   const [step, setStep] = useState<Step>(isImproveMode ? "loading-entry" : "input");

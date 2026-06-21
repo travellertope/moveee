@@ -4,19 +4,27 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
-import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
+import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
-import ContentGate from "@/components/ContentGate";
+import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getAccessLevel, canViewContent } from "@/lib/access";
+import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 600;
+
+export async function generateStaticParams() {
+  try {
+    const data = await getWPData(GET_STORIES, { first: 100 }, { revalidate: 600 });
+    const nodes: { slug: string }[] = data?.posts?.nodes ?? [];
+    return nodes.map((n) => ({ slug: n.slug }));
+  } catch {
+    return [];
+  }
+}
 
 function resolveAioseoTitle(raw: string, postTitle: string): string {
   // AIOSEO stores template tags — resolve the common ones then strip any leftovers
@@ -77,12 +85,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
-  // Access control
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
+  // Access level — session check is deferred to the ArticleContentGate client component
   const accessLevel = getAccessLevel(post);
-  const canView = canViewContent(accessLevel, user);
-  const isLoggedIn = !!user;
 
   // Fetch related stories and issue in parallel
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
@@ -178,8 +182,42 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   };
   const processedContent = cleanContent(contentWithIds);
 
+  const articleUrl = `https://themoveee.com/magazine/${resolvedParams.slug}`;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 155) || "",
+    image: post.featuredImage?.node?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    datePublished: post.date,
+    dateModified: post.modified || post.date,
+    author: {
+      "@type": "Person",
+      name: post.author?.node?.name || "Moveee Magazine",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Moveee Magazine",
+      logo: { "@type": "ImageObject", url: "https://themoveee.com/logo.png" },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    url: articleUrl,
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "Magazine", item: "https://themoveee.com/magazine" },
+      ...(categoryName && categorySlug ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `https://themoveee.com/magazine/category/${categorySlug}` }] : []),
+      { "@type": "ListItem", position: categoryName ? 4 : 3, name: post.title, item: articleUrl },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProgressBar />
 
       {/* ── HERO ── */}
@@ -281,7 +319,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         {/* LEFT — TOC */}
         <aside className="toc">
           <div className="toc-heading">In this piece</div>
-          <details className="toc-details">
+          <details className="toc-details" open>
           <summary className="toc-summary">
             <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>
@@ -337,48 +375,26 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </details>
         </aside>
 
-        {/* CENTER — PROSE (Interactive Paragraph Comments) */}
+        {/* CENTER — PROSE */}
         <div className="prose" id="article-body">
-          {canView ? (
-            <ParagraphCommentSystem
-              postId={parseInt(post.databaseId)}
-              content={processedContent || ""}
-            />
-          ) : (
-            <>
-              {/* First ~5% of article content with gradient fade */}
-              {(() => {
-                const firstParas = (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("");
-                const preview = firstParas || post.excerpt || "";
-                if (!preview) return null;
-                return (
-                  <div style={{ position: "relative", marginBottom: 0 }}>
-                    <div
-                      className="prose-content"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(preview) }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 160,
-                        background: "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-              <ContentGate
-                accessLevel={accessLevel as "member-only" | "patron-only"}
-                isLoggedIn={isLoggedIn}
-                callbackUrl={`/magazine/${resolvedParams.slug}`}
-              />
-            </>
-          )}
-          {canView && <FinishReading postId={parseInt(post.databaseId)} />}
+          <ArticleContentGate
+            accessLevel={accessLevel}
+            callbackUrl={`/magazine/${resolvedParams.slug}`}
+            previewHtml={sanitizeHtml(
+              (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
+              post.excerpt ||
+              ""
+            )}
+            fullContent={
+              <>
+                <ArticleComments
+                  postId={parseInt(post.databaseId)}
+                  content={processedContent || ""}
+                />
+                <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
+              </>
+            }
+          />
         </div>
 
         {/* RIGHT — SIDEBAR */}
@@ -422,9 +438,34 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </Link>
           )}
 
+          {/* Shop the Edit — desktop sidebar widget */}
+          {(post.featuredProducts ?? []).length > 0 && (
+            <div className="ste-sidebar-card">
+              <div className="ste-sb-label">Shop the Edit</div>
+              <div className="ste-sb-list">
+                {(post.featuredProducts as any[]).map((p: any) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
+                    <div className="ste-sb-img">
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
+                      ) : (
+                        <div className="ste-sb-img-placeholder" />
+                      )}
+                    </div>
+                    <div className="ste-sb-info">
+                      <div className="ste-sb-name">{p.name}</div>
+                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
+            </div>
+          )}
+
           <div className="newsletter-card">
-            <div className="s-label">★ The Moveee Weekly</div>
-            <h4>Culture in your inbox, every Friday.</h4>
+            <div className="s-label">★ Culture Drop</div>
+            <h4>Culture in your inbox, every Tuesday.</h4>
             <p>Film picks, exhibition openings, music worth your time. No noise.</p>
             <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
           </div>
@@ -539,9 +580,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         )}
       </div>
 
-      {/* ── SHOP THE EDIT ── only when the editor has tagged products ── */}
+      {/* ── SHOP THE EDIT — mobile/tablet full-width strip (hidden on desktop where sidebar widget shows) ── */}
       {(post.featuredProducts ?? []).length > 0 && (
-        <section className="ste-section">
+        <section className="ste-section ste-section--mobile">
           <div className="ste-inner">
             <div className="ste-header">
               <div className="ste-eyebrow">Shop the Edit</div>

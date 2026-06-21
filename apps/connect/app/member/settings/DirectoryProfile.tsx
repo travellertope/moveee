@@ -16,6 +16,7 @@ interface DirectoryState {
   instagram: string;
   linkedin: string;
   website: string;
+  twitter: string;
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -27,7 +28,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
   country: string;
 }) {
   const [state, setState] = useState<DirectoryState>({
-    optIn: true, bio: "", disciplines: [], instagram: "", linkedin: "", website: "",
+    optIn: true, bio: "", disciplines: [], instagram: "", linkedin: "", website: "", twitter: "",
   });
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<SaveStatus>("idle");
@@ -55,6 +56,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
           directory_instagram:    next.instagram,
           directory_linkedin:     next.linkedin,
           directory_website:      next.website,
+          directory_twitter:      next.twitter,
         }),
       });
       if (!res.ok) throw new Error();
@@ -159,9 +161,10 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
           </div>
 
           {/* Links */}
-          <LinkField label="Instagram handle" placeholder="@yourhandle" value={state.instagram} onSave={instagram => save({ instagram })} />
-          <LinkField label="LinkedIn URL" placeholder="linkedin.com/in/yourname" value={state.linkedin} onSave={linkedin => save({ linkedin })} />
-          <LinkField label="Website" placeholder="yoursite.com" value={state.website} onSave={website => save({ website })} />
+          <LinkField label="Instagram" placeholder="https://instagram.com/yourhandle" value={state.instagram} onSave={instagram => save({ instagram })} />
+          <LinkField label="LinkedIn" placeholder="https://linkedin.com/in/yourname" value={state.linkedin} onSave={linkedin => save({ linkedin })} />
+          <LinkField label="Website" placeholder="https://yoursite.com" value={state.website} onSave={website => save({ website })} />
+          <LinkField label="Twitter / X" placeholder="https://x.com/yourhandle" value={state.twitter} onSave={twitter => save({ twitter })} />
         </>
       )}
 

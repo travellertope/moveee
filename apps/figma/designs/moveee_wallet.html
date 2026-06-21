@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Wallet</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        error: '#C62828'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)',
+                        'header': '0 2px 10px rgba(20, 17, 13, 0.03)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        input:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #C8BFB0; }
+    </style>
+</head>
+<body class="flex justify-center text-ink font-sans min-h-screen">
+
+    <!-- Grid Container -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-12 max-w-[900px] mx-auto">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: WALLET HISTORY                        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Wallet History</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- White Top Section: Header + Hero + Tabs -->
+                <div class="bg-white shrink-0 shadow-header z-40 relative rounded-b-[24px]">
+                    
+                    <!-- Header (56px + status bar) -->
+                    <header class="pt-12 pb-2 px-4 relative flex items-center justify-center h-[92px]">
+                        <!-- Status Bar Mock (absolute top) -->
+                        <div class="absolute top-0 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                            <span>9:41</span>
+                            <div class="flex gap-1 items-center pb-0.5">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                            </div>
+                        </div>
+                        
+                        <button class="absolute left-4 bottom-2 w-[44px] h-[44px] flex items-center justify-start text-ink">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h1 class="font-sans text-[15px] font-bold text-ink self-end pb-3">Wallet</h1>
+                    </header>
+
+                    <!-- Balance Hero -->
+                    <div class="px-6 pb-6 pt-2 flex flex-col items-center">
+                        <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-[2px] mb-1">CULTURE POINTS</span>
+                        <h2 class="font-serif text-[48px] font-bold text-ink leading-none">1,240</h2>
+                        <span class="font-sans text-[14px] text-gold mt-1">≈ £30.25 GBP</span>
+                        
+                        <!-- Stats Row -->
+                        <div class="flex items-center justify-center gap-[8px] mt-[24px]">
+                            <span class="font-mono text-[12px] text-mute">385 REP</span>
+                            <div class="w-1 h-1 rounded-full bg-ghost"></div>
+                            <span class="font-mono text-[12px] text-mute">48 CR today</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="h-[44px] border-t border-ghost/40 flex items-start px-[16px] gap-[24px]">
+                        <button class="relative pt-[12px] pb-[12px] flex-1 flex justify-center whitespace-nowrap">
+                            <div class="absolute top-0 left-0 w-full h-[3px] bg-ochre rounded-b-md"></div>
+                            <span class="font-sans text-[14px] font-bold text-ink">History</span>
+                        </button>
+                        <button class="relative pt-[12px] pb-[12px] flex-1 flex justify-center whitespace-nowrap">
+                            <span class="font-sans text-[14px] text-mute">Cash Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-[16px] pb-[40px] relative">
+                    
+                    <!-- History Log Main Card -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                        
+                        <!-- Section Header -->
+                        <div class="bg-paper-deep h-[32px] px-[16px] flex items-center border-b border-ghost/20">
+                            <span class="font-mono text-[10px] font-bold uppercase text-mute">June 2026</span>
+                        </div>
+
+                        <!-- Ledger Entries -->
+                        <div class="flex flex-col">
+                            
+                            <!-- Entry 1 -->
+                            <div class="h-[64px] px-[16px] border-b border-ghost/50 flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Referral bonus</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 9</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-ochre">+50 CR</span>
+                            </div>
+
+                            <!-- Entry 2 -->
+                            <div class="h-[64px] px-[16px] border-b border-ghost/50 flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Post published</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 8</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-ochre">+10 CR</span>
+                            </div>
+
+                            <!-- Entry 3 (Spend) -->
+                            <div class="h-[64px] px-[16px] border-b border-ghost/50 flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost/50 flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Perk redeemed</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 7</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-error">–50 CR</span>
+                            </div>
+
+                            <!-- Entry 4 -->
+                            <div class="h-[64px] px-[16px] border-b border-ghost/50 flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Post validated</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 7</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-ochre">+20 CR</span>
+                            </div>
+
+                            <!-- Entry 5 -->
+                            <div class="h-[64px] px-[16px] border-b border-ghost/50 flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Daily trivia</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 6</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-ochre">+30 CR</span>
+                            </div>
+
+                            <!-- Entry 6 -->
+                            <div class="h-[64px] px-[16px] flex items-center justify-between">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Post published</span>
+                                        <span class="font-mono text-[11px] text-mute mt-[2px]">Jun 5</span>
+                                    </div>
+                                </div>
+                                <span class="font-sans text-[16px] font-bold text-ochre">+10 CR</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: WALLET CASH OUT                       -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Cash Out (GBP)</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- White Top Section: Header + Hero + Tabs -->
+                <div class="bg-white shrink-0 shadow-header z-40 relative rounded-b-[24px]">
+                    
+                    <!-- Header (56px + status bar) -->
+                    <header class="pt-12 pb-2 px-4 relative flex items-center justify-center h-[92px]">
+                        <div class="absolute top-0 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                            <span>9:41</span>
+                            <div class="flex gap-1 items-center pb-0.5">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                            </div>
+                        </div>
+                        <button class="absolute left-4 bottom-2 w-[44px] h-[44px] flex items-center justify-start text-ink">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h1 class="font-sans text-[15px] font-bold text-ink self-end pb-3">Wallet</h1>
+                    </header>
+
+                    <!-- Balance Hero -->
+                    <div class="px-6 pb-6 pt-2 flex flex-col items-center">
+                        <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-[2px] mb-1">CULTURE POINTS</span>
+                        <h2 class="font-serif text-[48px] font-bold text-ink leading-none">1,240</h2>
+                        <span class="font-sans text-[14px] text-gold mt-1">≈ £30.25 GBP</span>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[24px]">
+                            <span class="font-mono text-[12px] text-mute">385 REP</span>
+                            <div class="w-1 h-1 rounded-full bg-ghost"></div>
+                            <span class="font-mono text-[12px] text-mute">48 CR today</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="h-[44px] border-t border-ghost/40 flex items-start px-[16px] gap-[24px]">
+                        <button class="relative pt-[12px] pb-[12px] flex-1 flex justify-center whitespace-nowrap">
+                            <span class="font-sans text-[14px] text-mute">History</span>
+                        </button>
+                        <button class="relative pt-[12px] pb-[12px] flex-1 flex justify-center whitespace-nowrap">
+                            <div class="absolute top-0 left-0 w-full h-[3px] bg-ochre rounded-b-md"></div>
+                            <span class="font-sans text-[14px] font-bold text-ink">Cash Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-[16px] pb-[40px]">
+                    
+                    <!-- Cash Out Main Card -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] flex flex-col items-center">
+                        <span class="font-sans text-[12px] text-mute mb-2">Credits to cash out</span>
+                        <h3 class="font-serif text-[32px] font-bold text-ink mb-6">500</h3>
+                        
+                        <!-- Custom Slider -->
+                        <div class="w-full relative h-[8px] bg-ghost rounded-full mb-3">
+                            <div class="absolute top-0 left-0 h-full bg-ochre rounded-full" style="width: 40%;"></div>
+                            <!-- Thumb -->
+                            <div class="absolute top-1/2 left-[40%] w-[20px] h-[20px] bg-ochre rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 border-[2px] border-white cursor-pointer"></div>
+                        </div>
+                        <span class="font-mono text-[10px] text-mute">Min 100 · Max 1,240</span>
+
+                        <!-- Fee Card -->
+                        <div class="w-full bg-paper-deep rounded-lg p-[16px] mt-[16px] flex flex-col items-center border border-ghost/30">
+                            <span class="font-sans text-[13px] text-mute">30% processing fee</span>
+                            <div class="mt-[8px] flex flex-col items-center gap-1">
+                                <span class="font-sans text-[15px] font-bold text-ink leading-tight">You receive: 350 CR equivalent</span>
+                                <span class="font-sans text-[14px] text-gold leading-tight">≈ £8.55 GBP</span>
+                            </div>
+                        </div>
+
+                        <!-- Currency Segmented Control -->
+                        <div class="w-full flex mt-[24px] bg-white rounded-lg p-1 border border-ghost">
+                            <button class="flex-1 h-[36px] rounded-md bg-ink text-white font-sans text-[13px] font-bold shadow-sm">GBP</button>
+                            <button class="flex-1 h-[36px] rounded-md bg-transparent text-ink-soft font-sans text-[13px]">USD</button>
+                            <button class="flex-1 h-[36px] rounded-md bg-transparent text-ink-soft font-sans text-[13px]">NGN</button>
+                        </div>
+
+                        <!-- Bank Form -->
+                        <div class="w-full mt-[24px] flex flex-col gap-[16px]">
+                            <div class="flex flex-col gap-1">
+                                <label class="font-sans text-[12px] text-mute ml-1">Account Name</label>
+                                <input type="text" class="w-full h-[48px] bg-white border border-ghost rounded-lg px-[16px] text-[15px] font-sans text-ink" value="Zara Mensah">
+                            </div>
+                            
+                            <div class="flex flex-col gap-1">
+                                <label class="font-sans text-[12px] text-mute ml-1">Account Number</label>
+                                <input type="text" class="w-full h-[48px] bg-white border border-ghost rounded-lg px-[16px] text-[15px] font-sans text-ink tracking-wide font-mono" value="12345678">
+                            </div>
+                            
+                            <div class="flex flex-col gap-1">
+                                <label class="font-sans text-[12px] text-mute ml-1">Sort Code</label>
+                                <input type="text" class="w-full h-[48px] bg-white border border-ghost rounded-lg px-[16px] text-[15px] font-sans text-ink tracking-wide font-mono" value="12-34-56">
+                            </div>
+                        </div>
+
+                        <!-- Submit Action -->
+                        <button class="w-full h-[52px] bg-ochre text-white rounded-full font-sans font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-[24px]">
+                            Request Cash Out
+                        </button>
+                        
+                        <p class="font-sans text-[11px] text-mute text-center mt-[12px] max-w-[200px]">
+                            Processed within 5 business days.<br>30% fee applies.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -13,6 +13,15 @@ interface PortfolioItem {
   created_at: string;
 }
 
+interface PinnedPost {
+  id: number;
+  slug: string;
+  text: string;
+  image_url: string;
+  template_type: string;
+  tag: string;
+}
+
 const TYPE_EMOJI: Record<string, string> = {
   lookbook: "🖼️", writing: "✍️", video: "🎬",
   audio: "🎵", design: "🎨", link: "🔗",
@@ -30,15 +39,19 @@ interface Props {
 
 export default function PortfolioTab({ username, unlocked, reputationTier }: Props) {
   const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<PinnedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
     if (!unlocked) { setLoading(false); return; }
     fetch(`/api/connect/${username}/portfolio`)
-      .then(r => r.ok ? r.json() : { items: [] })
-      .then(d => setItems(d.items ?? []))
-      .catch(() => setItems([]))
+      .then(r => r.ok ? r.json() : { items: [], pinned_posts_data: [] })
+      .then(d => {
+        setItems(d.items ?? []);
+        setPinnedPosts(d.pinned_posts_data ?? []);
+      })
+      .catch(() => { setItems([]); setPinnedPosts([]); })
       .finally(() => setLoading(false));
   }, [username, unlocked]);
 
@@ -47,7 +60,7 @@ export default function PortfolioTab({ username, unlocked, reputationTier }: Pro
       <div className="prf-portfolio-gate">
         <p className="prf-portfolio-gate-title">Portfolio coming soon</p>
         <p className="prf-portfolio-gate-desc">
-          The portfolio tab unlocks at Taste Maker status (500 reputation).
+          The portfolio tab unlocks at Taste Maker status (500 points).
           This member is currently at <strong>{reputationTier}</strong> tier.
         </p>
       </div>
@@ -62,13 +75,16 @@ export default function PortfolioTab({ username, unlocked, reputationTier }: Pro
     );
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && pinnedPosts.length === 0) {
     return <p className="prf-empty">No portfolio items yet.</p>;
   }
 
   return (
     <>
       <div className="prf-portfolio-grid">
+        {pinnedPosts.map(post => (
+          <PinnedPostCard key={`pin-${post.id}`} post={post} />
+        ))}
         {items.map(item => (
           <PortfolioCard key={item.id} item={item} onClick={() => setSelected(item)} />
         ))}
@@ -102,6 +118,22 @@ export default function PortfolioTab({ username, unlocked, reputationTier }: Pro
         </div>
       )}
     </>
+  );
+}
+
+function PinnedPostCard({ post }: { post: PinnedPost }) {
+  return (
+    <a href={`/community/${post.slug}`} className="prf-portfolio-card">
+      {post.image_url ? (
+        <img src={post.image_url} alt={post.tag || "Community post"} className="prf-portfolio-thumb" />
+      ) : (
+        <div className="prf-portfolio-thumb-placeholder">📌</div>
+      )}
+      <div className="prf-portfolio-card-body">
+        <p className="prf-portfolio-card-type">{post.tag || post.template_type}</p>
+        {post.text && <p className="prf-portfolio-card-desc">{post.text}</p>}
+      </div>
+    </a>
   );
 }
 

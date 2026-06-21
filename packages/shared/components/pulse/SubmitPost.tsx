@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { parseHashtags } from "@/lib/hashtags";
 import SourcePreviewCard from "./SourcePreviewCard";
 import StarRating from "@/components/composer/StarRating";
 import MultiRating from "@/components/composer/MultiRating";
@@ -112,19 +111,6 @@ const MAX_CHARS: Record<string, number> = {
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
-function HashtagPreview({ text }: { text: string }) {
-  const tags = useMemo(() => parseHashtags(text), [text]);
-  if (!tags.length) return null;
-  return (
-    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-      {tags.map(tag => (
-        <span key={tag} style={{ color: "#b38238", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>
-          #{tag}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
@@ -178,6 +164,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  const [quoteSharingReason, setQuoteSharingReason] = useState("");
+  const [quoteType, setQuoteType] = useState("");
 
   // Event specific
   const [eventOrganiser, setEventOrganiser] = useState<{ id: number; title: string; slug: string; type: string; thumbnail: string | null } | null>(null);
@@ -189,8 +177,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [eventAdmission, setEventAdmission] = useState("");
   const [eventTicketUrl, setEventTicketUrl] = useState("");
   const [eventCategory, setEventCategory] = useState("");
+  const [eventRsvpEnabled, setEventRsvpEnabled] = useState(false);
+  const [eventRsvpCapacity, setEventRsvpCapacity] = useState("");
 
   const user = session?.user as any;
+  const isPro = user?.tier === "patron";
   const loggedIn = status === "authenticated";
   const maxChars = MAX_CHARS[template] ?? 3000;
   const charCount = text.length;
@@ -237,11 +228,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, 10);
-    setGalleryFiles(prev => [...prev, ...files].slice(0, 10));
+    const files = Array.from(e.target.files ?? []).slice(0, 4);
+    setGalleryFiles(prev => [...prev, ...files].slice(0, 4));
     files.forEach(f => {
       const reader = new FileReader();
-      reader.onload = ev => setGalleryPreviews(prev => [...prev, ev.target?.result as string].slice(0, 10));
+      reader.onload = ev => setGalleryPreviews(prev => [...prev, ev.target?.result as string].slice(0, 4));
       reader.readAsDataURL(f);
     });
   }
@@ -267,10 +258,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     ]);
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
     setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
-    setQuoteAuthor(""); setQuoteSource("");
+    setQuoteAuthor(""); setQuoteSource(""); setQuoteSharingReason(""); setQuoteType("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
     setEventOrganiser(null);
+    setEventRsvpEnabled(false); setEventRsvpCapacity("");
     setLinkPreview(null);
   }
 
@@ -350,8 +342,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       let imageUrl: string | undefined;
       const galleryUrls: string[] = [];
 
-      // Non-event templates use the community upload endpoint
-      if (imageFile && template !== "event") {
+      if (imageFile) {
         if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
         setUploading(true);
         imageUrl = await uploadImage(imageFile);
@@ -365,55 +356,18 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         setUploading(false);
       }
 
-      // Event goes to separate endpoint (uses events upload endpoint to get WP attachment ID)
-      if (template === "event") {
-        let eventImageUrl: string | undefined;
-        let eventImageId = 0;
-        if (imageFile) {
-          if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
-          setUploading(true);
-          const fd = new FormData();
-          fd.append("file", imageFile);
-          const upRes = await fetch("/api/events/upload-image", { method: "POST", body: fd });
-          setUploading(false);
-          if (upRes.ok) {
-            const upData = await upRes.json();
-            eventImageUrl = upData.url || undefined;
-            eventImageId  = upData.id  || 0;
-          }
-        }
-        const res = await fetch("/api/events/member-submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: eventTitle.trim(),
-            description: text.trim() || undefined,
-            event_date: eventDate,
-            end_date: eventEndDate || undefined,
-            location: eventLocation.trim() || undefined,
-            city: eventCity.trim() || undefined,
-            admission: eventAdmission.trim() || undefined,
-            ticketing_url: eventTicketUrl.trim() || undefined,
-            image_url: eventImageUrl,
-            image_id: eventImageId || undefined,
-            category: eventCategory || undefined,
-            organiser_directory_id: eventOrganiser?.id || undefined,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to submit event.");
-        setSuccess("Event submitted — it will appear on the events calendar shortly.");
-        resetForm();
-        setTimeout(() => setSuccess(""), 5000);
-        return;
-      }
-
       // Quote goes to separate endpoint
       if (template === "quote") {
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text.trim(), author: quoteAuthor.trim(), source: quoteSource.trim() || undefined }),
+          body: JSON.stringify({
+            text: text.trim(),
+            author: quoteAuthor.trim(),
+            source: quoteSource.trim() || undefined,
+            sharing_reason: quoteSharingReason.trim() || undefined,
+            quote_type: quoteType || undefined,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to submit quote.");
@@ -432,6 +386,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         authorTier: user?.tier ?? undefined,
         authorAvatar: user?.avatarUrl || undefined,
         template_type: template,
+        // Always include all gallery images (not just for creative-showcase)
+        gallery_images: galleryUrls.length > 0 ? galleryUrls : undefined,
       };
 
       // Link preview (post only)
@@ -466,11 +422,24 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       if (template === "itinerary") {
         payload.itinerary_stops = itineraryStops.filter(s => s.name.trim());
       }
-      if (template === "creative-showcase" && galleryUrls.length > 0) {
-        payload.gallery_images = galleryUrls;
-      }
       if (template === "creative-showcase" && videoUrl.trim()) {
         payload.video_url = videoUrl.trim();
+      }
+      if (template === "event") {
+        payload.event_title = eventTitle.trim();
+        payload.event_date = eventDate;
+        payload.event_end_date = eventEndDate || undefined;
+        payload.event_venue = eventLocation.trim() || undefined;
+        payload.event_address = eventLocation.trim() || undefined;
+        payload.event_city = eventCity.trim() || undefined;
+        payload.event_admission = eventAdmission.trim() || undefined;
+        payload.ticket_url = eventTicketUrl.trim() || undefined;
+        payload.event_category = eventCategory || undefined;
+        payload.organiser_directory_id = eventOrganiser?.id || undefined;
+        if (isPro && eventRsvpEnabled) {
+          payload.rsvp_enabled = true;
+          payload.rsvp_capacity = parseInt(eventRsvpCapacity) || 0;
+        }
       }
 
       const res = await fetch("/api/community/submit", {
@@ -681,6 +650,33 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   onChange={setEventOrganiser}
                   placeholder="Search directory for organiser…"
                 />
+
+                {isPro ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={eventRsvpEnabled}
+                        onChange={e => setEventRsvpEnabled(e.target.checked)}
+                      />
+                      Enable RSVP for this event
+                    </label>
+                    {eventRsvpEnabled && (
+                      <input
+                        type="number"
+                        min={0}
+                        value={eventRsvpCapacity}
+                        onChange={e => setEventRsvpCapacity(e.target.value)}
+                        placeholder="Capacity (0 = unlimited)"
+                        className="composer-input"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "0.25rem" }}>
+                    Connect Pro members can enable RSVP for their events.
+                  </p>
+                )}
               </>
             )}
 
@@ -710,7 +706,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
               className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
             />
-            <HashtagPreview text={text} />
 
             {/* Quote author/source */}
             {template === "quote" && (
@@ -722,6 +717,27 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 <input
                   type="text" value={quoteSource} onChange={e => setQuoteSource(e.target.value.slice(0, 150))}
                   placeholder="Source (optional)" className="composer-input" style={{ flex: 1, minWidth: "120px" }}
+                />
+              </div>
+            )}
+
+            {/* Quote type + sharing reason */}
+            {template === "quote" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <select
+                  value={quoteType}
+                  onChange={e => setQuoteType(e.target.value)}
+                  className={`composer-tag-select${quoteType ? " composer-tag-select--selected" : ""}`}
+                >
+                  <option value="">Quote type (optional)</option>
+                  {["Person", "Book", "Film", "Speech", "Song"].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <textarea
+                  value={quoteSharingReason}
+                  onChange={e => setQuoteSharingReason(e.target.value.slice(0, 280))}
+                  placeholder="Why are you sharing this? (optional)"
+                  rows={2}
+                  className="composer-textarea"
                 />
               </div>
             )}
@@ -817,8 +833,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template === "creative-showcase" || template === "hidden-gem" || template === "food-review" ? handleGalleryChange : handleFileChange}
-              multiple={template === "creative-showcase" || template === "hidden-gem" || template === "food-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take"}
               style={{ display: "none" }}
             />
 
@@ -843,8 +859,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 )
               )}
 
-              {/* Image button (not for poll or itinerary) */}
-              {template !== "poll" && template !== "quote" && template !== "itinerary" && (
+              {/* Image button (not for poll, quote, cultural-take, book-review) */}
+              {template !== "poll" && template !== "quote" && template !== "cultural-take" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -856,14 +872,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
-                {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
+                {galleryFiles.length > 0 ? `${galleryFiles.length}/4 image${galleryFiles.length > 1 ? "s" : ""}` : imageFile ? "1 image" : "Image"}
               </button>
               )}
 
               <div className="composer-spacer" />
-              <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 50 ? " composer-char-count--warn" : ""}`}>
-                {charRemaining}
-              </span>
               <button
                 type="submit"
                 disabled={!canSubmit()}

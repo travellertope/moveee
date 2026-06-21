@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./member.css";
+import "./footer.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import SessionProvider from "@/components/SessionProvider";
@@ -28,11 +29,36 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://connect.themoveee.com"),
+  verification: {
+    google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
+  },
   title: {
-    default: "Moveee — Community",
+    default: "Moveee — Connect to Culture",
     template: "%s | Moveee",
   },
-  description: "Moveee — the community hub for culture, events, and creative networks.",
+  description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://connect.themoveee.com",
+    siteName: "Moveee",
+    images: [
+      {
+        url: "https://themoveee.com/og-fallback.png",
+        width: 1200,
+        height: 630,
+        alt: "Moveee — Connect to Culture",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@moveeeapp",
+    creator: "@moveeeapp",
+    title: "Moveee — Connect to Culture",
+    description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
+    images: ["https://themoveee.com/og-fallback.png"],
+  },
 };
 
 export default function RootLayout({

@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.1.0' );
+define( 'CULTURE_VERSION', '2.4.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -37,10 +37,13 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-twitter.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-auth.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -72,6 +75,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 
@@ -82,6 +86,23 @@ function culture_community_activate() {
     Culture_Activator::activate();
 }
 register_activation_hook( __FILE__, 'culture_community_activate' );
+
+/**
+ * Auto-create/upgrade custom DB tables when the plugin version changes.
+ *
+ * This plugin is deployed via direct file sync rather than the WP plugin
+ * repo, so register_activation_hook() above only fires on a manual
+ * deactivate/reactivate in WP Admin — a code deploy alone does not run it.
+ * Without this check, any dbDelta table added after a site's initial
+ * activation (e.g. wp_culture_follows) silently never gets created in
+ * production, and writes/reads against it fail with no visible error.
+ */
+function culture_community_maybe_upgrade() {
+    if ( get_option( 'culture_db_version' ) !== CULTURE_VERSION ) {
+        Culture_Activator::create_tables();
+    }
+}
+add_action( 'plugins_loaded', 'culture_community_maybe_upgrade' );
 
 /**
  * Plugin deactivation hook.
@@ -124,8 +145,10 @@ function culture_community_init() {
     Culture_RSVP_Admin::init();
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
+    Culture_Shop_Checkout::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
+    Culture_Follows::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

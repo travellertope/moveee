@@ -1,15 +1,20 @@
-import React, { useEffect, useRef } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Modal, View, Text, ScrollView, TouchableOpacity,
-  Animated, StyleSheet, Dimensions,
+  View, Text, TouchableOpacity, StyleSheet, Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNav } from "../../hooks/useNav";
 import ReactionBar from "./ReactionBar";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import BottomSheet from "../ui/BottomSheet";
+import CommentSection from "./CommentSection";
+import { useColors } from "../../hooks/useColors";
+import { useAuthStore } from "../../auth/authStore";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { fonts, fontSize, space, radius } from "../../theme";
+import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
-
-const { height: SCREEN_H } = Dimensions.get("window");
-const SHEET_H = SCREEN_H * 0.72;
+import QuoteShareCard from "../quotes/QuoteShareCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
 interface Props {
   visible: boolean;
@@ -18,106 +23,198 @@ interface Props {
 }
 
 export default function QuoteDetailModal({ visible, item, onClose }: Props) {
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
+  const { user } = useAuthStore();
+  const [bookmarked, setBookmarked] = useState(false);
+  const { cardRef, share: shareCard } = useScoreCardShare();
 
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: visible ? 1 : 0,
-      duration: visible ? 280 : 200,
-      useNativeDriver: true,
-    }).start();
-  }, [visible]);
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://connect.themoveee.com/quotes";
+  const sharingReason = item.quoteSharingReason || undefined;
 
-  const translateY = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [SCREEN_H, 0],
-  });
-  const backdropOpacity = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
+  const handleAuthorPress = () => {
+    if (item.communityAuthorUsername) {
+      nav.navigate("MemberProfile", { username: item.communityAuthorUsername });
+    }
+  };
 
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  const handleShare = async () => {
+    await shareCard();
+  };
+
+  const handleBookmark = async () => {
+    if (!item.wpId || !user?.id) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${CULTURE_API}/content/bookmark`, { user_id: Number(user.id), post_id: Number(item.wpId) });
+    } catch {
+      setBookmarked(!next);
+    }
+  };
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      {/* Backdrop */}
-      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} />
-      </Animated.View>
+    <BottomSheet visible={visible} onClose={onClose}>
+      <View style={{ position: "absolute", top: -9999, left: -9999 }}>
+        <QuoteShareCard
+          ref={cardRef}
+          quoteText={item.title}
+          quoteAuthor={item.quoteAuthor}
+          quoteSource={item.quoteSource}
+          qrValue={shareUrl}
+        />
+      </View>
+      <View style={styles.body}>
+        {/* Decorative open quote — contained so it doesn't clip */}
+        <View style={styles.quoteBlock}>
+          <Text style={styles.openQuote}>"</Text>
+          <Text style={styles.quoteText}>{item.title}</Text>
+          <Text style={styles.closeQuote}>"</Text>
+        </View>
 
-      {/* Sheet */}
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.sheetHeader}>
-          <View style={styles.handle} />
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Ionicons name="close" size={20} color={colors.ink} />
+        {/* Attribution */}
+        <View style={styles.attribution}>
+          {item.quoteAuthor ? (
+            <Text style={styles.author}>{item.quoteAuthor}</Text>
+          ) : null}
+          {item.quoteSource ? (
+            <Text style={styles.source}>{item.quoteSource}</Text>
+          ) : null}
+        </View>
+
+        {sharingReason ? (
+          <View style={styles.posterNote}>
+            <TouchableOpacity
+              style={styles.posterNoteHeader}
+              onPress={handleAuthorPress}
+              disabled={!item.communityAuthorUsername}
+              activeOpacity={0.7}
+            >
+              {item.communityAuthorAvatar ? (
+                <Image source={{ uri: item.communityAuthorAvatar }} style={styles.posterAvatar} />
+              ) : (
+                <View style={[styles.posterAvatar, styles.posterAvatarFallback]}>
+                  <Text style={styles.posterAvatarInitial}>
+                    {(item.communityAuthor ?? "?")[0]?.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <Text style={styles.posterNoteLabel}>
+                💬 {item.communityAuthor ?? "Someone"}'s note
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.posterNoteText}>{sharingReason}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.sharePrompt}>
+          <Text style={styles.sharePromptText}>Know someone who needs to see this?</Text>
+          <TouchableOpacity onPress={handleShare}>
+            <Text style={styles.sharePromptLink}>Share quote →</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-          {/* Large quote */}
-          <View style={styles.quoteBlock}>
-            <Text style={styles.quoteMark}>"</Text>
-            <Text style={styles.quoteText}>{item.title}</Text>
-            <Text style={styles.closeMark}>"</Text>
-          </View>
+        <View style={styles.divider} />
 
-          {/* Author + source */}
-          <View style={styles.attribution}>
-            {item.quoteAuthor && (
-              <Text style={styles.author}>{item.quoteAuthor}</Text>
-            )}
-            {item.quoteSource && (
-              <Text style={styles.source}>{item.quoteSource}</Text>
-            )}
-          </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Reactions */}
-          {item.reactions && item.wpId && (
+        {/* Reactions row */}
+        <View style={styles.reactionsRow}>
+          {item.wpId ? (
             <ReactionBar
               postId={item.wpId}
-              initialCounts={item.reactions}
+              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+              initialReaction={item.userReaction ?? null}
               shareUrl={shareUrl}
+              showReport
             />
+          ) : (
+            <View style={styles.reactionsRow}>
+              <View style={styles.reactionItem}>
+                <Text style={styles.reactionEmoji}>❤️</Text>
+                <Text style={styles.reactionCount}>{item.reactions?.love ?? 0}</Text>
+              </View>
+              <TouchableOpacity style={styles.reactionItem} onPress={handleShare}>
+                <Ionicons name="share-outline" size={18} color={c.mute} />
+              </TouchableOpacity>
+            </View>
           )}
-        </ScrollView>
-      </Animated.View>
-    </Modal>
+          <TouchableOpacity
+            style={[styles.bookmarkBtn, bookmarked && styles.bookmarkBtnActive]}
+            onPress={handleBookmark}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={bookmarked ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color={bookmarked ? c.ochre : c.mute}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Comments */}
+        {item.wpId ? (
+          <CommentSection postId={String(item.wpId)} />
+        ) : null}
+      </View>
+    </BottomSheet>
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#000",
-  },
-  sheet: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    height: SHEET_H,
-    backgroundColor: colors.paperWarm,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    overflow: "hidden",
-  },
-  sheetHeader: {
-    alignItems: "center", paddingTop: space[2], paddingBottom: space[1],
-    paddingHorizontal: space[4],
-    flexDirection: "row", justifyContent: "center",
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-  },
-  handle:   { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.ghost },
-  closeBtn: { position: "absolute", right: space[4], padding: 4 },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    body: { paddingHorizontal: space[5], paddingTop: space[4], gap: space[4], paddingBottom: space[6] },
 
-  body: { padding: space[5], gap: space[4], paddingBottom: space[10] },
+    quoteBlock: { paddingTop: 8 },
+    openQuote: {
+      fontFamily: "Fraunces_700Bold",
+      fontSize: 56,
+      color: c.ghost,
+      lineHeight: 70,
+      marginBottom: -8,
+    },
+    quoteText: {
+      fontFamily: fonts.serifItalic,
+      fontSize: 22,
+      color: c.ink,
+      lineHeight: 32,
+      marginLeft: space[2],
+    },
+    closeQuote: {
+      fontFamily: "Fraunces_700Bold",
+      fontSize: 40,
+      color: c.ghost,
+      lineHeight: 32,
+      textAlign: "right",
+    },
 
-  quoteBlock: { gap: space[1] },
-  quoteMark:  { fontFamily: fonts.serifBold, fontSize: 72, color: colors.gold, lineHeight: 60, marginBottom: -space[2] },
-  quoteText:  { fontFamily: fonts.serif, fontSize: fontSize.xl, color: colors.ink, lineHeight: 30, fontStyle: "italic" },
-  closeMark:  { fontFamily: fonts.serifBold, fontSize: 48, color: colors.gold, lineHeight: 36, textAlign: "right", marginTop: -space[1] },
+    attribution: { gap: space[1], paddingLeft: space[2] },
+    author: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    source: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.5 },
 
-  attribution: { gap: space[1], paddingLeft: space[2] },
-  author: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
-  source: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, letterSpacing: 0.5 },
+    posterNote: {
+      backgroundColor: c.paperDeep, borderRadius: radius.md, padding: space[3],
+      borderLeftWidth: 2, borderLeftColor: c.ochre,
+    },
+    posterNoteHeader: { flexDirection: "row", alignItems: "center", gap: space[2], marginBottom: 6 },
+    posterAvatar: { width: 22, height: 22, borderRadius: 11 },
+    posterAvatarFallback: { backgroundColor: c.paperWarm, alignItems: "center", justifyContent: "center" },
+    posterAvatarInitial: { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft },
+    posterNoteLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
+    posterNoteText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 19 },
 
-  divider: { height: 1, backgroundColor: colors.rule },
-});
+    sharePrompt: { alignItems: "center", gap: 2 },
+    sharePromptText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    sharePromptLink: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
+
+    divider: { height: 1, backgroundColor: c.rule },
+
+    reactionsRow: { flexDirection: "row", alignItems: "center", gap: space[4] },
+    reactionItem: { flexDirection: "row", alignItems: "center", gap: space[1] },
+    reactionEmoji: { fontSize: 20 },
+    reactionCount: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.mute },
+    bookmarkBtn: { marginLeft: "auto" as any, padding: 4 },
+    bookmarkBtnActive: {},
+  });
+}

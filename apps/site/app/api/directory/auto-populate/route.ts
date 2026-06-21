@@ -19,6 +19,7 @@ import {
   generateDirectoryImage,
   generateTopicSuggestions,
 } from "@/lib/gemini";
+import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -253,7 +254,12 @@ async function submitEntry(
         stub.entryType,
         stub.excerpt
       );
-      const filename = `${stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}.jpg`;
+      const slug = stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+      const key = `directory/${slug}-${postId}.jpg`;
+      const imageBuffer = Buffer.from(image.data, "base64");
+      const imageUrl = await uploadToR2(key, imageBuffer, "image/jpeg");
+
+      // Save the R2 URL as post meta on the directory entry
       await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
         method: "POST",
         headers: {
@@ -262,8 +268,7 @@ async function submitEntry(
         },
         body: JSON.stringify({
           post_id: postId,
-          image_base64: image.data,
-          filename,
+          image_url: imageUrl,
           image_title: image.title,
           image_description: image.description,
           image_alt: image.altText,

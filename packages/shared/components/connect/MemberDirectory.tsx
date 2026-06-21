@@ -16,6 +16,7 @@ interface Member {
   instagram?: string;
   linkedin?: string;
   website?: string;
+  twitter?: string;
 }
 
 const DISCIPLINES = [
@@ -147,10 +148,18 @@ export default function MemberDirectory() {
 function MemberCard({ member }: { member: Member }) {
   const isPatron = member.tier === "patron";
   const location = [member.city, member.countryOfResidence].filter(Boolean).join(", ");
+  const toUrl = (platform: "instagram" | "linkedin" | "website" | "twitter", value: string) => {
+    if (/^https?:\/\//i.test(value)) return value;
+    if (platform === "instagram") return `https://instagram.com/${value.replace(/^@/, "")}`;
+    if (platform === "linkedin") return `https://linkedin.com/${value.replace(/^\//, "")}`;
+    if (platform === "twitter") return `https://twitter.com/${value.replace(/^@/, "")}`;
+    return `https://${value}`;
+  };
   const links = [
-    member.instagram && { label: "Instagram", href: `https://instagram.com/${member.instagram.replace(/^@/, "")}` },
-    member.linkedin  && { label: "LinkedIn",  href: member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}` },
-    member.website   && { label: "Website",   href: member.website.startsWith("http")  ? member.website  : `https://${member.website}` },
+    member.instagram && { label: "Instagram", href: toUrl("instagram", member.instagram) },
+    member.linkedin  && { label: "LinkedIn",  href: toUrl("linkedin", member.linkedin) },
+    member.website   && { label: "Website",   href: toUrl("website", member.website) },
+    member.twitter   && { label: "Twitter",   href: toUrl("twitter", member.twitter) },
   ].filter(Boolean) as { label: string; href: string }[];
 
   const inner = (
@@ -159,7 +168,15 @@ function MemberCard({ member }: { member: Member }) {
         {member.displayName.charAt(0).toUpperCase()}
       </div>
       <div className="mco-member-info">
-        <h3 className="mco-member-name">{member.displayName}</h3>
+        <h3 className="mco-member-name">
+          <span className="mco-member-name-text">{member.displayName}</span>
+          {isPatron && (
+            <svg className="mco-pro-check" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro">
+              <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+              <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+          )}
+        </h3>
         {member.occupation && (
           <p className="mco-member-role">{member.occupation}</p>
         )}
@@ -194,9 +211,6 @@ function MemberCard({ member }: { member: Member }) {
           </div>
         )}
       </div>
-      {isPatron && (
-        <span className="mco-member-tier" aria-label="Connect Pro member">Pro</span>
-      )}
     </div>
   );
 

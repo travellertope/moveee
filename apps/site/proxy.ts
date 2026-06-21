@@ -99,6 +99,13 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const { searchParams } = new URL(request.url)
+  // Strip legacy WooCommerce currency param — creates duplicate URL variants
+  if (searchParams.has('wmc-currency')) {
+    const clean = new URL(request.url)
+    clean.searchParams.delete('wmc-currency')
+    return NextResponse.redirect(clean.toString(), { status: 301 })
+  }
 
   // Set x-country cookie on every request so CurrencyProvider can read it client-side
   const country = request.headers.get('x-vercel-ip-country') || 'US'

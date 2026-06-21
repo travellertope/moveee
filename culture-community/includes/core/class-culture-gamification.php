@@ -224,14 +224,14 @@ class Culture_Gamification {
         // ── Profile & onboarding badges ───────────────────────────────────
         'profile_complete' => array(
             'name'        => 'Profile Complete',
-            'description' => 'Completed your Moveee Connect profile.',
+            'description' => 'Completed your Moveee profile.',
             'icon'        => 'dashicons-id',
             'trigger'     => 'profile_completed',
             'threshold'   => 1,
         ),
         'directory_member' => array(
             'name'        => 'In the Directory',
-            'description' => 'Opted into the Moveee Connect member directory.',
+            'description' => 'Opted into the Moveee member directory.',
             'icon'        => 'dashicons-businessperson',
             'trigger'     => 'directory_opted_in',
             'threshold'   => 1,
@@ -246,21 +246,21 @@ class Culture_Gamification {
         // ── Loyalty & tenure badges ───────────────────────────────────────
         'monthly_member' => array(
             'name'        => 'Monthly Member',
-            'description' => 'Been a Moveee Connect member for 30 days.',
+            'description' => 'Been a Moveee member for 30 days.',
             'icon'        => 'dashicons-calendar-alt',
             'trigger'     => 'account_age_days',
             'threshold'   => 30,
         ),
         'veteran' => array(
             'name'        => 'Veteran',
-            'description' => 'Been a Moveee Connect member for 180 days.',
+            'description' => 'Been a Moveee member for 180 days.',
             'icon'        => 'dashicons-awards',
             'trigger'     => 'account_age_days',
             'threshold'   => 180,
         ),
         'annual_advocate' => array(
             'name'        => 'Annual Advocate',
-            'description' => 'Been a Moveee Connect member for a full year.',
+            'description' => 'Been a Moveee member for a full year.',
             'icon'        => 'dashicons-star-half',
             'trigger'     => 'account_age_days',
             'threshold'   => 365,
@@ -268,84 +268,187 @@ class Culture_Gamification {
         // ── Reputation milestone badges ───────────────────────────────────
         'rising_star' => array(
             'name'        => 'Rising Star',
-            'description' => 'Earned 250 reputation.',
+            'description' => 'Earned 250 points.',
             'icon'        => 'dashicons-star-empty',
             'trigger'     => 'points',
             'threshold'   => 250,
         ),
-        'taste_maker_badge' => array(
-            'name'        => 'Taste Maker',
-            'description' => 'Earned 500 reputation.',
-            'icon'        => 'dashicons-star-filled',
+        'culture_contributor_badge' => array(
+            'name'        => 'Culture Contributor',
+            'description' => 'Earned 500 points — officially a Culture Contributor.',
+            'icon'        => 'dashicons-awards',
             'trigger'     => 'points',
             'threshold'   => 500,
         ),
+        'taste_maker_badge' => array(
+            'name'        => 'Taste Maker',
+            'description' => 'Earned 2,500 points — reached Taste Maker tier.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'points',
+            'threshold'   => 2500,
+        ),
         'culture_authority_badge' => array(
             'name'        => 'Culture Authority',
-            'description' => 'Earned 1500 reputation.',
+            'description' => 'Earned 10,000 reputation — reached Culture Authority tier.',
             'icon'        => 'dashicons-superhero',
             'trigger'     => 'points',
-            'threshold'   => 1500,
+            'threshold'   => 10000,
+        ),
+        'culture_icon_badge' => array(
+            'name'        => 'Culture Icon',
+            'description' => 'Earned 25,000 reputation and nominated by the community.',
+            'icon'        => 'dashicons-superhero-alt',
+            'trigger'     => 'points',
+            'threshold'   => 25000,
         ),
     );
 
     /**
      * Default reputation values per action. These replace the old points system
      * — reputation is permanent and never spent.
+     *
+     * Every action awards both reputation and credits (no action is rep-only or
+     * credit-only) so the rewards breakdown never shows a dash in either column.
      */
     const POINTS = array(
         'event_rsvp'             => 5,
-        'event_checkin'          => 15,
+        'event_checkin'          => 20,
+        'magazine_comment'       => 5,
         'newsletter_comment'     => 10,
-        'newsletter_reaction'    => 2,
-        'referral'               => 25,
+        'newsletter_reaction'    => 1,
+        'referral'               => 30,
         'quote_submission'       => 10,
         'quote_like'             => 1,
-        'magazine_read'          => 5,
-        'magazine_share'         => 5,
-        'community_comment'      => 5,
-        'community_like'         => 2,
-        'directory_entry'        => 15,
-        'game_completed'         => 5,
-        // New actions (Phase 5+)
-        'community_post'         => 5,   // initial post submission
-        'profile_completed'      => 10,  // all KYC fields filled
-        'email_verified'         => 5,   // email verification step
-        'directory_opt_in'       => 5,   // opted into member directory
-        'newsletter_subscribed'  => 3,   // first newsletter subscription
-        'poll_vote'              => 2,   // voting on a community poll
+        'magazine_read'          => 1,
+        'magazine_share'         => 2,
+        'community_comment'      => 8,
+        'community_like'         => 1,
+        'directory_entry'        => 20,
+        'game_completed'         => 1,
+        'community_post'         => 10,
+        'profile_completed'      => 15,
+        'email_verified'         => 5,
+        'directory_opt_in'       => 10,
+        'newsletter_subscribed'  => 5,
+        'poll_vote'              => 1,
     );
 
     /**
      * Small credit bonuses for non-post actions.
      * Post credits are earned only via validation threshold (see check_post_threshold).
+     *
+     * Every action awards both reputation and credits (see POINTS above).
      */
     const CREDIT_BONUSES = array(
         'event_rsvp'            => 1,
-        'event_checkin'         => 2,
-        'referral'              => 3,
+        'event_checkin'         => 3,
+        'referral'              => 5,
+        'magazine_comment'      => 2,
         'newsletter_comment'    => 1,
+        'newsletter_reaction'   => 1,
         'quote_submission'      => 1,
+        'quote_like'            => 1,
         'magazine_read'         => 1,
-        'magazine_share'        => 1,
-        'directory_entry'       => 2,
+        'magazine_share'        => 2,
+        'community_comment'     => 2,
+        'community_like'        => 1,
+        'directory_entry'       => 3,
         'game_completed'        => 1,
-        // New actions
         'community_post'        => 2,
-        'profile_completed'     => 5,
+        'profile_completed'     => 10,
         'email_verified'        => 2,
         'directory_opt_in'      => 2,
-        'newsletter_subscribed' => 1,
+        'newsletter_subscribed' => 2,
+        'poll_vote'             => 1,
     );
 
     const DAILY_CREDIT_CAP = 50;
 
+    // Option A: Raised thresholds so tiers take real community standing to reach.
+    // Option C: culture-icon at 25,000 is invite-only — rep alone does not unlock it.
+    //           It requires _culture_icon_nominated = 1 user meta set by admins.
     const REPUTATION_TIERS = array(
-        1500 => 'culture-authority',
-        500  => 'taste-maker',
-        100  => 'culture-contributor',
-        0    => 'member',
+        25000 => 'culture-icon',        // invite/nomination only
+        10000 => 'culture-authority',
+        2500  => 'taste-maker',
+        500   => 'culture-contributor',
+        0     => 'member',
     );
+
+    /**
+     * Get the credit bonus for an action, reading from DB with CREDIT_BONUSES as fallback.
+     *
+     * @param string $action Action slug.
+     * @return int
+     */
+    public static function get_credit_bonus( $action ) {
+        $defaults = self::CREDIT_BONUSES;
+        $key      = 'culture_credits_' . $action;
+        $saved    = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $action ] ?? 0 );
+    }
+
+    /**
+     * Get the reputation value for an action, reading from DB with POINTS as fallback.
+     *
+     * @param string $action Action slug.
+     * @return int
+     */
+    public static function get_reputation_value( $action ) {
+        $defaults = self::POINTS;
+        $key      = 'culture_rep_' . $action;
+        $saved    = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $action ] ?? 0 );
+    }
+
+    /**
+     * Get the configured daily credit cap, falling back to DAILY_CREDIT_CAP.
+     *
+     * @return int
+     */
+    public static function get_daily_cap( $user_id = 0 ) {
+        $saved = get_option( 'culture_daily_credit_cap', null );
+        if ( $saved !== null ) return (int) $saved;
+        if ( $user_id ) {
+            $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
+            if ( 'patron' === $tier ) return 100;
+        }
+        return self::DAILY_CREDIT_CAP;
+    }
+
+    /**
+     * Get the reputation threshold for a tier, reading from DB with hard-coded defaults.
+     *
+     * @param string $tier  One of: 'contributor', 'taste-maker', 'authority'.
+     * @return int
+     */
+    public static function get_rep_tier_threshold( $tier ) {
+        $defaults = array(
+            'contributor' => 500,
+            'taste-maker' => 2500,
+            'authority'   => 10000,
+            // culture-icon threshold is fixed — admin sets the nomination flag instead
+        );
+        $key   = 'culture_rep_tier_' . $tier;
+        $saved = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $tier ] ?? 0 );
+    }
+
+    /**
+     * Get reputation tier thresholds with values overridden by DB settings at runtime.
+     * Use this instead of self::REPUTATION_TIERS wherever a live value is needed.
+     *
+     * @return array  Keyed by threshold (int) => tier slug (string), descending.
+     */
+    public static function get_reputation_tiers() {
+        return array(
+            25000 => 'culture-icon',    // nomination only — rep threshold not enforced here
+            self::get_rep_tier_threshold( 'authority' )    => 'culture-authority',
+            self::get_rep_tier_threshold( 'taste-maker' )  => 'taste-maker',
+            self::get_rep_tier_threshold( 'contributor' )  => 'culture-contributor',
+            0 => 'member',
+        );
+    }
 
     /**
      * Get point values, reading from options with const defaults as fallback.
@@ -355,11 +458,11 @@ class Culture_Gamification {
     public static function get_point_values() {
         $values = array();
         foreach ( self::POINTS as $action => $default ) {
-            if ( class_exists( 'Culture_Settings' ) ) {
-                $values[ $action ] = Culture_Settings::get_points( $action );
-            } else {
-                $values[ $action ] = $default;
-            }
+            // Delegate to get_point_value() so this reads the same live,
+            // admin-configurable value (with proper fallback) that actually
+            // gets awarded at runtime via award_points() — keeps the rewards
+            // breakdown table in sync with what members really earn.
+            $values[ $action ] = self::get_point_value( $action );
         }
         return $values;
     }
@@ -424,10 +527,21 @@ class Culture_Gamification {
         return $legacy;
     }
 
-    /** Get the reputation tier string for a given reputation score. */
-    public static function get_reputation_tier( $reputation ) {
-        foreach ( self::REPUTATION_TIERS as $threshold => $tier ) {
-            if ( $reputation >= $threshold ) return $tier;
+    /**
+     * Get the reputation tier string for a given reputation score.
+     * culture-icon requires both 25,000 rep AND admin nomination flag.
+     */
+    public static function get_reputation_tier( $reputation, $user_id = 0 ) {
+        foreach ( self::get_reputation_tiers() as $threshold => $tier ) {
+            if ( $reputation >= $threshold ) {
+                if ( 'culture-icon' === $tier ) {
+                    // Only award culture-icon if admin has set the nomination flag.
+                    if ( ! $user_id || ! get_user_meta( $user_id, '_culture_icon_nominated', true ) ) {
+                        continue;
+                    }
+                }
+                return $tier;
+            }
         }
         return 'member';
     }
@@ -459,7 +573,7 @@ class Culture_Gamification {
             }
 
             $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-            $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
+            $remaining    = self::get_daily_cap( $user_id ) - $earned_today;
             if ( $remaining <= 0 ) {
                 $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
                 return 0;
@@ -509,9 +623,9 @@ class Culture_Gamification {
     /** Get how many credits the user can still earn today. */
     public static function get_daily_credits_remaining( $user_id ) {
         $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
-        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::DAILY_CREDIT_CAP;
+        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::get_daily_cap( $user_id );
         $earned = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-        return max( 0, self::DAILY_CREDIT_CAP - $earned );
+        return max( 0, self::get_daily_cap( $user_id ) - $earned );
     }
 
     // ── Threshold (upvote-to-earn) ────────────────────────────────────────────
@@ -558,8 +672,8 @@ class Culture_Gamification {
         // Determine credit/reputation amount by template type.
         $template = get_post_meta( $post_id, '_template_type', true ) ?: 'post';
         $credit_amounts = array(
-            'post'              => array( 'credits' => 10, 'reputation' => 5 ),
-            'hidden-gem'        => array( 'credits' => 15, 'reputation' => 10 ),
+            'post'              => array( 'credits' => 10, 'reputation' => 5 ),  // overridable via culture_credits_post_validated_standard
+            'hidden-gem'        => array( 'credits' => 20, 'reputation' => 10 ),
             'cultural-take'     => array( 'credits' => 12, 'reputation' => 8 ),
             'food-review'       => array( 'credits' => 15, 'reputation' => 10 ),
             'creative-showcase' => array( 'credits' => 12, 'reputation' => 8 ),
@@ -620,7 +734,7 @@ class Culture_Gamification {
         $new_rep = self::award_reputation( $user_id, $rep_to_add, $action );
 
         // Award small credit bonus for eligible actions.
-        $credit_bonus = self::CREDIT_BONUSES[ $action ] ?? 0;
+        $credit_bonus = self::get_credit_bonus( $action );
         if ( $credit_bonus > 0 ) {
             self::award_credits( $user_id, $credit_bonus, $action );
         }

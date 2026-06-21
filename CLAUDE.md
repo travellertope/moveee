@@ -26,6 +26,25 @@ stale history.
 
 ---
 
+## Brand naming convention (canonical — do not deviate)
+
+| Surface | Brand name | Domain |
+|---|---|---|
+| `apps/site` | **Moveee Magazine** | `themoveee.com` |
+| `apps/connect` | **Moveee** | `connect.themoveee.com` |
+| `apps/mobile` | **Moveee** | iOS / Android |
+
+- `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
+- `apps/connect` and `apps/mobile` are both just **Moveee** — no sub-brand qualifier.
+- Never use "Moveee Connect" as a product name.
+- Site tagline (Moveee Magazine): **"Best in Culture"**
+- App tagline (Moveee): **"Connect to Culture"**
+- Brand description framing: universal/global — do not describe the brand as specifically
+  African or Nigerian in metadata or SEO copy. The content and community speak for themselves.
+  Use language like: *"an independent magazine and community for people who live for culture."*
+
+---
+
 ## Project overview
 
 Next.js 15 (App Router) frontend + WordPress headless CMS backend.
@@ -38,12 +57,12 @@ user-visible copy says "Connect Pro" or "Pro").
 This is a **Turborepo monorepo** (as of June 2026).
 
 Key paths:
-- `apps/site/` — Site A: Next.js app for themoveee.com (Editorial + Shop, no auth)
+- `apps/site/` — Site A: Moveee Magazine at themoveee.com (Editorial + Shop, no auth)
   - `app/` — pages and route handlers
   - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
   - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
   - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
-- `apps/connect/` — Site B: Next.js app for connect.themoveee.com (Community + Auth)
+- `apps/connect/` — Site B: Moveee at connect.themoveee.com (Community + Auth)
   - `app/` — auth, member, community, events, games, directory pages
   - No local lib/ or components/ — all resolved from packages/shared
 - `apps/mobile/` — React Native app (Expo) for iOS + Android
@@ -378,6 +397,20 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 - Any mutation endpoint (insert/update) — use `$wpdb->insert/update` if needed,
   but still fire the relevant `do_action()` hooks for notifications/credits
 
+### Gotcha: `meta_query` OR-branches with NOT EXISTS / DATE casts are slow
+`WP_Query`'s `meta_query` builds one `LEFT JOIN` against `wp_postmeta` per
+branch — `wp_postmeta.meta_value` has no index, so a query with 3+ OR
+branches (especially mixing `NOT EXISTS` with `'type' => 'DATE'` casts) can
+hang for 20s+ in production and cascade into client timeouts. This bit the
+`culture_event` REST endpoint via `exclude_expired_events()` in
+`class-culture-post-types.php` (`rest_culture_event_query` filter) — fixed by
+replacing the meta_query with a single raw-SQL lookup (2 LEFT JOINs) that
+resolves matching IDs and sets `$args['post__in']` instead. If you see a REST
+endpoint backed by a CPT with a `rest_<post_type>_query` filter timing out,
+check for this pattern first. Reminder: an **empty** `post__in` array is
+ignored by `WP_Query` (returns everything) — use `array(0)` to force zero
+results.
+
 ---
 
 ## Key conventions
@@ -397,8 +430,91 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 
 ## Git branch
 
-Active development branch: `claude/admiring-dirac-lgzivc`
-Always commit and push to this branch.
+Active development branch: `claude/sweet-ritchie-xr21c3` (merged to main 2026-06-15)
+New work: create a fresh branch from main or use whatever branch is specified at session start.
+
+---
+
+## Reaction consistency fix (June 2026)
+
+Reactions (love/fire/clap) on community posts, pulse stories, quotes, and
+magazine articles were inconsistent across surfaces — some components never
+hydrated the viewer's own reaction state from the server (always starting
+"not reacted" on mount), some allowed multiple simultaneous "active"
+reactions per post (contradicting the single-reaction-per-user backend
+model), and web's reaction endpoint did a non-atomic GET-then-PATCH against
+native WP REST with no real per-user server record (relied on localStorage).
+
+**Backend (single source of truth):** `_culture_post_reactions` usermeta —
+a `post_id => reaction_type` map per user. `Culture_Mobile_API::toggle_reaction()`
+(`class-culture-mobile-api.php`) is the one place the toggle/switch logic
+lives; both mobile's `handle_react()` (JWT, `/mobile/community/react`) and
+web's new `handle_react()` (API key, `/community/react`, in
+`class-culture-rest-api.php`) just call into it — same mirrored-endpoint
+pattern as Follow/Community RSVP. Switching emoji decrements the old type's
+counter and increments the new one; tapping the same emoji again un-reacts.
+`_culture_liked_posts` (flat array) is kept in sync for backward
+compatibility with old boolean-`liked` reads.
+
+**Reading current reaction state:** Feed/list responses (`get_pulse_feed_items()`,
+`get_quote_feed_items()`, `get_community_feed_items()`, `format_community_post()`)
+now include a `userReaction` field sourced from the map directly — no extra
+request needed when rendering from a feed. Surfaces that fetch content
+*outside* a feed (e.g. magazine articles, fetched by slug) have no
+`userReaction` field to read, so there's a small dedicated GET lookup
+instead: web `GET /culture/v1/user/reaction` (used by
+`packages/shared/components/pulse/ReactionBar.tsx` on mount, proxied via
+`apps/connect/app/api/community/react/route.ts`), mobile
+`GET /culture/v1/mobile/user/reaction` (used by `ArticleScreen.tsx`).
+**Per the project's WPGraphQL-vs-REST rule**, this lookup was deliberately
+kept as a separate small REST call rather than threading `userReaction`
+through the GraphQL-sourced web content fetch (`unified-feed.ts`) —
+user-specific reads stay off the content/GraphQL path.
+
+**Frontend pattern (apply to any new reaction surface):** hydrate initial
+state from `item.userReaction` (or the dedicated lookup if there's no feed
+item), track at most one active reaction (a single `reacted` key/Set with
+at most one entry, not independent booleans per emoji), and after the POST
+always overwrite local state with the response's `reactionType`/`reactions`
+rather than trusting the optimistic guess (the server's switch logic is the
+authority, not the client's prediction). Fixed in this pass:
+`packages/shared/components/pulse/ReactionBar.tsx` (web shared),
+`apps/mobile/src/components/community/ReactionBar.tsx`,
+`PostDetailSheet.tsx`'s `ReactionsRow`, `FeedItemCard.tsx`'s `QuoteCard`
+(love-only bespoke handler), `QuoteDetailModal.tsx`, and
+`ArticleScreen.tsx`'s lifted top/bottom-bar state. Any component still
+written as `useState(false)` per emoji rather than one shared "which
+reaction is active" value has this same bug.
+
+---
+
+## @mentions system (June 2026)
+
+Hashtags removed entirely. @mentions implemented end-to-end.
+
+### Mobile composer
+- `components/composer/MentionInput.tsx` — drop-in TextInput replacement; detects `@word` at cursor, debounced search (300ms) to `GET /culture/v1/mobile/members?search=...`, shows suggestion dropdown above input, inserts `@username ` on select
+- All 10 post template main text areas use `MentionInput` (not plain `TextInput`)
+- `components/composer/UserSearch.tsx` — also uses `/mobile/members` (NOT `/culture/v1/members` which is API-key-only)
+- **Critical**: `/culture/v1/members` requires API key (server-side). Mobile must use `/culture/v1/mobile/members` (JWT Bearer). Wrong endpoint → 401 → auto-logout
+
+### Mobile display
+- `components/community/HashtagText.tsx` — repurposed to parse `@username` tokens (not `#hashtag`). Renders in `colors.gold + fonts.sansBold`. Prop: `onMentionPress?: (username) => void` (was `onHashtagPress`)
+- `FeedItemCard.tsx` + `PostDetailSheet.tsx` — pass `onMentionPress` → `nav.navigate("MemberProfile", { username })`
+
+### Web display
+- `packages/shared/components/pulse/HashtagText.tsx` — same repurpose. Prop: `onMentionClick?: (username) => void`
+- `FeedCard.tsx`, `CommunityDetailModal.tsx` — navigate to `/${username}` on mention tap
+
+### PHP notifications
+- `class-culture-notifications.php` — added `'mention' => 'You were mentioned'` to TYPES
+- `class-culture-mobile-api.php` `handle_submit_post()` — extracts `@username` via `preg_match_all`, calls `Culture_Notifications::add()` for each mentioned user (skips self-mentions)
+- `class-culture-rest-api.php` — same mention extraction on web post submit
+
+### Removed (hashtags)
+- Deleted: `apps/site/app/pulse/hashtag/`, `apps/connect/app/pulse/hashtag/`, `packages/shared/components/pulse/HashtagFeed.tsx`, `packages/utils/hashtags.ts`
+- Removed `HashtagPreview` from `SubmitPost.tsx`
+- Removed `#` toolbar button from `NewPostScreen.tsx`
 
 ---
 
@@ -442,7 +558,19 @@ On `cms.themoveee.com` (AWS Lightsail 2GB, London):
 - Vercel KV (Upstash, EU London region) — caches GraphQL responses with `wp:` key prefix
   - KV flush endpoint: `POST /api/revalidate-kv` (secret: `WP_REVALIDATE_SECRET` env var)
   - WordPress fires flush on every post publish via `class-culture-community.php`
-- Circuit breaker in `lib/wp.ts`: 3 failures → 60s cooldown (`CB_COOLDOWN = 60_000`)
+- Circuit breaker in `lib/wp.ts`: 3 failures → 60s cooldown — **now KV-backed** (`cb:cms` key in Vercel KV) so it trips across all serverless function instances, not just in-process
+
+### WordPress newsletter sends via WP-CLI (recommended)
+For large newsletter sends, use WP-CLI rather than the web UI to avoid PHP-FPM timeout:
+```bash
+wp eval 'Culture_Newsletter_Queue::dispatch_batch( $post_id );' --path=/opt/bitnami/wordpress
+```
+The queue processor runs in 50-post batches every 60s via WP-Cron (real cron at `/opt/bitnami/cron`).
+
+### Scaling pm.max_children
+Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/etc/memory.conf`
+(NOT www.conf — memory.conf overrides it). Each PHP-FPM worker uses ~90–120MB. Formula:
+`pm.max_children = floor((available_RAM_MB - 512) / 110)`. For 4GB: safe to set to ~30.
 
 ---
 
@@ -460,6 +588,30 @@ Please use "./proxy.ts" only.
 All edge logic (redirects, cache headers, cookie setting, rate limiting) must
 go into **`proxy.ts`** at the project root. The exported function is named
 `proxy` (not `middleware`) and uses the same `NextRequest`/`NextResponse` API.
+
+---
+
+## Plugin DB table auto-upgrade (critical — June 2026)
+
+`culture-community.php` deploys via direct file sync to the Lightsail server, not
+the WP plugin repo, so `register_activation_hook()` only fires on a manual
+deactivate/reactivate in WP Admin — a code deploy alone never runs it. Every
+`dbDelta` table lives in `Culture_Activator::create_tables()`, which was previously
+**only** called from that activation hook. Any table added after a site's initial
+activation (e.g. `wp_culture_follows`) would silently never get created in
+production — inserts/reads against the missing table fail with no visible error
+(`$wpdb` suppresses errors by default), so features looked like they "didn't save"
+(e.g. Follow button showing 0 followers and reverting after reload).
+
+**Fixed**: `culture_community_maybe_upgrade()` in `culture-community.php`, hooked
+on `plugins_loaded`, compares the `culture_db_version` option to `CULTURE_VERSION`
+and re-runs `Culture_Activator::create_tables()` on mismatch — `dbDelta` itself is
+idempotent, so this is safe to run on every version bump going forward. **Any new
+dbDelta table must still go through this same path** (just add it inside
+`create_tables()`) — no further wiring needed. If a feature backed by a custom
+table looks broken in production after a deploy, suspect this first: confirm the
+table actually exists (`SHOW TABLES LIKE 'wp_culture_%'`) before debugging the
+application logic.
 
 ---
 
@@ -528,7 +680,12 @@ Key static methods: `add()`, `get_for_user()`, `count_unread()`, `mark_read()`, 
 
 ### Library: `lib/feed-recommendations.ts`
 Pure TypeScript, no server dependency. Four exports:
-- `scoreItem(item, interestTagSet)` → 0–100 score: 50 pts interest match, 30 pts recency (3-day half-life), 20 pts engagement (log scale)
+- `scoreItem(item, interestTagSet)` → 0–100+ score: 50 pts interest match (25 for partial), 30 pts recency
+  (3-day half-life), 20 pts engagement (log scale) — **plus two boosts not part of the base 100**:
+  a location boost (city match +25, region match +15, via `detectRegion()` / `COUNTRY_TO_REGION`) and a
+  reputation boost (+10 when `authorRepTier` is taste-maker/culture-authority/culture-icon). The mobile
+  port in `apps/mobile/src/features/community/useFeedRecommendations.ts` must stay in sync with all of
+  this, not just the base three-factor score.
 - `rankFeed(items, interestTagSet)` → sorted by score descending; tiebreak: most recent
 - `getTrending(items, limit=5)` → highest engagement in last 7 days
 - `matchesInterests(item, interestTagSet)` → boolean (checks `category`, `communityTag`, `entryType`, `arm`)
@@ -588,7 +745,334 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 
 FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
 
+### RN unified comment system — `CommentSection.tsx` (June 2026)
+
+All comment UI in `apps/mobile` must use the shared `components/community/CommentSection.tsx`.
+Do not reimplement comment lists/composers per-screen — every surface (community posts, pulse
+items, quotes, magazine articles) previously had its own copy-pasted comment block with
+inconsistent avatar sizes, accent colors (`c.ochre` vs `c.gold`), empty-state copy, and composer
+styling. These have all been migrated onto the one component.
+
+**Two modes:**
+- **`postId` mode** (self-fetching) — pass `postId` and the component calls `useComments(postId)`
+  itself (custom `community/comments` + `community/comment` REST API). Used by
+  `PostDetailSheet.tsx`, `PulseDetailSheet.tsx`, `QuoteDetailModal.tsx`, `PostDetailScreen.tsx`,
+  `PulseDetailScreen.tsx`.
+- **Controlled mode** (`comments`/`loading`/`submitting`/`onSubmit` props, no `postId`) — for
+  screens with their own data source. Used by `ArticleScreen.tsx`'s `ArticleCommentsSection`,
+  which fetches WordPress-native `/wp-json/wp/v2/comments` directly (different shape, requires
+  HTML stripping) and does optimistic local insertion; it maps its `WpComment` shape into the
+  shared `NormalizedComment` shape before rendering.
+
+`useComments(postId, enabled = true)` (`src/features/community/useComments.ts`) takes an
+`enabled` flag so `CommentSection` doesn't fire a wasted fetch when used in controlled mode —
+always pass `!isControlled` as the second arg when calling it from inside a shared component.
+
+Standardized styling baked into `CommentSection`: `fonts.sansBold` heading, 32px avatars
+(`c.paperDeep` background), gap-based spacing (no per-row dividers), `truncateAt=3` default
+with a "View all N comments" expander, always-visible "Commenting as {name}" line, `radius.xl`
+pill composer (`c.paperWarm` bg, `borderWidth 1` / `c.ruleDark`), placeholder `"Add a comment…"`,
+`c.gold` accent color throughout, and empty-state copy `"No comments yet — be the first to
+comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPrompt`).
+
+### RN FeedItemCard card designs (FeedItemCard.tsx)
+- **PulseCard**: full-bleed hero image (200px, tappable → ImageLightbox), serif bold title, arm/category/region eyebrow row with region pill, OG link preview (LinkPreview) only when no hero image, source attribution below hero if named. Upgraded from plain inline ImgPlaceholder.
+- **EditorialCard**: badge row, serif XL title, excerpt, then `InternalLinkCard` snippet (border pill, 90px feature image from `item.image`, gold "MOVEEE MAGAZINE" label, title, excerpt) — matches site's InternalLinkCard exactly. Opens `EditorialSheet` on tap.
+- `item.image` on editorial items comes from WP featured image (`post.featuredImage?.node?.sourceUrl` in `unified-feed.ts`)
+- `item.image` on pulse items comes from `story._embedded?.["wp:featuredmedia"]?.[0]?.source_url`
+- OG fields on pulse: `item.ogImage`, `item.ogTitle`, `item.ogDescription`, `item.sourceUrl` — populated from `pulse_og_*` post meta
+
 ---
+
+## Profile cover photo
+
+`_culture_cover_photo_url` usermeta mirrors `_culture_avatar_url` exactly.
+- Upload: `POST /mobile/me/cover-photo` (multipart, field `file`) →
+  `handle_upload_cover_photo()` in `class-culture-mobile-api.php`, stores to
+  Cloudflare R2 (see "Mobile image uploads → Cloudflare R2" below), same
+  pattern as `handle_upload_avatar()`.
+- Exposed as `coverPhotoUrl` (camelCase) in both `public_profile()` and the
+  own-user-profile builder in `class-culture-mobile-api.php`, and as
+  `cover_photo_url` (snake_case) in `handle_get_public_profile()` in
+  `class-culture-rest-api.php` — **any new profile field must be added to
+  all three of these** to be visible everywhere (mobile member view, mobile
+  own profile/auth store, web public profile).
+- Mobile: `MemberSettingsScreen.tsx` ProfileTab has the upload control
+  (`handleCoverPhotoPick`, 16:9 crop) above the avatar section; uses
+  `api.upload(url, uri, "file")`. `MemberProfileScreen.tsx` swaps its
+  hardcoded gradient hero for an `Image` when `profile.coverPhotoUrl` is set.
+- Web: `app/connect/[username]/page.tsx` renders a `.prf-cover` banner above
+  `.prf-header-inner` when `cover_photo_url` is present — there was
+  previously no cover banner on web at all, only on mobile (gradient).
+- `coverPhotoUrl: string` added to both `User` and `Member` in
+  `apps/mobile/src/types/index.ts` (required field, not optional).
+
+---
+
+## Mobile image uploads → Cloudflare R2 (June 2026)
+
+All three mobile image-upload surfaces (community post images, avatar,
+cover photo) store to the **same R2 bucket the web app uses**, not
+WordPress's local media library. There are now two parallel ways this
+happens — both land in the same bucket, neither is "wrong", pick whichever
+pattern matches what you're touching:
+
+1. **Next.js proxy route, pre-existing pattern** (`apps/site/app/api/mobile/...`,
+   reached via the `PROXY = "https://themoveee.com/api"` constant in mobile
+   screens) — re-uses `packages/shared/lib/r2.ts`'s `uploadToR2()` directly,
+   plus a `sharp` re-compression step (community images: resize to
+   1600×1600 max, WebP q82; avatar: 400×400 cover-crop, WebP q85). Avatar
+   upload (`MemberSettingsScreen.tsx` → `${PROXY}/mobile/me/avatar` →
+   `apps/site/app/api/mobile/me/avatar/route.ts`) and community post images
+   (`NewPostScreen.tsx` → `${PROXY}/mobile/community/upload-image` →
+   `apps/site/app/api/mobile/community/upload-image/route.ts`) both use this
+   path. The avatar route saves the resulting URL back to WordPress via
+   `POST /mobile/me/avatar-url` (`handle_save_avatar_url()` — URL-only, no
+   file handling) since the upload itself already happened in Next.js.
+   **Do not "fix" these mobile screens to call the WordPress JWT host
+   directly thinking the PROXY route is dead** — it isn't; a prior session
+   in this same project mistakenly redirected the community-upload call from
+   `PROXY` to `MOBILE_API` believing the Next.js route didn't exist (it does,
+   see `apps/site/app/api/mobile/community/upload-image/route.ts`'s git
+   history, which predates that "fix"). That call site currently still
+   points at `MOBILE_API` and is **not** broken — see point 2 below for why —
+   but if you're investigating an upload bug, check whether the Next.js
+   route or the WordPress route is actually being hit before assuming either
+   one is missing.
+2. **WordPress-native R2 upload, new (`class-culture-r2.php`,
+   `Culture_R2`)** — a from-scratch PHP AWS SigV4 signer (no AWS SDK
+   dependency; raw `wp_remote_request()` PUT), functionally mirroring
+   `r2.ts`'s `uploadToR2()`. Used by `handle_upload_image()` (community,
+   key prefix `community/{userId}/`), `handle_upload_avatar()` (key prefix
+   `avatars/{userId}/`, direct-to-WP path — currently unused by the mobile
+   client, which goes through the Next.js proxy instead, but kept R2-backed
+   for parity since it's still a reachable registered route), and
+   `handle_upload_cover_photo()` (key prefix `covers/{userId}/`) in
+   `class-culture-mobile-api.php`. A shared private helper,
+   `upload_to_r2_from_request( $request, $key_prefix )`, does the
+   validation (MIME allowlist, 8MB cap) + R2 upload for all three. No WebP
+   re-compression on this path — uploads the original bytes/MIME type as-is.
+
+**R2 credentials (WordPress side)**: `Culture_R2`'s five private getters
+follow the project's standard `defined('CONSTANT') ?: get_option(...)`
+pattern (same as `Culture_Perks::hmac_key()`) —
+`CULTURE_R2_ACCOUNT_ID`/`culture_r2_account_id`,
+`CULTURE_R2_ACCESS_KEY_ID`/`culture_r2_access_key_id`,
+`CULTURE_R2_SECRET_ACCESS_KEY`/`culture_r2_secret_access_key`,
+`CULTURE_R2_BUCKET_NAME`/`culture_r2_bucket_name` (default
+`moveee-media`), `CULTURE_R2_PUBLIC_URL`/`culture_r2_public_url` (default
+`https://media.themoveee.com`). WP Admin fields live in the General tab
+(`render_general_tab()` in `class-culture-settings.php`), in a "Cloudflare
+R2 Storage" section — values must match the same R2 account/bucket the
+Next.js apps use (`R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/etc. on Vercel).
+
+---
+
+## Follow system (June 2026)
+
+### Database table: `wp_culture_follows`
+```
+id, follower_id, followed_id, notify_posts, created_at
+```
+`UNIQUE KEY (follower_id, followed_id)` — re-following just updates the
+`notify_posts` flag rather than inserting a duplicate row.
+
+### PHP class: `class-culture-follows.php` (`Culture_Follows`)
+Single source of truth for both REST surfaces. Key methods: `follow()`,
+`unfollow()`, `set_notify()`, `is_following()`, `followers_count()`,
+`following_count()`, `get_following_usernames()` (joined against `wp_users`,
+used by the feed-ranking boost since `FeedItem` carries usernames not numeric
+author IDs), `get_post_notify_follower_ids()`, `notify_followers_of_post()`
+(called from `handle_submit_post()` in `class-culture-mobile-api.php` after
+a community post is created — notifies only followers who opted into
+`notify_posts`). Fires `do_action('culture_new_follower', $followed_id,
+$follower_id)` only on a genuine new follow (not on notify-flag-only
+updates), wired in `Culture_Notifications::on_new_follower()`.
+
+### Notification types added
+`new_follower` ("X started following you") and `new_follower_post`
+("X just posted") in `Culture_Notifications::TYPES`.
+
+### REST endpoints (both surfaces, same shape)
+| Mobile (JWT) | Web (API key) | Purpose |
+|---|---|---|
+| `POST /mobile/follow` | `POST /follow` | Follow (`user_id`/`target_id`, optional `notify_posts`) |
+| `POST /mobile/unfollow` | `POST /unfollow` | Unfollow |
+| `POST /mobile/follow/notify` | `POST /follow/notify` | Update `notify_posts` for an existing follow |
+| `GET /mobile/follow/status` | `GET /follow/status` | `{ isFollowing, followersCount, followingCount }` |
+| `GET /mobile/follow/following` | `GET /follow/following` | `{ usernames: string[] }` — used by feed ranking |
+
+`handle_get_member()` (mobile) and `handle_get_public_profile()` (web) both
+now include `followersCount`/`followers_count` and `followingCount`/
+`following_count`; mobile also includes viewer-relative `isFollowing`.
+
+### Frontend — mobile
+- `MemberProfileScreen.tsx` — Follow/Following button + followers count
+  below the tier chip, plus a "Notify me when they post" checkbox row shown
+  only while following. Hidden entirely when viewing your own profile
+  (`isSelf` check against `useAuthStore`).
+- `PostDetailSheet.tsx`'s `AuthorRow` — same Follow/Following toggle inline
+  next to the author name, status fetched via `/mobile/follow/status` on
+  mount, hidden for your own posts.
+
+### Frontend — web
+- `app/connect/[username]/FollowButton.tsx` — client component, mirrors the
+  mobile profile screen (Follow toggle, followers count, notify checkbox).
+  Proxies through `app/api/connect/[username]/follow/route.ts` (GET status,
+  POST follow/unfollow, PATCH notify) which resolves the username → numeric
+  ID via the public member endpoint, then calls the API-key REST surface.
+- `packages/shared/components/pulse/CommunityDetailModal.tsx` —
+  `AuthorFollowToggle` inline component in the post author row (community
+  feed item detail modal), using the same `/api/connect/[username]/follow`
+  proxy route.
+
+### Feed-ranking boost
+Followed authors get a +15 score boost, added as a 5th optional parameter
+(`followedUsernames?: Set<string>`) to `scoreItem()`/`rankFeed()` in both
+`packages/utils/feed-recommendations.ts` (web) and
+`apps/mobile/src/features/community/useFeedRecommendations.ts` (mobile) —
+matched against `item.communityAuthorUsername` (lowercased) since neither
+FeedItem shape carries a numeric author ID. Web fetches the set via
+`/api/connect/follow/following` in `PulseFeed.tsx`; mobile fetches via
+`${MOBILE_API}/follow/following` in `ConnectFeedScreen.tsx`. As with the
+other feed-recommendation changes, **keep both files in sync**.
+
+### Global notification preferences page (June 2026)
+Built on top of `Culture_Notifications` (`class-culture-notifications.php`).
+
+- `_culture_notification_prefs` usermeta — JSON-encoded `type => bool` map.
+  `Culture_Notifications::get_prefs( $user_id )` merges stored prefs over a
+  defaults map freshly derived from `TYPES` keys every call, so any new type
+  added to `TYPES` in the future is enabled by default with no migration.
+  `set_prefs( $user_id, $prefs )` writes it back; `is_enabled( $user_id,
+  $type )` is checked at the top of `add()` — a muted type silently no-ops
+  (`add()` returns `0`, no row inserted).
+- `ALWAYS_ON_TYPES = ['system']` — the `system` type can't be muted; both
+  `is_enabled()` and `set_prefs()` enforce this (the latter just ignores
+  attempts to change it), and it's deliberately excluded from both frontend
+  preference lists below.
+- REST endpoints (same shape as the Follow system): `GET`/`POST
+  /mobile/notifications/preferences` (JWT, `handle_get/set_notification_prefs`
+  in `class-culture-mobile-api.php`, no `user_id` param — taken from
+  `get_current_user_id()`) and `GET`/`POST /notifications/preferences` (API
+  key, explicit `user_id` param, same handler names in
+  `class-culture-rest-api.php`). `POST` body is `{ prefs: { type: bool, ... } }`.
+- Mobile: new "Notifications" tab in `MemberSettingsScreen.tsx` (between
+  Newsletters and Security) — `NotificationsTab()` component, toggle row per
+  type from a local `NOTIFICATION_TYPES` label array that mirrors
+  `Culture_Notifications::TYPES` (minus `system`) — **keep this array in
+  sync with the PHP const**, there's no shared source of truth across the
+  PHP/TS boundary here.
+- Web: new `/member/settings/notifications` sub-route, added to
+  `SettingsTabs.tsx`. `NotificationPreferences.tsx` (same toggle-row pattern
+  as `NewsletterPreferences.tsx`, reuses `mem-field-list`/`mem-toggle` CSS
+  classes) proxied through `app/api/notifications/preferences/route.ts`.
+- The per-follow "notify me when they post" toggle (`notify_posts` on
+  `wp_culture_follows`) is a separate, more granular control — it still
+  governs whether a given *followed user's* posts trigger `new_follower_post`
+  at all per-relationship; the new global toggle governs whether the
+  `new_follower_post` *type* is delivered at all, independent of which
+  follows have notify enabled. Both checks apply (notify_posts AND
+  is_enabled) for that type to actually fire.
+
+### Notification touchpoint audit (June 2026) — dead hooks fixed
+A full-codebase audit confirmed every notification type ever created is
+already in `TYPES` (no missing registrations), but found two types that
+were fully wired into `Culture_Notifications` and the preference UIs yet
+**never actually fired** because nothing called their trigger:
+- `cashout_approved` / `cashout_rejected` — `Culture_Perks::approve_cashout()`
+  / `reject_cashout()` (`class-culture-perks.php`) updated the redemption row
+  but never called `do_action('culture_cashout_approved'/'_rejected', ...)`.
+  Fixed: both now fire the action (`$user_id`, `$redemption_id`) right after
+  the status update succeeds (and after the credit refund, for rejection).
+- `perk_redeemed` — `Culture_Perks::redeem_perk()` had no notification call
+  at all. Fixed: calls `Culture_Notifications::add()` directly (no
+  intermediate hook — this is a direct mutation flow, not an event pattern)
+  right after incrementing `redeemed_count`, linking to `/member/coupons`.
+
+Also found: the notification icon/emoji maps in
+`packages/shared/components/NotificationBell.tsx`,
+`apps/connect/app/member/notifications/NotificationsClient.tsx`, and
+`apps/mobile/src/screens/member/NotificationsScreen.tsx` were each missing
+entries for `referral_received`, `mention`, `new_follower`, and
+`new_follower_post` (silently fell back to a default icon). Filled in on
+all three — **if a new type is ever added to `Culture_Notifications::TYPES`,
+add an icon entry to all three of these files**, there is no shared
+source of truth for icons across the PHP/TS boundary.
+
+---
+
+## Event Spotlight carousel (June 2026)
+
+Horizontally-scrolling carousel merging editorial `culture_event` items + community
+`culture_post` events (`templateType === 'event'`) into a ranked highlight strip,
+inserted once after the 5th feed item on initial load (never re-inserted on
+pagination/infinite scroll). Implemented independently on web and mobile — both
+platforms mirror the same scoring/filtering rules, per the project's existing
+web/mobile duplication convention (RN can't import `packages/shared`).
+
+### Scoring/filtering utility
+- Web: `packages/shared/lib/event-spotlight.ts`
+- Mobile: `apps/mobile/src/features/community/eventSpotlight.ts`
+
+Both export `getSpotlightEvents(items: FeedItem[], limit = 10): FeedItem[]`.
+Filters to `type === "happening"` or (`type === "community"` and
+`templateType === "event"`), hides any event missing 2+ of {image, venue/location,
+admission}, returns `[]` (hide the module) when fewer than 2 qualifying events
+remain. Score = `isFeatured(40) + completeness(0-30) + log-scale rsvpCount(0-20) +
+organiserDirectoryId(10)`; falls back to soonest-upcoming-first sort when none of
+the scoring inputs (`isFeatured`/`rsvpCount`/`organiserDirectoryId`) are present on
+any candidate.
+
+### Backend fields required for scoring
+- `isFeatured`: editorial events read `_culture_is_featured` postmeta; community
+  events already had it via `community_event_meta`.
+- `rsvpCount`: editorial events previously had none — added
+  `Culture_Mobile_API::get_editorial_event_rsvp_count()` (raw SQL count against
+  `wp_culture_event_rsvp` by `event_slug`/`status='confirmed'`) for mobile;
+  web's `mapRestEventToFrontendShape` already covers it.
+- `organiserDirectoryId`: read from `_culture_event_organiser_id` (community) /
+  the existing organiser resolution (editorial) on both platforms.
+- Wired in `class-culture-mobile-api.php`'s `get_happening_feed_items()` /
+  `get_community_feed_items()` (mobile `/mobile/feed`), and in
+  `packages/shared/lib/unified-feed.ts` (web) — both feed mappers needed these
+  fields added since each builds its own response shape independently.
+
+### UI components
+- Web: `packages/shared/components/pulse/EventSpotlightCarousel.tsx`, inserted in
+  `PulseFeed.tsx` via array slicing (`visible.slice(0,5)` / carousel /
+  `visible.slice(5)`) — declarative slicing achieves "once, at position 5" without
+  needing a ref, since position 5 is stable across re-renders.
+- Mobile: `apps/mobile/src/components/community/EventSpotlightCarousel.tsx`, wired
+  into `ConnectFeedScreen.tsx`'s `FlatList` via a synthetic marker item
+  (`id: "__event-spotlight__"`) spliced into `listData` at index 5. The spotlight
+  item list itself is computed once into a ref (`spotlightLockRef`) on first
+  non-empty load and never recomputed — required because `FlatList`'s `data` array
+  changes on every pagination page, and reactively recomputing the spotlight set
+  would reorder/jump the already-rendered carousel.
+
+Both platforms reuse existing detail UI rather than building new ones: tapping a
+"happening"-type card opens `HappeningDetailModal` (self-managed inside the
+carousel component, mirroring the existing `HappeningCard` pattern); tapping a
+"community"-type card delegates to whatever the host screen already uses for that
+(web: `CommunityDetailModal` rendered by `EventSpotlightCarousel.tsx` itself; mobile:
+`onOpenCommunity` callback → the screen's existing `sheetItem`/`PostDetailSheet`).
+"See all →" routes to the existing Events tab/screen, not a new one.
+
+### Event-type cards fully removed from the inline feed (replaced, not duplicated)
+The Spotlight carousel is the **exclusive** surface for event-type items in the
+Connect feed — `isEventItem()` (exported from both scoring utilities) is used to
+filter every "happening" and community "event"-template item out of the regular
+feed list (`PulseFeed.tsx`'s `filtered` memo on web, `ConnectFeedScreen.tsx`'s
+`visibleItems` memo on mobile), regardless of whether that item actually qualifies
+for/appears in the carousel. Because of this, the qualifying bar inside
+`getSpotlightEvents()` was deliberately loosened to `>= 1` of {image, venue,
+price} (down from `>= 2`) so that nearly every event is still discoverable
+somewhere rather than disappearing — an event missing all three fields entirely
+is rare and likely incomplete/spam. On mobile, the spotlight ref computation
+reads from the raw `items` array (not the already-filtered `visibleItems`), since
+the event items it needs have been stripped out of `visibleItems` by this exact
+filter.
 
 ## Event system enhancements
 
@@ -610,16 +1094,307 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 
 ---
 
+## Community event RSVP (free, capacity-limited — June 2026)
+
+Targets community-organiser events: `culture_post` CPT, `_template_type = 'event'`.
+**Deliberately separate** from the pre-existing, unrelated `Culture_Event_RSVP` system
+(editorial `culture_event` CPT, table `wp_culture_event_rsvp`, public RSVP, admin-only
+attendee list) — the two systems must never share a table or be merged. This is RSVP
+only (free signups + capacity + attendee list + check-in tracking), not paid ticketing.
+
+### Database table: `wp_culture_community_rsvp`
+```
+id, post_id, user_id, status ('confirmed'|'cancelled'), created_at
+UNIQUE KEY (post_id, user_id) — re-RSVPing after cancel just flips status back
+KEY (post_id, status)
+```
+Created via `Culture_Community_RSVP::create_table()`, called from
+`Culture_Activator::create_tables()`, gated by `CULTURE_VERSION` bump to `2.4.0`.
+
+### PHP class: `class-culture-community-rsvp.php` (`Culture_Community_RSVP`)
+Single source of truth for both REST surfaces. Key methods: `is_pro()` (admin override
+OR `_culture_membership_tier === 'patron'`), `is_rsvp_enabled()`, `get_capacity()`,
+`get_count()`, `is_organiser()`, `get_status()` (returns `{enabled, rsvped, count,
+capacity, spotsLeft, isFull, isOrganiser}`), `rsvp()` (validates event type, RSVP
+enabled, not own event, capacity not exceeded; fires `Culture_Notifications::add()`
+directly to the organiser, type `event_rsvp`, no intermediate hook), `cancel()`,
+`get_attendees()` (joined against `wp_users`), `get_organiser_events()` (all of a
+user's organised events with live RSVP counts).
+
+### Post meta keys
+`_culture_rsvp_enabled` (bool), `_culture_rsvp_capacity` (int, 0 = unlimited).
+
+### Pro-gating (hard requirement)
+**Both RSVP creation (enabling the toggle when posting an event) and RSVP management
+(attendee list/export) are restricted to Connect Pro (`patron`) members only** —
+enforced server-side via `Culture_Community_RSVP::is_pro()`, not just hidden in the UI:
+- Creation: `handle_submit_post()` Event branch in `class-culture-mobile-api.php` —
+  if `rsvp_enabled` is passed but the poster isn't Pro, the toggle is **silently
+  ignored** (post still succeeds, just without RSVP) rather than failing the submit.
+- Management: `handle_community_event_attendees()` / `handle_community_my_events()` in
+  both `class-culture-mobile-api.php` and `class-culture-rest-api.php` return 403
+  `patron_required` if the requester isn't Pro, and `handle_community_event_attendees()`
+  additionally 403s `forbidden` if the requester isn't the post's organiser.
+
+### REST endpoints (mirrored, mobile JWT + web API-key)
+| Mobile (`/mobile/community/...`, JWT, `get_current_user_id()`) | Web (`/community/...`, API key, explicit `user_id` param) | Purpose |
+|---|---|---|
+| `POST event/rsvp` | `POST event/rsvp` | RSVP to an event |
+| `POST event/rsvp-cancel` | `POST event/rsvp-cancel` | Cancel RSVP |
+| `GET event/rsvp-status` | `GET event/rsvp-status` | `get_status()` for the current/given user |
+| `GET event/attendees` | `GET event/attendees` | Attendee list — Pro + organiser only |
+| `GET my-events` | `GET my-events` | Organiser's events with RSVP counts — Pro only |
+
+Handlers live in `class-culture-mobile-api.php` and `class-culture-rest-api.php`
+respectively; both just call into `Culture_Community_RSVP` static methods.
+
+### Notification type
+`event_rsvp` added to `Culture_Notifications::TYPES` — fires when someone RSVPs,
+notifying the organiser. Icon (`🎫`) added to the 3 frontend icon maps (see the
+"Notification touchpoint audit" section above for why there's no shared source of
+truth for these).
+
+### FeedItem RSVP fields
+`rsvpEnabled`, `rsvpCapacity`, `rsvpCount`, `rsvpAvailable` added to `FeedItem` in
+`apps/mobile/src/types/index.ts`, populated in the mobile community-feed mapper in
+`class-culture-mobile-api.php`.
+
+**Web gap closed (June 2026).** The web `FeedItem` type in
+`packages/shared/lib/unified-feed.ts` now also carries `ticketUrl`, `rsvpEnabled`,
+`rsvpCapacity`, `rsvpCount` (event date/venue/admission/category/organiser reuse the
+pre-existing happening-specific fields: `eventDate`, `endDate`, `location`,
+`venueAddress`, `city`, `admission`, `eventCategory`, `organiserName`,
+`organiserSlug`). `getCommunityPosts()` requests the raw `_event_*` postmeta keys plus
+a new resolved `community_event_meta` REST field (registered in
+`class-culture-post-types.php`, mirroring the pre-existing `culture_event_meta`
+pattern for editorial events) that resolves the organiser directory entry's
+name/slug and a live RSVP count server-side, avoiding a second request per event.
+
+`FeedCard.tsx` and `CommunityDetailModal.tsx` both render an `event` template badge,
+an event-details block (date, venue/city, admission, organiser link, ticket link),
+and — when `rsvpEnabled` — a self-contained `RsvpDisplay` component (same pattern as
+`PollDisplay`: own `useState`/`useEffect`, fetches live status on mount, posts to the
+proxy routes below on toggle). Both files duplicate this component exactly like they
+already duplicate `PollDisplay` — there's no shared component module between the
+feed-card and detail-modal renderers in this codebase, so **keep both in sync** for
+any future template feature.
+
+Three new Next.js proxy routes (same auth/secret pattern as
+`app/api/community/poll-vote/route.ts`):
+- `POST /api/community/event-rsvp` → `POST /community/event/rsvp`
+- `POST /api/community/event-rsvp-cancel` → `POST /community/event/rsvp-cancel`
+- `GET /api/community/event-rsvp-status?post_id=X` → `GET /community/event/rsvp-status`
+
+**Web composer reroute (June 2026 — closes the gap above).** `SubmitPost.tsx`'s Event
+template used to submit to `/api/events/member-submit` (the separate, excluded
+editorial `culture_event` RSVP system), so there was no way to create an RSVP-enabled
+community event from the web UI. **Fixed**: it now submits through the same generic
+`/api/community/submit` path as every other template (`template_type: "event"`),
+matching the mobile reroute below. `apps/connect/app/api/community/submit/route.ts`
+accepts `event_title`, `event_date`, `event_end_date`, `event_venue`, `event_address`
+(web only has one combined venue/address input — both meta keys get the same value),
+`event_city`, `event_admission`, `ticket_url`, `event_category`,
+`organiser_directory_id`, `rsvp_enabled`, `rsvp_capacity`. **Critical: this route calls
+native WP REST (`wp/v2/community-posts`) directly via HTTP Basic Auth — it does NOT go
+through the custom PHP `culture/v1/community/submit` endpoint that `handle_submit_post()`
+handles for mobile.** That means none of the PHP-side gating in `handle_submit_post()`
+(rep/Pro floors, RSVP Pro-only) applies to web; it had to be reimplemented directly in
+this Next.js route using `session.user.reputation` / `session.user.tier`. Event
+creation requires `patron` tier OR 500+ reputation (403 otherwise, same floor as
+mobile); RSVP enabling is silently dropped (post still succeeds) for non-Pro posters.
+The event image uses the generic `/api/community/upload-image` (R2, returns a plain
+URL) since community posts store images via the `community_image_url` meta field, not
+a WP attachment ID — no need for the editorial flow's upload-image endpoint. The RSVP
+toggle + capacity input in the composer JSX is gated on `session.user.tier === "patron"`.
+
+### Mobile composer reroute (important — June 2026)
+The mobile Event template in `NewPostScreen.tsx` used to submit to
+`${PROXY}/events/member-submit` (creating an editorial `culture_event` post via the
+*pre-existing, excluded* RSVP system) — which made this whole feature unreachable
+from the UI. **Fixed**: the Event template now submits through the same generic
+`${MOBILE_API}/community/submit` path as every other template, creating a `culture_post`
+with `_template_type = 'event'`. Body fields added: `event_date`, `event_end_date`,
+`event_venue`, `event_city`, `event_address`, `event_admission`, `ticket_url`,
+`event_category`, `organiser_directory_id`, `rsvp_enabled`, `rsvp_capacity`. Since this
+path derives `post_title` from `wp_trim_words(content, 10)` (no separate title field
+server-side), `content` for the event template is built as
+`eventTitle + "\n\n" + description` rather than just the description text. Image
+upload now goes through the shared `uploadImages()` → `/mobile/community/upload-image`
+flow (the old `/events/upload-image` endpoint is no longer called from this screen).
+**Reputation floor restored**: the old editorial event endpoint enforced a minimum
+reputation (Culture Contributor, 500 rep) to create an event. The reroute initially
+dropped this floor; it's since been restored in `handle_submit_post()` —
+`template_type === 'event'` now requires `patron` tier OR 500+ reputation (returns
+`rep_required` 403 otherwise), same gate as poll/itinerary (2,500 rep) right above
+it in the same function. Mobile-only check since web has no community-post event
+creation path yet.
+
+### RSVP UI
+- **Mobile composer**: `EVENT_CATEGORIES`-style toggle row + capacity input in
+  `renderEvent()` in `NewPostScreen.tsx`, gated by `user?.tier === "patron"` — tapping
+  while not Pro shows an `Alert` rather than enabling the toggle.
+- **Mobile post detail**: `EventRsvpButton` component in `PostDetailSheet.tsx`'s
+  `TemplateEvent`, self-contained (own `useState`/`useEffect`, calls
+  `event/rsvp-status` on mount, then `event/rsvp` / `event/rsvp-cancel` on toggle).
+- **Mobile organiser management**: `MyEventsScreen.tsx` (`screens/member/`), registered
+  in both `ConnectStack` and `MemberStack` as `"MyEvents"`, linked from
+  `MemberDashboardScreen.tsx`'s `QUICK_LINKS`. Non-Pro users see a lock card with an
+  upgrade CTA instead of the event list (`isPro` check against `useAuthStore()`).
+- **Web organiser management**: `/member/events` (`app/member/events/page.tsx` +
+  `EventsClient.tsx`), proxied through `app/api/member/events/route.ts` (list) and
+  `app/api/member/events/[postId]/attendees/route.ts` (attendee list). Non-Pro users
+  get a server-rendered upgrade prompt instead of the page content (checked via
+  `session.user.tier` before any data fetch — the page never calls the Pro-gated WP
+  endpoints for non-Pro members). CSV export is client-side (`Blob` + anchor download,
+  no server round-trip). Linked from `/member` quick links only when `isPatron`.
+
+---
+
+## NewPostScreen composer — template field reference (v2, June 2026)
+
+Source of truth: `apps/mobile/src/screens/community/NewPostScreen.tsx`
+Template picker: FAB → `TemplatePickerSheet` → `NewPost` route with `template` param
+
+### Inline photos pattern (post, hidden-gem, food-review, itinerary, event)
+Photos are embedded in the scroll body (NOT a floating strip). Pattern: dashed 80×80 add tile + 80×80 thumbs with white ✕, "Up to 4 photos" hint. MAX_IMAGES = 4.
+
+### Per-template field layout
+
+**Standard Post** — section tag chips (top) → emoji guide chips → textarea → char counter → inline photos
+
+**Hidden Gem** — place name input → location input (📍) → DirectorySearch ("Link this place") → divider → "Tell us about it" textarea → star rating (optional) → price range chips (₦/₦₦/₦₦₦/₦₦₦₦) → opening hours input (🕐) → divider → inline photos
+
+**Cultural Take** — "Your take" serif bold 20px textarea → divider → "Explain your take" body textarea → section tags at bottom. No image. DirectorySearch optional at bottom.
+
+**Food Review** — dish/item input → DirectorySearch (restaurant) → divider → MultiRating (Taste/Value/Vibe) → "Your review" textarea → cuisine chips (Nigerian/Pan-African/West African/Continental/Fusion/Seafood) → price range chips → divider → inline photos
+
+**Book Review** — `DirectorySearch` (`typeFilter="book"`, `showAuthorField`) for picking/creating the
+`culture_directory` book entry → status chips (Finished/Reading/Want to Read) → overall StarRating →
+breakdown MultiRating (Writing/Story/Characters/Pacing) → review textarea → favourite quote (ochre
+left border, italic) → recommend chips (Yes green / No) → genre chips (multi-select). No images.
+
+Submits to `${MOBILE_API}/community/submit` with extra fields: `linked_directory_id` (the selected
+book's `culture_directory` post ID — see "Book Review → directory linkage" below), `book_title`,
+`book_author`, `book_status`, `book_overall_rating`, `book_rating_writing/story/characters/pacing`,
+`book_fav_quote?`, `book_recommend`, `book_genres?`
+
+**Creative Showcase** — title input → medium chips (Photography/Film/Digital Art/Illustration/Music/Writing, single-select) → "About this work" textarea → collaborator input (@-prefixed) → divider → 120px dashed upload zone. MAX_IMAGES = 4.
+
+**Poll** — question textarea (80px, bordered) → PollBuilder options → divider → poll duration segmented control (1d/3d/7d) → description textarea (optional)
+
+**Itinerary** — trip title input → city/region input (📍) → ItineraryBuilder stops → duration input (⏱, optional) → budget chips (£/££/£££/££££, optional) → best time input (☀️, optional) → divider → inline photos
+
+**Event** — event name input (17px bold) → 2-col date grid (start date | start time / end date | end time) → venue name (🏛) + full address (📍) + city inputs → divider → admission (£ prefix) + ticket link (🔗) → category chips → organiser DirectorySearch pill → inline photos (hint: "Event flyer, venue photos…")
+
+**Quote** — paper-warm bordered box with decorative `"` glyph, italic serif textarea → author input → source input → divider → "Why sharing?" textarea (optional) → quote type chips (Person/Book/Film/Speech/Song)
+
+### State variables (key additions in v2)
+```ts
+// Hidden Gem
+hiddenGemPlaceName, hiddenGemLocation, hiddenGemPriceRange, hiddenGemOpeningHours
+
+// Cultural Take
+culturalTakeHeadline
+
+// Food Review
+cuisineTag, foodPriceRange
+
+// Creative Showcase
+showcaseTitle, showcaseMedium, showcaseCollaborator
+
+// Book Review
+bookEntry  // DirectoryEntry | null — selected via shared DirectorySearch, not a bespoke search
+bookStatus, bookOverallRating, bookRatings ({writing, story, characters, pacing})
+bookFavQuote, bookRecommend, bookGenres
+
+// Itinerary
+itineraryTitle, itineraryBudget, itineraryDuration, itineraryBestTime
+
+// Event
+eventAddress (new — separate from eventVenue)
+
+// Poll
+pollDescription
+
+// Quote
+quoteSharingReason, quoteType
+```
+
+---
+
 ## Reputation tier thresholds
 
-Defined in `Culture_Gamification::REPUTATION_TIERS`:
+Defined in `Culture_Gamification::REPUTATION_TIERS` (Option A+B+C redesign):
 ```php
-1500 => 'culture-authority',
-500  => 'taste-maker',
-100  => 'culture-contributor',
-0    => 'member',
+25000 => 'culture-icon',        // invite/nomination only — requires _culture_icon_nominated usermeta
+10000 => 'culture-authority',
+2500  => 'taste-maker',
+500   => 'culture-contributor',
+0     => 'member',
 ```
+
+`culture-icon` is a nomination-only tier. Even with 25,000+ rep, the user must have
+`_culture_icon_nominated = 1` set by an admin. `get_reputation_tier($rep, $user_id)` enforces this.
+
+**Every action awards both credits and reputation (no rep-only or credit-only
+actions, June 2026).** Previously some "passive" actions (`magazine_read`,
+`magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
+`community_like`, `quote_like`) gave 0 reputation by design (Option B) — this
+was changed so the mobile "How Rewards Work" breakdown table never shows a
+dash in either column. All 19 actions now have nonzero entries in both
+`Culture_Gamification::POINTS` and `::CREDIT_BONUSES`.
+
+Admin-configurable per-action overrides for **both** credits and reputation
+live under the same `culture_points_{action}` / `culture_credits_{action}`
+option-key prefixes (`class-culture-settings.php` → Credits/Reputation
+settings tabs). **Do not reintroduce a `culture_rep_{action}` prefix** — that
+prefix used to exist for the reputation tab but was never read by any runtime
+code (`get_reputation_value()` had zero callers); it was retired in favor of
+`culture_points_{action}`, which is what `get_point_value()` (the live path
+used by `award_points()`) actually reads. `get_point_values()` (plural, feeds
+the mobile rewards table via `handle_points_config()`) delegates to
+`get_point_value()` (singular) rather than `Culture_Settings::get_points()`
+directly, so the table stays in sync with what's actually awarded at runtime.
+
+A few award call sites bypass the `award_points()` bridge and call
+`award_credits()`/`award_reputation()` directly (`poll_vote` in
+`class-culture-rest-api.php`, `game_completed` in `class-culture-rest-api.php`,
+`magazine_read` in both `class-culture-rest-api.php` and
+`class-culture-mobile-api.php`) — if you add a new standalone award call site,
+make sure it awards both, using `Culture_Gamification::get_point_value()` /
+`get_credit_bonus()` rather than hardcoded literals.
+
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
+
+### Reputation-gated privileges (implemented)
+
+| Privilege | Minimum tier | Where enforced |
+|---|---|---|
+| Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
+| Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
+| Event template (creation) | Culture Contributor (500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile) and the web submit route (added June 2026) |
+| Poll + Itinerary templates | Taste Maker (2,500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile, 403) and `apps/connect/app/api/community/submit/route.ts` (web, 403 — added June 2026, web previously had zero gating on these templates since this route bypasses PHP entirely) |
+| Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
+| Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
+
+**Feed boost implementation:**
+- `community_author_rep_tier` saved as post meta on every submit (mobile API)
+- Registered in `class-culture-community.php` register_meta()
+- Returned as `authorRepTier` field in mobile feed response
+- `FeedItem.authorRepTier` added to `src/types/index.ts`
+
+**Perk tier gating:**
+- `culture_partner_perks` table has `min_rep_tier VARCHAR(30) DEFAULT 'member'` column
+- `dbDelta` in `class-culture-activator.php` adds it (ALTER on existing tables happens automatically)
+- Admin perk create/update API (`_sanitize_perk_data`) accepts `min_rep_tier` param
+- Tier order: member(0) < culture-contributor(1) < taste-maker(2) < culture-authority(3) < culture-icon(4)
+
+**Nomination power:**
+- `POST /culture/v1/nominate-icon` — API key auth
+- Body: `{ nominator_id, nominee_id }`
+- Sets `_culture_icon_nominated`, `_culture_icon_nominated_by`, `_culture_icon_nominated_at` usermeta
+- Rate-limited: one nomination per nominator per day (WP transient)
+- Nominations are additive — any Culture Authority can nominate, admin still controls the final flag
 
 ---
 
@@ -650,6 +1425,131 @@ Static-ish page for sharing individual community posts. URL: `/community/{slug}`
 - `ReactionBar`, `HashtagText`, `SourcePreviewCard`
 - Comment thread with `WpComment` type
 - Back link to Connect Feed (`/connect`)
+
+---
+
+## Discover (directory browse feature, June 2026)
+
+A dedicated browse/search surface over `culture_directory` entries (the 11 entry
+types: person, place, food, book, film, genre, movement, artwork, concept,
+fashion, tv-series) — separate from the existing `/directory` listing page
+(`DirectoryGrid.tsx`, which fetches all entries via GraphQL and filters
+client-side with no pagination/region/sort). Discover adds server-side
+pagination, search, a type filter (always visible, single-select chips), a
+region filter, sort options, and a live entry count — implemented identically
+on mobile and web per the project's existing web/mobile duplication
+convention.
+
+### Backend
+- `Culture_Directory::handle_browse()` (`class-culture-directory.php`) — new
+  paginated endpoint, registered as `GET /culture/v1/directory/browse`
+  (public, `class-culture-rest-api.php`). Params: `q` (optional text search),
+  `type` (comma-separated slugs — backend supports multi but both frontends
+  only ever send one, since the UI is single-select), `region` (single slug),
+  `sort` (`relevant`|`recent`|`rating`|`trending`|`random`), `seed` (integer,
+  only used by `sort=random`), `page`/`per_page` (capped 50, default
+  20). Returns `{ entries: [...], total, page, perPage, seed }` — `total` is
+  `$query->found_posts`, the basis for the filter sheet's live "Show N
+  entries" count.
+- `sort=trending` orders by `_community_review_count` (existing aggregate —
+  no new computation) as a proxy for "most referenced by community posts".
+- `sort=random` powers the "Explore More" grid's per-visit shuffle (see
+  Mobile/Web sections below) via a seeded MySQL `RAND(seed)` `posts_orderby`
+  filter — stable across "Load more" pagination within one visit (same
+  client-generated seed reused for every page request) but different on the
+  next visit/screen-mount. The client only sends `sort=random` when the user
+  hasn't chosen an explicit sort and isn't searching (`sort === "relevant" &&
+  !query`) — an explicit "Recently Added"/"Highest Rated" choice or an active
+  text search always overrides it.
+- Region filtering has no dedicated taxonomy/meta field to query — there's
+  only the freeform `_entry_city` string. `Culture_Directory::REGION_CITY_KEYWORDS`
+  is a static substring-match keyword table (nigeria/ghana/uk/usa/pan-african)
+  resolved via raw SQL against `wp_postmeta` into `post__in` (same documented
+  pattern as the `culture_event` meta_query fix — raw SQL resolve-to-IDs
+  instead of a `meta_query` LIKE join, with `array(0)` forcing zero results
+  rather than an empty array). This is only as accurate as the keyword list;
+  extend `REGION_CITY_KEYWORDS` if a city is miscategorized.
+- The "subtype" pill shown on each card (e.g. "Music", "Venue") reuses the
+  entry's first attached `culture_interest` term — no new per-type subtype
+  taxonomy was added.
+- `_average_rating`/`_community_review_count` meta (already computed by
+  `Culture_Directory::recompute_directory_aggregates()`) is reused as-is for
+  card ratings — no new computation.
+
+### Mobile (`apps/mobile`)
+- Entry point: compass icon in `ConnectFeedScreen.tsx`'s header, left of the
+  notification bell → `nav.navigate("Discover")`. Registered in
+  `AppParamList` (`useNav.ts`) and as a screen in `ConnectStack`
+  (`navigation/index.tsx`).
+- `screens/community/DiscoverScreen.tsx` — search icon toggles a hidden
+  search bar; the type-filter chip row is always visible (tapping a chip
+  applies immediately); a "Filters" pill opens `DiscoverFilterSheet` for
+  region + sort. "Recently Added" horizontal rail (compact cards, `sort=recent`)
+  and a "Trending in Community" rail (`sort=trending`) above a 2-column
+  paginated "Explore More" grid (renamed from "Browse All", `onEndReached`
+  infinite scroll) — the grid defaults to `sort=random` with a per-visit
+  seed (`useRef`, regenerated only on screen remount) so default browsing
+  always surfaces a fresh mix; an explicit sort choice or active search
+  overrides the randomization.
+- `components/community/DiscoverCard.tsx` — shared rail/grid card, exports
+  `DiscoverEntry` type and the `TYPE_BADGE` emoji/label/color map per entry
+  type (compact mode for the rail, full mode with star rating + subtype pill
+  for the grid).
+- `components/community/DiscoverFilterSheet.tsx` — `BottomSheet`-based panel:
+  type pills (mirrors the screen's chip row, kept in sync since the sheet can
+  also change type), region pills, sort radios, and a sticky footer button
+  that debounce-fetches `per_page=1` against `/directory/browse` with the
+  draft filters to show a real `total` count before applying.
+
+### Web (`apps/connect` + `packages/shared`)
+- Entry point: compass icon link to `/discover` in `ConnectHeader.tsx`
+  (`apps/connect/components/Header.tsx`), shown for both authenticated and
+  unauthenticated visitors (the underlying data is public).
+- `app/api/directory/browse/route.ts` — proxy to
+  `GET /culture/v1/directory/browse` (same pattern as the existing
+  `app/api/directory/search/route.ts`).
+- `app/discover/page.tsx` — thin server component reading `?type=`/`?region=`
+  query params, rendering `DiscoverBrowser`.
+- `packages/shared/components/DiscoverBrowser.tsx` — the client component
+  mirroring the mobile screen exactly: search toggle, always-visible type
+  chips, a "Filters" overlay panel (region + sort + live debounced count),
+  Recently Added rail, Trending in Community rail, paginated "Explore More"
+  grid (random-by-default, same seed/override rules as mobile above) with a
+  "Load more" button (web has no scroll-based infinite scroll here, unlike
+  mobile's `onEndReached`). Styled via `apps/connect/app/discover.css`,
+  imported as `@/app/discover.css` from inside the shared component — same
+  resolution trick `PulseFeed.tsx` already uses for `@/app/pulse-layout.css`.
+- Web-only, not duplicated to `apps/site` — Discover is a Site B (Connect)
+  community feature, consistent with where `/directory` itself lives.
+
+### Not yet implemented (deferred, lower priority)
+- Feed inline treatments for newly-added directory entries (State A: a small
+  "New to Discover" card in the main feed; State B: a reference chip on
+  community posts that link to a directory entry via `_linked_directory_id`)
+  — flagged in the original mockup but not built in this pass.
+
+### Book Review → directory linkage (mobile-only, fixed June 2026)
+Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
+same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.
+`handle_submit_post()` in `class-culture-mobile-api.php` already saves and reads back
+`_linked_directory_id` generically for any `culture_post` template (not gated by
+`template_type`), so no PHP changes were needed; the gap was purely in
+`NewPostScreen.tsx`, which had a bespoke book search (`bookSearch`/`bookSearchResults`/
+`bookSearchOpen` state, a fake `Date.now()`-based ID, city used as a stand-in for author)
+that never created or linked a real directory post. Fixed by swapping it for the shared
+`DirectorySearch` component (`typeFilter="book"`, `showAuthorField`) — same component
+already used by Hidden Gem and Food Review. `bookEntry` is now a `DirectoryEntry | null`
+from `DirectorySearch`'s exported interface; the submit payload includes
+`linked_directory_id: bookEntry!.id`. Author is stored on the directory entry via the
+generic `_about_fields` JSON blob (`[{label: "Author", value: ...}]`), read back by
+`Culture_Directory::get_about_field()` and returned as `author` in both
+`/directory/search` and `/directory/quick-create` responses — this is the same
+mechanism `DirectorySearch`'s `showAuthorField` prop already expected, just not
+previously wired up for books. `PostDetailSheet.tsx`'s `TemplateBookReview` now renders
+a "View in Directory →" chip when `item.linkedDirectoryId` is set, mirroring
+`TemplateHiddenGem`'s existing pattern. Web has no Book Review composer or
+feed-rendering at all, so this fix is mobile-only — no `packages/shared` or
+`apps/connect` changes needed.
 
 ---
 
@@ -721,6 +1621,127 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 
 ---
 
+## Google Sign-In (June 2026)
+
+Web (NextAuth) and mobile (Expo) both sign in through the same WordPress
+backend verification — there is no separate OAuth flow per surface, only a
+different REST entry point.
+
+### Server-side token verification
+`culture-community/includes/core/class-culture-google-auth.php`
+(`Culture_Google_Auth`) — no JWKS library, no new Composer dependency.
+Verifies a client-obtained Google ID token by calling Google's
+`https://oauth2.googleapis.com/tokeninfo?id_token=...` endpoint (Google
+itself rejects expired tokens; only `aud` and `email_verified` need
+checking here). `verify_id_token()` checks `aud` against the three
+configured client IDs (web/iOS/Android — any one matching is accepted) and
+requires `email_verified === "true"`. `find_or_create_user()` looks up by
+email; if no account exists, creates one with a random password, sets
+`_culture_membership_tier = citizen`, `_culture_email_verified = '1'`, and
+copies the Google profile photo into `_culture_avatar_url`. Required in
+`culture-community.php` alongside the other core includes.
+
+### Client ID storage
+Three Client IDs (Web/iOS/Android, from Google Cloud Console — public
+identifiers, not secrets) are stored as WP options
+(`culture_google_client_id_web/ios/android`), configurable in WP Admin →
+Culture Community → General → "Google Sign-In" section
+(`class-culture-settings.php`). Same pattern as `culture_api_secret` —
+**not** a `wp-config.php` constant.
+
+### REST endpoints
+| Route | Surface | Returns |
+|---|---|---|
+| `POST /culture/v1/login-google` | Web (public) | Full profile via `user_profile()` — same shape as `/login` |
+| `POST /culture/v1/mobile/login-google` | Mobile (public) | `{ token, user }` — same shape as `/mobile/login`, `token` from `issue_token()` |
+
+Both just call `Culture_Google_Auth::verify_id_token()` then
+`find_or_create_user()` — the only difference is the response shape,
+matching each surface's existing `/login` handler.
+
+### Web integration (NextAuth)
+`packages/shared/lib/auth.ts` — `GoogleProvider` added to `providers` only
+when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` env vars are set. The `jwt`
+callback gained an `account` param; when `account?.provider === "google"`,
+it POSTs `account.id_token` to `/wp-json/culture/v1/login-google` and maps
+the response onto the token via a new `applyCultureProfile()` helper
+(mirrors the field set the Credentials-branch already produces — keep both
+in sync if profile fields change). `app/login/page.tsx` has a "Continue
+with Google" button calling `signIn("google", { callbackUrl })`.
+Env vars (`.env.example`): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (the
+Web Client ID/secret — must match the "Web Client ID" in WP Admin).
+
+### Mobile integration (Expo) — native SDK, June 2026
+
+**The app no longer targets Expo Go for testing — do not design mobile auth
+flows around Expo Go compatibility.** Google Sign-In uses
+`@react-native-google-signin/google-signin` (native module, requires an EAS
+dev/preview/production build — `expo-auth-session` + `expo-web-browser`'s
+Custom Tab flow was the prior approach and has been fully removed for Google
+specifically; `expo-web-browser` itself is still used elsewhere, by
+`src/utils/openInApp.ts`, for opening Moveee links in an in-app browser).
+- `src/config/google.ts` — `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_ANDROID_CLIENT_ID`
+  (registered against the app's package name + release/preview keystore
+  SHA-1 in Google Cloud Console — the native Android flow resolves the
+  client implicitly via Play Services, no client ID param needed in code),
+  `GOOGLE_WEB_CLIENT_ID` (passed as `webClientId` to `GoogleSignin.configure()`
+  — required on every platform because it's what actually issues the
+  `idToken`, the iOS/Android client IDs alone don't).
+- `app.config.ts` — `GOOGLE_IOS_URL_SCHEME` constant (reversed form of
+  `GOOGLE_IOS_CLIENT_ID`, e.g. `com.googleusercontent.apps.<id>`) passed to
+  the `@react-native-google-signin/google-signin` config plugin's
+  `iosUrlScheme` option — keep it in sync if `GOOGLE_IOS_CLIENT_ID` ever
+  changes. No `scheme`/`googleServicesFile` needed for the Android side;
+  Play Services resolves the registered OAuth client via package name + SHA-1
+  alone.
+- `screens/auth/LoginScreen.tsx` — `GoogleSignin.configure()` called once at
+  module scope, `handleGoogleSignIn()` calls `GoogleSignin.hasPlayServices()`
+  then `GoogleSignin.signIn()`, reads `response.data?.idToken`, POSTs it to
+  `${MOBILE_API}/login-google`, calls `loginWithToken()`. Cancellation is
+  detected via `e.code === statusCodes.SIGN_IN_CANCELLED` (silently no-ops,
+  no error banner) — the old Custom Tab flow used a string-match on
+  `e.message` for this, the native SDK gives a proper error code instead.
+- After swapping `expo-auth-session` for `@react-native-google-signin/google-signin`
+  in `package.json`, the lockfile was regenerated via the standard
+  out-of-tree process (see "Expo SDK version — critical" below) — required
+  for EAS Build's `npm ci`.
+- **Per-build-profile SHA-1 gotcha**: EAS preview builds (APK, `eas.json`
+  `preview` profile) and production builds (app-bundle) can be signed with
+  different keystores, each with its own SHA-1 fingerprint. The Android
+  OAuth client in Google Cloud Console must have **every** SHA-1 that will
+  ever sign a build you test Google Sign-In on added as an additional
+  fingerprint (Google allows multiple SHA-1s per package name — no need for
+  a second client ID). Run `eas credentials` → Android → select the profile
+  → view keystore to get the exact SHA-1 to add. A `redirect_uri_mismatch` /
+  "Access blocked" error on a build that worked fine on another profile is
+  the signature of this gotcha specifically.
+
+### Google Cloud Console setup (one-time, by a human with console access)
+1. Create an OAuth 2.0 **Web application** client. Authorized redirect URI:
+   `https://connect.themoveee.com/api/auth/callback/google`. Use its
+   Client ID/Secret for `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (Vercel
+   env vars, Site B project) and its Client ID for the WP Admin "Web
+   Client ID" field.
+2. Create an OAuth 2.0 **iOS** client with bundle ID
+   `com.moveee.moveeeplatform`. Its Client ID goes in WP Admin "iOS Client
+   ID" and `GOOGLE_IOS_CLIENT_ID` in `src/config/google.ts`.
+3. Create an OAuth 2.0 **Android** client with package name
+   `com.moveee.connect` (the actual `android.package` in `app.config.ts` —
+   not `com.moveee.moveeeplatform`, which is stale/wrong if seen elsewhere)
+   and **every** SHA-1 signing cert fingerprint that will sign a build you
+   test Google Sign-In on (production keystore and the EAS `preview`
+   profile's keystore are typically different — see the per-build-profile
+   SHA-1 gotcha in "Mobile integration" above). Its Client ID goes in WP
+   Admin "Android Client ID" and `GOOGLE_ANDROID_CLIENT_ID` in
+   `src/config/google.ts`.
+4. No "Authorized redirect URI" entries are needed for the iOS/Android OAuth
+   clients — `@react-native-google-signin/google-signin` is a native module
+   (Play Services on Android, native Google SDK on iOS) and doesn't use a
+   redirect-URI-based flow the way the web client does. This requires an EAS
+   dev/preview/production build to test; it will not work in Expo Go.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
@@ -757,7 +1778,18 @@ All checks run server-side in `lib/spam-protection.ts` before posts reach WordPr
 
 ## moveee-connect React Native app — current state
 
-The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMKV.
+The app lives in `apps/mobile/` using Expo + React Navigation + Zustand + MMKV.
+
+### ⚠️ Production build checklist — items removed for preview builds
+
+These were stripped to unblock preview APK builds and **must be restored before production**:
+
+| Item | Where | Why removed | How to restore |
+|------|-------|-------------|----------------|
+| `react-native-iap` | `apps/mobile/package.json` dependencies | Has Amazon/Play store flavors — Gradle can't resolve without the store flavor plugin | Add back: `"react-native-iap": "^12.15.4"` |
+| `./plugins/withAndroidIapStoreFlavor` | `apps/mobile/app.json` plugins array | Required by react-native-iap to select Play vs Amazon flavor | Add back to plugins array |
+
+Before production build, also run `npm install` after restoring `react-native-iap`.
 
 ### Architecture
 - `src/api/client.ts` — `api.get/post/put/delete/upload()` with Bearer token injection
@@ -778,10 +1810,11 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 | Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
 | 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
 | ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
-| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings, upgraded Pulse + Editorial cards) |
 | PostDetailScreen, PulseDetailScreen | `screens/community/` |
-| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| NewPostScreen (all 10 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, book-review, creative-showcase, poll, itinerary, event, quote) |
 | Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| TemplatePickerSheet | `components/community/TemplatePickerSheet.tsx` — 2×2 grid bottom sheet modal, FAB → onSelect → NewPost with template param |
 | Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
 | MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
 | MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
@@ -799,6 +1832,35 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 | WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
 | GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
 | PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
+| Dark mode | `src/theme.ts` (`lightColors`, `darkColors`, `ColorPalette`), `src/store/themeStore.ts` (Zustand+MMKV, `ThemeMode`), `src/hooks/useColors.ts` (`useColors()` hook), Appearance tab in MemberSettingsScreen |
+| Lifestyle Shop | `screens/shop/ShopScreen.tsx` (home), `store/cartStore.ts` (item count badge), Shop tab added to navigation (6th tab between Games and Events) |
+| CartScreen | `screens/shop/CartScreen.tsx` — 3 frames: cart with items/qty/summary/Pro savings strip, empty state, checkout handoff with animated progress bar + security badges |
+| cartStore (full) | `store/cartStore.ts` — expanded from count-only to full item mgmt: `addItem/removeItem/updateQty/clearCart`, legacy `setItemCount/increment` kept |
+| TheEditScreen | `screens/shop/TheEditScreen.tsx` — editorial curated shop: hero gradient, feature card with editorial quote, horizontal season picks with badges, editorial stories, 2-col grid |
+| MakerProfileScreen | `screens/shop/MakerProfileScreen.tsx` — maker hero + stats bar + about + Origins bridge + 2-col product grid + contact card |
+| ShopSearchScreen | `screens/shop/ShopSearchScreen.tsx` — search with recent/popular suggestions, debounced results list |
+| ShopFilterSheet | `components/shop/ShopFilterSheet.tsx` — BottomSheet with category pills, sort radios, toggle rows; exports `ShopFilters` type |
+| ProEarlyAccessGate | `components/shop/ProEarlyAccessGate.tsx` — gold-bordered gate card with countdown, upgrade CTA |
+| OrderConfirmationScreen | `screens/shop/OrderConfirmationScreen.tsx` — celebration screen with overlapping item circles, track/continue buttons |
+| BottomSheet system | `components/ui/BottomSheet.tsx` — peek/full/dismiss states with PanResponder gestures |
+| PostDetailSheet | `components/community/PostDetailSheet.tsx` — all 9 community templates in a bottom sheet |
+| SheetErrorState | `components/ui/SheetErrorState.tsx` — wifi error state in a peek-height bottom sheet |
+| HappeningDetailModal | `components/community/HappeningDetailModal.tsx` — migrated to BottomSheet |
+| DirectoryDetailModal | `components/community/DirectoryDetailModal.tsx` — migrated to BottomSheet |
+| QuoteDetailModal | `components/community/QuoteDetailModal.tsx` — migrated to BottomSheet |
+| EditorialSheet | `components/community/EditorialSheet.tsx` — full-bleed hero + CTA for editorial cards |
+| InternalLinkCard (in FeedItemCard) | Inline component inside `FeedItemCard.tsx` — mirrors web `InternalLinkCard`: bordered pill with 90px feature image left, gold "MOVEEE MAGAZINE" label, title, excerpt. Used at bottom of EditorialCard. |
+| MagazineScreen (enhanced) | `screens/magazine/MagazineScreen.tsx` — category strip, featured hero, horizontal sections, issues, series |
+| IssuesArchiveScreen | `screens/magazine/IssuesArchiveScreen.tsx` — latest issue hero + 2-col grid |
+| MagazineSearchScreen | `screens/magazine/MagazineSearchScreen.tsx` — search bar + category strip + results |
+| ArticleScreen (enhanced) | `screens/magazine/ArticleScreen.tsx` — progress bar, sticky header, hero controls, pull quote, Pro gate, "Article complete!" banner, series strip, TOC FAB bottom sheet |
+| ConfirmDialog | `components/ui/ConfirmDialog.tsx` — reusable modal dialog, supports destructive variant |
+| Toast system | `components/ui/Toast.tsx` + `components/ui/ToastContainer.tsx` + `hooks/useToast.ts` — 4 types with animated progress bar |
+| ContextMenu | `components/ui/ContextMenu.tsx` — 200px floating menu with divider before destructive actions |
+| ReportPostSheet | `components/community/ReportPostSheet.tsx` — 3-option radio sheet, submits to community/report |
+| ForYouExplainerSheet | `components/community/ForYouExplainerSheet.tsx` — sparkle icon + serif title + interests CTA |
+| Location features | ConnectFeedScreen: region chip strip (All/Africa/Diaspora UK/US/Europe) defaults to user's region; EventsScreen: city filter + local sort; MemberDirectoryScreen: city chip strip; MemberSettingsScreen: newsletter segment auto-derived from countryOfResidence |
+| Reputation privileges | Feed boost for high-rep authors; Taste Maker skips new-member queue; Poll/Itinerary gated at 2500 rep (PHP + mobile UI 🔒); Perk min_rep_tier gating; Culture Authority can nominate for Culture Icon |
 
 ### What is missing (priority order)
 1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
@@ -835,6 +1897,16 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
 - "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
+### Expo SDK version — critical
+The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
+- `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
+- `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
+- **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
+  EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
+  `package.json` but not in the lockfile, it won't be installed.
+- To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
+  (must be outside the monorepo to avoid workspace interference)
+
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
 - `patron` = Connect Pro DB value — never rename in code
@@ -843,3 +1915,103 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
+- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = **10% off** regular price (not 7%). Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
+- **Shop multi-currency (live FX, June 2026)**: WooCommerce store currency is GBP — the single source of truth for all `WC_Order` totals. Shop is shown in NGN to Nigeria-resident shoppers via a manually-set admin exchange rate, never a live FX API. Since `/mobile/shop/products`, `/mobile/shop/products/{id}`, and `/mobile/shop/the-edit` all use `__return_true` permission callbacks (no `mobile_permission()` auth), `wp_get_current_user()` is unreliable there — currency must be resolved from an explicit `?country=` query param, not the session. Mobile screens (`ShopScreen.tsx`, `ShopListingScreen.tsx`, `ProductDetailScreen.tsx`, `TheEditScreen.tsx`) append `country=${user.countryOfResidence}` from the auth store to every shop fetch. Backend: `Culture_Mobile_API::resolve_shop_currency($request)` / `::convert_shop_price($gbp, $fx)` in `class-culture-mobile-api.php` — `country === "nigeria"` (case-insensitive) → NGN at `get_option('culture_shop_fx_ngn_per_gbp', 1900)`, else passthrough GBP. Admin rate + fallback flat shipping configured in WP Admin → Culture Community → Payment tab → "Lifestyle Shop" section (`culture_shop_fx_ngn_per_gbp`, `culture_shop_flat_shipping_gbp` options, registered in `class-culture-settings.php`). **When adding any new shop endpoint that returns prices, call `resolve_shop_currency()`/`convert_shop_price()` — don't read `get_woocommerce_currency()` directly.**
+- **Cart**: `cartStore.ts` supports full item management (`addItem/removeItem/updateQty/clearCart`). CartScreen uses WooCommerce web checkout via `Linking.openURL()`. **In-house native checkout is in progress** (replacing the hosted-checkout redirect) — see active session notes; not yet complete as of this entry.
+- **Dark mode pattern**: ALL screens must use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. **Never use the static `colors.*` import inside `createStyles`** — it bypasses dark mode. Use `c.*` exclusively inside that function.
+
+### Cross-stack navigation rules (critical)
+React Navigation stacks are isolated — a screen in ShopStack cannot navigate to a screen registered only in MagazineStack or ConnectStack. Rules:
+
+| From stack | To navigate to | Use |
+|---|---|---|
+| ShopStack | Article (magazine) | `nav.navigate("Magazine", { screen: "Article", params: { slug } } as any)` |
+| ShopStack | Membership (member) | `nav.navigate("Connect", { screen: "Membership" } as any)` |
+| Any stack | Login | Only valid from unauthenticated AuthStack — authenticated screens should navigate to Membership instead |
+
+Screens registered per stack (as of latest):
+- **ConnectStack**: ConnectFeed, PostDetail, PulseDetail, NewPost, DirectorySubmit, MemberProfile, MemberDirectory, Notifications, Article, MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+- **MagazineStack**: MagazineList, Article, IssuesArchive, MagazineSearch
+- **ShopStack**: ShopHome, ShopListing, ProductDetail, Cart, Checkout, TheEdit, ShopSearch, MakerProfile, OrderConfirmation
+- **GamesStack**: GamesList, TriviaGame, WhoSaidIt, Sudoku, Crossword
+- **EventsStack**: EventsList, EventDetail
+- **MemberStack**: MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+
+### api.get() / api.post() signature
+```ts
+api.get<T>(url: string, auth = true)   // second arg is boolean, NOT an options object
+api.post<T>(url: string, body: Record<string,unknown>, auth = true)
+api.put / api.patch / api.delete       // always authenticated
+```
+Common mistake: `api.get(url, { auth: false })` — the object is truthy so it injects the Bearer token anyway. Correct: `api.get(url, false)`.
+
+### useNotificationCount hook
+Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
+
+**Gotcha (fixed June 2026): mobile must call the JWT mobile endpoint, not the web proxy.**
+`useNotificationCount.ts` previously called `https://themoveee.com/api/notifications/count` —
+the Next.js web proxy route, which authenticates via `getServerSession()` (NextAuth cookie). The
+mobile app has no NextAuth session, only a JWT bearer token, so that route's `session?.user` was
+always null and it silently returned `{ unread: 0 }` — the bell badge (in `ConnectFeedScreen.tsx`'s
+header) and the Connect tab's red dot (`navigation/index.tsx` `MainTabs`) both read from this same
+hook, so both were permanently dark regardless of actual unread count. Fixed: the hook now calls
+`${MOBILE_API}/notifications/count` directly (the pre-existing mobile JWT endpoint,
+`handle_notification_count()` in `class-culture-mobile-api.php`) via `api.get()`, which attaches
+the Bearer token automatically. **Any future mobile hook that proxies through
+`https://themoveee.com/api/...` should first check whether a same-shaped `/mobile/...` JWT endpoint
+already exists** — most of the wallet/perks/passkey endpoints genuinely need the web proxy (they
+require `CULTURE_API_SECRET`, per the "Key gotchas" section above), but notifications already had
+a working mobile-native route that was simply never wired up.
+
+**Same bug class recurred (fixed June 2026) in `NewPostScreen.tsx`'s `uploadImages()`** — it POSTed
+to `${PROXY}/mobile/community/upload-image` (`PROXY = "https://themoveee.com/api"`, the Next.js web
+proxy), but no such route exists there; the real endpoint is
+`POST culture/v1/mobile/community/upload-image` on WordPress, reachable via `MOBILE_API`. Every
+image attached to a community post silently failed to upload ("Image upload failed" alert on every
+submit). Fixed by switching to `${MOBILE_API}/community/upload-image`; the now-unused `PROXY`
+constant was deleted from the file (the Event template's own past use of `PROXY` was already
+rerouted to `community/submit` earlier, so nothing else referenced it). **Lesson reinforced: before
+introducing or fixing any mobile API call to `https://themoveee.com/api/...`, grep
+`class-culture-mobile-api.php` for a matching `/mobile/...` route first** — this is now the second
+time a mobile screen called the web proxy for an endpoint that already had a native JWT route.
+
+### Notification tap routing (smart deep-links, June 2026)
+Tapping a notification in `NotificationsScreen.tsx` now navigates somewhere relevant instead of
+just marking it read. `openNotification(item, nav)` switches on `item.type` and reads fields off
+`item.meta` (the JSON blob set by whichever PHP call site fired the notification — see
+`Culture_Notifications::add()` call sites for the authoritative field names per type):
+- `mention` / `comment_received` / `new_follower_post` → `meta.post_id` → fetches the actual post
+  via `GET /mobile/community/post?post_id=X` (new endpoint, returns `{ item: FeedItem }`) then
+  navigates to `PostDetail` with the fetched item. **`PostDetail` requires a full `FeedItem` object,
+  not just an id** — there was previously no way to deep-link to an arbitrary post by id alone, only
+  via the unified feed list. The new endpoint reuses the exact same per-post field mapping as the
+  unified feed (extracted into `format_community_feed_item()`, called by both
+  `get_community_feed_items()` and the new `handle_get_community_post()`) so the post renders
+  identically regardless of entry point.
+- `new_follower` → `meta.follower_id` → `MemberProfile` with that `userId`.
+- `badge_unlocked` → own `MemberDashboard` (badges shown there).
+- `credit_earned` / `cashout_approved` / `cashout_rejected` / `escrow_released` / `post_validated`
+  → `Wallet`.
+- `perk_redeemed` / `perk_expiring` → `Coupons`.
+- `referral_received` → `Referral`. `event_rsvp` → `MyEvents`. `system` → no-op (not actionable).
+- The pressed row shows a small spinner in place of its emoji while the post-fetch case is in
+  flight (`navigatingId` state) — the other cases navigate synchronously so this is rarely visible
+  outside the fetch-based branch.
+- `MyEvents` was missing from `AppParamList` in `useNav.ts` despite already being a registered
+  `ConnectStack` screen — added it. If `nav.navigate()` to an existing screen throws a type error,
+  check `useNav.ts`'s `AppParamList` before assuming the screen isn't registered.
+
+### ConnectFeedScreen category chip matching (substring + alias, June 2026)
+`matchesCategory()` in `ConnectFeedScreen.tsx` no longer requires an exact string match between
+a filter chip (e.g. "Food") and the backend taxonomy term name (e.g. "Food & Drink" from
+`culture_dir_type`, or freeform `pulse_category`/WP `category` terms). It now does substring
+containment in both directions plus a small `CATEGORY_ALIASES` lookup table for cases substring
+matching alone can't catch (e.g. `music` → `album`, `travel` → `place`, `design` → `architecture`).
+When adding a new filter chip, check whether it needs an alias entry — substring matching alone
+is enough for cases like "Food" ⊂ "Food & Drink".
+
+### theme.ts — available keys
+- `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
+- `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
+- `fontSize`: includes `eyebrow`(9) for uppercase labels
+- `fonts`: `sans`, `sansBold`, `sansItalic`, `serif`, `serifBold`, `serifItalic`, `serifBoldItalic`, `mono`, `monoBold`, `monoItalic`. **`fontStyle: "italic"` synthesis is unreliable for custom/embedded TTF fonts on iOS** — applying it on top of a non-italic `fontFamily` (e.g. `Fraunces_400Regular`) can silently fall back to the system font's italic face instead of rendering the custom font at all. Always reference the real italic font file by name instead (`fonts.serifItalic` → `Fraunces_400Regular_Italic`). **Fixed app-wide June 2026** — every `fontFamily: fonts.serif/sans/mono(...)` + `fontStyle: "italic"` combo across the codebase (quote views, pull quotes, book-review favourite quotes, game screens, composer inputs, TOC titles, etc.) was swapped to the matching `*Italic` key. The italic weights (`Fraunces_700Bold_Italic`, `DMSans_400Regular_Italic`, `JetBrainsMono_400Regular_Italic`) are loaded in `App.tsx`'s `useFonts()` call alongside the existing weights — **if you add a new bold/regular weight to `theme.ts`'s `fonts` object, check whether an italic counterpart should be added and loaded at the same time**, since there's no synthesis fallback that looks right on iOS. Text with no explicit `fontFamily` (system default) is unaffected and can use plain `fontStyle: "italic"` safely — e.g. `react-native-render-html`'s `em`/`i`/`blockquote` tag styles in `ArticleScreen.tsx` intentionally have no custom `fontFamily`.

@@ -13,6 +13,17 @@ interface PortfolioItem {
   created_at: string;
 }
 
+interface CommunityPost {
+  id: number;
+  slug: string;
+  text: string;
+  image_url: string;
+  template_type: string;
+  tag: string;
+}
+
+interface PinnedPost extends CommunityPost {}
+
 const ITEM_TYPES = [
   { value: "lookbook", label: "Lookbook" },
   { value: "writing",  label: "Writing / Article" },
@@ -32,6 +43,10 @@ interface Props { reputation: number; username: string }
 
 export default function PortfolioManager({ reputation, username }: Props) {
   const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<PinnedPost[]>([]);
+  const [myPosts, setMyPosts] = useState<CommunityPost[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pinning, setPinning] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -43,11 +58,48 @@ export default function PortfolioManager({ reputation, username }: Props) {
 
   useEffect(() => {
     fetch("/api/user/portfolio")
-      .then(r => r.ok ? r.json() : { items: [] })
-      .then(d => setItems(d.items ?? []))
-      .catch(() => setItems([]))
+      .then(r => r.ok ? r.json() : { items: [], pinned_posts_data: [] })
+      .then(d => {
+        setItems(d.items ?? []);
+        setPinnedPosts(d.pinned_posts_data ?? []);
+      })
+      .catch(() => { setItems([]); setPinnedPosts([]); })
       .finally(() => setLoading(false));
   }, []);
+
+  function openPicker() {
+    setShowPicker(true);
+    if (username) {
+      fetch(`/api/connect/${username}/posts?per_page=50`)
+        .then(r => r.ok ? r.json() : { posts: [] })
+        .then(d => setMyPosts(Array.isArray(d.posts) ? d.posts : []))
+        .catch(() => setMyPosts([]));
+    }
+  }
+
+  async function togglePin(postId: number, pinned: boolean) {
+    setPinning(postId);
+    setError("");
+    try {
+      const res = await fetch("/api/user/portfolio/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, pinned }),
+      });
+      if (!res.ok) throw new Error("Could not update pin.");
+      const data = await res.json();
+      const ids: number[] = data.pinned_posts ?? [];
+      if (pinned) {
+        const post = myPosts.find(p => p.id === postId);
+        if (post) setPinnedPosts(prev => [...prev, post]);
+      } else {
+        setPinnedPosts(prev => prev.filter(p => p.id !== postId));
+      }
+    } catch (e: any) {
+      setError(e.message ?? "Could not update pin.");
+    }
+    setPinning(null);
+  }
 
   async function saveItems(newItems: PortfolioItem[]) {
     setSaving(true);
@@ -104,8 +156,8 @@ export default function PortfolioManager({ reputation, username }: Props) {
       <section className="mem-card">
         <div className="mem-card-label">Creative Portfolio</div>
         <p style={{ fontSize: "0.83rem", color: "var(--mute)", lineHeight: 1.6 }}>
-          The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 reputation).
-          You currently have <strong>{reputation}</strong> reputation points.
+          The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 points).
+          You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
         <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "8px" }}>
@@ -136,6 +188,72 @@ export default function PortfolioManager({ reputation, username }: Props) {
         <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>Loading…</p>
       ) : (
         <>
+          <div style={{ marginBottom: "24px" }}>
+            <p style={{ margin: "0 0 8px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".06em" }}>
+              Pinned community posts
+            </p>
+            {pinnedPosts.length === 0 ? (
+              <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>
+                No pinned posts yet. Pin a Creative Showcase or other community post to feature it here.
+              </p>
+            ) : (
+              pinnedPosts.map(post => (
+                <div key={post.id} style={{
+                  display: "flex", gap: "12px", alignItems: "center",
+                  padding: "10px 0", borderBottom: "1px solid rgba(42,36,28,.08)",
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mute)", textTransform: "uppercase", letterSpacing: ".06em" }}>{post.tag || post.template_type}</p>
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.text}</p>
+                  </div>
+                  <button
+                    onClick={() => togglePin(post.id, false)}
+                    disabled={pinning === post.id}
+                    className="mem-field-btn"
+                    style={{ color: "#c5491f", flexShrink: 0 }}
+                  >
+                    Unpin
+                  </button>
+                </div>
+              ))
+            )}
+            <button onClick={openPicker} className="mem-field-btn" style={{ marginTop: "12px" }}>
+              + Pin a community post
+            </button>
+          </div>
+
+          {showPicker && (
+            <div style={{ marginBottom: "24px", borderTop: "1px solid rgba(42,36,28,.1)", paddingTop: "16px" }}>
+              <p style={{ margin: "0 0 8px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ink)" }}>Choose a post to pin</p>
+              {myPosts.length === 0 ? (
+                <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>No community posts found.</p>
+              ) : (
+                myPosts
+                  .filter(p => !pinnedPosts.some(pp => pp.id === p.id))
+                  .map(post => (
+                    <div key={post.id} style={{
+                      display: "flex", gap: "12px", alignItems: "center",
+                      padding: "8px 0", borderBottom: "1px solid rgba(42,36,28,.06)",
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mute)", textTransform: "uppercase", letterSpacing: ".06em" }}>{post.tag || post.template_type}</p>
+                        <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.text}</p>
+                      </div>
+                      <button
+                        onClick={() => togglePin(post.id, true)}
+                        disabled={pinning === post.id}
+                        className="mem-field-btn"
+                        style={{ flexShrink: 0 }}
+                      >
+                        Pin
+                      </button>
+                    </div>
+                  ))
+              )}
+              <button onClick={() => setShowPicker(false)} className="mem-field-btn" style={{ marginTop: "12px" }}>Close</button>
+            </div>
+          )}
+
           {items.length === 0 && !showForm && (
             <p style={{ fontSize: "0.83rem", color: "var(--mute)", marginBottom: "20px" }}>
               No portfolio items yet. Add your first piece of work below.

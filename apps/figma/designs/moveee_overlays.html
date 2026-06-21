@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Overlays & Components</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                        'success-green': '#2D6A4F',
+                        'warning-orange': '#E65100',
+                        'error-red': '#C62828',
+                        'system-blue': '#007AFF'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                        'modal': '0 25px 50px -12px rgba(20, 17, 13, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Presentation Canvas Setup */
+        body { 
+            background-color: #F3ECE0; /* Base background */
+            margin: 0; 
+            min-height: 100vh;
+        }
+        .canvas-overlay {
+            background-color: rgba(20, 17, 13, 0.45); /* ink at 45% */
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Smooth rounded corners for bottom sheets */
+        .bottom-sheet { border-top-left-radius: 20px; border-top-right-radius: 20px; }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="canvas-overlay flex justify-center">
+        <!-- 4-Column Layout Grid for Presentation -->
+        <div class="flex gap-10 items-start max-w-[1600px] flex-wrap xl:flex-nowrap">
+
+            <!-- COLUMN 1 -->
+            <div class="flex flex-col gap-10 w-[390px] shrink-0">
+                
+                <!-- 1. BOTTOM SHEET: Template Picker -->
+                <div class="flex flex-col gap-3">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">1. Bottom Sheet — Template Picker</span>
+                    <div class="w-[390px] bg-white bottom-sheet shadow-modal flex flex-col relative pb-[40px]">
+                        <!-- Drag Handle -->
+                        <div class="w-[32px] h-[4px] bg-ghost rounded-full mx-auto mt-[12px]"></div>
+                        
+                        <h2 class="text-ink font-bold text-[15px] px-[20px] pt-[20px] pb-[16px] text-center">Choose a post type</h2>
+                        
+                        <!-- 3x3 Grid -->
+                        <div class="grid grid-cols-3 gap-[12px] px-[16px]">
+                            <!-- Active: Post -->
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center border-2 border-ochre cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">✏️</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Post</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">💎</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Hidden Gem</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">💬</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Cultural Take</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">🍽️</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Food Review</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">🎨</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Creative Showcase</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">📊</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Poll</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">🗺️</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Itinerary</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">📅</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Event</span>
+                            </div>
+                            <div class="h-[72px] bg-white rounded-xl shadow-card flex flex-col items-center justify-center cursor-pointer">
+                                <span class="text-[24px] leading-none mb-[4px]">💬</span>
+                                <span class="text-ink font-bold text-[12px] text-center leading-tight px-1">Quote</span>
+                            </div>
+                        </div>
+
+                        <button class="mt-[24px] text-mute text-[14px] font-sans mx-auto">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- 4. SIGN OUT CONFIRM -->
+                <div class="flex flex-col gap-3 items-center">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md w-[390px]">4. Sign Out Dialog</span>
+                    <div class="w-[320px] bg-white rounded-2xl shadow-modal p-[24px] flex flex-col text-center">
+                        <h2 class="text-ink font-bold text-[16px]">Sign out?</h2>
+                        <p class="text-mute text-[14px] mt-[8px] leading-relaxed">You'll need to sign in again to access your account.</p>
+                        
+                        <div class="flex gap-[12px] mt-[24px]">
+                            <button class="flex-1 h-[48px] rounded-full border border-ghost text-ink text-[14px] font-bold">Cancel</button>
+                            <button class="flex-1 h-[48px] rounded-full bg-error-red text-white text-[14px] font-bold">Sign out</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. "FOR YOU" EXPLAINER -->
+                <div class="flex flex-col gap-3">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">8. Explainer Sheet</span>
+                    <div class="w-[390px] bg-white bottom-sheet shadow-modal flex flex-col items-center relative pt-[12px] pb-[32px]">
+                        <!-- Drag Handle -->
+                        <div class="w-[32px] h-[4px] bg-ghost rounded-full absolute top-[12px]"></div>
+                        
+                        <div class="mt-[20px] text-ochre text-[24px] font-bold leading-none">✦</div>
+                        <h2 class="font-serif text-[20px] font-bold text-ink mt-[8px]">For You feed</h2>
+                        
+                        <p class="text-mute text-[14px] text-center max-w-[280px] mt-[12px] leading-relaxed">We rank your feed based on your interests and engagement. The more you post and react, the better it gets.</p>
+                        
+                        <button class="w-[280px] h-[48px] bg-ochre rounded-full text-white text-[14px] font-bold mt-[20px]">Set up your interests →</button>
+                        <button class="text-ghost text-[13px] font-sans mt-[12px]">Maybe later</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUMN 2 -->
+            <div class="flex flex-col gap-10 w-[390px] shrink-0 items-center">
+                
+                <!-- 2. BOTTOM SHEET: Report Post -->
+                <div class="flex flex-col gap-3 w-full">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">2. Bottom Sheet — Report Post</span>
+                    <div class="w-[390px] bg-white bottom-sheet shadow-modal flex flex-col pb-[20px]">
+                        <h2 class="text-ink font-bold text-[16px] px-[24px] py-[24px] border-b border-ghost">Report this post</h2>
+                        
+                        <div class="flex flex-col">
+                            <!-- Active Radio -->
+                            <div class="h-[52px] px-[16px] border-b border-ghost flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[24px] h-[24px] rounded-full border border-ochre flex items-center justify-center">
+                                    <div class="w-[12px] h-[12px] bg-ochre rounded-full"></div>
+                                </div>
+                                <span class="text-ink text-[15px]">Spam or misleading</span>
+                            </div>
+                            <!-- Inactive Radio -->
+                            <div class="h-[52px] px-[16px] border-b border-ghost flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[24px] h-[24px] rounded-full border border-ghost"></div>
+                                <span class="text-ink text-[15px]">Harassment or hate speech</span>
+                            </div>
+                            <!-- Inactive Radio -->
+                            <div class="h-[52px] px-[16px] border-b border-ghost flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[24px] h-[24px] rounded-full border border-ghost"></div>
+                                <span class="text-ink text-[15px]">Inappropriate content</span>
+                            </div>
+                        </div>
+
+                        <div class="p-[20px] mt-auto">
+                            <button class="w-full h-[48px] bg-ochre rounded-full text-white text-[14px] font-bold">Submit report</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. PASSKEY PROMPT -->
+                <div class="flex flex-col gap-3 w-full">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">5. Passkey Prompt</span>
+                    <div class="w-[390px] bg-white bottom-sheet shadow-modal flex flex-col items-center relative pt-[12px] pb-[32px]">
+                        <!-- Drag Handle -->
+                        <div class="w-[32px] h-[4px] bg-ghost rounded-full absolute top-[12px]"></div>
+                        
+                        <!-- Face ID Icon Mock -->
+                        <div class="mt-[32px] w-[48px] h-[48px] text-system-blue flex items-center justify-center">
+                            <svg class="w-full h-full" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 8H8C5.79086 8 4 9.79086 4 12V16M36 8H40C42.2091 8 44 9.79086 44 12V16M4 32V36C4 38.2091 5.79086 40 8 40H12M44 32V36C44 38.2091 42.2091 40 40 40H36" />
+                                <path d="M17 19H17.01M31 19H31.01" stroke-width="4"/>
+                                <path d="M24 18V26" />
+                                <path d="M18 31C18 31 20.5 34 24 34C27.5 34 30 31 30 31" />
+                            </svg>
+                        </div>
+
+                        <span class="text-mute text-[12px] font-sans mt-[16px]">Moveee Connect</span>
+                        <h2 class="text-ink font-bold text-[16px] mt-[12px]">Sign in with Face ID</h2>
+                        <p class="text-mute text-[14px] mt-[8px]">Use your biometric to log in securely.</p>
+                        
+                        <button class="text-mute text-[14px] font-sans mt-[16px]">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- 9. CONTEXT MENU -->
+                <div class="flex flex-col gap-3 items-center">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md w-[390px]">9. Context Menu</span>
+                    <div class="w-[200px] bg-white rounded-xl shadow-modal flex flex-col py-[8px]">
+                        
+                        <button class="h-[44px] px-[16px] flex items-center gap-[12px] hover:bg-paper-deep">
+                            <svg class="w-[16px] h-[16px] text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            <span class="text-ink text-[14px]">Copy link</span>
+                        </button>
+                        
+                        <button class="h-[44px] px-[16px] flex items-center gap-[12px] hover:bg-paper-deep">
+                            <svg class="w-[16px] h-[16px] text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                            <span class="text-ink text-[14px]">Save post</span>
+                        </button>
+                        
+                        <button class="h-[44px] px-[16px] flex items-center gap-[12px] hover:bg-paper-deep">
+                            <svg class="w-[16px] h-[16px] text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4m0 0L8 6m4-4v12"></path></svg>
+                            <span class="text-ink text-[14px]">Share</span>
+                        </button>
+                        
+                        <div class="h-[1px] bg-ghost my-[4px] mx-[16px]"></div>
+                        
+                        <button class="h-[44px] px-[16px] flex items-center gap-[12px] hover:bg-red-50">
+                            <svg class="w-[16px] h-[16px] text-error-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+                            <span class="text-error-red text-[14px]">Report</span>
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUMN 3 -->
+            <div class="flex flex-col gap-10 w-[343px] shrink-0 items-center">
+                
+                <!-- 7. TOAST NOTIFICATIONS -->
+                <div class="flex flex-col gap-4 w-full">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">7. Toast Notifications</span>
+                    
+                    <!-- Success -->
+                    <div class="w-[343px] bg-white rounded-lg shadow-modal border-l-[4px] border-l-success-green flex items-center p-[16px] relative overflow-hidden">
+                        <svg class="w-[20px] h-[20px] text-success-green mr-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-ink text-[14px] font-bold">Post published! You earned +10 CR</span>
+                        <div class="absolute bottom-0 left-0 h-[4px] w-[60%] bg-success-green rounded-r-full"></div>
+                    </div>
+
+                    <!-- Error -->
+                    <div class="w-[343px] bg-white rounded-lg shadow-modal border-l-[4px] border-l-error-red flex items-center p-[16px] relative overflow-hidden">
+                        <svg class="w-[20px] h-[20px] text-error-red mr-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span class="text-ink text-[14px] font-bold">Something went wrong. Please try again.</span>
+                        <div class="absolute bottom-0 left-0 h-[4px] w-[80%] bg-error-red rounded-r-full"></div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="w-[343px] bg-white rounded-lg shadow-modal border-l-[4px] border-l-ochre flex items-center p-[16px] relative overflow-hidden">
+                        <svg class="w-[20px] h-[20px] text-ochre mr-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"></path></svg>
+                        <span class="text-ink text-[14px]">Copied to clipboard</span>
+                        <div class="absolute bottom-0 left-0 h-[4px] w-[30%] bg-ochre rounded-r-full"></div>
+                    </div>
+
+                    <!-- Warning -->
+                    <div class="w-[343px] bg-white rounded-lg shadow-modal border-l-[4px] border-l-warning-orange flex items-center p-[16px] relative overflow-hidden">
+                        <svg class="w-[20px] h-[20px] text-warning-orange mr-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span class="text-ink text-[14px] leading-snug">Your Bisi Ceramics perk expires in 2 days!</span>
+                        <div class="absolute bottom-0 left-0 h-[4px] w-[90%] bg-warning-orange rounded-r-full"></div>
+                    </div>
+                </div>
+
+                <!-- 3. CONFIRM REDEEM DIALOG -->
+                <div class="flex flex-col gap-3 w-full items-center mt-6">
+                    <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md w-[343px]">3. Redeem Dialog</span>
+                    <div class="w-[320px] bg-white rounded-2xl shadow-modal p-[24px] flex flex-col text-center">
+                        <h2 class="text-ink font-bold text-[16px]">Redeem this perk?</h2>
+                        <h3 class="font-serif text-ink text-[18px] mt-[8px]">10% off at Bisi Ceramics</h3>
+                        <p class="text-mute text-[13px] mt-[8px]">This will spend 150 CR. Balance: 1,240 → 1,090 CR</p>
+                        
+                        <div class="flex gap-[12px] mt-[16px]">
+                            <button class="flex-1 h-[48px] rounded-full border border-ink text-ink text-[14px] font-bold">Cancel</button>
+                            <button class="flex-1 h-[48px] rounded-full bg-ochre text-white text-[14px] font-bold">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUMN 4 -->
+            <div class="flex flex-col gap-3 w-[390px] shrink-0">
+                <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold drop-shadow-md">6. Image Lightbox Overlay</span>
+                
+                <!-- 6. IMAGE LIGHTBOX -->
+                <div class="w-[390px] h-[844px] bg-black shadow-modal rounded-[40px] relative overflow-hidden flex flex-col border-8 border-gray-900">
+                    
+                    <!-- Top Bar -->
+                    <div class="absolute top-0 w-full pt-[48px] px-[16px] flex justify-between items-center z-20">
+                        <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center">
+                            <svg class="w-[20px] h-[20px] text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        <span class="text-white font-mono text-[13px] font-bold">2 / 5</span>
+                    </div>
+
+                    <!-- Image Placeholder -->
+                    <div class="flex-1 flex items-center justify-center w-full">
+                        <div class="w-[390px] h-[340px] bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] opacity-90"></div>
+                    </div>
+
+                    <!-- Bottom Dots -->
+                    <div class="absolute bottom-[40px] w-full flex justify-center gap-[8px]">
+                        <div class="w-[6px] h-[6px] rounded-full bg-white opacity-30"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-white"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-white opacity-30"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-white opacity-30"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-white opacity-30"></div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

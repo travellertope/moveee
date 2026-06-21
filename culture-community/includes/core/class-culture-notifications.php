@@ -20,6 +20,11 @@ class Culture_Notifications {
         'comment_received'  => 'New Comment',
         'post_validated'    => 'Post Reached Threshold',
         'system'            => 'System',
+        'referral_received' => 'Friend Joined',
+        'mention'           => 'You were mentioned',
+        'new_follower'      => 'New Follower',
+        'new_follower_post' => 'New Post From Someone You Follow',
+        'event_rsvp'        => 'Event RSVP',
     );
 
     /* ——————————————————————————————————————
@@ -34,9 +39,50 @@ class Culture_Notifications {
         add_action( 'culture_cashout_rejected',   array( __CLASS__, 'on_cashout_rejected' ), 10, 2 );
         add_action( 'culture_escrow_released',    array( __CLASS__, 'on_escrow_released'  ), 10, 2 );
         add_action( 'culture_post_validated',     array( __CLASS__, 'on_post_validated'   ), 10, 2 );
+        add_action( 'culture_referral_completed', array( __CLASS__, 'on_referral_completed' ), 10, 2 );
         // Perk-expiry check via WP Cron (hourly). Scheduling is handled in
         // Culture_Activator::activate() — not here — to avoid a DB lookup on every request.
         add_action( 'culture_check_perk_expiry',  array( __CLASS__, 'check_perk_expiry'  ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Per-type preferences
+     * —————————————————————————————————————— */
+
+    // Always delivered regardless of preference — not shown in the prefs UI.
+    const ALWAYS_ON_TYPES = array( 'system' );
+
+    /**
+     * Returns a complete type => bool map, merging stored prefs over
+     * defaults (everything on) so newly-added types are enabled by default
+     * without needing a migration.
+     */
+    public static function get_prefs( int $user_id ) : array {
+        $defaults = array_fill_keys( array_keys( self::TYPES ), true );
+        $stored   = json_decode( (string) get_user_meta( $user_id, '_culture_notification_prefs', true ), true );
+        if ( ! is_array( $stored ) ) {
+            $stored = array();
+        }
+        return array_merge( $defaults, array_intersect_key( $stored, $defaults ) );
+    }
+
+    public static function set_prefs( int $user_id, array $prefs ) : array {
+        $current = self::get_prefs( $user_id );
+        foreach ( $prefs as $type => $enabled ) {
+            if ( array_key_exists( $type, $current ) && ! in_array( $type, self::ALWAYS_ON_TYPES, true ) ) {
+                $current[ $type ] = (bool) $enabled;
+            }
+        }
+        update_user_meta( $user_id, '_culture_notification_prefs', wp_json_encode( $current ) );
+        return $current;
+    }
+
+    public static function is_enabled( int $user_id, string $type ) : bool {
+        if ( in_array( $type, self::ALWAYS_ON_TYPES, true ) ) {
+            return true;
+        }
+        $prefs = self::get_prefs( $user_id );
+        return $prefs[ $type ] ?? true;
     }
 
     /* ——————————————————————————————————————
@@ -51,6 +97,9 @@ class Culture_Notifications {
         string $action_url = '',
         array  $meta       = []
     ) : int {
+        if ( ! self::is_enabled( $user_id, $type ) ) {
+            return 0;
+        }
         global $wpdb;
         $wpdb->insert(
             $wpdb->prefix . 'culture_notifications',
@@ -233,6 +282,36 @@ class Culture_Notifications {
             "\"{$excerpt}\" has reached the engagement threshold — credits on their way.",
             '/member/wallet',
             array( 'post_id' => $post_id )
+        );
+    }
+
+    public static function on_referral_completed( int $referrer_id, int $new_user_id ) {
+        $new_user = get_userdata( $new_user_id );
+        if ( ! $new_user ) return;
+        $display = $new_user->display_name ?: $new_user->user_login;
+        $points  = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::POINTS['referral'] ?? 30 : 30;
+        $credits = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 : 5;
+        self::add(
+            $referrer_id,
+            'referral_received',
+            '🎉 ' . $display . ' joined via your link!',
+            "You earned +{$points} points and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
+            '/member/referrals',
+            array( 'new_user_id' => $new_user_id, 'points' => $points, 'credits' => $credits )
+        );
+    }
+
+    public static function on_new_follower( int $followed_id, int $follower_id ) : void {
+        $follower = get_userdata( $follower_id );
+        if ( ! $follower ) return;
+        $name = $follower->display_name ?: $follower->user_login;
+        self::add(
+            $followed_id,
+            'new_follower',
+            "{$name} started following you",
+            'Tap to view their profile.',
+            '/connect/' . $follower->user_login,
+            array( 'follower_id' => $follower_id )
         );
     }
 

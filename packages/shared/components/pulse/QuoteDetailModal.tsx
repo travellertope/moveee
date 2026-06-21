@@ -121,6 +121,17 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             )}
           </div>
 
+          {/* Sharing reason */}
+          {item.quoteSharingReason && (
+            <div style={{
+              marginTop: "1.25rem", padding: "0.75rem 1rem",
+              background: "#ece5d6", borderRadius: "4px",
+              color: "#5a5142", fontSize: "0.85rem", lineHeight: 1.5,
+            }}>
+              💬 {item.quoteSharingReason}
+            </div>
+          )}
+
           {/* Date */}
           <div style={{ fontSize: "0.72rem", color: "#bbb", marginTop: "1.5rem" }}>
             {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}

@@ -310,7 +310,7 @@ export default async function MagazineArchiveWrapper({
               </div>
               <div className="cta-band-right">
                 <Link href="/newsletter" className="cta-band-btn">Browse Issues →</Link>
-                <div className="cta-band-note">Free · Published every Friday</div>
+                <div className="cta-band-note">Free · Published every Tuesday</div>
               </div>
             </div>
           </section>

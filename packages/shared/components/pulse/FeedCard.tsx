@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { FeedItem } from "@/lib/unified-feed";
@@ -77,6 +78,82 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
     </div>
   );
 }
+
+function RsvpDisplay({
+  postId,
+  capacity,
+  initialCount,
+}: {
+  postId?: string;
+  capacity?: number;
+  initialCount?: number;
+}) {
+  const [status, setStatus] = useState<{ rsvped: boolean; count: number } | null>(
+    initialCount !== undefined ? { rsvped: false, count: initialCount } : null
+  );
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!postId) return;
+    fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0) });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
+  const count = status?.count ?? initialCount ?? 0;
+  const isFull = !!capacity && capacity > 0 && count >= capacity;
+  const rsvped = !!status?.rsvped;
+
+  async function toggle() {
+    if (loading || !postId) return;
+    if (!rsvped && isFull) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId) }),
+      });
+      if (res.ok) {
+        setStatus((prev) => ({
+          rsvped: !rsvped,
+          count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
+        }));
+      }
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.6rem" }}>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={loading || (!rsvped && isFull)}
+        style={{
+          background: rsvped ? "#fff" : "var(--ochre, #b38238)",
+          color: rsvped ? "#b38238" : "#fff",
+          border: "1px solid #b38238",
+          borderRadius: "4px",
+          padding: "7px 14px",
+          fontSize: "0.78rem",
+          fontWeight: 700,
+          cursor: !rsvped && isFull ? "not-allowed" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
+      </button>
+      <span style={{ fontSize: "0.72rem", color: "#7a6f5c" }}>
+        {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+      </span>
+    </div>
+  );
+}
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
@@ -148,6 +225,94 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   );
 }
 
+function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const count = images.length;
+
+  if (count === 0) return null;
+
+  if (count === 1) {
+    return (
+      <div style={{ marginBottom: "0.6rem", borderRadius: "8px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+        <img
+          src={images[0]}
+          alt=""
+          onClick={() => onTap(images[0])}
+          style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block", cursor: "zoom-in" }}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: "0.6rem", border: "1px solid #e8e2d8", borderRadius: "8px", overflow: "hidden" }}>
+      {/* Scrollable carousel row */}
+      <div
+        style={{
+          display: "flex",
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+        }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const idx = Math.round(el.scrollLeft / el.clientWidth);
+          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
+        }}
+      >
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt=""
+            onClick={() => onTap(img)}
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              height: "260px",
+              objectFit: "cover",
+              display: "block",
+              scrollSnapAlign: "start",
+              cursor: "zoom-in",
+            }}
+            loading="lazy"
+          />
+        ))}
+      </div>
+      {/* Dots + counter */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "6px 12px", gap: "6px", position: "relative",
+        borderTop: "1px solid #e8e2d8", backgroundColor: "var(--paper, #f3ece0)",
+      }}>
+        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+          {images.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === activeIdx ? "16px" : "6px",
+                height: "6px",
+                borderRadius: "3px",
+                backgroundColor: i === activeIdx ? "var(--ochre, #b38238)" : "#c8bfaf",
+                transition: "width 0.2s ease",
+              }}
+            />
+          ))}
+        </div>
+        <span style={{
+          position: "absolute", right: "12px",
+          fontFamily: "var(--font-mono, monospace)",
+          fontSize: "10px", color: "#9e9e9e",
+        }}>
+          {activeIdx + 1} / {count}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pulse:     { label: "Pulse",      bg: "#fef3e2", color: "#b38238" },
   editorial: { label: "Editorial",  bg: "#fff0eb", color: "#c5491f" },
@@ -185,14 +350,17 @@ function Badge({ label, bg, color }: { label: string; bg: string; color: string 
 export default function FeedCard({
   item,
   onTagClick,
-  onHashtagClick,
+  onMentionClick,
   interestMatch,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
-  onHashtagClick?: (hashtag: string) => void;
+  onMentionClick?: (username: string) => void;
   interestMatch?: boolean;
 }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const router = useRouter();
+  const handleMentionClick = onMentionClick ?? ((username: string) => router.push(`/${username}`));
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
   // ── Quote card ──
@@ -265,6 +433,8 @@ export default function FeedCard({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeModal = useCallback(() => setModalOpen(false), []);
 
+    const isPro = item.communityTier === "patron";
+
     async function submitReport(reason: string) {
       setReportState("sent");
       try {
@@ -302,6 +472,7 @@ export default function FeedCard({
                 color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 overflow: "hidden",
+                ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
               }}>
                 {item.communityAuthorAvatar ? (
                   <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -317,6 +488,7 @@ export default function FeedCard({
               color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0, overflow: "hidden",
+              ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -338,19 +510,11 @@ export default function FeedCard({
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
-              {item.communityTier === "patron" && (
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: "0.52rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#b38238",
-                  background: "rgba(179,130,56,.1)",
-                  border: "1px solid rgba(179,130,56,.25)",
-                  padding: "1px 5px",
-                  lineHeight: 1.6,
-                  flexShrink: 0,
-                }}>Pro</span>
+              {isPro && (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro" style={{ flexShrink: 0 }}>
+                  <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+                  <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
               )}
               <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
               <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
@@ -370,6 +534,7 @@ export default function FeedCard({
                     border: "none",
                     cursor: onTagClick ? "pointer" : "default",
                     flexShrink: 0,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {item.communityTag}
@@ -425,6 +590,11 @@ export default function FeedCard({
                       Weekend Route
                     </span>
                   )}
+                  {item.templateType === "event" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -441,7 +611,7 @@ export default function FeedCard({
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
-                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} clamp={6} />
+                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={handleMentionClick} clamp={6} />
               </div>
             </div>
 
@@ -459,20 +629,41 @@ export default function FeedCard({
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
             )}
 
-            {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
-            {item.galleryImages && item.galleryImages.length >= 1 && (
-              <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
-                {item.galleryImages.map((img: string, i: number) => (
-                  <img
-                    key={i}
-                    src={img}
-                    alt=""
-                    onClick={() => setLightbox(img)}
-                    style={{ height: "200px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
-                    loading="lazy"
-                  />
-                ))}
+            {/* Event details + RSVP */}
+            {item.templateType === "event" && (
+              <div style={{ fontSize: "0.78rem", color: "#7a6f5c", marginBottom: "0.5rem", lineHeight: 1.5 }}>
+                {item.eventDate && (
+                  <div>
+                    📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
+                    {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+                  </div>
+                )}
+                {(item.location || item.city) && (
+                  <div>📍 {[item.location, item.city].filter(Boolean).join(", ")}</div>
+                )}
+                {item.admission && <div>🎟 {item.admission}</div>}
+                {item.organiserName && item.organiserSlug && (
+                  <div>
+                    Organised by{" "}
+                    <a href={`/directory/${item.organiserSlug}`} style={{ color: "#b38238" }}>
+                      {item.organiserName}
+                    </a>
+                  </div>
+                )}
+                {item.ticketUrl && (
+                  <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", display: "inline-block", marginTop: "4px" }}>
+                    Get tickets →
+                  </a>
+                )}
               </div>
+            )}
+            {item.templateType === "event" && item.rsvpEnabled && (
+              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
+            )}
+
+            {/* Gallery carousel — all image-capable templates */}
+            {item.galleryImages && item.galleryImages.length >= 1 && (
+              <GalleryCarousel images={item.galleryImages} onTap={setLightbox} />
             )}
 
             {/* Video embed */}
@@ -612,7 +803,7 @@ export default function FeedCard({
         </article>
 
         {modalOpen && (
-          <CommunityDetailModal item={item} onClose={closeModal} onHashtagClick={onHashtagClick} />
+          <CommunityDetailModal item={item} onClose={closeModal} onMentionClick={handleMentionClick} />
         )}
       </>
     );
@@ -702,7 +893,7 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}
@@ -809,7 +1000,7 @@ export default function FeedCard({
             {item.title}
           </h3>
           {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
               {displayText}
             </p>
           )}
@@ -872,7 +1063,7 @@ export default function FeedCard({
               {item.title}
             </h3>
             {displayText && (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {displayText}
               </p>
             )}
@@ -979,7 +1170,7 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}

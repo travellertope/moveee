@@ -1,12 +1,62 @@
-import { MMKV } from "react-native-mmkv";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const storage = new MMKV({ id: "moveee-store" });
+// In-memory map provides synchronous reads; AsyncStorage provides persistence.
+const mem = new Map<string, string>();
+
+/**
+ * Load all persisted keys into memory. Call once before the app renders
+ * (see App.tsx) so that synchronous reads on startup return correct values.
+ */
+export async function hydrateStorage(): Promise<void> {
+  try {
+    const keys = (await AsyncStorage.getAllKeys()) as string[];
+    if (keys.length) {
+      const pairs = await AsyncStorage.multiGet(keys);
+      for (const [k, v] of pairs) {
+        if (k !== null && v !== null) mem.set(k, v);
+      }
+    }
+  } catch {}
+}
+
+// Drop-in replacement for the MMKV `storage` instance used across the app.
+export const storage = {
+  getString(key: string): string | undefined {
+    return mem.get(key);
+  },
+
+  getNumber(key: string): number | undefined {
+    const v = mem.get(key);
+    if (v === undefined) return undefined;
+    const n = Number(v);
+    return isNaN(n) ? undefined : n;
+  },
+
+  set(key: string, value: string | number | boolean): void {
+    const s = String(value);
+    mem.set(key, s);
+    AsyncStorage.setItem(key, s).catch(() => {});
+  },
+
+  delete(key: string): void {
+    mem.delete(key);
+    AsyncStorage.removeItem(key).catch(() => {});
+  },
+};
 
 const CACHE_META_KEY = "__cache_meta__";
 
+function safeParse<T>(raw: string | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 function getMeta(): Record<string, number> {
-  const raw = storage.getString(CACHE_META_KEY);
-  return raw ? JSON.parse(raw) : {};
+  return safeParse(storage.getString(CACHE_META_KEY), {});
 }
 
 function setMeta(meta: Record<string, number>) {
@@ -25,8 +75,7 @@ export const cache = {
     const meta = getMeta();
     const expiry = meta[key];
     if (!expiry || Date.now() > expiry) return null;
-    const raw = storage.getString(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    return safeParse<T | null>(storage.getString(key), null);
   },
 
   invalidate(key: string) {

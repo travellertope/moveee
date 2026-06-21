@@ -90,6 +90,7 @@ export default async function WalletPage() {
               credits={balance?.credits ?? 0}
               creditsPerGbp={balance?.credits_per_gbp ?? 10}
               entries={history.entries ?? []}
+              isPro={isPatron}
             />
           </div>
 

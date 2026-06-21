@@ -16,6 +16,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_Directory {
 
     /**
+     * Coarse region buckets for the Discover region filter. There is no
+     * dedicated country/region field on culture_directory — only the free-text
+     * _entry_city meta — so regions are resolved by substring-matching city
+     * keywords. Extend this list as new regions are needed; matching is
+     * case-insensitive against _entry_city.
+     */
+    const REGION_CITY_KEYWORDS = array(
+        'nigeria'      => array( 'nigeria', 'lagos', 'abuja', 'ibadan', 'port harcourt', 'kano', 'enugu' ),
+        'ghana'        => array( 'ghana', 'accra', 'kumasi' ),
+        'uk'           => array( 'uk', 'united kingdom', 'london', 'manchester', 'birmingham', 'bristol' ),
+        'usa'          => array( 'usa', 'united states', 'new york', 'los angeles', 'atlanta', 'chicago', 'houston' ),
+        'pan-african'  => array( 'africa', 'pan-african', 'senegal', 'dakar', 'kenya', 'nairobi', 'south africa', 'johannesburg', 'cape town' ),
+    );
+
+    /**
      * Verify the shared bearer secret sent from the Next.js backend.
      *
      * The secret is stored in the WP option `culture_api_secret` and must match
@@ -335,16 +350,15 @@ class Culture_Directory {
      */
     public static function handle_attach_image( WP_REST_Request $request ) {
         $post_id           = (int) $request->get_param( 'post_id' );
-        $image_base64      = $request->get_param( 'image_base64' );
-        $filename          = sanitize_file_name( $request->get_param( 'filename' ) ?: 'directory-image.jpg' );
+        $image_url         = esc_url_raw( $request->get_param( 'image_url' ) ?: '' );
         $image_title       = sanitize_text_field( $request->get_param( 'image_title' ) ?: '' );
         $image_description = sanitize_textarea_field( $request->get_param( 'image_description' ) ?: '' );
         $image_alt         = sanitize_text_field( $request->get_param( 'image_alt' ) ?: '' );
 
-        if ( ! $post_id || ! $image_base64 ) {
+        if ( ! $post_id || ! $image_url ) {
             return new WP_Error(
                 'missing_params',
-                __( 'post_id and image_base64 are required.', 'culture-community' ),
+                __( 'post_id and image_url are required.', 'culture-community' ),
                 array( 'status' => 400 )
             );
         }
@@ -359,89 +373,13 @@ class Culture_Directory {
             );
         }
 
-        // Decode the base64 image data.
-        $image_data = base64_decode( $image_base64, true );
-        if ( false === $image_data ) {
-            return new WP_Error(
-                'invalid_image',
-                __( 'Could not decode base64 image data.', 'culture-community' ),
-                array( 'status' => 400 )
-            );
-        }
-
-        // Upload into the WordPress uploads directory.
-        $upload = wp_upload_bits( $filename, null, $image_data );
-        if ( ! empty( $upload['error'] ) ) {
-            return new WP_Error(
-                'upload_failed',
-                $upload['error'],
-                array( 'status' => 500 )
-            );
-        }
-
-        // Determine MIME type from the filename extension.
-        $mime = wp_check_filetype( $filename );
-
-        // Create the media attachment post.
-        // Use visual metadata when provided so the Visuals library is searchable
-        // by what is visible in the illustration, not the directory entry topic.
-        $att_title = $image_title ?: sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) );
-        $attachment_id = wp_insert_attachment(
-            array(
-                'post_mime_type' => $mime['type'] ?: 'image/jpeg',
-                'post_title'     => $att_title,
-                'post_content'   => $image_description,
-                'post_excerpt'   => $image_alt,
-                'post_status'    => 'inherit',
-            ),
-            $upload['file'],
-            $post_id
-        );
-
-        if ( is_wp_error( $attachment_id ) ) {
-            return new WP_Error(
-                'attachment_failed',
-                $attachment_id->get_error_message(),
-                array( 'status' => 500 )
-            );
-        }
-
-        // Generate image size metadata (thumbnails etc.).
-        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-        $meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
-        wp_update_attachment_metadata( $attachment_id, $meta );
-
-        // Set alt text (stored as post meta, separate from the attachment post).
-        if ( $image_alt ) {
-            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $image_alt );
-        }
-
-        // Mark as a Culture Directory visual so it persists in /visuals even if
-        // the parent directory entry is later deleted. Store enough entry context
-        // (slug, title, type) so the gallery can display the card without needing
-        // the parent post to still exist.
-        $entry_type = '';
-        if ( taxonomy_exists( 'culture_dir_type' ) ) {
-            $terms = wp_get_post_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
-            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-                $entry_type = $terms[0];
-            }
-        }
-
-        update_post_meta( $attachment_id, '_culture_dir_visual',      '1' );
-        update_post_meta( $attachment_id, '_culture_dir_entry_slug',  $post->post_name );
-        update_post_meta( $attachment_id, '_culture_dir_entry_title', $post->post_title );
-        update_post_meta( $attachment_id, '_culture_dir_entry_type',  $entry_type );
-
-        // Set as the post's featured image.
-        set_post_thumbnail( $post_id, $attachment_id );
+        // Store the R2 URL as post meta — no WordPress media attachment needed.
+        update_post_meta( $post_id, '_culture_dir_image_url', $image_url );
+        update_post_meta( $post_id, '_culture_dir_image_alt', $image_alt );
 
         return rest_ensure_response( array(
-            'success'       => true,
-            'attachment_id' => $attachment_id,
-            'url'           => $upload['url'],
+            'success' => true,
+            'url'     => $image_url,
         ) );
     }
 
@@ -493,6 +431,28 @@ class Culture_Directory {
      * Returns a list of matching directory entries for post-composer autocomplete.
      * Public endpoint — no auth needed.
      */
+    /**
+     * Reads a single labelled value out of the generic `_about_fields` JSON
+     * blob (format: [{label, value}], used by the mobile DirectoryDetailScreen
+     * "About" section) — e.g. get_about_field( $id, 'Author' ) for book entries.
+     */
+    private static function get_about_field( $post_id, $label ) {
+        $raw = get_post_meta( $post_id, '_about_fields', true );
+        if ( ! $raw ) {
+            return '';
+        }
+        $fields = json_decode( $raw, true );
+        if ( ! is_array( $fields ) ) {
+            return '';
+        }
+        foreach ( $fields as $field ) {
+            if ( isset( $field['label'], $field['value'] ) && $field['label'] === $label ) {
+                return $field['value'];
+            }
+        }
+        return '';
+    }
+
     public static function handle_search( WP_REST_Request $request ) {
         $q    = sanitize_text_field( $request->get_param( 'q' ) );
         $type = sanitize_key( $request->get_param( 'type' ) );
@@ -539,10 +499,195 @@ class Culture_Directory {
                 'type'      => $type_slug,
                 'thumbnail' => $thumb ?: null,
                 'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                'author'    => self::get_about_field( $post->ID, 'Author' ),
             );
         }
 
         return rest_ensure_response( $results );
+    }
+
+    // ── Discover: paginated browse with filters ──────────────────────────────
+
+    /**
+     * GET /culture/v1/directory/browse?q=&type=&region=&sort=&page=&per_page=
+     *
+     * Powers the Discover screen's "Recently Added" rail + 2-column grid, plus
+     * the filter sheet's live "Show N entries" count (via the `total` field).
+     * Public endpoint — no auth needed.
+     *
+     * - `type` accepts a comma-separated list of culture_dir_type slugs (multi-select).
+     * - `region` accepts a single slug from REGION_CITY_KEYWORDS, matched against
+     *   _entry_city via substring (case-insensitive).
+     * - `sort` is one of: relevant (title match relevance when `q` set, else recent),
+     *   recent (post_date desc), rating (_average_rating desc), trending
+     *   (_community_review_count desc), random (seeded shuffle — pass the same
+     *   `seed` back on subsequent pages to keep pagination stable within a
+     *   single Discover visit; a new seed should be generated client-side on
+     *   each fresh visit to the screen).
+     */
+    public static function handle_browse( WP_REST_Request $request ) {
+        global $wpdb;
+
+        $q        = sanitize_text_field( $request->get_param( 'q' ) );
+        $types    = array_filter( array_map( 'sanitize_key', explode( ',', (string) $request->get_param( 'type' ) ) ) );
+        $region   = sanitize_key( $request->get_param( 'region' ) );
+        $sort     = sanitize_key( $request->get_param( 'sort' ) ) ?: 'relevant';
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ?: 20 ) );
+
+        $args = array(
+            'post_type'      => 'culture_directory',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+        );
+
+        if ( $types ) {
+            $args['tax_query'] = array( array(
+                'taxonomy' => 'culture_dir_type',
+                'field'    => 'slug',
+                'terms'    => $types,
+            ) );
+        }
+
+        $title_filter = null;
+        if ( $q !== '' ) {
+            $title_filter = function( $where ) use ( $q ) {
+                global $wpdb;
+                $like   = '%' . $wpdb->esc_like( $q ) . '%';
+                $where .= $wpdb->prepare( " AND {$wpdb->posts}.post_title LIKE %s", $like );
+                return $where;
+            };
+            add_filter( 'posts_where', $title_filter );
+        }
+
+        // Region: resolve matching post IDs via a single raw-SQL lookup against
+        // _entry_city before passing to WP_Query, same pattern documented in
+        // CLAUDE.md for meta_query OR-branch slowness — avoids a meta_query join.
+        if ( $region && isset( self::REGION_CITY_KEYWORDS[ $region ] ) ) {
+            $keywords  = self::REGION_CITY_KEYWORDS[ $region ];
+            $like_sql  = array();
+            $like_args = array();
+            foreach ( $keywords as $kw ) {
+                $like_sql[]  = 'meta_value LIKE %s';
+                $like_args[] = '%' . $wpdb->esc_like( $kw ) . '%';
+            }
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_entry_city' AND (" . implode( ' OR ', $like_sql ) . ')';
+            $matching_ids = $wpdb->get_col( $wpdb->prepare( $sql, $like_args ) );
+            $args['post__in'] = $matching_ids ?: array( 0 );
+        }
+
+        $random_filter = null;
+        $seed          = 0;
+        if ( $sort === 'recent' || ( $sort === 'relevant' && $q === '' ) ) {
+            $args['orderby'] = 'date';
+            $args['order']   = 'DESC';
+        } elseif ( $sort === 'rating' ) {
+            $args['meta_key'] = '_average_rating';
+            $args['orderby']  = 'meta_value_num';
+            $args['order']    = 'DESC';
+        } elseif ( $sort === 'trending' ) {
+            $args['meta_key'] = '_community_review_count';
+            $args['orderby']  = 'meta_value_num';
+            $args['order']    = 'DESC';
+        } elseif ( $sort === 'random' ) {
+            // Seeded MySQL RAND() — a single seed value keeps ordering stable
+            // across paginated requests within one Discover visit, while a
+            // fresh seed (generated client-side per screen visit) reshuffles
+            // the grid on the next visit.
+            $seed = (int) $request->get_param( 'seed' ) ?: wp_rand( 1, PHP_INT_MAX );
+            $random_filter = function( $orderby ) use ( $seed, $wpdb ) {
+                return $wpdb->prepare( 'RAND(%d)', $seed );
+            };
+            add_filter( 'posts_orderby', $random_filter );
+        } else {
+            $args['orderby'] = 'title';
+            $args['order']   = 'ASC';
+        }
+
+        $args['update_post_term_cache'] = true;
+        $args['update_post_meta_cache'] = true;
+
+        $query = new WP_Query( $args );
+        if ( $title_filter ) {
+            remove_filter( 'posts_where', $title_filter );
+        }
+        if ( $random_filter ) {
+            remove_filter( 'posts_orderby', $random_filter );
+        }
+
+        $post_ids = wp_list_pluck( $query->posts, 'ID' );
+
+        // Batch-prime the meta cache for all posts in one query instead of
+        // 3 × get_post_meta() per post (N+1). WP_Query's built-in
+        // update_post_meta_cache only fires for the main query object —
+        // calling update_meta_cache explicitly ensures it for REST contexts.
+        if ( $post_ids ) {
+            update_meta_cache( 'post', $post_ids );
+        }
+
+        // Batch-load thumbnail attachment URLs (avoids N per-post queries for
+        // _thumbnail_id → attachment URL resolution).
+        $thumb_map = array();
+        if ( $post_ids ) {
+            $thumb_ids_raw = array();
+            foreach ( $post_ids as $pid ) {
+                $tid = get_post_meta( $pid, '_thumbnail_id', true );
+                if ( $tid ) {
+                    $thumb_ids_raw[ $pid ] = (int) $tid;
+                }
+            }
+            if ( $thumb_ids_raw ) {
+                $att_ids     = array_unique( array_values( $thumb_ids_raw ) );
+                $placeholder = implode( ',', array_fill( 0, count( $att_ids ), '%d' ) );
+                $att_rows    = $wpdb->get_results( $wpdb->prepare(
+                    "SELECT ID, guid FROM {$wpdb->posts} WHERE ID IN ($placeholder)",
+                    $att_ids
+                ), OBJECT_K );
+                foreach ( $thumb_ids_raw as $pid => $att_id ) {
+                    if ( isset( $att_rows[ $att_id ] ) ) {
+                        $thumb_map[ $pid ] = $att_rows[ $att_id ]->guid;
+                    }
+                }
+            }
+        }
+
+        $today = current_time( 'Y-m-d' );
+        $entries = array();
+
+        foreach ( $query->posts as $post ) {
+            $type_terms     = get_the_terms( $post->ID, 'culture_dir_type' );
+            $type_slug      = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
+            $interest_terms = get_the_terms( $post->ID, 'culture_interest' );
+            $subtype        = ( $interest_terms && ! is_wp_error( $interest_terms ) ) ? $interest_terms[0]->name : '';
+
+            $excerpt = $post->post_excerpt
+                ? wp_trim_words( $post->post_excerpt, 20 )
+                : wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 );
+
+            $entries[] = array(
+                'id'            => $post->ID,
+                'title'         => $post->post_title,
+                'slug'          => $post->post_name,
+                'type'          => $type_slug,
+                'subtype'       => $subtype,
+                'excerpt'       => $excerpt,
+                'thumbnail'     => isset( $thumb_map[ $post->ID ] ) ? $thumb_map[ $post->ID ] : null,
+                'city'          => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
+                'reviewCount'   => (int) get_post_meta( $post->ID, '_community_review_count', true ),
+                'dateAdded'     => $post->post_date,
+                'isNew'         => substr( $post->post_date, 0, 10 ) === $today,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'entries' => $entries,
+            'total'   => (int) $query->found_posts,
+            'page'    => $page,
+            'perPage' => $per_page,
+            'seed'    => $seed ?: null,
+        ) );
     }
 
     // ── Phase 3: Quick-create stub ───────────────────────────────────────────
@@ -561,6 +706,7 @@ class Culture_Directory {
         $lat          = (float) $request->get_param( 'location_lat' );
         $lng          = (float) $request->get_param( 'location_lng' );
         $city         = sanitize_text_field( $request->get_param( 'city' ) );
+        $author       = sanitize_text_field( $request->get_param( 'author' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -591,18 +737,22 @@ class Culture_Directory {
         if ( $city ) {
             update_post_meta( $post_id, '_entry_city', $city );
         }
+        if ( $author ) {
+            update_post_meta( $post_id, '_about_fields', wp_json_encode( array( array( 'label' => 'Author', 'value' => $author ) ) ) );
+        }
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
-            Culture_Gamification::award_reputation( $user_id, 15, 'directory_entry', $post_id );
-            Culture_Gamification::award_credits( $user_id, 2, 'directory_entry', $post_id );
+            Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'directory_entry' ), 'directory_entry', $post_id );
+            Culture_Gamification::award_credits( $user_id, Culture_Gamification::get_credit_bonus( 'directory_entry' ), 'directory_entry', $post_id );
         }
 
         return rest_ensure_response( array(
-            'id'    => $post_id,
-            'slug'  => get_post_field( 'post_name', $post_id ),
-            'title' => $title,
-            'city'  => $city,
+            'id'     => $post_id,
+            'slug'   => get_post_field( 'post_name', $post_id ),
+            'title'  => $title,
+            'city'   => $city,
+            'author' => $author,
         ) );
     }
 

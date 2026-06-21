@@ -177,4 +177,178 @@ export function useArticle(slug: string) {
   return { article, loading, error };
 }
 
+// ── Issues ────────────────────────────────────────────────────────────────────
+
+export interface MagazineIssue {
+  id: string;
+  number: number;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  articleCount: number;
+  date: string;
+}
+
+const ISSUES_CACHE_KEY = "magazine_issues";
+
+// WordPress REST: custom endpoint at /wp-json/culture/v1/mobile/magazine/issues
+// Falls back to placeholder data if the endpoint isn't available yet.
+const ISSUES_URL = `${WP_URL}/wp-json/culture/v1/mobile/magazine/issues`;
+
+const PLACEHOLDER_ISSUES: MagazineIssue[] = [
+  { id: "7", number: 7, title: "The Maker Edition", description: "9 articles exploring African makers, craft culture, and the economics of creation.", articleCount: 9, date: "June 2026" },
+  { id: "6", number: 6, title: "The Sound Issue", articleCount: 12, date: "May 2026" },
+  { id: "5", number: 5, title: "Cities & Culture", articleCount: 8, date: "Apr 2026" },
+  { id: "4", number: 4, title: "Fashion Forward", articleCount: 10, date: "Mar 2026" },
+  { id: "3", number: 3, title: "The Film Edit", articleCount: 7, date: "Feb 2026" },
+  { id: "2", number: 2, title: "Food & Identity", articleCount: 9, date: "Jan 2026" },
+  { id: "1", number: 1, title: "Origins", articleCount: 11, date: "Dec 2025" },
+];
+
+export function useIssues() {
+  const [issues, setIssues] = useState<MagazineIssue[]>(() => cache.get<MagazineIssue[]>(ISSUES_CACHE_KEY) ?? PLACEHOLDER_ISSUES);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.get<MagazineIssue[]>(ISSUES_URL, false);
+      setIssues(data);
+      cache.set(ISSUES_CACHE_KEY, data, TTL.MEDIUM);
+    } catch {
+      // Endpoint may not exist yet — silently fall back to placeholder data
+      if (issues.length === 0) {
+        setIssues(PLACEHOLDER_ISSUES);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [issues.length]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const refresh = useCallback(async () => {
+    await load();
+  }, [load]);
+
+  return { issues, loading, error, refresh };
+}
+
+// ── Author archive ────────────────────────────────────────────────────────────
+
+export interface WPUser {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  avatar_urls: Record<string, string>;
+  link: string;
+}
+
+export function useAuthorArchive(authorSlug: string) {
+  const [author, setAuthor] = useState<WPUser | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const users = await api.get<WPUser[]>(`${WP_URL}/wp-json/wp/v2/users?slug=${encodeURIComponent(authorSlug)}`, false);
+        if (cancelled) return;
+        const user = users[0] ?? null;
+        setAuthor(user);
+        if (!user) return;
+        const posts = await api.get<WPPost[]>(`${WP_POSTS}?author=${user.id}&per_page=10&page=1&_embed=wp:featuredmedia,wp:term,author`, false);
+        if (cancelled) return;
+        setArticles(posts.map(mapPost));
+        setHasMore(posts.length === 10);
+        setPage(1);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authorSlug]);
+
+  const loadMore = useCallback(async () => {
+    if (!author || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const posts = await api.get<WPPost[]>(`${WP_POSTS}?author=${author.id}&per_page=10&page=${nextPage}&_embed=wp:featuredmedia,wp:term,author`, false);
+      setArticles((prev) => [...prev, ...posts.map(mapPost)]);
+      setHasMore(posts.length === 10);
+      setPage(nextPage);
+    } catch {} finally { setLoadingMore(false); }
+  }, [author, page, hasMore, loadingMore]);
+
+  return { author, articles, loading, loadingMore, hasMore, error, loadMore };
+}
+
+// ── Category archive ──────────────────────────────────────────────────────────
+
+export function useCategoryArchive(categorySlug: string) {
+  const [categoryName, setCategoryName] = useState(categorySlug);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const cats = await api.get<Array<{ id: number; name: string; slug: string }>>(`${WP_URL}/wp-json/wp/v2/categories?slug=${encodeURIComponent(categorySlug)}`, false);
+        if (cancelled) return;
+        const cat = cats[0];
+        if (!cat) { setError("Category not found"); return; }
+        setCategoryId(cat.id);
+        setCategoryName(cat.name);
+        const posts = await api.get<WPPost[]>(`${WP_POSTS}?categories=${cat.id}&per_page=10&page=1&_embed=wp:featuredmedia,wp:term,author`, false);
+        if (cancelled) return;
+        setArticles(posts.map(mapPost));
+        setHasMore(posts.length === 10);
+        setPage(1);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [categorySlug]);
+
+  const loadMore = useCallback(async () => {
+    if (!categoryId || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const posts = await api.get<WPPost[]>(`${WP_POSTS}?categories=${categoryId}&per_page=10&page=${nextPage}&_embed=wp:featuredmedia,wp:term,author`, false);
+      setArticles((prev) => [...prev, ...posts.map(mapPost)]);
+      setHasMore(posts.length === 10);
+      setPage(nextPage);
+    } catch {} finally { setLoadingMore(false); }
+  }, [categoryId, page, hasMore, loadingMore]);
+
+  return { categoryName, articles, loading, loadingMore, hasMore, error, loadMore };
+}
+
 export { stripTags, decodeEntities };

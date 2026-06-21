@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { api, MOBILE_API } from "../../api/client";
 import { cache, TTL } from "../../store/storage";
+import { decodeHtml } from "../../utils/decodeHtml";
 import type { FeedItem } from "../../types";
 
 const CACHE_KEY = "unified_feed";
@@ -9,6 +10,18 @@ const PAGE_SIZE = 20;
 interface FeedResponse {
   items: FeedItem[];
   hasMore: boolean;
+}
+
+function decodeItem(item: FeedItem): FeedItem {
+  return {
+    ...item,
+    title:         decodeHtml(item.title),
+    excerpt:       decodeHtml(item.excerpt),
+    body:          decodeHtml(item.body),
+    source:        decodeHtml(item.source),
+    ogTitle:       decodeHtml(item.ogTitle),
+    ogDescription: decodeHtml(item.ogDescription),
+  };
 }
 
 export function useUnifiedFeed() {
@@ -28,8 +41,9 @@ export function useUnifiedFeed() {
       const data = await api.get<FeedResponse>(
         `${MOBILE_API}/feed?page=${pageNum}&per_page=${PAGE_SIZE}`
       );
+      const decoded = data.items.map(decodeItem);
       setItems((prev) => {
-        const next = replace ? data.items : [...prev, ...data.items];
+        const next = replace ? decoded : [...prev, ...decoded];
         if (replace) cache.set(CACHE_KEY, next, TTL.SHORT);
         return next;
       });
