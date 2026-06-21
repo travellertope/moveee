@@ -6,11 +6,15 @@
  * and editorially rewrite the most culturally relevant stories, saving them
  * to WordPress as pulse_story posts.
  *
- * GET  — invoked by Vercel cron (Authorization: Bearer {PULSE_REFRESH_SECRET}).
+ * GET  — invoked by the external cron-job.org schedule ("moveee - pulse refresh"),
+ *        Authorization: Bearer {PULSE_REFRESH_SECRET} or {CRON_SECRET}. cron-job.org
+ *        is the live scheduler for this route, not Vercel cron — there is no
+ *        vercel.json schedule. NOTE: as of 2026-06-21 this job shows "Inactive" on
+ *        the cron-job.org dashboard (likely auto-disabled after repeated failures —
+ *        check its 30s request timeout against this route's maxDuration below).
  * POST — invoked manually from the admin panel.
  *
  * Protected by PULSE_REFRESH_SECRET query param or Authorization header.
- * Configured in vercel.json to run daily at 08:00 UTC.
  */
 
 import { NextRequest, NextResponse } from "next/server";

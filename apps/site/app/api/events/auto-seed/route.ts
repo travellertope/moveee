@@ -2,10 +2,11 @@
  * GET/POST /api/events/auto-seed
  *
  * Cron-triggered seeder. Auth: Authorization: Bearer {CRON_SECRET}.
- * GET  — invoked by Vercel cron with default citiesPerRun.
+ * GET  — invoked by the external cron-job.org schedule ("moveee - events")
+ *        with default citiesPerRun. cron-job.org is the live scheduler for
+ *        this route, not Vercel cron — there is no vercel.json schedule.
  * POST — invoked manually; accepts { citiesPerRun } in request body.
- * Runs daily at 02:00 UTC (vercel.json). Rotates through target cities
- * so every city is covered across the week.
+ * Rotates through target cities so every city is covered over time.
  */
 
 import { NextRequest, NextResponse } from "next/server";
