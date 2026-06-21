@@ -227,7 +227,6 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
 }
 
 function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
-  const [activeIdx, setActiveIdx] = useState(0);
   const count = images.length;
 
   if (count === 0) return null;
@@ -246,71 +245,38 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
     );
   }
 
+  // Multi-image strip — fixed-size square thumbnails, several visible at once
+  // (mirrors apps/mobile's GalleryStrip rather than a one-slide-per-view carousel).
   return (
-    <div style={{ marginBottom: "0.6rem", border: "1px solid #e8e2d8", borderRadius: "8px", overflow: "hidden" }}>
-      {/* Scrollable carousel row */}
-      <div
-        className="hide-scrollbar"
-        style={{
-          display: "flex",
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-        }}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          const idx = Math.round(el.scrollLeft / el.clientWidth);
-          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
-        }}
-      >
-        {images.map((img, i) => (
-          <img
-            key={i}
-            src={img}
-            alt=""
-            onClick={() => onTap(img)}
-            style={{
-              flex: "0 0 100%",
-              width: "100%",
-              height: "260px",
-              objectFit: "cover",
-              display: "block",
-              scrollSnapAlign: "start",
-              cursor: "zoom-in",
-            }}
-            loading="lazy"
-          />
-        ))}
-      </div>
-      {/* Dots + counter */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "6px 12px", gap: "6px", position: "relative",
-        borderTop: "1px solid #e8e2d8", backgroundColor: "var(--paper, #f3ece0)",
-      }}>
-        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-          {images.map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: i === activeIdx ? "16px" : "6px",
-                height: "6px",
-                borderRadius: "3px",
-                backgroundColor: i === activeIdx ? "var(--ochre, #b38238)" : "#c8bfaf",
-                transition: "width 0.2s ease",
-              }}
-            />
-          ))}
-        </div>
-        <span style={{
-          position: "absolute", right: "12px",
-          fontFamily: "var(--font-mono, monospace)",
-          fontSize: "10px", color: "#9e9e9e",
-        }}>
-          {activeIdx + 1} / {count}
-        </span>
-      </div>
+    <div
+      className="hide-scrollbar"
+      style={{
+        display: "flex",
+        gap: "6px",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        marginBottom: "0.6rem",
+      }}
+    >
+      {images.map((img, i) => (
+        <img
+          key={i}
+          src={img}
+          alt=""
+          onClick={() => onTap(img)}
+          style={{
+            height: "200px",
+            width: "200px",
+            objectFit: "cover",
+            display: "block",
+            flexShrink: 0,
+            borderRadius: "8px",
+            border: "1px solid #e8e2d8",
+            cursor: "zoom-in",
+          }}
+          loading="lazy"
+        />
+      ))}
     </div>
   );
 }
