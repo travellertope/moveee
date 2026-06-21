@@ -63,25 +63,6 @@ class Culture_REST_API {
      * Register REST API routes.
      */
     public static function register_routes() {
-        // QR Code check-in endpoint for Chapter Leaders.
-        register_rest_route( 'culture/v1', '/check-in', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_checkin' ),
-            'permission_callback' => array( __CLASS__, 'checkin_permission' ),
-            'args'                => array(
-                'user_id'  => array(
-                    'required'          => true,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ),
-                'event_id' => array(
-                    'required'          => true,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ),
-            ),
-        ) );
-
         // Paystack webhook endpoint (public, verified by signature).
         register_rest_route( 'culture/v1', '/paystack-webhook', array(
             'methods'             => 'POST',
@@ -2085,93 +2066,6 @@ class Culture_REST_API {
     }
 
     /**
-     * Permission check: only Chapter Leaders and admins can check in users.
-     */
-    public static function checkin_permission( $request ) {
-        return current_user_can( 'culture_scan_qr' );
-    }
-
-    /**
-     * Handle a QR code check-in.
-     */
-    public static function handle_checkin( $request ) {
-        global $wpdb;
-
-        $user_id  = $request->get_param( 'user_id' );
-        $event_id = $request->get_param( 'event_id' );
-
-        // Validate user exists.
-        $user = get_userdata( $user_id );
-        if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'culture-community' ), array( 'status' => 404 ) );
-        }
-
-        // Validate event exists and is published.
-        $event = get_post( $event_id );
-        if ( ! $event || 'culture_event' !== $event->post_type || 'publish' !== $event->post_status ) {
-            return new WP_Error( 'invalid_event', __( 'Event not found.', 'culture-community' ), array( 'status' => 404 ) );
-        }
-
-
-        $table = $wpdb->prefix . 'culture_attendance';
-
-        // Check for duplicate check-in.
-        $existing = $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM {$table} WHERE user_id = %d AND event_id = %d AND status = 'checked_in'",
-            $user_id,
-            $event_id
-        ) );
-
-        if ( $existing ) {
-            return new WP_Error( 'already_checked_in', __( 'User already checked in.', 'culture-community' ), array( 'status' => 409 ) );
-        }
-
-        // Update existing RSVP or create new record.
-        $rsvp = $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM {$table} WHERE user_id = %d AND event_id = %d AND status = 'rsvp'",
-            $user_id,
-            $event_id
-        ) );
-
-        if ( $rsvp ) {
-            $wpdb->update(
-                $table,
-                array(
-                    'status'       => 'checked_in',
-                    'checkin_time' => current_time( 'mysql' ),
-                ),
-                array( 'id' => $rsvp ),
-                array( '%s', '%s' ),
-                array( '%d' )
-            );
-        } else {
-            $wpdb->insert(
-                $table,
-                array(
-                    'user_id'      => $user_id,
-                    'event_id'     => $event_id,
-                    'status'       => 'checked_in',
-                    'checkin_time' => current_time( 'mysql' ),
-                ),
-                array( '%d', '%d', '%s', '%s' )
-            );
-        }
-
-        // Award gamification points and evaluate badges.
-        Culture_Gamification::award_points( $user_id, 'event_checkin' );
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'message' => __( 'Check-in successful.', 'culture-community' ),
-            'user'    => array(
-                'id'           => $user_id,
-                'display_name' => $user->display_name,
-                'points'       => Culture_Gamification::get_points( $user_id ),
-            ),
-        ) );
-    }
-
-    /**
      * Handle newsletter unsubscribe request from the Next.js frontend.
      *
      * Validates the HMAC token (generated when the email was sent) then removes
@@ -2353,11 +2247,6 @@ class Culture_REST_API {
         ) );
     }
 
-    /**
-     * Return list of published chapters for the Next.js registration form.
-     *
-     * @return WP_REST_Response
-     */
     /**
      * Authenticate a user via WordPress credentials.
      * Returns a minimal user profile — never the password hash.
@@ -4158,7 +4047,7 @@ class Culture_REST_API {
 
     /**
      * GET /culture/v1/user/profile?user_id=X
-     * Returns the full live user profile (points, badges, chapters, etc.).
+     * Returns the full live user profile (points, badges, etc.).
      */
     public static function handle_get_user_profile( $request ) {
         $user_id = $request->get_param( 'user_id' );

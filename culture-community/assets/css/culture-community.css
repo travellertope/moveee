@@ -118,7 +118,6 @@
     opacity: 0.9;
 }
 
-.culture-passport__chapters,
 .culture-passport__qr,
 .culture-passport__badges,
 .culture-passport__upgrade {
@@ -126,7 +125,6 @@
     border-bottom: 1px solid var(--culture-border);
 }
 
-.culture-passport__chapters h3,
 .culture-passport__qr h3,
 .culture-passport__badges h3 {
     margin: 0 0 12px;
@@ -134,15 +132,6 @@
     color: var(--culture-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
-}
-
-.culture-passport__chapter {
-    margin-bottom: 6px;
-}
-
-.culture-passport__chapter-label {
-    font-weight: 600;
-    margin-right: 4px;
 }
 
 .culture-passport__qr-code {
@@ -370,13 +359,6 @@
     font-size: 14px;
     resize: vertical;
     margin-bottom: 8px;
-}
-
-/* ── Chapter Map ── */
-.culture-chapter-map {
-    border-radius: var(--culture-radius);
-    box-shadow: var(--culture-shadow);
-    overflow: hidden;
 }
 
 /* ── Notices ── */
@@ -852,172 +834,6 @@
     max-width: 960px;
     margin: 0 auto;
     padding: 30px 20px;
-}
-
-/* ── Single Chapter Template ── */
-.culture-single-chapter__thumbnail {
-    margin-bottom: 24px;
-    border-radius: var(--culture-radius);
-    overflow: hidden;
-}
-
-.culture-single-chapter__thumbnail img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.culture-single-chapter__title {
-    margin: 0 0 12px;
-    font-size: 32px;
-}
-
-.culture-single-chapter__meta {
-    display: flex;
-    gap: 20px;
-    color: var(--culture-muted);
-    font-size: 14px;
-    margin-bottom: 16px;
-}
-
-.culture-single-chapter__interests {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-
-.culture-single-chapter__interest-tag {
-    display: inline-block;
-    padding: 4px 12px;
-    background: var(--culture-light);
-    border-radius: 20px;
-    font-size: 12px;
-    color: var(--culture-text);
-}
-
-.culture-single-chapter__content {
-    margin-bottom: 30px;
-    font-size: 16px;
-    line-height: 1.7;
-}
-
-.culture-single-chapter__map-section {
-    margin-bottom: 30px;
-}
-
-.culture-single-chapter__map-section h2 {
-    font-size: 20px;
-    margin-bottom: 12px;
-}
-
-.culture-single-chapter__map {
-    border-radius: var(--culture-radius);
-    box-shadow: var(--culture-shadow);
-    overflow: hidden;
-}
-
-.culture-single-chapter__events {
-    margin-bottom: 30px;
-}
-
-.culture-single-chapter__events h2 {
-    font-size: 20px;
-    margin-bottom: 16px;
-}
-
-/* ── Archive Chapter Template ── */
-.culture-archive-chapter__header {
-    margin-bottom: 30px;
-}
-
-.culture-archive-chapter__header h1 {
-    margin: 0 0 8px;
-    font-size: 32px;
-}
-
-.culture-archive-chapter__intro {
-    color: var(--culture-muted);
-    font-size: 16px;
-}
-
-.culture-archive-chapter__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-}
-
-.culture-archive-chapter__card {
-    background: #fff;
-    border-radius: var(--culture-radius);
-    box-shadow: var(--culture-shadow);
-    overflow: hidden;
-    transition: box-shadow 0.2s;
-}
-
-.culture-archive-chapter__card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-
-.culture-archive-chapter__thumb img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    display: block;
-}
-
-.culture-archive-chapter__body {
-    padding: 20px;
-}
-
-.culture-archive-chapter__title {
-    margin: 0 0 8px;
-    font-size: 20px;
-}
-
-.culture-archive-chapter__title a {
-    color: var(--culture-text);
-    text-decoration: none;
-}
-
-.culture-archive-chapter__meta {
-    display: flex;
-    gap: 16px;
-    font-size: 13px;
-    color: var(--culture-muted);
-    margin-bottom: 10px;
-}
-
-.culture-archive-chapter__interests {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-}
-
-.culture-archive-chapter__tag {
-    display: inline-block;
-    padding: 2px 10px;
-    background: var(--culture-light);
-    border-radius: 12px;
-    font-size: 11px;
-}
-
-.culture-archive-chapter__excerpt {
-    font-size: 14px;
-    color: var(--culture-text);
-    margin-bottom: 16px;
-}
-
-.culture-archive-chapter__pagination {
-    margin-top: 30px;
-    text-align: center;
-}
-
-.culture-archive-chapter__empty {
-    text-align: center;
-    padding: 40px;
-    color: var(--culture-muted);
 }
 
 /* ── Single Event Template ── */

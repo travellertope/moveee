@@ -12,7 +12,7 @@ get_header();
     <header class="culture-archive-event__header">
         <h1><?php esc_html_e( 'Events', 'culture-community' ); ?></h1>
         <p class="culture-archive-event__intro">
-            <?php esc_html_e( 'Discover upcoming cultural events in your chapter and beyond.', 'culture-community' ); ?>
+            <?php esc_html_e( 'Discover upcoming cultural events near you and beyond.', 'culture-community' ); ?>
         </p>
     </header>
 
@@ -21,11 +21,9 @@ get_header();
             <?php while ( have_posts() ) : the_post();
                 $event_id    = get_the_ID();
                 $event_date  = get_post_meta( $event_id, '_culture_event_date', true );
-                $chapter_id  = get_post_meta( $event_id, '_culture_chapter_id', true );
                 $is_physical = get_post_meta( $event_id, '_culture_is_physical', true );
                 $capacity    = get_post_meta( $event_id, '_culture_capacity', true );
 
-                $chapter_name = $chapter_id ? get_the_title( $chapter_id ) : '';
                 $formatted_date = $event_date ? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $event_date ) ) : '';
 
                 $interests = get_the_terms( $event_id, 'culture_interest' );
@@ -58,12 +56,6 @@ get_header();
                         </h2>
 
                         <div class="culture-archive-event__meta">
-                            <?php if ( $chapter_name ) : ?>
-                                <span class="culture-archive-event__chapter">
-                                    <span class="dashicons dashicons-location-alt"></span>
-                                    <?php echo esc_html( $chapter_name ); ?>
-                                </span>
-                            <?php endif; ?>
                             <?php if ( $capacity ) : ?>
                                 <span class="culture-archive-event__capacity">
                                     <?php printf( esc_html__( 'Capacity: %d', 'culture-community' ), (int) $capacity ); ?>

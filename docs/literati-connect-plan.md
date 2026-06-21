@@ -1,6 +1,6 @@
 # Literati Connect & House Fellowship — Full Planning & Implementation Spec
 
-Status: **Phases 1–3 complete end-to-end (backend + mobile + web). Phase 4 next.**
+Status: **Phases 1–5 complete end-to-end (backend + mobile + web).**
 Ground rules (§7) and conflict resolution (§8) are now fully specified
 (added 2026-06-21) as Phase 6 — see §9 for where they sit in build order.
 Not yet built.
@@ -38,15 +38,65 @@ mobile app or rely on the host's manual check-in fallback — plus the same
 manual check-in modal and attendance/streak row, wired into
 `app/cluster/[id]/page.tsx` alongside `ClusterElection`.
 
-**Phase 4 (Rewards & notifications) — not started, up next.** Reward wiring
-(`cluster_checked_in`/`cluster_host_served`/`literati_connect_attended` action
-keys), two badges (`cluster_regular`, `city_convener`), cron jobs
-(`culture_sweep_literati_attendance`, `culture_award_cluster_host_service`),
-five new notification types with icon-map/deep-link updates across all three
-frontend icon maps (see the main CLAUDE.md "Notification touchpoint audit"
-section for why there's no shared source of truth for those).
+**Phase 4 (Rewards & notifications) — done.** Reward wiring: `cluster_checked_in`
+(`Culture_Clusters::check_in()` calls `award_points()` on a genuine new
+check-in only, not the `alreadyCheckedIn` early-return path) and
+`cluster_host_served` (new monthly cron, see below) added to both
+`Culture_Gamification::POINTS`/`::CREDIT_BONUSES`. Two new badges:
+`cluster_regular` (trigger `cluster_checkin_streak`, threshold 8, reads
+`Culture_Clusters::get_checkin_streak()`) and `city_convener` (trigger
+`cluster_host_consecutive_months`, threshold 3, reads the new
+`Culture_Clusters::get_host_consecutive_months()`, which walks distinct
+year-month buckets in the credit ledger). Two new cron jobs in
+`class-culture-cron.php`: `culture_award_cluster_host_service` (monthly —
+required adding a custom `'monthly'` interval to `add_schedules()`, since WP
+core has no built-in monthly schedule; awards each active cluster's current
+host once per calendar month, idempotency checked via a ledger query scoped
+to `source = 'cluster_host_served' AND source_id = $cluster_id AND
+created_at >= ` start of month, not `ledger_has_entry()` which has no time
+window) and `culture_send_cluster_checkin_reminders` (daily — matches
+`_cluster_meeting_day` against today's day name, notifies every active
+member of a matching cluster). One new notification type,
+`cluster_checkin_reminder`, registered in `Culture_Notifications::TYPES` with
+icon-map entries added across all three frontend files and a deep-link case
+in mobile's `openNotification()` (routes to `ClusterScreen`, same as the
+other four cluster types — all four of those were already fully wired in
+Phases 1–3, confirmed during this pass).
 
-**Phase 5 (Literati Connect integration + feed surfacing) — not started.**
+**Phase 5 (Literati Connect integration + feed surfacing) — done.** Closed the
+`literati_connect_attended` gap flagged above: `literati_connect_attended`
+added to both `Culture_Gamification::POINTS` (20) and `::CREDIT_BONUSES` (3).
+New daily cron `culture_sweep_literati_attendance`
+(`Culture_Cron::sweep_literati_attendance()`, `HOOK_LITERATI_ATTENDANCE`)
+queries `culture_event` posts flagged `_culture_event_is_literati` (the §1
+editorial-CPT meta flag — already registered/exposed via REST in
+`class-culture-post-types.php`) whose `_culture_event_date` fell in the last
+48h, cross-references confirmed rows in `wp_culture_event_rsvp` by
+`event_slug`, resolves each row's free-text `email` to a WP user via
+`get_user_by('email', ...)` (that table has no `user_id` column — same
+lookup `Culture_Event_RSVP::handle_submit()` already uses), and awards
+reputation + credits once per event per attendee via direct
+`award_reputation()`/`award_credits()` calls with `source_id = $event_id`,
+guarded by `Culture_Gamification::ledger_has_entry()` (exact match, no time
+window — correct here since this is a true once-per-event award, unlike the
+monthly `cluster_host_served` cron which needs a time-windowed check
+instead). Discover/Events rail: web `apps/connect/app/events/page.tsx`
+("Literati Connect" rail, city-nearby-first with all-events fallback, capped
+at 10) and mobile `EventsScreen.tsx` (`LiteratiRail` component, same
+filtering logic, `mapEvent()` populates `isLiterati` from
+`cem.is_literati`/`_culture_event_is_literati`). House Fellowship
+feed-injected reminder card (§4.5): web
+`packages/shared/components/pulse/HouseFellowshipReminderCard.tsx`, inserted
+into `PulseFeed.tsx` via the same stable array-slice-after-5th-item pattern
+already used by the Event Spotlight carousel; mobile
+`components/community/HouseFellowshipReminderCard.tsx`, spliced into
+`ConnectFeedScreen.tsx`'s `FlatList` via a second marker id
+(`__house-fellowship-reminder__`) alongside the existing spotlight marker.
+Both reminder cards self-fetch `GET cluster/my-clusters` (mobile JWT, web via
+the existing `/api/cluster/my-clusters` proxy), filter client-side for a
+cluster whose `meetingDay` matches today, and render nothing if none match —
+CTA links to the cluster's existing check-in surface (web `/cluster/{id}`,
+mobile `ClusterScreen` with `{ id }`), not a new route.
 
 Two related but distinct offerings, both physical/IRL, both open to **all**
 members (Citizen and Pro — no tier gating anywhere in this feature):

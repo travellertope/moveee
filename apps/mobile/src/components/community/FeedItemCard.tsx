@@ -1226,7 +1226,12 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
     <>
       <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
         <View style={styles.happeningContent}>
-          <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
+            {item.isLiterati ? (
+              <BadgePill label="🪶 Literati Connect" bg={c.paperWarm} color={c.ochre} styles={styles} />
+            ) : null}
+          </View>
 
           {/* Compact thumbnail beside title/date/location, instead of a full-width hero */}
           <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>

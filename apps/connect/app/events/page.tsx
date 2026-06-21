@@ -1,9 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getEventsWithFallback } from "@/lib/wp";
 import { getCategoryImage, getCategoryGradient } from "./utils/categoryImages";
 import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
+import EventsCarousel from "./components/EventsCarousel";
 import "@/app/events.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -50,6 +53,9 @@ function fmtShort(raw?: string) {
 }
 
 export default async function EventsPage() {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const userCity = (session?.user as any)?.city?.toLowerCase().trim();
+
   let events: any[] = [];
   try {
     events = await getEventsWithFallback(50, { revalidate: 180 });
@@ -58,6 +64,13 @@ export default async function EventsPage() {
   const upcoming = events.sort(
     (a, b) => new Date(a.eventDate || a.date || 0).getTime() - new Date(b.eventDate || b.date || 0).getTime()
   );
+
+  // Literati Connect — monthly, city-wide meetups (§1 of literati-connect-plan.md)
+  const literatiAll = upcoming.filter((e) => e.isLiterati);
+  const literatiNearby = userCity
+    ? literatiAll.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(userCity))
+    : [];
+  const literatiEvents = (literatiNearby.length > 0 ? literatiNearby : literatiAll).slice(0, 10);
 
   const sidebarCities = FEATURED_CITIES
     .map((c) => ({ ...c, count: cityCount(upcoming, c.name) }))
@@ -160,6 +173,19 @@ export default async function EventsPage() {
           </div>
         </div>
       </section>
+
+      {/* ── LITERATI CONNECT RAIL ── */}
+      {literatiEvents.length > 0 && (
+        <section className="ev-featured-section">
+          <div className="ev-featured-inner">
+            <div className="ev-featured-header">
+              <span className="ev-featured-label">🪶 Literati Connect{userCity && literatiNearby.length > 0 ? " near you" : ""}</span>
+              <Link href="#timeline" className="ev-featured-all">All happenings ↓</Link>
+            </div>
+            <EventsCarousel events={literatiEvents} />
+          </div>
+        </section>
+      )}
 
       {/* ── TIMELINE + SIDEBAR ── */}
       <div className="ev-timeline-section" id="timeline">

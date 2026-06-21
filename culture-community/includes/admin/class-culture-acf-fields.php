@@ -227,6 +227,16 @@ class Culture_ACF_Fields {
                     'ui' => 1,
                 ),
                 array(
+                    'key' => 'field_event_is_literati',
+                    'label' => 'Literati Connect Event',
+                    'name' => 'event_is_literati',
+                    'type' => 'true_false',
+                    'instructions' => 'Mark this as a Literati Connect monthly city meetup.',
+                    'wrapper' => array( 'width' => '25' ),
+                    'message' => 'This is a Literati Connect event',
+                    'ui' => 1,
+                ),
+                array(
                     'key' => 'field_event_admission',
                     'label' => 'Admission / Ticket Info',
                     'name' => 'admission',

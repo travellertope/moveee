@@ -1,6 +1,6 @@
 <?php
 /**
- * AJAX handlers for frontend interactions (RSVP, reactions, chapter selection).
+ * AJAX handlers for frontend interactions (RSVP, reactions).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

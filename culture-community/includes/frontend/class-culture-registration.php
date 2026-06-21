@@ -1,13 +1,12 @@
 <?php
 /**
- * Registration form with tier selection and chapter picker.
+ * Registration form with tier selection.
  *
  * Shortcode: [culture_register]
  * Renders a multi-step registration wizard:
  *   Step 1: Account details (username, email, password)
  *   Step 2: Choose tier (Citizen free / Patron paid)
- *   Step 3: Select primary chapter (+ secondary if Patron)
- *   Step 4: Redirect to Paystack if Patron, or complete registration
+ *   Step 3: Redirect to Paystack if Patron, or complete registration
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

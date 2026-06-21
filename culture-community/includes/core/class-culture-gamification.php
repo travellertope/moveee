@@ -301,6 +301,20 @@ class Culture_Gamification {
             'trigger'     => 'points',
             'threshold'   => 25000,
         ),
+        'cluster_regular' => array(
+            'name'        => 'Cluster Regular',
+            'description' => 'Checked in 8 weeks in a row at your House Fellowship.',
+            'icon'        => 'dashicons-groups',
+            'trigger'     => 'cluster_checkin_streak',
+            'threshold'   => 8,
+        ),
+        'city_convener' => array(
+            'name'        => 'City Convener',
+            'description' => 'Served as a House Fellowship host for 3 consecutive months.',
+            'icon'        => 'dashicons-businessman',
+            'trigger'     => 'cluster_host_consecutive_months',
+            'threshold'   => 3,
+        ),
     );
 
     /**
@@ -332,6 +346,9 @@ class Culture_Gamification {
         'newsletter_subscribed'  => 5,
         'poll_vote'              => 1,
         'cluster_founded'        => 50,
+        'cluster_checked_in'     => 5,
+        'cluster_host_served'    => 25,
+        'literati_connect_attended' => 20,
     );
 
     /**
@@ -362,6 +379,9 @@ class Culture_Gamification {
         'newsletter_subscribed' => 2,
         'poll_vote'             => 1,
         'cluster_founded'       => 15,
+        'cluster_checked_in'    => 2,
+        'cluster_host_served'   => 8,
+        'literati_connect_attended' => 3,
     );
 
     const DAILY_CREDIT_CAP = 50;
@@ -988,6 +1008,16 @@ class Culture_Gamification {
 
             case 'newsletter_subscribed':
                 return (int) get_user_meta( $user_id, '_culture_newsletter_subscribed_badge', true );
+
+            case 'cluster_checkin_streak':
+                return class_exists( 'Culture_Clusters' )
+                    ? Culture_Clusters::get_checkin_streak( $user_id )
+                    : 0;
+
+            case 'cluster_host_consecutive_months':
+                return class_exists( 'Culture_Clusters' )
+                    ? Culture_Clusters::get_host_consecutive_months( $user_id )
+                    : 0;
 
             // Account age in full days since registration
             case 'account_age_days':

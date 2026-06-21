@@ -11,7 +11,6 @@
             this.bindCommentToggle();
             this.bindCommentForm();
             this.bindPaymentInit();
-            this.bindChapterSelect();
             this.bindCopyReferral();
             this.bindRegistration();
         },
@@ -145,29 +144,6 @@
         },
 
         /**
-         * Chapter selection handler.
-         */
-        bindChapterSelect: function() {
-            $(document).on('submit', '.js-culture-chapter-form', function(e) {
-                e.preventDefault();
-                var $form = $(this);
-
-                $.post(cultureData.ajaxUrl, {
-                    action: 'culture_set_chapters',
-                    primary_chapter: $form.find('[name="primary_chapter"]').val(),
-                    secondary_chapter: $form.find('[name="secondary_chapter"]').val(),
-                    nonce: cultureData.nonce
-                }, function(response) {
-                    if (response.success) {
-                        Culture.showNotice(response.data.message, 'success');
-                    } else {
-                        Culture.showNotice(response.data.message, 'error');
-                    }
-                });
-            });
-        },
-
-        /**
          * Show a notification message.
          */
         showNotice: function(message, type) {
@@ -280,16 +256,6 @@
                 $(this).removeClass('culture-register__input--error');
             });
 
-            // Toggle secondary chapter field based on tier selection.
-            $form.on('change', 'input[name="tier"]', function() {
-                var $secondary = $form.find('.culture-register__field--secondary');
-                if ($(this).val() === 'patron') {
-                    $secondary.slideDown(200);
-                } else {
-                    $secondary.slideUp(200).find('select').val('');
-                }
-            });
-
             // Form submission via AJAX.
             $form.on('submit', function(e) {
                 e.preventDefault();
@@ -306,8 +272,6 @@
                     password: $form.find('[name="password"]').val(),
                     display_name: $form.find('[name="display_name"]').val(),
                     tier: $form.find('[name="tier"]:checked').val(),
-                    primary_chapter: $form.find('[name="primary_chapter"]').val(),
-                    secondary_chapter: $form.find('[name="secondary_chapter"]').val(),
                     culture_referral_code: $form.find('[name="culture_referral_code"]').val(),
                     culture_register_nonce_field: $form.find('[name="culture_register_nonce_field"]').val()
                 }, function(response) {

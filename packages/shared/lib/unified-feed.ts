@@ -40,6 +40,7 @@ export interface FeedItem {
   organiserName?: string;
   organiserSlug?: string;
   isFeatured?: boolean;
+  isLiterati?: boolean;
   organiserDirectoryId?: number;
   // directory-specific
   entryType?: string;
@@ -317,6 +318,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         organiserSlug: event.organiserSlug || undefined,
         organiserDirectoryId: event.organiserDirectoryId ?? undefined,
         isFeatured: Boolean(event.isFeatured),
+        isLiterati: Boolean(event.isLiterati),
         rsvpCount: Number(event.rsvpCount) || 0,
       });
     }

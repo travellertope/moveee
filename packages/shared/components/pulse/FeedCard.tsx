@@ -1077,6 +1077,15 @@ export default function FeedCard({
           {/* Badges row */}
           <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
             <Badge {...typeMeta} />
+            {item.isLiterati && (
+              <span style={{
+                fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
+                textTransform: "uppercase", color: "#b38238", background: "#f3ece0",
+                border: "1px solid #b38238", borderRadius: 4, padding: "0.1rem 0.4rem",
+              }}>
+                🪶 Literati Connect
+              </span>
+            )}
             {item.eventCategory && (
               <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.eventCategory}

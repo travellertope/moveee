@@ -35,6 +35,7 @@ const TYPE_EMOJI: Record<string, string> = {
   cluster_forming_expired:  "⌛",
   cluster_new_host:         "🗳️",
   cluster_election_started: "🏛️",
+  cluster_checkin_reminder: "📅",
 };
 
 function timeAgo(iso: string): string {
