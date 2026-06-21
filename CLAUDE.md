@@ -1934,10 +1934,21 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ## Community feed spam protection
 
-All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
+All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
+`@/lib/spam-protection` — resolves there via the `@/lib/*` tsconfig paths entry, which checks
+`packages/shared/lib/*` first, then `packages/utils/*`, then the app-local `./lib/*`; this file
+lives in `packages/utils`, not `packages/shared/lib`, despite the import alias) before posts reach
+WordPress.
 
 **Checks applied to posts (`app/api/community/submit/route.ts`):**
-1. URL/link blocking — Citizens cannot post links; Moveee Pro members can
+1. URL/link blocking — Citizens cannot post links; Moveee Pro members can. Gate is a literal
+   `tier === "patron"` check in `checkPostSpam()`/`checkCommentSpam()` — no reputation-based bypass
+   for this one (unlike Poll/Itinerary/Event templates, which bypass on reputation OR Pro). There's
+   also an `process.env.ALLOW_LINKS_FOR_PRO === "false"` escape hatch that — despite the variable's
+   name — disables the link block for **everyone** (not just Pro) when explicitly set to the string
+   `"false"`; this looks like a kill-switch for the whole feature, not a per-tier toggle. Don't rely
+   on this env var being set in normal operation; the default behavior with it unset is the
+   Citizen/Pro split described above.
 2. Rate limit — 5 posts per 10 minutes per user (HTTP 429)
 3. Duplicate detection — same text rejected within 30 minutes (HTTP 409)
 4. Keyword blocklist — default phrases + admin-configured custom phrases (HTTP 400)

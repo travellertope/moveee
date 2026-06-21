@@ -81,6 +81,7 @@ const APP_ROUTES = new Set([
   'cookie-policy',
   'search',
   'api',
+  'features',
   // Regional edition homepages
   'uk',
   'us',
