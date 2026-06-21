@@ -112,7 +112,7 @@
 }
 
 body {
-  background: var(--paper);
+  background: var(--paper-warm);
   color: var(--ink);
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
