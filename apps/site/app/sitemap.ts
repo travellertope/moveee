@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getWPData, GET_STORIES, GET_PRODUCTS, GET_NEWSLETTERS, GET_JOURNEYS } from "@/lib/wp";
+import { FEATURE_PAGES } from "@/lib/features";
 
 const BASE = "https://themoveee.com";
 
@@ -32,7 +33,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/journeys`,     changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
     { url: `${BASE}/makers`,       changeFrequency: "weekly"  as const, priority: 0.6, lastModified: new Date() },
     { url: `${BASE}/visuals`,      changeFrequency: "monthly" as const, priority: 0.5, lastModified: new Date() },
+    { url: `${BASE}/features`,     changeFrequency: "monthly" as const, priority: 0.7, lastModified: new Date() },
   ];
+
+  const featureUrls: MetadataRoute.Sitemap = FEATURE_PAGES.map((f) => ({
+    url: `${BASE}/features/${f.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+    lastModified: new Date(),
+  }));
 
   const articleUrls: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${BASE}/magazine/${a.slug}`,
@@ -62,5 +71,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...articleUrls, ...productUrls, ...newsletterUrls, ...journeyUrls];
+  return [...staticPages, ...featureUrls, ...articleUrls, ...productUrls, ...newsletterUrls, ...journeyUrls];
 }
