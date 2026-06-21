@@ -2,8 +2,12 @@
 /**
  * Scheduled jobs for Culture Community.
  *
- * All automation runs via WordPress cron, triggered by a real server cron
- * on Lightsail every 30 minutes (see wp-config.php: DISABLE_WP_CRON = true).
+ * This class is the canonical owner for the five jobs below — automation runs
+ * via WordPress cron, triggered by a real server cron on Lightsail every 30
+ * minutes (see wp-config.php: DISABLE_WP_CRON = true). These same five jobs
+ * must NOT also be scheduled on cron-job.org (the external scheduler used for
+ * jobs that have no WP-side logic) — running both would double-fire the seed
+ * with mismatched frequencies. See "Split cron ownership" in CLAUDE.md.
  *
  * Jobs:
  *  - Grace period check (daily) — downgrades lapsed Patron accounts.
