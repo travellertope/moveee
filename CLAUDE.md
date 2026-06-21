@@ -111,7 +111,13 @@ React Native can't use the DOM-dependent shared package — edit both when those
 - **Literati Connect** is a *separate* offering — the name for city-by-city physical
   meetup clusters of Moveee members. Do not confuse this with the Moveee product itself,
   and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
-  now belongs to Literati Connect.
+  now belongs to Literati Connect. **Full planning doc (read before any build work on
+  this feature): `docs/literati-connect-plan.md`** — covers Literati Connect (monthly,
+  city-wide — reuses the existing editorial `culture_event` CPT) and House Fellowship
+  (weekly, street-cluster — new `culture_cluster` CPT, open to all tiers, three
+  host-selection mechanisms: appointed/self-nominated/elected, overflow joining when a
+  home-street cluster is full, QR-based weekly check-in mirroring the Perks redemption
+  pattern). Status as of 2026-06-21: planning complete, build not started.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
   Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
   emails/admin labels) — this superseded the prior naming and is now fully applied
