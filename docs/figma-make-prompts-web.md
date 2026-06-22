@@ -614,3 +614,326 @@ Card Spec, Desktop Shop by Maker Spotlight, Mobile Companion (full stack).
 
 ---
 
+## 3. FULL SHOP/LIFESTYLE HOMEPAGE — COMPLETE END-TO-END PAGE (Site A, themoveee.com/shop)
+
+> **Relationship to §2:** §2 specified four *new/upgraded* pieces in isolation (search+filter
+> bar, trust strip, product card, Shop by Maker reframing) as a redesign delta against the
+> current page. This section is the **complete page**, hero to footer-adjacent, folding those
+> four upgrades into their place in the full flow alongside every section that was already
+> working — masthead, ticker, Editorial Picks, both Editorial Bridges, the category grid, the
+> member band, and the closing Origins Bridge. Use this section when generating the whole page
+> in one pass; use §2 only if you need to regenerate just the upgraded pieces on their own.
+> Same scope rule as §2 applies: product detail (`/shop/[slug]`), brand storefronts
+> (`/shop/brand/[slug]`), and "The Moveee Edit" (`/shop/edit`) are separate pages, not covered
+> here.
+
+### Brand architecture
+
+Identical to §2 — stay inside Site A's existing token set (white/paper-deep/ink/ochre/gold),
+no paper-warm. See the Quick Reference table at the top of this file. Gold is reserved for
+Moveee Pro signifiers only, mirrored everywhere it appears below (ticker, product card,
+member band).
+
+### Section order (top to bottom — this is the authoritative sequence for the full page)
+
+1. Masthead
+2. Trust Strip *(new, §2)*
+3. Sticky Search + Filter Bar *(upgraded, §2)*
+4. Ticker
+5. Featured Editorial Picks
+6. Editorial Bridge — Magazine
+7. Main Product Grid *(upgraded card, §2)*
+8. Editorial Bridge — Origins (mid-page)
+9. Category Grid
+10. Shop by Maker *(renamed/reframed, §2)*
+11. Moveee Member Band *(renamed, §2)*
+12. Origins Bridge (closing)
+
+### Marketing copy (final — use verbatim; do not let Figma Make invent its own)
+
+**1 — MASTHEAD**
+- H1 (unfiltered): `Moveee Lifestyle` · H1 (filtered): the active category/tag/maker name,
+  italic.
+- Body (unfiltered): `Every piece chosen for craft, longevity, and the story behind it. Every
+  maker on Moveee is personally vetted for craft integrity, fair production, and lasting
+  quality.`
+- Body (filtered): `A curated collection of [Category] goods from vetted makers.`
+
+**2 — TRUST STRIP** *(verbatim from §2, reproduced for continuity)*
+1. `✓ Vetted Makers` — `Every maker personally reviewed before their first listing.`
+2. `★ 4.8 average rating` — `Across 1,200+ verified buyer reviews.`
+3. `↺ Free Returns` — `30 days, no questions asked.`
+4. `◇ Moveee Pro saves 10%` — `Automatically applied at checkout for members.`
+
+**3 — STICKY SEARCH + FILTER BAR** *(verbatim from §2, reproduced for continuity)*
+- Search placeholder: `Search makers, materials, or pieces…`
+- Filter pills: `Category`, `Price`, `Material`, `Maker Location`, `In Stock Only`
+- Sort options: `Featured`, `Newest`, `Price: Low–High`, `Price: High–Low`, `Most Loved`
+
+**4 — TICKER (repeating marquee strip)**
+- Items, in order, looping: `Vetted Makers · ★ · Ethical Production · ★ · Free Returns · ★ ·
+  Moveee Pro Members Save 10% · ★` — note the last item is a copy update from the current
+  page's `Connect Members Save 10%`, bringing it in line with the rest of this redesign's
+  "Connect" → "Moveee" rebrand.
+
+**5 — FEATURED EDITORIAL PICKS**
+- Section header: `Editorial Picks` (H2, "Picks" italic) + `The Moveee Edit →` link
+  (to `/shop/edit`).
+- Large hero card + 2×2 grid of small cards. Each card: `★ Vetted` pip, `New` pip (when
+  applicable), vendor name, product name, price.
+
+**6 — EDITORIAL BRIDGE (Magazine)**
+- Eyebrow: `As Seen In`
+- Title: `The Moveee Edit` (italic) + meta `Issue 014 · Craft & Makers`
+- CTA: `Read the Issue →` (to `/magazine`)
+
+**7 — MAIN PRODUCT GRID**
+- Section label: `[All Products / active filter label] — N pieces`
+- Empty state (zero results): `No products found.` (Fraunces italic, mute)
+- Cards: upgraded spec from §2 (vendor name, product name, price + `[member price] with
+  Moveee Pro` when present, `★ rating (count)` or `New listing`, `Add to bag` button).
+
+**8 — EDITORIAL BRIDGE (Origins, mid-page)**
+- Eyebrow: `Origins Journal`
+- Title: `Where things` + `come from` (italic) + meta `Stories from the makers behind the
+  objects`
+- CTA: `Explore Origins →` (to `/journeys`)
+
+**9 — CATEGORY GRID**
+- Header: `Shop by` + `Category` (italic)
+- Cards: category image, name, `N pieces` count overlay — link to `/shop/category/[slug]`.
+
+**10 — SHOP BY MAKER** *(verbatim from §2, reproduced for continuity)*
+- Eyebrow: `Shop by Maker` · H3: `The hands behind every piece.`
+- Body: `Moveee makers are independent craftspeople, vetted for quality and fair production
+  before their first listing goes live. Shop their full collections, or read their story on
+  the Moveee Maker directory.`
+- Cards: maker image, `★ Vetted Maker` pip, name (→ `/makers/[slug]`), location, description,
+  product count, `View shop →` (→ `/shop/brand/[slug]`).
+- Header-right link: `All makers →` (to `/makers`).
+
+**11 — MOVEEE MEMBER BAND**
+- H3: `Moveee` + `Pro` (italic)
+- Body: `Join Moveee for early access to new makers, exclusive editions, and 10% off every
+  purchase in the shop.`
+- 4 perks: `◈ Early Access` — `First look at new makers and limited drops.` / `◇ 10% Off` —
+  `Applied automatically to every shop order.` / `○ Free Delivery` — `On all UK orders,
+  always.` / `△ Maker Events` — `Invitations to studio visits and openings.`
+- CTA: `Join Moveee →` (to `/feed`)
+- Floating stat card: `2,400` / `Members & growing`
+
+**12 — ORIGINS BRIDGE (closing)**
+- Eyebrow: `Origins Journal`
+- H3: `The stories` + `behind` (italic) + `the objects`
+- Body: `Every maker in the shop has a story. We travel to document them — from mountain
+  workshops to coastal studios.`
+- CTA: `Read Origins →` (to `/journeys`)
+
+⚠️ **DEV ANNOTATION REQUIREMENT** — add `<!-- DEV: <note> -->` comments at these points (items
+1–6 below are carried over verbatim from §2's annotation list since those upgrades sit inside
+this full-page flow; items 7–10 are new to this section):
+  1. Above the search + filter bar — *(from §2)* search/facet backend doesn't exist yet; see
+     §2 DEV note 1 for the exact GraphQL/REST wiring approach.
+  2. Above the sort dropdown — *(from §2)* `ShopFilterBar.tsx`'s sort/view callbacks already
+     exist but are never wired up; see §2 DEV note 2.
+  3. Above the Pro pricing line on product cards — *(from §2)* `memberPrice` resolves via
+     `GET_PRODUCT_EXTRA` but isn't in the main `GET_PRODUCTS` query yet; see §2 DEV note 3.
+  4. Above the rating/review line on product cards — *(from §2)* no reviews data model exists
+     yet; render `New listing` for every card until a WooCommerce-native reviews system is
+     built; see §2 DEV note 4.
+  5. Above the trust strip — *(from §2)* the `4.8` rating and `1,200+ reviews` figures are
+     placeholder copy pending the reviews system; treat as static admin-configurable copy
+     until then; see §2 DEV note 5.
+  6. Above the Shop by Maker spotlight — *(from §2)* `extractVendors()`'s grouping logic and
+     `FALLBACK_VENDORS` are unchanged; only copy/framing + the new `View shop →` link are new;
+     see §2 DEV note 6.
+  7. Above the ticker: `"DEV: TICKER_ITEMS in ShopArchiveWrapper.tsx (lines 66-71) currently
+     reads 'Connect Members Save 10%' — update the literal string to 'Moveee Pro Members Save
+     10%' as part of this same pass, it's a one-line constant change with no other
+     dependencies."`
+  8. Above the Main Product Grid's empty state: `"DEV: 'No products found.' is rendered
+     as-is today with no suggested-alternative action (e.g. 'clear filters' or 'browse all') —
+     once faceted filtering ships (§2 DEV note 1), wire a 'Clear filters' button into this
+     empty state so a visitor who over-filters isn't dead-ended."`
+  9. Above the two Origins-themed modules (Editorial Bridge §8 and the closing Origins Bridge
+     §12): `"DEV: these are two distinct existing components (the thin 'ed-bridge' text strip
+     mid-page, and the richer image+copy 'shop-origins-bridge' block at the very end) that
+     both link to /journeys with near-identical 'Origins Journal' framing — this is
+     intentional repetition (the page funnels toward /journeys twice), not a duplicate bug,
+     but the two modules should look visually distinct (text-only bridge vs. full image+copy
+     block) so it doesn't read as a copy-paste mistake to the visitor."`
+  10. Above the Moveee Member Band's floating stat card: `"DEV: the '2,400 Members & growing'
+      figure (member-band-inner .fl-num in ShopArchiveWrapper.tsx) is a hardcoded literal
+      today, not a live count — either wire it to a real member-count query or move it into
+      WP Admin as an editable option (same static-copy pattern as the trust strip figures
+      above) rather than leaving a hardcoded number that will go stale."`
+
+---
+
+### PROMPT 3 — Full Shop/Lifestyle Homepage, Hero to Footer (Desktop 1440px + Mobile 390px)
+
+```
+Senior web UX/UI designer — themoveee.com/shop homepage, complete end-to-end page design,
+hero to footer-adjacent. Desktop frame 1440px wide per section, companion mobile frame 390px
+wide, same content, stacked layout. This is the FULL page, not a partial redesign — generate
+every section below in the order given, as one continuous scrolling page.
+
+Brand tokens (Site A — do not introduce new tokens): white #FFFFFF bg, paper-deep #F2F2F2
+card/section bg, ink #14110D text, ink-soft #3A342B body copy, mute #7A6F5C secondary text,
+rule #2A241C borders, ochre #C5491F primary accent, ochre-deep #8A2D10 hover state,
+gold #B38238 reserved for Moveee Pro signifiers only. Fraunces (display/serif) + DM Sans
+(body/sans) + JetBrains Mono (kickers/meta/labels). Radius: sm=2px, md=4px, lg=6px, xl=12px,
+2xl=20px, full=9999px. Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px
+rgba(20,17,13,0.04).
+
+Use the marketing copy supplied above VERBATIM in every frame — do not paraphrase or invent
+new copy for any section, including the sections reproduced from §2.
+
+---
+
+FRAME 1 — MASTHEAD (1440×280px, white bg, centred content max-width 720px):
+  H1: "Moveee Lifestyle" (or active filter label, italic) Fraunces 48px bold ink, centred.
+  Thin ochre rule divider below, 16px margin both sides.
+  Body copy (per the unfiltered/filtered variants above) DM Sans 16px ink-soft, centred,
+    max-width 600px, 16px top margin.
+
+---
+
+FRAME 2 — TRUST STRIP (1440×140px, white bg, 1px rule top+bottom border, 4 columns,
+max-width 1100px centred, 32px vertical padding):
+  TRUST BADGE (×4): icon 24px (✓ / ★ / ↺ / ◇) ochre, label DM Sans 13px bold ink beside icon,
+    proof-point line DM Sans 12px mute below, 4px top. Fill with the exact 4-item copy above.
+
+---
+
+FRAME 3 — STICKY SEARCH + FILTER BAR (1440×120px, white bg, 1px rule bottom border, sticky
+on scroll):
+  ROW 1 (72px): search input (420px, radius-full, paper-deep fill, magnifying-glass icon,
+    placeholder copy above) — filter pills "Category ▾ / Price ▾ / Material ▾ / Maker
+    Location ▾" (radius-full ghost-border, DM Sans 13px) + "In Stock Only" toggle pill —
+    right cluster: sort dropdown (copy above) + grid/list view toggle + "N items" result
+    count (JetBrains Mono 11px mute).
+  ROW 2 (48px, shown only when filters active): removable filter chips + "Clear all" link.
+
+---
+
+FRAME 4 — TICKER (1440×56px, ink #14110D bg, full-bleed horizontal marquee, white text
+DM Sans 13px uppercase letter-spacing 1px, ochre "★" separators, continuous scroll
+left-to-right, seamless loop): fill with the 4-item copy above (Moveee Pro Members wording,
+not "Connect Members").
+
+---
+
+FRAME 5 — FEATURED EDITORIAL PICKS (1440×640px, white bg, 80px vertical padding):
+  Header row: "Editorial Picks" (Fraunces 32px bold ink, "Picks" italic) left + "The Moveee
+    Edit →" DM Sans 13px bold ochre link right.
+  Grid (64px top margin, max-width 1200px centred): 1 large feature card (left, ~50% width,
+    image 100% height of card, info block below — vendor name DM Sans 11px mute uppercase,
+    product name Fraunces 18px bold ink, price DM Sans 15px bold ink) + a 2×2 grid of smaller
+    cards (right, same info-block pattern, smaller image). "★ Vetted" pip (ink/80% fill,
+    white text, radius-full, top-left of every image) and "New" pip (ochre fill, top-right,
+    when applicable) on all 5 cards.
+
+---
+
+FRAME 6 — EDITORIAL BRIDGE: MAGAZINE (1440×220px, paper-deep #F2F2F2 bg, centred content):
+  Eyebrow "As Seen In" JetBrains Mono 11px bold ochre uppercase, centred.
+  Title "The Moveee Edit" (italic) Fraunces 28px bold ink + meta "Issue 014 · Craft & Makers"
+    DM Sans 13px mute, 8px top, centred.
+  CTA "Read the Issue →" DM Sans 14px bold ochre, 16px top, centred.
+
+---
+
+FRAME 7 — MAIN PRODUCT GRID (1440×1200px, white bg, 80px vertical padding):
+  Section label: "[All Products / active label] — N pieces" JetBrains Mono 12px mute
+    uppercase, left-aligned, max-width 1200px centred container.
+  Grid (4 columns, 24px gap, 32px top margin) of the upgraded product card from §2: white
+    fill, radius-lg, 1px rule border; image (top, radius-lg top corners, "★ Vetted" +
+    optional "New"/"Sold Out" pips); info block (vendor name, product name Fraunces 16px bold,
+    price DM Sans 15px bold + "[price] with Moveee Pro" gold #B38238 12px line when present,
+    "★ 4.9 (38)" or "New listing" line, full-width "Add to bag" button).
+  Empty state (zero results): centred italic Fraunces 16px mute "No products found." with a
+    "Clear filters" ghost-border button below it (per DEV note 8 above).
+
+---
+
+FRAME 8 — EDITORIAL BRIDGE: ORIGINS, MID-PAGE (1440×220px, paper-deep #F2F2F2 bg, centred —
+visually IDENTICAL layout to Frame 6 but distinct copy, per DEV note 9 — same eyebrow/title/
+meta/CTA structure, different content):
+  Eyebrow "Origins Journal", title "Where things come from" (last word italic), meta
+    "Stories from the makers behind the objects", CTA "Explore Origins →".
+
+---
+
+FRAME 9 — CATEGORY GRID (1440×560px, white bg, 80px vertical padding):
+  Header: "Shop by Category" (Fraunces 28px bold ink, "Category" italic), centred, 64px
+    bottom margin before grid.
+  Grid (6 across, 16px gap, max-width 1200px centred): each cell a 200×240px image card,
+    radius-lg, dark gradient overlay bottom third, category name (DM Sans 16px bold white)
+    + "N pieces" count (DM Sans 12px white/80%) inside the overlay, bottom-left aligned.
+
+---
+
+FRAME 10 — SHOP BY MAKER (1440×560px, paper-deep #F2F2F2 bg, 80px vertical padding —
+identical layout to §2 Frame 4, reproduced here for page continuity):
+  Header: eyebrow "Shop by Maker", H3 "The hands behind every piece." (Fraunces 32px bold
+    ink), body copy (DM Sans 15px ink-soft) left-aligned max-width 640px, "All makers →" link
+    top-right.
+  Cards (4 across, 24px gap, 64px top margin): image, "★ Vetted Maker" pip, name
+    (Fraunces 18px bold ink), location (DM Sans 13px mute), description (DM Sans 13px
+    ink-soft, 2 lines max), product count (DM Sans 12px mute), "View shop →" (DM Sans 12px
+    bold ochre, new secondary link below the count).
+
+---
+
+FRAME 11 — MOVEEE MEMBER BAND (1440×520px, ink #14110D bg, white text, split 60/40 layout):
+  LEFT (60%, 64px padding): H3 "Moveee Pro" (Fraunces 32px bold white, "Pro" gold #B38238
+    italic) + body copy (DM Sans 15px white/85% opacity, 12px top) + 4-perk 2×2 mini-grid
+    (icon 20px gold, title DM Sans 13px bold white, desc DM Sans 12px white/70%, 24px top) +
+    "Join Moveee →" button (gold fill, ink text, radius-full, 48px height, 24px top).
+  RIGHT (40%): full-bleed lifestyle/product photography panel with a floating stat card
+    overlapping its bottom-left corner (white fill, radius-lg, shadow-card, 24px padding):
+    "2,400" (Fraunces 28px bold ink) + "Members & growing" (DM Sans 12px mute) below.
+
+---
+
+FRAME 12 — ORIGINS BRIDGE, CLOSING (1440×480px, white bg, split 50/50 layout — visually
+DISTINCT from Frame 8's thin text bridge, per DEV note 9 — full image+copy treatment):
+  LEFT (50%): full-bleed maker/workshop photography panel, radius-lg.
+  RIGHT (50%, 64px padding): eyebrow "Origins Journal" (JetBrains Mono 11px bold ochre
+    uppercase) + H3 "The stories behind the objects" ("behind" italic, Fraunces 32px bold
+    ink, 12px top) + body copy (DM Sans 15px ink-soft, 16px top) + "Read Origins →" (DM Sans
+    14px bold ochre, 16px top).
+
+---
+
+FRAME 13 — MOBILE COMPANION (390px wide, single scrolling stack, all 12 sections condensed
+in the same order):
+  Masthead: unchanged, centred, smaller type scale (H1 32px).
+  Trust strip: 2×2 grid instead of 4-across.
+  Search + filter bar: search full-width top; filter pills single horizontally-scrolling row;
+    sort/view/count collapse into one row below, sort opens a bottom sheet not a native select.
+  Ticker: unchanged marquee behaviour, full-bleed.
+  Featured Editorial Picks: large card full-width on top, then 2×2 grid below it (still 2
+    columns, not stacked to 1).
+  Editorial Bridge (Magazine): stacked centred text, unchanged copy.
+  Main Product Grid: 2-column grid (not 4), same card field stack, image height 200px.
+  Editorial Bridge (Origins, mid-page): stacked centred text, unchanged copy, visually
+    identical to the Magazine bridge above per Frame 8's spec.
+  Category Grid: 2-column grid (not 6), same overlay treatment.
+  Shop by Maker: header stacked above cards, cards 2-across (not 4), both links preserved.
+  Moveee Member Band: stacked (text block, then image+stat card below, full-width), perks
+    grid stays 2×2.
+  Origins Bridge (closing): stacked (image on top, full-width; text block below it), unchanged
+    copy.
+
+---
+
+Output 13 frames in this exact order: Masthead, Trust Strip, Search/Filter Bar, Ticker,
+Featured Editorial Picks, Editorial Bridge (Magazine), Main Product Grid, Editorial Bridge
+(Origins), Category Grid, Shop by Maker, Moveee Member Band, Origins Bridge (closing), Mobile
+Companion (full stack).
+```
+
+---
+
