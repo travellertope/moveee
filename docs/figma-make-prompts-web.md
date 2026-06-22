@@ -3505,3 +3505,324 @@ Frame 4 (The Moveee Edit, Desktop, full scroll), Frame 5 (Maker Profile Page,
 Desktop, full scroll), Frame 6 (Mobile Companion, full scroll).
 
 ---
+
+## 15. FEED CARD DETAIL DRAWERS — WEB (Site B, web.themoveee.com — `/feed`, `/connect/people`)
+
+> **Note on scope.** Mobile's §17 designs these as bottom sheets (`BottomSheet.tsx`
+> peek/full/dismiss states, drag handle, elastic overscroll, keyboard-aware compose
+> bar) because that's the native iOS/Android interaction pattern. **Web has no
+> bottom-sheet system at all** — the direct equivalent is a family of five
+> **right-side slide-in drawer panels**, all sharing one shell (`position: fixed;
+> inset: 0; zIndex: 8000`, panel `width: min(520px, 100vw)`, click-outside or
+> Escape to close, `document.body.style.overflow = "hidden"` while open). There is
+> no drag handle, no peek/full states, no elastic overscroll, and no native share
+> sheet — clicking outside or pressing Escape is the only dismiss gesture, and the
+> mount/unmount is instant (no slide-in transition or animation property exists in
+> the real components). Five sibling components, all lazy-loaded via
+> `dynamic(() => import(...), { ssr: false })` from `FeedCard.tsx`:
+> `CommunityDetailModal.tsx` (all 10 post templates — the equivalent of mobile's
+> PROMPT 17B), `QuoteDetailModal.tsx`, `HappeningDetailModal.tsx`,
+> `DirectoryDetailModal.tsx` (these three plus `PulseDetailModal.tsx` are the
+> equivalent of mobile's PROMPT 17C "Other Feed Card Detail Sheets"). Mobile's
+> PROMPT 17D edge cases (native share sheet stacked on top, keyboard-aware comment
+> compose bar, elastic overscroll, wifi-error empty state) have **no web
+> equivalent** — web has no native share sheet to stack, no on-screen keyboard to
+> accommodate, no overscroll physics, and errored comment fetches render inline
+> ("Loading comments…" never resolving) rather than a dedicated error frame. None
+> of these are designed here; see DEV note 5.
+
+### Brand architecture
+
+Connect to Culture — Site B (`apps/connect`, web.themoveee.com). These drawers
+render wherever the unified feed renders cards: `/feed` (Pulse Feed) and any other
+surface using `packages/shared/components/pulse/FeedCard.tsx`.
+
+### Why this section exists
+
+CLAUDE.md already documents "Feed card offcanvas detail modals" as a settled
+pattern (`HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`,
+`QuoteDetailModal.tsx`, all `packages/shared/components/pulse/`,
+`position: fixed, zIndex: 8000, width: min(520px, 100vw)`) — but that note doesn't
+cover `CommunityDetailModal.tsx`, which is the web analog of mobile's biggest
+single prompt (17B, all 10 community templates) and has never been speced for
+design. This section closes that gap and gives the existing three modals (plus the
+previously-undocumented `PulseDetailModal.tsx`) their first visual spec, grounded
+directly in the live component code rather than the mobile bottom-sheet mockups.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Happening badge: **"Happening"**
+- Directory badge: **"Directory"**
+- Quote badge: **"Quote"**
+- Community badge: **"Community"**
+- Literati pill (Happening only, conditional): **"🪶 Literati Connect"**
+- Happening CTA: **"View Event Details →"**
+- Directory CTA: **"View Full Entry →"**
+- Happening header link: **"Full page →"**
+- Directory header link: **"Full page →"**
+- Quote header link: **"Full page →"**
+- Community header link (conditional on slug): **"Open full page →"**
+- Happening empty-organiser fallback label: **"Organised by"**
+- Community follow toggle: **"Follow"** / **"✓ Following"**
+- Community hidden-gem badge: **"Hidden Gem"** + star glyphs
+- Community cultural-take badge: **"Take · {locationName}"**
+- Community food-review badge: **"Food Review · {foodDishName}"**
+- Community creative-showcase badge: **"Creative Showcase"**
+- Community itinerary badge: **"Weekend Route"**
+- Community event badge: **"Event · {eventCategory}"**
+- Community event ticket link: **"Get tickets →"**
+- Community report (card-level, not modal): **"Report this post"** → **"Report
+  as: …"** → **"Reported — thank you."**
+- Reaction bar labels (emoji only, no text labels): ❤️ Love · 🔥 Fire · 👏 Respect
+- Comment thread loading state: **"Loading comments…"**
+
+### DEV ANNOTATION REQUIREMENT
+
+The following `<!-- DEV: ... -->` notes MUST appear in the prompt at the indicated
+insertion points:
+
+1. `<!-- DEV: All five drawer panels share one shell exactly — position: fixed,
+   inset: 0, zIndex: 8000, panel width: min(520px, 100vw), backdrop
+   rgba(20,17,13,0.55), boxShadow -4px 0 24px rgba(0,0,0,0.15). There is no CSS
+   transition/animation anywhere in these components — render this as an instant
+   cut, not a slide-in. -->` — insert at the top of the FRAME 1 shell description.
+2. `<!-- DEV: CommunityDetailModal.tsx and FeedCard.tsx each keep their own
+   duplicate copies of PollDisplay and RsvpDisplay (not a shared module) — if this
+   design ever changes the poll or RSVP UI, both files need the same edit. -->`
+   — insert near the Poll/RSVP frame.
+3. `<!-- DEV: PulseDetailModal.tsx is a fifth sibling drawer (for item.type ===
+   "pulse" cards) that exists in code but has no documented spec anywhere — give
+   it the same shell as the other four; its content is an editorial/pulse story
+   read view, closest in shape to HappeningDetailModal's body without the RSVP
+   CTA. -->` — insert near the Pulse/Editorial frame.
+4. `<!-- DEV: Reactions appear TWICE for community posts — once inline on the
+   feed card itself, and again inside this same modal via a second independent
+   ReactionBar instance (itemType="community", noBorder). Both hydrate
+   separately against the same per-user server record; do not assume the modal
+   "inherits" the card's reaction state. -->` — insert near the
+   CommunityDetailModal reaction bar.
+5. `<!-- DEV: Mobile's bottom-sheet edge cases (native share sheet stacked on
+   top, keyboard-aware comment compose bar, elastic overscroll, wifi-error empty
+   state) have no web equivalent and are out of scope here — web has no native
+   share sheet, no on-screen keyboard layout shift, no overscroll physics, and an
+   errored comment fetch just leaves "Loading comments…" showing indefinitely
+   rather than rendering a dedicated error state. -->` — insert as a closing note
+   after the last frame.
+6. `<!-- DEV: The ⚑ report control lives only on the feed card footer
+   (FeedCard.tsx), never inside the detail modal — clicking it does not open or
+   affect this drawer at all. Do not add a report button to the modal mockup. -->`
+   — insert near the CommunityDetailModal author row.
+
+### PROMPT 15 — Feed Card Detail Drawers (Desktop 1440px + Mobile 390px)
+
+```
+Senior product designer — Moveee (web.themoveee.com) feed card detail drawers.
+Brand: paper #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D,
+Fraunces (serif headings) + DM Sans (body) + JetBrains Mono (labels/dates).
+
+Design 5 right-side slide-in drawer panels that open over the Pulse Feed (`/feed`)
+when a card is clicked. All five share one shell:
+
+<!-- DEV: All five drawer panels share one shell exactly — position: fixed,
+inset: 0, zIndex: 8000, panel width: min(520px, 100vw), backdrop
+rgba(20,17,13,0.55), boxShadow -4px 0 24px rgba(0,0,0,0.15). There is no CSS
+transition/animation anywhere in these components — render this as an instant
+cut, not a slide-in. -->
+
+SHARED SHELL (all 5 frames):
+  Backdrop: full viewport, rgba(20,17,13,.55), behind the panel.
+  Panel: right-anchored, width 520px (desktop) / 100vw (mobile companion),
+    full viewport height, paper #F3ECE0 fill, scrollable, box-shadow
+    -4px 0 24px rgba(0,0,0,.15), no rounded corners (flush right edge).
+  Sticky header (20px padding, white-ish paper bg, 1px bottom border #e0dbd1):
+    Left: type badge pill(s). Right: "Full page →" link (DM Sans 13px ochre,
+    omitted on Directory's header — Directory repeats its badge as plain text
+    instead) + ✕ close button (24px ghost icon, ink).
+  Content area: 1.25rem padding throughout, ghost rules (1px #e8e2d8) between
+  major sections.
+
+════════════════════════════════════════════
+FRAME 1 — HAPPENING DRAWER
+════════════════════════════════════════════
+Header badges: "Happening" pill (bg #eeedfe, text #3c3489, 9px bold, pill
+  radius) + conditional "🪶 Literati Connect" pill (ochre-bordered, shown only
+  for Literati Connect events) + plain eventCategory text if present.
+
+Content:
+  Featured image — contain-fit, max-height 360px, letterboxed on #f9f6f1,
+    bordered rounded card.
+  Title: Fraunces 22px bold ink ("Afro Nation Lagos 2026" placeholder).
+  Event-details strip card (white fill, bordered, rounded, 16px padding):
+    📅 long-format date ("Saturday, 28 June 2026"), optional end date,
+      optional opening hours.
+    📍 location / venue address / city.
+    🎟 admission, bold.
+  Description: 2 paragraphs, DM Sans 14px ink-soft, 1.6 line-height (sanitized
+    HTML body, link color #3c3489).
+  "Organised by" eyebrow label + linked pill to /directory/{slug} (ochre text)
+    or plain bold text if unlinked.
+  CTA button: full-width, solid indigo #3c3489, white 14px bold text,
+    "View Event Details →", radius-full, 52px height.
+
+No reaction bar, no comments, no follow toggle on this drawer.
+
+════════════════════════════════════════════
+FRAME 2 — DIRECTORY DRAWER
+════════════════════════════════════════════
+Header badges: "Directory" pill (bg #e8f5ee, text #085041, 9px bold) + plain
+  entryType text ("STUDIO").
+
+Content:
+  Cover image — cover-fit, max-height 260px, rounded.
+  Title: Fraunces 22px bold ink.
+  Second, more prominent type badge below title (same green pill style).
+  "Added {date}" — muted gray #999, small.
+  Excerpt: 2-3 paragraphs, DM Sans 14px ink-soft, decoded HTML entities.
+  CTA button: full-width, solid #085041 fill, white text, "View Full Entry →",
+    radius-full, 52px height.
+
+No reaction bar, no comments, no follow toggle on this drawer.
+
+════════════════════════════════════════════
+FRAME 3 — QUOTE DRAWER
+════════════════════════════════════════════
+Header badge: "Quote" pill (bg #f3eef8, text #7a4da0, 9px bold).
+
+Content (vertically centred in available space, 2rem 1.5rem padding):
+  Decorative " glyph — Fraunces serif, 4rem, color #d8c9b0.
+  Quote text — Fraunces 1.35rem italic ink, 1.55 line-height.
+  Attribution block (1px top border #e8e2d8): "— {author}" in rust #c5491f,
+    then italic source text in muted gray below it.
+  Optional sharing-reason callout: "💬 {reason text}" on #ece5d6 background,
+    rounded card, only when present.
+  Date line — very muted gray #bbb, small, centred.
+  ReactionBar (noBorder variant) — ❤️ Love · 🔥 Fire · 👏 Respect icon buttons
+    with counts, spacer, then a share icon button (copy-link / native share).
+
+No comment thread, no follow toggle on this drawer.
+
+════════════════════════════════════════════
+FRAME 4 — COMMUNITY DRAWER (all 10 templates, composite reference frame)
+════════════════════════════════════════════
+Header badges: "Community" pill (bg #edf7ed, text #2e7d32, 9px bold) + plain
+  communityTag text. Header right: "Open full page →" link (only when the
+  post has a slug) + close button.
+
+<!-- DEV: The ⚑ report control lives only on the feed card footer
+(FeedCard.tsx), never inside the detail modal — clicking it does not open or
+affect this drawer at all. Do not add a report button to the modal mockup. -->
+
+AUTHOR ROW (top of content):
+  38px avatar circle (initials fallback or photo) — Moveee Pro authors get a
+    gold glow ring: box-shadow 0 0 0 2.5px #b38238, 0 0 16px 4px
+    rgba(179,130,56,.6).
+  Author name + small gold "PRO" badge chip (13px) if Pro tier.
+  Date, muted, small.
+  Right-aligned follow toggle pill — "Follow" (plain border, ink text) or
+    "✓ Following" (gold border + tinted fill + gold text). Hidden entirely
+    when viewing your own post or when logged out.
+
+TEMPLATE BADGE ROW (varies by templateType — show all 10 as labelled chips in
+this reference frame, stacked vertically with a divider between each, each
+chip annotated with its template name in JetBrains Mono 10px ghost):
+  • Standard Post — no badge, plain text + media only.
+  • Hidden Gem — ochre badge "Hidden Gem ★★★☆☆" (stars from rating).
+  • Cultural Take — purple badge "Take · {locationName}".
+  • Food Review — rust badge "Food Review · {dish name}"; below the post
+    text, a 3-row rating strip: Taste / Value / Vibe, each a 5-star glyph row
+    (filled ★ + empty ☆).
+  • Creative Showcase — blue badge "Creative Showcase".
+  • Itinerary — green badge "Weekend Route"; numbered stop list below the
+    text: circular ochre numbered markers, bold stop name, optional note,
+    optional small thumbnail per stop.
+  • Community Event — rust badge "Event · {category}"; event-details block
+    (📅 date/end date, 📍 location/city, 🎟 admission, "Organised by {link}",
+    "Get tickets →" external link;
+    <!-- DEV: CommunityDetailModal.tsx and FeedCard.tsx each keep their own
+    duplicate copies of PollDisplay and RsvpDisplay (not a shared module) — if
+    this design ever changes the poll or RSVP UI, both files need the same
+    edit. -->
+    when RSVP is enabled, an RSVP block directly below: spots-left count,
+    "RSVP" / "Cancel RSVP" toggle button).
+  • Poll — vote-option buttons (full width, bordered), turning into
+    percentage-bar rows once voted/expired, with a vote-count + expiry caption
+    below.
+  • Quote (as a community template, distinct from FRAME 3's curated Quote) —
+    same decorative-quote treatment as Frame 3 but inline within the
+    community post body rather than as the drawer's sole content.
+  • Book Review — star rating row + review text; no distinct badge color
+    documented beyond the generic post styling.
+  📍 location badge ("📍 {locationName}") appears on every template except
+    Cultural Take (which folds location into its own badge text).
+
+SHARED CONTENT BLOCKS (below the template-specific block, in this order when
+present): post text (with @mention highlighting in gold), gallery strip
+(horizontal scroll, 220px tall cover-fit images) OR a single image (only if no
+gallery), video embed (YouTube iframe or a plain "Watch video →" link for
+non-YouTube), link preview card (only if no image and a source URL exists).
+
+REACTIONS + COMMENTS (bottom of drawer):
+<!-- DEV: Reactions appear TWICE for community posts — once inline on the
+feed card itself, and again inside this same modal via a second independent
+ReactionBar instance (itemType="community", noBorder). Both hydrate
+separately against the same per-user server record; do not assume the modal
+"inherits" the card's reaction state. -->
+  ReactionBar (noBorder) — ❤️ Love · 🔥 Fire · 👏 Respect + share icon.
+  1px bottom border separating reactions from comments.
+  Comment thread below: avatar + name + comment text rows, composer at the
+  very bottom (avatar + text input + "Post" button). Loading state shows
+  "Loading comments…" centred, muted.
+
+════════════════════════════════════════════
+FRAME 5 — PULSE/EDITORIAL DRAWER
+════════════════════════════════════════════
+<!-- DEV: PulseDetailModal.tsx is a fifth sibling drawer (for item.type ===
+"pulse" cards) that exists in code but has no documented spec anywhere — give
+it the same shell as the other four; its content is an editorial/pulse story
+read view, closest in shape to HappeningDetailModal's body without the RSVP
+CTA. -->
+Header badge: "Pulse" or "Editorial" pill (use the same muted-indigo styling
+  family as Happening's badge for visual consistency, since no bespoke color
+  is documented for this drawer). Header right: "Full page →" link + close.
+
+Content: hero image (contain-fit, letterboxed, same treatment as Happening's
+  image), Fraunces title, source/byline line (DM Sans 13px mute), body
+  copy in 2-3 paragraphs (DM Sans 14px ink-soft, 1.6 line-height), ghost rule,
+  ReactionBar (noBorder) — ❤️ Love · 🔥 Fire · 👏 Respect + share, ghost rule,
+  "More in this series" related-items row (2 compact rows: small thumbnail +
+  title + date), CTA link "Read full story →" to the source/article page.
+
+<!-- DEV: Mobile's bottom-sheet edge cases (native share sheet stacked on
+top, keyboard-aware comment compose bar, elastic overscroll, wifi-error empty
+state) have no web equivalent and are out of scope here — web has no native
+share sheet, no on-screen keyboard layout shift, no overscroll physics, and an
+errored comment fetch just leaves "Loading comments…" showing indefinitely
+rather than rendering a dedicated error state. -->
+
+════════════════════════════════════════════
+MOBILE COMPANION (390px, all 5 drawers):
+Panel becomes full-width (100vw) instead of 520px — otherwise identical
+layout, header, and content structure to the desktop frames above. No bottom-
+sheet drag handle or peek state — same instant-cut right-side panel, just
+edge-to-edge.
+
+CONSTRAINTS:
+- Do not design drag handles, peek/full snap states, or elastic overscroll —
+  none of that exists in the real components; this is a plain fixed-position
+  overlay panel, not a native sheet.
+- Do not design a native share-sheet-stacked-on-top frame, a keyboard-aware
+  comment compose frame, or a wifi-error empty state frame for these drawers —
+  none have a web equivalent (see DEV note 5).
+- Do not add a report (⚑) control inside any drawer — it only exists on the
+  feed card itself.
+- Do not invent a transition/slide-in animation — render the panel as already
+  fully open in every frame.
+```
+
+Output 5 frames + 1 mobile-companion sheet: Frame 1 (Happening), Frame 2
+(Directory), Frame 3 (Quote), Frame 4 (Community — composite of all 10
+templates), Frame 5 (Pulse/Editorial), Mobile Companion (full-width variant of
+all 5, shown stacked or as a single representative frame with template
+callouts).
+
+---
