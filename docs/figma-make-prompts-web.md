@@ -1951,3 +1951,212 @@ Companion, full scroll).
 
 ---
 
+## 8. CULTURE GAMES — WEB (Site B, web.themoveee.com/games)
+
+### Note on scope
+
+The mobile catalog's §7 models only 2 playable games (Daily Trivia, Who Said It)
+plus 2 dimmed "Coming soon" cards (Crossword, Sudoku) — and shows a server-tracked
+countdown timer ("Next game available in 14:32:07") on the already-played state.
+**On the real web app, all four games are fully built and playable**
+(`apps/connect/app/games/{trivia,who-said-it,sudoku,crossword}/page.tsx`, each
+rendering a shared component from `packages/shared/components/games/`) — there is
+no "coming soon" state for any of them, and "already played today" is detected via
+a `localStorage` key per game/date, not a live countdown. This prompt covers the
+real Games Hub, the four real gameplay components, and the shared
+`GameDoneScreen` result screen, with the differences from mobile flagged explicitly.
+
+### Brand architecture
+
+Site B (`apps/connect`), brand **Moveee**. Path: `/games`. Shared component logic
+lives in `packages/shared/components/games/` and is consumed by thin Site B route
+wrappers; this is consistent with the monorepo's general shared-code convention.
+
+### Why this section exists
+
+Real code shows Games as a complete 4-title hub, not a 2-built/2-placeholder set.
+The hub page (`app/games/page.tsx`) renders a `GAMES` array of 4 entries through a
+single `GameCard` component (icon, badge, accent colour, tagline, difficulty,
+rounds, "Play now →"), with no disabled/dimmed state anywhere in the array or the
+card component. Each individual game (`TriviaGame.tsx`, `WhoSaidItGame.tsx`,
+`SudokuGame.tsx`, `CrosswordGame.tsx`) is a self-contained client component with
+its own loading/playing/answered/complete/error phase machine, and all four funnel
+into the same shared `GameDoneScreen` for their completion state — a single,
+reusable score/share/subscribe screen rather than four bespoke ones.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+**Games Hub header:**
+> Culture Games
+>
+> Play. Learn. Connect.
+>
+> Test your knowledge of African and diaspora culture — music, film, literature,
+> history, and everything in between.
+
+**Game cards (name / tagline / badge / difficulty / rounds):**
+1. Who Said It? — "A quote appears — you guess who said it. 10 rounds drawn live
+   from our verified quote archive." · Quotes · Mixed difficulty · 10 rounds
+2. Culture Trivia — "10 daily questions spanning Afrobeats, Nollywood, literature,
+   history, and African art. Fresh questions every day." · Daily · Easy to Hard ·
+   10 questions
+3. Daily Sudoku — "One 9×9 grid a day — same puzzle for every player worldwide. No
+   luck, pure logic." · Puzzle · Medium · 1 daily grid
+4. Daily Crossword — "A new African culture mini-crossword every day. Test your
+   knowledge of people, places, and traditions." · Culture · Mixed · 1 daily puzzle
+
+**Trivia in-game copy:**
+- Header: "Culture Trivia" eyebrow + "Today's quiz · {date}"
+- "Question {n} of {total} · {Category}"
+- Explanation box label: "Did you know?"
+- Next button: "Next Question →" / "See Results →" (final question)
+
+**GameDoneScreen (shared, all 4 games) — result badges by score band (quiz games):**
+> 🏆 PERFECT — "Flawless. Every answer right."
+> 🔥 SHARP — "Culture is in your blood."
+> 🧠 VERSED — "Well versed. Keep going."
+> 📖 LEARNING — "The archive awaits you."
+> 🌱 STARTER — "Every great knows starts here."
+
+**GameDoneScreen — puzzle games (Sudoku/Crossword):**
+> 🏅 COMPLETE — "Puzzle solved."
+
+**GameDoneScreen shared chrome:**
+- Header bar: "THE MOVEEE" wordmark + "{icon} {Game Name}" tag
+- Share button: "Share your score →" → "✓ Copied to clipboard" (clipboard fallback)
+- Email capture: "Get daily game reminders" + email input + "Notify me" button →
+  "✓ You're on the list — we'll ping you daily."
+- Nav actions: "Try {Other Game} →" (primary) / "All Games" (ghost)
+- Already-played tag: "Already played today"
+
+### DEV ANNOTATION REQUIREMENT
+
+When generating, insert these as `<!-- DEV: ... -->` comments at the indicated frame:
+
+1. <!-- DEV: All four games are fully built and playable on web — do not render any
+   game card as dimmed/"Coming soon" the way mobile's PROMPT 7 Frame 1 does for
+   Crossword/Sudoku. The real `GAMES` array in `app/games/page.tsx` has no
+   disabled/locked entries, and `GameCard.tsx` has no disabled visual variant. -->
+2. <!-- DEV: "Already played today" is detected client-side via a `localStorage`
+   key per game per date (`moveee_trivia_{date}`, `moveee_wsi_{date}`,
+   `moveee_sudoku_{date}`, `moveee_crossword_{date}`) — there is no server-tracked
+   countdown timer like mobile's "14:32:07" display. Do not include a live
+   countdown in this frame; the real already-played state just re-renders
+   `GameDoneScreen` with `alreadyDone` set, showing the same score the player
+   already earned that day. -->
+3. <!-- DEV: All four games funnel into the SAME shared `GameDoneScreen` component
+   for their result screen, not four separate bespoke result screens — quiz games
+   (Trivia, Who Said It) show a score fraction + percentage + tiered badge/tagline;
+   puzzle games (Sudoku, Crossword) show only a "COMPLETE" badge with no score
+   fraction (`isPuzzle` branch hides the score block entirely). Model this as one
+   component with a puzzle-vs-quiz prop, not duplicated screens. -->
+4. <!-- DEV: GameDoneScreen includes two mechanics absent from mobile's PROMPT 7
+   Frame 4 score screen entirely: a native Web Share API share button (falling
+   back to clipboard-copy with a 3-second "✓ Copied" confirmation), and an inline
+   email-capture form ("Get daily game reminders") that POSTs to
+   `/api/games/subscribe`. Both must be included in this frame. -->
+5. <!-- DEV: Who Said It's answer options are author-name text buttons sourced
+   from `question.options` (variable count/length strings), not mobile's fixed
+   4-letter-chip ABCD layout — size the option buttons to wrap real names, don't
+   force a uniform short-chip width. -->
+6. <!-- DEV: CrosswordGame includes a Moveee-Pro-gated "regenerate random puzzle"
+   action (`isPatron` check against `session.user.tier`, calls
+   `/api/games/crossword/daily?random=true`) with its own loading/celebrating
+   states — this has no equivalent anywhere in the mobile catalog (which marks
+   Crossword as not-yet-built) and should be shown as a secondary control near the
+   puzzle, gated behind the same Pro-only visual treatment used elsewhere in this
+   app (e.g. the ContentGate lock affordance), not as a freely available button. -->
+7. <!-- DEV: SudokuGame includes a live running timer (mm:ss, ticks only while
+   `phase === "playing"`) and a mistake counter — neither appears in the mobile
+   catalog since mobile never built Sudoku. Render both in the puzzle header. -->
+
+### PROMPT 8 — Games Hub, Trivia Gameplay, Shared Result Screen (Desktop 1440px +
+Mobile 390px)
+
+```
+TASK: Design the Culture Games hub, the Culture Trivia gameplay flow, and the
+shared GameDoneScreen result screen for Moveee's web community app
+(web.themoveee.com/games).
+
+CONTEXT: Site B — Moveee's community + auth surface. Paper-warm background, white
+cards, ochre/gold/ink palette, DM Sans + Fraunces + JetBrains Mono. All four games
+(Who Said It, Culture Trivia, Daily Sudoku, Daily Crossword) are real and fully
+playable — none are placeholders.
+
+ELEMENTS:
+
+FRAME 1 — GAMES HUB (Desktop, 1440px)
+
+- Header band: "Culture Games" mono eyebrow, "Play. *Learn.* Connect." serif H1
+  (Learn italicised), subtitle paragraph, generous padding, paper-warm background
+- 4-card grid (2×2 on desktop, single column on mobile per Frame 5): each
+  `GameCard` — top accent-colour bar matching the game's brand colour (Who Said It
+  rust/ochre #c5491f, Trivia olive #3d4a2a, Sudoku navy #1a3a5c, Crossword brown
+  #5c3a1a), small coloured badge pill (Quotes/Daily/Puzzle/Culture), large emoji
+  icon, game name, tagline, meta row (difficulty · rounds), "Play now →" link at
+  card bottom. <!-- DEV 1 --> No card is dimmed or locked.
+
+FRAME 2 — TRIVIA: QUESTION IN PROGRESS (Desktop, 1440px, centred ~640px column)
+
+- Slim nav bar above the game: "← Games" back link · "/" separator · "Culture
+  Trivia" title
+- Game header: "Culture Trivia" eyebrow + "Today's quiz · {date}"
+- Progress pips row: one dot per question (10 total), filled/done state for
+  answered questions, active-ring state for the current one — not a single
+  progress bar
+- "Question {n} of {total} · {Category}" caption line
+- Question text, serif, large, centred, allow up to 3 lines
+- 4 answer option buttons, full width, left letter chip (A/B/C/D) + option text,
+  unselected state: white fill, thin border
+
+FRAME 3 — TRIVIA: ANSWER REVEALED + EXPLANATION (Desktop, same column width)
+
+- Same question card, now with option states: correct option green border + tint
+  + checkmark; selected-wrong option red border + tint + ×; other two options
+  unchanged
+- Explanation box below options: paper-deep background, "Did you know?" label +
+  explanation paragraph
+- "Next Question →" button now active (ochre fill) — reads "See Results →" only
+  on the final question
+
+FRAME 4 — SHARED GAME DONE SCREEN (Desktop, component close-up, ~480px card,
+show both a quiz-game state and a puzzle-game state side by side)
+
+- Card header bar: "THE MOVEEE" wordmark left, "{icon} {Game Name}" tag right
+- Result zone: tier badge (PERFECT/SHARP/VERSED/LEARNING/STARTER for quiz games,
+  COMPLETE for puzzle games per <!-- DEV 3 -->), large emoji, score fraction +
+  percentage (quiz games only — omit entirely for the puzzle-game state), italic
+  tagline
+- Meta row: formatted date + "Already played today" tag when applicable
+- "Share your score →" button (full width, secondary style)
+- Email capture zone: "Get daily game reminders" label + email input + "Notify
+  me" button, OR the success state "✓ You're on the list — we'll ping you daily."
+- Footer actions: "Try {Other Game} →" primary button + "All Games" ghost link
+
+FRAME 5 — MOBILE COMPANION (390px, single column)
+
+- Games hub: 1-column card stack instead of 2×2 grid, same card content
+- Trivia question/answer frames: full-width single column, same pip row and
+  option button stack
+- GameDoneScreen: full-width card, same internal stacking order
+
+BEHAVIOUR:
+- "Already played today" renders the GameDoneScreen result for that day's
+  already-recorded score, no countdown timer anywhere per <!-- DEV 2 -->
+- Progress pips advance only on answer submission, not on view
+- Share button uses native share sheet where available, clipboard-copy fallback
+  with a transient "✓ Copied to clipboard" confirmation
+
+CONSTRAINTS:
+- No disabled/"Coming soon" game cards — all four titles are live
+- GameDoneScreen must be modelled as one shared component varying by a
+  quiz-vs-puzzle flag, not as separate per-game result screens
+```
+
+Output 5 frames: Frame 1 (Games Hub, Desktop), Frame 2 (Trivia In Progress,
+Desktop), Frame 3 (Trivia Answer Revealed, Desktop), Frame 4 (Shared Game Done
+Screen, component close-up — quiz + puzzle states), Frame 5 (Mobile Companion,
+full scroll).
+
+---
+
