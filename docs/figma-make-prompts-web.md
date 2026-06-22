@@ -3070,3 +3070,438 @@ Frame 2 (Full Notifications Page, Desktop), Frame 3 (Analytics Dashboard,
 Desktop, full scroll), Frame 4 (Mobile Companion, full scroll).
 
 ---
+
+## 14. LIFESTYLE SHOP — WEB (Site A, themoveee.com/shop)
+
+> **Note on scope.** The mobile catalog's §16 covers a 6th bottom-nav tab with a
+> hero banner, vendor showcase, "Connect Pro" band, cart drawer, checkout
+> handoff screen, maker profile, "The Edit", product search, a filter bottom
+> sheet, a gold early-access gate, and an order-confirmation celebration
+> screen. The real web shop is architecturally different in several load-
+> bearing ways — this section is grounded in the actual `apps/site/app/shop/**`
+> tree, not a 1:1 port of the mobile spec:
+> - **The shop lives only on Site A** (`themoveee.com`), not Site B
+>   (`web.themoveee.com`/`apps/connect`) — there is no shop surface in
+>   `apps/connect` at all; Connect's `proxy.ts` doesn't even need a shop
+>   redirect because the shop was never built there.
+> - **No hero banner on shop home** — `ShopArchiveWrapper.tsx` goes straight
+>   from the page head into the filter bar and an animated ticker; there is
+>   no full-bleed image/headline block like the mobile hero.
+> - **Cart is a drawer only — there is no full-page cart screen, no in-app
+>   checkout, and no order-confirmation screen.** `CartDrawer.tsx` is a
+>   right-side slide-in panel reachable from any shop page; its "Checkout →"
+>   button is a hard redirect to `https://cms.themoveee.com/checkout`
+>   (WooCommerce-hosted, native WordPress checkout pages) — there is nothing
+>   resembling mobile's animated "Taking you to secure checkout..." handoff
+>   screen or its post-purchase celebration screen, because the purchase
+>   itself completes entirely outside the Next.js app.
+> - **No shop search screen and no filter bottom sheet** — filtering is a
+>   sticky horizontal category-tab bar plus a sort dropdown and a grid/list
+>   view toggle baked into `ShopArchiveWrapper.tsx`'s filter bar; there is no
+>   dedicated search page, no price-range slider, and no in-stock/on-sale
+>   toggles anywhere in the web shop.
+> - **Pro early-access gating is a simple inline banner, not a gold
+>   countdown gate card** — `ShopSessionSection.tsx` shows one line of copy
+>   and an upgrade link in place of (not overlaying/dimming) the Add to Cart
+>   controls; there is no "Opens in 7d 14h 32m" countdown anywhere in the
+>   code.
+> - **"The Moveee Edit" exists on web** (`app/shop/edit/page.tsx`) as a
+>   magazine-post-driven curation stream, structurally different from the
+>   mobile catalog's standalone editorial-grid page — each entry pairs one
+>   magazine story card with up to 4 linked products, not a single flat
+>   product grid.
+> - **Maker pages exist in two parallel places**: `app/makers/[slug]/page.tsx`
+>   (the canonical maker/vendor profile, linked from the makers directory at
+>   `/makers`) and `app/shop/brand/[slug]/page.tsx` (a near-duplicate sourced
+>   from WooCommerce WCFM vendor data instead of the directory). Both are
+>   real, live routes — this prompt covers the canonical `/makers/[slug]`
+>   page since it's the one linked from the shop's "Meet the Makers" strip.
+> - **No multi-currency** — web shop prices are GBP-only; there is no
+>   NGN/GBP toggle the way `apps/mobile`'s shop screens have.
+> - **No wishlist persistence** — the heart/save icon on the product page
+>   renders but has no backing API call; it is purely decorative in the
+>   current build.
+
+### Brand architecture
+
+Site A (`apps/site`, themoveee.com) — Editorial + Shop, no auth required to
+browse. Per CLAUDE.md's brand table, this surface is branded **Moveee
+Magazine** elsewhere on the site, but the shop itself is labelled **"Moveee
+Lifestyle"** in its own page head — keep that exact label, do not rename it
+to "Moveee Magazine Shop" or similar. Pro-tier gating language on shop pages
+should read **"Moveee Pro"**, per the canonical tier-naming table — but see
+DEV annotation 1 below: the live ticker and one section heading still say
+"Connect Members"/"Connect Member Band", a stale pre-rename leftover from
+before the 2026-06-21 Connect→Moveee tier rename swept through. Render the
+prompt's copy using the *real* current strings (including the stale ones, so
+the design is honest about what ships today) but flag it for a copy fix via
+the DEV annotation, exactly as the project's established convention requires
+— do not silently "correct" it in the mockup.
+
+### Why this section exists
+
+Moveee Lifestyle is the one commerce surface in an otherwise content/
+community-only product. It deliberately reads as an editorial boutique
+rather than a generic e-commerce grid — every section ties back to either a
+vetted independent maker or a magazine story, and the only purchase
+incentive offered to non-members is the Moveee Pro discount + early access,
+not coupons or flash sales. The real implementation backs this fully:
+GraphQL-sourced product/vendor content, a WooCommerce Store API-backed cart
+drawer, and a hard handoff to WordPress's own checkout for payment — there
+is intentionally no native Next.js checkout to design around.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Shop head: "Moveee Lifestyle" ("Lifestyle" in ochre italic) — description:
+  "Every piece chosen for craft, longevity, and the story behind it. Every
+  maker on Moveee is personally vetted for craft integrity, fair production,
+  and lasting quality."
+- Ticker loop: "Vetted Makers · ★ · Ethical Production · ★ · Free Returns ·
+  ★ · Connect Members Save 10%"
+- Editorial Picks header: "Editorial Picks" ("Picks" in ochre) + "The Moveee
+  Edit →"
+- Editorial bridge #1: "As Seen In" / "The Moveee Edit" (italic) / "Issue
+  014 · Craft & Makers" / "Read the Issue →"
+- Category grid: "Shop by Category" + "N pieces" per card
+- Vendor strip: "Meet the Makers" + "All makers →" / "★ Vetted Maker" /
+  "N products"
+- Connect Member Band: "Connect Members" heading, "Join Moveee for early
+  access to new makers, exclusive editions, and 10% off every purchase in
+  the shop." — four perk cards: "Early Access" / "10% Off" / "Patron
+  Stories" / "Maker Events" — "Join Moveee →" — float box: "2,400 Members &
+  growing"
+- Origins bridge: "Origins Journal" / "The stories behind the objects" /
+  "Read Origins →"
+- Product badges: "★ Vetted" · "New" · "Sold Out"
+- Product CTA: "Add to Cart →"
+- Pro banner (Pro member): "You have early access to this drop as a Moveee
+  Pro member."
+- Pro banner (non-Pro, gated): "This drop is available to Moveee Pro members
+  first." + "Upgrade to Pro →" (logged in) / "Join Moveee Pro →" (logged out)
+- Pro price label: "★ Your Pro price" / non-Pro teaser: "Pro member price
+  available" + "Upgrade →"
+- Accordion tab labels: "Description" · "Materials & Care" · "Delivery &
+  Returns" · "About the Maker"
+- "As Seen In" product block: "As Seen In" + "Read the Feature →"
+- Maker story section: "01" / "The maker behind it" — fallback story text:
+  "{Vendor} is a vetted Moveee partner — personally reviewed for craft
+  integrity, fair production practices, and lasting quality."
+- Process section: "How It's Made" / "From raw material to your door" / "A
+  N-stage process — each step overseen by the maker themselves."
+- Vendor profile card stats: "Years making" / "Products in shop" / "Moveee
+  rating" — CTAs: "View maker profile" / "More from {Vendor}"
+- Related products: "More from {Category}" ({Category} in ochre) + "View
+  all →"
+- Cart drawer: "Your Cart" — empty: "Your cart is empty." + "Browse the Shop
+  →" — footer: "Subtotal" + "Shipping & taxes calculated at checkout" +
+  "Checkout →" + "Continue Shopping"
+- The Edit hero: "Moveee Lifestyle · The Edit" eyebrow, "The Moveee Edit"
+  headline, "Products picked by our writers and editors — straight from the
+  stories we tell. Every item is connected to a piece of culture." + "Browse
+  the full shop →"
+- The Edit empty state: "✦" / "Curation coming soon" / "Our editors are
+  building the first edit. Check back shortly — or browse the full shop." +
+  "Browse the shop →"
+- The Edit stream: "From this story" label per product block; bottom CTA:
+  "Want more?" / "Explore everything in the Moveee shop — vetted makers, all
+  culture-connected." + "Browse the shop" / "Meet the makers"
+- Makers directory: "Meet the Makers" ("Makers" in ochre italic) +
+  "Every maker on Moveee is personally vetted for craft integrity, fair
+  production practices, and lasting quality. These are the people behind the
+  pieces."
+- Maker profile: "Shop all products →" / "View profile" — products section:
+  "Work by {Maker Name}" ({Name} in italic) — empty state: "No products
+  listed yet. Check back soon."
+
+### DEV ANNOTATION REQUIREMENT
+
+1. <!-- DEV: ticker copy ("Connect Members Save 10%") and the home-page
+   "Connect Member Band" section are stale pre-2026-06-21-rename leftovers —
+   per CLAUDE.md's tier-naming table this should read "Moveee Members"
+   everywhere; the "Patron Stories" perk-card label has the same issue and
+   should read "Pro Stories" or similar. Flag for a copy-only fix in
+   ShopArchiveWrapper.tsx, do not change tier logic. -->
+2. <!-- DEV: there is no native checkout or order-confirmation screen in
+   this app — "Checkout →" in the cart drawer is a plain anchor to
+   https://cms.themoveee.com/checkout (WooCommerce-hosted). Do not design a
+   third "checkout" frame; the drawer's footer button is the entire web
+   checkout surface from this app's perspective. -->
+3. <!-- DEV: Pro pricing (ShopSessionSection.tsx) is resolved client-side via
+   useSession() inside a client component, not in page-level SSR/metadata —
+   the server-rendered shell is tier-agnostic and the price/banner swap in
+   after hydration. Don't design this as a server-decided split; it's a
+   post-load client swap (briefly shows the non-Pro state on first paint). -->
+4. <!-- DEV: there are two parallel maker-profile routes (app/makers/[slug]
+   sourced from the directory, app/shop/brand/[slug] sourced from WooCommerce
+   WCFM vendor data) that render near-identically. This prompt specs
+   app/makers/[slug] only, since that's the one linked from the shop's
+   "Meet the Makers" strip — do not conflate the two or assume one replaces
+   the other. -->
+5. <!-- DEV: the save/wishlist heart icon on the product page has no backing
+   API call — it is UI-only with no persistence. Render it but do not design
+   a "Saved Items" page around it; none exists. -->
+6. <!-- DEV: vendor data has a three-tier fallback (GraphQL → custom REST
+   /wp-json/moveee/v1/vendors/ → hardcoded FALLBACK_VENDORS array in code) —
+   the "Meet the Makers" strip may show placeholder vendors (e.g. "Studio
+   Fern") in low-data environments; this is intentional, not a bug to design
+   around. -->
+
+### PROMPT 14 — Lifestyle Shop (Desktop 1440px + Mobile 390px)
+
+```
+Senior product designer — Moveee Lifestyle shop, web. Desktop-first, 1440px
+canvas, paper bg #F3ECE0 (--paper), white card fills, ink #14110D (--ink),
+ochre #C5491F (--ochre, primary accent), gold #B38238 (--gold, secondary/Pro
+accent), mute #7A6F5C (--mute). Fraunces serif for headlines/product names
+(italic accent word in ochre), JetBrains Mono for vendor tags/badges/prices/
+labels (uppercase, letter-spacing .13em), DM Sans sparingly for body copy.
+
+FRAME 1 — SHOP HOME (full scroll, 1440px, top section through Origins
+bridge):
+
+HEADER (shared site header — logo left, nav centre, cart bag icon + count
+badge right. Reuse Site A's existing header, do not redesign it here.)
+
+SHOP HEAD (1100px max-width centred, 64px top padding):
+  "Moveee Lifestyle" Fraunces 56px ("Lifestyle" italic ochre)
+  Thin horizontal rule below, 24px margin
+  Description: "Every piece chosen for craft, longevity, and the story
+  behind it. Every maker on Moveee is personally vetted for craft integrity,
+  fair production, and lasting quality." DM Sans 16px mute, max 640px
+
+FILTER BAR (sticky on scroll, white bg, 64px height, bottom rule):
+  Category tabs (horizontal, scrollable if overflow): All (active, ink fill
+  white text) · Ceramics · Textiles · Leather · Jewellery · Objects · Paper
+  + more — ghost text mute, mono 12px uppercase, underline on active.
+  Right side: "Sort: Featured ▾" mono 12px mute dropdown + grid/list view
+  toggle (two icon buttons, active = ink fill) + "N pieces" mono 11px mute
+  count.
+
+TICKER (full-bleed, dark ink bg, 40px height, horizontal marquee animation):
+  Looping mono 11px uppercase gold text: "Vetted Makers · ★ · Ethical
+  Production · ★ · Free Returns · ★ · Connect Members Save 10% · ★" — repeat
+  seamlessly. <!-- DEV annotation 1: "Connect Members" is stale copy -->
+
+EDITORIAL PICKS (1100px max-width, 80px top padding):
+  Header row: "Editorial Picks" Fraunces 40px ("Picks" italic ochre) left +
+  "The Moveee Edit →" mono 13px ochre right.
+  2-column layout (60/40 split, 24px gap):
+    LEFT: one large featured card, 1:1 image, "★ Vetted" pip top-left (white
+    pill, mono 9px), "New" badge top-right (ochre fill, mono 9px white),
+    below image: vendor tag mono 9px uppercase ochre, product name Fraunces
+    22px italic price, price Fraunces 18px italic.
+    RIGHT: 2×2 grid of 4 smaller cards, same field set at smaller scale.
+
+EDITORIAL BRIDGE #1 (full-bleed, ink bg with radial rust-gradient overlay,
+220px height, centred content):
+  "As Seen In" mono 11px uppercase gold + "The Moveee Edit" Fraunces 32px
+  italic white + "Issue 014 · Craft & Makers" mono 12px white/60 + "Read the
+  Issue →" mono 13px gold underline.
+
+MAIN PRODUCT GRID (1100px max-width, 4 columns, 24px gap, 80px top padding):
+  "All Products" Fraunces 28px label (implicit from filter bar context).
+  8 product cards: white fill, 1:1 image (badges: "★ Vetted" top-left, "New"
+  ochre top-right OR "Sold Out" full dark overlay), vendor tag mono 9px
+  ochre, product name Fraunces 16px, price Fraunces 15px italic, "Add to
+  Cart →" mono 12px button revealed on image hover (slides up from bottom).
+
+EDITORIAL BRIDGE #2 (same treatment as bridge #1, links to Origins Journal):
+  "Origins Journal" Fraunces 32px italic white + descriptive subtext + "Read
+  Origins →"
+
+CATEGORY GRID (1100px max-width, 6 columns, 16px gap):
+  6 category cards, each: image bg, dark gradient overlay bottom 40%,
+  category name Fraunces 18px white + "N pieces" mono 11px white/70,
+  bottom-left aligned.
+
+VENDOR STRIP — "Meet the Makers" (1100px max-width, 80px top padding):
+  Header: "Meet the Makers" Fraunces 28px + "All makers →" mono 13px ochre
+  right.
+  4-column grid of vendor cards: avatar (72px circle), "★ Vetted Maker" mono
+  9px pill below avatar, vendor name Fraunces 18px, location mono 11px mute,
+  bio excerpt DM Sans 13px mute 2 lines, "N products" mono 10px mute.
+
+CONNECT MEMBER BAND (paper-deep bg, 1440px full-bleed, 2-column 50/50,
+120px vertical padding): <!-- DEV annotation 1: stale "Connect" naming -->
+  LEFT: "Connect Members" Fraunces 36px + paragraph: "Join Moveee for early
+  access to new makers, exclusive editions, and 10% off every purchase in
+  the shop." DM Sans 15px mute, max 440px.
+  4 perk mini-cards in a row (◈ Early Access · ◇ 10% Off · ○ Patron Stories
+  · △ Maker Events) — icon + label, mono 11px.
+  "Join Moveee →" ochre filled pill button, 48px height.
+  RIGHT: image placeholder + floating box overlapping bottom-left corner:
+  "2,400 Members & growing" white card, Fraunces 16px ink, shadow-card.
+
+ORIGINS BRIDGE (1100px max-width, 2-column, image left / text right, 80px
+top+bottom padding):
+  "Origins Journal" Fraunces 28px + "The stories behind the objects" + body
+  copy + "Read Origins →" mono 13px ochre.
+
+---
+
+FRAME 2 — PRODUCT DETAIL PAGE (full scroll, 1440px):
+
+BREADCRUMB (1100px max-width, 24px top padding): "Shop → Ceramics →
+Terracotta Ritual Bowl" mono 11px mute + "← Back to Shop" mono 11px ochre
+right-aligned.
+
+PRODUCT HERO (1100px max-width, 2-column 55/45 split, 48px gap):
+  LEFT — ProductGallery: large square hero image, "★ Vetted Maker" white
+  pill seal top-left, expand-icon hint bottom-right (opens lightbox on
+  click). Thumbnail strip below (4 small squares, active = ink border ring).
+  RIGHT — product info:
+    Vendor link: "Studio Fern" mono 11px ochre underline (links to maker
+    page)
+    "Terracotta Ritual Bowl" Fraunces 32px ink
+    Short description DM Sans 15px mute, 2-3 lines
+    PRO EARLY ACCESS BANNER (gold-bordered card, 16px padding, only if
+    gated): for Pro members — "★ Pro Early Access" gold badge + "You have
+    early access to this drop as a Moveee Pro member." DM Sans 13px; for
+    non-Pro — same badge + "This drop is available to Moveee Pro members
+    first. Opens publicly on [date]." + "Upgrade to Pro →"/"Join Moveee
+    Pro →" mono 12px ochre link
+    PRICE ROW: regular price Fraunces 24px italic (struck-through if on
+    sale) + "GBP" mono 10px mute. Pro member: "★ Your Pro price" gold label
+    above a gold Fraunces 24px italic discounted price, struck-through
+    regular price shown smaller above it. Non-Pro teaser: "Pro member price
+    available" mono 12px mute + "Upgrade →" ochre link.
+    COLOUR SELECTOR (if variants): label + swatch row (32px circles, ink
+    ring on active)
+    SIZE SELECTOR (if variants): label + pill row (ink fill active, ghost
+    border inactive)
+    CTA ROW: "Add to Cart →" full-width ochre filled button (52px height) —
+    OR if early-access-gated and non-Pro: "★ Get early access" gold filled
+    button instead (links to /connect/membership, replaces Add to Cart
+    entirely, not an overlay) + ♡ save icon button beside it (28px, outline,
+    non-functional per DEV annotation 5)
+    Delivery info: "Delivery: 3–5 working days" / "Returns: Free within 30
+    days" mono 11px mute, stacked
+
+ACCORDION (1100px max-width, below hero, ghost top rule, 24px top margin):
+  4 collapsible rows: "Description" (expanded default, Fraunces 16px label +
+  chevron) · "Materials & Care" (only if filled) · "Delivery & Returns"
+  (only if filled) · "About the Maker" (only if vendor bio exists)
+  Expanded content: DM Sans 14px mute, line-height 1.6
+
+AS SEEN IN (1100px max-width, paper-deep card, radius-xl, 24px padding, only
+if linked to a magazine post):
+  "As Seen In" mono 11px ochre + magazine post title Fraunces 20px italic +
+  category meta mono 11px mute + "Read the Feature →" ochre link
+
+MAKER STORY SECTION (1100px max-width, 2-column, image left/text right, only
+if vendor exists):
+  "01" mono 11px ochre + "The maker behind it" Fraunces 28px + tagline +
+  "Origins Journal" mono 10px mute meta
+  Story text DM Sans 15px, line-height 1.7 — fallback if no custom copy:
+  "Studio Fern is a vetted Moveee partner — personally reviewed for craft
+  integrity, fair production practices, and lasting quality."
+
+PROCESS SECTION — "How It's Made" (1100px max-width, only if steps exist):
+  "How It's Made" mono 11px ochre + "From raw material to your door"
+  Fraunces 28px + "A 3-stage process — each step overseen by the maker
+  themselves." DM Sans 14px mute
+  3-column grid of step cards: 01/02/03 mono 24px ochre + step title Fraunces
+  16px + description DM Sans 13px mute + optional duration mono 10px italic
+
+VENDOR PROFILE CARD (1100px max-width, white card, radius-xl, shadow-card,
+2-column, 32px padding, only if vendor exists):
+  LEFT: vendor avatar/image (160px square, radius-lg)
+  RIGHT: "Vetted Maker · Lagos" mono 11px ochre tag + vendor name Fraunces
+  24px + bio DM Sans 14px mute + stats row (3 columns: "Years making" /
+  "Products in shop" / "Moveee rating", each a number Fraunces 20px + label
+  mono 9px uppercase mute) + 2 CTAs: "View maker profile" (outline) + "More
+  from Studio Fern" (ochre filled)
+
+RELATED PRODUCTS (1100px max-width, 80px top padding):
+  "More from Ceramics" Fraunces 24px ("Ceramics" italic ochre) + "View
+  all →" right
+  4-column grid, same product card style as the home grid.
+
+---
+
+FRAME 3 — CART DRAWER (overlay state, shown on top of Frame 1's product
+grid, dimmed background ink 45% overlay):
+  Drawer: 420px wide, slides from right, white fill, shadow-modal, full
+  viewport height.
+  HEADER (64px, ghost bottom rule): "Your Cart" Fraunces 20px + "(3)" mono
+  12px mute count + × close icon right.
+  ITEMS LIST (scrollable): 3 item rows, each: 72px square image left +
+  product name Fraunces 14px + price Fraunces 13px italic right + quantity
+  stepper (− 2 +, ghost border circles) below name + × remove icon.
+  FOOTER (fixed, 24px padding, ghost top rule): "Subtotal" mono 12px + price
+  Fraunces 16px italic right; "Shipping & taxes calculated at checkout" mono
+  10px mute; "Checkout →" full-width ochre filled button (52px) <!-- DEV
+  annotation 2: hard links to cms.themoveee.com/checkout, no in-app step
+  after this -->; "Continue Shopping" ghost text button below, closes drawer.
+  Empty state variant (small inset): "Your cart is empty." Fraunces 18px +
+  "Browse the Shop →" ochre button.
+
+---
+
+FRAME 4 — "THE MOVEEE EDIT" PAGE (1440px, full scroll):
+  HERO: "Moveee Lifestyle · The Edit" mono 11px uppercase ochre eyebrow +
+  "The Moveee Edit" Fraunces 48px + "Products picked by our writers and
+  editors — straight from the stories we tell. Every item is connected to a
+  piece of culture." DM Sans 16px mute, max 560px + "Browse the full shop →"
+  ochre link.
+  STREAM (1100px max-width, repeating 2-column blocks, 64px gap between
+  blocks):
+    Each block: LEFT — magazine story card (480px image, category tag mono
+    10px ochre, post title Fraunces 24px, excerpt DM Sans 14px mute ~140
+    chars, date mono 11px mute, "Read the story →" ochre link). RIGHT — "From
+    this story" mono 11px uppercase mute label + 2×2 grid of up to 4 linked
+    products (image + name + price, smaller scale than main grid).
+  EMPTY STATE (centred, if no editorials exist): "✦" 32px ochre + "Curation
+  coming soon" Fraunces 22px + "Our editors are building the first edit.
+  Check back shortly — or browse the full shop." DM Sans 14px mute + "Browse
+  the shop →" ochre button.
+  CLOSING BAND: "Want more?" Fraunces 28px + "Explore everything in the
+  Moveee shop — vetted makers, all culture-connected." DM Sans 14px mute +
+  2 buttons: "Browse the shop" (ochre filled) + "Meet the makers" (outline).
+
+---
+
+FRAME 5 — MAKER PROFILE PAGE (app/makers/[slug], 1440px, full scroll):
+  BREADCRUMB: "Shop → Makers → Studio Fern" mono 11px mute.
+  HERO (full-bleed banner image, 320px height, dark gradient overlay bottom
+  60%): "★ Vetted Maker" mono 10px white pill + "Studio Fern" Fraunces 36px
+  white + "Lagos, Nigeria" mono 12px white/70 + bio DM Sans 14px white/85
+  max 480px + stats grid (3 cols: Years making / Products in shop / Moveee
+  rating, white text) + 2 CTAs: "Shop all products →" (ochre filled) + "View
+  profile" (white outline, only if a directory entry exists) + social links
+  row (Website ↗ · Instagram ↗ · X ↗, if available).
+  PRODUCTS SECTION (1100px max-width, 80px top padding): "Work by Studio
+  Fern" Fraunces 28px ("Studio Fern" italic ochre) + count mono 12px mute +
+  4-column product grid (same card style as shop home). Empty state if none:
+  "No products listed yet. Check back soon." DM Sans 14px mute, centred.
+
+---
+
+FRAME 6 — MOBILE COMPANION (390px width, single scroll, representing Shop
+Home + Product Detail collapsed to single column):
+  Shop head stacked, filter bar becomes horizontal-scroll chip row with a
+  separate sort/view row below it, ticker unchanged (full-bleed), editorial
+  picks collapse to single column (large card, then 4 stacked small cards),
+  product grid becomes 2-column, vendor strip becomes horizontal scroll,
+  Connect Member Band stacks vertically (text block above image), cart
+  drawer becomes full-width bottom-anchored sheet rather than a right-side
+  panel (320px height, drag handle, same content).
+
+CONSTRAINTS:
+- Do not design a native checkout step or order-confirmation screen — the
+  cart drawer's "Checkout →" button is the entire web checkout surface.
+- Do not design a search page or filter bottom sheet — filtering is the
+  sticky category-tab + sort-dropdown + view-toggle bar only.
+- Pro early-access gating replaces the Add to Cart button outright; it does
+  not render as a dimmed overlay on top of disabled controls.
+- Use the real (stale) "Connect Members"/"Connect Member Band" copy where
+  shown in code today, annotated via DEV note 1 — do not silently rename it
+  to "Moveee Members" in the mockup itself.
+```
+
+Output 6 frames: Frame 1 (Shop Home, Desktop, full scroll), Frame 2 (Product
+Detail Page, Desktop, full scroll), Frame 3 (Cart Drawer overlay, Desktop),
+Frame 4 (The Moveee Edit, Desktop, full scroll), Frame 5 (Maker Profile Page,
+Desktop, full scroll), Frame 6 (Mobile Companion, full scroll).
+
+---
