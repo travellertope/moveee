@@ -426,8 +426,19 @@ export default function ClusterScreen() {
             <View style={styles.card}>
               <Text style={styles.cardLabel}>Getting started</Text>
               <Text style={styles.cardBody}>
-                This fellowship needs at least 4 members to activate. Share the invite link with neighbours and friends to get started.
+                This fellowship needs at least 4 members to activate. Here's what to do next:
               </Text>
+              <View style={{ gap: 8, marginTop: 8 }}>
+                <Text style={styles.cardBody}>
+                  1. Share the invite link below with neighbours, friends, and anyone on your street.
+                </Text>
+                <Text style={styles.cardBody}>
+                  2. When 4 people have joined, the fellowship activates automatically — unlocking weekly check-ins, host elections, and Culture Credits rewards.
+                </Text>
+                <Text style={styles.cardBody}>
+                  3. Once active, meet weekly on {cluster.meetingDay ? `${capitalize(cluster.meetingDay)}s` : "your chosen day"} at {cluster.meetingTime || "the time you set"}. The host shows a QR code and members scan it to check in.
+                </Text>
+              </View>
               <Text style={styles.memberCount}>
                 {cluster.memberCount} of 4 members needed
               </Text>
@@ -436,6 +447,17 @@ export default function ClusterScreen() {
                 <Text style={styles.joinBtnText}>Share invite link</Text>
               </TouchableOpacity>
             </View>
+          )}
+
+          {status?.isMember && cluster.status !== "forming" && (
+            <TouchableOpacity style={[styles.card, { flexDirection: "row", alignItems: "center" }]} onPress={handleShare}>
+              <Ionicons name="link-outline" size={18} color={c.ochre} style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.memberLabel}>Invite people</Text>
+                <Text style={[styles.memberCount, { marginTop: 2 }]}>Tap to share the invite link to this fellowship</Text>
+              </View>
+              <Ionicons name="share-outline" size={18} color={c.mute} />
+            </TouchableOpacity>
           )}
 
           <View style={styles.card}>

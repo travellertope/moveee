@@ -52,7 +52,7 @@ interface MakerProfile {
 }
 
 type MakerProfileRouteParams = {
-  MakerProfile: { makerId: number; makerSlug?: string };
+  MakerProfile: { makerSlug: string; makerName: string };
 };
 
 // ── Placeholder data ───────────────────────────────────────────────────────────
@@ -97,9 +97,11 @@ function SkeletonBox({ w, h, radius: r = 6 }: { w: number | string; h: number; r
 function ProductCard({
   product,
   makerName,
+  onPress,
 }: {
   product: MakerProduct;
   makerName: string;
+  onPress?: () => void;
 }) {
   const c = useColors();
   const s = useMemo(() => createProductCardStyles(c), [c]);
@@ -117,7 +119,7 @@ function ProductCard({
       : c.gold; // "new"
 
   return (
-    <View style={s.card}>
+    <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
       {/* Image area */}
       <View style={s.imageWrap}>
         {product.image ? (
@@ -199,7 +201,7 @@ function ProductCard({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -242,7 +244,7 @@ function createProductCardStyles(c: ColorPalette) {
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: "rgba(255,255,255,0.90)",
+      backgroundColor: `${c.paper}E6`,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -287,7 +289,7 @@ function createProductCardStyles(c: ColorPalette) {
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: "#F3ECE0",
+      backgroundColor: c.paperDeep,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -301,9 +303,9 @@ export default function MakerProfileScreen() {
   const s = useMemo(() => createStyles(c), [c]);
   const navigation = useNav();
   const route = useRoute<RouteProp<MakerProfileRouteParams, "MakerProfile">>();
-  const { makerId } = route.params;
+  const { makerSlug, makerName } = route.params;
 
-  const [maker, setMaker] = useState<MakerProfile>(PLACEHOLDER);
+  const [maker, setMaker] = useState<MakerProfile>({ ...PLACEHOLDER, name: makerName, slug: makerSlug });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -311,10 +313,31 @@ export default function MakerProfileScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.get(`${MOBILE_API}/shop/maker/${makerId}`, false);
-        if (!cancelled) setMaker(data as MakerProfile);
+        const data = await api.get<{ products: Array<{ id: number; name: string; price: string; regularPrice?: string; salePrice?: string; imageUrl?: string; badge?: string; badgeLabel?: string; makerName?: string; makerCity?: string }> }>(
+          `${MOBILE_API}/shop/products?maker=${encodeURIComponent(makerName)}&per_page=50`,
+          false,
+        );
+        if (cancelled) return;
+        const items = data?.products ?? [];
+        const firstItem = items[0];
+        const mappedProducts: MakerProduct[] = items.map((p) => ({
+          id: p.id,
+          title: p.name,
+          price: parseFloat(p.regularPrice || p.price) || 0,
+          salePrice: p.salePrice ? parseFloat(p.salePrice) || undefined : undefined,
+          badge: (p.badge as MakerProduct["badge"]) ?? undefined,
+          badgeLabel: p.badgeLabel ?? undefined,
+          image: p.imageUrl ?? undefined,
+        }));
+        setMaker((prev) => ({
+          ...prev,
+          name: makerName,
+          slug: makerSlug,
+          city: firstItem?.makerCity ?? prev.city,
+          products: mappedProducts,
+        }));
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Failed to load maker");
+        if (!cancelled) setError(e?.message ?? "Failed to load maker products");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -322,7 +345,7 @@ export default function MakerProfileScreen() {
     return () => {
       cancelled = true;
     };
-  }, [makerId]);
+  }, [makerSlug, makerName]);
 
   const handleShare = useCallback(async () => {
     await Share.share({
@@ -523,7 +546,12 @@ export default function MakerProfileScreen() {
           ) : (
             <View style={s.productGrid}>
               {products.map((p) => (
-                <ProductCard key={p.id} product={p} makerName={maker.name} />
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  makerName={maker.name}
+                  onPress={() => navigation.push("ProductDetail", { productId: p.id })}
+                />
               ))}
             </View>
           )}
