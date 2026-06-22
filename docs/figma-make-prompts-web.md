@@ -2382,3 +2382,202 @@ component close-up), Frame 4 (Mobile Companion, Pro variant, full scroll).
 
 ---
 
+
+## 10. MEMBER SETTINGS — WEB (Site B, web.themoveee.com/member/settings)
+
+### Note on scope
+Mobile's Member Settings is a single screen (`MemberSettingsScreen.tsx`) with 5
+client-side tabs (Profile/Directory/Interests/Newsletters/Security) and one
+full-form-with-bottom-"Save changes"-button pattern per tab. The web version is
+**structurally different, not just restyled**: it is 6 separate routed pages
+(`/member/settings/profile`, `/directory`, `/interests`, `/newsletters`,
+`/notifications`, `/security`) navigated via real `<Link>`s in `SettingsTabs.tsx`
+(active state from `usePathname()`, not local state), and almost every field
+saves itself independently the moment it's edited — there is no single "Save
+changes" button anywhere in this section. A 6th tab, **Notifications**, exists
+on web with no equivalent anywhere in the mobile catalog at all.
+
+### Brand architecture
+Site B (`apps/connect`, web.themoveee.com — Community + Auth). Tier copy is
+"Moveee Pro" / "Moveee Citizen" — never "Connect Pro"/"Connect Citizen".
+
+### Why this section exists
+Grounded in the real route files: `SettingsTabs.tsx` (6-tab nav), `ProfileEditor.tsx`
+(per-field inline-edit pattern), `DirectoryProfile.tsx` (directory opt-in +
+live card preview), `apps/connect/app/member/settings/interests/page.tsx` +
+`packages/shared/components/InterestEditor.tsx` (interest picker, canonical
+18-slug taxonomy from `lib/interest-mappings.ts`), `NewsletterPreferences.tsx`,
+`NotificationPreferences.tsx`, `security/page.tsx` + `PasskeyManager.tsx`.
+
+### Marketing copy (final — use verbatim where shown)
+
+**Profile tab** — field labels: Display Name, Email *(read-only, note: "Contact
+support to change your email")*, Username *(read-only, note: "Usernames cannot
+be changed")*, Phone, WhatsApp, Gender *(select: Prefer not to say / Male /
+Female / Non-binary / Other)*, Date of Birth, Nationality, Country of
+Residence, City, Occupation.
+
+**Directory tab** — toggle row: "Show me in the directory". Live preview note:
+"Name, role, and location come from your Profile section above." Disciplines
+(toggle chips, no cap): Creative, Entrepreneur, Artist, Filmmaker, Writer,
+Designer, Musician, Photographer, Tech, Legal, Finance, Academic. Bio field —
+160 characters max. Link fields: Instagram, LinkedIn, Website, Twitter / X.
+
+**Interests tab** — header "Your Interests", copy "Your interests shape your
+personalised feed. Select at least 3." Helper line: "{N} selected{N<3 ? ' — X
+more needed' : ' ✓'}". Button: "Save interests".
+
+**Newsletters tab** — three cards: "Culture Drop" ("Weekly — the deep dive into
+global culture. Essays, music, events. Every Tuesday."), "GetMeLit" ("Weekly —
+stories, poems, book recommendations, and opportunities for writers and
+readers."), "Events & Experiences" ("As needed — first access to new events
+and exclusive member invites."). Each toggle button reads "Subscribed" or
+"Subscribe".
+
+**Notifications tab** — 14 toggle rows, each "On"/"Off": Credits Earned, Badge
+Unlocked, Perk Expiring Soon, Perk Redeemed, Cash Out Approved, Cash Out
+Rejected, Credits Released, New Comment, Post Reached Threshold, Friend
+Joined, You Were Mentioned, New Follower, New Post From Someone You Follow,
+Event RSVP.
+
+**Security tab** — Password row: "Change your password via email reset" /
+"Change →". Passkeys section: "Passkeys use your device's biometrics
+(fingerprint, Face ID) for fast, secure sign-in. Required to redeem credits
+and cash out." Empty state: "No passkeys registered. Add one below." Each row
+shows device name + "Added {time ago}" (+ "· Used {time ago}" if different
+from created). Delete button: "Remove" / "Removing…". Add control: "Device
+name" input + "Add Passkey" / "Working…" button (hidden once 5 passkeys
+exist).
+
+<!-- DEV 1: Per-field inline-edit-with-autosave pattern (ProfileEditor.tsx,
+DirectoryProfile.tsx's BioField/LinkField, both NewsletterPreferences.tsx and
+NotificationPreferences.tsx's toggle rows) — every field/row has its own
+view↔edit or on↔off state and its own transient "Saved ✓"/"Error" feedback
+(~2s, then clears). There is NO page-level "Save changes" button anywhere in
+this section on web, unlike mobile's single bottom-Save-button full form. -->
+
+<!-- DEV 2: Email and Username fields render as permanently read-only rows
+(no Edit button at all) with an inline note below the value — "Contact
+support to change your email" / "Usernames cannot be changed". Mobile's
+Profile tab has no equivalent read-only-field treatment; annotate these as
+visually distinct (greyed value, no Edit affordance) from editable rows. -->
+
+<!-- DEV 3: Directory tab has a live "How your card looks" preview block
+(avatar initial, name, occupation, city/country, up to 3 discipline tags,
+bio) rendered only when the opt-in toggle is on, sourced from BOTH the
+Profile tab's fields (name/occupation/location) and this tab's own fields
+(disciplines/bio) — no equivalent exists on mobile. Caption directly under
+it: "Name, role, and location come from your Profile section above." -->
+
+<!-- DEV 4: Directory disciplines vocabulary (Creative, Entrepreneur, Artist,
+Filmmaker, Writer, Designer, Musician, Photographer, Tech, Legal, Finance,
+Academic) differs from mobile's discipline list and has NO "select up to 5"
+cap — toggles freely. Bio cap is 160 characters here vs mobile's 280. A 4th
+link field, Twitter/X, exists here with no mobile equivalent (mobile has 3:
+Instagram/LinkedIn/Website). -->
+
+<!-- DEV 5: Interests tab reads/writes the canonical 18-slug taxonomy from
+`lib/interest-mappings.ts` (fashion-streetwear, food-drink, street-food,
+nightlife, live-music, music-production, independent-film, visual-art,
+architecture, photography, literature, visual-design, tech-culture,
+sport-wellness, travel, ideas — the last two slugs, event-performance and
+event-community, are excluded from this picker, used only as event
+categories). This is a DIFFERENT, smaller, differently-worded list than
+whatever appears in the mobile catalog's interest screen — use the real slugs
+and emoji/labels from `interest-mappings.ts`, not the mobile copy. Minimum
+3 selections enforced client-side before the Save button enables. -->
+
+<!-- DEV 6: Notifications tab has NO mobile-catalog precedent at all — it is a
+genuinely new 6th tab. All 14 rows default to "On" when unset (`prefs[id] ??
+true`) and the "system" notification type is deliberately excluded entirely
+(always-on, not user-configurable, not shown in this list). -->
+
+<!-- DEV 7: Security tab's password row is a single link to
+`/forgot-password?email=...` (email reset flow) — there is no in-page
+change-password form with current/new/confirm fields on web. Passkey
+management (PasskeyManager.tsx) uses `@simplewebauthn/browser`'s
+`startRegistration()` (WebAuthn browser API), is capped at 5 passkeys per
+account, and a delete action requires a native `confirm()` dialog before
+calling the delete endpoint. -->
+
+<!-- DEV 8: Newsletter list on web (Culture Drop, GetMeLit, Events &
+Experiences) is a DIFFERENT set/order than the canonical PHP newsletter
+system documented elsewhere in this repo (which is list-ID driven and
+currently has culture-drop/getmelit registered as the two real sendable
+lists) — "Events & Experiences" here is a third, settings-only preference
+category, not a `_culture_nl_list` value. Flag this as worth reconciling but
+do not invent backend wiring for it in the prompt. -->
+
+### PROMPT 10 — Member Settings (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — SETTINGS SHELL + PROFILE TAB (Desktop, 1440px)
+
+- Top: 6-tab horizontal nav (Profile / Directory / Interests / Newsletters /
+  Notifications / Security), active tab underlined/bolded, each a real link
+  — annotate per <!-- DEV 1 --> that switching tabs is a full route change
+- Below nav: avatar upload control (current avatar or initial, "Change
+  photo" affordance) inside a .mem-card
+- Field list, one row per field, each row in one of two states:
+  - VIEW state: label (small caps mono) + value (or "—" if empty) + "Edit"
+    button at row end
+  - EDIT state (shown for one row at a time): label + input/select +
+    "Save"/"Cancel" buttons, transient "Saved ✓" or "Error" badge after Save
+  - Read-only rows (Email, Username) per <!-- DEV 2 -->: value rendered
+    greyed, small italic note below, NO Edit button
+  - Country/City fields use searchable select components, City filtered by
+    selected Country
+
+FRAME 2 — DIRECTORY TAB (Desktop, 1440px)
+
+- Toggle row "Show me in the directory" (custom pill toggle, not a checkbox)
+- When ON: live preview card per <!-- DEV 3 --> (avatar initial, name,
+  occupation, city/country line, up to 3 discipline tags, bio snippet) with
+  caption below it
+- 12-chip discipline grid (3-col), freely toggleable, no selection cap, per
+  <!-- DEV 4 -->
+- Bio field: inline-edit textarea, 160-char counter
+- 4 link fields (Instagram/LinkedIn/Website/Twitter-X), each independent
+  inline-edit row
+
+FRAME 3 — INTERESTS + NEWSLETTERS TABS (Desktop, 1440px, split view for
+reference — built as two separate routes)
+
+- Interests: header + helper copy, grid of interest chips (emoji + label,
+  auto-fill columns ~130px min), selected chips shown bold/bordered/shadowed,
+  live "{N} selected" counter (green once ≥3), "Save interests" button
+  disabled until 3+ selected — use the real 16-interest taxonomy subset per
+  <!-- DEV 5 -->
+- Newsletters: 3 stacked rows (Culture Drop / GetMeLit / Events &
+  Experiences), each label + muted description + toggle button reading
+  "Subscribed"/"Subscribe"
+
+FRAME 4 — NOTIFICATIONS + SECURITY TABS (Desktop, 1440px, split view for
+reference)
+
+- Notifications: 14 stacked rows, label only (no description), each with an
+  "On"/"Off" toggle button per <!-- DEV 6 -->
+- Security: Password row (label + muted description + "Change →" link per
+  <!-- DEV 7 -->), then Passkeys card: explanatory paragraph, list of
+  existing passkey rows (device name, "Added Xd ago" / "· Used Xh ago",
+  "Remove" button), device-name input + "Add Passkey" button (hidden at 5
+  passkeys), inline success/error message box below
+
+FRAME 5 — MOBILE COMPANION (390px, Profile tab shown, single column)
+
+- 6-tab nav becomes a horizontally-scrollable pill row
+- Avatar upload full-width, field list stacks identically (view↔edit per
+  row), same Edit/Save/Cancel pattern — no condensed mobile-only variant of
+  the inline-edit interaction
+
+CONSTRAINTS:
+- Never use "Connect Pro"/"Connect Citizen" — always "Moveee Pro"/"Moveee Citizen"
+- No page-level Save button anywhere — every field/toggle is self-saving
+- 6 tabs, not 5 — Notifications is real and must be included
+```
+
+Output 5 frames: Frame 1 (Settings Shell + Profile, Desktop), Frame 2
+(Directory, Desktop), Frame 3 (Interests + Newsletters, Desktop), Frame 4
+(Notifications + Security, Desktop), Frame 5 (Mobile Companion, Profile tab).
+
+---
