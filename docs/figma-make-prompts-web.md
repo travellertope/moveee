@@ -1168,3 +1168,177 @@ active), Frame 3 (Mobile Companion).
 
 ---
 
+## 5. POST COMPOSER — WEB (Site B, web.themoveee.com/feed)
+
+> Note on scope: web counterpart to the mobile catalog's §4A "Template Picker Sheet" +
+> §4B "Post Composer (All 10 Templates)". Read `packages/shared/components/pulse/
+> SubmitPost.tsx` in full before drafting this — the real web composer is architecturally
+> different from mobile in three load-bearing ways, not just a smaller-screen redraw:
+> (1) there is **no separate template-picker bottom sheet at all** — template selection is
+> a single always-visible horizontal pill bar at the top of one persistent composer card,
+> and switching pills swaps the fields below in place; (2) the composer is **inline in the
+> feed timeline**, never a full-screen takeover or modal; (3) **the web composer only has
+> 9 templates — there is no Book Review template on web** (mobile-only, per CLAUDE.md
+> "Book Review → directory linkage (mobile-only...)" — `TEMPLATES` in `SubmitPost.tsx` has
+> no `book-review` entry and no book search UI exists anywhere in `packages/shared`). Do
+> not draw a 10th frame for it.
+
+### Brand architecture
+Site B (`apps/connect`), Moveee. No "Connect" branding on any composer chrome.
+
+### Why this section exists
+`SubmitPost.tsx` renders one of three states depending on session: logged-out (a single
+disabled-looking prompt button that dispatches `open-auth-modal`), success (a purple-tinted
+confirmation banner, replaces the whole card briefly), or the full composer (template pill
+bar + avatar + dynamic field stack + submit). The field stack per template is generally the
+same *data* as the mobile catalog's §4B (same labels, same required-ness, same character
+limits in `MAX_CHARS`), but laid out as a single-column form inside one card rather than a
+full-screen view with a media toolbar pinned above the keyboard — there's no keyboard to pin
+above on desktop. Three gating states that exist in real code have no mobile-catalog
+equivalent worth copying verbatim and need drawing fresh: the Pro/reputation gates on Poll,
+Itinerary, and Event (per CLAUDE.md "Reputation-gated privileges"), and the auto-tag
+detection behaviour (typing 20+ characters into the Standard Post body auto-selects a
+section tag from keyword matching, shown as a brief tag-bar state change, no toast).
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Logged-out prompt: `"What's happening in culture? Join the community to share."`
+- Template pill labels (note: shorter than the mobile catalog's full names): `Update` 📝 ·
+  `Gem` 💎 · `Take` 💬 · `Food` 🍽️ · `Showcase` 🎨 · `Poll` 📊 · `Route` 🗺️ · `Event` 📅 ·
+  `Quote` ✦
+- Field placeholders (verbatim, per `placeholders` map in `SubmitPost.tsx`):
+  - post: `"What's happening in culture?"`
+  - quote: `"The quote…"`
+  - hidden-gem: `"Tell us about this gem — what makes it special?"`
+  - cultural-take: `"Share your take…"`
+  - food-review: `"How was the food?"`
+  - creative-showcase: `"Caption (optional)"`
+  - poll: `"Ask a question…"`
+  - itinerary: `"Describe your route…"`
+  - event: `"Describe the event — what to expect, why it matters… (optional)"`
+- DirectorySearch placeholders: cultural-take → `"What are you writing about?"`,
+  food-review → `"Which restaurant or venue?"`, hidden-gem → `"Search or add a location *"`
+- Food review dish input: `"Dish or item name *"`
+- Event fields: `"Event name *"` / labels `"Start date & time *"` / `"End date & time"`
+
+### DEV ANNOTATION REQUIREMENT
+  1. Above the template pill bar:
+     "DEV: `composer-template-bar` — exactly 9 pills, always visible, no modal/sheet step.
+     Switching pills calls `handleTemplateChange()` which resets the section tag to
+     `TEMPLATE_TAGS[t]` (food-review→Food, itinerary→Travel, creative-showcase→Art) or
+     clears it for templates with no default. **Do not design a 10th 'Book Review' pill —
+     it does not exist on web**, see CLAUDE.md."
+  2. Above the avatar element in the form row:
+     "DEV: 34px circle, border colour swaps to purple (#7a4da0) only for the Quote
+     template, ochre (#c5491f) for every other template — `user.avatarUrl` image if set,
+     else initials from `user.name`."
+  3. Above the Poll and Itinerary pills:
+     "DEV: Both require Taste Maker (2,500 rep) or Moveee Pro — gate enforced server-side
+     in `apps/connect/app/api/community/submit/route.ts` (403 on submit), but there is
+     currently NO client-side lock/disabled state on these two pills in the real component
+     — clicking through and submitting as an ineligible user fails only after pressing
+     Post. This prompt should design the missing inline lock affordance (greyed pill + 🔒 +
+     tooltip 'Taste Maker or Pro required') as a recommended UI gap-fill, not a
+     transcription of existing behaviour."
+  4. Above the Event pill:
+     "DEV: Requires Culture Contributor (500 rep) or Pro, same client-side gap as #3 above
+     — same recommended lock affordance applies."
+  5. Above the Standard Post textarea:
+     "DEV: `handleTextChange()` auto-detects a section tag from keyword matching once the
+     body exceeds 20 characters (`detectTagFromContent()`), unless the user has manually
+     picked a tag (`tagLocked`). Show this as a state where the tag bar's active pill
+     visibly shifts a beat after the user stops typing — no toast or explicit confirmation
+     in the real UI, so don't invent one here."
+  6. Above the link-preview behaviour (Standard Post only):
+     "DEV: A debounced (800ms) `fetch` to `/api/community/link-preview` fires automatically
+     when a URL appears in the body text — renders via `SourcePreviewCard` once resolved.
+     Citizens (non-Pro) are blocked from posting links at all by the spam-protection layer
+     server-side (see CLAUDE.md 'Community feed spam protection') — the link preview can
+     still render client-side before that rejection happens, so design a brief inline
+     error state for this case ('Links are a Moveee Pro feature' or similar) since none
+     currently exists."
+  7. Above the multi-image upload control (post, hidden-gem, food-review, itinerary):
+     "DEV: Capped at 4 files via `.slice(0, 4)` in `handleGalleryChange()`, base64 preview
+     via `FileReader`, actual upload happens on submit via `/api/community/upload-image`
+     (R2-backed) — not per-file on add."
+  8. Above the success state:
+     "DEV: Replaces the entire composer card with a single purple-tinted banner
+     (`#f3eef8` bg, `#e0d4f0` border, `#7a4da0` text, italic Fraunces) — there is no
+     separate 'view your post' or 'post again' CTA in this state, it's transient (the
+     parent feed already prepends the new item via `onPosted`)."
+
+### PROMPT 5 — Post Composer (Desktop 1440px, inline card)
+
+```
+Senior web UX/UI designer — Moveee (Site B, web.themoveee.com/feed). Desktop frame
+1440px, composer card constrained to the center-timeline column width (~660px, matching
+PulseFeed's center rail).
+Brand: white card bg, paper-warm #F3ECE0 (quote avatar accent), ochre #C5491F, purple
+#7A4DA0 (quote-only accent), ink #14110D, mute #7A6F5C, success #2D6A4F, ghost #E0D8CE.
+DM Sans body, Fraunces display (quote/italic fields), JetBrains Mono char counters.
+
+FRAME 1 — LOGGED-OUT STATE:
+White card, 1px ghost border, radius 6px, 1rem vertical / 1.25rem horizontal padding.
+Row: 34px grey circle placeholder avatar (no image) + full-width pill button, paper-warm
+bg, ghost border, "What's happening in culture? Join the community to share." DM Sans
+14px ink-soft, left-aligned, click target = entire button (opens auth modal elsewhere).
+
+FRAME 2 — TEMPLATE BAR + STANDARD POST (default template):
+TEMPLATE BAR (top of card, horizontal row, no wrap, ghost bottom border, 0.5rem padding):
+  9 pills, each: emoji (14px) + label (DM Sans 12px bold), 0.3rem/0.7rem padding,
+  radius-full, ghost border + ink-soft text when inactive; ochre fill + white text when
+  active (purple fill + white text specifically for the Quote pill when active).
+  Order: 📝 Update (active) · 💎 Gem · 💬 Take · 🍽️ Food · 🎨 Showcase · 📊 Poll ·
+  🗺️ Route · 📅 Event · ✦ Quote.
+
+FORM BODY (1rem padding, flex row, 0.75rem gap):
+  Avatar (34px circle, ochre border 1.5px, photo or initials).
+  Fields column (flex 1):
+    Textarea, no border, 15px DM Sans ink, placeholder "What's happening in culture?",
+      min-height ~90px, filled with: "The Lagos jazz scene is having a real moment right
+      now — three new venues opened this year alone."
+    Char counter "118 / 3000" JetBrains Mono 11px mute, bottom-right under textarea.
+    Section tag row (horizontal pills, 8px gap): Music (active, ink fill white) · Film ·
+      Art · Fashion · Food · Sport · Travel · Ideas · Literature · Design · Tech (ghost,
+      scrollable row) — annotate per DEV #5 that "Music" became active automatically once
+      the body passed 20 characters, no manual tap.
+    Photo row (shared upload pattern, reuse the exact 80×80px ADD-tile + thumbnail design
+      already specified in the mobile catalog's §4B shared pattern — same visuals, web
+      just shows it inline under the textarea instead of above a keyboard toolbar): 2
+      added photo thumbnails + 1 ADD tile, "Up to 4 photos" caption below.
+    Bottom row (space-between): left empty, right "Post" button — ochre fill, white DM
+      Sans 13px bold, radius 4px, disabled/50%-opacity style variant shown faded beside it
+      labelled "disabled until valid".
+
+FRAME 3 — TEMPLATE BAR STATES (component sheet, isolated, 9 pills shown 3 ways):
+  Row A: all 9 pills inactive (default ghost style).
+  Row B: "Poll" pill in the RECOMMENDED locked-affordance state (greyed fill, 🔒 16px icon
+    after the label, reduced opacity ~60%) with a tooltip callout below: "Taste Maker or
+    Pro required" DM Sans 11px white on dark ink background, small triangle pointer.
+  Row C: "Quote" pill active — purple fill #7A4DA0, white text/emoji (the one template
+    whose active colour is not ochre).
+
+FRAME 4 — REMAINING 7 TEMPLATE FIELD STACKS (one stacked column per template, card width
+~660px each, arranged as a 2-column × 4-row grid for the canvas, 7 cards total — Hidden
+Gem, Cultural Take, Food Review, Creative Showcase, Poll, Route/Itinerary, Event):
+  Reuse the exact field labels, required-asterisks, star ratings, chip rows, and copy
+  already fully specified per-template in the mobile catalog's §4B Frames 2–8 (Hidden Gem,
+  Cultural Take, Food Review, Creative Showcase, Poll, Itinerary, Event) — same data, same
+  validation rules (`canSubmit()` per template) — just laid out as a single-column form
+  inside one ~660px white card instead of a full-screen view, with the template bar from
+  Frame 2 always pinned above the field stack on every card. Quote template field stack:
+  reuse mobile §4B Frame 9 exactly, swap the avatar accent to purple per DEV #2.
+  Do NOT include a "Book Review" card here — see scope note above.
+
+FRAME 5 — SUCCESS STATE:
+Card fully replaced by a single banner: pale purple #F3EEF8 fill, 1px #E0D4F0 border,
+radius 6px, 0.85rem/1rem padding, text "Posted! Your update is now live in the feed."
+(representative copy — exact string is dynamic per template in the real component) DM
+Sans 14px Fraunces italic #7A4DA0, no buttons.
+```
+
+Output 5 frames: Frame 1 (logged-out), Frame 2 (template bar + Standard Post), Frame 3
+(template bar component states), Frame 4 (remaining 7 template field stacks), Frame 5
+(success state).
+
+---
+
