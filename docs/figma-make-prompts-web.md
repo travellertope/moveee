@@ -2742,3 +2742,150 @@ Success, Desktop), Frame 4 (Coupons, Desktop), Frame 5 (Mobile Companion,
 full scroll).
 
 ---
+
+## 12. MEMBER DIRECTORY & PUBLIC PROFILES — WEB (Site B, web.themoveee.com/connect/people, /connect/[username])
+
+### Note on scope
+Mobile's "Member Directory" is a generic global directory with name/discipline/
+location search and explicit filter chips showing a member count. The real
+web page (`/connect/people`, `MemberDirectory.tsx`) is branded **"People Near
+Me"** and is deliberately location-scoped to the viewer — it queries the
+viewer's own city first, falling back to their country, with no way to browse
+globally and no visible "N members" count. It also renders a `HouseFellowship`
+module above the directory grid for logged-in visitors, which has no mobile
+equivalent in this catalog section at all.
+
+### Brand architecture
+Site B (`apps/connect`). "Moveee Pro" / "Moveee Citizen" — the mobile
+catalog's "CONNECT PRO badge" wording must be corrected.
+
+### Why this section exists
+Grounded in `apps/connect/app/connect/people/page.tsx`, `MemberDirectory.tsx`
+(`packages/shared/components/connect/`), `apps/connect/app/connect/[username]/
+page.tsx`, `BadgeShelf.tsx`, `ProfileTabs.tsx`, `CommunityTab.tsx`,
+`PortfolioTab.tsx`.
+
+### Marketing copy (final — use verbatim where shown)
+
+**People page hero:** eyebrow "Moveee · People Near Me", headline "Find each
+*other.*", lede "Members of the Moveee community near you — who they are,
+what they do. Filter by industry to find your people." CTA (logged in):
+"Update your profile →"; (logged out): "Join & get listed →". Section nav:
+"Pulse Feed" · "People Near Me" (active) · "Membership".
+
+**Directory empty state:** "No one near you yet." / "Members who have opted
+into the directory will appear here once someone near you joins. Join Moveee
+and opt in from your profile settings to be listed." / "Join & get listed →"
+
+**Public profile — Portfolio gate (below Taste Maker):** "Portfolio coming
+soon" / "The portfolio tab unlocks at Taste Maker status (500 points). This
+member is currently at {tier} tier."
+
+**Profile actions:** Follow/Following toggle, Share button, "← Directory"
+link.
+
+<!-- DEV 1: The directory filter is a single "industry" select (All
+industries + the 12 DirectoryProfile.tsx disciplines: Creative,
+Entrepreneur, Artist, Filmmaker, Writer, Designer, Musician, Photographer,
+Tech, Legal, Finance, Academic) plus a free-text search box — there is no
+separate "All Locations" filter chip and no live member-count caption,
+because location is implicit (the viewer's own city/country) rather than a
+user-chosen filter. -->
+
+<!-- DEV 2: Member cards always render an initial-letter avatar circle —
+there is no real-photo avatar image anywhere in `MemberDirectory.tsx`'s
+`MemberCard`, unlike the public profile page itself which does show a real
+avatar image when set. Cards show up to 3 discipline tags as plain text
+chips (not emoji-prefixed), a one-line bio if set, and clickable link
+buttons (text labels "Instagram"/"LinkedIn"/"Website"/"Twitter", not icon
+circles) — only rendered when the member has filled them in. -->
+
+<!-- DEV 3: A `HouseFellowship` module renders above the directory grid for
+logged-in visitors only — this is the House Fellowship / Literati Connect
+feature (see project docs), entirely unrelated to and absent from this
+mobile catalog section. Include it as a placeholder band, not a fully
+detailed component, since it belongs to a different feature area. -->
+
+<!-- DEV 4: Public profile's badge shelf (`BadgeShelf.tsx`) renders emoji-only
+circular buttons (no name label visible by default) — tapping/clicking one
+toggles a small tooltip showing its name. This is a click-to-reveal
+interaction, not the always-visible "🎨 Taste Maker · 💎 Gem Hunter ..." text
+chip row shown in the mobile catalog. Reputation tier badge (e.g. "Taste
+Maker") only renders at all when the tier is above "Member" — Member-tier
+profiles show no tier badge. -->
+
+<!-- DEV 5: Portfolio tab is hard-gated at Taste Maker (500 reputation) for
+EVERY visitor, including the profile owner — there is no owner-only "+ Add
+work" tile shown here (portfolio editing happens on a separate
+`/member/portfolio` settings page, out of scope for this view). Below the
+gate, unlocked portfolios show a flat grid mixing real portfolio items
+(lookbook/writing/video/audio/design/link types, click opens a detail
+modal — not a masonry grid with year captions) with the member's pinned
+community posts inline in the same grid. -->
+
+<!-- DEV 6: Community tab has its own template filter strip (All, Gems,
+Takes, Food, Showcases, Polls) absent from the mobile catalog's plain
+3-post list — and paginates via "Load more" with a real `hasMore` flag
+rather than a static 3-item preview. -->
+
+### PROMPT 12 — Member Directory & Public Profiles (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — PEOPLE NEAR ME (Desktop, 1440px)
+
+- Hero band: eyebrow, headline ("Find each *other.*"), lede, CTA button
+  (context-dependent), ghost "← Back to Feed" link, section-nav row (Pulse
+  Feed / People Near Me active / Membership)
+- HouseFellowship band placeholder (logged-in only) per <!-- DEV 3 -->
+- Directory controls: search input + single industry select (no location
+  chip) per <!-- DEV 1 -->
+- Member grid (responsive columns): cards per <!-- DEV 2 --> — initial-avatar
+  circle, name + inline Pro badge, occupation, location, up to 3 discipline
+  text chips, optional bio line, optional link buttons row
+- Empty state block (centred): "No one near you yet." copy + "Join & get
+  listed →"
+
+FRAME 2 — PUBLIC PROFILE: COMMUNITY TAB (Desktop, 1440px)
+
+- Optional cover photo banner (full-bleed, only if set)
+- Identity block: avatar (real image or initial, gold ring if Pro), name +
+  inline Pro badge, "@handle · City, Country · Occupation" line, conditional
+  rep-tier badge pill (hidden at Member tier), BadgeShelf row of emoji
+  circles per <!-- DEV 4 --> (show one in its active/tooltip-open state),
+  bio paragraph, stats row ("{N} pts · {N} posts · Joined {Month Year}"),
+  actions row (Follow/Following, Share, ← Directory)
+- Tabs: Community (active) · Portfolio
+- Community tab: template filter strip (All/Gems/Takes/Food/Showcases/Polls)
+  per <!-- DEV 6 -->, post list (template emoji + relative date, 2-line
+  text, reaction counts), "Load more" link
+
+FRAME 3 — PUBLIC PROFILE: PORTFOLIO TAB, two states (Desktop, 1440px)
+
+- LEFT — gated state per <!-- DEV 5 -->: "Portfolio coming soon" /
+  "...unlocks at Taste Maker status (500 points). This member is currently
+  at {tier} tier."
+- RIGHT — unlocked state: flat grid mixing pinned-post cards (📌 placeholder
+  if no image, tag/template label, post text snippet) and portfolio item
+  cards (type emoji or thumbnail, type label, title, description) — click
+  opens a detail modal with full image/title/description/"View project →"
+  link
+
+FRAME 4 — MOBILE COMPANION (390px, single column)
+
+- People Near Me: hero stacks, directory controls stack, member grid
+  collapses to 1 column
+- Public profile: identity block, tabs, and grids stack full-width — same
+  component logic as desktop
+
+CONSTRAINTS:
+- Never use "Connect Pro"/"Connect Citizen" — always "Moveee Pro"/"Moveee Citizen"
+- Directory is location-scoped to the viewer, not a global browse — do not
+  add a location filter chip
+- Portfolio gate applies to every visitor including the profile owner
+```
+
+Output 4 frames: Frame 1 (People Near Me, Desktop), Frame 2 (Public Profile —
+Community Tab, Desktop), Frame 3 (Public Profile — Portfolio Tab, gated +
+unlocked, Desktop), Frame 4 (Mobile Companion, full scroll).
+
+---
