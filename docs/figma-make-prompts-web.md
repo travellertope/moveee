@@ -2581,3 +2581,164 @@ Output 5 frames: Frame 1 (Settings Shell + Profile, Desktop), Frame 2
 (Notifications + Security, Desktop), Frame 5 (Mobile Companion, Profile tab).
 
 ---
+
+## 11. WALLET, PERKS & COUPONS — WEB (Site B, web.themoveee.com/member/wallet, /connect/perks, /member/coupons)
+
+### Note on scope
+Three separate routes, not three tabs/screens in one flow: `/member/wallet`
+(`WalletClient.tsx`), `/connect/perks` (`PerksClient.tsx`), `/member/coupons`
+(`CouponsClient.tsx`). The real cash-out flow is materially different from
+mobile's: it's gated behind Moveee Pro, requires a WebAuthn passkey
+**step-up** challenge (a fresh biometric prompt, separate from login) before
+either redeeming a perk or submitting a cash-out request, and supports three
+full currencies (GBP/USD/NGN) with distinct bank-detail fields per currency
+rather than one GBP-only slider screen.
+
+### Brand architecture
+Site B (`apps/connect`). Tier copy "Moveee Pro" / "Moveee Citizen".
+
+### Why this section exists
+Grounded in `WalletClient.tsx` (history + cash-out tabs, step-up auth,
+multi-currency bank forms), `PerksClient.tsx` (perk grid, confirm modal,
+step-up auth, redemption success state), `CouponsClient.tsx` (Active/Used/
+Expired sections, QR via `api.qrserver.com`).
+
+### Marketing copy (final — use verbatim where shown)
+
+**Wallet — Cash Out tab (non-Pro):** "Cash out your credits" / "Convert your
+earned credits to real money — a Moveee Pro exclusive. Upgrade to start
+cashing out." / "Upgrade to Moveee Pro →"
+
+**Wallet — Cash Out tab (Pro):** "Minimum 100 credits. A flat 40% fee
+applies. Partner perks are fee-free — browse perks instead." / "🔑 Passkey
+verification required at checkout." Submit button: "Request Cash Out" /
+"Submitting…". Success message: "Cash out request submitted. You'll receive
+{symbol}{amount} after admin approval (48 hr hold)."
+
+**Perks:** Step-up prompt: "Passkey required to redeem perks. Set up a
+passkey in settings →". Working state: "⬡ Waiting for your device
+biometrics…". Confirm modal: "Confirm redemption" / "Spend {N} credits for
+"{title}"?" / "Your coupon will expire in {N} days. Your balance after: {N}
+credits." Buttons: "Confirm"/"Processing…", "Cancel". Success: "Perk
+redeemed!" / "Show this QR code at the partner venue." / "Expires: {date}" /
+"New balance: {N} credits". Buttons: "Browse more perks", "My Coupons →".
+Card button states: "Redeem — {N} credits", "Sign in to redeem", "Sold out",
+"Not enough credits". Empty state: "No perks available yet" / "Partner perks
+are coming soon. Keep earning credits in the meantime!"
+
+**Coupons:** Section headers "Active Coupons ({N})", "Used ({N})", "Expired
+({N})". Empty: "No active coupons. Browse perks to redeem one." Per-coupon:
+"{N} credits · Redeemed {date}", "Expires in {N} days" / "Expires today".
+
+<!-- DEV 1: There is a real discrepancy in WalletClient.tsx worth flagging
+rather than silently "fixing" in the prompt — the displayed fee-calculation
+constant (`feePercent = 30`, used for the "Fee: 30%" hint and the
+You-receive-amount math shown live as the user types) does NOT match the
+visible paragraph copy directly above it, which reads "A flat 40% fee
+applies" (matching `Culture_Perks::cashout_fee_percent()` / CLAUDE.md's
+documented flat-40%-fee rule). Render the UI exactly as the code does
+(30% in the live calculator, 40% in the static paragraph) and flag this
+inconsistency as a DEV note for engineering follow-up — do not silently pick
+one number when annotating the frame. -->
+
+<!-- DEV 2: Both perk redemption AND cash-out require a WebAuthn "step-up"
+challenge (`startAuthentication()` via `/api/auth/passkey/step-up` +
+`step-up-verify`) — a SEPARATE biometric prompt from login, fired at the
+moment of the sensitive action, not at sign-in. If the user has no passkey
+registered, the step-up silently fails and surfaces a "Passkey required ...
+Set up a passkey in settings →" banner instead of an error. This has no
+equivalent UI in the mobile catalog and must be shown as a distinct frame
+state (the "⬡ Waiting for your device biometrics…" banner). -->
+
+<!-- DEV 3: Cash-out supports 3 currencies (GBP/USD/NGN) with DIFFERENT
+required bank fields per currency — GBP: Sort Code + Account Number; USD:
+Bank Name + Routing/ABA Number + Account Number; NGN: Bank Name (a 23-entry
+select of real Nigerian banks) + 10-digit NUBAN Account Number. There is no
+generic "enter your bank details" single form — annotate per-currency field
+swapping, not a slider (mobile shows a slider; web uses a plain number
+input). -->
+
+<!-- DEV 4: Cash-out is hard-gated to Moveee Pro — non-Pro visitors to the
+Cash Out tab see an upsell card instead of the form entirely (no disabled
+slider/greyed form, a fully separate upgrade-prompt layout). -->
+
+<!-- DEV 5: Perks grid cards are plain text-forward cards (cost line, title,
+description, meta row with min-spend/validity, action button) — there is no
+partner-logo placeholder area as in the mobile catalog. A confirmation modal
+(perk title, cost, expiry days, resulting balance) sits between tapping
+"Redeem" and the actual API call, which mobile's catalog does not show as a
+separate step. -->
+
+<!-- DEV 6: Coupons page groups redemptions into three sections — Active,
+Used, Expired — rather than mobile's single scrollable list of coupon cards.
+Only Active coupons get the full QR-code treatment; Used/Expired render as
+compact muted one-line rows (title + date), not full QR cards with
+greyscale/watermark treatment. -->
+
+### PROMPT 11 — Wallet, Perks & Coupons (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — WALLET: TRANSACTION HISTORY TAB (Desktop, 1440px)
+
+- Tab switcher: "Transaction History" (active, underlined) · "Cash Out"
+- Card: "Recent Transactions" label, ledger rows (source label + date left,
+  signed amount right — green for positive, ochre/red for negative), sourced
+  from a real label map (Referral bonus, Post published, Perk redeemed,
+  Perk refund, Cash out, Cash out refund, Profile completed, Email verified,
+  Directory opt-in, Newsletter signup, Poll vote)
+- Empty state: "No transactions yet." italic muted
+
+FRAME 2 — WALLET: CASH OUT TAB, two states side by side (Desktop, 1440px)
+
+- LEFT (non-Pro): ochre-bordered upsell card, "Moveee Pro" pill, "Cash out
+  your credits" / "Convert your earned credits to real money — a Moveee Pro
+  exclusive. Upgrade to start cashing out." / "Upgrade to Moveee Pro →" button
+- RIGHT (Pro): explanatory paragraph per <!-- DEV 1 --> showing both the 30%
+  live-calculator number and the 40% static-copy number as written in code,
+  passkey note, form: Credits-to-cash-out number input with live fee/receive
+  hint, Currency select (GBP/USD/NGN), Account holder name, then
+  currency-conditional fields per <!-- DEV 3 -->, "Request Cash Out" button
+
+FRAME 3 — PERKS BROWSE + STEP-UP STATES (Desktop, 1440px)
+
+- Step-up banners: "Passkey required..." warning banner, "⬡ Waiting for your
+  device biometrics…" working banner (both shown stacked for reference, not
+  simultaneously in real use) per <!-- DEV 2 -->
+- Perk grid (responsive columns), cards per <!-- DEV 5 -->: cost line,
+  title, description, meta row (min spend / validity days), button state
+  variants (Redeem—N credits / Sign in to redeem / Sold out / Not enough
+  credits)
+- Confirm redemption modal (overlay): title, cost+name sentence, expiry +
+  resulting balance sentence, Confirm/Cancel buttons
+- Success state: "Perk redeemed!" headline, QR image, expiry date, new
+  balance, "Browse more perks" + "My Coupons →" actions
+
+FRAME 4 — COUPONS PAGE (Desktop, 1440px)
+
+- "Active Coupons (N)" section: full QR card per redemption (QR image,
+  title, "N credits · Redeemed {date}", colour-coded expiry countdown)
+- "Used (N)" and "Expired (N)" sections per <!-- DEV 6 -->: compact
+  60%/40%-opacity one-line rows, no QR
+- Empty state: "No active coupons. Browse perks to redeem one."
+
+FRAME 5 — MOBILE COMPANION (390px, single column)
+
+- Wallet history list, Cash Out form (fields stack full-width, currency
+  select still swaps field sets), Perks grid collapses to 1 column, Coupons
+  sections stack — same component logic as desktop, no separate mobile-only
+  layout branch
+
+CONSTRAINTS:
+- Never use "Connect Pro"/"Connect Citizen" — always "Moveee Pro"/"Moveee Citizen"
+- Show the 30%/40% fee-copy discrepancy exactly as it exists in code, not
+  reconciled
+- Cash-out form fields change per selected currency — do not show all bank
+  fields at once
+```
+
+Output 5 frames: Frame 1 (Wallet History, Desktop), Frame 2 (Wallet Cash Out
+— Non-Pro & Pro, Desktop), Frame 3 (Perks Browse + Step-Up + Confirm +
+Success, Desktop), Frame 4 (Coupons, Desktop), Frame 5 (Mobile Companion,
+full scroll).
+
+---
