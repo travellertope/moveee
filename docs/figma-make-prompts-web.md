@@ -717,8 +717,9 @@ member band).
 - Body: `Join Moveee for early access to new makers, exclusive editions, and 10% off every
   purchase in the shop.`
 - 4 perks: `◈ Early Access` — `First look at new makers and limited drops.` / `◇ 10% Off` —
-  `Applied automatically to every shop order.` / `○ Free Delivery` — `On all UK orders,
-  always.` / `△ Maker Events` — `Invitations to studio visits and openings.`
+  `Applied automatically to every shop order.` / `○ Patron Stories` — `Exclusive maker
+  interviews and behind-the-scenes features.` / `△ Maker Events` — `Invitations to studio
+  visits and openings.`
 - CTA: `Join Moveee →` (to `/feed`)
 - Floating stat card: `2,400` / `Members & growing`
 
