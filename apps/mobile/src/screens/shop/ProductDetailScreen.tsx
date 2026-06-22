@@ -92,7 +92,7 @@ function ImageGallery({
         <Ionicons
           name={liked ? "heart" : "heart-outline"}
           size={20}
-          color={liked ? "#C62828" : "#14110D"}
+          color={liked ? "#C62828" : c.ink}
         />
       </TouchableOpacity>
 
@@ -155,7 +155,7 @@ function createGalleryStyles(c: ColorPalette) {
       top: 16, right: 16,
       width: 40, height: 40,
       borderRadius: 20,
-      backgroundColor: "rgba(255,255,255,0.9)",
+      backgroundColor: `${c.paper}E6`,
       justifyContent: "center",
       alignItems: "center",
       zIndex: 20,
@@ -718,10 +718,14 @@ export default function ProductDetailScreen() {
 
   const handleShare = useCallback(async () => {
     if (!product) return;
-    await Share.share({
-      message: `Check out ${product.name} on Moveee — themoveee.com/shop/${product.slug}`,
-      url: `https://themoveee.com/shop/${product.slug}`,
-    });
+    try {
+      await Share.share({
+        message: `Check out ${product.name} on Moveee — https://themoveee.com/shop/${product.slug}`,
+        url: `https://themoveee.com/shop/${product.slug}`,
+      });
+    } catch {
+      // user cancelled share
+    }
   }, [product]);
 
   const handleAddToBag = () => {

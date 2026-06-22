@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert,
+  SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert, Share,
   Modal, FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -145,7 +145,30 @@ export default function StartClusterScreen() {
       if (capacity.trim()) body.capacity = Number(capacity.trim());
       const res = await api.post<{ id: number }>(`${MOBILE_API}/cluster/create`, body as Record<string, string>);
       if (res?.id) {
-        nav.replace("ClusterScreen", { id: res.id });
+        const url = `https://web.themoveee.com/cluster/${res.id}/invite`;
+        Alert.alert(
+          "Fellowship created!",
+          "Now share the invite link with neighbours and friends. You need at least 4 members to activate.",
+          [
+            {
+              text: "Share invite link",
+              onPress: async () => {
+                try {
+                  await Share.share({
+                    message: `Join my House Fellowship "${name.trim()}" on Moveee! ${url}`,
+                    url,
+                  });
+                } catch {}
+                nav.replace("ClusterScreen", { id: res.id });
+              },
+            },
+            {
+              text: "Later",
+              style: "cancel",
+              onPress: () => nav.replace("ClusterScreen", { id: res.id }),
+            },
+          ],
+        );
       } else {
         setError("Could not create this House Fellowship right now.");
       }
