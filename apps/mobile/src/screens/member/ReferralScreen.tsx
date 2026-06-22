@@ -259,7 +259,7 @@ export default function ReferralScreen() {
           </View>
           <Text style={styles.shortUrl}>Short link: web.themoveee.com/r/{referralCode}</Text>
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.8}>
-            <Ionicons name="share-social-outline" size={18} color={c.ochre} />
+            <Ionicons name="share-outline" size={18} color={c.ochre} />
             <Text style={styles.shareBtnText}>Share via WhatsApp / DMs</Text>
           </TouchableOpacity>
         </View>

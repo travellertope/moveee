@@ -46,7 +46,7 @@ export type AppParamList = {
   MagazineSearch: undefined;
   // Shop
   ShopHome: undefined;
-  ShopListing: { category?: string } | undefined;
+  ShopListing: { category?: string; categoryName?: string; categorySlug?: string; makerName?: string } | undefined;
   ProductDetail: { productId: number; productSlug?: string };
   Cart: undefined;
   Checkout: { couponCode?: string } | undefined;

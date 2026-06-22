@@ -366,7 +366,7 @@ export default function MemberDashboardScreen() {
             onPress={handleCopyReferral}
             activeOpacity={0.8}
           >
-            <Ionicons name="share-social-outline" size={16} color={c.ochre} />
+            <Ionicons name="share-outline" size={16} color={c.ochre} />
             <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>
               Share my referral link
             </Text>

@@ -2,7 +2,9 @@ import React, { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert,
+  Modal, FlatList,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
@@ -18,6 +20,12 @@ const DAYS = [
   { value: "friday",    label: "Friday" },
   { value: "saturday",  label: "Saturday" },
   { value: "sunday",    label: "Sunday" },
+];
+
+const COUNTRIES = [
+  "Nigeria", "United Kingdom", "United States", "Ghana", "Kenya", "South Africa",
+  "Canada", "Australia", "Germany", "France", "Netherlands", "Sweden",
+  "UAE", "Jamaica", "Trinidad & Tobago",
 ];
 
 function createStyles(c: ColorPalette) {
@@ -50,9 +58,41 @@ function createStyles(c: ColorPalette) {
     pickerBtn: {
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
       paddingHorizontal: 12, paddingVertical: 10, backgroundColor: c.paper,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     },
     pickerBtnText: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
     pickerBtnPlaceholder: { color: c.ghost },
+
+    howItWorks: {
+      backgroundColor: c.paperDeep, borderRadius: radius.xl, padding: 16,
+      marginBottom: space[4], gap: 10,
+    },
+    howTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, marginBottom: 2 },
+    howStep: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+    howNum: {
+      width: 22, height: 22, borderRadius: 11,
+      backgroundColor: c.ochre, justifyContent: "center", alignItems: "center", flexShrink: 0,
+    },
+    howNumText: { fontFamily: fonts.sansBold, fontSize: 11, color: "#fff" },
+    howText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 18, flex: 1 },
+
+    modalOverlay: {
+      flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center", alignItems: "center",
+    },
+    modalCard: {
+      backgroundColor: c.paper, borderRadius: radius.xl, padding: 20,
+      width: "85%", maxHeight: "70%",
+    },
+    modalTitle: { fontFamily: fonts.serifBold, fontSize: 18, color: c.ink, marginBottom: 12 },
+    modalRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingVertical: 12, paddingHorizontal: 4,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    modalRowActive: { backgroundColor: `${c.ochre}10` },
+    modalRowText: { fontFamily: fonts.sans, fontSize: 15, color: c.ink },
+    modalRowTextActive: { fontFamily: fonts.sansBold, color: c.ochre },
 
     errorText: { fontFamily: fonts.sans, fontSize: 12, color: "#C62828", marginTop: space[2] },
   });
@@ -85,16 +125,8 @@ export default function StartClusterScreen() {
 
   const close = () => nav.goBack();
 
-  const pickDay = () => {
-    Alert.alert(
-      "Meeting day",
-      "Which day does this House Fellowship meet?",
-      [
-        ...DAYS.map((d) => ({ text: d.label, onPress: () => setMeetingDay(d.value) })),
-        { text: "Cancel", style: "cancel" as const },
-      ]
-    );
-  };
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -150,9 +182,28 @@ export default function StartClusterScreen() {
       >
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <Text style={styles.intro}>
-            Start a weekly meet-up for Moveee members on your street. Open to all members — no
-            tier requirement.
+            Start a weekly meet-up for Moveee members on your street. Open to all tiers — no upgrade required.
           </Text>
+
+          <View style={styles.howItWorks}>
+            <Text style={styles.howTitle}>How it works</Text>
+            <View style={styles.howStep}>
+              <View style={styles.howNum}><Text style={styles.howNumText}>1</Text></View>
+              <Text style={styles.howText}>Fill in the details below and create your fellowship.</Text>
+            </View>
+            <View style={styles.howStep}>
+              <View style={styles.howNum}><Text style={styles.howNumText}>2</Text></View>
+              <Text style={styles.howText}>Share the invite link with neighbours and friends so they can join.</Text>
+            </View>
+            <View style={styles.howStep}>
+              <View style={styles.howNum}><Text style={styles.howNumText}>3</Text></View>
+              <Text style={styles.howText}>Once 4 members have joined, the fellowship activates — unlocking check-ins, host elections, and rewards.</Text>
+            </View>
+            <View style={styles.howStep}>
+              <View style={styles.howNum}><Text style={styles.howNumText}>4</Text></View>
+              <Text style={styles.howText}>Meet weekly, scan the host's QR code to check in, and earn Culture Credits.</Text>
+            </View>
+          </View>
 
           <Text style={styles.sectionLabel}>Name</Text>
           <TextInput
@@ -182,19 +233,19 @@ export default function StartClusterScreen() {
           />
 
           <Text style={styles.sectionLabel}>Country</Text>
-          <TextInput
-            style={styles.fieldInput}
-            placeholder="e.g. Nigeria"
-            placeholderTextColor={c.ghost}
-            value={country}
-            onChangeText={setCountry}
-          />
+          <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowCountryPicker(true)}>
+            <Text style={[styles.pickerBtnText, !country && styles.pickerBtnPlaceholder]}>
+              {country || "Select a country"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={c.mute} />
+          </TouchableOpacity>
 
           <Text style={styles.sectionLabel}>Meeting day</Text>
-          <TouchableOpacity style={styles.pickerBtn} onPress={pickDay}>
+          <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowDayPicker(true)}>
             <Text style={[styles.pickerBtnText, !selectedDay && styles.pickerBtnPlaceholder]}>
               {selectedDay ? selectedDay.label : "Select a day"}
             </Text>
+            <Ionicons name="chevron-down" size={16} color={c.mute} />
           </TouchableOpacity>
 
           <Text style={styles.sectionLabel}>Meeting time</Text>
@@ -228,6 +279,51 @@ export default function StartClusterScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* Day Picker Modal */}
+      <Modal visible={showDayPicker} transparent animationType="fade" onRequestClose={() => setShowDayPicker(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowDayPicker(false)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Meeting day</Text>
+            {DAYS.map((d) => (
+              <TouchableOpacity
+                key={d.value}
+                style={[styles.modalRow, meetingDay === d.value && styles.modalRowActive]}
+                onPress={() => { setMeetingDay(d.value); setShowDayPicker(false); }}
+              >
+                <Text style={[styles.modalRowText, meetingDay === d.value && styles.modalRowTextActive]}>
+                  {d.label}
+                </Text>
+                {meetingDay === d.value && <Ionicons name="checkmark" size={18} color={c.ochre} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Country Picker Modal */}
+      <Modal visible={showCountryPicker} transparent animationType="fade" onRequestClose={() => setShowCountryPicker(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCountryPicker(false)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Country</Text>
+            <FlatList
+              data={COUNTRIES}
+              keyExtractor={(item) => item}
+              style={{ maxHeight: 400 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.modalRow, country === item && styles.modalRowActive]}
+                  onPress={() => { setCountry(item); setShowCountryPicker(false); }}
+                >
+                  <Text style={[styles.modalRowText, country === item && styles.modalRowTextActive]}>
+                    {item}
+                  </Text>
+                  {country === item && <Ionicons name="checkmark" size={18} color={c.ochre} />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

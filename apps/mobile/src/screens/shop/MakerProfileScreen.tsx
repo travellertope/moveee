@@ -365,7 +365,7 @@ export default function MakerProfileScreen() {
           style={s.headerBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="share-social-outline" size={20} color={c.ink} />
+          <Ionicons name="share-outline" size={20} color={c.ink} />
         </TouchableOpacity>
       </View>
 
@@ -476,7 +476,7 @@ export default function MakerProfileScreen() {
           )}
 
           <TouchableOpacity style={s.linkRow} onPress={handleShare}>
-            <Ionicons name="share-social-outline" size={16} color={c.mute} style={{ marginRight: 8 }} />
+            <Ionicons name="share-outline" size={16} color={c.mute} style={{ marginRight: 8 }} />
             <Text style={s.shareLinkText}>Share this maker</Text>
           </TouchableOpacity>
         </View>

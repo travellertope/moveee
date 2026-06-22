@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  TouchableOpacity, ActivityIndicator, Modal, Alert,
+  TouchableOpacity, ActivityIndicator, Modal, Alert, Share,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
@@ -58,6 +58,7 @@ function createStyles(c: ColorPalette) {
     joinBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
       height: 48, alignItems: "center", justifyContent: "center",
+      flexDirection: "row",
     },
     joinBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.paper },
     leaveBtn: { alignItems: "center", paddingVertical: 8 },
@@ -157,6 +158,16 @@ export default function ClusterScreen() {
   const [checkedInIds, setCheckedInIds] = useState<Set<number>>(new Set());
 
   const isHost = !!cluster && cluster.hostId === myUserId;
+  const isFounder = !!status?.role && status.role === "founder";
+
+  const handleShare = async () => {
+    if (!cluster) return;
+    const url = `https://web.themoveee.com/cluster/${clusterId}/invite`;
+    await Share.share({
+      message: `Join my House Fellowship "${cluster.name}" on Moveee! ${url}`,
+      url,
+    });
+  };
 
   const loadElection = async () => {
     try {
@@ -350,7 +361,13 @@ export default function ClusterScreen() {
           <Ionicons name="chevron-back" size={24} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>House Fellowship</Text>
-        <View style={{ width: 24 }} />
+        {cluster ? (
+          <TouchableOpacity onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-outline" size={22} color={c.ink} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
       </View>
 
       {loading ? (
@@ -404,6 +421,22 @@ export default function ClusterScreen() {
               {cluster.memberCount}{cluster.capacity > 0 ? ` / ${cluster.capacity}` : ""} members
             </Text>
           </View>
+
+          {cluster.status === "forming" && status?.isMember && (
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Getting started</Text>
+              <Text style={styles.cardBody}>
+                This fellowship needs at least 4 members to activate. Share the invite link with neighbours and friends to get started.
+              </Text>
+              <Text style={styles.memberCount}>
+                {cluster.memberCount} of 4 members needed
+              </Text>
+              <TouchableOpacity style={styles.joinBtn} onPress={handleShare}>
+                <Ionicons name="share-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.joinBtnText}>Share invite link</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.card}>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
