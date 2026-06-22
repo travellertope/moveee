@@ -562,6 +562,41 @@ Both share `cms.themoveee.com` (WordPress) as the backend.
 | 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
 | 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
+### Lifestyle Shop archive page (Site A, redesigned June 2026)
+
+`apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
+`products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
+static sections (head, ticker, featured picks, editorial bridges, category
+grid, vendor strip, member band, origins bridge). The filter bar and the main
+product grid live together in one client component:
+**`apps/site/app/shop/components/ShopBrowser.tsx`** (`"use client"`) — it
+owns all interactive state (search, price-band facets, tag facets, in-stock
+toggle, sort, grid/list view) and renders the grid itself, since filter state
+and the product list must share one React state tree. The previous
+`ShopFilterBar.tsx` (deleted) only rendered the filter UI and exposed
+`onSortChange`/`onViewChange` props that the parent never actually passed —
+sort and view-toggle were dead UI before this change.
+
+- Facets: price bands (4 fixed ranges) and tag pills derived from
+  `productTags` (excluding the `"new"` tag slug) — there is no "material"
+  taxonomy in the schema, so tags are the closest real facet available.
+- Pro price (10% off) is computed client-side from the existing `price`
+  string (same `replace(/<[^>]*>/g,"").replace(/[^0-9.]/g,"")` parse pattern
+  used in `app/shop/[slug]/page.tsx`) rather than fetched from
+  `moveeeMeta.memberPrice` — that field lives in `wp.ts`'s `GET_PRODUCT_EXTRA`
+  query, which is **deliberately kept separate** from the shared
+  `PRODUCT_FIELDS_FRAGMENT` so the product page still renders if the
+  moveee-graphql-bridge plugin isn't active; merging it into the listing
+  fragment would risk failing the whole shop grid query in any environment
+  where that plugin/field isn't available. Don't merge them — compute Pro
+  price client-side instead, as done here.
+- Every card shows a static "New listing" placeholder instead of a star
+  rating — there is no reviews data model for shop products yet.
+- The member-band section now says "Moveee Pro" (was stale "Connect
+  Members" copy) and its CTA links to `/register?tier=patron`. The "2,400
+  Members & growing" stat in that section is still a hardcoded literal, not
+  a live count — out of scope until there's a backend count to wire up.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
