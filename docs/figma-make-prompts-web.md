@@ -1342,3 +1342,320 @@ Output 5 frames: Frame 1 (logged-out), Frame 2 (template bar + Standard Post), F
 
 ---
 
+## 6. MAGAZINE / ARTICLE DETAIL — WEB (Site A, themoveee.com/magazine)
+
+### Note on scope
+
+The mobile catalog's §5 covers two screens — "Magazine Home & Browse" (Prompt 5A) and
+"Article Detail Full Scroll States" (Prompt 5B) — as a single-column, app-shell scroll
+experience with a bottom-sheet TOC overlay. The real web equivalent is architecturally
+different in a way that matters for the prompt: the article page is a genuine **3-column
+desktop layout** (`article-wrap`: TOC sidebar / prose / right sidebar, defined in
+`apps/site/app/magazine.css` and rendered by `apps/site/app/magazine/[slug]/page.tsx`) —
+there is no bottom sheet at all on desktop, the TOC is a permanently-visible left column.
+A `<details>`-based collapse only matters at mobile width. This section also corrects the
+mobile catalog's mid-article gate CTA, which uses the stale phrase "Upgrade to Connect
+Pro" — the real component (`packages/shared/components/ContentGate.tsx`) says **"Upgrade
+to Moveee Pro"**; per the project's brand-naming convention "Connect" no longer refers to
+the platform, so this prompt uses the real, current copy, not the mobile catalog's.
+
+### Brand architecture
+
+Site A — **Moveee Magazine**, themoveee.com. No auth required to browse; the
+member/patron gate only applies to individual gated articles. Paper/ink/ochre tokens
+throughout (`var(--paper)`, `var(--ink)`, `var(--ochre)`) — no Connect-style dark
+community chrome anywhere on this surface.
+
+### Why this section exists
+
+Grounded directly in `apps/site/app/magazine/MagazineArchiveWrapper.tsx` (home/browse),
+`apps/site/app/magazine/issues/page.tsx` (issues archive), `apps/site/app/magazine/[slug]/page.tsx`
+(article detail — 660 lines, the real 3-column layout + hero + gate + sidebar widgets +
+author band + related), `packages/shared/components/ArticleContentGate.tsx` +
+`packages/shared/components/ContentGate.tsx` (the real gate UI/copy), `apps/site/components/ArticleActions.tsx`
+(share/bookmark/like bar), and `apps/site/components/FinishReading.tsx` (the reward banner
+on scroll-completion). Every frame below transcribes real markup, real class names, and
+real conditional logic rather than re-skinning the mobile screens.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+**Magazine home header:**
+> Moveee *Editorials*
+> Long-form essays, interviews, and cultural commentary. The editorial heart of The Moveee.
+
+**Category ticker (loops):** Visual Art ✦ Film ✦ Literature ✦ Music ✦ Fashion ✦ Food ✦
+
+**Section labels (in order down the home page):** Selected → Featured Stories · Visual →
+In Focus · (Editorial section, own component) · Digest → Quick Reads · Voices → Opinions &
+Essays
+
+**Newsletter CTA band (bottom of magazine home):**
+> Weekly Dispatch
+> The Moveee *Newsletter*
+> Culture, art, heritage, and the stories worth reading — curated from Lagos, London,
+> Accra, and beyond. In your inbox every Friday.
+> Tags: Film · Art · Fashion · Heritage · Music
+> Button: "Browse Issues →" · Note: "Free · Published every Tuesday"
+
+**Issues archive header:** Magazine (eyebrow) → All Issues. Empty state: "No issues
+published yet."
+
+**Article hero eyebrow:** `★ {Category Name}` (· {Country} if present)
+
+**Byline bar labels:** "Words by" / "Published" / "Reading time" — values e.g. "8 minutes"
+
+**TOC heading:** "In this piece" — numbered list `01, 02, 03…` per heading.
+
+**TOC metadata labels:** Writer / Location / Section / Series / Industry
+
+**Sidebar — Issue card:** "This piece is from" → "Issue {N}" or issue name → "Read the full
+issue →"
+
+**Sidebar — Shop the Edit:** "Shop the Edit" → "Browse all products →"
+
+**Sidebar — newsletter card (always Culture Drop, never GetMeLit, in this slot):**
+> ★ Culture Drop
+> Culture in your inbox, every Tuesday.
+> Film picks, exhibition openings, music worth your time. No noise.
+> Button: "Subscribe free →"
+
+**Sidebar — related story cards:** category label → title → excerpt → "Read →"
+
+**Sidebar — dark archive card:**
+> From the archive
+> Explore the full magazine
+> Browse all essays, interviews, and dispatches from The Moveee editorial team.
+> "All stories →"
+
+**Content gate copy (real, from `ContentGate.tsx` — three states, use exactly):**
+
+*Member-only, logged out:*
+> ★ Moveee Community
+> This one's for the community.
+> Create a free Moveee account to read this and everything else in the member archive.
+> Takes 30 seconds — no card needed, free forever.
+> Primary: "Join free — it takes 30 seconds →" · Secondary: "Already have an account? Sign in"
+> Footnote: "Free membership · No credit card · Cancel anytime"
+
+*Patron-only, logged out:*
+> ★ Moveee Pro
+> There's more on the other side.
+> This piece goes deeper — reserved for Moveee Pro members. Join a global community of
+> culture-forward people, with exclusive editorials, a Pro badge, and long-form content
+> worth your time.
+> Primary: "Explore Moveee Pro →" · Secondary: "Already a member? Sign in"
+> Footnote: "Moveee Pro · {yearly price} · Cancel anytime · Free account always available"
+
+*Patron-only, logged in as Citizen:*
+> ★ Moveee Pro
+> You're one step away.
+> This piece is part of our Moveee Pro archive — extended reads, exclusive member events,
+> and long-form content for people who want to go further with The Moveee community.
+> Primary: "Upgrade to Moveee Pro →" (links to `/feed`)
+> Footnote: "{yearly price} · Cancel anytime"
+
+**Finish Reading banner:** "Article complete!" / "+ {N} Culture Points earned" (or
+"Already credited — thanks for reading!" if previously awarded this browser session).
+
+**Author band label:** "Words by" → name (em-italicized surname) → bio. Ghostwriter
+variant: name → "as told to **{author}**" → bio. CTA: "More by {FirstName} →"
+
+**Shop the Edit (mobile strip) eyebrow/title:** "Shop the Edit" → "From this story" →
+"Browse all products →"
+
+**Related section:** "Keep *reading*" → "All stories →"
+
+### DEV ANNOTATION REQUIREMENT
+
+<!-- DEV: Three-column `article-wrap` grid (TOC / prose / sidebar) is desktop-only —
+collapses to a single column with the TOC rendered as a collapsible `<details>` (chevron
+toggle, "In this piece" summary) below ~860px. There is no bottom-sheet TOC overlay on
+web at any breakpoint, unlike the mobile app — design the mobile companion frame with the
+TOC as an inline collapsed accordion above the prose, not a drawer. -->
+
+<!-- DEV: The hero has two variants depending on whether the post has a featured image —
+"article-hero" (full-bleed image + vignette + overlaid breadcrumb + hero-text block) vs.
+"standard-hero" (plain breadcrumb above a paper-background header, no image). Design both;
+do not assume every article has a hero image. -->
+
+<!-- DEV: ArticleContentGate always shows a real preview before the gate — specifically
+the first 3 `<p>` tags of the article (`processedContent.match(/<p>...<\/p>/gi).slice(0,3)`),
+faded out under a 160px bottom gradient (`linear-gradient(to bottom, transparent, var(--paper))`).
+This is a hard rule, not arbitrary placement — never show 0 paragraphs or an arbitrary
+mid-paragraph cutoff. -->
+
+<!-- DEV: Use the exact 3-state gate copy in the Marketing Copy section above — the mobile
+catalog's "Upgrade to Connect Pro" wording is stale and must not be reused; the real,
+current label is "Moveee Pro" in all three gate states. -->
+
+<!-- DEV: The right sidebar stacks conditionally and in this exact order when present:
+issue card (only if the post belongs to an issue) → Shop the Edit widget (only if
+`featuredProducts.length > 0`) → newsletter card (always present, hardcoded Culture Drop
+copy, never GetMeLit in this slot) → up to 2 related-story cards → dark "From the archive"
+card (always present, last). Don't reorder or assume all blocks always render. -->
+
+<!-- DEV: "Shop the Edit" renders TWICE when a post has featured products — once as a
+compact sidebar widget (desktop, `ste-sidebar-card`, 56px thumbnails) and once as a
+full-width 2-col product grid below the author band (`ste-section--mobile`, hidden on
+desktop via CSS, not a responsive single component). Design both as genuinely separate
+frames, not one frame that reflows — they have different visual treatments. -->
+
+<!-- DEV: FinishReading is a silent client-side mechanic — no progress toast, no visible
+nudge while reading. It checks scroll position (≥85% of scrollable height) and a minimum
+dwell time (max of 30s or 50% of estimated reading time) every second, fires once per
+post per browser (localStorage-gated), and renders the completion banner in-place at the
+point in the DOM where `<FinishReading>` sits (just after comments, before the series
+context block) — it does not float or pin. Only renders for logged-in users. -->
+
+<!-- DEV: ArticleActions (share/bookmark/like) sits inside the byline bar itself (hero
+text block on image variant, header block on standard-hero variant) — it is not a
+separate floating action bar. Logged-out tap on bookmark/like dispatches an
+`open-auth-modal` custom event rather than navigating to /login. -->
+
+<!-- DEV: The author-band has a real fallback illustrated SVG avatar (face/hair/garment
+shapes in ink/ochre/dark-green) when no avatar URL exists — do not design a generic grey
+circle placeholder, use the same illustrated-portrait treatment as a real fallback state. -->
+
+### PROMPT 6 — Magazine Home, Issues Archive & Article Detail (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — MAGAZINE HOME (Desktop, 1440px, apps/site/app/magazine/MagazineArchiveWrapper.tsx)
+
+Background: var(--paper) throughout.
+
+HEADER (mag-head):
+- H1 "Moveee Editorials" (Editorials in italic serif), 44px Fraunces light
+- Description paragraph below, 15px, var(--ink-soft), max-width 480px
+- Below: CategoryNav tab strip ("All Stories" + WP categories, active tab = ochre
+  underline) + secondary filter dropdowns (Industry/Country/Series) right-aligned
+
+CATEGORY TICKER: full-width thin marquee strip, looping mono-caps text "Visual Art ✦
+Film ✦ Literature ✦ Music ✦ Fashion ✦ Food ✦", var(--ochre) separators, scrolling
+left continuously, ink background
+
+HERO FEATURE (hf-main + hf-sidebar, 2-col):
+- Left (hf-main, ~65% width): eyebrow (category name, ochre mono caps) → tall 16:9 hero
+  image (var(--ink) bg if missing) → serif headline 36px → standfirst paragraph →
+  meta row: date (left) + "Read Extended Edit ↗" (right, ochre underline)
+- Vertical divider (hf-divider)
+- Right (hf-sidebar, ~35%): 3 stacked compact story cards — each: kicker label, small
+  thumbnail, serif title 18px, date — no excerpt at this size
+
+SECTION BAND "Featured Stories" (sec-label "Selected" above sec-header "Featured
+*Stories*" + "View all →" right-aligned):
+- 3-col grid, each card: portrait image, kicker, serif title, 2-line excerpt, date
+
+PORTRAIT SCROLL "In Focus" (sec-label "Visual"):
+- Horizontal scroll row of 5 portrait-aspect cards (image fills, kicker below, serif
+  title, date) — peek-next-card overflow
+
+EDITORIAL SECTION: separate component (EditorialSection) — render as a generic
+feature-band placeholder matching the site's card visual language (not detailed here,
+component is out of scope)
+
+DIGEST "Quick Reads" (sec-label "Digest"): 4-col compact grid — small square image,
+kicker, title, date, no excerpt
+
+OPINIONS "Opinions & Essays" (sec-label "Voices"), paper-deep background section:
+- 2-col grid of pull-quote-style cards: large italic serif quote (the post title used
+  as a quote), author name below, truncated excerpt, kicker
+
+CTA BAND (cta-band, ink background, full-bleed, 3-col):
+- Left: "Weekly Dispatch" eyebrow, "The Moveee *Newsletter*" serif
+- Mid: paragraph copy + tag pills (Film/Art/Fashion/Heritage/Music)
+- Right: "Browse Issues →" button (paper/white pill on ink) + "Free · Published every
+  Tuesday" note
+
+FRAME 2 — ISSUES ARCHIVE (Desktop, 1440px, apps/site/app/magazine/issues/page.tsx)
+
+- Header: "Magazine" eyebrow (ochre mono caps) → "All Issues" serif H1, centred or
+  left-aligned column, generous top padding
+- Grid (mag-issues-grid): 4-col, each card (mag-issue-card):
+  - Cover image, 3:4 aspect, var(--paper-deep) placeholder block if no cover URL
+  - Issue number label below ("Issue {N}" or fallback to issue name), mono caps
+  - Optional subtitle line, italic serif, smaller
+- Empty state (no issues): centred italic serif "No issues published yet."
+
+FRAME 3 — ARTICLE DETAIL TOP (Desktop, 1440px, apps/site/app/magazine/[slug]/page.tsx)
+
+ProgressBar: thin 2px ochre bar fixed to top of viewport, fills as user scrolls (0–100%)
+
+HERO (image variant — article-hero):
+- Full-bleed 60vh image, dark vignette gradient bottom-up
+- Breadcrumb overlaid top-left on the image: "Home / Editorials / {Category} /
+  {Article Title}" — mono caps, white/translucent, ochre "/" separators
+- hero-text block bottom-left over the vignette:
+  - Eyebrow: "★ {Category}" (· {Country} if present), ochre
+  - H1 serif 48px, white, tight leading
+  - Standfirst paragraph, 18px, white/85% opacity
+  - Byline bar (horizontal row): "Words by" / author name — "Published" / date —
+    "Reading time" / "{N} minutes" — then ArticleActions icon trio (share/bookmark/
+    heart-with-count) right-aligned, small circular outline buttons on dark glass bg
+
+HERO (no-image variant — standard-hero): same breadcrumb (not overlaid, plain ink-on-
+paper above the header), then a paper-background header block with the same eyebrow →
+H1 → standfirst → byline-bar stack, just without the photographic backdrop.
+
+3-COLUMN BODY (article-wrap, max-width ~1080px centred):
+- LEFT (toc, ~200px): "In this piece" heading, numbered link list (01/02/03…, ochre
+  number, ink text, hover ochre), divider, then toc-meta block: Writer / Location /
+  Section / Series / Industry label-value pairs, mono-caps labels
+- CENTER (prose, ~600px): body copy begins — show first 2 paragraphs at full opacity,
+  third paragraph fading into a 160px bottom gradient (transparent → paper), then the
+  ContentGate card directly beneath (see Frame 4)
+- RIGHT (sidebar, ~260px): stacked cards in fixed order — issue card (ochre left
+  border accent) → Shop the Edit widget (if present) → Culture Drop newsletter card →
+  up to 2 related story cards → dark "From the archive" card
+
+FRAME 4 — CONTENT GATE STATES (Desktop, component close-up, 700px wide)
+
+Render 3 side-by-side gate card variants (each ~220px tall, top border rule, generous
+padding):
+1. Member-only / logged out — key-lock SVG icon (ochre) → "★ Moveee Community" label →
+   "This one's for the community." H3 → body copy → two buttons (filled ink "Join
+   free…", outline "Already have an account?") → mono footnote
+2. Patron-only / logged out — same layout, "★ Moveee Pro" label, "There's more on the
+   other side." H3, body copy, "Explore Moveee Pro →" / "Already a member? Sign in",
+   footnote with price
+3. Patron-only / logged in as Citizen — same layout, single button only ("Upgrade to
+   Moveee Pro →"), no secondary button, shorter footnote (price + cancel line only)
+
+FRAME 5 — ARTICLE END MODULES (Desktop, 1440px, stacked sections below the 3-col body)
+
+- FinishReading banner (only render in this frame as "earned" state): tinted
+  ochre-8%-opacity card, checkmark icon left, "Article complete!" italic serif +
+  "+ 15 Culture Points earned" small mute text right of icon
+- Series context strip (paper-deep background, centred narrow column): "Part of the
+  series" label → series name link (ochre underline) → description paragraph
+- Author band (author-band, horizontal row): 120×120 circular avatar (real photo or
+  the illustrated SVG fallback) → "Words by" label + name (serif, surname italic) +
+  bio paragraph → "More by {FirstName} →" CTA pill, right-aligned
+- Shop the Edit mobile-strip section (render here even on desktop frame to document
+  it — note via dashed outline that it's CSS-hidden ≥ desktop breakpoint): eyebrow +
+  "From this story" H2 → 4-card horizontal-scroll grid → "Browse all products →"
+  footer link
+- Related "Keep reading" section: header row (H3 "Keep *reading*" + "All stories →")
+  → 3-col grid of related story cards (image, category kicker, title, date)
+
+FRAME 6 — MOBILE COMPANION (390px, single column)
+
+- Hero: full-bleed image (16:9) with overlaid eyebrow/title/standfirst, byline bar
+  wraps to 2 lines, ArticleActions icons inline below byline
+- TOC: collapsed accordion directly below hero — "In this piece ▾" summary row,
+  tapping expands the numbered list + toc-meta inline (not a sheet/drawer)
+- Prose: full-width single column, same 3-paragraph-preview + gradient + gate pattern
+- Sidebar cards (issue/Shop the Edit/newsletter/related/archive) stack in the same
+  fixed order directly beneath the gate, full-width, before the author band
+- Author band: avatar + name + bio stack vertically (not the desktop horizontal row)
+- Shop the Edit mobile strip: this is the ONE place it actually shows on mobile —
+  horizontal-scroll product cards
+- Related: vertical stack of 3 cards instead of a grid
+```
+
+Output 6 frames: Frame 1 (Magazine Home, Desktop), Frame 2 (Issues Archive, Desktop),
+Frame 3 (Article Detail Top, Desktop), Frame 4 (Content Gate 3 states, component
+close-up), Frame 5 (Article End Modules, Desktop), Frame 6 (Mobile Companion, full
+scroll).
+
+---
+
