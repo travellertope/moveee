@@ -938,3 +938,233 @@ Companion (full stack).
 
 ---
 
+## 4. PULSE FEED — WEB (Site B, web.themoveee.com/feed)
+
+> Note on scope: this is the web counterpart to the mobile catalog's
+> `docs/figma-make-prompts.md` §3 "CONNECT FEED (Main Home Screen)" + §3B "Happenings
+> Spotlight Carousel". The mobile prompt designs a single-column 390px scroll with a
+> floating-pencil FAB and a bottom tab bar. The real web feed (`PulseFeed.tsx`,
+> `apps/connect/app/feed/page.tsx`) is a fundamentally different layout — a 3-column
+> desktop grid (190px left filter rail / fluid center timeline, capped 1080px total /
+> 220px right sidebar) with an inline composer at the top of the timeline instead of a
+> FAB, and collapses to the mobile catalog's single-column pattern only below 860px. This
+> prompt designs the desktop 3-column layout as the primary frame and treats the existing
+> mobile catalog entry as the already-correct mobile-companion reference rather than
+> re-drawing it.
+
+### Brand architecture
+Site B (`apps/connect`, web.themoveee.com) — Moveee, no sub-brand qualifier. This is the
+Pulse/Connect feed at `/feed` (renamed from the bare `/connect` path, June 2026 — see
+CLAUDE.md "Connect app feed route"). Tier badges read "Moveee Citizen" / "Moveee Pro" —
+never "Connect Citizen/Pro".
+
+### Why this section exists
+Read directly from `packages/shared/components/pulse/PulseFeed.tsx`,
+`apps/connect/app/feed/page.tsx`, `ConnectHero.tsx`, `FeedCard.tsx`,
+`EventSpotlightCarousel.tsx`, and `apps/connect/app/pulse-layout.css` before writing this
+section. The actual desktop feed is a 3-column grid, distinct from anything in the mobile
+catalog:
+- **Left rail (190px, sticky, white, right border)**: "Sections" (People Near Me,
+  Membership), "Personalised" (For You toggle, shown only when the viewer has interests
+  set), "Content Type" (All/Pulse/News/Editorial/Event/Directory/Quote), "Category"
+  (Music/Film/Art/Fashion/Literature/Food/Tech/Sport/Travel/Design/Ideas) — all rendered
+  as left-border-accent text links, not pills.
+- **Center timeline (fluid, max 1080px total page width, right border)**: an inline
+  `SubmitPost` composer sits directly in the timeline flow above the feed (not a floating
+  pencil FAB like mobile) — there is no FAB anywhere in the web feed. Below the composer
+  is a horizontal category-pill strip (`.feed-category-strip`), then the card stream.
+- **Right sidebar (220px, sticky)**: "Hot this week 🔥" trending list (left-border-accent
+  text rows, no images — title + reaction count, not mini-cards like the mobile Trending
+  Strip), a "Personalised feed ready" nudge card (only shown when interests exist and For
+  You is off), and an "About Moveee" card.
+- **Below 860px**: the two sidebars hide entirely; a horizontal-scroll mobile filter strip
+  (For You pill + content-type pills + a "⊞ Sections" button that expands a dropdown panel
+  for the Sections links) replaces the left rail, matching the mobile catalog's filter row
+  concept but implemented as a strip + overflow dropdown rather than a fixed set of pills.
+- **Event Spotlight Carousel** (`EventSpotlightCarousel.tsx`) is real, shipped code —
+  inserted once after the 5th feed item exactly as the mobile §3B prompt specifies (same
+  scoring formula, same category-dot colour table, same 236px card). A
+  `HouseFellowshipReminderCard` is inserted at the same position for logged-in viewers
+  only — this has no mobile-catalog equivalent yet and is new to this prompt.
+- **Logged-out visitors** see `ConnectHero` above the feed (headline "Where culture
+  gathers.", Join/Sign-in CTAs, a section-nav strip) — there is no equivalent hero in the
+  mobile catalog since the mobile app requires auth before reaching the feed at all.
+- Card types match the mobile catalog's Editorial/Community/Quote cards conceptually but
+  render as a single-column stream inside the center rail rather than full-bleed against
+  the phone width — same content fields (badges, author rows, reaction bars, poll/RSVP
+  inline widgets per `FeedCard.tsx`), narrower max-width.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Hero (logged-out only): `"Where culture gathers."` / `"Village square for culture loving
+  creatives, entrepreneurs, professionals."` / CTAs `"Join Moveee →"` / `"Already a member?
+  Sign in"`
+- Section nav: `"Pulse Feed"` · `"People Near Me"` · `"Membership"`
+- Interests nudge (no interests set): `"Personalise your feed"` — `"pick your interests for
+  a For You view."` — `"Set interests →"`
+- Right sidebar nudge (interests set, For You off): `"Personalised feed ready"` —
+  `"Switch to For You to see content ranked by your interests."` — `"For You →"`
+- Right sidebar About card: `"About Moveee"` — `"The community for Black and diaspora
+  creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and
+  stay in the conversation."`
+- Trending header: `"Hot this week 🔥"`
+- Spotlight carousel header: `"📅 Upcoming Near You"` / `"See all →"` (copy already
+  finalised in the mobile §3B prompt — reuse verbatim, do not redraft)
+- Empty feed state: `"Nothing here yet — check back soon."`
+- Directory teaser (below feed): `"Find Each Other"` / `"The Directory"` / `"A searchable
+  index of members — who they are, what they do, and where they're based. The Lagos
+  photographer. The UK art director. The Nigerian lawyer in New York."` / `"Browse the
+  directory →"`
+- Membership teaser (below feed): `"Membership"` / `"Moveee Citizen & Moveee Pro"` / `"Free
+  membership gets you in. Moveee Pro gets you featured, gated content, a Pro badge, and
+  more. Two tiers. One community."` / `"View membership →"`
+
+### DEV ANNOTATION REQUIREMENT
+Add `<!-- DEV: <note> -->` (HTML) or `{/* DEV: <note> */}` (JSX) directly above the
+relevant element — do not group them at the top of the file.
+
+  1. Above the 3-column grid container:
+     "DEV: `grid-template-columns: 190px 1fr 220px`, `max-width: 1080px`, centred. Below
+     860px both sidebars are `display: none` and the grid collapses to `1fr` — see
+     `apps/connect/app/pulse-layout.css`. Do not hardcode pixel widths in the generated
+     component; reuse the existing `.pulse-layout`/`.pulse-sidebar-left`/`.pulse-timeline`/
+     `.pulse-sidebar-right` classes."
+  2. Above the inline composer:
+     "DEV: This is `SubmitPost.tsx` rendered directly in the timeline flow, not a modal or
+     FAB. It already exists and supports all 10 post templates — do not redesign its
+     internals here, just reserve the layout slot above the category-pill strip."
+  3. Above the Event Spotlight Carousel insertion point:
+     "DEV: Inserted via array slicing — `visible.slice(0,5)` then the carousel then
+     `visible.slice(5)` — not a ref/index check. This is what makes 'once, after the 5th
+     item, never re-inserted on infinite-scroll pagination' work without extra state, since
+     position 5 in the already-rendered array is stable across re-renders. See
+     `PulseFeed.tsx`'s render block. Full scoring/filtering spec already documented in the
+     mobile §3B prompt — reuse, don't redefine here."
+  4. Above the HouseFellowshipReminderCard:
+     "DEV: Logged-in-only, rendered at the exact same array position as the Event
+     Spotlight Carousel (`visible.length > 5 && session?.user`). No mobile-catalog
+     equivalent yet — this card is new to the web feed only as of this prompt."
+  5. Above the ConnectHero block:
+     "DEV: `ConnectHero.tsx` checks `useSession()` client-side and renders `null` for
+     logged-in users — it is NOT conditionally mounted by the server. Keep this client-side
+     check pattern in the generated component rather than gating it in the parent RSC, to
+     avoid layout-shift on session hydration (see the comment already in
+     `apps/connect/app/feed/page.tsx`)."
+  6. Above the "For You" toggle in both the left rail and mobile filter strip:
+     "DEV: Only rendered at all when `hasInterests` (i.e. `session.user.interests.length >
+     0`); ranking logic is `rankFeed()` from `lib/feed-recommendations.ts` — do not
+     reimplement scoring here, this prompt only needs the toggle's two visual states."
+  7. Above the right-sidebar trending list:
+     "DEV: Text rows with a left ochre border accent (title + reaction count) — this is
+     NOT the mobile catalog's image-based 160×80px Trending Strip mini-cards. Different
+     visual treatment for the same `getTrending()` data, by design, since the sidebar is
+     narrow (220px) and persistent rather than a one-off horizontal scroll."
+  8. Above the Directory/Membership teaser sections below the feed:
+     "DEV: These are separate `<section>` blocks in `app/feed/page.tsx`, not part of
+     `PulseFeed.tsx` itself — they render below the feed for all visitors regardless of
+     scroll position, not as feed items."
+
+### PROMPT 4 — Pulse Feed (Desktop 1440px + Mobile Companion 390px)
+
+```
+Senior web UX/UI designer — Moveee (Site B, web.themoveee.com/feed). Desktop frame
+1440px wide, content column capped at 1080px and centred; mobile-companion frame
+390×844px.
+Brand: paper bg #FFFFFF, paper-warm #F3ECE0 (hero only), ochre #C5491F, gold #B38238,
+ink #14110D, ink-soft #3A342B, mute #7A6F5C, rule #E8E2D8, success #2D6A4F.
+DM Sans body, Fraunces display, JetBrains Mono data/timestamps/dates.
+
+FRAME 1 — DESKTOP, LOGGED-OUT (1440px):
+
+CONNECT HERO (full-width, paper-warm #F3ECE0 bg, 64px vertical padding):
+  Eyebrow "Moveee" DM Sans 11px bold ochre uppercase.
+  Headline "Where culture gathers." Fraunces 40px, "gathers." in italic.
+  Lede "Village square for culture loving creatives, entrepreneurs, professionals." DM Sans
+    16px ink-soft, max-width 480px.
+  CTA row: "Join Moveee →" solid ochre button + "Already a member? Sign in" ghost text link.
+  Section nav strip below (white bg, border-top rule): "Pulse Feed" · "People Near Me" ·
+    "Membership" — DM Sans 13px bold ink, 24px gap, underline on hover.
+
+3-COLUMN FEED GRID (below hero, 1080px max-width centred, grid-template-columns
+190px/1fr/220px):
+
+  LEFT RAIL (190px, white, right border 1px rule, sticky):
+    "SECTIONS" DM Sans 9px bold uppercase mute, 0.15em letter-spacing — links below:
+      "People Near Me", "Membership" — DM Sans 13px ink-soft, left-border 2px transparent.
+    "CONTENT TYPE" same heading style — links: All/Pulse/News/Editorial/Event/Directory/
+      Quote — active state: ochre text + 2px ochre left border + 600 weight.
+    "CATEGORY" same heading style — links: Music/Film/Art/Fashion/Literature/Food/Tech/
+      Sport/Travel/Design/Ideas.
+    (Omit "Personalised" group in this logged-out frame — it requires interests.)
+
+  CENTER TIMELINE (fluid, right border 1px rule):
+    Category pill strip (white bg, horizontal scroll, pills: All + the 11 categories above,
+      32px height, radius-full, active = ochre fill white text, inactive = ghost border
+      ink-soft text).
+    Feed cards (1–5 visible): same 4 card types already specified for mobile (Editorial,
+      Community/Hidden-Gem, Quote, plus a Poll-template card showing the inline
+      `PollDisplay` bar-chart-style vote bars) — rendered single-column, 680px max card
+      width, 24px vertical gap, no card shadow on Editorial (bottom-border separator style),
+      shadow-card on Community/Poll cards, paper-warm fill on Quote card. Same copy/field
+      stack as the mobile catalog's Prompt 3 Frame 1, just narrower and desktop-typed.
+    EVENT SPOTLIGHT CAROUSEL inserted after card 5 — reuse the exact card design already
+      specified in the mobile catalog's Prompt 3B Frame 1 (236px cards, header "📅 Upcoming
+      Near You" / "See all →", FEATURED star, 🌱 Community badge) — same component, same
+      horizontal scroll, just sitting inside the narrower center column instead of full
+      device width.
+    2 more feed cards below the carousel.
+
+  RIGHT SIDEBAR (220px, sticky):
+    "HOT THIS WEEK 🔥" DM Sans 9px bold uppercase mute — 3 trending rows below: each a
+      2px ochre left-border block, title DM Sans 12px bold ink (2 lines max, ellipsis),
+      "{N} reactions" DM Sans 10px mute below.
+    "About Moveee" card (white, 1px rule border, radius 4px, 14px padding): heading DM Sans
+      9px bold uppercase mute, body "The community for Black and diaspora creatives,
+      entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in
+      the conversation." DM Sans 12px ink-soft.
+
+DIRECTORY TEASER (full-width section below the 3-column grid, paper-deep bg):
+  Split layout: left text block ("Find Each Other" eyebrow, "The Directory" Fraunces 28px
+    heading, descriptive paragraph), right "Browse the directory →" ochre text CTA.
+
+MEMBERSHIP TEASER (full-width section, paper bg, border-top rule):
+  Same split layout: "Membership" eyebrow, "Moveee Citizen & Moveee Pro" Fraunces 28px
+    heading, descriptive paragraph, "View membership →" ochre text CTA.
+
+FRAME 2 — DESKTOP, LOGGED-IN + "FOR YOU" ACTIVE (1440px):
+Same 3-column grid as Frame 1, but:
+  No Connect Hero (logged-in visitors never see it).
+  LEFT RAIL gains a "PERSONALISED" group above "Content Type": single "For You" link,
+    active state = ochre text + left border (same active styling as Content Type links).
+  Inline composer bar sits at the very top of the center timeline (above the category pill
+    strip): collapsed state — white card, 1px rule border, radius 4px, placeholder text
+    "Share something with the community…" DM Sans 13px mute, small template-picker icon
+    row (10 template icons, 16px each, muted) along the bottom edge of the card.
+  Below the composer + pill strip: an "Interests" nudge is HIDDEN in this frame (the user
+    already has interests since For You is active) — instead show feed cards with a small
+    "✦ For You" badge (ochre bg, white DM Sans 9px bold, top-right corner) on any card
+    matching the viewer's interests.
+  RIGHT SIDEBAR: trending list same as Frame 1; below it, in place of the "Personalised
+    feed ready" nudge (hidden because For You is already on), nothing — just the About
+    Moveee card directly below trending.
+  After feed card 5: Event Spotlight Carousel, THEN a HouseFellowshipReminderCard directly
+    beneath it (paper-warm card, ochre left accent, House Fellowship icon + short reminder
+    copy + "View →" link — logged-in-only module, no mobile-catalog equivalent).
+
+FRAME 3 — MOBILE COMPANION (390×844px, logged-in, For You off):
+Single column, matches the mobile catalog's existing Prompt 3 Frame 1 design exactly
+(header, filter row, 4 card types, FAB) — EXCEPT replace the floating pencil FAB with the
+web pattern: no FAB at all; instead show the same collapsed inline composer bar from Frame
+2, placed at the very top of the scroll (below the mobile filter strip, above the category
+pill strip) — this is the one real layout difference between the web mobile-companion view
+and the existing native mobile app screen, since web has no FAB pattern anywhere in the
+app. Mobile filter strip: horizontal scroll of For You pill (hidden if no interests) +
+content-type pills + a sticky-right "⊞ Sections" button (dark ink fill, white text) that
+expands a 2-column dropdown panel (People Near Me / Membership) below the strip when
+tapped.
+
+Output 3 frames: Frame 1 (Desktop, logged-out), Frame 2 (Desktop, logged-in + For You
+active), Frame 3 (Mobile Companion).
+```
+
+---
+
