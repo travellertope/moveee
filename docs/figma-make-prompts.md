@@ -5507,6 +5507,289 @@ Desktop Magazine Spotlight, Mobile Companion (full stack).
 
 ---
 
+## 19. SHOP/LIFESTYLE HOMEPAGE — STANDARD MARKETPLACE REDESIGN (Site A, themoveee.com/shop)
+
+> **Note on scope:** like §18, this is a **responsive web redesign** for `apps/site`
+> (themoveee.com), not mobile — frames are specified at **desktop 1440px** with a
+> **mobile 390px** companion frame. This covers the `/shop` homepage only
+> (`apps/site/app/shop/ShopArchiveWrapper.tsx` + `shop.css`) — the product detail page,
+> brand storefront pages (`/shop/brand/[slug]`), and "The Moveee Edit" curated page
+> (`/shop/edit`) are out of scope for this prompt and keep their current design.
+
+### Brand architecture (read this before writing or designing anything below)
+
+- This redesign stays entirely inside Site A's **existing magazine/shop token set** — do
+  NOT introduce §18's paper-warm `#F3ECE0` Moveee-zone tokens here. The shop is a Site A
+  surface, not a Site A/Site B bridge: white `#FFFFFF` bg, paper-deep `#F2F2F2` card bg,
+  ink `#14110D` text, ink-soft `#3A342B` body copy, mute `#7A6F5C` secondary text, rule
+  `#2A241C` borders, ochre `#C5491F` primary accent, ochre-deep `#8A2D10` hover/pressed,
+  gold `#B38238` reserved for member/Pro-tier signifiers only (matches its use elsewhere
+  as a membership-tier color). Fraunces (display/serif) + DM Sans (body/sans) +
+  JetBrains Mono (kickers/labels/meta), same as every other Site A surface.
+  "Vetted" trust pips, the ticker strip, and the Editorial Bridge modules already use
+  these tokens correctly — keep that visual language, this prompt extends it rather than
+  replacing it.
+- "Moveee" is never called "the marketplace" or "the store" in visible copy — it's the
+  "Moveee Lifestyle Shop", shortened to "Shop" in nav contexts. "Connect" never refers to
+  this page or its members teaser — per the project's naming convention, "Connect" now
+  belongs to Literati Connect; the existing "Connect Member Band" module (section 10 of
+  the current page) is renamed "Moveee Member Band" in this redesign and its copy updated
+  to drop "Connect Members" in favour of "Moveee members" / "Moveee Pro" — bring the page
+  in line with the rest of the rebrand while we're touching it.
+
+### Why this section exists
+
+The current `/shop` homepage (read directly from `ShopArchiveWrapper.tsx`) is a strong
+*editorial* shop page — masthead, ticker, Editorial Picks, two magazine/journal bridges, a
+product grid, a category grid, a vendor strip, a membership band, an Origins bridge — but
+it is missing the load-bearing mechanics that make a craft marketplace feel like a
+marketplace rather than a lookbook:
+
+- **No search at all.** There is no search input anywhere on the page or in
+  `ShopFilterBar.tsx` — a visitor who knows what they want has no way to type it in.
+- **Sort and view-toggle exist in the UI but do nothing.** `ShopFilterBar.tsx`'s
+  `onSortChange`/`onViewChange` callbacks are typed and the `<select>`/buttons render, but
+  `ShopArchiveWrapper.tsx` never passes them in — selecting "Price: Low–High" or the list
+  icon is currently a no-op.
+- **No faceted filtering.** Category is the only filter axis (via `ShopFilterBar`'s tabs);
+  there's no price range, material, maker location, or in-stock-only filter — every
+  leading craft marketplace (Etsy chief among them) leans on faceted search as a primary
+  discovery mechanic, not just category tabs.
+- **No trust/social-proof signal on individual product cards.** The "★ Vetted" pip is
+  global flavour text repeated on every card — there are no review counts, ratings, or
+  "X sold" signals, which is the single most common trust pattern on craft marketplace
+  product cards (Etsy, Not On The High Street, Folksy all surface this directly on the
+  card, not just on the PDP).
+- **Pro pricing is invisible until checkout.** `GET_PRODUCT_EXTRA` already resolves a
+  `memberPrice` field (see `packages/shared/lib/wp.ts`), but no homepage card displays it —
+  Moveee Pro's "10% off every purchase" perk (already advertised in the Member Band module
+  itself) is not shown anywhere a Pro member is actually browsing.
+- **The Vendor Strip and `/makers` directory duplicate the same data with no obvious
+  relationship.** `extractVendors()` in `ShopArchiveWrapper.tsx` builds vendor cards purely
+  by grouping the current product set by vendor name, separately from the dedicated
+  `/makers` and `/makers/[slug]` editorial maker-profile pages and the shop's own
+  `/shop/brand/[slug]` storefronts — three surfaces, the same underlying vendor data, no
+  shared "maker spotlight" treatment. This redesign doesn't attempt to merge those routes
+  (out of scope), but gives the homepage's own Maker spotlight module a clearer, more
+  marketplace-standard "Shop by Maker" framing.
+
+This redesign keeps every section of the current page that already works (masthead,
+ticker, Editorial Picks, both Editorial Bridges, Category Grid, Origins Bridge) and adds
+the missing marketplace mechanics around them: a real sticky search + faceted filter bar,
+functional sort, trust signals and Pro pricing on every card, and a sharper "Shop by
+Maker" framing for the vendor strip.
+
+### Marketing copy (final — use verbatim in the prompt; do not let Figma Make invent its own)
+
+**STICKY SEARCH + FILTER BAR**
+- Search placeholder: `Search makers, materials, or pieces…`
+- Filter pill labels (left to right): `Category`, `Price`, `Material`, `Maker Location`,
+  `In Stock Only`
+- Sort dropdown options: `Featured`, `Newest`, `Price: Low–High`, `Price: High–Low`,
+  `Most Loved`
+- View toggle: grid icon / list icon (unlabelled, as today)
+
+**MASTHEAD (unchanged from current page — reproduced here for completeness, do not alter)**
+- H1: `Moveee Lifestyle` (or the active category/tag/maker name when filtered)
+- Body: `Every piece chosen for craft, longevity, and the story behind it. Every maker on
+  Moveee is personally vetted for craft integrity, fair production, and lasting quality.`
+
+**TRUST STRIP (new — sits directly under the masthead, above the ticker)**
+- Four trust badges, icon + label + one-line proof point:
+  1. `✓ Vetted Makers` — `Every maker personally reviewed before their first listing.`
+  2. `★ 4.8 average rating` — `Across 1,200+ verified buyer reviews.`
+  3. `↺ Free Returns` — `30 days, no questions asked.`
+  4. `◇ Moveee Pro saves 10%` — `Automatically applied at checkout for members.`
+
+**PRODUCT CARD — PRO PRICING (applies to every card in the redesigned grid)**
+- Standard price shown as today (e.g. `£68`).
+- When `memberPrice` is present on the product: a second line below it, smaller, gold
+  text: `£61.20 with Moveee Pro` — always phrased as "[member price] with Moveee Pro",
+  never "Pro price" alone, so logged-out visitors understand what unlocks it.
+
+**PRODUCT CARD — TRUST SIGNAL (replaces the repeated static "★ Vetted" pip as the *only*
+signal — keep the Vetted pip, add a second line below the price)**
+- Rating + review count line: `★ 4.9 (38)` — DM Sans 12px, mute colour, shown only when
+  the product has at least one review; cards with zero reviews show `New listing` in its
+  place (JetBrains Mono 10px uppercase, ochre) rather than leaving blank space.
+
+**"SHOP BY MAKER" SPOTLIGHT (renamed from "Meet the Makers")**
+- Eyebrow: `SHOP BY MAKER`
+- H3: `The hands behind every piece.`
+- Body (new, sits above the maker cards): `Moveee makers are independent craftspeople,
+  vetted for quality and fair production before their first listing goes live. Shop their
+  full collections, or read their story on the Moveee Maker directory.`
+- Card CTA (unchanged): maker name links to `/makers/[slug]`; new secondary link per card:
+  `View shop →` linking to `/shop/brand/[slug]`.
+
+**MOVEEE MEMBER BAND (renamed from "Connect Members" — copy update only, layout unchanged)**
+- H3: `Moveee Pro`
+- Body: `Join Moveee for early access to new makers, exclusive editions, and 10% off every
+  purchase in the shop.`
+- CTA: `Join Moveee →` (unchanged destination, `/feed`)
+
+⚠️ **DEV ANNOTATION REQUIREMENT** — add `<!-- DEV: <note> -->` comments at these points:
+  1. Above the sticky search + filter bar: `"DEV: Search has no backend today — wire to a
+     new GraphQL search param on GET_PRODUCTS (packages/shared/lib/wp.ts) or a WooCommerce
+     REST search fallback if GraphQL full-text search isn't available. Filter pills
+     (Price/Material/Maker Location/In Stock Only) need new query params threaded through
+     ShopArchiveWrapper's props and the underlying GET_PRODUCTS query — none of these
+     facets currently exist as filterable fields. Category pill reuses the existing
+     /shop/category/[slug] route; the others should be implemented as client-side query
+     params on /shop itself (?price=&material=&location=&inStock=1) rather than new routes,
+     to avoid combinatorial route explosion."`
+  2. Above the sort dropdown: `"DEV: ShopFilterBar.tsx already has working onSortChange/
+     onViewChange props and local state (lines 16-38) — they're just never wired up by the
+     parent. Make ShopArchiveWrapper's main product grid section a client component (or
+     extract just the grid into one) that reads sort/view state and actually reorders/
+     re-renders the product list — view toggle should switch product-grid between the
+     existing card grid and a new horizontal list-row layout."`
+  3. Above the Pro pricing line on the product card: `"DEV: memberPrice already resolves
+     via GET_PRODUCT_EXTRA in packages/shared/lib/wp.ts but the main GET_PRODUCTS query
+     used by the homepage grid does not request it — add memberPrice to GET_PRODUCTS'
+     PRODUCT_FIELDS_FRAGMENT rather than fetching it per-card, to avoid an N+1 query
+     pattern. Only render the Pro-pricing line when a value is actually returned."`
+  4. Above the rating/review-count line on the product card: `"DEV: There is no review/
+     rating data model anywhere in this codebase yet (confirmed — no culture_directory-style
+     rating field on WooCommerce products). This requires a genuinely new feature (a
+     product reviews system, likely backed by WooCommerce's native review/comment system
+     via wc_review_count()/wc_get_rating_html() since that's free functionality already
+     built into WooCommerce) before this line can show real data — until then, render the
+     'New listing' fallback state for every card rather than fabricating a placeholder
+     rating."`
+  5. Above the trust strip: `"DEV: The '4.8 average rating' and '1,200+ verified buyer
+     reviews' figures are placeholder copy pending the reviews system above — do not wire
+     real aggregate-query logic until that system exists; treat this strip as static admin-
+     configurable copy (a WP option, same pattern as other static trust copy elsewhere in
+     the plugin) until then."`
+  6. Above the "Shop by Maker" spotlight: `"DEV: extractVendors()'s product-grouping logic
+     in ShopArchiveWrapper.tsx (lines 30-49) and the FALLBACK_VENDORS hardcoded array
+     (lines 51-56) are unchanged by this redesign — only the section's copy/framing and the
+     addition of a per-card 'View shop →' link to /shop/brand/[slug] are new. Do not refetch
+     or restructure the underlying maker data in this pass."`
+
+---
+
+### PROMPT 19 — Shop Homepage Marketplace Redesign (Desktop 1440px + Mobile 390px)
+
+```
+Senior web UX/UI designer — themoveee.com/shop homepage redesign, evolving the existing
+editorial shop page into a standard craft-marketplace homepage. Desktop frame 1440px wide,
+companion mobile frame 390px wide, same content, stacked layout.
+Brand tokens (Site A, unchanged — do not introduce new tokens): white #FFFFFF bg,
+paper-deep #F2F2F2 card/section bg, ink #14110D text, ink-soft #3A342B body copy,
+mute #7A6F5C secondary text, rule #2A241C borders, ochre #C5491F primary accent,
+ochre-deep #8A2D10 hover state, gold #B38238 reserved for Moveee Pro signifiers only.
+Fraunces (display/serif) + DM Sans (body/sans) + JetBrains Mono (kickers/meta/labels).
+Radius: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
+Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04).
+
+CONTEXT: the current /shop homepage already has a working masthead, ticker strip,
+Editorial Picks grid, two Editorial Bridge modules (to Magazine and Origins), a category
+grid, a vendor strip, a membership band, and an Origins bridge — all of these KEEP their
+current design and are NOT part of this prompt. This prompt covers ONLY: (1) a new sticky
+search + faceted filter bar that replaces the existing non-functional ShopFilterBar, (2) a
+new trust strip under the masthead, (3) an upgraded product card (used in both the
+Editorial Picks and Main Grid sections) carrying Pro pricing + a rating/review line, and
+(4) a reframed "Shop by Maker" spotlight section. Use the marketing copy supplied above
+VERBATIM — do not paraphrase or invent new copy.
+
+---
+
+FRAME 1 — DESKTOP STICKY SEARCH + FILTER BAR (1440×120px, white bg, 1px rule bottom border,
+sticky on scroll, sits directly below the masthead, replacing the current filter-bar):
+
+ROW 1 (72px height, 32px horizontal padding):
+  Search input (left, 420px wide): radius-full, paper-deep fill, mute placeholder text
+    "Search makers, materials, or pieces…", small magnifying-glass icon left-inset 16px,
+    DM Sans 14px.
+  Filter pills (centre, inline after search, 8px gap each): "Category ▾", "Price ▾",
+    "Material ▾", "Maker Location ▾" — each a radius-full ghost-border pill, DM Sans 13px
+    ink, 36px height, chevron icon right; "In Stock Only" as a plain toggle pill (no
+    chevron) that fills ochre when active.
+  Right cluster: Sort dropdown (radius-md border, DM Sans 13px, 36px height, options from
+    copy above) + grid/list view toggle (two 32px icon buttons, active state ochre fill)
+    + result count "248 items" JetBrains Mono 11px mute.
+ROW 2 (48px height, shown only when filters are active): active filter chips with × to
+  remove each, "Clear all" text link right-aligned, ochre text DM Sans 12px.
+
+---
+
+FRAME 2 — DESKTOP MASTHEAD + TRUST STRIP (1440×360px, white bg):
+
+MASTHEAD (unchanged from current page, reproduced for continuity — centred, max-width
+  720px): H1 "Moveee Lifestyle" Fraunces 48px bold ink, centred rule divider below, body
+  copy DM Sans 16px ink-soft centred max-width 600px.
+
+TRUST STRIP (new, 32px top margin, 4 columns, max-width 1100px centred, 1px rule top
+  border, 32px vertical padding):
+  TRUST BADGE (each column): icon 24px (✓ / ★ / ↺ / ◇) ochre colour, label DM Sans 13px
+    bold ink directly right of icon, proof-point line DM Sans 12px mute below, 4px top.
+  Fill all four badges with the exact copy supplied above, in order.
+
+---
+
+FRAME 3 — DESKTOP UPGRADED PRODUCT CARD (340×460px card spec, used inside both the
+Editorial Picks grid and the Main Product Grid — show as a single annotated card spec,
+not a full grid, since the grid layout itself is unchanged):
+
+Card: white fill, radius-lg, 1px rule border, hover state lifts shadow-card + 2px
+  translateY.
+  IMAGE (340×280px, radius-lg top corners only, object-fit cover):
+    "★ Vetted" pip (top-left, ink/80%-opacity fill, white text, radius-full, 11px, 8px
+      padding) — unchanged from today.
+    "New" pip (top-right, ochre fill, same sizing) when applicable — unchanged.
+  INFO BLOCK (20px padding):
+    Vendor name: DM Sans 11px mute uppercase, letter-spacing 0.5px.
+    Product name: Fraunces 16px bold ink, 4px top, max 2 lines.
+    PRICE ROW (8px top): standard price DM Sans 15px bold ink (e.g. "£68"); directly below
+      it, when memberPrice exists, a second line "£61.20 with Moveee Pro" DM Sans 12px bold
+      gold #B38238.
+    RATING ROW (6px top): "★ 4.9 (38)" DM Sans 12px mute when reviews exist; OR
+      "New listing" JetBrains Mono 10px uppercase ochre when zero reviews — never show both.
+    "Add to bag" button (full width, 8px top, ink fill white text, radius-md, 40px height,
+      DM Sans 13px bold) — unchanged from today's AddToCartButton placement.
+
+---
+
+FRAME 4 — DESKTOP "SHOP BY MAKER" SPOTLIGHT (1440×520px, paper-deep #F2F2F2 bg, 80px
+vertical padding, replacing today's "Meet the Makers" framing — same card grid layout,
+new header + copy + secondary link per card):
+
+HEADER BLOCK (left-aligned, max-width 640px, 64px left padding):
+  Eyebrow: "SHOP BY MAKER" JetBrains Mono 11px bold ochre uppercase.
+  H3: "The hands behind every piece." Fraunces 32px bold ink, 8px top.
+  Body: new copy block from above, DM Sans 15px ink-soft, line-height 1.5, 12px top.
+  "All makers →" DM Sans 13px bold ochre link, top-right of header row (unchanged
+    position from today).
+
+MAKER CARDS (4 across, 64px top margin, 24px gap, unchanged sizing/style from today's
+  vendor-cards — image, "★ Vetted Maker" pip, name, location, description, product count):
+  Add a new secondary line under the existing product-count line: "View shop →" DM Sans
+    12px bold ochre, links to /shop/brand/[slug] (the maker's name itself still links to
+    /makers/[slug] as today — two distinct destinations on one card, both visible).
+
+---
+
+FRAME 5 — MOBILE COMPANION (390px wide, single scrolling stack):
+  Search + filter bar: search input full-width at top; filter pills become a single
+    horizontally-scrolling row below the search input (no wrapping); sort dropdown +
+    view toggle + result count collapse into one row below the filter pills, sort as a
+    compact icon-button that opens a bottom-sheet selector rather than a native <select>.
+  Trust strip: 2×2 grid instead of 4-across, same badge content.
+  Product card: same field stack (image → vendor → name → price/Pro-price → rating →
+    Add to bag), full-width single-column in the grid, image height reduced to 220px.
+  Shop by Maker: header stacked above cards, cards 2-across instead of 4-across, same
+    two-link pattern (maker name + "View shop →") preserved on each card.
+
+---
+
+Output 5 frames: Desktop Search/Filter Bar, Desktop Masthead+Trust Strip, Desktop Product
+Card Spec, Desktop Shop by Maker Spotlight, Mobile Companion (full stack).
+```
+
+---
+
 ## APPENDIX — SCREEN INVENTORY
 
 Complete list of screens to design:
