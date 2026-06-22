@@ -2160,3 +2160,225 @@ full scroll).
 
 ---
 
+## 9. MEMBER DASHBOARD — WEB (Site B, web.themoveee.com/member)
+
+### Note on scope
+
+Mobile's §8 models a single scrollable card stack (hero → passkey banner → 4-stat
+bar → upgrade banner [Citizen only] → earned-badges chip row → referral row →
+8-item quick-links list → collapsible "How to Earn" table) and uses the stale
+"Connect Pro"/"Connect Citizen" wording throughout. The real web dashboard
+(`apps/connect/app/member/page.tsx`) is a genuine 2-column desktop layout (main
+column + side column, not one long stack), uses correct "Moveee Pro"/"Moveee
+Citizen" copy, has **5** stats (not 4 — Membership is its own stat alongside
+Credits/Points/Badges/Referrals), shows the **full 18-badge grid with locked
+states** rather than only-earned chips, and a much longer "How to Earn" table
+(12 rows, both Credits AND Points columns) and quick-links list (14 entries,
+including a House Fellowship link that's conditional on cluster membership) than
+mobile's. This prompt is grounded in the real page, `MemberDashboard.tsx`
+(stats), `MemberBadges.tsx` (badge grid), and `PasskeyBanner.tsx`.
+
+### Brand architecture
+
+Site B (`apps/connect`), brand **Moveee**. Path: `/member`. Tier labels are
+"Moveee Pro" / "Moveee Citizen" — never "Connect Pro"/"Connect Citizen" (the
+mobile catalog's wording here is stale per the project's tier rename).
+
+### Why this section exists
+
+The real dashboard is desktop-native: a full-width hero strip, then a 2-column
+body (`mem-grid`) where the main column carries the badge grid and earn-table,
+and the side column carries the conditional upgrade card, referral card, and a
+flat quick-links list — this is a meaningfully different information hierarchy
+from mobile's single vertical card stack, where everything (including badges,
+quick links, and the earn table) competes for the same scroll position. The
+stats component (`MemberDashboard.tsx`) also has live click-to-toggle info
+tooltips on Credits and Points explaining the underlying mechanic in plain
+language — a feature with no mobile equivalent.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+**Hero:**
+> The Moveee — Culture Community
+> {Display Name}
+> Moveee Pro / Moveee Citizen · {city}
+
+**Stats labels:** Moveee Credits · Points · Badges Earned · Referrals · Membership
+
+**Credits tooltip:**
+> Moveee Credits are your spendable currency. Earn them by posting, engaging, and
+> participating in the community. Redeem them for partner perks or cash out
+> (Moveee Pro only, 40% fee). Daily cap: 50 credits.
+
+**Points tooltip:**
+> Points is your permanent standing in the community — it never decreases. It
+> unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture
+> Authority (1,500). Unlike credits, points cannot be spent.
+
+**Passkey banner (no escrowed credits):**
+> Set up a Passkey to unlock Credits
+> Passkeys are required to spend credits and redeem partner perks. Takes 30
+> seconds.
+> Set up Passkey → / Dismiss
+
+**Passkey banner (with escrowed credits):**
+> You have {N} credits waiting — they'll be released once you add a passkey.
+
+**Upgrade card (Citizen only):**
+> Upgrade to Moveee Pro
+> Unlock the full experience.
+> - Moveee Pro badge on your Pulse posts
+> - Exclusive gated content & editorials
+> - 10% Moveee Shop discount
+> - Early access to new features
+> Become a Moveee Pro →
+
+**Referral card:**
+> Invite a Friend
+> Share your link. Earn +30 reputation and +5 credits for every member who joins.
+> {N} successful referral(s) — View details →
+
+**Achievements section header:** "Achievements" + "{N} of 18 earned"
+
+**How to Earn table rows (Action / Credits / Points):**
+1. Post validated (5 reactions or 3 comments) — +10 cr / +5
+2. Hidden Gem or Food Review validated — +15 cr / +10
+3. Event RSVP — +1 cr / +5
+4. Event check-in — +2 cr / +15
+5. Refer a member — +3 cr / +25
+6. Newsletter comment — +1 cr / +10
+7. Share a quote — +1 cr / +10
+8. Quote liked by others — — / +1
+9. Read a magazine article — +1 cr / +5
+10. Share a magazine article — +1 cr / +5
+11. Directory entry submitted — +2 cr / +15
+12. Game completed — +1 cr / +5
+
+Caption: "Credits are spendable (capped at 50/day). Points are permanent and
+unlock status."
+
+**Quick links (side column, flat list, no icons in real code — text links):**
+My Wallet · My Coupons · Notifications · My Analytics · My Events (Pro only) ·
+My House Fellowship (if clustered) / Find your House Fellowship (if not) · Refer
+a Friend · Browse Perks · My Collection · Account Settings · Newsletters ·
+Upcoming Events · Magazine · Discover · Quotes Archive · Sign out
+
+### DEV ANNOTATION REQUIREMENT
+
+When generating, insert these as `<!-- DEV: ... -->` comments at the indicated frame:
+
+1. <!-- DEV: This is a real 2-column desktop layout (`mem-grid`: main column +
+   side column), not a single vertical card stack like mobile's PROMPT 8. Badges
+   and the How to Earn table live in the main column; the upgrade card, referral
+   card, and quick-links list live in the side column — preserve this split, don't
+   flatten it into one column on desktop. -->
+2. <!-- DEV: There are 5 stats, not 4 — Credits, Points, Badges Earned,
+   Referrals, AND Membership (tier name shown as its own stat value) are all
+   rendered by `MemberDashboard.tsx`'s `mem-stats` row. Credits and Points each
+   have a clickable ⓘ info icon opening an inline tooltip with the exact mechanic
+   copy above — include both tooltip states in this frame, not just the static
+   numbers. -->
+3. <!-- DEV: The badge section shows the FULL catalog of 18 badges in a grid,
+   with explicit locked (○ icon, dimmed) vs earned (★ icon, full colour) states
+   and each badge's name + one-line description always visible — this is not a
+   chip row of only the badges already earned like mobile's Card 5. Earned badges
+   sort first via `sortedBadges`. -->
+4. <!-- DEV: Tier copy must read "Moveee Pro" / "Moveee Citizen" throughout —
+   mobile's "CONNECT PRO"/"CONNECT CITIZEN" wording is stale per the 2026-06-21
+   tier rename and must not be reused anywhere in this frame. -->
+5. <!-- DEV: PasskeyBanner has two distinct copy states depending on
+   `creditsEscrowed` — a generic "takes 30 seconds" pitch when 0, or a specific
+   "you have {N} credits waiting" message when credits are actually held in
+   escrow pending passkey setup. Show both states as labelled variants, not just
+   the generic one mobile shows. -->
+6. <!-- DEV: The quick-links list is 14-15 entries (vs. mobile's 8) and includes
+   one CONDITIONAL row — "My House Fellowship" (links to `/cluster/{id}`) if the
+   member already belongs to an active, non-archived cluster, or "Find your House
+   Fellowship" (links to `/connect/people`) if not. "My Events" is itself
+   conditional on Moveee Pro tier. Render the list with these conditions annotated,
+   not as a fixed always-identical 8-item menu. -->
+7. <!-- DEV: The How to Earn table has 12 rows (not mobile's 5) and a leading
+   explanatory caption distinguishing credits (spendable, daily-capped) from
+   points (permanent, status-unlocking) — both columns must be populated for
+   every row except "Quote liked by others," which has no credit value (shown as
+   an em dash, not a zero). -->
+
+### PROMPT 9 — Member Dashboard, Pro & Citizen Variants (Desktop 1440px + Mobile
+390px)
+
+```
+TASK: Design the Member Dashboard page for Moveee's web community app
+(web.themoveee.com/member), in both Moveee Pro and Moveee Citizen variants.
+
+CONTEXT: Site B — Moveee's community + auth surface. Paper-warm background, white
+cards, ochre/gold/ink palette, generous 2-column desktop grid (not a single
+scrolling stack). Tier copy is "Moveee Pro" / "Moveee Citizen" — never "Connect".
+
+ELEMENTS:
+
+FRAME 1 — DASHBOARD, MOVEEE PRO (Desktop, 1440px, full scroll)
+
+- Full-width hero strip: circular avatar (gold ring if Pro) left, "The Moveee —
+  Culture Community" eyebrow + display name (serif H1) + tier badge pill (gold,
+  "Moveee Pro") + city, right
+- Passkey banner (only if no passkey set) — <!-- DEV 5 --> show the generic copy
+  variant here
+- 5-stat row, full width, ghost dividers between each: Moveee Credits (with ⓘ
+  tooltip), Points (with ⓘ tooltip + tier label sublabel e.g. "Taste Maker"),
+  Badges Earned ("{n}/18"), Referrals, Membership ("Moveee Pro")
+- 2-column body below:
+  - MAIN column (left, ~65% width): Achievements section (full 18-badge grid,
+    earned badges shown first, sorted, each with name + description, locked
+    badges dimmed with ○ icon) → "How to Earn" table (12 rows, Action/Credits/
+    Points columns, caption above explaining credits vs points)
+  - SIDE column (right, ~35% width): Referral card (copyable link + referral
+    count + "View details →") → Quick Links list (flat text-link list, 14-15
+    entries per <!-- DEV 6 -->, including "My Events" since this is the Pro
+    variant) — no upgrade card in this variant
+
+FRAME 2 — DASHBOARD, MOVEEE CITIZEN (Desktop, 1440px, full scroll)
+
+- Same hero/stats/2-column structure as Frame 1, but: ghost (non-gold) avatar
+  ring, "Moveee Citizen" tier badge (ghost style, not gold fill), Membership stat
+  shows "Moveee Citizen"
+- SIDE column gains an "Upgrade to Moveee Pro" dark card ABOVE the referral card
+  — "Unlock the full experience." heading, 4-item perk list, "Become a Moveee
+  Pro →" button
+- Quick Links list omits "My Events" (Pro-only) for this variant
+- Achievements grid and How to Earn table identical structure, just reflecting
+  this user's (likely lower) earned-badge count
+
+FRAME 3 — STAT TOOLTIPS + PASSKEY BANNER STATES (Desktop, component close-up)
+
+- Credits stat with ⓘ tooltip open: full tooltip copy bubble shown anchored
+  below the stat
+- Points stat with ⓘ tooltip open: full tooltip copy bubble shown
+- Passkey banner, two side-by-side labelled variants: "No escrowed credits"
+  (generic pitch) and "With escrowed credits" (specific "{N} credits waiting"
+  copy) per <!-- DEV 5 -->
+
+FRAME 4 — MOBILE COMPANION (390px, single column, Pro variant shown)
+
+- Hero, stats row (wraps to 2 rows of stats on narrow width), passkey banner,
+  then the MAIN-column content (Achievements, How to Earn) directly above the
+  SIDE-column content (Referral, Quick Links) — single column stacking order
+  follows the desktop main-then-side order, not an interleaved mix
+
+BEHAVIOUR:
+- Tooltip open/close is click-toggled, closes on outside click
+- Badge grid sorts earned-first but always shows all 18 entries, never hides
+  locked ones
+- "My House Fellowship" vs "Find your House Fellowship" in Quick Links is
+  conditional on cluster membership — annotate this branching in the frame
+
+CONSTRAINTS:
+- Never use "Connect Pro"/"Connect Citizen" — always "Moveee Pro"/"Moveee Citizen"
+- 5 stats, not 4; 18-badge full grid, not an earned-only chip row
+```
+
+Output 4 frames: Frame 1 (Dashboard, Moveee Pro, Desktop), Frame 2 (Dashboard,
+Moveee Citizen, Desktop), Frame 3 (Stat Tooltips + Passkey Banner states,
+component close-up), Frame 4 (Mobile Companion, Pro variant, full scroll).
+
+---
+
