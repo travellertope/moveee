@@ -1659,3 +1659,295 @@ scroll).
 
 ---
 
+## 7. EVENTS / HAPPENINGS — WEB (Site B, web.themoveee.com/events)
+
+### Note on scope
+
+The mobile catalog's §6 covers Prompt 6 (Events List + Event Detail + RSVP Success,
+app-shell style) and Prompt 6B — a from-scratch redesign introducing a Timeline View,
+a Calendar View, and a bottom Filter Sheet. **The real web app has no calendar grid
+and no filter sheet at all.** Filtering on web happens through dedicated, separately
+routed archive pages (`/events/{citySlug}` and `/events/{categorySlug}`, both served
+by the same `[slug]/page.tsx` dynamic route via lookup tables), not a modal/sheet
+overlay on the list page. This prompt is grounded entirely in the real editorial-style
+Happenings architecture: `apps/connect/app/events/page.tsx` (list/home),
+`apps/connect/app/events/components/EventTimeline.tsx` (the month/day-grouped list +
+sidebar), `apps/connect/app/events/[slug]/page.tsx` (Luma-inspired detail page), and
+`apps/connect/app/events/components/RSVPForm.tsx` (the real RSVP/ticketing form).
+Mobile's calendar-view and filter-sheet concepts are intentionally **not** reproduced
+here — see DEV ANNOTATION 1 below for why, and what to build instead if a filter UI
+is ever wanted on web.
+
+The AI-discovered-event variant (`event.isAiGenerated` → a separate
+`DiscoveredEventPage` component with its own related-events rail) exists in the real
+codebase but was not read in depth for this prompt and is out of scope for this pass
+— flag it as a follow-on prompt candidate, not as a frame here.
+
+### Brand architecture
+
+Site B (`apps/connect`), brand name **Moveee** (never "Moveee Connect"). Path:
+`/events`. This is the community/auth surface — "Happenings" is the in-product label
+for the events feature, used in headings; "Moveee Happenings" appears as the literal
+hero title. The closing CTA band sells **Moveee Pro** (never "Connect Pro").
+
+### Why this section exists
+
+Real code shows Events is not a generic list-and-detail utility screen — it's built
+as a full editorial section with the same visual register as the Magazine: a stats
+hero, a marquee ticker, curated grids (Featured, By City), a conditional
+membership-perk carousel (Literati Connect), a real chronological timeline with a
+sidebar, and a closing membership pitch. The detail page borrows the "Luma-inspired"
+compact hero pattern (image left, structured info right) rather than mobile's
+full-bleed-image-then-card-overlap pattern, and the RSVP mechanism is materially
+richer than mobile's 2-field form — it has to support both free RSVP and paid
+ticketing with an external payment-gateway redirect and async webhook confirmation
+states, none of which mobile's PROMPT 6 models.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+**Hero (`EventHero`):**
+> Moveee *Happenings*
+
+(standfirst, paraphrase-free placeholder — pull live from `event-hero` props if
+regenerating against current data; do not invent a different hero title)
+
+3 stat labels: "Happenings this year", "Cities covered", "Categories"
+
+**Category ticker (loops, ★ separators):**
+> Visual Art ★ Film ★ Literature ★ Music ★ Fashion ★ Food ★ Design ★ Community
+
+**Section labels:**
+> Featured
+> By City
+
+**Connect CTA band:**
+> Moveee
+>
+> Members go first.
+>
+> 1. Early RSVP — 48 hours before public
+> 2. Private views & members-only dinners
+> 3. Priority for Origins journeys & supper tables
+> 4. 15% off Lifestyle shop
+>
+> Become a Member →
+>
+> from $9 / month
+
+**Luma-style detail hero registration box (two states):**
+> {admission} · {location}
+> Find Out More →
+
+> Secure your place below.
+> RSVP Now →
+
+**RSVP form (free flow):**
+- Field labels: "Full name", "Email address", "How did you hear about this?" (optional)
+- Capacity bar label row: "Capacity" / "{spotsRemaining} spot(s) remaining"
+- Submit button: "Confirm RSVP →" (idle/default) → "Processing…" (loading)
+- Success card: "You're on the list." / "Confirmation sent by email · See you there."
+- Error copy: "You are already registered for this event." (already_registered) /
+  "Sorry — this event is now fully booked." (sold_out) / generic fallback otherwise
+
+**RSVP form (paid flow):**
+- Submit button: "Pay {price} →" (idle/default) → "Redirecting to payment…" (loading)
+- `ticket_confirmed` return state: "Ticket confirmed." (green-tinted card, ref code)
+- `ticket_pending` return state: "Payment received." (blue-tinted card, ref code —
+  this is the async Stripe-webhook-confirmation state, distinct from the synchronous
+  Paystack confirmation)
+
+### DEV ANNOTATION REQUIREMENT
+
+When generating, insert these as `<!-- DEV: ... -->` comments at the indicated frame:
+
+1. <!-- DEV: There is no calendar-grid view and no bottom filter sheet on the real
+   web app — do not build mobile's PROMPT 6B Frame 2/3 concepts here. Filtering is
+   handled by dedicated archive routes instead: `/events/{citySlug}` and
+   `/events/{categorySlug}`, both served by the same `app/events/[slug]/page.tsx`
+   dynamic route via `CITY_SLUGS`/`CATEGORY_SLUGS` lookup tables (6 cities, 20
+   category slugs — mixing short legacy slugs like "music" with canonical
+   `culture_interest` taxonomy slugs like "live-music"). If a filter UI is wanted on
+   web later, the natural shape is a query-param-driven filter bar on the list page
+   that deep-links into these existing archive routes, not a new sheet/modal. -->
+2. <!-- DEV: EventTimeline groups chronologically by month then by day
+   (`groupByMonth`/`groupByDay`, keyed off `eventDate || date`) — this is real
+   grouping logic, not a flat list with date labels. Each row's category icon comes
+   from a fixed CAT_ICONS glyph map (music ♪, film ◉, visual-arts ◈, fashion ✦,
+   food ◆, literature ▬, design ◻, performance ★, community ◇, tech ○) layered over
+   a category-color gradient placeholder when there's no real image — reuse this map
+   exactly, don't invent new icons per category. -->
+3. <!-- DEV: The Literati Connect carousel only renders conditionally
+   (`literatiEvents.length > 0`), filters to `isLiterati` events, prefers the
+   session user's city with a fallback to all cities, and caps at 10 items via
+   `EventsCarousel`. Show it in the frame as present, but annotate it as
+   conditional — it should not always appear in the generated prototype's default
+   state. -->
+4. <!-- DEV: The detail-page hero is the "Luma-inspired" 2-column layout
+   (`event-hero-luma`) — portrait image left, structured info column right (category
+   pill + live status dot computed from now vs event date/endDate, title, optional
+   tagline, date chip with month/day icon block + opening hours, venue chip,
+   registration box). This is NOT mobile's full-bleed-image-then-overlapping-white-
+   card pattern — don't reuse that layout here. -->
+5. <!-- DEV: RSVPForm branches on whether the selected ticket type has
+   `ticketAmount > 0`. Paid tickets POST to `/api/events/ticket` and redirect to an
+   external `payment_url` (Paystack or Stripe); free RSVPs POST to
+   `/api/events/rsvp` directly with no redirect. Both paths share the same form UI
+   up to the submit button — model this as one component with a price-dependent
+   submit label and behaviour, not two separate forms. -->
+6. <!-- DEV: On mount, RSVPForm reads `ticket_confirmed`/`ticket_pending`/
+   `ticket_failed`/`ticket_cancelled` URL params — these are payment-gateway return
+   states, not form-submission states. `ticket_pending` specifically represents an
+   async Stripe webhook that hasn't confirmed yet at redirect time; it must look
+   visually distinct (blue-tinted) from the synchronous `ticket_confirmed` success
+   (green-tinted), not just a duplicate of it. -->
+7. <!-- DEV: The capacity bar only renders when BOTH `capacity` and
+   `spotsRemaining` are present on the event — many free community events have
+   neither and should show no bar at all, not an empty/zero-width one. Ticket-type
+   rows (name/info/price) only render above the form when `tickets.length > 1`; a
+   single default "General Admission" ticket type renders no selector at all. -->
+8. <!-- DEV: Sidebar info-cards on the detail page stack in a fixed conditional
+   order: RSVP card (always) → "Organised by" card (only if organiser resolves,
+   purple #3c3489 left border, links to /directory/{slug}) → associated-journey card
+   (only if `associatedJourney` present, dark bg, links to /origins/{slug}) →
+   "Press & Media" card (always present, generic fallback copy if no custom contact
+   set). Preserve this order and conditionality exactly — don't always show all four. -->
+9. <!-- DEV: AI-discovered events (`event.isAiGenerated`) route to a wholly separate
+   `DiscoveredEventPage` component with its own related-events logic and are
+   explicitly out of scope for this prompt — do not attempt to merge that flow into
+   the frames below. -->
+
+### PROMPT 7 — Events List, Event Detail, RSVP Form (Desktop 1440px + Mobile 390px)
+
+```
+TASK: Design the Happenings (Events) list page, an individual event detail page, and
+the RSVP form component for Moveee's web community app (web.themoveee.com/events).
+
+CONTEXT: This is Site B — Moveee's community + auth surface, editorial-magazine
+visual register (paper background, ink text, ochre accents, serif display type +
+mono-caps labels), matching the rest of the Connect app. Events here are called
+"Happenings" in headings. The closing CTA pitches Moveee Pro membership perks.
+
+ELEMENTS:
+
+FRAME 1 — EVENTS LIST / HOME (Desktop, 1440px, full scroll)
+
+- Hero (`EventHero`): "Moveee *Happenings*" serif display title (Happenings
+  italicised), standfirst paragraph, 3 stat chips below (Happenings this year /
+  Cities covered / Categories), generous top/bottom padding, paper background
+- Category ticker: full-width dark marquee strip, looping text row repeating
+  "Visual Art ★ Film ★ Literature ★ Music ★ Fashion ★ Food ★ Design ★ Community",
+  duplicated content for seamless CSS scroll loop
+- "Featured" section: sec-label "Featured" + H3 header, 4-card grid — each card a
+  large image, category kicker, title, date — prioritising events flagged
+  `isFeatured`, falling back to events with images, then plain cards
+- "By City" section: sec-label + H3 "By *City*" header, 6-card grid (Lagos/Nigeria,
+  London/UK, Accra/Ghana, Nairobi/Kenya, New York/USA, Paris/France) — each card
+  shows city name, country, and a live happening count, links to /events/{citySlug}
+- <!-- DEV 3 --> Literati Connect carousel: horizontal-scroll rail of event cards,
+  rendered only when qualifying events exist, header noting "Literati Connect" theme
+- EventTimeline section (id="timeline"): see Frame 1B below for its internal layout
+- Connect CTA band: full-width dark ink section, 2-column — LEFT: "Moveee" mono
+  eyebrow + "Members go first." serif H3 + body paragraph; RIGHT: numbered list of
+  4 perks (Early RSVP 48hrs / private views & dinners / Origins priority / 15% off
+  shop) + filled "Become a Member →" button (links to /feed) + "from $9 / month"
+  mono fine-print
+
+FRAME 1B — EVENT TIMELINE COMPONENT (Desktop, close-up, 1100px wide, 2-col)
+
+- LEFT (timeline column, ~780px): month section headings (dot + month label) →
+  day-group headings ("13 Jun" short date + "Friday" weekday) → EventRow list per
+  day: small thumbnail (real image OR category-gradient placeholder with a glyph
+  icon overlay per <!-- DEV 2 -->), title, meta row ("◍ {place} · {category}"),
+  right-aligned date-range text + admission price if present, trailing "→" arrow
+- RIGHT (sidebar, ~280px): "Cities" block — city name + count rows, "All cities →"
+  link at bottom; "Categories" block — icon + name rows, no counts
+
+FRAME 2 — EVENT DETAIL PAGE TOP (Desktop, 1440px, "Luma-inspired" hero)
+
+- `event-hero-luma`, 2-column, generous padding on paper background:
+  - LEFT (~560px): portrait event image (or ink-bg/ochre-circle SVG placeholder if
+    none), optional "↗ Featured in {city}" chip top-left over the image
+  - RIGHT (~600px): "← Happenings" back link → category pill + status dot (Upcoming
+    / Current / Past, computed live) → serif display title → optional italic
+    tagline → date chip (month/day icon block + weekday/date string + opening
+    hours) → venue chip (pin icon + venue name + optional address) → registration
+    box: EITHER "{admission} · {location}" + "Find Out More →" external link (when
+    `ticketingUrl` set) OR "Secure your place below." + "RSVP Now →" anchor to the
+    RSVP card
+- Ticker strip directly below hero: dark marquee repeating event title, host title,
+  location, formatted date, "{N} Spots"/"Limited Capacity" text, "★ Members: early
+  access" note, admission or "Free Admission" — looped twice for seamless scroll
+
+FRAME 3 — EVENT DETAIL PAGE BODY (Desktop, 1440px, 2-col below the ticker)
+
+- LEFT column (~760px): "About the event" section label + sanitized rich-text body
+  copy; optional pull-quote block (tagline as large italic blockquote + host
+  attribution citation, ochre left border); optional "Selected works" grid
+  (numbered "N°0{i+1}" cards: image, title, media+dimensions+year meta line);
+  optional "Programme" schedule list (time + title + description rows, each with an
+  access tag pill styled differently for "members" vs "open")
+- RIGHT sidebar (~340px), stacked per <!-- DEV 8 -->: RSVP card (id="rsvp-section",
+  see Frame 4) → "Organised by" info-card (purple #3c3489 left border, organiser
+  name + link to /directory/{slug}, only if resolved) → associated-journey
+  info-card (dark bg, "View Journey →" to /origins/{slug}, only if present) →
+  "Press & Media" info-card (always present — heading "Press enquiries" + contact
+  copy + optional mailto link)
+- Artist strip (only if a featured host exists), full-width below the 2-col body:
+  circular host photo, "The artist" label, host name (first name plain, rest
+  italic), italic excerpt, "Read the full portrait →" link to /directory/{slug}
+
+FRAME 4 — RSVP FORM COMPONENT STATES (Desktop, close-up, 420px wide card, show 5
+states side by side or stacked with state labels)
+
+1. Idle / free event: ticket-type row (if >1 type) → capacity bar (if both capacity
+   + spotsRemaining present, label "Capacity" / "{N} spot(s) remaining", filled
+   track) → Full name field → Email address field → optional ticket-type select →
+   optional "How did you hear about this?" field → "Confirm RSVP →" button
+2. Idle / paid event: same field stack, ticket rows show name/info/price per type,
+   button reads "Pay {price} →"
+3. Loading: button shows "Processing…" (free) or "Redirecting to payment…" (paid),
+   disabled state styling
+4. Free success: green-tinted card, "You're on the list." + "Confirmation sent by
+   email · See you there."
+5. Error: red-tinted inline message above the form — show both copy variants
+   stacked as labelled sub-states: "You are already registered for this event."
+   and "Sorry — this event is now fully booked."
+
+Also show, as two additional small labelled cards beside the main 5: the
+`ticket_confirmed` payment-return state (green-tinted, "Ticket confirmed." + ref
+code) and the `ticket_pending` payment-return state (blue-tinted, "Payment
+received." + ref code) per <!-- DEV 6 -->.
+
+FRAME 5 — MOBILE COMPANION (390px, single column)
+
+- Hero: stacked title/standfirst/stats, full-width ticker marquee unchanged
+- Featured + By City sections collapse to single-column card stacks
+- EventTimeline: single column, sidebar (Cities/Categories) moves below the
+  timeline list rather than beside it
+- Connect CTA band: stacks to single column, perks list before the button
+- Detail page: Luma hero collapses to stacked (image full-width on top, info column
+  below, registration box full-width)
+- RSVP card: full-width, same field stack and state set as Frame 4
+
+BEHAVIOUR:
+- Ticker marquees auto-scroll continuously, pause on hover
+- EventTimeline groups are chronological, real grouping logic — not flat date labels
+- Detail-page status dot (Upcoming/Current/Past) is computed against the current
+  time, not a static value
+- RSVP form behaviour branches on ticket price per <!-- DEV 5 -->; payment-return
+  states are read from URL params on mount, not from form interaction
+
+CONSTRAINTS:
+- Paper/ink/ochre palette throughout list and detail pages; only the CTA band and
+  ticker strips use dark ink backgrounds
+- No calendar grid, no bottom filter sheet anywhere in this prompt — see DEV 1
+- Tier copy must say "Moveee Pro" — never "Connect Pro"
+```
+
+Output 5 frames: Frame 1 (Events List/Home, Desktop, includes Frame 1B Timeline
+close-up), Frame 2 (Event Detail Hero, Desktop), Frame 3 (Event Detail Body,
+Desktop), Frame 4 (RSVP Form States, component close-up), Frame 5 (Mobile
+Companion, full scroll).
+
+---
+
