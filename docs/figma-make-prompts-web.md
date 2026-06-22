@@ -2889,3 +2889,184 @@ Community Tab, Desktop), Frame 3 (Public Profile — Portfolio Tab, gated +
 unlocked, Desktop), Frame 4 (Mobile Companion, full scroll).
 
 ---
+
+## 13. NOTIFICATIONS & ANALYTICS — WEB (Site B, web.themoveee.com/member/notifications, /member/analytics)
+
+> **Note on scope.** Web notifications exist on **two** surfaces, and the
+> dropdown is the one members actually use day to day —
+> `packages/shared/components/NotificationBell.tsx` (a header bell + dropdown
+> panel, mounted globally, polling every 120s) is the primary surface; the
+> full-page `/member/notifications` route (`NotificationsClient.tsx`) is a
+> secondary "see everything" list with no Today/Earlier sectioning and no
+> per-type colour coding — it is a single flat list, oldest unread first by
+> default order from the API. This prompt covers **both**, plus
+> `/member/analytics` (`AnalyticsClient.tsx`), which is a single full-page
+> SVG chart dashboard with no mobile-catalog precedent for its layout beyond
+> the chart types themselves. There is no separate desktop/mobile chart
+> implementation difference — the same `<svg viewBox="0 0 600 H">` markup
+> scales fluidly (`width: 100%, height: auto`) on both frame sizes.
+
+### Brand architecture
+
+Site B (`web.themoveee.com`), member-only, behind `getServerSession()`
+redirect guards on both routes. "Moveee Pro"/"Moveee Citizen" tier badge
+shown on the Analytics hero only (`mem-tier-badge`) — Notifications has no
+tier-gated content. Internally "credits"/"reputation" — user-facing copy on
+this page already (correctly) renders "Credit Balance"/"Points", consistent
+with the Cr/Pt rename rule.
+
+### Why this section exists
+
+The dropdown bell (`NotificationBell.tsx`) is what most members see most
+often — it ships on every page via the global layout, polls
+`/api/notifications/count` every 120s (paused when `document.hidden`), and
+renders up to 20 items with a "View all notifications →" link once the list
+hits that cap. The 19-entry `TYPE_EMOJI` map is the authoritative emoji set
+(per CLAUDE.md's "Notification touchpoint audit" — there is no shared
+source of truth across PHP/TS, this map is duplicated verbatim in
+`NotificationsClient.tsx` and must stay in sync with
+`Culture_Notifications::TYPES`). The full-page list at `/member/notifications`
+exists for members who want the complete history beyond the dropdown's
+20-item cap, fetching up to 50 server-side with `cache: "no-store"`. Neither
+surface does Today/Earlier date-grouping or left-border per-type colour
+accents the way the mobile catalog's PROMPT 12A does — both are flat lists
+distinguished only by an unread highlight tint + 7px ochre dot, and the
+emoji icon itself is the only per-type visual signal.
+
+Analytics (`AnalyticsClient.tsx`) is a client-fetched dashboard
+(`GET /api/member/analytics`, no `userId` param needed — server resolves it
+from session) rendering 6 summary stat cards, a grouped bar chart (credits
+earned/spent, last 30 days), a line chart (reputation/points earned, last 6
+months), and a ranked top-posts list (last 90 days) — all hand-rolled SVG,
+no charting library, matching the project's existing "plain SVG, no external
+charting lib" convention documented in CLAUDE.md's Phase 8c notes.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+> **Notifications dropdown header:** "Notifications" / "Mark all read"
+> **Notifications empty state (dropdown):** "No notifications yet."
+> **Notifications full page label:** "All Notifications"
+> **Notifications full-page empty state:** "No notifications yet."
+> **Analytics breadcrumb + heading:** "Dashboard › Analytics" / "My Analytics"
+> **Analytics stat labels:** "Credit Balance" (sub: "spendable credits") ·
+> "Points" (sub: "all-time points") · "Posts" (sub: "{N} pending" or
+> "published") · "Badges" (sub: "earned badges") · "Earned (30d)" (sub:
+> "credits earned") · "Spent (30d)" (sub: "credits spent")
+> **Chart section labels:** "Credits — Last 30 Days" · "Points Earned — Last
+> 6 Months" · "Top Posts — Last 90 Days"
+> **Chart empty states:** "No credit activity in the last 30 days." / "No
+> points activity yet." / "No published posts yet."
+> **Analytics load error:** "Could not load analytics. Please try again later."
+> **Analytics loading state:** "Loading analytics…"
+
+### DEV ANNOTATION REQUIREMENT
+
+Add these as `<!-- DEV: ... -->` comments at the exact spots noted:
+
+1. Dropdown bell badge shows `unread > 9 ? "9+" : unread` — cap the count
+   display at "9+", never render a 3-digit number in the 14px circle.
+2. Full-page list has NO Today/Earlier date sectioning and NO per-type
+   left-border colour — unlike the mobile catalog's PROMPT 12A, this is a
+   single flat list ordered however the API returns it (createdAt desc,
+   server-side) with only an unread tint + dot as the visual unread signal.
+3. `TYPE_EMOJI` is a 19-entry map duplicated independently in
+   `NotificationBell.tsx` and `NotificationsClient.tsx` — 5 of the 19 types
+   (`cluster_activated`, `cluster_forming_expired`, `cluster_new_host`,
+   `cluster_election_started`, `cluster_checkin_reminder`) belong to the
+   House Fellowship feature and have no mobile-catalog precedent in PROMPT
+   12A's 5-example set — include at least one cluster-type row in the frame
+   to demonstrate full coverage.
+4. Bar chart's two series use ochre `#b38238` (earned) and rust `#c5491f`
+   (spent) — same two-colour convention as the wallet ledger; line chart
+   uses a one-off blue `#2a6496` not used anywhere else on the site (not
+   ochre/gold like the mobile catalog's PROMPT 12B describes) — render the
+   line chart in this blue, not gold.
+5. Top Posts rank badge: rank #1 gets a solid ochre filled circle with white
+   numeral; ranks 2+ get a flat `var(--paper-deep)` circle with muted
+   numeral — only the #1 spot is visually distinguished.
+6. Stat grid is `repeat(auto-fill, minmax(140px, 1fr))` — 6 cards, not the
+   mobile catalog's 4-card row; do not drop "Earned (30d)"/"Spent (30d)" to
+   match mobile's count.
+7. Analytics has no chart-type toggle, date-range picker, or tooltip-on-hover
+   interaction described in the mobile catalog's PROMPT 12B for the line
+   chart's last point — the web line chart renders dots on every point
+   uniformly, no hover state implemented.
+
+### PROMPT 13 — Notifications & Analytics (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — NOTIFICATION BELL DROPDOWN, two states (Desktop, 1440px)
+
+Header context: small bell-icon button (18×18 outline icon, no fill) sitting
+in the global site header, unread badge per <!-- DEV 1 --> top-right of the
+icon (#c5491f circle, white numeral, 9px bold)
+
+- LEFT panel (open dropdown, has unread): anchored top-right under the bell,
+  width min(340px, 100vw-32px), max-height 440px scrollable, white bg,
+  1px rgba(42,36,28,.12) border, 6px radius, sticky header row
+  "Notifications (3)" (count in #c5491f) + "Mark all read" link (ochre,
+  right-aligned); list of notification rows, each: emoji icon (left,
+  1.1rem), title (700 weight if unread / 500 if read, 0.78rem), body
+  (0.72rem muted, 2-line clamp), time-ago caption (0.66rem, lightest muted),
+  unread rows get a faint ochre-tint background + 6px ochre dot far-right;
+  include one cluster-type row per <!-- DEV 3 -->; footer "View all
+  notifications →" link only rendered once 20+ items are loaded
+
+- RIGHT panel (open dropdown, empty state): same shell, centered "No
+  notifications yet." (0.8rem, muted, ~24px vertical padding)
+
+FRAME 2 — FULL NOTIFICATIONS PAGE (Desktop, 1440px)
+
+- Member hero band (avatar circle, "My Account" eyebrow, "Notifications" h1)
+- Below: 2-col grid — main column is a single `mem-card` titled "All
+  Notifications · {N} unread" (ochre-coloured count) with "Mark all read"
+  top-right; flat list of rows (1px hairline dividers via background-color
+  trick, alternating paper bg on read rows / faint ochre tint on unread),
+  each row: emoji + title/body/full formatted date ("Mon, 22 Jun 2026") +
+  unread dot — no date grouping, no left-border colour per <!-- DEV 2 -->
+- Side column: quick-links card (Dashboard →, My Wallet →, My Coupons →,
+  Settings →)
+- Empty state variant: "No notifications yet." centered, italic, muted
+
+FRAME 3 — ANALYTICS DASHBOARD (Desktop, 1440px, full scroll)
+
+- Member hero band: breadcrumb "Dashboard › Analytics" eyebrow, "My
+  Analytics" h1, tier badge pill below (Moveee Pro / Moveee Citizen)
+- Stat grid: 6 cards per <!-- DEV 6 -->, each a bordered paper card —
+  uppercase 0.68rem label, 1.6rem bold value, 0.72rem muted sub-caption:
+  Credit Balance / Points / Posts / Badges / Earned (30d) / Spent (30d)
+- "Credits — Last 30 Days" card: grouped bar chart per <!-- DEV 4 -->
+  (ochre=earned, rust=spent), y-axis gridlines + ticks, x-axis date labels
+  thinned to ~10 visible, 2-entry legend bottom-left (colour swatch + label)
+- "Points Earned — Last 6 Months" card: line chart per <!-- DEV 4 --> (blue
+  #2a6496 line + 8%-opacity area fill, dots on every point, month labels
+  thinned to ~6 visible)
+- "Top Posts — Last 90 Days" card: ranked list, rank circle per <!-- DEV 5
+  -->, post title (ellipsis-truncated single line) + formatted date, then
+  3 stacked mini-stats (reactions / comments / total engagement) right-aligned
+- "← Back to Dashboard" link, ochre, below the last card
+
+FRAME 4 — MOBILE COMPANION (390px, single column)
+
+- Bell dropdown: same shell anchored full-width minus 32px margin below the
+  header bell, identical row markup stacked
+- Full notifications page: hero stacks, quick-links card moves below the
+  notification list (no side-by-side grid)
+- Analytics: stat grid collapses to 2 columns, both charts remain full-width
+  SVG (same `viewBox`, scales down naturally), top-posts list stacks mini-
+  stats below the title instead of beside it
+
+CONSTRAINTS:
+- TYPE_EMOJI map must be rendered identically on both dropdown and full-page
+  surfaces — no surface gets a different icon for the same type
+- Never label spendable credits or all-time reputation as anything other
+  than "Credit Balance"/"credits" and "Points"/"points" per the Cr/Pt rename
+- No tooltip-on-hover, no date-range picker, no chart-type toggle — render
+  the charts exactly as the static SVG output described above
+```
+
+Output 4 frames: Frame 1 (Notification Bell Dropdown, open + empty, Desktop),
+Frame 2 (Full Notifications Page, Desktop), Frame 3 (Analytics Dashboard,
+Desktop, full scroll), Frame 4 (Mobile Companion, full scroll).
+
+---
