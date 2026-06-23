@@ -1,10 +1,10 @@
-import React from "react";
 import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO } from "@/lib/wp";
 import { decodeHtml } from "@/lib/decode-html";
 import Link from "next/link";
 import Image from "next/image";
 import CategoryNav from "@/components/CategoryNav";
 import EditorialSection from "@/components/EditorialSection";
+import MagazineFilterPills from "@/components/MagazineFilterPills";
 import "../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -108,78 +108,18 @@ export default async function MagazineArchiveWrapper({
             activeFilter={!!(industry || country || series || tag)}
           />
 
-          {/* Filter pills */}
-          <div className="mg-nav-filters">
-            {/* Series */}
-            {seriesOptions.length > 0 && (
-              <div className={`mg-filter-pill${series ? " mg-filter-pill--active" : ""}`}>
-                <span>{series ? seriesOptions.find((s: any) => s.slug === series)?.name || "Series" : "Series"}</span>
-                <select
-                  aria-label="Filter by series"
-                  value={series ?? ""}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                    window.location.href = e.target.value
-                      ? `/magazine/series/${e.target.value}`
-                      : "/magazine";
-                  }}
-                >
-                  <option value="">All Series</option>
-                  {seriesOptions.map((s: any) => (
-                    <option key={s.slug} value={s.slug}>{s.name}</option>
-                  ))}
-                </select>
-                <span className="mg-filter-caret">▾</span>
-              </div>
-            )}
-
-            {/* Industry */}
-            {industryOptions.length > 0 && (
-              <div className={`mg-filter-pill${industry ? " mg-filter-pill--active" : ""}`}>
-                <span>{industry ? industryOptions.find((i: any) => i.slug === industry)?.name || "Industry" : "Industry"}</span>
-                <select
-                  aria-label="Filter by industry"
-                  value={industry ?? ""}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                    window.location.href = e.target.value
-                      ? `/magazine/industry/${e.target.value}`
-                      : "/magazine";
-                  }}
-                >
-                  <option value="">All Industries</option>
-                  {industryOptions.map((i: any) => (
-                    <option key={i.slug} value={i.slug}>{i.name}</option>
-                  ))}
-                </select>
-                <span className="mg-filter-caret">▾</span>
-              </div>
-            )}
-
-            {/* Country */}
-            {countryOptions.length > 0 && (
-              <div className={`mg-filter-pill${country ? " mg-filter-pill--active" : ""}`}>
-                <span>{country ? countryOptions.find((c: any) => c.slug === country)?.name || "Country" : "Country"}</span>
-                <select
-                  aria-label="Filter by country"
-                  value={country ?? ""}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                    window.location.href = e.target.value
-                      ? `/magazine/country/${e.target.value}`
-                      : "/magazine";
-                  }}
-                >
-                  <option value="">All Countries</option>
-                  {countryOptions.map((c: any) => (
-                    <option key={c.slug} value={c.slug}>{c.name}</option>
-                  ))}
-                </select>
-                <span className="mg-filter-caret">▾</span>
-              </div>
-            )}
-
-            {isFiltered && (
-              <Link href="/magazine" className="mg-filter-clear">Clear ✕</Link>
-            )}
-          </div>
+          {/* Filter pills — client component (event handlers not allowed in RSC) */}
+          <MagazineFilterPills
+            seriesOptions={seriesOptions}
+            industryOptions={industryOptions}
+            countryOptions={countryOptions}
+            activeSeries={series}
+            activeIndustry={industry}
+            activeCountry={country}
+          />
+          {isFiltered && (
+            <Link href="/magazine" className="mg-filter-clear">Clear ✕</Link>
+          )}
         </nav>
       </section>
 
