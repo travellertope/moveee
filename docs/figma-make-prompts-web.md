@@ -3826,3 +3826,691 @@ all 5, shown stacked or as a single representative frame with template
 callouts).
 
 ---
+
+## 16. DESIGN SYSTEM & CORE UI COMPONENTS — WEB (Site A + Site B, shared tokens)
+
+> **Note on scope.** Mobile's §0 (Design System Foundation) and §1 (Core UI
+> Components — Buttons/Inputs/Avatars + Feed Cards & Badge System) describe a
+> from-scratch React Native token system and a matching set of reusable
+> components. **Web has no equivalent component library at all** — there is no
+> shared `<Button>`, `<Input>`, or `<Avatar>` React component anywhere in
+> `packages/shared`, `apps/connect`, or `apps/site`. Buttons are plain
+> `<button>`/`<a>`/`<Link>` elements styled by one of 16+ independently-defined
+> className families (`.con-btn-primary`, `.con-btn-ghost`, `.ch-btn-ghost`,
+> `.ch-btn-solid`, etc.), and avatars are inlined per-surface with no shared size
+> scale — a member-dashboard avatar, a public-profile avatar, a header avatar,
+> and a feed-card avatar are four separate hand-styled `<div>`s with four
+> different sizes/background colors. This section therefore documents what
+> *actually exists* — the real CSS custom-property token set (which **does**
+> exist and **is** shared, just via `:root` variables rather than a design-token
+> JS object) plus a representative sample of the real button/avatar/badge
+> patterns in use — rather than designing a net-new component library mobile
+> never needed prompting for either (mobile's own component system was built
+> directly into React Native screens, not abstracted into a shared package).
+> Site A and Site B's token sets are **not identical** — see DEV note 1.
+
+### Brand architecture
+
+Spans both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
+web.themoveee.com) — this is the shared visual foundation both surfaces draw
+from, plus where they diverge.
+
+### Why this section exists
+
+Every other web section in this document has referenced "the brand tokens" by
+name (paper, ink, ochre, gold, mute) without ever showing them side by side or
+confirming their exact values against the real CSS. This section is that
+reference sheet — grounded in the actual `:root`/`@theme` blocks in both apps'
+`globals.css`, not the mobile catalog's hex list (which mostly matches, but not
+entirely — see DEV note 1 for where they diverge).
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+This is a component/token reference page, not a marketing surface — no
+verbatim marketing copy block applies. Use real UI copy strings only where
+shown in the frame specs below (e.g. "Moveee Pro", "Moveee Citizen", nav labels).
+
+### DEV ANNOTATION REQUIREMENT
+
+The following `<!-- DEV: ... -->` notes MUST appear in the prompt at the
+indicated insertion points:
+
+1. `<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
+   identical token set. Site B has `--paper-warm` (#f3ece0), a full border-
+   radius scale, `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`,
+   `--rule-dark`, and full dark-mode tokens under `[data-theme="dark"]`. Site A
+   has none of these — its `--rule` is even a different type (`#2a241c` solid
+   color vs Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all.
+   Only `--paper`, `--paper-deep`, `--ink`, `--ink-soft`, `--mute`, `--ochre`,
+   `--ochre-deep`, `--moss`, `--gold` are truly shared. -->` — insert at the top
+   of the Color Tokens frame.
+2. `<!-- DEV: There is no shared web `<Button>`/`<Input>`/`<Avatar>` component
+   — every button is a plain element styled by one of 16+ independent
+   className families (.con-btn-primary, .con-btn-ghost, .ch-btn-ghost,
+   .ch-btn-solid, plus per-page families like .adm-btn-*, .mz-btn-*). Avatars
+   are inlined per-surface with four different real-world sizes (header 34px,
+   public profile 72px/52px mobile, member dashboard 72px/56px mobile, feed
+   card 34px) and three different background colors (--ink, --ochre, #edf7ed)
+   — there is no single "avatar size scale" to draw from like mobile's
+   XS/SM/MD/LG/XL. Show the real sizes as four distinct named instances, not a
+   clean scale. -->` — insert at the top of the Buttons & Avatars frame.
+3. `<!-- DEV: `var(--font-jetbrains-mono)` is defined but never actually
+   referenced anywhere in either app's CSS — every mono-font usage (button
+   labels, meta text, badges) hardcodes the literal string 'JetBrains Mono',
+   monospace instead. There's also a dangling `var(--font-newsreader)`
+   reference in apps/connect/app/globals.css (.comment-sidebar-header h3) with
+   no Newsreader font ever imported — flag both as known CSS debt, do not
+   "fix" them in the mockup. -->` — insert near the Typography frame.
+4. `<!-- DEV: FeedCard.tsx has no template badge at all for Poll (renders
+   straight into PollDisplay with no header label) or Book Review (mobile-only
+   feature, never built on web) — do not invent badge colors for these two;
+   show them as "no badge" states instead. -->` — insert near the Badge System
+   frame.
+5. `<!-- DEV: Web has no persistent bottom tab bar — confirmed absent from both
+   apps/connect and packages/shared. Site B's mobile nav is a slide-down
+   hamburger overlay drawer (position: fixed; top: 60px), not a tab bar; Site A
+   has the same hamburger pattern plus a separate cart icon. Do not design a
+   bottom tab bar frame — replace it with the real header nav (desktop) +
+   hamburger drawer (mobile) shown in the Navigation frame. -->` — insert at
+   the top of the Navigation frame.
+
+### PROMPT 16 — Design System & Core UI Components (Desktop 1440px + Mobile 390px)
+
+```
+Senior product designer — Moveee web design system reference sheet, covering
+both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
+web.themoveee.com). Desktop frame 1440px wide, scrollable.
+
+<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
+identical token set. Site B has --paper-warm (#f3ece0), a full border-radius
+scale, --shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark,
+and full dark-mode tokens under [data-theme="dark"]. Site A has none of these
+— its --rule is even a different type (#2a241c solid color vs Site B's
+rgba(20,17,13,0.10)), and it has no dark mode at all. Only --paper,
+--paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold
+are truly shared. -->
+
+════════════════════════════════════════════
+FRAME 1 — COLOR TOKENS
+════════════════════════════════════════════
+Two labelled columns: "Shared (both apps)" and "Site B only (apps/connect)".
+
+SHARED swatches (each a 120×120px square + label below: token name, hex, used-by):
+  --paper #ffffff · --paper-deep #f2f2f2 (site: #f2f2f2 / connect: #f5f5f5 —
+    label both) · --ink #14110d · --ink-soft #3a342b · --mute #7a6f5c ·
+  --ochre #c5491f · --ochre-deep #8a2d10 · --moss #3d4a2a · --gold #b38238.
+
+SITE B ONLY swatches:
+  --paper-warm #f3ece0 · --rule rgba(20,17,13,.10) · --rule-dark
+    rgba(20,17,13,.15) · --glow-gold (render as a gold-glow ring sample, not a
+    flat swatch: box-shadow 0 0 0 2px #b38238, 0 0 10px 2px rgba(179,130,56,.55)).
+
+DARK MODE swatches (Site B only, [data-theme="dark"], second labelled row):
+  --paper #242018 · --paper-warm #1a1612 · --paper-deep #2d2820 ·
+  --ink #f3ece0 · --ink-soft #d4c9b8 · --mute #9e9288 · --ochre #d4603a ·
+  --ochre-deep #a83f20 · --gold #c9963f.
+
+RADIUS SCALE (Site B only — Site A has no radius scale), 6 rounded rectangles
+  labelled: sm 2px · md 4px · lg 6px · xl 12px · 2xl 20px · full 9999px (pill).
+
+SHADOWS (Site B only, 3 sample cards):
+  shadow-card: 0 1px 3px rgba(20,17,13,.08) · shadow-modal: 0 20px 60px
+  rgba(20,17,13,.18) · shadow-fab: 0 4px 12px rgba(197,73,31,.35).
+
+════════════════════════════════════════════
+FRAME 2 — TYPOGRAPHY
+════════════════════════════════════════════
+<!-- DEV: var(--font-jetbrains-mono) is defined but never actually referenced
+anywhere in either app's CSS — every mono-font usage (button labels, meta
+text, badges) hardcodes the literal string 'JetBrains Mono', monospace
+instead. There's also a dangling var(--font-newsreader) reference in
+apps/connect/app/globals.css (.comment-sidebar-header h3) with no Newsreader
+font ever imported — flag both as known CSS debt, do not "fix" them in the
+mockup. -->
+
+Three font families, each loaded via next/font/google in both apps' layout.tsx
+(no explicit weight set on either Font call — weights come from CSS):
+  Fraunces (serif, display/headings) — sample at 36px/700, 28px/700, 22px/400.
+  DM Sans (sans, body/UI) — sample at 17px/400, 15px/400, 13px/400, 15px/700.
+  JetBrains Mono (labels/meta/buttons) — sample at 11px/400, 11px/700,
+    10px/700 uppercase letter-spacing .1em-.15em (this is the actual button-
+    label treatment, e.g. .con-btn-primary).
+
+════════════════════════════════════════════
+FRAME 3 — BUTTONS & AVATARS
+════════════════════════════════════════════
+<!-- DEV: There is no shared web <Button>/<Input>/<Avatar> component — every
+button is a plain element styled by one of 16+ independent className families
+(.con-btn-primary, .con-btn-ghost, .ch-btn-ghost, .ch-btn-solid, plus
+per-page families like .adm-btn-*, .mz-btn-*). Avatars are inlined per-surface
+with four different real-world sizes (header 34px, public profile 72px/52px
+mobile, member dashboard 72px/56px mobile, feed card 34px) and three different
+background colors (--ink, --ochre, #edf7ed) — there is no single "avatar size
+scale" to draw from like mobile's XS/SM/MD/LG/XL. Show the real sizes as four
+distinct named instances, not a clean scale. -->
+
+BUTTONS — show each real class, labelled with its className:
+  .con-btn-primary: ochre fill, white text, JetBrains Mono 10px uppercase
+    letter-spacing .15em, 14px/28px padding, no border-radius (square
+    corners — this family predates the radius scale).
+  .con-btn-ghost: no fill, mute text, JetBrains Mono 10px uppercase,
+    1px bottom border only (underline-style, not a pill).
+  .ch-btn-ghost (header-only variant): ink text, 1px border
+    rgba(42,36,28,.25), radius 6px, DM Sans 14px/500, hover →
+    --paper-deep bg.
+  .ch-btn-solid (header-only variant): white text on ink fill,
+    radius 6px, DM Sans 14px/600, hover → 82% opacity.
+
+AVATARS — show 4 real instances side by side, each labelled with its source
+  component/file, NOT as a clean size scale:
+  Header avatar — 34px, --ink bg, white initial, DM Sans 0.8rem/700.
+  Public profile avatar (.prf-avatar) — 72px desktop / 52px mobile, --ink bg,
+    Fraunces 28px/300 (20px mobile) initial.
+  Member dashboard avatar (.mem-avatar) — 72px desktop / 56px mobile, --ochre
+    bg, Fraunces 28px/400 (22px mobile) initial.
+  Feed card avatar (community card) — 34px, #edf7ed bg, 1px solid #c8e6c9
+    border, #2e7d32 initial color. Pro-tier variant: add the gold glow ring
+    (box-shadow 0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)).
+
+TIER BADGE (ProBadge.tsx) — solid gold (#B38238) rounded square, white ribbon/
+  medal SVG icon centred, no text inside the badge itself (icon-only, ~size×0.62
+  icon inside a size-scaled padded square). Show at size=13 (its real usage
+  next to author names in FeedCard) and size=24 (larger reference). Separately
+  show the text-label pairing used in the header: "Moveee Pro" / "Moveee
+  Citizen" plain text (DM Sans), confirming the badge icon and the tier-name
+  text are two independent pieces, not one combined component.
+
+NOTIFICATION BELL — bell outline icon (ink), with the real unread indicator:
+  14×14px circle, border-radius 50%, background #c5491f, white count text
+  (9px/700, "9+" cap above 9) — NOT a plain dot, it always shows a number.
+  Dropdown panel's per-row unread dot: 6×6px circle, same #c5491f.
+
+════════════════════════════════════════════
+FRAME 4 — REACTION BAR
+════════════════════════════════════════════
+Three reaction buttons in this exact order: ❤️ Love · 🔥 Fire · 👏 Respect
+  (note: the third one's internal key is "clap" but its display label is
+  "Respect", not "Clap" — use "Respect" in the mockup).
+  Inactive state: transparent bg, transparent border, color #7a6f5c.
+  Active state: bg #f0ece4, border 1px #d8cfc4, color #3a342b, radius 20px.
+  Padding 0.2rem/0.55rem, emoji ~0.85rem, count text ~0.8rem, gap 0.3rem
+  between emoji and count, 0.25rem gap between the three buttons.
+  Share button (right-aligned): outline download-tray icon, #7a6f5c, no text
+  — becomes a green (#2e7d32) "Copied ✓" text label for 2 seconds after tap
+  (clipboard fallback when the Web Share API isn't available).
+  Optional top divider (omitted when used inside a detail drawer that already
+  has its own divider): 1px border-top #e8e2d8, 0.5rem padding-top.
+
+════════════════════════════════════════════
+FRAME 5 — BADGE SYSTEM (FeedCard.tsx, real values)
+════════════════════════════════════════════
+<!-- DEV: FeedCard.tsx has no template badge at all for Poll (renders straight
+into PollDisplay with no header label) or Book Review (mobile-only feature,
+never built on web) — do not invent badge colors for these two; show them as
+"no badge" states instead. -->
+
+All badges: fontSize ~0.58-0.6rem, fontWeight 700, letterSpacing 0.1em,
+  uppercase, padding ~2px/6px, borderRadius 2px (square-ish pill, not full
+  radius — distinct from mobile's radius-full badge treatment).
+
+FEED-ITEM-TYPE badges (6, shown as one row):
+  Pulse "Pulse" #b38238 on #fef3e2 · Editorial "Editorial" #c5491f on #fff0eb ·
+  Happening "Happening" #3c3489 on #eeedfe · Directory "Directory" #085041 on
+  #e8f5ee · Quote "Quote" #7a4da0 on #f3eef8 · Community "Community" #2e7d32
+  on #edf7ed.
+
+COMMUNITY TEMPLATE badges (6 real + 2 explicit "no badge" states, second row):
+  Hidden Gem "Hidden Gem {★ rating}" #b38238 on rgba(179,130,56,.1) ·
+  Cultural Take "Take{· location}" #6b48a8 on rgba(107,72,168,.08) ·
+  Food Review "Food Review{· dish}" #c5491f on rgba(197,73,31,.08) ·
+  Creative Showcase "Creative Showcase" #1976d2 on rgba(25,118,210,.08) ·
+  Itinerary "Weekend Route" #2e7d32 on rgba(46,125,50,.08) · Event
+  "Event{· category}" #a8351f on rgba(168,53,31,.08) · Poll — show as a plain
+  unbadged card header (just the avatar/author row, no pill at all) · Book
+  Review — same explicit "no badge on web" treatment.
+
+Literati Connect pill (happening cards only): "🪶 Literati Connect", color
+  #b38238, background #f3ece0, border 1px #b38238.
+
+════════════════════════════════════════════
+FRAME 6 — NAVIGATION
+════════════════════════════════════════════
+<!-- DEV: Web has no persistent bottom tab bar — confirmed absent from both
+apps/connect and packages/shared. Site B's mobile nav is a slide-down
+hamburger overlay drawer (position: fixed; top: 60px), not a tab bar; Site A
+has the same hamburger pattern plus a separate cart icon. Do not design a
+bottom tab bar frame — replace it with the real header nav (desktop) +
+hamburger drawer (mobile) shown in this frame. -->
+
+Two side-by-side desktop header strips, each full 1440px width, labelled:
+
+SITE B HEADER (apps/connect/components/Header.tsx): logo left; nav links
+  "Feed" · "Events" · "Games" (local) + "Magazine ↗" (external, deep-links to
+  themoveee.com/magazine) — active link gets background var(--paper-deep),
+  color var(--ink); right side: compass icon (→ /discover), sun/moon theme
+  toggle, NotificationBell (logged-in only), avatar + dropdown (My Dashboard /
+  Wallet / Settings / Vendor Dashboard if vendor / Sign out), or "Sign in" +
+  "Join" buttons (.ch-btn-ghost / .ch-btn-solid) when logged out.
+
+SITE A HEADER (apps/site/components/Header.tsx): logo left; nav links "Feed"
+  · "Discover" (both external, deep-link to web.themoveee.com) + "Editorials"
+  (local, the only in-app link) — active state via data-active="true"
+  attribute, not a class; right side: search icon, cart icon with numeric
+  badge (.cart-badge), "Sign in" link, "Join →" button. No theme toggle, no
+  notification bell, no compass icon (Discover lives on Site B only).
+
+MOBILE COMPANION (390px, both sites): collapsed header bar (logo + hamburger
+  + cart icon on Site A only) → tap hamburger → full-width slide-down overlay
+  drawer (position: fixed, top: 60px) listing the same nav links as desktop,
+  stacked vertically. No bottom tab bar on either site.
+
+CONSTRAINTS:
+- Do not invent a shared `<Button>`/`<Input>`/`<Avatar>` component system —
+  show the real fragmented className-based reality instead.
+- Do not design a bottom tab bar — it does not exist on web.
+- Do not give Poll or Book Review community-post badges — they have none on
+  web (Book Review has no web composer or feed rendering at all).
+- Use the real "Respect" reaction label, not "Clap", even though the internal
+  key is `clap`.
+```
+
+Output 6 frames: Frame 1 (Color Tokens), Frame 2 (Typography), Frame 3
+(Buttons & Avatars), Frame 4 (Reaction Bar), Frame 5 (Badge System), Frame 6
+(Navigation, desktop + mobile companion).
+
+---
+
+## 17. AUTHENTICATION FLOW — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+Auth lives entirely on Site B (`apps/connect`) — Site A never shows login/register UI; it
+redirects auth paths to web.themoveee.com via `proxy.ts`. Per the brand table, this surface is
+just **Moveee** (no "Connect" qualifier) — but note the live copy in code still reads
+`"The Moveee — Culture Community"`, not the simpler current brand line; flag this as a DEV note
+rather than silently correcting it, since the prompt must match what's actually deployed.
+
+### Why this section exists
+Mobile §2 (Splash & Onboarding, Login & Register) is a fully illustrated, paper-warm-background,
+pill-button, icon-rich flow. The real web auth flow is the **opposite extreme**: five standalone
+page files (`login/page.tsx`, `register/page.tsx`, `register/complete/page.tsx`,
+`forgot-password/page.tsx`, `reset-password/page.tsx`), each with **zero shared layout chrome**
+(no header/footer — their `layout.tsx` files are bare `robots: noindex` passthroughs), **zero
+external stylesheet** (no `auth.css` exists anywhere in the repo), and **all styling as inline
+`React.CSSProperties` objects** defined in a local `styles`/`s` const per file — no Tailwind
+classes, no CSS Modules, no `className` usage at all in these five files. Every page renders the
+same single centered card-on-white pattern. There's also no splash screen or onboarding carousel
+on web — those are app-install-time mobile concepts with no web equivalent.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Eyebrow (all pages except the reset-password invalid-link state): `The Moveee — Culture Community`
+- Login headline: `Sign in` (default) / `You're in!` (after `?registered=1`)
+- Login subheadline: `Welcome back. Sign in to access your community and member perks.` /
+  `Your account is ready. Sign in to access your dashboard and member perks.`
+- Register headline: `Join the Community`
+- Register subheadline: `Free to join. Enter a few details and we'll send you a verification link.`
+- Check-email headline: `Check your inbox`
+- Register/complete welcome: `Welcome, {displayName || username}!`
+- Step 2 headline: `What moves you?`
+- Step 3 headline: `Choose your membership` / `Upgrade to Moveee Pro`
+- Forgot-password headline: `Reset your password`
+- Reset-password headline: `Set a new password`
+
+<!-- DEV: All five inline-style "design tokens" repeated nearly verbatim per file (since
+there's no shared stylesheet) — treat these literal values as the de facto auth design system:
+page bg #ffffff, card bg #fffdf8, card border 1px solid #e8e0d4, card radius 4px, heading
+Georgia serif weight 300 26–28px, body font -apple-system/Segoe UI stack, eyebrow 11px
+letter-spacing 0.2em uppercase color #7a6f5c, primary button bg #14110d / white text / radius 3
+/ uppercase / letter-spacing 0.08–0.1em, secondary/outline button transparent bg + 1px solid
+rgba(42,36,28,.25) or #d4cbbf border, input border #d4cbbf / radius 3 / padding 10px 14px,
+error block color #c0392b / bg #fef2f2 / border rgba(192,57,43,.15), mute/footer text #7a6f5c,
+inline link color #14110d underlined, required-asterisk color #c5491f (register/complete only).
+This is a deliberately different (non-brand-token, Georgia-serif, no-Fraunces) visual language
+from the rest of the web app — call this out as a real inconsistency, not a design choice to
+replicate elsewhere. -->
+
+<!-- DEV: Card maxWidth varies by page — login 440px, register 480px, register/complete 580px
+(wider, to fit the 2-column tier grid in Step 3) — use the real widths, do not standardize them. -->
+
+<!-- DEV: A dead duplicate file exists at apps/connect/app/login/login/page.tsx — a stale copy
+missing the Google button, only reachable at the literal URL /login/login (nothing links to
+it). Do not include it as a frame; it's flagged for cleanup, not part of the live UX. -->
+
+<!-- DEV: Login page form fields are "Username or Email" + "Password" — not split into separate
+email/username inputs the way mobile's design implies. Register page email placeholder is
+literally "you@example.com", username placeholder "@handle". -->
+
+<!-- DEV: Google Sign-In button on login: literal text "Continue with Google" preceded by a
+plain text span containing the letter "G" — there is no Google logo SVG/image. It sits below
+the credentials form, below a single "or" divider, below the Passkey button (order:
+password form → divider → Passkey → Google) — visually identical outline-button chrome to the
+Passkey button (both secondary/outline style; only "Sign in →" is the filled primary CTA).
+Triggered via next-auth's `signIn("google", { callbackUrl })` — no client-side Google SDK call
+on web (unlike mobile's native `@react-native-google-signin/google-signin` SDK). -->
+
+<!-- DEV: register/complete is internally a 4-state machine (verify/about/interests/membership/
+done) but the visible ProgressBar only covers 3 steps — labels exactly
+["About You", "Your Interests", "Membership"], rendered as filled-black circular numbered nodes
+(✓ when passed) joined by a track line with a black fill bar overlay; percent =
+(currentStepIdx / 2) * 100 → 0%/50%/100%. The "verify" step (token validation spinner/error) and
+terminal "done" state are NOT part of the visible step indicator — "verify" is skipped entirely
+when arriving via ?upgrade=patron. -->
+
+<!-- DEV: Step 2 interest grid renders from the real `INTERESTS` array in
+lib/interest-mappings.ts (the 18-slug canonical taxonomy) as a 3-column emoji+label toggle grid
+— requires >= 3 selections to continue, with a live counter: "{n} selected — {3-n} more needed"
+or "{n} selected ✓". -->
+
+<!-- DEV: Step 3 tier cards must show the real verbatim perk bullets — Citizen: "Access to free
+member articles" / "Access to online events" / "GetMeLit & Culture Drop newsletters" /
+"Community forum & Pulse". Moveee Pro: "Everything in Citizen" / "All patron-only articles" /
+"10% shop discount + early access" / "Cash out credits · 100 credits/day · Pro badge". Pricing
+is currency-aware (NGN or USD based on residence) with a "Switch" toggle and a Monthly/Annually
+billing toggle showing a savings tag ("Save ₦9,000" or "Save $8"). -->
+
+<!-- DEV: Forgot-password's success state is shown unconditionally regardless of whether the
+account actually exists — anti-enumeration by design (verbatim code comment: "always show
+success to avoid enumeration"). Copy must read "If an account exists for {email}, you'll
+receive a reset link shortly..." not a confirmation that an account was found. -->
+
+<!-- DEV: Reset-password's invalid-link state uses a shorter eyebrow, "The Moveee" — without the
+"— Culture Community" suffix used everywhere else. This is a real inconsistency in the code,
+not an error in this prompt — replicate it as-is. -->
+
+<!-- DEV: PasskeyPrompt.tsx (packages/shared/components) is NOT mounted anywhere in apps/connect
+— grep confirms its only web-package usage is the component file itself; it's actually
+mobile-only in current usage (apps/mobile/src/components/ui/Overlays.tsx) despite living in the
+shared web package. Do not include a passkey *setup modal* anywhere in this auth-flow frame set.
+PasskeyBanner.tsx IS used on web, but only post-login on the /member dashboard (not part of the
+auth flow itself) — see Frame 6 below for why it's included anyway, as a "where passkeys
+actually appear on web" callout. -->
+
+### PROMPT 17 — Authentication Flow (Desktop 1440px + Mobile 390px)
+
+```
+You are a senior web UX/UI designer recreating the REAL, currently-deployed Moveee Connect
+(web.themoveee.com, Site B) authentication flow — not a redesign. These pages have no shared
+header/footer chrome, no external stylesheet, and no brand-token CSS variables (--ink/--ochre/
+--paper etc. are NOT used here) — every value below is a literal inline style pulled directly
+from the live code. Recreate this fragmented, Georgia-serif, white-and-cream aesthetic exactly;
+do not "fix" it into the Fraunces/DM-Sans brand system used elsewhere in the app.
+
+Shared page chrome (every frame): full-viewport white (#ffffff) background, single centered
+card: background #fffdf8, border 1px solid #e8e0d4, border-radius 4px, no shadow. Heading font
+Georgia, serif, weight 300. Body font -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif.
+No logo image, no illustration anywhere — purely typographic, with an eyebrow line
+"The Moveee — Culture Community" (11px, letter-spacing 0.2em, uppercase, color #7a6f5c) standing
+in for a wordmark.
+
+FRAME 1 — LOGIN (card maxWidth 440px, padding 40px 40px 32px):
+Eyebrow → h1 "Sign in" (Georgia 28px weight 300, color #14110d) → subheading "Welcome back. Sign
+in to access your community and member perks." (15px, #7a6f5c) → form: field "Username or Email"
+(label 11px #7a6f5c above input, input border 1px #d4cbbf, radius 3, padding 10px 14px) → field
+"Password" (same style, type=password) → primary button "Sign in →" full width, bg #14110d,
+white text, radius 3, uppercase, letter-spacing 0.08em, 13px → divider row: thin line — "or"
+(12px #7a6f5c) — thin line → outline button "🔑 Sign in with Passkey" (transparent bg, 1px solid
+rgba(42,36,28,.25) border, radius 3, full width) → outline button, 10px below, literal text span
+"G" + "Continue with Google" (same outline chrome as Passkey button) → footer links, centered,
+13px #7a6f5c: "Forgot your password?" then "New to the community? Create an account" (both
+underlined ochre... actually #14110d per code — link color is #14110d with underline, not ochre).
+
+FRAME 1B — LOGIN ERROR + LOADING (small inset variants on the same frame): error block below the
+form, background #fef2f2, border 1px solid rgba(192,57,43,.15), text color #c0392b, copy
+"Invalid username or password. Please try again." Loading variant: submit button text changes
+to "Signing in…", passkey button to "🔑 Waiting for device…".
+
+FRAME 2 — REGISTER, form view (card maxWidth 480px):
+Eyebrow → h1 "Join the Community" → subheading "Free to join. Enter a few details and we'll send
+you a verification link." → form: "Email *" (placeholder "you@example.com", asterisk color
+#c5491f) → "Username *" (placeholder "@handle") → "Password *" (hint below input, 12px #7a6f5c:
+"At least 8 characters") → primary button "Create account →" → footer: "Already have an
+account? Sign in" then "Want Moveee Pro? Upgrade after joining".
+
+FRAME 2B — REGISTER, check-email view (same card, content swapped, text-align center): large "✉"
+glyph centered → eyebrow "One more step" → h1 "Check your inbox" → "We sent a verification link
+to" then bold dynamic "{email}" → body copy "Click the link in that email to verify your address
+and continue setting up your profile. The link expires in 24 hours." → text button (not a link)
+"Wrong address? Go back" — resets to form view client-side with no navigation.
+
+FRAME 3 — REGISTER/COMPLETE — Step 1 "About You" (card maxWidth 580px):
+Eyebrow → h1 dynamic "Welcome, {displayName}!" → ProgressBar component: 3 circular nodes labeled
+"About You" / "Your Interests" / "Membership", current/passed nodes filled black (#14110d),
+passed nodes show "✓", connected by a track line with a black progress-fill overlay at 0% width
+for this step → step heading "A little about you" → 2-col row: "Date of Birth *" (date input) |
+"Country of Residence *" (searchable select, placeholder "Search countries…") → 2-col row:
+"City *" (searchable select) | "Occupation (optional)" (placeholder "e.g. Filmmaker, Designer")
+→ hint text "You can add your bio, disciplines, and social links from profile settings after
+joining." → nav row: blank — "Continue →" (no Back button on this first step).
+
+FRAME 4 — REGISTER/COMPLETE — Step 2 "Your Interests": same chrome, ProgressBar at 50% fill →
+h1 "What moves you?" → step heading "Pick your interests" → sub-copy "Select at least 3. This
+shapes your feed and connects you with the right community." → 3-column grid of toggle buttons,
+one per interest (emoji + label, from the real 18-slug interest taxonomy), active state filled
+→ dynamic counter "{n} selected — {3-n} more needed" or "{n} selected ✓" → nav row: "← Back" —
+"Continue →" (disabled until 3+ selected).
+
+FRAME 5 — REGISTER/COMPLETE — Step 3 "Membership": ProgressBar at 100% fill → h1 "Choose your
+membership" → step heading "Your membership tier" → billing toggle: "Monthly" | "Annually" pill
+switch with a savings tag ("Save ₦9,000" or "Save $8") → 2-column tier card grid: Citizen card
+(label "Citizen", price "Free", 4 verbatim perk bullets) and Moveee Pro card (label "Moveee Pro",
+price "₦4,500"/"$4" + "/ mo" or annual equivalent, 4 verbatim perk bullets) → currency notice
+"Pricing based on residence: NGN." + "Switch" button → nav row: "← Back" — "Continue to payment
+→" (patron) or "Complete registration →" (citizen).
+
+FRAME 6 — FORGOT PASSWORD (card maxWidth 440px): pre-submit — eyebrow → h1 "Reset your password"
+→ body "Enter the email address on your account and we'll send you a link to set a new
+password." → field "Email address" (placeholder "you@example.com") → primary button "Send reset
+link →" → footer "Remember your password? Sign in". Post-submit (always shown regardless of
+whether the account exists — anti-enumeration): body "If an account exists for **{email}**,
+you'll receive a reset link shortly. Check your spam folder if you don't see it within a few
+minutes." → "Back to sign in" link.
+
+FRAME 7 — RESET PASSWORD: main state — eyebrow → h1 "Set a new password" → field "New password"
+(hint "At least 8 characters") → field "Confirm password" → primary button "Set new password →".
+Success state: green (#27ae60) message replacing the form, auto-redirects to /login after 2.5s.
+Invalid-link state (missing query params): shorter eyebrow "The Moveee" (no "— Culture
+Community" suffix) → h1 "Invalid link" → body "This password-reset link is missing required
+information. Please request a new one." → "Back to home" link.
+
+FRAME 8 — PASSKEY BANNER (post-login context callout, NOT part of the auth flow itself — shown
+only on /member for logged-in users without a passkey, included here to clarify where passkeys
+actually surface on web): pill banner, background rgba(179,130,56,.08), border
+rgba(179,130,56,.25), radius 6px, "🔑" icon → headline "Set up a Passkey to unlock Credits" →
+conditional body: "You have {N} credits waiting — they'll be released once you add a passkey."
+or "Passkeys are required to spend credits and redeem partner perks. Takes 30 seconds." → CTA
+"Set up Passkey →" (ochre #b38238 fill, white text) → "Dismiss" outline button.
+
+MOBILE COMPANION (390px, one per frame above): identical content, card becomes full-width with
+24px side margins instead of a fixed maxWidth, all other inline styles unchanged — there is no
+separate mobile-specific layout in the real code (these pages are not responsive-redesigned,
+just naturally narrow-friendly due to the single-column card).
+
+CONSTRAINTS:
+- Do not use Fraunces, DM Sans, ochre #C5491F, or paper-warm #F3ECE0 anywhere in this section —
+  this flow runs on a completely different, Georgia-serif, inline-style visual language with no
+  shared design tokens. This is a real inconsistency in the codebase, not a mistake to fix.
+- Do not add a splash screen or onboarding carousel — there is no web equivalent.
+- Do not show a passkey *setup* modal inside the login/register flow — PasskeyPrompt.tsx is not
+  mounted anywhere on web today, only on mobile.
+- The Google button must read literally "G" + "Continue with Google" — no Google logo asset.
+- Forgot-password's success copy must never confirm or deny account existence.
+```
+
+Output 8 frames (desktop) + 8 mobile companions: Frame 1 (Login + error/loading states),
+Frame 2 (Register form + check-email), Frame 3 (Register/Complete Step 1), Frame 4
+(Register/Complete Step 2), Frame 5 (Register/Complete Step 3), Frame 6 (Forgot Password),
+Frame 7 (Reset Password), Frame 8 (Passkey Banner callout).
+
+---
+
+## 18. OVERLAYS & MICRO-INTERACTIONS — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+All real components are in `packages/shared/components/pulse/` (FeedCard.tsx) and
+`apps/connect/app/connect/perks/` — this is exclusively a Site B (Moveee) surface.
+
+### Why this section exists
+Mobile §13 shows 9 distinct, purpose-built overlay primitives — bottom sheets, a confirm
+dialog, a toast system with 4 colour-coded variants, a context menu. The real web app has
+**no toast system, no context menu, and no confirm-before-signing-out step at all** — most of
+mobile's "overlay" patterns collapse on web into inline state swaps local to whatever component
+triggered them. Only two of the nine actually get a real overlay treatment on web (the perk
+redeem confirm modal, and the image lightbox); the rest are either inline footer-row expansions,
+persistent (not first-time-only) sidebar nudge cards, or simply don't exist. This section
+documents that real, much flatter reality rather than inventing missing primitives.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Report confirm row: `Report as:` / pill labels `spam`, `harassment`, `inappropriate`
+- Report sent: `Reported — thank you.`
+- Report error: `Couldn't send report.`
+- Redeem confirm title: `Confirm redemption`
+- Redeem confirm body: `` Spend **{credit_cost} credits** for "{title}"? `` then
+  `Your coupon will expire in {expiry_days} days. Your balance after: **{balance} credits**.`
+- Redeem success: `Perk redeemed!` / `Show this QR code at the partner venue.` /
+  `New balance: {n} credits`
+- Passkey step-up required: `Passkey required to redeem perks.`
+- Passkey step-up waiting: `⬡ Waiting for your device biometrics…`
+- No-interests nudge: `Personalise your feed` / `pick your interests for a For You view.` /
+  `Set interests →`
+- Has-interests nudge: `Personalised feed ready` / `Switch to For You to see content ranked by
+  your interests.` / `For You →`
+
+<!-- DEV: There is no template-picker bottom sheet on web — SubmitPost.tsx's template choice is
+a persistent horizontal pill row (`.composer-template-bar`) always visible above the composer
+fields, not a separate picker step: 📝 Update · 💎 Gem · 💬 Take · 🍽️ Food · 🎨 Showcase · 📊 Poll
+· 🗺️ Route · 📅 Event · ✦ Quote. Clicking a pill swaps the form fields inline in the same card.
+Do not draw this as a modal/sheet. -->
+
+<!-- DEV: Report is an inline footer-row state swap on the community card, not a modal — states
+are idle (⚑ flag icon, color #c8bfb0) → confirm (text "Report as:" + 3 pill buttons + ✕ cancel,
+pill style bg #fef2f2 / border rgba(192,57,43,.2) / text #c0392b) → sent/error (plain text, no
+dismiss). No backdrop. -->
+
+<!-- DEV: Confirm-redeem IS a real centered modal — `.perk-modal-backdrop` (rgba(20,17,13,.65),
+z-index 1000) → `.perk-modal` (bg var(--paper), maxWidth 480px). Note: perks.css defines a more
+elaborate `.perk-modal-confirm-btn`/`.perk-modal-cancel-btn` style that the live JSX does NOT
+actually use — the wired buttons are the simpler `.perk-card-btn`/`.perk-card-btn--outline`
+classes. Flag this CSS/JSX mismatch in the prompt rather than picking whichever looks nicer. -->
+
+<!-- DEV: Sign-out has NO confirmation step on web — `Header.tsx`'s dropdown "Sign out" button
+calls `signOut({ callbackUrl: "/login" })` directly on click, no dialog, no window.confirm(). Do
+not draw a sign-out confirm dialog frame as if it exists — show the dropdown item firing
+immediately instead. -->
+
+<!-- DEV: PasskeyPrompt.tsx is not mounted anywhere in apps/connect (confirmed via grep) — the
+only passkey UI actually live on web is the inline step-up banner inside the perk redeem flow
+(item above) and PasskeyManager inside /member/settings/security (separate from this overlay
+set). Do not draw a passkey bottom sheet. -->
+
+<!-- DEV: Image lightbox DOES exist and is a real fullscreen overlay — `ImageLightbox` inline in
+FeedCard.tsx, `position: fixed; inset: 0; zIndex: 9999; background: rgba(0,0,0,.88)`, Escape key
++ backdrop click both close, body-scroll-locked while open, circular 36×36px ✕ close button
+(rgba(255,255,255,.12) bg) top-right. No page-counter ("2 / 5") and no dot-pagination like
+mobile — it shows exactly one image at a time, triggered from a gallery thumbnail strip or a
+single hero image, never a swipeable multi-image viewer. -->
+
+<!-- DEV: There is NO toast system anywhere in the web codebase (no Toast.tsx, no alert()) —
+every success/error message is an inline, persistent element local to the component that
+triggered it, not a floating auto-dismissing notification. Composer success swaps the whole
+composer card content to a message box (bg #f3eef8, border #e0d4f0, italic Fraunces, color
+#7a4da0); composer error renders `.composer-error` text below the action bar with no
+auto-dismiss; perk redeem success replaces the whole grid section with a full success block
+(QR code, balance, two CTA buttons) rather than a toast; perk redeem error renders inline inside
+the still-open confirm modal. Do not draw 4 floating toast variants — draw these 4 real inline
+states instead. -->
+
+<!-- DEV: There is no first-time-only "For You" explainer sheet — it's two ALWAYS-conditionally-
+shown (not dismiss-once) nudge cards in PulseFeed.tsx: a no-interests banner above the composer
+(bg #fdf5e6, border #e8d8b0) and a has-interests-not-yet-toggled sidebar card (bg
+rgba(179,130,56,.06), border rgba(179,130,56,.2)). Both reappear on every page load while their
+condition holds — there's no localStorage dismiss flag the way mobile's sheet has. -->
+
+<!-- DEV: There is no long-press/right-click context menu on web at all. The four mobile menu
+actions (copy link / save / share / report) are split across three always-visible inline
+controls instead: a share button inside ReactionBar (navigator.share() or clipboard copy with a
+2s "Copied!" title flip — no "Save" action exists anywhere for community posts), a comment-count
+button (opens CommunityDetailModal, not a menu), and the report flag described above. Do not
+draw a grouped floating menu. -->
+
+### PROMPT 18 — Overlay & Inline-State Patterns (Desktop 1440px)
+
+```
+You are a senior web UX/UI designer documenting the REAL overlay and micro-interaction patterns
+in the Moveee Connect web app (web.themoveee.com) — not redesigning them. Unlike a typical
+design system, this app has no toast primitive, no context menu, and no confirm-before-sign-out
+step; most "overlay" moments are inline state swaps inside the triggering component. Show each
+pattern as it actually renders today, on a 1440px canvas with the real PulseFeed background
+dimmed behind modal frames only (frames 3 and 6 below — every other frame is inline, not an
+overlay, so show it in its natural page context, not dimmed).
+
+FRAME 1 — TEMPLATE PILL BAR (inline, not a picker sheet): horizontal row of 9 pill buttons above
+the composer textarea — "📝 Update" "💎 Gem" "💬 Take" "🍽️ Food" "🎨 Showcase" "📊 Poll"
+"🗺️ Route" "📅 Event" "✦ Quote" — active pill has a filled/bordered state, inactive pills plain
+outline. Show the composer fields directly below changing when a different pill is active (two
+sub-states side by side: "Update" active vs "Poll" active).
+
+FRAME 2 — REPORT (inline footer-row state swap on a community FeedCard, 3 sub-states in a row):
+(a) idle — small "⚑" flag icon, color #c8bfb0, in the card footer action row; (b) confirm — flag
+replaced by text "Report as:" (color #7a6f5c) + three pill buttons "spam" / "harassment" /
+"inappropriate" (bg #fef2f2, border 1px solid rgba(192,57,43,.2), color #c0392b, radius 3) + a
+"✕" cancel; (c) sent — plain text "Reported — thank you." (color #7a6f5c). No backdrop on any
+of the three.
+
+FRAME 3 — CONFIRM REDEEM MODAL (real centered overlay): dimmed backdrop rgba(20,17,13,.65) full
+viewport → centered card, background var(--paper), maxWidth 480px, padding 36px 32px 28px, "✕"
+close top-right → title "Confirm redemption" → body `Spend **150 credits** for "10% off at Bisi
+Ceramics"?` → second line "Your coupon will expire in 30 days. Your balance after: **1,090
+credits**." → two buttons "Cancel" (outline) / "Confirm" (filled, → "Processing…" loading state).
+Include a second small inline variant above the modal trigger: a passkey step-up banner reading
+"Passkey required to redeem perks." with link styling, and its waiting state "⬡ Waiting for your
+device biometrics…" — these gate the modal from ever opening if no passkey exists.
+
+FRAME 4 — SIGN OUT (dropdown menu, no confirm step): show the Header.tsx avatar dropdown
+(`role="menu"`) with rows "My Dashboard", "Wallet", "Settings", divider, "Sign out" (danger red
+text) — annotate that clicking "Sign out" fires `signOut()` immediately, no dialog appears.
+
+FRAME 5 — IMAGE LIGHTBOX (real fullscreen overlay): full-viewport black-ish overlay
+rgba(0,0,0,.88) → centered image (maxHeight 90vh, objectFit contain, radius 4px, shadow) → small
+circular "✕" close button (36×36px, bg rgba(255,255,255,.12)) top-right inset 1rem. No image
+counter, no pagination dots — single image only. Show the trigger state too: a 200×200px
+thumbnail strip (gallery) with cursor "zoom-in" feeding into this overlay.
+
+FRAME 6 — INLINE SUCCESS/ERROR STATES (4 sub-frames, none are toasts):
+(a) Composer success — whole composer card content replaced by a message box, bg #f3eef8,
+border 1px solid #e0d4f0, italic Fraunces text, color #7a4da0, e.g. "Quote submitted — it will
+appear after review."
+(b) Composer error — plain red-toned text below the action bar, no card swap, no auto-dismiss.
+(c) Perk redeem success — full content-area swap: title "Perk redeemed!", body "Show this QR
+code at the partner venue.", QR code image, expiry date line, "New balance: {n} credits", two
+buttons "Browse more perks" / "My Coupons →".
+(d) Perk redeem error — small red error text rendered inside the still-open confirm modal from
+Frame 3, not a separate overlay.
+
+FRAME 7 — "FOR YOU" NUDGE CARDS (2 sub-states, always-conditional, never first-time-only):
+(a) No-interests banner above the composer: bg #fdf5e6, border 1px solid #e8d8b0, copy
+"Personalise your feed — pick your interests for a For You view." with link "Set interests →".
+(b) Has-interests sidebar card: bg rgba(179,130,56,.06), border 1px solid rgba(179,130,56,.2),
+title "Personalised feed ready", body "Switch to For You to see content ranked by your
+interests.", ochre-filled button "For You →".
+
+FRAME 8 — SPLIT CONTEXT ACTIONS (no grouped menu exists — show the 3 real always-visible
+controls side by side on a card footer instead of a long-press menu): a share icon inside the
+reaction bar (tooltip flips to "Copied!" for 2s after click), a comment-count button (opens the
+full detail drawer, not a menu), and the report flag from Frame 2. Annotate clearly: "No single
+grouped context menu exists — these three controls together cover what mobile's one menu does,
+minus a Save action which has no web equivalent."
+
+CONSTRAINTS:
+- Do not invent a toast/snackbar component — none exists on web; use the 4 real inline
+  success/error patterns in Frame 6 instead.
+- Do not invent a long-press context menu — use the 3 split inline controls in Frame 8.
+- Do not draw a sign-out confirmation dialog — it doesn't exist; show the dropdown firing
+  immediately instead.
+- Do not draw a passkey bottom sheet — PasskeyPrompt.tsx is unmounted on web; only the inline
+  step-up banner inside the perks flow is real.
+- Frame 3 and Frame 5 are the only two patterns that get a real dimmed/fullscreen overlay
+  treatment — every other frame must be shown inline, in its natural page context.
+```
+
+Output 8 frames, each containing its labeled sub-states as described above.
+
+---
