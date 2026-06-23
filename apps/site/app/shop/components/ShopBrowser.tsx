@@ -30,6 +30,18 @@ function vendorName(p: any): string {
   return p.vendorProfile?.storeName || "";
 }
 
+function vendorLocation(p: any): string {
+  return p.vendorProfile?.city || p.vendorProfile?.country || "";
+}
+
+function averageRating(p: any): number {
+  return parseFloat(p.averageRating) || 0;
+}
+
+function reviewCount(p: any): number {
+  return p.reviewCount ?? 0;
+}
+
 function isNew(p: any): boolean {
   return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
 }
@@ -59,6 +71,8 @@ export default function ShopBrowser({
   const [searchOpen, setSearchOpen] = useState(false);
   const [priceBand, setPriceBand] = useState<string | null>(null);
   const [tag, setTag] = useState<string | null>(null);
+  const [material, setMaterial] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sort, setSort] = useState("default");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -73,6 +87,23 @@ export default function ShopBrowser({
       }
     }
     return [...set.entries()].slice(0, 6);
+  }, [products]);
+
+  const availableMaterials = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of products) {
+      for (const m of p.productMaterials ?? []) set.add(m);
+    }
+    return [...set].slice(0, 6);
+  }, [products]);
+
+  const availableLocations = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of products) {
+      const loc = vendorLocation(p);
+      if (loc) set.add(loc);
+    }
+    return [...set].slice(0, 6);
   }, [products]);
 
   const filtered = useMemo(() => {
@@ -90,6 +121,12 @@ export default function ShopBrowser({
     if (tag) {
       list = list.filter((p) => p.productTags?.nodes?.some((t: any) => t.slug === tag));
     }
+    if (material) {
+      list = list.filter((p) => p.productMaterials?.includes(material));
+    }
+    if (location) {
+      list = list.filter((p) => vendorLocation(p) === location);
+    }
     if (inStockOnly) {
       list = list.filter((p) => !isOutOfStock(p));
     }
@@ -98,8 +135,11 @@ export default function ShopBrowser({
     if (sort === "price-asc") sorted.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
     else if (sort === "price-desc") sorted.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
     else if (sort === "newest") sorted.sort((a, b) => (b.databaseId ?? 0) - (a.databaseId ?? 0));
+    else if (sort === "most-loved") {
+      sorted.sort((a, b) => reviewCount(b) - reviewCount(a) || averageRating(b) - averageRating(a));
+    }
     return sorted;
-  }, [products, query, priceBand, tag, inStockOnly, sort]);
+  }, [products, query, priceBand, tag, material, location, inStockOnly, sort]);
 
   const activeChips: Array<{ id: string; label: string; clear: () => void }> = [];
   if (query.trim()) activeChips.push({ id: "q", label: `"${query.trim()}"`, clear: () => setQuery("") });
@@ -111,12 +151,16 @@ export default function ShopBrowser({
     const found = availableTags.find(([slug]) => slug === tag);
     activeChips.push({ id: "tag", label: found?.[1] ?? tag, clear: () => setTag(null) });
   }
+  if (material) activeChips.push({ id: "material", label: material, clear: () => setMaterial(null) });
+  if (location) activeChips.push({ id: "location", label: location, clear: () => setLocation(null) });
   if (inStockOnly) activeChips.push({ id: "stock", label: "In stock only", clear: () => setInStockOnly(false) });
 
   function clearAll() {
     setQuery("");
     setPriceBand(null);
     setTag(null);
+    setMaterial(null);
+    setLocation(null);
     setInStockOnly(false);
   }
 
@@ -158,6 +202,7 @@ export default function ShopBrowser({
               <option value="price-asc">Price: Low–High</option>
               <option value="price-desc">Price: High–Low</option>
               <option value="newest">Newest</option>
+              <option value="most-loved">Most Loved</option>
             </select>
 
             <div className="view-toggle">
@@ -215,6 +260,26 @@ export default function ShopBrowser({
               onClick={() => setTag(tag === slug ? null : slug)}
             >
               {name}
+            </button>
+          ))}
+          {availableMaterials.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`facet-pill${material === m ? " active" : ""}`}
+              onClick={() => setMaterial(material === m ? null : m)}
+            >
+              {m}
+            </button>
+          ))}
+          {availableLocations.map((loc) => (
+            <button
+              key={loc}
+              type="button"
+              className={`facet-pill${location === loc ? " active" : ""}`}
+              onClick={() => setLocation(location === loc ? null : loc)}
+            >
+              {loc}
             </button>
           ))}
           <button
@@ -294,7 +359,11 @@ export default function ShopBrowser({
                       {!outOfStock && <span className="pro">{proPrice} with Pro</span>}
                     </div>
                   )}
-                  <div className="prating">New listing</div>
+                  <div className="prating">
+                    {reviewCount(p) > 0
+                      ? `★ ${averageRating(p).toFixed(1)} (${reviewCount(p)})`
+                      : "New listing"}
+                  </div>
                   {!outOfStock && p.databaseId && (
                     <AddToCartButton productId={p.databaseId} />
                   )}

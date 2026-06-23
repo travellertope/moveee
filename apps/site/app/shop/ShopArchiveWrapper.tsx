@@ -1,5 +1,13 @@
 import React from "react";
-import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES, GET_ALL_MAKERS } from "@/lib/wp";
+import {
+  getWPData,
+  GET_PRODUCTS,
+  GET_PRODUCTS_BY_VENDOR,
+  GET_PRODUCT_CATEGORIES,
+  GET_ALL_MAKERS,
+  GET_PRODUCTS_EXTRA,
+  GET_PRODUCTS_BY_VENDOR_EXTRA,
+} from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import ShopBrowser from "./components/ShopBrowser";
@@ -83,18 +91,40 @@ export default async function ShopArchiveWrapper({
   let categories: any[] = [];
   let makers: any[] = [];
 
-  const [prodResult, catResult, makersResult] = await Promise.allSettled([
+  const [prodResult, catResult, makersResult, extraResult] = await Promise.allSettled([
     brand
       ? getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: brand })
       : getWPData(GET_PRODUCTS, { first: 24, category: category || null, tag: tag || null }),
     getWPData(GET_PRODUCT_CATEGORIES, {}),
     getWPData(GET_ALL_MAKERS, { first: 4 }),
+    // Separate, isolated fetch for moveee-graphql-bridge-dependent fields
+    // (vendor location, ratings, materials) — see GET_PRODUCTS_EXTRA's own
+    // comment for why this must never be merged into the main products query.
+    brand
+      ? getWPData(GET_PRODUCTS_BY_VENDOR_EXTRA, { first: 24, vendor: brand })
+      : getWPData(GET_PRODUCTS_EXTRA, { first: 24, category: category || null, tag: tag || null }),
   ]);
 
   if (prodResult.status === "fulfilled") products = prodResult.value?.products?.nodes ?? [];
   if (catResult.status === "fulfilled")  categories = catResult.value?.productCategories?.nodes ?? [];
   if (makersResult.status === "fulfilled") {
     makers = (makersResult.value?.moveeeVendors ?? []).filter((m: any) => m.storeName).slice(0, 4);
+  }
+  if (extraResult.status === "fulfilled" && products.length) {
+    const extraNodes = extraResult.value?.products?.nodes ?? [];
+    const extraById = new Map(extraNodes.map((n: any) => [n.databaseId, n]));
+    products = products.map((p: any) => {
+      const extra = extraById.get(p.databaseId);
+      return extra
+        ? {
+            ...p,
+            vendorProfile: extra.vendorProfile,
+            averageRating: extra.averageRating,
+            reviewCount: extra.reviewCount,
+            productMaterials: extra.productMaterials,
+          }
+        : p;
+    });
   }
 
   // REST fallback for vendor strip when GraphQL returns nothing.

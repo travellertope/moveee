@@ -577,9 +577,15 @@ and the product list must share one React state tree. The previous
 `onSortChange`/`onViewChange` props that the parent never actually passed —
 sort and view-toggle were dead UI before this change.
 
-- Facets: price bands (4 fixed ranges) and tag pills derived from
-  `productTags` (excluding the `"new"` tag slug) — there is no "material"
-  taxonomy in the schema, so tags are the closest real facet available.
+- Facets: price bands (4 fixed ranges), tag pills derived from `productTags`
+  (excluding the `"new"` tag slug), **Material pills** (from the
+  `product_material` taxonomy, June 2026) and **Maker-Location pills**
+  (derived from `vendorProfile.city`/`.country`, falling back to country
+  when city is empty) — both added in the same pass as the reviews system
+  below, replacing the prior "no material taxonomy exists" gap.
+- Sort: Featured (default), Price Low–High/High–Low, Newest, and
+  **Most Loved** (sorts by `reviewCount` desc, tiebreak `averageRating`
+  desc) — added alongside the reviews system.
 - Pro price (10% off) is computed client-side from the existing `price`
   string (same `replace(/<[^>]*>/g,"").replace(/[^0-9.]/g,"")` parse pattern
   used in `app/shop/[slug]/page.tsx`) rather than fetched from
@@ -590,12 +596,68 @@ sort and view-toggle were dead UI before this change.
   fragment would risk failing the whole shop grid query in any environment
   where that plugin/field isn't available. Don't merge them — compute Pro
   price client-side instead, as done here.
-- Every card shows a static "New listing" placeholder instead of a star
-  rating — there is no reviews data model for shop products yet.
+- Each card shows `★ {averageRating} ({reviewCount})` when `reviewCount > 0`,
+  otherwise falls back to the static "New listing" placeholder.
 - The member-band section now says "Moveee Pro" (was stale "Connect
   Members" copy) and its CTA links to `/register?tier=patron`. The "2,400
   Members & growing" stat in that section is still a hardcoded literal, not
-  a live count — out of scope until there's a backend count to wire up.
+  a live count — out of scope until there's a backend count to wire up
+  (explicitly deferred — not part of the reviews/facets/sort build below).
+
+### Lifestyle Shop product reviews + Material/Location facets (June 2026)
+
+Built on top of the existing WooCommerce **native** comment-based review
+system (`comment_type = 'review'`, `_wc_average_rating`/`_wc_review_count`
+postmeta) rather than inventing a new table — `moveee-graphql-bridge.php`
+(repo root) only adds a thin REST + GraphQL layer on top of WooCommerce's own
+storage, so any other WooCommerce code reading those two postmeta keys stays
+in sync automatically.
+
+- **Taxonomy**: `product_material` (non-hierarchical, `show_in_graphql:
+  false` — deliberately not auto-wired through WPGraphQL's generic taxonomy
+  support; exposed manually instead, see below) registered on `product` in
+  `moveee-graphql-bridge.php`. Tag products with materials (Linen, Oak,
+  Brass, etc.) via the normal WP Admin taxonomy UI on the product edit
+  screen.
+- **GraphQL fields** (`averageRating: String`, `reviewCount: Int`,
+  `productMaterials: [String]`) added via `register_graphql_field` at
+  priority 99 on the four product types, exactly mirroring the existing
+  `vendorProfile`/`moveeeMeta` manual-resolver pattern — chosen over relying
+  on `show_in_graphql` taxonomy auto-wiring since WPGraphQL WooCommerce's
+  taxonomy connections (`productCategories`/`productTags`) are themselves
+  manually wired by that third-party plugin, not generic WP core behavior.
+  Fetched via two new isolated queries in `wp.ts`,
+  `GET_PRODUCTS_EXTRA`/`GET_PRODUCTS_BY_VENDOR_EXTRA` (listing grid) and an
+  extension of the existing `GET_PRODUCT_EXTRA` (single product page) — all
+  three follow the same `Promise.allSettled` + merge-by-`databaseId`
+  isolation pattern as `vendorProfile`/`moveeeMeta`, so a bridge-plugin
+  outage degrades gracefully (no rating/materials shown, "New listing"
+  placeholder, no facets) rather than failing the whole shop.
+- **REST endpoints** (`moveee-graphql-bridge.php`, namespace `moveee/v1`,
+  separate from the WordPress plugin's own `culture/v1` namespace):
+  `GET /moveee/v1/products/{id}/reviews` (public, lists approved reviews) and
+  `POST /moveee/v1/products/{id}/reviews` (requires `Authorization: Bearer
+  {culture_api_secret}` — mirrors `Culture_Rest_Api::api_key_permission()`'s
+  `verify_bearer_token()` convention, **not** the `X-Culture-Secret` header
+  that `apps/site/app/api/comments/route.ts` sends, which WordPress never
+  actually checks for that route). One review per user per product —
+  resubmitting updates the existing comment via `wp_update_comment()` rather
+  than inserting a duplicate. `moveee_recalculate_product_rating()` recomputes
+  `_wc_average_rating`/`_wc_review_count` via a raw-SQL `AVG()`/`COUNT()`
+  join against `wp_comments`/`wp_commentmeta` after every submit and busts
+  WooCommerce's product transients.
+- **Next.js proxy**: `app/api/shop/reviews/route.ts` — `GET` is a thin public
+  passthrough; `POST` requires `getServerSession(authOptions)` (consistent
+  with the comments route's auth pattern) and forwards
+  `Authorization: Bearer ${CULTURE_API_SECRET}` to the bridge endpoint.
+- **UI**: `app/shop/[slug]/ProductReviews.tsx` (client component) — review
+  list + a session-gated review form (5-star picker + textarea), rendered as
+  its own section on the product page between "Vendor Profile" and "More
+  From This Category". Average rating + material pills also surfaced near
+  the product title/lede in `[slug]/page.tsx`. `ShopBrowser.tsx`'s
+  `availableMaterials`/`availableLocations` facet pills and the "Most Loved"
+  sort option (see above) read `productMaterials`/`vendorProfile.city`/
+  `averageRating`/`reviewCount` off the same merged product objects.
 
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
