@@ -87,7 +87,7 @@ export default async function MagazineArchiveWrapper({
   const portraitStories = stories.slice(7, 12);
   const editorialStories = stories.slice(12, 16);
   const digestStories = stories.slice(16, 20);
-  const opinionStories = stories.slice(20, 26);
+  const opinionStories = stories.slice(20, 22);
   const isFiltered = !!(category || industry || country || series || tag);
 
   return (

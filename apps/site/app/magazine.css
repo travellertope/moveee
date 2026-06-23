@@ -38,6 +38,8 @@
 }
 .mg-nav-tabs {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   gap: 0;
   overflow-x: auto;
   -ms-overflow-style: none;
@@ -423,6 +425,84 @@
   color: #C8BFB0;
   margin-top: auto;
 }
+
+/* ── THE EDIT (editorial spotlight, hover-swap visual) ── */
+.editorial {
+  background: var(--ink);
+  padding: 80px 64px;
+}
+.editorial-inner {
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+.ed-left h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px;
+}
+.ed-left h3 em { font-style: italic; color: var(--ochre); }
+.ed-left > p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255,255,255,.65);
+  max-width: 420px;
+  margin: 0 0 40px;
+}
+.ed-grid {
+  display: flex;
+  flex-direction: column;
+}
+.ed-item {
+  display: block;
+  padding: 20px 0;
+  border-top: 1px solid rgba(255,255,255,.15);
+  text-decoration: none;
+  color: inherit;
+  opacity: .5;
+  transition: opacity .2s;
+}
+.ed-item:first-child { border-top: none; padding-top: 0; }
+.ed-item:hover,
+.ed-item--active { opacity: 1; }
+.ek {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin-bottom: 8px;
+}
+.ed-item h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+.em {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
+}
+.ed-visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ochre);
+}
+.ed-visual img { object-fit: cover; }
 
 /* ── DIGEST: Quick Reads ── */
 .mg-digest {
@@ -876,6 +956,9 @@
   .mg-hero-sidebar { width: 260px; }
   .mg-band { padding: 48px 32px 64px; }
   .mg-band-grid { grid-template-columns: repeat(2, 1fr); }
+  .editorial { padding: 48px 32px; }
+  .editorial-inner { grid-template-columns: 1fr; gap: 32px; }
+  .ed-visual { aspect-ratio: 16/9; }
   .mg-portrait-scroll { padding: 0 32px 8px; }
   .mg-portrait-header { padding: 0 32px; }
   .mg-digest { padding: 0 32px 64px; }
@@ -903,6 +986,8 @@
   .mg-hero-sidebar { width: 100%; }
   .mg-band { padding: 32px 16px 48px; }
   .mg-band-grid { grid-template-columns: 1fr; }
+  .editorial { padding: 40px 16px; }
+  .ed-visual { aspect-ratio: 4/3; }
   .mg-portrait-scroll { padding: 0 16px 8px; }
   .mg-portrait-header { padding: 0 16px; }
   .mg-digest { padding: 0 16px 48px; }
