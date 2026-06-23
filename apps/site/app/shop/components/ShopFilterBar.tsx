@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { PRICE_BANDS, useShopFilter } from "./ShopFilterContext";
 
 interface Category {
@@ -15,13 +14,10 @@ interface Props {
 }
 
 export default function ShopFilterBar({ categories, activeCategorySlug }: Props) {
-  const pathname = usePathname();
   const {
     filtered,
     query,
     setQuery,
-    searchOpen,
-    setSearchOpen,
     priceBand,
     setPriceBand,
     material,
@@ -40,16 +36,28 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
     clearAll,
   } = useShopFilter();
 
-  const isActive = (href: string) => pathname === href;
   const activeCategoryName = activeCategorySlug
     ? categories.find((c) => c.slug === activeCategorySlug)?.name
     : null;
 
   return (
-    <div className="filter-bar filter-bar--dd">
-      <div className="filter-bar-inner">
-        <div className="filter-dd-row">
-          <div className="filter-dd-pill">
+    <div className="sl-filter">
+      {/* Row 1 — search + pills + right controls */}
+      <div className="sl-filter-row1">
+        {/* Always-visible search */}
+        <input
+          type="text"
+          className="sl-search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search makers & products…"
+          aria-label="Search products"
+        />
+
+        {/* Filter pills */}
+        <div className="sl-filter-pills">
+          {/* Category */}
+          <div className={`sl-fpill${activeCategorySlug ? " sl-fpill--active" : ""}`}>
             <span>{activeCategoryName ?? "Category"}</span>
             <select
               aria-label="Filter by category"
@@ -65,10 +73,11 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
                 </option>
               ))}
             </select>
-            <span className="dd-caret">▾</span>
+            <span className="sl-fpill-caret">▾</span>
           </div>
 
-          <div className="filter-dd-pill">
+          {/* Price */}
+          <div className={`sl-fpill${priceBand ? " sl-fpill--active" : ""}`}>
             <span>{priceBand ? PRICE_BANDS.find((b) => b.id === priceBand)?.label : "Price"}</span>
             <select
               aria-label="Filter by price"
@@ -82,119 +91,106 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
                 </option>
               ))}
             </select>
-            <span className="dd-caret">▾</span>
+            <span className="sl-fpill-caret">▾</span>
           </div>
 
-          <div className="filter-dd-pill">
-            <span>{material ?? "Material"}</span>
-            <select
-              aria-label="Filter by material"
-              value={material ?? ""}
-              onChange={(e) => setMaterial(e.target.value || null)}
-            >
-              <option value="">Any Material</option>
-              {availableMaterials.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <span className="dd-caret">▾</span>
-          </div>
+          {/* Material */}
+          {availableMaterials.length > 0 && (
+            <div className={`sl-fpill${material ? " sl-fpill--active" : ""}`}>
+              <span>{material ?? "Material"}</span>
+              <select
+                aria-label="Filter by material"
+                value={material ?? ""}
+                onChange={(e) => setMaterial(e.target.value || null)}
+              >
+                <option value="">Any Material</option>
+                {availableMaterials.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <span className="sl-fpill-caret">▾</span>
+            </div>
+          )}
 
-          <div className="filter-dd-pill">
-            <span>{location ?? "Maker Location"}</span>
-            <select
-              aria-label="Filter by maker location"
-              value={location ?? ""}
-              onChange={(e) => setLocation(e.target.value || null)}
-            >
-              <option value="">Any Location</option>
-              {availableLocations.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-            <span className="dd-caret">▾</span>
-          </div>
+          {/* Location */}
+          {availableLocations.length > 0 && (
+            <div className={`sl-fpill${location ? " sl-fpill--active" : ""}`}>
+              <span>{location ?? "Maker Location"}</span>
+              <select
+                aria-label="Filter by maker location"
+                value={location ?? ""}
+                onChange={(e) => setLocation(e.target.value || null)}
+              >
+                <option value="">Any Location</option>
+                {availableLocations.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
+              <span className="sl-fpill-caret">▾</span>
+            </div>
+          )}
 
+          {/* In Stock Only — filled when active */}
           <button
             type="button"
-            className={`filter-dd-stock${inStockOnly ? " active" : ""}`}
+            className={`sl-fpill${inStockOnly ? " sl-fpill--filled" : " sl-fpill--unfilled"}`}
             onClick={() => setInStockOnly(!inStockOnly)}
           >
             In Stock Only
           </button>
-
-          <button
-            className={`ftab ftab-search${searchOpen ? " active" : ""}`}
-            onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Search products"
-            type="button"
-          >
-            ⌕
-          </button>
         </div>
 
-        <div className="filter-right">
+        {/* Right cluster — count, sort, view toggle */}
+        <div className="sl-filter-right">
+          <span className="sl-filter-count">{filtered.length} items</span>
+
           <select
-            className="sort-select"
+            className="sl-sort-select"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             aria-label="Sort products"
           >
-            <option value="default">Sort: Featured</option>
+            <option value="default">Featured</option>
             <option value="price-asc">Price: Low–High</option>
             <option value="price-desc">Price: High–Low</option>
             <option value="newest">Newest</option>
             <option value="most-loved">Most Loved</option>
           </select>
 
-          <div className="view-toggle">
+          <div className="sl-view-toggle">
             <button
-              className={`vt-btn${view === "grid" ? " active" : ""}`}
+              type="button"
+              className={`sl-vt-btn${view === "grid" ? " sl-vt-btn--active" : ""}`}
               onClick={() => setView("grid")}
               aria-label="Grid view"
-              type="button"
             >
               ⊞
             </button>
             <button
-              className={`vt-btn${view === "list" ? " active" : ""}`}
+              type="button"
+              className={`sl-vt-btn${view === "list" ? " sl-vt-btn--active" : ""}`}
               onClick={() => setView("list")}
               aria-label="List view"
-              type="button"
             >
               ☰
             </button>
           </div>
-
-          <div className="result-count">{filtered.length} items</div>
         </div>
       </div>
 
-      {searchOpen && (
-        <div className="filter-search-row">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by product or maker…"
-            className="filter-search-input"
-            autoFocus
-          />
-        </div>
-      )}
-
+      {/* Row 2 — active filter chips */}
       {activeChips.length > 0 && (
-        <div className="filter-chips">
+        <div className="sl-filter-row2">
           {activeChips.map((chip) => (
-            <button key={chip.id} type="button" className="filter-chip" onClick={chip.clear}>
-              {chip.label} ✕
+            <button key={chip.id} type="button" className="sl-chip" onClick={chip.clear}>
+              {chip.label} <span className="sl-chip-x">✕</span>
             </button>
           ))}
-          <button type="button" className="filter-chip filter-chip-clear" onClick={clearAll}>
+          <button type="button" className="sl-filter-clear" onClick={clearAll}>
             Clear all
           </button>
         </div>
