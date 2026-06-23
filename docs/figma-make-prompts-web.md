@@ -4341,3 +4341,176 @@ Frame 2 (Register form + check-email), Frame 3 (Register/Complete Step 1), Frame
 Frame 7 (Reset Password), Frame 8 (Passkey Banner callout).
 
 ---
+
+## 18. OVERLAYS & MICRO-INTERACTIONS — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+All real components are in `packages/shared/components/pulse/` (FeedCard.tsx) and
+`apps/connect/app/connect/perks/` — this is exclusively a Site B (Moveee) surface.
+
+### Why this section exists
+Mobile §13 shows 9 distinct, purpose-built overlay primitives — bottom sheets, a confirm
+dialog, a toast system with 4 colour-coded variants, a context menu. The real web app has
+**no toast system, no context menu, and no confirm-before-signing-out step at all** — most of
+mobile's "overlay" patterns collapse on web into inline state swaps local to whatever component
+triggered them. Only two of the nine actually get a real overlay treatment on web (the perk
+redeem confirm modal, and the image lightbox); the rest are either inline footer-row expansions,
+persistent (not first-time-only) sidebar nudge cards, or simply don't exist. This section
+documents that real, much flatter reality rather than inventing missing primitives.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Report confirm row: `Report as:` / pill labels `spam`, `harassment`, `inappropriate`
+- Report sent: `Reported — thank you.`
+- Report error: `Couldn't send report.`
+- Redeem confirm title: `Confirm redemption`
+- Redeem confirm body: `` Spend **{credit_cost} credits** for "{title}"? `` then
+  `Your coupon will expire in {expiry_days} days. Your balance after: **{balance} credits**.`
+- Redeem success: `Perk redeemed!` / `Show this QR code at the partner venue.` /
+  `New balance: {n} credits`
+- Passkey step-up required: `Passkey required to redeem perks.`
+- Passkey step-up waiting: `⬡ Waiting for your device biometrics…`
+- No-interests nudge: `Personalise your feed` / `pick your interests for a For You view.` /
+  `Set interests →`
+- Has-interests nudge: `Personalised feed ready` / `Switch to For You to see content ranked by
+  your interests.` / `For You →`
+
+<!-- DEV: There is no template-picker bottom sheet on web — SubmitPost.tsx's template choice is
+a persistent horizontal pill row (`.composer-template-bar`) always visible above the composer
+fields, not a separate picker step: 📝 Update · 💎 Gem · 💬 Take · 🍽️ Food · 🎨 Showcase · 📊 Poll
+· 🗺️ Route · 📅 Event · ✦ Quote. Clicking a pill swaps the form fields inline in the same card.
+Do not draw this as a modal/sheet. -->
+
+<!-- DEV: Report is an inline footer-row state swap on the community card, not a modal — states
+are idle (⚑ flag icon, color #c8bfb0) → confirm (text "Report as:" + 3 pill buttons + ✕ cancel,
+pill style bg #fef2f2 / border rgba(192,57,43,.2) / text #c0392b) → sent/error (plain text, no
+dismiss). No backdrop. -->
+
+<!-- DEV: Confirm-redeem IS a real centered modal — `.perk-modal-backdrop` (rgba(20,17,13,.65),
+z-index 1000) → `.perk-modal` (bg var(--paper), maxWidth 480px). Note: perks.css defines a more
+elaborate `.perk-modal-confirm-btn`/`.perk-modal-cancel-btn` style that the live JSX does NOT
+actually use — the wired buttons are the simpler `.perk-card-btn`/`.perk-card-btn--outline`
+classes. Flag this CSS/JSX mismatch in the prompt rather than picking whichever looks nicer. -->
+
+<!-- DEV: Sign-out has NO confirmation step on web — `Header.tsx`'s dropdown "Sign out" button
+calls `signOut({ callbackUrl: "/login" })` directly on click, no dialog, no window.confirm(). Do
+not draw a sign-out confirm dialog frame as if it exists — show the dropdown item firing
+immediately instead. -->
+
+<!-- DEV: PasskeyPrompt.tsx is not mounted anywhere in apps/connect (confirmed via grep) — the
+only passkey UI actually live on web is the inline step-up banner inside the perk redeem flow
+(item above) and PasskeyManager inside /member/settings/security (separate from this overlay
+set). Do not draw a passkey bottom sheet. -->
+
+<!-- DEV: Image lightbox DOES exist and is a real fullscreen overlay — `ImageLightbox` inline in
+FeedCard.tsx, `position: fixed; inset: 0; zIndex: 9999; background: rgba(0,0,0,.88)`, Escape key
++ backdrop click both close, body-scroll-locked while open, circular 36×36px ✕ close button
+(rgba(255,255,255,.12) bg) top-right. No page-counter ("2 / 5") and no dot-pagination like
+mobile — it shows exactly one image at a time, triggered from a gallery thumbnail strip or a
+single hero image, never a swipeable multi-image viewer. -->
+
+<!-- DEV: There is NO toast system anywhere in the web codebase (no Toast.tsx, no alert()) —
+every success/error message is an inline, persistent element local to the component that
+triggered it, not a floating auto-dismissing notification. Composer success swaps the whole
+composer card content to a message box (bg #f3eef8, border #e0d4f0, italic Fraunces, color
+#7a4da0); composer error renders `.composer-error` text below the action bar with no
+auto-dismiss; perk redeem success replaces the whole grid section with a full success block
+(QR code, balance, two CTA buttons) rather than a toast; perk redeem error renders inline inside
+the still-open confirm modal. Do not draw 4 floating toast variants — draw these 4 real inline
+states instead. -->
+
+<!-- DEV: There is no first-time-only "For You" explainer sheet — it's two ALWAYS-conditionally-
+shown (not dismiss-once) nudge cards in PulseFeed.tsx: a no-interests banner above the composer
+(bg #fdf5e6, border #e8d8b0) and a has-interests-not-yet-toggled sidebar card (bg
+rgba(179,130,56,.06), border rgba(179,130,56,.2)). Both reappear on every page load while their
+condition holds — there's no localStorage dismiss flag the way mobile's sheet has. -->
+
+<!-- DEV: There is no long-press/right-click context menu on web at all. The four mobile menu
+actions (copy link / save / share / report) are split across three always-visible inline
+controls instead: a share button inside ReactionBar (navigator.share() or clipboard copy with a
+2s "Copied!" title flip — no "Save" action exists anywhere for community posts), a comment-count
+button (opens CommunityDetailModal, not a menu), and the report flag described above. Do not
+draw a grouped floating menu. -->
+
+### PROMPT 18 — Overlay & Inline-State Patterns (Desktop 1440px)
+
+```
+You are a senior web UX/UI designer documenting the REAL overlay and micro-interaction patterns
+in the Moveee Connect web app (web.themoveee.com) — not redesigning them. Unlike a typical
+design system, this app has no toast primitive, no context menu, and no confirm-before-sign-out
+step; most "overlay" moments are inline state swaps inside the triggering component. Show each
+pattern as it actually renders today, on a 1440px canvas with the real PulseFeed background
+dimmed behind modal frames only (frames 3 and 6 below — every other frame is inline, not an
+overlay, so show it in its natural page context, not dimmed).
+
+FRAME 1 — TEMPLATE PILL BAR (inline, not a picker sheet): horizontal row of 9 pill buttons above
+the composer textarea — "📝 Update" "💎 Gem" "💬 Take" "🍽️ Food" "🎨 Showcase" "📊 Poll"
+"🗺️ Route" "📅 Event" "✦ Quote" — active pill has a filled/bordered state, inactive pills plain
+outline. Show the composer fields directly below changing when a different pill is active (two
+sub-states side by side: "Update" active vs "Poll" active).
+
+FRAME 2 — REPORT (inline footer-row state swap on a community FeedCard, 3 sub-states in a row):
+(a) idle — small "⚑" flag icon, color #c8bfb0, in the card footer action row; (b) confirm — flag
+replaced by text "Report as:" (color #7a6f5c) + three pill buttons "spam" / "harassment" /
+"inappropriate" (bg #fef2f2, border 1px solid rgba(192,57,43,.2), color #c0392b, radius 3) + a
+"✕" cancel; (c) sent — plain text "Reported — thank you." (color #7a6f5c). No backdrop on any
+of the three.
+
+FRAME 3 — CONFIRM REDEEM MODAL (real centered overlay): dimmed backdrop rgba(20,17,13,.65) full
+viewport → centered card, background var(--paper), maxWidth 480px, padding 36px 32px 28px, "✕"
+close top-right → title "Confirm redemption" → body `Spend **150 credits** for "10% off at Bisi
+Ceramics"?` → second line "Your coupon will expire in 30 days. Your balance after: **1,090
+credits**." → two buttons "Cancel" (outline) / "Confirm" (filled, → "Processing…" loading state).
+Include a second small inline variant above the modal trigger: a passkey step-up banner reading
+"Passkey required to redeem perks." with link styling, and its waiting state "⬡ Waiting for your
+device biometrics…" — these gate the modal from ever opening if no passkey exists.
+
+FRAME 4 — SIGN OUT (dropdown menu, no confirm step): show the Header.tsx avatar dropdown
+(`role="menu"`) with rows "My Dashboard", "Wallet", "Settings", divider, "Sign out" (danger red
+text) — annotate that clicking "Sign out" fires `signOut()` immediately, no dialog appears.
+
+FRAME 5 — IMAGE LIGHTBOX (real fullscreen overlay): full-viewport black-ish overlay
+rgba(0,0,0,.88) → centered image (maxHeight 90vh, objectFit contain, radius 4px, shadow) → small
+circular "✕" close button (36×36px, bg rgba(255,255,255,.12)) top-right inset 1rem. No image
+counter, no pagination dots — single image only. Show the trigger state too: a 200×200px
+thumbnail strip (gallery) with cursor "zoom-in" feeding into this overlay.
+
+FRAME 6 — INLINE SUCCESS/ERROR STATES (4 sub-frames, none are toasts):
+(a) Composer success — whole composer card content replaced by a message box, bg #f3eef8,
+border 1px solid #e0d4f0, italic Fraunces text, color #7a4da0, e.g. "Quote submitted — it will
+appear after review."
+(b) Composer error — plain red-toned text below the action bar, no card swap, no auto-dismiss.
+(c) Perk redeem success — full content-area swap: title "Perk redeemed!", body "Show this QR
+code at the partner venue.", QR code image, expiry date line, "New balance: {n} credits", two
+buttons "Browse more perks" / "My Coupons →".
+(d) Perk redeem error — small red error text rendered inside the still-open confirm modal from
+Frame 3, not a separate overlay.
+
+FRAME 7 — "FOR YOU" NUDGE CARDS (2 sub-states, always-conditional, never first-time-only):
+(a) No-interests banner above the composer: bg #fdf5e6, border 1px solid #e8d8b0, copy
+"Personalise your feed — pick your interests for a For You view." with link "Set interests →".
+(b) Has-interests sidebar card: bg rgba(179,130,56,.06), border 1px solid rgba(179,130,56,.2),
+title "Personalised feed ready", body "Switch to For You to see content ranked by your
+interests.", ochre-filled button "For You →".
+
+FRAME 8 — SPLIT CONTEXT ACTIONS (no grouped menu exists — show the 3 real always-visible
+controls side by side on a card footer instead of a long-press menu): a share icon inside the
+reaction bar (tooltip flips to "Copied!" for 2s after click), a comment-count button (opens the
+full detail drawer, not a menu), and the report flag from Frame 2. Annotate clearly: "No single
+grouped context menu exists — these three controls together cover what mobile's one menu does,
+minus a Save action which has no web equivalent."
+
+CONSTRAINTS:
+- Do not invent a toast/snackbar component — none exists on web; use the 4 real inline
+  success/error patterns in Frame 6 instead.
+- Do not invent a long-press context menu — use the 3 split inline controls in Frame 8.
+- Do not draw a sign-out confirmation dialog — it doesn't exist; show the dropdown firing
+  immediately instead.
+- Do not draw a passkey bottom sheet — PasskeyPrompt.tsx is unmounted on web; only the inline
+  step-up banner inside the perks flow is real.
+- Frame 3 and Frame 5 are the only two patterns that get a real dimmed/fullscreen overlay
+  treatment — every other frame must be shown inline, in its natural page context.
+```
+
+Output 8 frames, each containing its labeled sub-states as described above.
+
+---
