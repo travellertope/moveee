@@ -1317,6 +1317,37 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 - Organiser field: `DirectorySearch` component, typeFilter="person"
 - Image upload via WP Media API (not URL input)
 
+### Composer client-side gating UI (web, June 2026)
+
+Two client-side affordances added to `packages/shared/components/pulse/SubmitPost.tsx` to
+surface server-side gates *before* submit instead of only after a 403 — previously a user
+could fill out an entire Poll/Itinerary/Event form, or type a link into a standard Post, and
+only find out it was rejected after pressing Post.
+
+- **Reputation-gated template pills**: `TEMPLATE_REP_GATE` maps `poll`/`itinerary` → Taste
+  Maker (2,500 rep) and `event` → Culture Contributor (500 rep), mirroring the existing
+  server-side gate in `handle_submit_post()` (mobile) and
+  `apps/connect/app/api/community/submit/route.ts` (web) — Moveee Pro always bypasses, same
+  as the server. `meetsTemplateGate()` checks `session.user.reputation` against this map;
+  pills that fail the gate render dimmed with a 🔒 and a `title` tooltip, and clicking one
+  shows an inline `.composer-template-lock-tip` banner (auto-dismisses after 4s) instead of
+  switching the form to that template. **Keep `TEMPLATE_REP_GATE` in sync with the PHP/route
+  thresholds if those ever change** — there's no shared source of truth across the
+  PHP/TS boundary here, same caveat as the notification icon maps elsewhere in this file.
+- **Inline link-blocked warning**: Citizens (non-`patron`) typing a URL into a standard Post
+  now see a `.composer-link-warning` banner ("Links are a Moveee Pro feature…" + an Upgrade
+  link to `/register?upgrade=patron`) the moment `URL_RE` matches the text, and `canSubmit()`
+  disables the Post button while a link is present for non-Pro users — both mirror the
+  link-block rule already enforced server-side in `packages/utils/spam-protection.ts`
+  (`checkPostSpam()`'s literal `tier === "patron"` check, no reputation bypass for this one).
+  The link-preview fetch effect itself is also now gated on `isPro` so non-Pro users don't
+  fire a wasted preview request for a link that will be rejected anyway.
+- Both additions are CSS-duplicated across `apps/connect/app/globals.css` and
+  `apps/site/app/globals.css` (`.composer-template-pill--locked`, `.composer-template-lock`,
+  `.composer-template-lock-tip`, `.composer-link-warning`) — same duplication pattern the
+  rest of the composer CSS already follows in both files, since `SubmitPost.tsx` is a shared
+  component consumed from both apps (`PulseFeed.tsx`, `CategoryPage.tsx`).
+
 ---
 
 ## Community event RSVP (free, capacity-limited — June 2026)

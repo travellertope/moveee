@@ -57,6 +57,14 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
+// Templates gated by reputation tier (Moveee Pro always bypasses) — mirrors the
+// server-side gate in handle_submit_post() / apps/connect/app/api/community/submit/route.ts
+const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
+  poll:      { minRep: 2500, tierLabel: "Taste Maker" },
+  itinerary: { minRep: 2500, tierLabel: "Taste Maker" },
+  event:     { minRep: 500,  tierLabel: "Culture Contributor" },
+};
+
 const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
   post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
@@ -180,12 +188,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [eventRsvpEnabled, setEventRsvpEnabled] = useState(false);
   const [eventRsvpCapacity, setEventRsvpCapacity] = useState("");
 
+  const [lockedTip, setLockedTip] = useState<TemplateType | null>(null);
+  const lockedTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current); }, []);
+
   const user = session?.user as any;
   const isPro = user?.tier === "patron";
   const loggedIn = status === "authenticated";
   const maxChars = MAX_CHARS[template] ?? 3000;
   const charCount = text.length;
   const charRemaining = maxChars - charCount;
+  const reputation = Number(user?.reputation ?? 0);
+
+  function meetsTemplateGate(t: TemplateType): boolean {
+    const gate = TEMPLATE_REP_GATE[t];
+    if (!gate) return true;
+    return isPro || reputation >= gate.minRep;
+  }
 
   const fetchLinkPreview = useCallback((url: string) => {
     if (previewFetchRef.current) clearTimeout(previewFetchRef.current);
@@ -204,7 +223,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }, []);
 
   useEffect(() => {
-    if (template !== "post") return;
+    if (template !== "post" || !isPro) return;
     const match = text.match(URL_RE);
     if (match) {
       const url = match[0];
@@ -276,6 +295,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function handleTemplateChange(t: TemplateType) {
+    if (!meetsTemplateGate(t)) {
+      setLockedTip(t);
+      if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current);
+      lockedTipTimer.current = setTimeout(() => setLockedTip(null), 4000);
+      return;
+    }
+    setLockedTip(null);
     setTemplate(t);
     setError("");
     if (!lockedTag) {
@@ -304,6 +330,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
     switch (template) {
       case "post":
+        if (!isPro && URL_RE.test(text)) return false;
         return text.trim().length >= 1;
       case "quote":
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
@@ -512,18 +539,29 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     <div className="composer-card">
       {/* Template selector */}
       <div className="composer-template-bar">
-        {TEMPLATES.map(t => (
-          <button
-            key={t.slug}
-            type="button"
-            className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}`}
-            onClick={() => handleTemplateChange(t.slug)}
-          >
-            <span className="composer-template-emoji">{t.emoji}</span>
-            <span className="composer-template-label">{t.label}</span>
-          </button>
-        ))}
+        {TEMPLATES.map(t => {
+          const gate = TEMPLATE_REP_GATE[t.slug];
+          const locked = gate ? !meetsTemplateGate(t.slug) : false;
+          return (
+            <button
+              key={t.slug}
+              type="button"
+              className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}`}
+              onClick={() => handleTemplateChange(t.slug)}
+              title={locked && gate ? `${gate.tierLabel} or Moveee Pro required` : undefined}
+            >
+              <span className="composer-template-emoji">{t.emoji}</span>
+              <span className="composer-template-label">{t.label}</span>
+              {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
+            </button>
+          );
+        })}
       </div>
+      {lockedTip && TEMPLATE_REP_GATE[lockedTip] && (
+        <p className="composer-template-lock-tip">
+          {TEMPLATE_REP_GATE[lockedTip]!.tierLabel} ({TEMPLATE_REP_GATE[lockedTip]!.minRep.toLocaleString()} rep) or Moveee Pro required to use the {TEMPLATES.find(t => t.slug === lockedTip)?.label} template.
+        </p>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="composer-form-body">
@@ -778,8 +816,16 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               <ItineraryBuilder stops={itineraryStops} onChange={setItineraryStops} />
             )}
 
+            {/* Link blocked warning — Citizens can't post links (server-side gate in spam-protection.ts) */}
+            {template === "post" && !isPro && URL_RE.test(text) && (
+              <div className="composer-link-warning">
+                <span>Links are a Moveee Pro feature — this post will be rejected with a link in it.</span>
+                <a href="/register?upgrade=patron">Upgrade →</a>
+              </div>
+            )}
+
             {/* Link preview (post only) */}
-            {template === "post" && !imagePreview && linkPreview && (
+            {template === "post" && isPro && !imagePreview && linkPreview && (
               previewLoading ? (
                 <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
               ) : (
