@@ -621,6 +621,29 @@ since they don't need filter state).
   a live count — out of scope until there's a backend count to wire up
   (explicitly deferred — not part of the reviews/facets/sort build below).
 
+**Mobile-companion responsive styling (June 2026)** — added a dedicated block at
+the top of `shop.css`'s existing `@media (max-width: 640px)` query (right after
+the masthead/trust-strip rules) covering all archive sections: horizontally
+scrolling filter pills (`.filter-dd-row` gets `overflow-x: auto` + hidden
+scrollbar instead of wrapping), featured picks stack to 1 column, 2-up product
+grid (`.product-grid`/`.cat-grid`/`.vendor-cards` all `repeat(2, 1fr)`), shrunk
+`.pcard`/`.pimg` dimensions (460px→320px / 280px→160px) with proportional font
+sizes, compact "mini" vendor cards (`.vc-desc` hidden), non-overlapping member
+band, and a full-bleed edge-to-edge origins-bridge image. This is **CSS-only** —
+no changes to `ShopFilterBar.tsx`/`ShopFilterContext.tsx`; the filter dropdowns
+stay native `<select>` pills (just restyled to scroll), not real bottom sheets.
+**Two bugs caught and fixed in this pass**: (1) `.member-band-inner`'s
+`@media (max-width: 1200px)` override set `grid-template-columns: 1fr`, which
+was a no-op since the element's base `display` is `flex` not `grid` — changed
+to `flex-direction: column` (this also makes the pre-existing `.mb-img`/
+`.mb-float` mobile rules actually take effect for the first time). (2) `.padd`
+(the product-card "Add to Cart" button) is hover-revealed (`opacity: 0` until
+`:hover`), which never fires on touch devices — added `opacity: 1; transform:
+none;` inside the mobile override so the button is visible by default on
+mobile. **If you add a hover-revealed element anywhere in the shop UI, check
+whether it also needs a mobile always-visible override** — touch devices never
+trigger `:hover`.
+
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
 Built on top of the existing WooCommerce **native** comment-based review

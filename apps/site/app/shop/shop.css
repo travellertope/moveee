@@ -2047,7 +2047,7 @@
   .product-grid { grid-template-columns: 1fr 1fr; }
   .vendor-cards { grid-template-columns: 1fr 1fr; }
   .cat-grid { grid-template-columns: repeat(3, 1fr); }
-  .member-band-inner { grid-template-columns: 1fr; }
+  .member-band-inner { flex-direction: column; }
   .ob-inner { grid-template-columns: 1fr; }
   .sp-product-hero { grid-template-columns: 1fr; gap: 50px; }
   .sp-gallery-wrap { position: static; max-width: 620px; }
@@ -2090,9 +2090,78 @@
   .sp-process-header h3 { font-size: 38px; }
 }
 @media (max-width: 640px) {
-  .product-grid { grid-template-columns: 1fr; }
+  /* ── Mobile companion (mockup Frame 13) ── */
+
+  /* Masthead — centered column */
+  .shop-head-inner { align-items: center; text-align: center; padding: 28px 20px 24px; }
+  .sh-rule { display: block; width: 32px; height: 1px; margin: 10px 0; }
+  .sh-desc { display: block; max-width: 100%; text-align: center; font-size: 13px; }
+
+  /* Trust strip — tighten padding */
+  .trust-strip-inner { padding: 18px 16px; gap: 16px 14px; }
+  .trust-desc { padding-left: 0; }
+
+  /* Filter bar — horizontally scrolling pills instead of wrapping */
+  .filter-bar--dd .filter-bar-inner { padding: 10px 16px; }
+  .filter-dd-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .filter-dd-row::-webkit-scrollbar { display: none; }
+  .filter-dd-pill,
+  .filter-dd-stock { flex-shrink: 0; }
+  .filter-right { flex-wrap: wrap; padding: 0 16px; width: 100%; justify-content: space-between; border-left: none; }
+  .filter-search-row { padding: 12px 16px; }
+  .filter-facets,
+  .filter-chips { padding: 12px 16px; }
+
+  /* Featured editorial picks — large card stacks above the 2×2 grid */
+  .featured-section { padding: 32px 20px; }
+  .featured-grid { grid-template-columns: 1fr; gap: 24px; }
+  .feat-name { font-size: 17px; }
+  .feat-large .feat-name { font-size: 20px; }
+
+  /* Main product grid — 2-up like the mockup, not single column */
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
-  .featured-grid { grid-template-columns: 1fr; }
+
+  .pcard { height: 320px; }
+  .pcard .pimg { height: 160px; margin-bottom: 10px; }
+  .pcard-body { padding: 0 10px; }
+  .pcard .pvendor { font-size: 8px; }
+  .pcard .pname { font-size: 13px; }
+  .pcard .pprice { font-size: 9px; }
+  .pcard .pprice .main { font-size: 14px; }
+  .pcard .pprice .pro { font-size: 8px; }
+  .pcard .prating { font-size: 8px; }
+  .pcard .padd,
+  .pcard .padd--sold { padding: 9px; font-size: 8px; opacity: 1; transform: none; }
+
+  /* Vendor strip — compact 2-up "mini" maker cards */
+  .shop-vendor-cards { padding: 40px 20px; }
+  .vendor-cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .vc .vc-img { height: 100px; }
+  .vc > h4, .vc .vc-loc, .vc .vc-count { padding-left: 12px; padding-right: 12px; }
+  .vc h4 { font-size: 15px; margin-top: 12px; }
+  .vc .vc-desc { display: none; }
+  .vc .vc-count { padding-top: 10px; margin-bottom: 12px; font-size: 11px; }
+
+  /* Member band — full-width, non-overlapping stat card */
+  .shop-member-band { padding: 40px 20px; }
+  .mb-left, .mb-right { text-align: left; }
+  .mb-perks { gap: 1px; }
+  .mb-btn { display: block; width: 100%; text-align: center; max-width: 240px; margin: 0 auto; }
+  .mb-img { height: 240px; margin-bottom: 64px; }
+  .mb-float { left: 0; right: 0; width: auto; bottom: -40px; }
+
+  /* Origins bridge (closing) — full-bleed image, no inset/radius on mobile */
+  .shop-origins-bridge { padding: 0; }
+  .ob-inner { grid-template-columns: 1fr; border: none; border-radius: 0; border-bottom: 1px solid var(--rule); }
+  .ob-img { min-height: 200px; margin: 0; border-radius: 0; }
+  .ob-content { padding: 32px 24px; text-align: left; }
 
   /* ── Product page mobile fixes ── */
   /* Contain the entire product info column */
