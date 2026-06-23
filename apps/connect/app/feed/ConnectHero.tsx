@@ -26,7 +26,7 @@ export default function ConnectHero() {
         </div>
       </div>
       <nav className="mco-section-nav" aria-label="Connect sections">
-        <a href="#feed" className="mco-nav-link">Pulse Feed</a>
+        <a href="#feed" className="mco-nav-link mco-nav-link--active">Pulse Feed</a>
         <Link href="/connect/people" className="mco-nav-link">People Near Me</Link>
         <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
       </nav>

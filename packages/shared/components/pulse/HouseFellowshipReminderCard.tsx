@@ -42,31 +42,46 @@ export default function HouseFellowshipReminderCard() {
         alignItems: "center",
         justifyContent: "space-between",
         gap: "1rem",
-        background: "#14110d",
-        color: "#f3ece0",
+        background: "var(--paper-warm, #f3ece0)",
         borderRadius: 12,
-        padding: "1rem 1.25rem",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        borderLeft: "4px solid var(--ochre, #c5491f)",
+        padding: "20px",
         textDecoration: "none",
         marginBottom: "1.25rem",
       }}
     >
-      <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
         <span style={{
-          fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em",
-          textTransform: "uppercase", color: "#b38238",
+          flexShrink: 0,
+          width: 48, height: 48,
+          borderRadius: "50%",
+          background: "#ffffff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.3rem",
         }}>
-          House Fellowship · Today
+          🫂
         </span>
-        <p style={{ margin: "0.35rem 0 0", fontSize: "0.95rem", fontWeight: 600 }}>
-          {cluster.name} meets today{cluster.meetingTime ? ` at ${cluster.meetingTime}` : ""} — check in when you arrive.
-        </p>
+        <div>
+          <p style={{
+            margin: 0, fontFamily: "var(--font-serif, 'Fraunces', serif)",
+            fontWeight: 700, fontSize: "0.95rem", color: "var(--ink, #14110d)",
+          }}>
+            {cluster.name} meets today{cluster.meetingTime ? ` at ${cluster.meetingTime}` : ""}
+          </p>
+          <p style={{
+            margin: "0.25rem 0 0", fontSize: "0.8rem", color: "var(--ink-soft, #3a342b)",
+          }}>
+            Check in when you arrive.
+          </p>
+        </div>
       </div>
       <span style={{
-        flexShrink: 0, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em",
-        textTransform: "uppercase", color: "#14110d", background: "#b38238",
-        padding: "0.5rem 0.9rem", borderRadius: 6, whiteSpace: "nowrap",
+        flexShrink: 0, fontFamily: "var(--font-sans, 'DM Sans', sans-serif)",
+        fontSize: "0.85rem", fontWeight: 700, color: "var(--ochre, #c5491f)",
+        whiteSpace: "nowrap",
       }}>
-        Check in →
+        View →
       </span>
     </Link>
   );
