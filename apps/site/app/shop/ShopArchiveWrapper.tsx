@@ -10,7 +10,9 @@ import {
 } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
-import ShopBrowser from "./components/ShopBrowser";
+import { ShopFilterProvider } from "./components/ShopFilterContext";
+import ShopFilterBar from "./components/ShopFilterBar";
+import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
 
 const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -112,7 +114,7 @@ export default async function ShopArchiveWrapper({
   }
   if (extraResult.status === "fulfilled" && products.length) {
     const extraNodes = extraResult.value?.products?.nodes ?? [];
-    const extraById = new Map(extraNodes.map((n: any) => [n.databaseId, n]));
+    const extraById = new Map<number, any>(extraNodes.map((n: any) => [n.databaseId, n]));
     products = products.map((p: any) => {
       const extra = extraById.get(p.databaseId);
       return extra
@@ -205,131 +207,131 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 3. FILTER BAR + MAIN PRODUCT GRID ── */}
-      <ShopBrowser
-        products={products}
-        categories={categories.slice(0, 8)}
-        isFiltered={isFiltered}
-        activeLabel={activeLabel}
-      />
+      <ShopFilterProvider products={products}>
+        {/* ── 3. FILTER BAR ── */}
+        <ShopFilterBar categories={categories.slice(0, 8)} activeCategorySlug={category} />
 
-      {/* ── 3. TICKER ── */}
-      <div className="ticker-wrap">
-        <div className="ticker-track" aria-hidden>
-          {TICKER_ITEMS.map((item, i) => (
-            <span key={i} className={item === "★" ? "a" : undefined}>
-              {item}
-            </span>
-          ))}
-          {TICKER_ITEMS.map((item, i) => (
-            <span key={`b${i}`} className={item === "★" ? "a" : undefined}>
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 4. FEATURED EDITORIAL PICKS ── */}
-      {featured.length > 0 && (
-        <section className="featured-section">
-          <div className="featured-header">
-            <h2 className="feat-title">
-              Editorial <em>Picks</em>
-            </h2>
-            <Link href="/shop/edit" className="feat-all">
-              The Moveee Edit →
-            </Link>
+        {/* ── 3b. TICKER ── */}
+        <div className="ticker-wrap">
+          <div className="ticker-track" aria-hidden>
+            {TICKER_ITEMS.map((item, i) => (
+              <span key={i} className={item === "★" ? "a" : undefined}>
+                {item}
+              </span>
+            ))}
+            {TICKER_ITEMS.map((item, i) => (
+              <span key={`b${i}`} className={item === "★" ? "a" : undefined}>
+                {item}
+              </span>
+            ))}
           </div>
-          <div className="featured-grid">
-            {/* Large card */}
-            {featured[0] && (
-              <Link href={`/shop/${featured[0].slug}`} className="feat-card feat-large">
-                <div className="feat-img-wrap">
-                  {featured[0].image?.sourceUrl ? (
-                    <Image
-                      src={featured[0].image.sourceUrl}
-                      alt={featured[0].image.altText || featured[0].name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "var(--indigo-deep, #0f1826)" }} />
-                  )}
-                  <div className="feat-pip"><span>★</span> Vetted</div>
-                  {isNew(featured[0]) && <div className="feat-new">New</div>}
-                </div>
-                <div className="feat-info">
-                  {vendorName(featured[0]) && (
-                    <span className="feat-vendor">{vendorName(featured[0])}</span>
-                  )}
-                  <span className="feat-name">
-                    {featured[0].name}
-                  </span>
-                  {featured[0].price && (
-                    <span className="feat-price">{featured[0].price}</span>
-                  )}
-                </div>
-              </Link>
-            )}
+        </div>
 
-            {/* 2×2 grid of small cards */}
-            <div className="feat-grid">
-              {featured.slice(1, 5).map((p) => (
-                <Link key={p.id} href={`/shop/${p.slug}`} className="feat-card feat-small">
+        {/* ── 4. FEATURED EDITORIAL PICKS ── */}
+        {featured.length > 0 && (
+          <section className="featured-section">
+            <div className="featured-header">
+              <h2 className="feat-title">
+                Editorial <em>Picks</em>
+              </h2>
+              <Link href="/shop/edit" className="feat-all">
+                The Moveee Edit →
+              </Link>
+            </div>
+            <div className="featured-grid">
+              {/* Large card */}
+              {featured[0] && (
+                <Link href={`/shop/${featured[0].slug}`} className="feat-card feat-large">
                   <div className="feat-img-wrap">
-                    {p.image?.sourceUrl ? (
+                    {featured[0].image?.sourceUrl ? (
                       <Image
-                        src={p.image.sourceUrl}
-                        alt={p.image.altText || p.name}
+                        src={featured[0].image.sourceUrl}
+                        alt={featured[0].image.altText || featured[0].name}
                         fill
                         style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                      <div style={{ width: "100%", height: "100%", background: "var(--indigo-deep, #0f1826)" }} />
                     )}
-                    {isNew(p) && <div className="feat-new">New</div>}
+                    <div className="feat-pip"><span>★</span> Vetted</div>
+                    {isNew(featured[0]) && <div className="feat-new">New</div>}
                   </div>
                   <div className="feat-info">
-                    {vendorName(p) && (
-                      <span className="feat-vendor">{vendorName(p)}</span>
+                    {vendorName(featured[0]) && (
+                      <span className="feat-vendor">{vendorName(featured[0])}</span>
                     )}
-                    <span className="feat-name">{p.name}</span>
-                    {p.price && <span className="feat-price">{p.price}</span>}
+                    <span className="feat-name">
+                      {featured[0].name}
+                    </span>
+                    {featured[0].price && (
+                      <span className="feat-price">{featured[0].price}</span>
+                    )}
                   </div>
                 </Link>
-              ))}
+              )}
+
+              {/* 2×2 grid of small cards */}
+              <div className="feat-grid">
+                {featured.slice(1, 5).map((p) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="feat-card feat-small">
+                    <div className="feat-img-wrap">
+                      {p.image?.sourceUrl ? (
+                        <Image
+                          src={p.image.sourceUrl}
+                          alt={p.image.altText || p.name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                        />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                      )}
+                      {isNew(p) && <div className="feat-new">New</div>}
+                    </div>
+                    <div className="feat-info">
+                      {vendorName(p) && (
+                        <span className="feat-vendor">{vendorName(p)}</span>
+                      )}
+                      <span className="feat-name">{p.name}</span>
+                      {p.price && <span className="feat-price">{p.price}</span>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* ── 5. EDITORIAL BRIDGE ── */}
-      <div className="ed-bridge">
-        <div className="ed-bridge-inner">
-          <div className="eb-label">As Seen In</div>
-          <div className="eb-title">
-            <em>The Moveee Edit</em>
-            <span className="eb-meta">Issue 014 · Craft &amp; Makers</span>
+        {/* ── 5. EDITORIAL BRIDGE (Magazine) ── */}
+        <div className="ed-bridge">
+          <div className="ed-bridge-inner">
+            <div className="eb-label">As Seen In</div>
+            <div className="eb-title">
+              <em>The Moveee Edit</em>
+              <span className="eb-meta">Issue 014 · Craft &amp; Makers</span>
+            </div>
+            <Link href="/magazine" className="eb-cta">
+              Read the Issue →
+            </Link>
           </div>
-          <Link href="/magazine" className="eb-cta">
-            Read the Issue →
-          </Link>
         </div>
-      </div>
 
-      {/* ── 7. SECOND EDITORIAL BRIDGE ── */}
-      <div className="ed-bridge">
-        <div className="ed-bridge-inner">
-          <div className="eb-label">Origins Journal</div>
-          <div className="eb-title">
-            Where things <em>come from</em>
-            <span className="eb-meta">Stories from the makers behind the objects</span>
+        {/* ── 6. MAIN PRODUCT GRID ── */}
+        <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
+
+        {/* ── 7. SECOND EDITORIAL BRIDGE (Origins, mid-page) ── */}
+        <div className="ed-bridge ed-bridge--origins">
+          <div className="ed-bridge-inner">
+            <div className="eb-label">Origins Journal</div>
+            <div className="eb-title">
+              Where things <em>come from</em>
+              <span className="eb-meta">Stories from the makers behind the objects</span>
+            </div>
+            <Link href="/journeys" className="eb-cta">
+              Explore Origins →
+            </Link>
           </div>
-          <Link href="/journeys" className="eb-cta">
-            Explore Origins →
-          </Link>
         </div>
-      </div>
+      </ShopFilterProvider>
 
       {/* ── 8. CATEGORY GRID ── */}
       <section className="shop-cat-grid">

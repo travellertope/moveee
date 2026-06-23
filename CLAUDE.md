@@ -562,20 +562,37 @@ Both share `cms.themoveee.com` (WordPress) as the backend.
 | 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
 | 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
-### Lifestyle Shop archive page (Site A, redesigned June 2026)
+### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
 `products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
-static sections (head, ticker, featured picks, editorial bridges, category
-grid, vendor strip, member band, origins bridge). The filter bar and the main
-product grid live together in one client component:
-**`apps/site/app/shop/components/ShopBrowser.tsx`** (`"use client"`) — it
-owns all interactive state (search, price-band facets, tag facets, in-stock
-toggle, sort, grid/list view) and renders the grid itself, since filter state
-and the product list must share one React state tree. The previous
-`ShopFilterBar.tsx` (deleted) only rendered the filter UI and exposed
-`onSortChange`/`onViewChange` props that the parent never actually passed —
-sort and view-toggle were dead UI before this change.
+page in this exact order: 1. Shop Head, 2. Trust Strip, [inside
+`ShopFilterProvider`] 3. `ShopFilterBar`, 3b. Ticker, 4. Featured Editorial
+Picks, 5. Editorial Bridge (Magazine), 6. `ShopProductGrid`, 7. Editorial
+Bridge (Origins, `.ed-bridge--origins`), [outside provider] 8. Category Grid,
+9. Vendor Strip ("Meet the Makers"), 10. Member Band (Moveee Pro), 11. Origins
+Bridge Closing (full image+copy block, `.ob-*` classes — visually distinct
+from the compact text-only `.ed-bridge` banners in steps 5/7).
+
+**Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
+mockup's filter bar and product grid aren't adjacent (other sections sit
+between them), so state had to move to a shared React Context instead of one
+combined client component:
+- `components/ShopFilterContext.tsx` — `ShopFilterProvider` + `useShopFilter()`
+  hook; owns all filter/sort/view state and the derived `filtered` list, plus
+  shared helper exports (`vendorName`, `parsePrice`, `formatGBP`, `isNew`,
+  `isOutOfStock`, `averageRating`, `reviewCount`, `PRICE_BANDS`).
+- `components/ShopFilterBar.tsx` — renders the filter dropdown pills, search
+  toggle, sort select, view toggle, and active-filter chips. Pure consumer of
+  `useShopFilter()`, no local state.
+- `components/ShopProductGrid.tsx` — renders the actual product cards from
+  `filtered`. Also a pure consumer of `useShopFilter()`.
+
+Both `ShopFilterBar` and `ShopProductGrid` must be rendered inside
+`ShopFilterProvider` (see the section order above — sections 3 through 7 are
+nested inside the provider in `ShopArchiveWrapper.tsx`; the category
+grid/vendor strip/member band/origins-closing sections after it are outside,
+since they don't need filter state).
 
 - Facets: price bands (4 fixed ranges), tag pills derived from `productTags`
   (excluding the `"new"` tag slug), **Material pills** (from the
