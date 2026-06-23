@@ -2,8 +2,7 @@ import React from "react";
 import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES, GET_ALL_MAKERS } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
-import ShopFilterBar from "./components/ShopFilterBar";
-import AddToCartButton from "@/components/AddToCartButton";
+import ShopBrowser from "./components/ShopBrowser";
 import "./shop.css";
 
 const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -59,15 +58,11 @@ function isNew(p: any): boolean {
   return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
 }
 
-function isOutOfStock(p: any): boolean {
-  return p.stockStatus === "OUT_OF_STOCK";
-}
-
 const TICKER_ITEMS = [
   "Vetted Makers", "★", "Ethical Production", "★",
-  "Free Returns", "★", "Connect Members Save 10%", "★",
+  "Free Returns", "★", "Moveee Pro Members Save 10%", "★",
   "Vetted Makers", "★", "Ethical Production", "★",
-  "Free Returns", "★", "Connect Members Save 10%", "★",
+  "Free Returns", "★", "Moveee Pro Members Save 10%", "★",
 ];
 
 const FALLBACK_CATEGORIES = [
@@ -124,7 +119,6 @@ export default async function ShopArchiveWrapper({
 
   // Featured = first 5 (1 large + 2×2 grid), grid = rest
   const featured = products.slice(0, 5);
-  const gridProducts = products.slice(5);
 
   return (
     <>
@@ -147,10 +141,12 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 2. FILTER BAR ── */}
-      <ShopFilterBar
+      {/* ── 2. FILTER BAR + MAIN PRODUCT GRID ── */}
+      <ShopBrowser
+        products={products}
         categories={categories.slice(0, 8)}
-        productCount={products.length}
+        isFiltered={isFiltered}
+        activeLabel={activeLabel}
       />
 
       {/* ── 3. TICKER ── */}
@@ -257,56 +253,6 @@ export default async function ShopArchiveWrapper({
         </div>
       </div>
 
-      {/* ── 6. MAIN PRODUCT GRID ── */}
-      <section className="shop-grid-section">
-        <div className="sec-label">
-          {isFiltered ? activeLabel : "All Products"} — {products.length} pieces
-        </div>
-        {products.length === 0 ? (
-          <p style={{ color: "var(--mute)", fontFamily: "'Fraunces', serif", fontStyle: "italic" }}>
-            No products found.
-          </p>
-        ) : (
-          <div className="product-grid">
-            {(isFiltered ? products : gridProducts).map((p: any) => {
-              const vname = vendorName(p);
-              const outOfStock = isOutOfStock(p);
-              return (
-                <Link key={p.id} href={`/shop/${p.slug}`} className="pcard" style={{ textDecoration: "none", color: "inherit" }}>
-                  <div className="pimg">
-                    {p.image?.sourceUrl ? (
-                      <Image
-                        src={p.image.sourceUrl}
-                        alt={p.image.altText || p.name}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                    )}
-                    <div className="vetted-pip"><span className="s">★</span> Vetted</div>
-                    {isNew(p) && <div className="new-pip">New</div>}
-                    {outOfStock && (
-                      <div className="sold-pip"><span>Sold Out</span></div>
-                    )}
-                  </div>
-                  {vname && <div className="pvendor">{vname}</div>}
-                  <div className="pname">{p.name}</div>
-                  {p.price && (
-                    <div className="pprice">
-                      <span className="main">{p.price}</span>
-                    </div>
-                  )}
-                  {!outOfStock && p.databaseId && (
-                    <AddToCartButton productId={p.databaseId} />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
       {/* ── 7. SECOND EDITORIAL BRIDGE ── */}
       <div className="ed-bridge">
         <div className="ed-bridge-inner">
@@ -393,13 +339,13 @@ export default async function ShopArchiveWrapper({
         );
       })()}
 
-      {/* ── 10. CONNECT MEMBER BAND ── */}
+      {/* ── 10. MOVEEE PRO MEMBER BAND ── */}
       <section className="shop-member-band">
         <div className="member-band-inner">
           <div className="mb-left">
-            <h3>Connect <em>Members</em></h3>
+            <h3>Moveee <em>Pro</em></h3>
             <p>
-              Join Moveee for early access to new makers, exclusive
+              Upgrade to Moveee Pro for early access to new makers, exclusive
               editions, and 10% off every purchase in the shop.
             </p>
             <div className="mb-perks">
@@ -416,7 +362,7 @@ export default async function ShopArchiveWrapper({
                 </div>
               ))}
             </div>
-            <Link href="/feed" className="mb-btn">Join Moveee →</Link>
+            <Link href="/register?tier=patron" className="mb-btn">Upgrade to Pro →</Link>
           </div>
           <div className="mb-right">
             <div className="mb-img" />

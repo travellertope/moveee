@@ -586,6 +586,41 @@ Both share `cms.themoveee.com` (WordPress) as the backend.
 | 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
 | 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
+### Lifestyle Shop archive page (Site A, redesigned June 2026)
+
+`apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
+`products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
+static sections (head, ticker, featured picks, editorial bridges, category
+grid, vendor strip, member band, origins bridge). The filter bar and the main
+product grid live together in one client component:
+**`apps/site/app/shop/components/ShopBrowser.tsx`** (`"use client"`) — it
+owns all interactive state (search, price-band facets, tag facets, in-stock
+toggle, sort, grid/list view) and renders the grid itself, since filter state
+and the product list must share one React state tree. The previous
+`ShopFilterBar.tsx` (deleted) only rendered the filter UI and exposed
+`onSortChange`/`onViewChange` props that the parent never actually passed —
+sort and view-toggle were dead UI before this change.
+
+- Facets: price bands (4 fixed ranges) and tag pills derived from
+  `productTags` (excluding the `"new"` tag slug) — there is no "material"
+  taxonomy in the schema, so tags are the closest real facet available.
+- Pro price (10% off) is computed client-side from the existing `price`
+  string (same `replace(/<[^>]*>/g,"").replace(/[^0-9.]/g,"")` parse pattern
+  used in `app/shop/[slug]/page.tsx`) rather than fetched from
+  `moveeeMeta.memberPrice` — that field lives in `wp.ts`'s `GET_PRODUCT_EXTRA`
+  query, which is **deliberately kept separate** from the shared
+  `PRODUCT_FIELDS_FRAGMENT` so the product page still renders if the
+  moveee-graphql-bridge plugin isn't active; merging it into the listing
+  fragment would risk failing the whole shop grid query in any environment
+  where that plugin/field isn't available. Don't merge them — compute Pro
+  price client-side instead, as done here.
+- Every card shows a static "New listing" placeholder instead of a star
+  rating — there is no reviews data model for shop products yet.
+- The member-band section now says "Moveee Pro" (was stale "Connect
+  Members" copy) and its CTA links to `/register?tier=patron`. The "2,400
+  Members & growing" stat in that section is still a hardcoded literal, not
+  a live count — out of scope until there's a backend count to wire up.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
@@ -1305,6 +1340,37 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 - Category field now present (maps to `culture_event_categories` taxonomy)
 - Organiser field: `DirectorySearch` component, typeFilter="person"
 - Image upload via WP Media API (not URL input)
+
+### Composer client-side gating UI (web, June 2026)
+
+Two client-side affordances added to `packages/shared/components/pulse/SubmitPost.tsx` to
+surface server-side gates *before* submit instead of only after a 403 — previously a user
+could fill out an entire Poll/Itinerary/Event form, or type a link into a standard Post, and
+only find out it was rejected after pressing Post.
+
+- **Reputation-gated template pills**: `TEMPLATE_REP_GATE` maps `poll`/`itinerary` → Taste
+  Maker (2,500 rep) and `event` → Culture Contributor (500 rep), mirroring the existing
+  server-side gate in `handle_submit_post()` (mobile) and
+  `apps/connect/app/api/community/submit/route.ts` (web) — Moveee Pro always bypasses, same
+  as the server. `meetsTemplateGate()` checks `session.user.reputation` against this map;
+  pills that fail the gate render dimmed with a 🔒 and a `title` tooltip, and clicking one
+  shows an inline `.composer-template-lock-tip` banner (auto-dismisses after 4s) instead of
+  switching the form to that template. **Keep `TEMPLATE_REP_GATE` in sync with the PHP/route
+  thresholds if those ever change** — there's no shared source of truth across the
+  PHP/TS boundary here, same caveat as the notification icon maps elsewhere in this file.
+- **Inline link-blocked warning**: Citizens (non-`patron`) typing a URL into a standard Post
+  now see a `.composer-link-warning` banner ("Links are a Moveee Pro feature…" + an Upgrade
+  link to `/register?upgrade=patron`) the moment `URL_RE` matches the text, and `canSubmit()`
+  disables the Post button while a link is present for non-Pro users — both mirror the
+  link-block rule already enforced server-side in `packages/utils/spam-protection.ts`
+  (`checkPostSpam()`'s literal `tier === "patron"` check, no reputation bypass for this one).
+  The link-preview fetch effect itself is also now gated on `isPro` so non-Pro users don't
+  fire a wasted preview request for a link that will be rejected anyway.
+- Both additions are CSS-duplicated across `apps/connect/app/globals.css` and
+  `apps/site/app/globals.css` (`.composer-template-pill--locked`, `.composer-template-lock`,
+  `.composer-template-lock-tip`, `.composer-link-warning`) — same duplication pattern the
+  rest of the composer CSS already follows in both files, since `SubmitPost.tsx` is a shared
+  component consumed from both apps (`PulseFeed.tsx`, `CategoryPage.tsx`).
 
 ---
 

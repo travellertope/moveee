@@ -577,6 +577,50 @@ h1, h2, h3, h4 {
 .composer-template-emoji { font-size: 0.85rem; }
 .composer-template-label { letter-spacing: 0.03em; }
 
+.composer-template-pill--locked {
+  cursor: pointer;
+  opacity: 0.55;
+  color: #a39a8b;
+}
+.composer-template-pill--locked:hover {
+  border-color: #e0d8ce;
+  background: #fff;
+  color: #a39a8b;
+}
+.composer-template-lock { font-size: 0.65rem; }
+
+.composer-template-lock-tip {
+  margin: 4px 1.25rem 0;
+  padding: 0.5rem 0.7rem;
+  background: #faf3e6;
+  border: 1px solid #e3d3ad;
+  border-left: 3px solid var(--ochre, #b38238);
+  border-radius: 4px;
+  color: #6b5a36;
+  font-size: 0.76rem;
+}
+
+.composer-link-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: #faf3e6;
+  border: 1px solid #e3d3ad;
+  border-left: 3px solid var(--ochre, #b38238);
+  border-radius: 4px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.78rem;
+  color: #6b5a36;
+}
+.composer-link-warning a {
+  color: var(--ochre, #b38238);
+  font-weight: 600;
+  text-decoration: underline;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Form body & fields */
 .composer-form-body { padding: 1rem 1.25rem 0.9rem; }
 .composer-fields {
