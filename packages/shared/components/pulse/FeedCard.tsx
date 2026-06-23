@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { MessageCircle, Flag } from "lucide-react";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
@@ -784,9 +785,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
@@ -797,9 +796,9 @@ export default function FeedCard({
                 <button
                   onClick={() => setReportState("confirm")}
                   title="Report this post"
-                  style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
+                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", flexShrink: 0, lineHeight: 1 }}
                 >
-                  ⚑
+                  <Flag size={13} strokeWidth={1.8} />
                 </button>
               )}
               {reportState === "confirm" && (
@@ -978,9 +977,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
