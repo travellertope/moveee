@@ -4119,3 +4119,225 @@ Output 6 frames: Frame 1 (Color Tokens), Frame 2 (Typography), Frame 3
 (Navigation, desktop + mobile companion).
 
 ---
+
+## 17. AUTHENTICATION FLOW — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+Auth lives entirely on Site B (`apps/connect`) — Site A never shows login/register UI; it
+redirects auth paths to web.themoveee.com via `proxy.ts`. Per the brand table, this surface is
+just **Moveee** (no "Connect" qualifier) — but note the live copy in code still reads
+`"The Moveee — Culture Community"`, not the simpler current brand line; flag this as a DEV note
+rather than silently correcting it, since the prompt must match what's actually deployed.
+
+### Why this section exists
+Mobile §2 (Splash & Onboarding, Login & Register) is a fully illustrated, paper-warm-background,
+pill-button, icon-rich flow. The real web auth flow is the **opposite extreme**: five standalone
+page files (`login/page.tsx`, `register/page.tsx`, `register/complete/page.tsx`,
+`forgot-password/page.tsx`, `reset-password/page.tsx`), each with **zero shared layout chrome**
+(no header/footer — their `layout.tsx` files are bare `robots: noindex` passthroughs), **zero
+external stylesheet** (no `auth.css` exists anywhere in the repo), and **all styling as inline
+`React.CSSProperties` objects** defined in a local `styles`/`s` const per file — no Tailwind
+classes, no CSS Modules, no `className` usage at all in these five files. Every page renders the
+same single centered card-on-white pattern. There's also no splash screen or onboarding carousel
+on web — those are app-install-time mobile concepts with no web equivalent.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Eyebrow (all pages except the reset-password invalid-link state): `The Moveee — Culture Community`
+- Login headline: `Sign in` (default) / `You're in!` (after `?registered=1`)
+- Login subheadline: `Welcome back. Sign in to access your community and member perks.` /
+  `Your account is ready. Sign in to access your dashboard and member perks.`
+- Register headline: `Join the Community`
+- Register subheadline: `Free to join. Enter a few details and we'll send you a verification link.`
+- Check-email headline: `Check your inbox`
+- Register/complete welcome: `Welcome, {displayName || username}!`
+- Step 2 headline: `What moves you?`
+- Step 3 headline: `Choose your membership` / `Upgrade to Moveee Pro`
+- Forgot-password headline: `Reset your password`
+- Reset-password headline: `Set a new password`
+
+<!-- DEV: All five inline-style "design tokens" repeated nearly verbatim per file (since
+there's no shared stylesheet) — treat these literal values as the de facto auth design system:
+page bg #ffffff, card bg #fffdf8, card border 1px solid #e8e0d4, card radius 4px, heading
+Georgia serif weight 300 26–28px, body font -apple-system/Segoe UI stack, eyebrow 11px
+letter-spacing 0.2em uppercase color #7a6f5c, primary button bg #14110d / white text / radius 3
+/ uppercase / letter-spacing 0.08–0.1em, secondary/outline button transparent bg + 1px solid
+rgba(42,36,28,.25) or #d4cbbf border, input border #d4cbbf / radius 3 / padding 10px 14px,
+error block color #c0392b / bg #fef2f2 / border rgba(192,57,43,.15), mute/footer text #7a6f5c,
+inline link color #14110d underlined, required-asterisk color #c5491f (register/complete only).
+This is a deliberately different (non-brand-token, Georgia-serif, no-Fraunces) visual language
+from the rest of the web app — call this out as a real inconsistency, not a design choice to
+replicate elsewhere. -->
+
+<!-- DEV: Card maxWidth varies by page — login 440px, register 480px, register/complete 580px
+(wider, to fit the 2-column tier grid in Step 3) — use the real widths, do not standardize them. -->
+
+<!-- DEV: A dead duplicate file exists at apps/connect/app/login/login/page.tsx — a stale copy
+missing the Google button, only reachable at the literal URL /login/login (nothing links to
+it). Do not include it as a frame; it's flagged for cleanup, not part of the live UX. -->
+
+<!-- DEV: Login page form fields are "Username or Email" + "Password" — not split into separate
+email/username inputs the way mobile's design implies. Register page email placeholder is
+literally "you@example.com", username placeholder "@handle". -->
+
+<!-- DEV: Google Sign-In button on login: literal text "Continue with Google" preceded by a
+plain text span containing the letter "G" — there is no Google logo SVG/image. It sits below
+the credentials form, below a single "or" divider, below the Passkey button (order:
+password form → divider → Passkey → Google) — visually identical outline-button chrome to the
+Passkey button (both secondary/outline style; only "Sign in →" is the filled primary CTA).
+Triggered via next-auth's `signIn("google", { callbackUrl })` — no client-side Google SDK call
+on web (unlike mobile's native `@react-native-google-signin/google-signin` SDK). -->
+
+<!-- DEV: register/complete is internally a 4-state machine (verify/about/interests/membership/
+done) but the visible ProgressBar only covers 3 steps — labels exactly
+["About You", "Your Interests", "Membership"], rendered as filled-black circular numbered nodes
+(✓ when passed) joined by a track line with a black fill bar overlay; percent =
+(currentStepIdx / 2) * 100 → 0%/50%/100%. The "verify" step (token validation spinner/error) and
+terminal "done" state are NOT part of the visible step indicator — "verify" is skipped entirely
+when arriving via ?upgrade=patron. -->
+
+<!-- DEV: Step 2 interest grid renders from the real `INTERESTS` array in
+lib/interest-mappings.ts (the 18-slug canonical taxonomy) as a 3-column emoji+label toggle grid
+— requires >= 3 selections to continue, with a live counter: "{n} selected — {3-n} more needed"
+or "{n} selected ✓". -->
+
+<!-- DEV: Step 3 tier cards must show the real verbatim perk bullets — Citizen: "Access to free
+member articles" / "Access to online events" / "GetMeLit & Culture Drop newsletters" /
+"Community forum & Pulse". Moveee Pro: "Everything in Citizen" / "All patron-only articles" /
+"10% shop discount + early access" / "Cash out credits · 100 credits/day · Pro badge". Pricing
+is currency-aware (NGN or USD based on residence) with a "Switch" toggle and a Monthly/Annually
+billing toggle showing a savings tag ("Save ₦9,000" or "Save $8"). -->
+
+<!-- DEV: Forgot-password's success state is shown unconditionally regardless of whether the
+account actually exists — anti-enumeration by design (verbatim code comment: "always show
+success to avoid enumeration"). Copy must read "If an account exists for {email}, you'll
+receive a reset link shortly..." not a confirmation that an account was found. -->
+
+<!-- DEV: Reset-password's invalid-link state uses a shorter eyebrow, "The Moveee" — without the
+"— Culture Community" suffix used everywhere else. This is a real inconsistency in the code,
+not an error in this prompt — replicate it as-is. -->
+
+<!-- DEV: PasskeyPrompt.tsx (packages/shared/components) is NOT mounted anywhere in apps/connect
+— grep confirms its only web-package usage is the component file itself; it's actually
+mobile-only in current usage (apps/mobile/src/components/ui/Overlays.tsx) despite living in the
+shared web package. Do not include a passkey *setup modal* anywhere in this auth-flow frame set.
+PasskeyBanner.tsx IS used on web, but only post-login on the /member dashboard (not part of the
+auth flow itself) — see Frame 6 below for why it's included anyway, as a "where passkeys
+actually appear on web" callout. -->
+
+### PROMPT 17 — Authentication Flow (Desktop 1440px + Mobile 390px)
+
+```
+You are a senior web UX/UI designer recreating the REAL, currently-deployed Moveee Connect
+(web.themoveee.com, Site B) authentication flow — not a redesign. These pages have no shared
+header/footer chrome, no external stylesheet, and no brand-token CSS variables (--ink/--ochre/
+--paper etc. are NOT used here) — every value below is a literal inline style pulled directly
+from the live code. Recreate this fragmented, Georgia-serif, white-and-cream aesthetic exactly;
+do not "fix" it into the Fraunces/DM-Sans brand system used elsewhere in the app.
+
+Shared page chrome (every frame): full-viewport white (#ffffff) background, single centered
+card: background #fffdf8, border 1px solid #e8e0d4, border-radius 4px, no shadow. Heading font
+Georgia, serif, weight 300. Body font -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif.
+No logo image, no illustration anywhere — purely typographic, with an eyebrow line
+"The Moveee — Culture Community" (11px, letter-spacing 0.2em, uppercase, color #7a6f5c) standing
+in for a wordmark.
+
+FRAME 1 — LOGIN (card maxWidth 440px, padding 40px 40px 32px):
+Eyebrow → h1 "Sign in" (Georgia 28px weight 300, color #14110d) → subheading "Welcome back. Sign
+in to access your community and member perks." (15px, #7a6f5c) → form: field "Username or Email"
+(label 11px #7a6f5c above input, input border 1px #d4cbbf, radius 3, padding 10px 14px) → field
+"Password" (same style, type=password) → primary button "Sign in →" full width, bg #14110d,
+white text, radius 3, uppercase, letter-spacing 0.08em, 13px → divider row: thin line — "or"
+(12px #7a6f5c) — thin line → outline button "🔑 Sign in with Passkey" (transparent bg, 1px solid
+rgba(42,36,28,.25) border, radius 3, full width) → outline button, 10px below, literal text span
+"G" + "Continue with Google" (same outline chrome as Passkey button) → footer links, centered,
+13px #7a6f5c: "Forgot your password?" then "New to the community? Create an account" (both
+underlined ochre... actually #14110d per code — link color is #14110d with underline, not ochre).
+
+FRAME 1B — LOGIN ERROR + LOADING (small inset variants on the same frame): error block below the
+form, background #fef2f2, border 1px solid rgba(192,57,43,.15), text color #c0392b, copy
+"Invalid username or password. Please try again." Loading variant: submit button text changes
+to "Signing in…", passkey button to "🔑 Waiting for device…".
+
+FRAME 2 — REGISTER, form view (card maxWidth 480px):
+Eyebrow → h1 "Join the Community" → subheading "Free to join. Enter a few details and we'll send
+you a verification link." → form: "Email *" (placeholder "you@example.com", asterisk color
+#c5491f) → "Username *" (placeholder "@handle") → "Password *" (hint below input, 12px #7a6f5c:
+"At least 8 characters") → primary button "Create account →" → footer: "Already have an
+account? Sign in" then "Want Moveee Pro? Upgrade after joining".
+
+FRAME 2B — REGISTER, check-email view (same card, content swapped, text-align center): large "✉"
+glyph centered → eyebrow "One more step" → h1 "Check your inbox" → "We sent a verification link
+to" then bold dynamic "{email}" → body copy "Click the link in that email to verify your address
+and continue setting up your profile. The link expires in 24 hours." → text button (not a link)
+"Wrong address? Go back" — resets to form view client-side with no navigation.
+
+FRAME 3 — REGISTER/COMPLETE — Step 1 "About You" (card maxWidth 580px):
+Eyebrow → h1 dynamic "Welcome, {displayName}!" → ProgressBar component: 3 circular nodes labeled
+"About You" / "Your Interests" / "Membership", current/passed nodes filled black (#14110d),
+passed nodes show "✓", connected by a track line with a black progress-fill overlay at 0% width
+for this step → step heading "A little about you" → 2-col row: "Date of Birth *" (date input) |
+"Country of Residence *" (searchable select, placeholder "Search countries…") → 2-col row:
+"City *" (searchable select) | "Occupation (optional)" (placeholder "e.g. Filmmaker, Designer")
+→ hint text "You can add your bio, disciplines, and social links from profile settings after
+joining." → nav row: blank — "Continue →" (no Back button on this first step).
+
+FRAME 4 — REGISTER/COMPLETE — Step 2 "Your Interests": same chrome, ProgressBar at 50% fill →
+h1 "What moves you?" → step heading "Pick your interests" → sub-copy "Select at least 3. This
+shapes your feed and connects you with the right community." → 3-column grid of toggle buttons,
+one per interest (emoji + label, from the real 18-slug interest taxonomy), active state filled
+→ dynamic counter "{n} selected — {3-n} more needed" or "{n} selected ✓" → nav row: "← Back" —
+"Continue →" (disabled until 3+ selected).
+
+FRAME 5 — REGISTER/COMPLETE — Step 3 "Membership": ProgressBar at 100% fill → h1 "Choose your
+membership" → step heading "Your membership tier" → billing toggle: "Monthly" | "Annually" pill
+switch with a savings tag ("Save ₦9,000" or "Save $8") → 2-column tier card grid: Citizen card
+(label "Citizen", price "Free", 4 verbatim perk bullets) and Moveee Pro card (label "Moveee Pro",
+price "₦4,500"/"$4" + "/ mo" or annual equivalent, 4 verbatim perk bullets) → currency notice
+"Pricing based on residence: NGN." + "Switch" button → nav row: "← Back" — "Continue to payment
+→" (patron) or "Complete registration →" (citizen).
+
+FRAME 6 — FORGOT PASSWORD (card maxWidth 440px): pre-submit — eyebrow → h1 "Reset your password"
+→ body "Enter the email address on your account and we'll send you a link to set a new
+password." → field "Email address" (placeholder "you@example.com") → primary button "Send reset
+link →" → footer "Remember your password? Sign in". Post-submit (always shown regardless of
+whether the account exists — anti-enumeration): body "If an account exists for **{email}**,
+you'll receive a reset link shortly. Check your spam folder if you don't see it within a few
+minutes." → "Back to sign in" link.
+
+FRAME 7 — RESET PASSWORD: main state — eyebrow → h1 "Set a new password" → field "New password"
+(hint "At least 8 characters") → field "Confirm password" → primary button "Set new password →".
+Success state: green (#27ae60) message replacing the form, auto-redirects to /login after 2.5s.
+Invalid-link state (missing query params): shorter eyebrow "The Moveee" (no "— Culture
+Community" suffix) → h1 "Invalid link" → body "This password-reset link is missing required
+information. Please request a new one." → "Back to home" link.
+
+FRAME 8 — PASSKEY BANNER (post-login context callout, NOT part of the auth flow itself — shown
+only on /member for logged-in users without a passkey, included here to clarify where passkeys
+actually surface on web): pill banner, background rgba(179,130,56,.08), border
+rgba(179,130,56,.25), radius 6px, "🔑" icon → headline "Set up a Passkey to unlock Credits" →
+conditional body: "You have {N} credits waiting — they'll be released once you add a passkey."
+or "Passkeys are required to spend credits and redeem partner perks. Takes 30 seconds." → CTA
+"Set up Passkey →" (ochre #b38238 fill, white text) → "Dismiss" outline button.
+
+MOBILE COMPANION (390px, one per frame above): identical content, card becomes full-width with
+24px side margins instead of a fixed maxWidth, all other inline styles unchanged — there is no
+separate mobile-specific layout in the real code (these pages are not responsive-redesigned,
+just naturally narrow-friendly due to the single-column card).
+
+CONSTRAINTS:
+- Do not use Fraunces, DM Sans, ochre #C5491F, or paper-warm #F3ECE0 anywhere in this section —
+  this flow runs on a completely different, Georgia-serif, inline-style visual language with no
+  shared design tokens. This is a real inconsistency in the codebase, not a mistake to fix.
+- Do not add a splash screen or onboarding carousel — there is no web equivalent.
+- Do not show a passkey *setup* modal inside the login/register flow — PasskeyPrompt.tsx is not
+  mounted anywhere on web today, only on mobile.
+- The Google button must read literally "G" + "Continue with Google" — no Google logo asset.
+- Forgot-password's success copy must never confirm or deny account existence.
+```
+
+Output 8 frames (desktop) + 8 mobile companions: Frame 1 (Login + error/loading states),
+Frame 2 (Register form + check-email), Frame 3 (Register/Complete Step 1), Frame 4
+(Register/Complete Step 2), Frame 5 (Register/Complete Step 3), Frame 6 (Forgot Password),
+Frame 7 (Reset Password), Frame 8 (Passkey Banner callout).
+
+---
