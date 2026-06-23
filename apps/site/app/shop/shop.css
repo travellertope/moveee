@@ -204,6 +204,47 @@
   gap: 18px;
 }
 
+/* ── TRUST STRIP ── */
+.shop-trust-strip {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-deep);
+}
+.trust-strip-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 22px 60px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+.trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.trust-icon {
+  font-size: 16px;
+  color: var(--ochre);
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.trust-title {
+  font-family: 'Fraunces', serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+.trust-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .04em;
+  color: var(--mute);
+  line-height: 1.4;
+}
+
 /* Ticker styles live in globals.css */
 
 /* ── FEATURED EDITORIAL PICKS ── */
@@ -651,7 +692,12 @@
   border-top: 1px solid rgba(42, 36, 28, .15);
   padding-top: 10px;
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+.vc .vc-view { color: var(--ochre); }
+.vc:hover .vc-view { text-decoration: underline; }
 
 /* ── MEMBER BAND ── */
 .shop-member-band {
@@ -1710,6 +1756,7 @@
   .ed-bridge { padding-left: 24px; padding-right: 24px; }
   .filter-bar-inner { padding: 0 24px; }
   .featured-section { padding-left: 24px; padding-right: 24px; }
+  .trust-strip-inner { grid-template-columns: 1fr 1fr; padding: 18px 24px; gap: 18px; }
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .vendor-cards { grid-template-columns: 1fr; }
   .ed-bridge-inner { grid-template-columns: 1fr; gap: 24px; }

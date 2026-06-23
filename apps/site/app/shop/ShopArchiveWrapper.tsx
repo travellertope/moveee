@@ -141,7 +141,41 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 2. FILTER BAR + MAIN PRODUCT GRID ── */}
+      {/* ── 2. TRUST STRIP ── */}
+      <section className="shop-trust-strip">
+        <div className="trust-strip-inner">
+          <div className="trust-item">
+            <span className="trust-icon">✓</span>
+            <div>
+              <div className="trust-title">Vetted Makers</div>
+              <div className="trust-desc">Every maker personally reviewed before listing.</div>
+            </div>
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon">★</span>
+            <div>
+              <div className="trust-title">4.8 average rating</div>
+              <div className="trust-desc">Across 1,200+ verified buyer reviews.</div>
+            </div>
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon">↺</span>
+            <div>
+              <div className="trust-title">Free Returns</div>
+              <div className="trust-desc">30 days, no questions asked.</div>
+            </div>
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon">◇</span>
+            <div>
+              <div className="trust-title">Moveee Pro saves 10%</div>
+              <div className="trust-desc">Automatically applied at checkout for members.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. FILTER BAR + MAIN PRODUCT GRID ── */}
       <ShopBrowser
         products={products}
         categories={categories.slice(0, 8)}
@@ -330,7 +364,10 @@ export default async function ShopArchiveWrapper({
                     <h4>{name}</h4>
                     {loc && <div className="vc-loc">{loc}</div>}
                     {desc && <p className="vc-desc">{desc}</p>}
-                    <div className="vc-count">{count} {count === 1 ? "product" : "products"}</div>
+                    <div className="vc-count">
+                      <span>{count} {count === 1 ? "product" : "products"}</span>
+                      <span className="vc-view">View shop →</span>
+                    </div>
                   </Link>
                 );
               })}
@@ -362,7 +399,7 @@ export default async function ShopArchiveWrapper({
                 </div>
               ))}
             </div>
-            <Link href="/register?tier=patron" className="mb-btn">Upgrade to Pro →</Link>
+            <Link href="/register?tier=patron" className="mb-btn">Join Moveee →</Link>
           </div>
           <div className="mb-right">
             <div className="mb-img" />
