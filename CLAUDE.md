@@ -723,6 +723,33 @@ in sync automatically.
   sort option (see above) read `productMaterials`/`vendorProfile.city`/
   `averageRating`/`reviewCount` off the same merged product objects.
 
+### Magazine archive page — "The Edit" section gotcha (fixed June 2026)
+
+`apps/site/components/EditorialSection.tsx` (renders "The Edit" hover-swap spotlight
+block on `/magazine`) uses its own classname scheme (`.editorial`, `.editorial-inner`,
+`.ed-left`, `.ed-grid`, `.ed-item`, `.ed-visual`, `.ek`, `.em`) that is **separate from**
+the page's `mg-*` namespace in `magazine.css` — this is intentional (it's a
+component-scoped style, not part of the archive's section-by-section `mg-*` system) but
+it means **the CSS for this component must be added to `magazine.css` manually; it does
+not come along "for free" when the rest of the `mg-*` system is touched.** A prior page
+rebuild moved the whole archive to the `mg-*` system but never added equivalent rules for
+`.editorial`/`.ed-*`, leaving the section completely unstyled (plain text, no card/image
+layout) — and because `.ed-visual` had no `position: relative`, the absolutely-positioned
+hover-swap `<Image fill>` elements and the ochre fallback tint inside it escaped to the
+nearest positioned ancestor and visually overlapped unrelated sections elsewhere on the
+page (looked like random "floating orange squares"). **Lesson: any container with an
+absolutely-positioned child must itself be `position: relative` (or similar) — an
+unstyled wrapper around `fill`/`inset: 0` elements doesn't just look unstyled, it lets
+those children paint outside their intended box.** Also fixed: `EditorialSection.tsx`
+referenced a `var(--ochre-deep)` CSS custom property that was never defined anywhere
+(only a Tailwind utility class `bg-ochre-deep` exists, not a CSS var) — swapped to the
+real `var(--ochre)` token. Separately, `.mg-nav-tabs` (the category tab row) lacked
+`flex: 1 1 auto; min-width: 0`, so on category-heavy lists it could overflow past its
+flex sibling `.mg-nav-filters` instead of scrolling within its own bounds — fixed the
+same way. The Opinions & Essays section (`opinionStories` slice in
+`MagazineArchiveWrapper.tsx`) is capped at 2 articles, not 6 — `.mg-op-grid` is already a
+2-column grid so this needs no CSS change if the cap changes again.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
