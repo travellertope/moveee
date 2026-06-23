@@ -4514,3 +4514,145 @@ CONSTRAINTS:
 Output 8 frames, each containing its labeled sub-states as described above.
 
 ---
+
+## 19. DARK MODE & LOADING STATES — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+Dark mode is Site B-only — `apps/site/app/globals.css` (Site A) has no `[data-theme="dark"]`
+block at all. Site A does have its own `app/loading.tsx`, but no dark-mode tokens to pair with
+it, so it's out of scope for the dark-mode half of this section.
+
+### Why this section exists
+Mobile §14A documents a fully bespoke, brighter-than-light-mode dark palette applied uniformly
+across 8 screens with explicit per-badge dark adjustments. Web's real dark mode is a genuine,
+working CSS-variable system (`[data-theme="dark"]` in `apps/connect/app/globals.css`, toggled via
+`ThemeContext.tsx`, persisted to `localStorage["moveee-theme"]`) — but it is **not** uniformly
+applied: `FeedCard.tsx`, the single highest-traffic component on the site, hardcodes hex colors
+for nearly all of its badge/card styling and simply does not adapt when the user switches themes.
+Mobile §14B documents 9 polished skeleton-loading frames with a named shimmer animation; web has
+**no shared skeleton component at all** — most routes show a plain "Loading…" text fallback via
+Next.js's `loading.tsx` convention, and only two routes (`/pulse`, `/community`) have hand-rolled,
+copy-pasted shimmer skeletons. This section documents both gaps as real, code-grounded findings
+rather than papering over them with an idealized design.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Feed loading fallback: `Loading feed…`
+- (No other user-facing loading copy exists beyond this single string — the shimmer skeletons on
+  `/pulse` and `/community` show no text at all, just animated bars.)
+
+<!-- DEV: Use the REAL dark-mode token table below — do not invent brighter mobile-style values.
+Light → Dark: --paper #ffffff → #242018; --paper-warm #f3ece0 → #1a1612; --paper-deep #f2f2f2 →
+#2d2820; --ink #14110d → #f3ece0; --ink-soft #3a342b → #d4c9b8; --mute #7a6f5c → #9e9288; --rule
+rgba(20,17,13,.10) → rgba(61,53,48,.6); --rule-dark rgba(20,17,13,.15) → #3d3530; --ochre
+#c5491f → #d4603a; --ochre-deep #8a2d10 → #a83f20; --gold #b38238 → #c9963f; --moss #3d4a2a
+(unchanged); --shadow-card 0 1px 3px rgba(20,17,13,.08) → 0 1px 3px rgba(0,0,0,.4); --shadow-modal
+0 20px 60px rgba(20,17,13,.18) → 0 20px 60px rgba(0,0,0,.55); --shadow-fab 0 4px 12px
+rgba(197,73,31,.35) → 0 4px 12px rgba(212,96,58,.4); --glow-gold ring color rgba(179,130,56,.55)
+→ rgba(201,150,63,.45). Radius tokens are unaffected by theme. -->
+
+<!-- DEV: The toggle is a plain binary light/dark switch — there is no in-app "system" option in
+the UI (system preference is only consulted ONCE, via an inline FOUC-prevention boot script in
+layout.tsx's <head>, on a visitor's very first visit with no stored localStorage value; every
+subsequent visit uses whatever the explicit toggle last set). The toggle button itself lives in
+Header.tsx — a plain <button> swapping sun/moon SVG icons, no separate ThemeToggle.tsx
+component, no cookie, localStorage key "moveee-theme". -->
+
+<!-- DEV: FeedCard.tsx does NOT adapt to dark mode — its TYPE_BADGE color map and card background
+are hardcoded hex (e.g. card bg "#fff", border "#e8e2d8", pulse badge bg "#fef3e2"/color
+"#b38238", happening badge bg "#eeedfe"/color "#3c3489", Pro glow boxShadow literal
+"#b38238") rather than var(--paper)/var(--ochre) etc. Any dark-mode mockup of a feed card must
+show this AS A BUG — i.e. draw the feed card still showing light-mode colors even while the rest
+of the page (header, background) is in dark mode — not as a polished, fully-adapted dark card
+the way mobile's CARD A–D look. Header.tsx and member/page.tsx, by contrast, do correctly use
+var(--ink)/var(--mute) for their own inline styles, so the header chrome and surrounding
+dashboard text adapt correctly even while feed cards don't. -->
+
+<!-- DEV: There is no shared Skeleton component anywhere in apps/connect, apps/site, or
+packages/shared (mobile has one, web doesn't). Most routes' loading.tsx is plain text, e.g.
+feed/loading.tsx renders only `<div className="mco-feed-loading">Loading feed…</div>` inside a
+`<section>` — no shimmer, no shaped placeholders at all. Only `/pulse` and `/community` have
+real shimmer skeletons, and even those are copy-pasted (each route locally redefines an
+identical `shimmer` style object and `@keyframes shimmer` rather than sharing one), use
+hardcoded hex (#ffffff, #e8e2d8 — not dark-mode aware either), and differ in content: pulse's
+skeleton is a 3-column grid (190px sidebar | 1fr feed | 220px sidebar) of fake bars + 8 fake post
+rows with occasional 90×90px thumbnail blocks; community's skeleton is just one fake post (avatar
+circle + header/body bars) plus 3 fake comment rows. Do not invent skeleton coverage for routes
+that don't have it (dashboard, events, shop, notifications, public profile, games — all either
+have no loading.tsx or a plain-text one not covered by this report; draw only what's confirmed). -->
+
+<!-- DEV: There is no root-level or full-app splash/initial-loading screen on Site B at all —
+apps/connect/app/loading.tsx does not exist, and apps/connect/app/layout.tsx has no Suspense
+fallback or splash UI beyond the dark-mode FOUC-prevention script (which only sets a data
+attribute, renders nothing visible). Do not draw a Moveee-branded splash/spinner screen for Site
+B — that pattern is mobile-only (Expo's native splash config). Site A does have its own root
+app/loading.tsx, but it carries no dark-mode pairing and is out of scope here. -->
+
+### PROMPT 19 — Dark Mode & Loading States (Desktop 1440px)
+
+```
+You are a senior web UX/UI designer documenting the REAL dark-mode and loading-state behavior of
+Moveee Connect (web.themoveee.com) — including its real gaps, not an idealized fully-polished
+version. Canvas: 1440px desktop frames.
+
+═══════════════════════════════════════
+DARK MODE TOKEN TABLE (use exact values)
+═══════════════════════════════════════
+--paper: #ffffff → #242018      --paper-warm: #f3ece0 → #1a1612
+--paper-deep: #f2f2f2 → #2d2820 --ink: #14110d → #f3ece0
+--ink-soft: #3a342b → #d4c9b8   --mute: #7a6f5c → #9e9288
+--rule: rgba(20,17,13,.10) → rgba(61,53,48,.6)
+--rule-dark: rgba(20,17,13,.15) → #3d3530
+--ochre: #c5491f → #d4603a      --ochre-deep: #8a2d10 → #a83f20
+--gold: #b38238 → #c9963f       --moss: #3d4a2a (unchanged)
+--shadow-card: 0 1px 3px rgba(20,17,13,.08) → 0 1px 3px rgba(0,0,0,.4)
+--shadow-modal: 0 20px 60px rgba(20,17,13,.18) → 0 20px 60px rgba(0,0,0,.55)
+--glow-gold ring: rgba(179,130,56,.55) → rgba(201,150,63,.45)
+
+FRAME 1 — THEME TOGGLE (3 sub-states): the Header.tsx sun/moon icon button in its light-mode
+state (sun icon, color var(--ink) resolving to #14110d), dark-mode state (moon icon, color
+var(--ink) resolving to #f3ece0), and an annotation box explaining the binary-only toggle (no
+in-app "system" option) plus the once-only FOUC boot-script behavior described above.
+
+FRAME 2 — CONNECT FEED, DARK MODE (the bug frame): full feed page in dark mode — header bar
+correctly dark (bg var(--paper-deep) → #2d2820, text var(--ink) → #f3ece0), page background
+correctly dark (var(--paper-warm) → #1a1612), sidebar nudge cards correctly dark — BUT the
+community/editorial feed cards themselves remain rendered in their LIGHT-mode hardcoded colors
+(white #fff card bg, light badge colors like #fef3e2/#eeedfe) sitting awkwardly inside the dark
+page. Add a callout arrow + label: "FeedCard.tsx hardcodes hex colors — does not adapt to dark
+mode (real bug, not a design choice)."
+
+FRAME 3 — MEMBER DASHBOARD / HEADER, DARK MODE (the correct frame, for contrast): show
+Header.tsx and member/page.tsx rendering correctly in dark mode — these two use var(--ink)/
+var(--mute) properly. Label: "Correctly dark-mode-aware, unlike Frame 2."
+
+FRAME 4 — LOADING STATES (4 sub-frames, real coverage only):
+(a) Feed loading (`/feed`) — plain text only: a bare line of text "Loading feed…" centered in an
+otherwise empty content area, no shapes, no shimmer.
+(b) Pulse loading (`/pulse`) — real shimmer skeleton: 3-column layout (190px sidebar bars | 1fr
+column of 8 fake post-row bars, some with 90×90px thumbnail blocks | 220px sidebar bars), all
+bars using the shimmer gradient `linear-gradient(90deg, #f0ece6 25%, #e8e2da 50%, #f0ece6 75%)`
+animating via `background-position` sweep, 1.4s ease-in-out infinite loop, radius 2px.
+(c) Community loading (`/community`) — same shimmer technique, much sparser: one fake post (avatar
+circle + 2 header bars + 3 body bars) plus 3 fake comment rows below.
+(d) Annotation panel: "No shared Skeleton component exists — each route copy-pastes its own
+shimmer style object. Hardcoded hex, not dark-mode aware. Most other routes (dashboard, events,
+shop, notifications, public profile, games) have either no loading.tsx or a plain-text-only one —
+do not assume skeleton coverage beyond pulse and community."
+
+FRAME 5 — NO SPLASH SCREEN (negative-space frame): show a blank/empty browser viewport with a
+dashed-border callout box reading "apps/connect has no root loading.tsx and no splash screen —
+this pattern does not exist on Site B. (Site A has its own app/loading.tsx, out of scope here.)"
+
+CONSTRAINTS:
+- Use the real, less-vivid token values above — do not brighten them to match mobile's
+  intentionally-bolder dark palette.
+- Frame 2 must show the FeedCard dark-mode bug explicitly, as a flaw to document, not fix.
+- Do not draw skeleton coverage for any route beyond /pulse and /feed and /community.
+- Do not draw a branded splash/spinner screen for Site B.
+```
+
+Output 5 frames: Frame 1 (Theme Toggle), Frame 2 (Feed dark mode — adaptation bug), Frame 3
+(Dashboard/Header dark mode — correct), Frame 4 (Loading States, 4 sub-frames), Frame 5 (No
+splash screen — negative-space callout).
+
+---
