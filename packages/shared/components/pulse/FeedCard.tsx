@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { MessageCircle, Flag } from "lucide-react";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
@@ -379,7 +380,10 @@ export default function FeedCard({
           style={{
             position: "relative",
             background: "var(--paper-warm, #f3ece0)",
-            borderBottom: "1px solid #e8e2d8",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             overflow: "hidden",
             minWidth: 0,
             padding: "20px 24px 20px 24px",
@@ -781,9 +785,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
@@ -794,9 +796,9 @@ export default function FeedCard({
                 <button
                   onClick={() => setReportState("confirm")}
                   title="Report this post"
-                  style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
+                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", flexShrink: 0, lineHeight: 1 }}
                 >
-                  ⚑
+                  <Flag size={13} strokeWidth={1.8} />
                 </button>
               )}
               {reportState === "confirm" && (
@@ -853,8 +855,12 @@ export default function FeedCard({
       <>
         <article
           style={{
+            position: "relative",
             background: "#fff",
-            borderBottom: "1px solid #e8e2d8",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             padding: "1rem 1.25rem",
             overflow: "hidden",
             minWidth: 0,
@@ -971,9 +977,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
@@ -996,7 +1000,17 @@ export default function FeedCard({
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
 
     return (
-      <article style={{ position: "relative", background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem 1.5rem", overflow: "hidden", minWidth: 0 }}>
+      <article style={{
+        position: "relative",
+        background: "#fff",
+        border: "1px solid rgba(232,226,216,0.5)",
+        borderRadius: "12px",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        margin: "12px 16px",
+        padding: "1rem 1.25rem 1.5rem",
+        overflow: "hidden",
+        minWidth: 0,
+      }}>
         {interestMatch && (
           <span style={{
             position: "absolute",
@@ -1078,7 +1092,17 @@ export default function FeedCard({
 
     return (
       <>
-        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        <article style={{
+          position: "relative",
+          background: "#fff",
+          border: "1px solid rgba(232,226,216,0.5)",
+          borderRadius: "12px",
+          boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+          margin: "12px 16px",
+          padding: "1rem 1.25rem",
+          overflow: "hidden",
+          minWidth: 0,
+        }}>
           {/* Eyebrow row — plain mono text */}
           <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
             <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#085041" }}>

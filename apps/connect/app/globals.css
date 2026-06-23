@@ -841,15 +841,20 @@ h1, h2, h3, h4 {
 
 /* Template tab bar — 9 pills, always visible, horizontally scrollable */
 .composer-template-bar {
+  border-bottom: 1px solid #e0d8ce;
+}
+.composer-template-scroll {
   display: flex;
   gap: 6px;
   padding: 8px;
-  border-bottom: 1px solid #e0d8ce;
+  padding-bottom: 48px;
+  margin-bottom: -40px;
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.composer-template-bar::-webkit-scrollbar { display: none; }
+.composer-template-scroll::-webkit-scrollbar { display: none; }
 
 .composer-template-pill-wrap { position: relative; display: inline-flex; }
 

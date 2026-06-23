@@ -1336,6 +1336,51 @@ source of truth for icons across the PHP/TS boundary.
 
 ---
 
+## Events/Happenings web surface — full visual rebuild (`evt-*` namespace, June 2026)
+
+`apps/connect/app/events/` (homepage `page.tsx`, `[slug]/page.tsx` detail page, and
+all of `app/events/components/`) was rebuilt from scratch off a new mockup, replacing
+every prior CSS namespace (`ev-*`, `ticker-wrap`/`page-body`/`left-col`/`sidebar`,
+`ehl-*`, `rsvp-card`/`info-card`/`artist-strip`, heavy inline `style={{...}}` props)
+with a single canonical namespace: **`evt-*`**, fully defined in `app/events.css`.
+This is now the only namespace to use for any future work on this surface — don't
+reintroduce the old classnames or inline styles even for small tweaks.
+
+- **Three event sources unified into one shape**: editorial/seeded `culture_event`
+  CPT events (`getEventsWithFallback()`), community-published `culture_post` events
+  with `_template_type = "event"` (`getCommunityPosts()` + `isEventItem()`), and
+  backend-created `culture_event` CPT events (same fetch path as the first — no
+  special-casing needed, they're indistinguishable from seeded events once published).
+  `mapCommunityEvent()` in `app/events/page.tsx` converts a community `FeedItem` into
+  the same shape editorial events already use (`cultureInterests.nodes[0]` for
+  category, etc.) so both render through the same `EventTimeline`/`EventsCarousel`
+  components.
+- **`href` override pattern**: `TimelineEvent`/`CarouselEvent` interfaces both carry
+  an optional `href?: string`. Editorial events fall back to `/events/{slug}`;
+  community events set `href` explicitly to `/community/{slug}` (their real detail
+  page) via `mapCommunityEvent()`. Any new mixed-source list component should follow
+  this same pattern rather than hardcoding `/events/${slug}`.
+- **AI-generated events are unaffected** — `[slug]/page.tsx` still delegates to
+  `DiscoveredEventPage` unchanged when `event.isAiGenerated` is true; that component
+  and its siblings (`CommunityRadarSection.tsx`, `EventCard.tsx`, `SpotlightCard.tsx`,
+  `DiscoveredEventRow.tsx`) were deliberately left untouched by this rebuild.
+- **Ticker pattern**: any `evt-ticker-track` (`.evt-ticker`/`.evt-detail-ticker`) needs
+  to be rendered as **two tracks** (`evt-ticker-track` + `evt-ticker-track--b`, second
+  one `aria-hidden`), not one — the CSS animation moves `translateX(0)` →
+  `translateX(-100%)` on a loop, which only looks seamless if the content is
+  duplicated into a second track positioned at `left: 100%`. A single track will
+  visibly snap/gap at the loop boundary. `events/page.tsx`'s homepage ticker and
+  `[slug]/page.tsx`'s detail ticker both follow this `["a","b"].map(...)` pattern.
+- `RSVPForm.tsx` was already on the `evt-*` namespace going into this pass (`evt-rsvp-card`,
+  `evt-state-card`, `evt-capacity-block`, `evt-submit-btn`, etc.) — no changes needed there.
+- City/category archive pages (`city-archive.tsx`/`category-archive.tsx`) delegate to
+  the same rebuilt `EventTimeline` and needed only their own header/wrapper classes
+  updated to `evt-archive-*`.
+- Every class needed for this rebuild already existed in `app/events.css` going in —
+  no new CSS was authored, only the JSX/classname layer changed across all 9 files.
+
+---
+
 ## Event Spotlight carousel (June 2026)
 
 Horizontally-scrolling carousel merging editorial `culture_event` items + community

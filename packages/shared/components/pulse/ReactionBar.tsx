@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { Heart, Flame, Hand, Share2 } from "lucide-react";
 
 const REACTIONS = [
-  { key: "love", emoji: "❤️", label: "Love"    },
-  { key: "fire", emoji: "🔥", label: "Fire"    },
-  { key: "clap", emoji: "👏", label: "Respect" },
+  { key: "love", icon: Heart, label: "Love",    activeColor: "#E53E3E" },
+  { key: "fire", icon: Flame, label: "Fire",    activeColor: "#F97316" },
+  { key: "clap", icon: Hand,  label: "Respect", activeColor: "#B38238" },
 ] as const;
 type ReactionKey = (typeof REACTIONS)[number]["key"];
 
@@ -167,7 +168,7 @@ export default function ReactionBar({
         overflow: "hidden",
       }}
     >
-      {REACTIONS.map(({ key, emoji, label }) => {
+      {REACTIONS.map(({ key, icon: Icon, label, activeColor }) => {
         const active = myReaction === key;
         const count  = counts[key];
         return (
@@ -177,22 +178,26 @@ export default function ReactionBar({
             title={label}
             aria-label={`${label}: ${count}`}
             style={{
-              background: active ? "#f0ece4" : "transparent",
-              border: "1px solid",
-              borderColor: active ? "#d8cfc4" : "transparent",
+              background: "transparent",
+              border: "none",
               borderRadius: "20px",
-              padding: "0.2rem 0.55rem",
+              padding: "0.2rem 0.4rem",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               gap: "0.3rem",
               fontSize: "0.8rem",
-              color: active ? "#3a342b" : "#7a6f5c",
+              color: active ? activeColor : "#7a6f5c",
               transition: "all 0.15s",
               lineHeight: 1,
             }}
           >
-            <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>{emoji}</span>
+            <Icon
+              size={16}
+              strokeWidth={1.8}
+              fill={active ? activeColor : "none"}
+              color={active ? activeColor : "#7a6f5c"}
+            />
             {count > 0 && (
               <span style={{ fontSize: "0.7rem", fontVariantNumeric: "tabular-nums" }}>
                 {count}
@@ -225,11 +230,7 @@ export default function ReactionBar({
         {copied ? (
           <span>Copied ✓</span>
         ) : (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-            <polyline points="16 6 12 2 8 6" />
-            <line x1="12" y1="2" x2="12" y2="15" />
-          </svg>
+          <Share2 size={14} strokeWidth={1.8} aria-hidden />
         )}
       </button>
     </div>

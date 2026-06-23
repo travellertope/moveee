@@ -541,27 +541,29 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     <div className="composer-card">
       {/* Template selector */}
       <div className="composer-template-bar">
-        {TEMPLATES.map(t => {
-          const gate = TEMPLATE_REP_GATE[t.slug];
-          const locked = gate ? !meetsTemplateGate(t.slug) : false;
-          const isQuote = t.slug === "quote";
-          return (
-            <span key={t.slug} className="composer-template-pill-wrap">
-              <button
-                type="button"
-                className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
-                onClick={() => handleTemplateChange(t.slug)}
-              >
-                <span className="composer-template-emoji">{t.emoji}</span>
-                <span className="composer-template-label">{t.label}</span>
-                {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
-              </button>
-              {locked && gate && (
-                <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
-              )}
-            </span>
-          );
-        })}
+        <div className="composer-template-scroll">
+          {TEMPLATES.map(t => {
+            const gate = TEMPLATE_REP_GATE[t.slug];
+            const locked = gate ? !meetsTemplateGate(t.slug) : false;
+            const isQuote = t.slug === "quote";
+            return (
+              <span key={t.slug} className="composer-template-pill-wrap">
+                <button
+                  type="button"
+                  className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
+                  onClick={() => handleTemplateChange(t.slug)}
+                >
+                  <span className="composer-template-emoji">{t.emoji}</span>
+                  <span className="composer-template-label">{t.label}</span>
+                  {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
+                </button>
+                {locked && gate && (
+                  <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
       {lockedTip && TEMPLATE_REP_GATE[lockedTip] && (
         <p className="composer-template-lock-tip">
