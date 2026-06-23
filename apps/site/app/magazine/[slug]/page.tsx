@@ -27,7 +27,6 @@ export async function generateStaticParams() {
 }
 
 function resolveAioseoTitle(raw: string, postTitle: string): string {
-  // AIOSEO stores template tags — resolve the common ones then strip any leftovers
   return raw
     .replace(/#post_title/g, postTitle)
     .replace(/#separator_sa/g, "|")
@@ -48,7 +47,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const imageUrl = post.featuredImage?.node?.sourceUrl || "/og-fallback.png";
   const plainExcerpt = post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || "";
 
-  // Prefer AIOSEO values; fall back to post title / excerpt
   const metaTitle = post.seoTitle
     ? resolveAioseoTitle(post.seoTitle, post.title)
     : `${post.title} · The Moveee`;
@@ -85,10 +83,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
-  // Access level — session check is deferred to the ArticleContentGate client component
   const accessLevel = getAccessLevel(post);
 
-  // Fetch related stories and issue in parallel
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
   let relatedStories: any[] = [];
   let postIssue: any = null;
@@ -97,18 +93,19 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       getWPData(GET_STORIES, { first: 4, categoryName: primaryCategory || undefined }),
       getIssuesForPost(parseInt(post.databaseId)),
     ]);
-    relatedStories = (relData?.posts?.nodes || []).filter((s: any) => s.slug !== resolvedParams.slug).slice(0, 3);
+    relatedStories = (relData?.posts?.nodes || [])
+      .filter((s: any) => s.slug !== resolvedParams.slug)
+      .slice(0, 3);
     postIssue = issueTerms?.[0] ?? null;
   } catch {}
 
-  const publishedDate = new Date(post.date).toLocaleDateString('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  const publishedDate = new Date(post.date).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
-  // Estimate reading time from content
   const wordCount = post.content?.replace(/<[^>]*>/g, "").split(/\s+/).length || 0;
   const readingTime = Math.max(1, Math.ceil(wordCount / 250));
 
@@ -116,7 +113,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const categorySlug = post.categories?.nodes?.[0]?.slug || "";
   const hasFeaturedImage = !!post.featuredImage?.node?.sourceUrl;
 
-  // Extract headings from content for TOC, generating IDs where none exist.
   const toHeadingSlug = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
 
@@ -124,19 +120,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const headings: { id: string; text: string }[] = [];
   const usedIds = new Set<string>();
 
-  // First pass: collect all h2/h3 headings and assign IDs
   const allHeadingRegex = /<h([23])[^>]*>(.*?)<\/h\1>/gi;
   let match;
   while ((match = allHeadingRegex.exec(rawContent)) !== null) {
     const rawText = decodeHtml(match[2]);
     if (!rawText) continue;
-
-    // Prefer an existing id attribute; otherwise generate one from text
     const existingId = /\bid="([^"]+)"/.exec(match[0])?.[1];
     let id = existingId || toHeadingSlug(rawText);
     if (!id) continue;
-
-    // Deduplicate
     if (usedIds.has(id)) {
       let n = 2;
       while (usedIds.has(`${id}-${n}`)) n++;
@@ -146,36 +137,30 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     headings.push({ id, text: rawText });
   }
 
-  // Second pass: inject generated IDs into headings that lack them so anchor
-  // links in the TOC actually scroll to the right place.
   let headingIdx = 0;
   const contentWithIds = rawContent.replace(
     /<h([23])([^>]*)>(.*?)<\/h\1>/gi,
     (full: string, level: string, attrs: string, inner: string) => {
       if (headingIdx >= headings.length) return full;
       const { id } = headings[headingIdx++];
-      if (/\bid=/.test(attrs)) return full; // already has an id
+      if (/\bid=/.test(attrs)) return full;
       return `<h${level}${attrs} id="${id}">${inner}</h${level}>`;
     }
   );
 
-  // Intercept and rewrite internal WP links to use proper Next.js routing
   const cleanContent = (html: string) => {
     if (!html) return html;
-    // Known top-level app routes that should NOT be prefixed with /magazine
-    const appRoutes = ['quote', 'directory', 'events', 'origins', 'connect', 'register', 'login', 'member', 'shop', 'newsletter', 'contact', 'privacy', 'terms'];
+    const appRoutes = ["quote", "directory", "events", "origins", "connect", "register", "login", "member", "shop", "newsletter", "contact", "privacy", "terms"];
     return html.replace(
       /href="https?:\/\/(?:18\.175\.121\.188|cms\.themoveee\.com)\/([^"]*)"/gi,
       (match, path) => {
-        // Exclude direct media assets
-        if (path.startsWith('wp-content/')) return match;
-        // Map native categorisation
-        if (path.startsWith('category/')) return `href="/magazine/category/${path.replace('category/', '').replace(/\/$/, '')}"`;
-        if (path.startsWith('author/')) return `href="/author/${path.replace('author/', '')}"`;
-        // Preserve known Next.js app routes
-        const topSegment = path.split('/')[0];
+        if (path.startsWith("wp-content/")) return match;
+        if (path.startsWith("category/"))
+          return `href="/magazine/category/${path.replace("category/", "").replace(/\/$/, "")}"`;
+        if (path.startsWith("author/"))
+          return `href="/author/${path.replace("author/", "")}"`;
+        const topSegment = path.split("/")[0];
         if (appRoutes.includes(topSegment)) return `href="/${path}"`;
-        // Assume all other native links are relative to magazine
         return `href="/magazine/${path}"`;
       }
     );
@@ -209,7 +194,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
       { "@type": "ListItem", position: 2, name: "Magazine", item: "https://themoveee.com/magazine" },
-      ...(categoryName && categorySlug ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `https://themoveee.com/magazine/category/${categorySlug}` }] : []),
+      ...(categoryName && categorySlug
+        ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `https://themoveee.com/magazine/category/${categorySlug}` }]
+        : []),
       { "@type": "ListItem", position: categoryName ? 4 : 3, name: post.title, item: articleUrl },
     ],
   };
@@ -222,52 +209,51 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
       {/* ── HERO ── */}
       {hasFeaturedImage ? (
-        <section className="article-hero">
-          {/* BREADCRUMB overlaid on hero */}
-          <div className="breadcrumb overlay">
-            <Link href="/">Home</Link><span className="sep">/</span>
-            <Link href="/magazine">Editorials</Link><span className="sep">/</span>
-            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
-            <span className="breadcrumb-current">{post.title}</span>
-          </div>
+        <section className="ar-hero">
+          <nav className="ar-breadcrumb ar-breadcrumb--overlay">
+            <Link href="/">Home</Link><span className="sep"> / </span>
+            <Link href="/magazine">Editorials</Link><span className="sep"> / </span>
+            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
+            <span className="ar-breadcrumb-current">{post.title}</span>
+          </nav>
           <Image
             src={post.featuredImage.node.sourceUrl}
             alt={post.featuredImage.node.altText || post.title}
             fill
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: "cover" }}
             priority
+            className="ar-hero-img"
           />
-          <div className="hero-vignette" />
-          <div className="hero-text">
-            <div className="hero-eyebrow">
+          <div className="ar-hero-vignette" />
+          <div className="ar-hero-text">
+            <div className="ar-hero-eyebrow">
               <span>★ {categoryName}</span>
               {post.countries?.nodes?.[0]?.name && (
-                <>
-                  <span className="sep">·</span>
-                  <span>{post.countries.nodes[0].name}</span>
-                </>
+                <> · <span>{post.countries.nodes[0].name}</span></>
               )}
             </div>
-            <h1 className="article-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
+            <h1 className="ar-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
             {post.excerpt && (
-              <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
+              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
             )}
-            <div className="byline-bar">
-              <div className="b-item">
-                <div className="b-label">Words by</div>
-                <div className="b-val">
-                  {post.asToldTo
-                    ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
-                    : post.author?.node?.name || "The Moveee"}
+            <div className="ar-byline">
+              <div className="ar-byline-items">
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Words by</div>
+                  <div className="ar-byline-val">
+                    {post.asToldTo
+                      ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
+                      : post.author?.node?.name || "The Moveee"}
+                  </div>
                 </div>
-              </div>
-              <div className="b-item">
-                <div className="b-label">Published</div>
-                <div className="b-val">{publishedDate}</div>
-              </div>
-              <div className="b-item">
-                <div className="b-label">Reading time</div>
-                <div className="b-val">{readingTime} minutes</div>
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Published</div>
+                  <div className="ar-byline-val">{publishedDate}</div>
+                </div>
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Reading time</div>
+                  <div className="ar-byline-val">{readingTime} minutes</div>
+                </div>
               </div>
               <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
@@ -275,264 +261,253 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </section>
       ) : (
         <>
-          <div className="breadcrumb">
-            <Link href="/">Home</Link><span className="sep">/</span>
-            <Link href="/magazine">Editorials</Link><span className="sep">/</span>
-            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
-            <span className="breadcrumb-current">{post.title}</span>
-          </div>
-          <header className="standard-hero">
-          <div className="hero-eyebrow" style={{ color: 'var(--ochre)', marginBottom: '20px' }}>
-            <span>★ {categoryName}</span>
-          </div>
-          <h1 className="article-title">{post.title}</h1>
-          {post.excerpt && (
-            <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
-          )}
-          <div className="byline-bar">
-            <div className="b-item">
-              <div className="b-label">Words by</div>
-              <div className="b-val">
-                {post.asToldTo
-                  ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
-                  : post.author?.node?.name || "The Moveee"}
+          <nav className="ar-breadcrumb">
+            <Link href="/">Home</Link><span className="sep"> / </span>
+            <Link href="/magazine">Editorials</Link><span className="sep"> / </span>
+            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
+            <span className="ar-breadcrumb-current">{post.title}</span>
+          </nav>
+          <header className="ar-standard-hero">
+            <div className="ar-hero-eyebrow">★ {categoryName}</div>
+            <h1 className="ar-title">{post.title}</h1>
+            {post.excerpt && (
+              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
+            )}
+            <div className="ar-byline">
+              <div className="ar-byline-items">
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Words by</div>
+                  <div className="ar-byline-val">
+                    {post.asToldTo
+                      ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
+                      : post.author?.node?.name || "The Moveee"}
+                  </div>
+                </div>
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Published</div>
+                  <div className="ar-byline-val">{publishedDate}</div>
+                </div>
+                <div className="ar-byline-item">
+                  <div className="ar-byline-label">Reading time</div>
+                  <div className="ar-byline-val">{readingTime} min</div>
+                </div>
               </div>
+              <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
-            <div className="b-item">
-              <div className="b-label">Published</div>
-              <div className="b-val">{publishedDate}</div>
-            </div>
-            <div className="b-item">
-              <div className="b-label">Reading time</div>
-              <div className="b-val">{readingTime} min</div>
-            </div>
-            <ArticleActions postId={parseInt(post.databaseId)} />
-          </div>
-        </header>
+          </header>
         </>
       )}
 
       {/* ── ARTICLE 3-COLUMN LAYOUT ── */}
       <ImageLightbox>
-      <div className="article-wrap">
+        <div className="ar-wrap">
 
-        {/* LEFT — TOC */}
-        <aside className="toc">
-          <div className="toc-heading">In this piece</div>
-          <details className="toc-details" open>
-          <summary className="toc-summary">
-            <span className="toc-toggle-label">In this piece</span>
-            <span className="toc-chevron" aria-hidden>▾</span>
-          </summary>
-          {headings.length > 0 ? (
-            <ul>
-              {headings.map((h, i) => (
-                <li key={h.id}>
-                  <a href={`#${h.id}`}>
-                    <span className="n">{String(i + 1).padStart(2, '0')}</span>
-                    {h.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <ul>
-              <li><a href="#article-body"><span className="n">01</span>Full article</a></li>
-            </ul>
-          )}
-          <div className="toc-meta">
-            <div className="tm-item">
-              <div className="tm-label">Writer</div>
-              <div className="tm-val">
-                {post.asToldTo
-                  ? <>{post.asToldTo}<br /><span style={{ fontSize: "0.75em", opacity: 0.7 }}>as told to {post.author?.node?.name || "The Moveee"}</span></>
-                  : post.author?.node?.name || "The Moveee"}
-              </div>
-            </div>
-            {post.countries?.nodes?.[0]?.name && (
-              <div className="tm-item">
-                <div className="tm-label">Location</div>
-                <div className="tm-val">{post.countries.nodes[0].name}</div>
-              </div>
-            )}
-            <div className="tm-item">
-              <div className="tm-label">Section</div>
-              <div className="tm-val">{categoryName}</div>
-            </div>
-            {post.series?.nodes?.[0]?.name && (
-              <div className="tm-item">
-                <div className="tm-label">Series</div>
-                <div className="tm-val">{post.series.nodes[0].name}</div>
-              </div>
-            )}
-            {post.industries?.nodes?.[0]?.name && (
-              <div className="tm-item">
-                <div className="tm-label">Industry</div>
-                <div className="tm-val">{post.industries.nodes[0].name}</div>
-              </div>
-            )}
-          </div>
-          </details>
-        </aside>
-
-        {/* CENTER — PROSE */}
-        <div className="prose" id="article-body">
-          <ArticleContentGate
-            accessLevel={accessLevel}
-            callbackUrl={`/magazine/${resolvedParams.slug}`}
-            previewHtml={sanitizeHtml(
-              (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
-              post.excerpt ||
-              ""
-            )}
-            fullContent={
-              <>
-                <ArticleComments
-                  postId={parseInt(post.databaseId)}
-                  content={processedContent || ""}
-                />
-                <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
-              </>
-            }
-          />
-        </div>
-
-        {/* RIGHT — SIDEBAR */}
-        <aside className="sidebar">
-
-          {/* Issue card — shown first when post belongs to an issue */}
-          {postIssue && (
-            <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: 'none' }}>
-              <div className="s-card" style={{ borderLeft: '3px solid var(--ochre)', marginBottom: 16 }}>
-                <div className="s-label">This piece is from</div>
-                <h4 style={{ marginBottom: postIssue.meta?.issue_subtitle ? 4 : 12 }}>
-                  {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
-                </h4>
-                {postIssue.meta?.issue_subtitle && (
-                  <p style={{ fontStyle: 'italic', fontSize: 13, marginBottom: 12, color: 'var(--ink-soft)' }}>
-                    {postIssue.meta.issue_subtitle}
-                  </p>
-                )}
-                {postIssue.meta?.issue_cover_image_url && (
-                  <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', marginBottom: 12, overflow: 'hidden', background: 'var(--paper-deep)' }}>
-                    <Image
-                      src={postIssue.meta.issue_cover_image_url}
-                      alt={postIssue.name}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
+          {/* LEFT — TOC */}
+          <aside className="ar-toc">
+            <div className="ar-toc-heading">In this piece</div>
+            <details className="ar-toc-details" open>
+              <summary className="ar-toc-summary">
+                <span className="ar-toc-toggle-label">Contents</span>
+                <span className="ar-toc-chevron" aria-hidden>▾</span>
+              </summary>
+              {headings.length > 0 ? (
+                <ul>
+                  {headings.map((h, i) => (
+                    <li key={h.id}>
+                      <a href={`#${h.id}`}>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, opacity: 0.5, marginRight: 6 }}>
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul>
+                  <li><a href="#article-body">Full article</a></li>
+                </ul>
+              )}
+              <div className="ar-toc-meta">
+                <div className="ar-toc-meta-item">
+                  <div className="ar-toc-meta-label">Writer</div>
+                  <div className="ar-toc-meta-val">
+                    {post.asToldTo
+                      ? <>{post.asToldTo}<br /><span style={{ fontSize: "0.85em", opacity: 0.7 }}>as told to {post.author?.node?.name || "The Moveee"}</span></>
+                      : post.author?.node?.name || "The Moveee"}
+                  </div>
+                </div>
+                {post.countries?.nodes?.[0]?.name && (
+                  <div className="ar-toc-meta-item">
+                    <div className="ar-toc-meta-label">Location</div>
+                    <div className="ar-toc-meta-val">{post.countries.nodes[0].name}</div>
                   </div>
                 )}
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '9px',
-                  letterSpacing: '.14em',
-                  textTransform: 'uppercase' as const,
-                  borderBottom: '1px solid var(--ink)',
-                  paddingBottom: '1px',
-                  color: 'var(--ink)',
-                }}>
-                  Read the full issue →
-                </span>
+                <div className="ar-toc-meta-item">
+                  <div className="ar-toc-meta-label">Section</div>
+                  <div className="ar-toc-meta-val">{categoryName}</div>
+                </div>
+                {post.series?.nodes?.[0]?.name && (
+                  <div className="ar-toc-meta-item">
+                    <div className="ar-toc-meta-label">Series</div>
+                    <div className="ar-toc-meta-val">{post.series.nodes[0].name}</div>
+                  </div>
+                )}
+                {post.industries?.nodes?.[0]?.name && (
+                  <div className="ar-toc-meta-item">
+                    <div className="ar-toc-meta-label">Industry</div>
+                    <div className="ar-toc-meta-val">{post.industries.nodes[0].name}</div>
+                  </div>
+                )}
               </div>
-            </Link>
-          )}
+            </details>
+          </aside>
 
-          {/* Shop the Edit — desktop sidebar widget */}
-          {(post.featuredProducts ?? []).length > 0 && (
-            <div className="ste-sidebar-card">
-              <div className="ste-sb-label">Shop the Edit</div>
-              <div className="ste-sb-list">
-                {(post.featuredProducts as any[]).map((p: any) => (
-                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
-                    <div className="ste-sb-img">
-                      {p.imageUrl ? (
-                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
-                      ) : (
-                        <div className="ste-sb-img-placeholder" />
-                      )}
+          {/* CENTER — PROSE */}
+          <div className="ar-prose" id="article-body">
+            <ArticleContentGate
+              accessLevel={accessLevel}
+              callbackUrl={`/magazine/${resolvedParams.slug}`}
+              previewHtml={sanitizeHtml(
+                (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
+                post.excerpt ||
+                ""
+              )}
+              fullContent={
+                <>
+                  <ArticleComments
+                    postId={parseInt(post.databaseId)}
+                    content={processedContent || ""}
+                  />
+                  <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
+                </>
+              }
+            />
+          </div>
+
+          {/* RIGHT — SIDEBAR */}
+          <aside className="ar-sidebar">
+
+            {postIssue && (
+              <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: "none" }}>
+                <div className="ar-sidebar-card ar-sidebar-card--issue">
+                  <span className="ar-sidebar-label">This piece is from</span>
+                  <h4 style={{ marginBottom: postIssue.meta?.issue_subtitle ? 4 : 12 }}>
+                    {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
+                  </h4>
+                  {postIssue.meta?.issue_subtitle && (
+                    <p style={{ fontStyle: "italic", fontSize: 13, marginBottom: 12, color: "var(--ink-soft)" }}>
+                      {postIssue.meta.issue_subtitle}
+                    </p>
+                  )}
+                  {postIssue.meta?.issue_cover_image_url && (
+                    <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", marginBottom: 12, overflow: "hidden", background: "var(--paper-deep)" }}>
+                      <Image
+                        src={postIssue.meta.issue_cover_image_url}
+                        alt={postIssue.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
                     </div>
-                    <div className="ste-sb-info">
-                      <div className="ste-sb-name">{p.name}</div>
-                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                  )}
+                  <span className="ar-sc-read">Read the full issue →</span>
+                </div>
+              </Link>
+            )}
+
+            {(post.featuredProducts ?? []).length > 0 && (
+              <div className="ste-sidebar-card">
+                <div className="ste-sidebar-card-label">Shop the Edit</div>
+                {(post.featuredProducts as any[]).map((p: any) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sidebar-item">
+                    <div className="ste-sidebar-item-img" style={{ position: "relative" }}>
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="48px" />
+                      ) : null}
+                    </div>
+                    <div className="ste-sidebar-item-info">
+                      <div className="ste-sidebar-item-name">{p.name}</div>
+                      <div className="ste-sidebar-item-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
                     </div>
                   </Link>
                 ))}
+                <Link href="/shop" style={{ display: "block", padding: "10px 16px", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ar-ochre)", textDecoration: "none", borderTop: "1px solid var(--ar-ghost-light)" }}>
+                  Browse all products →
+                </Link>
               </div>
-              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
+            )}
+
+            <div className="ar-sidebar-card ar-sidebar-card--newsletter">
+              <span className="ar-sidebar-label">★ Culture Drop</span>
+              <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Culture in your inbox, every Tuesday.</h4>
+              <p style={{ fontSize: 13, color: "var(--mute)", marginBottom: 14, lineHeight: 1.5 }}>Film picks, exhibition openings, music worth your time. No noise.</p>
+              <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
             </div>
-          )}
 
-          <div className="newsletter-card">
-            <div className="s-label">★ Culture Drop</div>
-            <h4>Culture in your inbox, every Tuesday.</h4>
-            <p>Film picks, exhibition openings, music worth your time. No noise.</p>
-            <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
-          </div>
+            {relatedStories.slice(0, 2).map((story: any) => (
+              <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: "none" }}>
+                <div className="ar-sidebar-card ar-sidebar-card--story">
+                  {story.featuredImage?.node?.sourceUrl && (
+                    <div className="ar-sc-thumb" style={{ position: "relative", width: "100%", aspectRatio: "16/9", marginBottom: 10, overflow: "hidden", borderRadius: 4, background: "var(--ar-ghost-light)" }}>
+                      <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill style={{ objectFit: "cover" }} />
+                    </div>
+                  )}
+                  <div className="ar-sc-kicker">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
+                  <div className="ar-sc-title">{story.title}</div>
+                  {story.excerpt && (
+                    <p style={{ fontSize: 12, color: "var(--mute)", margin: "6px 0 10px", lineHeight: 1.5 }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…") }}
+                    />
+                  )}
+                  <span className="ar-sc-read">Read →</span>
+                </div>
+              </Link>
+            ))}
 
-          {relatedStories.slice(0, 2).map((story: any) => (
-            <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: 'none' }}>
-              <div className="s-card">
-                <div className="s-label">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
-                <h4>{story.title}</h4>
-                {story.excerpt && (
-                  <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…") }} />
-                )}
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '9px',
-                  letterSpacing: '.14em',
-                  textTransform: 'uppercase' as const,
-                  borderBottom: '1px solid var(--ink)',
-                  paddingBottom: '1px',
-                  color: 'var(--ink)',
-                }}>
-                  Read →
-                </span>
-              </div>
-            </Link>
-          ))}
-
-          <div className="s-card-dark">
-            <div className="s-label">From the archive</div>
-            <h4>Explore the full magazine</h4>
-            <p>Browse all essays, interviews, and dispatches from The Moveee editorial team.</p>
-            <Link href="/magazine">
-              All stories →
-            </Link>
-          </div>
-        </aside>
-      </div>
+            <div className="ar-sidebar-card ar-sidebar-card--dark">
+              <span className="ar-sidebar-label">From the archive</span>
+              <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, color: "#ffffff", marginBottom: 8 }}>Explore the full magazine</h4>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 14, lineHeight: 1.5 }}>Browse all essays, interviews, and dispatches from The Moveee editorial team.</p>
+              <Link href="/magazine" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>
+                All stories →
+              </Link>
+            </div>
+          </aside>
+        </div>
       </ImageLightbox>
 
-      {/* ── SERIES CONTEXT (data-nosnippet keeps it out of Google snippets/excerpts) ── */}
+      {/* ── SERIES CONTEXT ── */}
       {post.series?.nodes?.[0]?.description && (
-        <div className="series-context" data-nosnippet>
-          <div className="series-context-inner">
-            <div className="series-context-label">Part of the series</div>
-            <Link href={`/magazine/series/${post.series.nodes[0].slug}`} className="series-context-name">
+        <div className="ar-series" data-nosnippet>
+          <div className="ar-series-inner">
+            <div className="ar-series-label">Part of the series</div>
+            <Link href={`/magazine/series/${post.series.nodes[0].slug}`} className="ar-series-name">
               {post.series.nodes[0].name}
             </Link>
-            <p className="series-context-desc"
+            <p
+              className="ar-series-desc"
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.series.nodes[0].description) }}
             />
+            <Link href={`/magazine/series/${post.series.nodes[0].slug}`} className="ar-series-link">
+              Read the full series →
+            </Link>
           </div>
         </div>
       )}
 
       {/* ── AUTHOR BAND ── */}
-      <div className="author-band">
-        <div className="author-avatar">
+      <div className="ar-author">
+        <div className="ar-author-avatar" style={{ position: "relative", overflow: "hidden" }}>
           {post.author?.node?.avatar?.url ? (
-            <Image 
-              src={post.author.node.avatar.url} 
-              alt={post.author.node.name || "Author"} 
-              width={120} 
-              height={120} 
-              style={{ objectFit: 'cover', width: '100%', height: '100%' }} 
+            <Image
+              src={post.author.node.avatar.url}
+              alt={post.author.node.name || "Author"}
+              width={120}
+              height={120}
+              style={{ objectFit: "cover", width: "100%", height: "100%" }}
             />
           ) : (
-            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
               <rect width="120" height="120" fill="#3d4a2a" />
               <ellipse cx="60" cy="52" rx="32" ry="40" fill="#6b3020" />
               <path d="M 30 44 Q 35 14 60 10 Q 85 14 90 44 Q 84 26 60 24 Q 36 26 30 44 Z" fill="#14110d" />
@@ -543,21 +518,26 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </svg>
           )}
         </div>
-        <div className="author-info">
-          <div className="a-label">Words by</div>
+        <div className="ar-author-info">
+          <div className="ar-author-label">Words by</div>
           {post.asToldTo ? (
             <>
-              <h4>{post.asToldTo}</h4>
-              <p className="a-told-to">as told to <strong>{post.author?.node?.name || "The Moveee"}</strong></p>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond."}</p>
+              <div className="ar-author-name">{post.asToldTo}</div>
+              <p className="ar-author-bio" style={{ fontStyle: "italic" }}>
+                as told to <strong>{post.author?.node?.name || "The Moveee"}</strong>
+              </p>
+              <p className="ar-author-bio">
+                {post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond."}
+              </p>
             </>
           ) : (
             <>
-              <h4>
+              <div className="ar-author-name">
                 {post.author?.node?.name ? (
                   post.author.node.name.includes(" ") ? (
                     <>
-                      {post.author.node.name.split(" ").slice(0, -1).join(" ")} <em>{post.author.node.name.split(" ").slice(-1)}</em>
+                      {post.author.node.name.split(" ").slice(0, -1).join(" ")}{" "}
+                      <em>{post.author.node.name.split(" ").slice(-1)}</em>
                     </>
                   ) : (
                     post.author.node.name
@@ -565,89 +545,81 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 ) : (
                   <>The <em>Moveee</em></>
                 )}
-              </h4>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond. Long-form essays and visual stories that document the things that matter."}</p>
+              </div>
+              <p className="ar-author-bio">
+                {post.author?.node?.description ||
+                  "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and beyond. Long-form essays and visual stories that document the things that matter."}
+              </p>
             </>
           )}
         </div>
         {post.author?.node?.slug && (
-          <Link
-            href={`/author/${post.author.node.slug}`}
-            className="author-cta"
-          >
+          <Link href={`/author/${post.author.node.slug}`} className="ar-author-cta">
             More by {post.author.node.name?.split(" ")[0]} →
           </Link>
         )}
       </div>
 
-      {/* ── SHOP THE EDIT — mobile/tablet full-width strip (hidden on desktop where sidebar widget shows) ── */}
+      {/* ── SHOP THE EDIT — mobile strip ── */}
       {(post.featuredProducts ?? []).length > 0 && (
-        <section className="ste-section ste-section--mobile">
-          <div className="ste-inner">
-            <div className="ste-header">
-              <div className="ste-eyebrow">Shop the Edit</div>
-              <h2 className="ste-title">From this story</h2>
-            </div>
-            <div className="ste-grid">
-              {(post.featuredProducts as any[]).map((p: any) => (
-                <Link key={p.id} href={`/shop/${p.slug}`} className="ste-card">
-                  <div className="ste-card-img">
-                    {p.imageUrl ? (
-                      <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="220px" />
-                    ) : (
-                      <div className="ste-card-img-placeholder" />
-                    )}
-                  </div>
-                  <div className="ste-card-body">
-                    <div className="ste-card-name">{p.name}</div>
-                    <div className="ste-card-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
-                  </div>
-                </Link>
-              ))}
-            </div>
-            <div className="ste-footer">
-              <Link href="/shop" className="ste-browse-link">Browse all products →</Link>
-            </div>
+        <section className="ste-section--mobile">
+          <div className="ste-mobile-label">Shop the Edit</div>
+          <div className="ste-mobile-scroll">
+            {(post.featuredProducts as any[]).map((p: any) => (
+              <Link key={p.id} href={`/shop/${p.slug}`} className="ste-mobile-item">
+                <div className="ste-mobile-img" style={{ position: "relative", overflow: "hidden" }}>
+                  {p.imageUrl && (
+                    <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="72px" />
+                  )}
+                </div>
+                <div className="ste-mobile-name">{p.name}</div>
+                <div className="ste-mobile-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+              </Link>
+            ))}
           </div>
         </section>
       )}
 
       {/* ── RELATED ── */}
       {relatedStories.length > 0 && (
-        <section className="related">
-          <div className="related-inner">
-            <div className="related-hdr">
+        <section className="ar-related">
+          <div className="ar-related-inner">
+            <div className="ar-related-header">
               <h3>Keep <em>reading</em></h3>
               <Link href="/magazine">All stories →</Link>
             </div>
-            <div className="related-grid">
+            <div className="ar-related-grid">
               {relatedStories.map((story: any) => (
-                <Link href={`/magazine/${story.slug}`} key={story.id} className="rc">
-                  <div className="rf">
+                <Link href={`/magazine/${story.slug}`} key={story.id} className="ar-rc">
+                  <div className="ar-rf" style={{ position: "relative", overflow: "hidden" }}>
                     {story.featuredImage?.node?.sourceUrl ? (
                       <Image
                         src={story.featuredImage.node.sourceUrl}
                         alt={story.title}
                         fill
-                        style={{ objectFit: 'cover' }}
+                        style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+                      <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%" }}>
                         <defs>
                           <linearGradient id={`rg-${story.id}`} x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0%" stopColor="#3d4a2a" /><stop offset="100%" stopColor="#14110d" />
                           </linearGradient>
                         </defs>
-                        <rect width="400" height="250" fill={`url(#rg-${story.id})`} />
-                        <circle cx="200" cy="125" r="80" fill="#c5491f" opacity="0.35" />
-                        <circle cx="200" cy="125" r="50" fill="#b38238" opacity="0.45" />
+                        <rect width="400" height="300" fill={`url(#rg-${story.id})`} />
+                        <circle cx="200" cy="150" r="80" fill="#c5491f" opacity="0.35" />
+                        <circle cx="200" cy="150" r="50" fill="#b38238" opacity="0.45" />
                       </svg>
                     )}
                   </div>
-                  <div className="rk">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
-                  <h4>{story.title}</h4>
-                  <div className="rm">
-                    {new Date(story.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  <div className="ar-rk">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
+                  <h4 className="ar-rt">{story.title}</h4>
+                  <div className="ar-rm">
+                    {new Date(story.date).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </div>
                 </Link>
               ))}
