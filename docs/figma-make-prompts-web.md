@@ -3826,3 +3826,296 @@ all 5, shown stacked or as a single representative frame with template
 callouts).
 
 ---
+
+## 16. DESIGN SYSTEM & CORE UI COMPONENTS — WEB (Site A + Site B, shared tokens)
+
+> **Note on scope.** Mobile's §0 (Design System Foundation) and §1 (Core UI
+> Components — Buttons/Inputs/Avatars + Feed Cards & Badge System) describe a
+> from-scratch React Native token system and a matching set of reusable
+> components. **Web has no equivalent component library at all** — there is no
+> shared `<Button>`, `<Input>`, or `<Avatar>` React component anywhere in
+> `packages/shared`, `apps/connect`, or `apps/site`. Buttons are plain
+> `<button>`/`<a>`/`<Link>` elements styled by one of 16+ independently-defined
+> className families (`.con-btn-primary`, `.con-btn-ghost`, `.ch-btn-ghost`,
+> `.ch-btn-solid`, etc.), and avatars are inlined per-surface with no shared size
+> scale — a member-dashboard avatar, a public-profile avatar, a header avatar,
+> and a feed-card avatar are four separate hand-styled `<div>`s with four
+> different sizes/background colors. This section therefore documents what
+> *actually exists* — the real CSS custom-property token set (which **does**
+> exist and **is** shared, just via `:root` variables rather than a design-token
+> JS object) plus a representative sample of the real button/avatar/badge
+> patterns in use — rather than designing a net-new component library mobile
+> never needed prompting for either (mobile's own component system was built
+> directly into React Native screens, not abstracted into a shared package).
+> Site A and Site B's token sets are **not identical** — see DEV note 1.
+
+### Brand architecture
+
+Spans both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
+web.themoveee.com) — this is the shared visual foundation both surfaces draw
+from, plus where they diverge.
+
+### Why this section exists
+
+Every other web section in this document has referenced "the brand tokens" by
+name (paper, ink, ochre, gold, mute) without ever showing them side by side or
+confirming their exact values against the real CSS. This section is that
+reference sheet — grounded in the actual `:root`/`@theme` blocks in both apps'
+`globals.css`, not the mobile catalog's hex list (which mostly matches, but not
+entirely — see DEV note 1 for where they diverge).
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+This is a component/token reference page, not a marketing surface — no
+verbatim marketing copy block applies. Use real UI copy strings only where
+shown in the frame specs below (e.g. "Moveee Pro", "Moveee Citizen", nav labels).
+
+### DEV ANNOTATION REQUIREMENT
+
+The following `<!-- DEV: ... -->` notes MUST appear in the prompt at the
+indicated insertion points:
+
+1. `<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
+   identical token set. Site B has `--paper-warm` (#f3ece0), a full border-
+   radius scale, `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`,
+   `--rule-dark`, and full dark-mode tokens under `[data-theme="dark"]`. Site A
+   has none of these — its `--rule` is even a different type (`#2a241c` solid
+   color vs Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all.
+   Only `--paper`, `--paper-deep`, `--ink`, `--ink-soft`, `--mute`, `--ochre`,
+   `--ochre-deep`, `--moss`, `--gold` are truly shared. -->` — insert at the top
+   of the Color Tokens frame.
+2. `<!-- DEV: There is no shared web `<Button>`/`<Input>`/`<Avatar>` component
+   — every button is a plain element styled by one of 16+ independent
+   className families (.con-btn-primary, .con-btn-ghost, .ch-btn-ghost,
+   .ch-btn-solid, plus per-page families like .adm-btn-*, .mz-btn-*). Avatars
+   are inlined per-surface with four different real-world sizes (header 34px,
+   public profile 72px/52px mobile, member dashboard 72px/56px mobile, feed
+   card 34px) and three different background colors (--ink, --ochre, #edf7ed)
+   — there is no single "avatar size scale" to draw from like mobile's
+   XS/SM/MD/LG/XL. Show the real sizes as four distinct named instances, not a
+   clean scale. -->` — insert at the top of the Buttons & Avatars frame.
+3. `<!-- DEV: `var(--font-jetbrains-mono)` is defined but never actually
+   referenced anywhere in either app's CSS — every mono-font usage (button
+   labels, meta text, badges) hardcodes the literal string 'JetBrains Mono',
+   monospace instead. There's also a dangling `var(--font-newsreader)`
+   reference in apps/connect/app/globals.css (.comment-sidebar-header h3) with
+   no Newsreader font ever imported — flag both as known CSS debt, do not
+   "fix" them in the mockup. -->` — insert near the Typography frame.
+4. `<!-- DEV: FeedCard.tsx has no template badge at all for Poll (renders
+   straight into PollDisplay with no header label) or Book Review (mobile-only
+   feature, never built on web) — do not invent badge colors for these two;
+   show them as "no badge" states instead. -->` — insert near the Badge System
+   frame.
+5. `<!-- DEV: Web has no persistent bottom tab bar — confirmed absent from both
+   apps/connect and packages/shared. Site B's mobile nav is a slide-down
+   hamburger overlay drawer (position: fixed; top: 60px), not a tab bar; Site A
+   has the same hamburger pattern plus a separate cart icon. Do not design a
+   bottom tab bar frame — replace it with the real header nav (desktop) +
+   hamburger drawer (mobile) shown in the Navigation frame. -->` — insert at
+   the top of the Navigation frame.
+
+### PROMPT 16 — Design System & Core UI Components (Desktop 1440px + Mobile 390px)
+
+```
+Senior product designer — Moveee web design system reference sheet, covering
+both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
+web.themoveee.com). Desktop frame 1440px wide, scrollable.
+
+<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
+identical token set. Site B has --paper-warm (#f3ece0), a full border-radius
+scale, --shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark,
+and full dark-mode tokens under [data-theme="dark"]. Site A has none of these
+— its --rule is even a different type (#2a241c solid color vs Site B's
+rgba(20,17,13,0.10)), and it has no dark mode at all. Only --paper,
+--paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold
+are truly shared. -->
+
+════════════════════════════════════════════
+FRAME 1 — COLOR TOKENS
+════════════════════════════════════════════
+Two labelled columns: "Shared (both apps)" and "Site B only (apps/connect)".
+
+SHARED swatches (each a 120×120px square + label below: token name, hex, used-by):
+  --paper #ffffff · --paper-deep #f2f2f2 (site: #f2f2f2 / connect: #f5f5f5 —
+    label both) · --ink #14110d · --ink-soft #3a342b · --mute #7a6f5c ·
+  --ochre #c5491f · --ochre-deep #8a2d10 · --moss #3d4a2a · --gold #b38238.
+
+SITE B ONLY swatches:
+  --paper-warm #f3ece0 · --rule rgba(20,17,13,.10) · --rule-dark
+    rgba(20,17,13,.15) · --glow-gold (render as a gold-glow ring sample, not a
+    flat swatch: box-shadow 0 0 0 2px #b38238, 0 0 10px 2px rgba(179,130,56,.55)).
+
+DARK MODE swatches (Site B only, [data-theme="dark"], second labelled row):
+  --paper #242018 · --paper-warm #1a1612 · --paper-deep #2d2820 ·
+  --ink #f3ece0 · --ink-soft #d4c9b8 · --mute #9e9288 · --ochre #d4603a ·
+  --ochre-deep #a83f20 · --gold #c9963f.
+
+RADIUS SCALE (Site B only — Site A has no radius scale), 6 rounded rectangles
+  labelled: sm 2px · md 4px · lg 6px · xl 12px · 2xl 20px · full 9999px (pill).
+
+SHADOWS (Site B only, 3 sample cards):
+  shadow-card: 0 1px 3px rgba(20,17,13,.08) · shadow-modal: 0 20px 60px
+  rgba(20,17,13,.18) · shadow-fab: 0 4px 12px rgba(197,73,31,.35).
+
+════════════════════════════════════════════
+FRAME 2 — TYPOGRAPHY
+════════════════════════════════════════════
+<!-- DEV: var(--font-jetbrains-mono) is defined but never actually referenced
+anywhere in either app's CSS — every mono-font usage (button labels, meta
+text, badges) hardcodes the literal string 'JetBrains Mono', monospace
+instead. There's also a dangling var(--font-newsreader) reference in
+apps/connect/app/globals.css (.comment-sidebar-header h3) with no Newsreader
+font ever imported — flag both as known CSS debt, do not "fix" them in the
+mockup. -->
+
+Three font families, each loaded via next/font/google in both apps' layout.tsx
+(no explicit weight set on either Font call — weights come from CSS):
+  Fraunces (serif, display/headings) — sample at 36px/700, 28px/700, 22px/400.
+  DM Sans (sans, body/UI) — sample at 17px/400, 15px/400, 13px/400, 15px/700.
+  JetBrains Mono (labels/meta/buttons) — sample at 11px/400, 11px/700,
+    10px/700 uppercase letter-spacing .1em-.15em (this is the actual button-
+    label treatment, e.g. .con-btn-primary).
+
+════════════════════════════════════════════
+FRAME 3 — BUTTONS & AVATARS
+════════════════════════════════════════════
+<!-- DEV: There is no shared web <Button>/<Input>/<Avatar> component — every
+button is a plain element styled by one of 16+ independent className families
+(.con-btn-primary, .con-btn-ghost, .ch-btn-ghost, .ch-btn-solid, plus
+per-page families like .adm-btn-*, .mz-btn-*). Avatars are inlined per-surface
+with four different real-world sizes (header 34px, public profile 72px/52px
+mobile, member dashboard 72px/56px mobile, feed card 34px) and three different
+background colors (--ink, --ochre, #edf7ed) — there is no single "avatar size
+scale" to draw from like mobile's XS/SM/MD/LG/XL. Show the real sizes as four
+distinct named instances, not a clean scale. -->
+
+BUTTONS — show each real class, labelled with its className:
+  .con-btn-primary: ochre fill, white text, JetBrains Mono 10px uppercase
+    letter-spacing .15em, 14px/28px padding, no border-radius (square
+    corners — this family predates the radius scale).
+  .con-btn-ghost: no fill, mute text, JetBrains Mono 10px uppercase,
+    1px bottom border only (underline-style, not a pill).
+  .ch-btn-ghost (header-only variant): ink text, 1px border
+    rgba(42,36,28,.25), radius 6px, DM Sans 14px/500, hover →
+    --paper-deep bg.
+  .ch-btn-solid (header-only variant): white text on ink fill,
+    radius 6px, DM Sans 14px/600, hover → 82% opacity.
+
+AVATARS — show 4 real instances side by side, each labelled with its source
+  component/file, NOT as a clean size scale:
+  Header avatar — 34px, --ink bg, white initial, DM Sans 0.8rem/700.
+  Public profile avatar (.prf-avatar) — 72px desktop / 52px mobile, --ink bg,
+    Fraunces 28px/300 (20px mobile) initial.
+  Member dashboard avatar (.mem-avatar) — 72px desktop / 56px mobile, --ochre
+    bg, Fraunces 28px/400 (22px mobile) initial.
+  Feed card avatar (community card) — 34px, #edf7ed bg, 1px solid #c8e6c9
+    border, #2e7d32 initial color. Pro-tier variant: add the gold glow ring
+    (box-shadow 0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)).
+
+TIER BADGE (ProBadge.tsx) — solid gold (#B38238) rounded square, white ribbon/
+  medal SVG icon centred, no text inside the badge itself (icon-only, ~size×0.62
+  icon inside a size-scaled padded square). Show at size=13 (its real usage
+  next to author names in FeedCard) and size=24 (larger reference). Separately
+  show the text-label pairing used in the header: "Moveee Pro" / "Moveee
+  Citizen" plain text (DM Sans), confirming the badge icon and the tier-name
+  text are two independent pieces, not one combined component.
+
+NOTIFICATION BELL — bell outline icon (ink), with the real unread indicator:
+  14×14px circle, border-radius 50%, background #c5491f, white count text
+  (9px/700, "9+" cap above 9) — NOT a plain dot, it always shows a number.
+  Dropdown panel's per-row unread dot: 6×6px circle, same #c5491f.
+
+════════════════════════════════════════════
+FRAME 4 — REACTION BAR
+════════════════════════════════════════════
+Three reaction buttons in this exact order: ❤️ Love · 🔥 Fire · 👏 Respect
+  (note: the third one's internal key is "clap" but its display label is
+  "Respect", not "Clap" — use "Respect" in the mockup).
+  Inactive state: transparent bg, transparent border, color #7a6f5c.
+  Active state: bg #f0ece4, border 1px #d8cfc4, color #3a342b, radius 20px.
+  Padding 0.2rem/0.55rem, emoji ~0.85rem, count text ~0.8rem, gap 0.3rem
+  between emoji and count, 0.25rem gap between the three buttons.
+  Share button (right-aligned): outline download-tray icon, #7a6f5c, no text
+  — becomes a green (#2e7d32) "Copied ✓" text label for 2 seconds after tap
+  (clipboard fallback when the Web Share API isn't available).
+  Optional top divider (omitted when used inside a detail drawer that already
+  has its own divider): 1px border-top #e8e2d8, 0.5rem padding-top.
+
+════════════════════════════════════════════
+FRAME 5 — BADGE SYSTEM (FeedCard.tsx, real values)
+════════════════════════════════════════════
+<!-- DEV: FeedCard.tsx has no template badge at all for Poll (renders straight
+into PollDisplay with no header label) or Book Review (mobile-only feature,
+never built on web) — do not invent badge colors for these two; show them as
+"no badge" states instead. -->
+
+All badges: fontSize ~0.58-0.6rem, fontWeight 700, letterSpacing 0.1em,
+  uppercase, padding ~2px/6px, borderRadius 2px (square-ish pill, not full
+  radius — distinct from mobile's radius-full badge treatment).
+
+FEED-ITEM-TYPE badges (6, shown as one row):
+  Pulse "Pulse" #b38238 on #fef3e2 · Editorial "Editorial" #c5491f on #fff0eb ·
+  Happening "Happening" #3c3489 on #eeedfe · Directory "Directory" #085041 on
+  #e8f5ee · Quote "Quote" #7a4da0 on #f3eef8 · Community "Community" #2e7d32
+  on #edf7ed.
+
+COMMUNITY TEMPLATE badges (6 real + 2 explicit "no badge" states, second row):
+  Hidden Gem "Hidden Gem {★ rating}" #b38238 on rgba(179,130,56,.1) ·
+  Cultural Take "Take{· location}" #6b48a8 on rgba(107,72,168,.08) ·
+  Food Review "Food Review{· dish}" #c5491f on rgba(197,73,31,.08) ·
+  Creative Showcase "Creative Showcase" #1976d2 on rgba(25,118,210,.08) ·
+  Itinerary "Weekend Route" #2e7d32 on rgba(46,125,50,.08) · Event
+  "Event{· category}" #a8351f on rgba(168,53,31,.08) · Poll — show as a plain
+  unbadged card header (just the avatar/author row, no pill at all) · Book
+  Review — same explicit "no badge on web" treatment.
+
+Literati Connect pill (happening cards only): "🪶 Literati Connect", color
+  #b38238, background #f3ece0, border 1px #b38238.
+
+════════════════════════════════════════════
+FRAME 6 — NAVIGATION
+════════════════════════════════════════════
+<!-- DEV: Web has no persistent bottom tab bar — confirmed absent from both
+apps/connect and packages/shared. Site B's mobile nav is a slide-down
+hamburger overlay drawer (position: fixed; top: 60px), not a tab bar; Site A
+has the same hamburger pattern plus a separate cart icon. Do not design a
+bottom tab bar frame — replace it with the real header nav (desktop) +
+hamburger drawer (mobile) shown in this frame. -->
+
+Two side-by-side desktop header strips, each full 1440px width, labelled:
+
+SITE B HEADER (apps/connect/components/Header.tsx): logo left; nav links
+  "Feed" · "Events" · "Games" (local) + "Magazine ↗" (external, deep-links to
+  themoveee.com/magazine) — active link gets background var(--paper-deep),
+  color var(--ink); right side: compass icon (→ /discover), sun/moon theme
+  toggle, NotificationBell (logged-in only), avatar + dropdown (My Dashboard /
+  Wallet / Settings / Vendor Dashboard if vendor / Sign out), or "Sign in" +
+  "Join" buttons (.ch-btn-ghost / .ch-btn-solid) when logged out.
+
+SITE A HEADER (apps/site/components/Header.tsx): logo left; nav links "Feed"
+  · "Discover" (both external, deep-link to web.themoveee.com) + "Editorials"
+  (local, the only in-app link) — active state via data-active="true"
+  attribute, not a class; right side: search icon, cart icon with numeric
+  badge (.cart-badge), "Sign in" link, "Join →" button. No theme toggle, no
+  notification bell, no compass icon (Discover lives on Site B only).
+
+MOBILE COMPANION (390px, both sites): collapsed header bar (logo + hamburger
+  + cart icon on Site A only) → tap hamburger → full-width slide-down overlay
+  drawer (position: fixed, top: 60px) listing the same nav links as desktop,
+  stacked vertically. No bottom tab bar on either site.
+
+CONSTRAINTS:
+- Do not invent a shared `<Button>`/`<Input>`/`<Avatar>` component system —
+  show the real fragmented className-based reality instead.
+- Do not design a bottom tab bar — it does not exist on web.
+- Do not give Poll or Book Review community-post badges — they have none on
+  web (Book Review has no web composer or feed rendering at all).
+- Use the real "Respect" reaction label, not "Clap", even though the internal
+  key is `clap`.
+```
+
+Output 6 frames: Frame 1 (Color Tokens), Frame 2 (Typography), Frame 3
+(Buttons & Avatars), Frame 4 (Reaction Bar), Frame 5 (Badge System), Frame 6
+(Navigation, desktop + mobile companion).
+
+---
