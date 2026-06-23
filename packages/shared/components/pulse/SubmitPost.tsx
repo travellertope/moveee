@@ -926,9 +926,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               <button
                 type="submit"
                 disabled={!canSubmit()}
-                className={`composer-submit${template === "quote" ? " composer-submit--quote" : ""}`}
+                className="composer-submit"
               >
-                {uploading ? "Uploading…" : loading ? "Posting…" : template === "quote" ? "Submit" : "Post"}
+                {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
               </button>
             </div>
             {error && <p className="composer-error">{error}</p>}

@@ -1081,8 +1081,6 @@ h1, h2, h3, h4 {
 }
 .composer-submit:hover:not(:disabled) { background: #b33522; }
 .composer-submit:disabled { background: #e8e2d8; color: #aaa; cursor: default; }
-.composer-submit--quote                         { background: #7a4da0; }
-.composer-submit--quote:hover:not(:disabled)    { background: #6a3d90; }
 
 /* Logged-out prompt */
 .composer-prompt-btn {

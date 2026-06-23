@@ -5,6 +5,7 @@ import Image from "next/image";
 import ProductGallery from "./ProductGallery";
 import ShopSessionSection from "./ShopSessionSection";
 import ProductAccordion from "./ProductAccordion";
+import ProductReviews from "./ProductReviews";
 import "../shop.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -73,8 +74,11 @@ export default async function ProductPage({
     ]);
     product = coreData?.product ?? null;
     if (product && extraData?.product) {
-      product.vendorProfile = extraData.product.vendorProfile ?? null;
-      product.moveeeMeta    = extraData.product.moveeeMeta    ?? null;
+      product.vendorProfile    = extraData.product.vendorProfile ?? null;
+      product.moveeeMeta       = extraData.product.moveeeMeta    ?? null;
+      product.averageRating    = extraData.product.averageRating ?? "0.0";
+      product.reviewCount      = extraData.product.reviewCount   ?? 0;
+      product.productMaterials = extraData.product.productMaterials ?? [];
     }
   } catch { /* CMS unreachable */ }
 
@@ -249,6 +253,21 @@ export default async function ProductPage({
 
           <h1 className="sp-product-name">{product.name}</h1>
 
+          {product.reviewCount > 0 && (
+            <div className="sp-product-rating">
+              <span className="stars">★ {parseFloat(product.averageRating).toFixed(1)}</span>
+              <span className="count">({product.reviewCount} review{product.reviewCount === 1 ? "" : "s"})</span>
+            </div>
+          )}
+
+          {product.productMaterials?.length > 0 && (
+            <div className="sp-product-materials">
+              {product.productMaterials.map((m: string) => (
+                <span key={m} className="sp-material-pill">{m}</span>
+              ))}
+            </div>
+          )}
+
           {product.shortDescription && (
             <div
               className="sp-product-lede"
@@ -404,6 +423,13 @@ export default async function ProductPage({
           </div>
         </section>
       )}
+
+      {/* ── REVIEWS ── */}
+      <ProductReviews
+        productId={parseInt(product.databaseId)}
+        averageRating={parseFloat(product.averageRating) || 0}
+        reviewCount={product.reviewCount || 0}
+      />
 
       {/* ── MORE FROM THIS CATEGORY ── */}
       {relatedProducts.length > 0 && (

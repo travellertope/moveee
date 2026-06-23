@@ -1439,6 +1439,45 @@ export const GET_PRODUCT_EXTRA = `
         memberPrice
         earlyAccessUntil
       }
+      averageRating
+      reviewCount
+      productMaterials
+    }
+  }
+`;
+
+// Batched extra-data fetch for the shop listing/grid pages — same isolation
+// rationale as GET_PRODUCT_EXTRA above (these fields depend on the
+// moveee-graphql-bridge plugin and must never be merged into
+// PRODUCT_FIELDS_FRAGMENT/GET_PRODUCTS, or a bridge-plugin outage would take
+// down the whole grid query). Re-issues the same first/category/tag args as
+// GET_PRODUCTS so the result set lines up, then the caller merges by id.
+export const GET_PRODUCTS_EXTRA = `
+  query GetProductsExtra($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag }) {
+      nodes {
+        databaseId
+        slug
+        vendorProfile { storeName city country }
+        averageRating
+        reviewCount
+        productMaterials
+      }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_BY_VENDOR_EXTRA = `
+  query GetProductsByVendorExtra($first: Int, $vendor: String) {
+    products(first: $first, where: { authorName: $vendor }) {
+      nodes {
+        databaseId
+        slug
+        vendorProfile { storeName city country }
+        averageRating
+        reviewCount
+        productMaterials
+      }
     }
   }
 `;
