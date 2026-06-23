@@ -20,79 +20,97 @@ interface Props {
 }
 
 export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
-  const { filtered, view, activeChips, clearAll } = useShopFilter();
+  const { filtered, view, clearAll } = useShopFilter();
 
   return (
-    <section className="shop-grid-section">
-      <div className="sec-label">
-        {isFiltered ? activeLabel : "All Products"} — {filtered.length} pieces
-      </div>
-      {filtered.length === 0 ? (
-        <div className="shop-empty">
-          <p className="shop-empty-text">No products found.</p>
-          <button type="button" className="shop-empty-clear" onClick={clearAll}>
-            Clear filters
-          </button>
+    <section className="sl-grid">
+      <div className="sl-grid-inner">
+        <div className="sl-grid-header">
+          <div className="sl-grid-label">
+            {isFiltered ? activeLabel : "All Products"}{" "}
+            <span className="sl-grid-count">— {filtered.length} pieces</span>
+          </div>
         </div>
-      ) : (
-        <div className={view === "grid" ? "product-grid" : "product-list"}>
-          {filtered.map((p: any) => {
-            const vname = vendorName(p);
-            const outOfStock = isOutOfStock(p);
-            const proPrice = formatGBP(parsePrice(p.price) * 0.9);
-            const hasReviews = reviewCount(p) > 0;
-            return (
-              <Link
-                key={p.id}
-                href={`/shop/${p.slug}`}
-                className={`pcard${outOfStock ? " pcard--sold" : ""}`}
-              >
-                <div className="pimg">
-                  {p.image?.sourceUrl ? (
-                    <Image
-                      src={p.image.sourceUrl}
-                      alt={p.image.altText || p.name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
+
+        {filtered.length === 0 ? (
+          <div className="sl-empty">
+            <p className="sl-empty-text">No products found.</p>
+            <button type="button" className="sl-empty-clear" onClick={clearAll}>
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className={view === "grid" ? "sl-product-grid" : "sl-product-list"}>
+            {filtered.map((p: any) => {
+              const vname = vendorName(p);
+              const outOfStock = isOutOfStock(p);
+              const proPrice = formatGBP(parsePrice(p.price) * 0.9);
+              const hasReviews = reviewCount(p) > 0;
+              return (
+                <Link
+                  key={p.id}
+                  href={`/shop/${p.slug}`}
+                  className={`sl-pcard${outOfStock ? " sl-pcard--sold" : ""}`}
+                >
+                  <div className="sl-pcard-img">
+                    {p.image?.sourceUrl ? (
+                      <Image
+                        src={p.image.sourceUrl}
+                        alt={p.image.altText || p.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                    )}
+                    <div className="sl-pcard-vetted">
+                      <span className="sl-pcard-vetted-star">★</span> Vetted
+                    </div>
+                    {!outOfStock && isNew(p) && (
+                      <div className="sl-pcard-new-pip">New</div>
+                    )}
+                    {outOfStock && (
+                      <div className="sl-pcard-sold-overlay">
+                        <span>Sold Out</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`sl-pcard-body${outOfStock ? " sl-pcard-body--muted" : ""}`}>
+                    {vname && <div className="sl-pcard-vendor">{vname}</div>}
+                    <div className="sl-pcard-name">{p.name}</div>
+                    {p.price && (
+                      <div className="sl-pcard-prices">
+                        <span className="sl-pcard-price">{p.price}</span>
+                        {!outOfStock && (
+                          <span className="sl-pcard-pro-price">{proPrice} with Pro</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="sl-pcard-rating">
+                      {hasReviews
+                        ? `★ ${averageRating(p).toFixed(1)} (${reviewCount(p)})`
+                        : "New listing"}
+                    </div>
+                  </div>
+
+                  {outOfStock ? (
+                    <button type="button" className="sl-pcard-sold-btn" disabled>
+                      Sold out
+                    </button>
                   ) : (
-                    <div className="pimg-placeholder" />
+                    p.databaseId && (
+                      <div className="sl-pcard-add">
+                        <AddToCartButton productId={p.databaseId} />
+                      </div>
+                    )
                   )}
-                  <div className="vetted-pip">
-                    <span className="s">★</span> Vetted
-                  </div>
-                  {!outOfStock && isNew(p) && <div className="new-pip">New</div>}
-                  {outOfStock && (
-                    <div className="sold-pip">
-                      <span>Sold Out</span>
-                    </div>
-                  )}
-                </div>
-                <div className={`pcard-body${outOfStock ? " pcard-body--muted" : ""}`}>
-                  {vname && <div className="pvendor">{vname}</div>}
-                  <div className="pname">{p.name}</div>
-                  {p.price && (
-                    <div className="pprice">
-                      <span className="main">{p.price}</span>
-                      {!outOfStock && <span className="pro">{proPrice} with Moveee Pro</span>}
-                    </div>
-                  )}
-                  <div className="prating">
-                    {hasReviews ? `★ ${averageRating(p).toFixed(1)} (${reviewCount(p)})` : "New listing"}
-                  </div>
-                </div>
-                {outOfStock ? (
-                  <button type="button" className="padd padd--sold" disabled>
-                    Sold out
-                  </button>
-                ) : (
-                  p.databaseId && <AddToCartButton productId={p.databaseId} />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
