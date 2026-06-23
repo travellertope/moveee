@@ -157,7 +157,8 @@ table, `award_credits()`/`award_reputation()`, `REPUTATION_TIERS`, the `credits`
 `reputation` fields in the NextAuth session shape, and all REST/API field names stay
 exactly as they are. Only labels, button text, card titles, and chart legends in
 user-visible UI change. As of 2026-06-20 this has only been applied to
-`docs/figma-make-prompts.md` Section 18 — a full sweep of `apps/site`, `apps/connect`,
+`docs/figma-make-prompts-web.md` Section 1 (moved there in the June 2026 mobile/web prompt-file
+split — see "Figma Make prompt files" below) — a full sweep of `apps/site`, `apps/connect`,
 `apps/mobile`, and `packages/shared` UI copy (gamification feature descriptions, wallet/
 analytics pages, badge/credit toast messages, membership perk copy) is still pending.
 
@@ -445,6 +446,29 @@ results.
 - The subscriber count in the Send Newsletter meta box updates live when the
   list or segment dropdown changes (JS reads `data-counts` on the box div).
 - Segment codes: `us` `uk` `ng` `gh` `ca` `au` — empty string = all segments.
+
+---
+
+## Figma Make prompt files (split into mobile vs. web, June 2026)
+
+Two separate catalogs of structured Figma Make / First Draft prompts, **do not merge them
+back together**:
+
+- `docs/figma-make-prompts.md` — **mobile only** (`apps/mobile`, iOS & Android). Sections
+  numbered §0–17 + Appendix. Frames are 390×844px iOS throughout.
+- `docs/figma-make-prompts-web.md` — **webapp only** (`apps/site` + `apps/connect`). Sections
+  numbered independently, starting at §1 (currently §1 Web Homepage, §2 Shop/Lifestyle
+  Marketplace Redesign). Frames are desktop 1440px + a mobile-companion 390px frame per screen
+  — not the same thing as the mobile app catalog above.
+
+Both follow the same per-section convention: a brand-architecture/scope preamble, a "why this
+section exists" rationale grounded in the actual current code, a verbatim marketing-copy block
+(the prompt must use this copy as-is, never paraphrase), a `<!-- DEV: <note> -->` annotation
+list flagging real engineering gotchas, then a `### PROMPT N` block broken into numbered
+`FRAME` sections with exact dimensions/colors/fonts/copy placement. When adding a new prompt,
+append a new numbered section to whichever file matches the surface (mobile app → the first
+file; `apps/site`/`apps/connect` → the web file) rather than inventing a third file or a new
+top-level doc.
 
 ---
 

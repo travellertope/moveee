@@ -406,7 +406,7 @@ export default async function ShopArchiveWrapper({
               {[
                 { icon: "◈", title: "Early Access", desc: "First look at new makers and limited drops." },
                 { icon: "◇", title: "10% Off", desc: "Applied automatically to every shop order." },
-                { icon: "○", title: "Free Delivery", desc: "On all UK orders, always." },
+                { icon: "○", title: "Patron Stories", desc: "Exclusive maker interviews and behind-the-scenes features." },
                 { icon: "△", title: "Maker Events", desc: "Invitations to studio visits and openings." },
               ].map((perk) => (
                 <div key={perk.title} className="sh-perk">
