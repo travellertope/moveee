@@ -379,7 +379,10 @@ export default function FeedCard({
           style={{
             position: "relative",
             background: "var(--paper-warm, #f3ece0)",
-            borderBottom: "1px solid #e8e2d8",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             overflow: "hidden",
             minWidth: 0,
             padding: "20px 24px 20px 24px",
@@ -853,8 +856,12 @@ export default function FeedCard({
       <>
         <article
           style={{
+            position: "relative",
             background: "#fff",
-            borderBottom: "1px solid #e8e2d8",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             padding: "1rem 1.25rem",
             overflow: "hidden",
             minWidth: 0,
@@ -996,7 +1003,17 @@ export default function FeedCard({
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
 
     return (
-      <article style={{ position: "relative", background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem 1.5rem", overflow: "hidden", minWidth: 0 }}>
+      <article style={{
+        position: "relative",
+        background: "#fff",
+        border: "1px solid rgba(232,226,216,0.5)",
+        borderRadius: "12px",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        margin: "12px 16px",
+        padding: "1rem 1.25rem 1.5rem",
+        overflow: "hidden",
+        minWidth: 0,
+      }}>
         {interestMatch && (
           <span style={{
             position: "absolute",
@@ -1078,7 +1095,17 @@ export default function FeedCard({
 
     return (
       <>
-        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        <article style={{
+          position: "relative",
+          background: "#fff",
+          border: "1px solid rgba(232,226,216,0.5)",
+          borderRadius: "12px",
+          boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+          margin: "12px 16px",
+          padding: "1rem 1.25rem",
+          overflow: "hidden",
+          minWidth: 0,
+        }}>
           {/* Eyebrow row — plain mono text */}
           <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
             <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#085041" }}>
