@@ -46,9 +46,9 @@ export default function CategoryNav({ categories, currentCategory, activeFilter 
   };
 
   return (
-    <div 
+    <div
       ref={scrollRef}
-      className={`mag-nav-primary ${isDragging ? 'dragging' : ''}`}
+      className={`mg-nav-tabs ${isDragging ? 'dragging' : ''}`}
       onMouseDown={handleMouseDown}
       onMouseLeave={handleMouseLeave}
       onMouseUp={handleMouseUp}
@@ -57,13 +57,13 @@ export default function CategoryNav({ categories, currentCategory, activeFilter 
       {categories.map((cat) => {
         const isActive = (currentCategory === cat.slug) || (!currentCategory && !activeFilter && !cat.slug);
         return (
-          <Link 
-            key={cat.name} 
-            href={cat.slug ? `/magazine/category/${cat.slug}` : "/magazine"} 
+          <Link
+            key={cat.name}
+            href={cat.slug ? `/magazine/category/${cat.slug}` : "/magazine"}
             style={{ textDecoration: 'none' }}
             onClick={handleLinkClick}
           >
-            <button className={`tab ${isActive ? 'active' : ''}`}>
+            <button className={`mg-nav-tab${isActive ? ' mg-nav-tab--active' : ''}`}>
               {cat.name}
             </button>
           </Link>
