@@ -2063,3 +2063,348 @@
     font-size: 28px;
   }
 }
+
+/* ==========================================================================
+   ── DISCOVERED EVENT PAGE (Luma-style) — /events/[slug] when isAiGenerated
+   ========================================================================== */
+
+.luma-event-page {
+  background: var(--paper);
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+
+.luma-event-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 40px 0;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 56px;
+  align-items: start;
+}
+
+/* Left */
+.luma-left { position: sticky; top: 32px; }
+
+.luma-back {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+.luma-back:hover { color: var(--ink); }
+
+.luma-poster {
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: rgba(42,36,28,0.06);
+  margin-bottom: 18px;
+}
+.luma-poster img { width: 100%; height: 100%; object-fit: cover; }
+.luma-poster-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  background: rgba(42,36,28,0.05);
+  font-family: var(--font-mono);
+}
+.luma-poster-placeholder span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.4; }
+.luma-poster-day { font-family: var(--font-serif) !important; font-size: 64px !important; line-height: 1 !important; color: var(--ochre) !important; opacity: 1 !important; letter-spacing: -0.02em !important; }
+
+.luma-cta-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 16px;
+  text-decoration: none;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+}
+.luma-cta-btn:hover { background: var(--ochre); }
+
+.luma-attribution {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.45;
+  text-align: center;
+}
+.luma-attribution a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Right */
+.luma-right { padding-top: 4px; }
+
+.luma-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.luma-city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  border: 1px solid rgba(197,73,31,0.3);
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.luma-city-chip:hover { border-color: var(--ochre); }
+.luma-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(20,17,13,0.06);
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.luma-cat-chip:hover { background: rgba(20,17,13,0.12); }
+
+.luma-title {
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 3.5vw, 44px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 32px;
+}
+
+/* date / location rows */
+.luma-meta-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 28px;
+  border: 1px solid rgba(42,36,28,0.1);
+}
+
+.luma-meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(42,36,28,0.08);
+}
+.luma-meta-row:last-child { border-bottom: none; }
+
+.luma-date-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.luma-date-month {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+  line-height: 1;
+}
+.luma-date-day {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--ochre);
+}
+.luma-loc-icon {
+  width: 36px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--ochre);
+  text-align: center;
+  padding-top: 3px;
+}
+.luma-meta-text { flex: 1; }
+.luma-meta-main { font-size: 15px; font-weight: 400; line-height: 1.3; margin-bottom: 3px; }
+.luma-meta-sub { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.5; }
+
+/* registration box */
+.luma-register-box {
+  border: 1px solid rgba(42,36,28,0.12);
+  padding: 24px;
+  margin-bottom: 36px;
+  background: rgba(42,36,28,0.02);
+}
+.luma-register-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+.luma-register-note {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.luma-register-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: var(--ochre);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 14px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.luma-register-btn:hover { background: #a83b18; }
+
+/* about */
+.luma-about { margin-bottom: 32px; }
+.luma-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.4;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(42,36,28,0.08);
+}
+.luma-excerpt {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin-bottom: 12px;
+}
+.luma-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.luma-content p { margin-bottom: 1em; }
+
+/* tags */
+.luma-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+.luma-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  background: rgba(42,36,28,0.05);
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.luma-tag:hover { background: rgba(42,36,28,0.1); color: var(--ink); }
+
+/* related */
+.luma-related { margin-bottom: 40px; }
+.luma-related-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(42,36,28,0.07);
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.15s;
+}
+.luma-related-row:hover { opacity: 0.7; }
+.luma-related-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ochre);
+  flex-shrink: 0;
+  width: 52px;
+  padding-top: 2px;
+}
+.luma-related-info { flex: 1; }
+.luma-related-title { display: block; font-size: 14px; line-height: 1.3; margin-bottom: 3px; }
+.luma-related-loc { display: block; font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.4; }
+.luma-all-link {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.luma-footer-nav { padding-top: 20px; border-top: 1px solid rgba(42,36,28,0.08); }
+.luma-back-footer {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--mute);
+  text-decoration: none;
+}
+.luma-back-footer:hover { color: var(--ink); }
+
+@media (max-width: 768px) {
+  .luma-event-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 24px 0;
+  }
+  .luma-left { position: static; }
+  .luma-poster { aspect-ratio: 4/3; }
+}
+
+/* ── Category placeholder colours ────────────────────────────────────────
+   Used as background when an event has no image (luma-poster-placeholder).
+   Keep colours muted/earthy to stay on-brand.
+──────────────────────────────────────────────────────────────────────── */
+.ev-cat-ph { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:4px; }
+.ev-cat-ph-icon { font-size:1.4rem; opacity:0.6; }
+.ev-cat-ph-name { font-family:var(--font-mono); font-size:7px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.5; }
+
+[data-cat-ph="music"]       { background:#2c2240; }
+[data-cat-ph="film"]        { background:#1e2d1e; }
+[data-cat-ph="visual-arts"] { background:#1a2e38; }
+[data-cat-ph="fashion"]     { background:#352030; }
+[data-cat-ph="food"]        { background:#2e2010; }
+[data-cat-ph="literature"]  { background:#1c2c1c; }
+[data-cat-ph="design"]      { background:#1a2838; }
+[data-cat-ph="performance"] { background:#301828; }
+[data-cat-ph="community"]   { background:#2a2016; }
+[data-cat-ph="tech"]        { background:#101e30; }
+[data-cat-ph="default"]     { background:#1e1c18; }
+
+[data-cat-ph] .ev-cat-ph-icon,
+[data-cat-ph] .ev-cat-ph-name { color: #fff; }

@@ -474,9 +474,11 @@ top-level doc.
 
 These are the actual self-contained HTML output files (Tailwind CDN + Google Fonts, multiple
 "Frame N" sections at fixed pixel widths) generated *from* the prompt catalogs above — not to be
-confused with the `.md` prompt text files themselves. Two folders, split the same way:
+confused with the `.md` prompt text files themselves. Two folders, split the same way, both under
+`apps/figma/` (consolidated there 2026-06-24 — see below for the prior, now-removed locations):
 
-- `apps/figma/designs/` — **mobile app** mockups (`apps/mobile`). Pre-existing.
+- `apps/figma/designs-mobile/` — **mobile app** mockups (`apps/mobile`). Renamed from
+  `apps/figma/designs/` for naming symmetry with `designs-web`.
 - `apps/figma/designs-web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can
   overlap with the mobile folder (e.g. `moveee_connect_settings.html`,
   `moveee_dark_mode_ui.html`, `moveee_overlays.html`, `moveee_wallet.html`,
@@ -488,6 +490,22 @@ random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_setti
 `moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
 surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
 location like `docs/figma-design/`.
+
+**Consolidation note (2026-06-24):** a third, older mockup location existed at the repo-root
+`/designs/` folder — predating the `apps/figma/` convention entirely (single one-off HTML
+prototypes, not "Frame N" multi-frame Figma Make output), containing a mix of `apps/site`
+mockups (`homepage.html`, `magazine_index.html`, `shop_index.html`, `shop_product.html`,
+`origins_index.html`, `origins_journey.html`, `gele_return.html`, `marrakech_dispatch.html`,
+`portrait_feature.html`, `event_opening.html`, `events_index.html`, `newsletter/hub.html`,
+`newsletter/issue.html` — title tag `"... · The Moveee"`) and `apps/connect` mockups
+(`community_posts.html`, `composer_states.html`, `directory_detail_1.html`,
+`events_list_and_detail.html`, `feed_cards.html`, `feed-cards-v2.html`,
+`mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`). All of it was moved into
+`apps/figma/designs-web/` (no filename collisions) since that folder's scope already covers both
+`apps/site` and `apps/connect`. The root `/designs/` folder no longer exists — if you see a
+reference to it anywhere (e.g. stale docs), update it to `apps/figma/designs-web/`.
+`SHOP_BUILD_PLAN.md`'s reference to `/designs/shop_index.html`/`/designs/shop_product.html` was
+updated as part of this move.
 
 ---
 
