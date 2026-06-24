@@ -247,9 +247,6 @@ export default async function MagazineArchiveWrapper({
                       href={`/magazine/${story.slug}`}
                       className="mg-sf-card"
                     >
-                      <div className="mg-sf-kicker">
-                        {decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}
-                      </div>
                       <div className="mg-sf-thumb">
                         {story.featuredImage?.node?.sourceUrl && (
                           <Image
@@ -260,16 +257,21 @@ export default async function MagazineArchiveWrapper({
                           />
                         )}
                       </div>
-                      <h3
-                        className="mg-sf-title"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                      />
-                      <div className="mg-sf-date">
-                        {new Date(story.date).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
+                      <div className="mg-sf-body">
+                        <div className="mg-sf-kicker">
+                          {decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}
+                        </div>
+                        <h3
+                          className="mg-sf-title"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                        />
+                        <div className="mg-sf-date">
+                          {new Date(story.date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </div>
                       </div>
                     </Link>
                   ))}
