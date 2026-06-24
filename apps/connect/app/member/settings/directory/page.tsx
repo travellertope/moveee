@@ -33,7 +33,7 @@ export default async function DirectorySettingsPage() {
   } catch {}
 
   return (
-    <section className="mem-card">
+    <section className="mem-card mem-card--editable">
       <div className="mem-card-label">Moveee Directory</div>
       <DirectoryProfile
         displayName={displayName}

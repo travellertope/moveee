@@ -262,10 +262,15 @@
 .mem-card {
   background: var(--paper);
   border: 1px solid rgba(42,36,28,.12);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(20,17,13,.06);
   padding: 28px 28px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.mem-card--editable {
+  border-color: rgba(197,73,31,.2);
 }
 .mem-card--dark {
   background: var(--ink);
@@ -562,15 +567,15 @@
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--ochre);
   text-decoration: none;
-  border-bottom: 1px solid rgba(42,36,28,.25);
+  border-bottom: 1px solid rgba(197,73,31,.25);
   padding-bottom: 2px;
   white-space: nowrap;
   flex-shrink: 0;
   transition: color .15s, border-color .15s;
 }
-.mem-field-btn:hover { color: var(--ochre); border-color: var(--ochre); }
+.mem-field-btn:hover { color: var(--ochre-deep); border-color: var(--ochre-deep); }
 .mem-field-btn--muted { color: var(--mute); border-color: rgba(42,36,28,.15); }
 .mem-field-btn--muted:hover { color: var(--ochre); border-color: var(--ochre); }
 
@@ -613,7 +618,8 @@
   font-size: 14px;
   color: var(--ink);
   background: var(--paper-deep);
-  border: 1px solid rgba(42,36,28,.2);
+  border: 1px solid var(--ochre);
+  border-radius: 8px;
   padding: 8px 10px;
   outline: none;
   transition: border-color .15s;
@@ -713,6 +719,7 @@ select.mem-field-input { cursor: pointer; }
   text-transform: uppercase;
   padding: 8px 14px;
   border: 1px solid rgba(42,36,28,.2);
+  border-radius: 999px;
   background: transparent;
   color: var(--mute);
   cursor: pointer;
@@ -1066,7 +1073,7 @@ select.mem-field-input { cursor: pointer; }
   left: 0;
   right: 24px;
   height: 2px;
-  background: var(--ink);
+  background: var(--ochre);
 }
 
 .mem-action-btn {

@@ -347,11 +347,20 @@ add it to the perks lists in:
 var(--ink)        /* #14110d — primary dark text / dark backgrounds */
 var(--paper)      /* #f3ece0 — primary light background */
 var(--paper-deep) /* slightly deeper paper, for card backgrounds */
-var(--ochre)      /* #b38238 — accent gold/amber */
+var(--ochre)      /* #c5491f — accent rust (NOT amber — corrected June 2026, see note below) */
+var(--gold)       /* #b38238 — accent gold/amber, distinct from ochre */
 var(--rule)       /* border colour, subtle */
 var(--mute)       /* muted text */
 var(--ink-soft)   /* softer body text */
 ```
+
+**Correction (June 2026):** this table previously listed `var(--ochre)` as `#b38238`
+(amber) — that was wrong. The actual definitions in `apps/connect/app/globals.css`
+are `--ochre: #c5491f` (rust) and `--gold: #b38238` (amber) — two distinct tokens.
+This matches the Figma Make mockups' own Tailwind config (`ochre: '#C5491F'`,
+`gold: '#B38238'`) exactly. If a future rebuild pass seems to find an "ochre vs gold
+mismatch" between mockups and the live CSS, check the real `globals.css` values first
+— they likely already match; don't assume the stale value once documented here.
 
 The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.
@@ -821,7 +830,7 @@ re-derived from scratch each session.
 | 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
 | 8 | Culture Games | Site B | Not started |
 | 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
-| 10 | Member Settings | Site B | Not started |
+| 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Not started |
 | 12 | Member Directory & Public Profiles | Site B | Not started |
 | 13 | Notifications & Analytics | Site B | Not started |
@@ -877,6 +886,70 @@ rebuilt against `mockups/web/moveee_dashboard_web.html`:
   cross-referencing. If this matters, re-check pixel fidelity against
   `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
   fully closed.
+
+### Member Settings — visual rebuild (§10, June 2026)
+
+`apps/connect/app/member.css` plus `app/member/settings/profile/page.tsx` and
+`app/member/settings/directory/page.tsx` (className only) and
+`app/member/settings/PasskeyManager.tsx` rebuilt against
+`mockups/web/moveee_connect_settings.html`. The underlying structure/logic
+(per-field inline-edit-with-autosave, read-only field treatment, Directory
+tab cross-tab preview, WebAuthn/Passkey management, settings-only newsletter
+preference list) was already fully implemented going into this pass — only
+visual fidelity gaps needed fixing, all confirmed by direct grep of the
+mockup HTML rather than the prose spec (see the `--ochre` correction above —
+an earlier pass on this same pass nearly went down the wrong path assuming
+`var(--ochre)` was amber rather than rust, based on the doc table that has
+now been corrected):
+
+- `.mem-card` was a flat rectangle (no radius, no shadow) — the mockup wants
+  `rounded-xl` + `shadow-card` on every card, confirmed against *both* the
+  Settings mockup and the already-completed Dashboard mockup (so this was a
+  pre-existing gap, not Settings-specific). Added `border-radius: 12px` +
+  a subtle `box-shadow` to the shared `.mem-card` base class with its
+  existing neutral border kept. Settings' editable-field cards specifically
+  also want an ochre-tinted border (`border-ochre/20` in the mockup, distinct
+  from Dashboard's neutral `border-ghost/20`) — added as a separate
+  `.mem-card--editable` modifier class, applied only to the Profile and
+  Directory settings page's wrapping `<section>` (the two pages with
+  inline-editable fields), not to Security/Notifications/Interests/
+  Newsletters (action-row or toggle-row cards, which the mockup keeps on a
+  neutral border — see the Password row in the Security frame for the
+  confirming example).
+- `.prf-tab--active::after` (the active tab's underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the active tab underline while keeping the
+  tab *text* itself `text-ink` (don't change the text color, only the
+  underline — confirmed via the mockup's literal class list,
+  `text-ink ... border-b-[2px] border-ochre`).
+- `.mem-field-btn` (Edit/Change links) defaulted to `var(--ink)`, only
+  turning ochre on hover — mockup's Edit/Change links (`text-ochre`) are
+  ochre by default. Default color changed to `var(--ochre)`; hover changed
+  to `var(--ochre-deep)` so there's still a visible hover state.
+- `.mem-toggle` (Notifications on/off buttons) was missing
+  `border-radius: 999px` — mockup uses a full pill (`rounded-full`) for these;
+  the existing on/off background colors (`var(--ink)` for "on") were already
+  correct and didn't need changing.
+- `.mem-field-input` (editable text inputs) was missing `border-radius`
+  (mockup uses `rounded-lg`, ~8px) and only showed an ochre border on focus —
+  mockup's editable inputs have a persistent `border-ochre` outline, not just
+  on focus. Added `border-radius: 8px` and changed the default border to
+  `var(--ochre)`.
+- `PasskeyManager.tsx`'s "Remove" button and inline error-message text used
+  the literal `#c5491f` (brand ochre/rust) for a destructive/error action —
+  the mockup uses a **distinct** error-red token (`error: '#C62828'`, not the
+  brand accent) for this. Swapped both to `#c62828`/`rgba(198,40,40,...)`.
+  There's no `--error` CSS variable in `globals.css` yet — this file uses a
+  literal, consistent with how other one-off colors (e.g. `var(--moss,
+  #5a7a5a)`) are already handled ad hoc in `member.css`. If a real error-red
+  variable is ever introduced, swap this literal for it.
+- `.dir-toggle`, `.dir-toggle--on`, `.dir-preview-tag`, `.dir-discipline-tag`/
+  `--on` in the Directory tab were checked against the mockup and found to
+  already be correct — no changes needed there.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as the Dashboard rebuild above. Verified via CSS
+  brace-balance check and direct mockup HTML re-read for exact class names/
+  values. Re-check pixel fidelity against `mockups/web/moveee_connect_settings.html`
+  in a real environment before considering this fully closed.
 
 ### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
 
