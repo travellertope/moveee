@@ -174,7 +174,7 @@ function RsvpDisplay({
           background: rsvped ? "#fff" : "var(--ochre, #b38238)",
           color: rsvped ? "#b38238" : "#fff",
           border: "1px solid #b38238",
-          borderRadius: "4px",
+          borderRadius: "999px",
           padding: "7px 14px",
           fontSize: "0.78rem",
           fontWeight: 700,

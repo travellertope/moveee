@@ -72,47 +72,43 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "1rem 1.25rem",
+          padding: "1.25rem",
           borderBottom: "1px solid #e0dbd1",
           position: "sticky",
           top: 0,
-          background: "var(--paper, #f3ece0)",
+          background: "#faf8f5",
           zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
-              background: "#fef3e2",
-              color: "#b38238",
+              background: "#eeedfe",
+              color: "#3c3489",
               fontSize: "0.58rem",
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               padding: "0.18rem 0.45rem",
-              borderRadius: "2px",
-            }}>Pulse</span>
+              borderRadius: "999px",
+            }}>Editorial</span>
             {item.region && (
               <span style={{ fontSize: "0.62rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.region}
               </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             {item.slug && (
               <Link
                 href={`/pulse/${item.slug}`}
                 style={{
-                  color: "#7a6f5c",
-                  fontSize: "0.65rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  textDecoration: "none",
-                  padding: "0.2rem 0.5rem",
-                  border: "1px solid #d8d0c6",
-                  borderRadius: "2px",
+                  color: "#c5491f",
+                  fontSize: "0.8rem",
+                  fontWeight: 400,
+                  textDecoration: "underline",
+                  textUnderlineOffset: "2px",
                 }}
               >
-                Open full page <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginLeft: "2px" }}><path d="M3 9L9 3M4 3h5v5"/></svg>
+                Full page →
               </Link>
             )}
             <button
@@ -122,13 +118,13 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#7a6f5c",
-                fontSize: "1.1rem",
+                color: "#14110d",
                 lineHeight: 1,
                 padding: "0.25rem",
+                display: "flex",
               }}
             >
-              ✕
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
         </div>

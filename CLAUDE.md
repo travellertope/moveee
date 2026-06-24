@@ -826,10 +826,48 @@ re-derived from scratch each session.
 | 12 | Member Directory & Public Profiles | Site B | Not started |
 | 13 | Notifications & Analytics | Site B | Not started |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
-| 15 | Feed Card Detail Drawers | Site B | Done — verified 2026-06-24: the 5 existing drawer components (`CommunityDetailModal.tsx`, `QuoteDetailModal.tsx`, `HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`, `PulseDetailModal.tsx`, all `packages/shared/components/pulse/`) already match the spec exactly — no code changes were needed, the doc section was written by documenting the existing implementation |
+| 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
 | 16 | Design System & Core UI Components | Site A + B | Not started |
 | 17 | Authentication Flow | Site B | Not started |
 | 18 | Overlays & Micro-interactions | Site B | Not started |
+
+### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
+
+**Gotcha that caused a false "Done" claim, then got corrected:** when verifying a Figma
+Make web rebuild section against its mockup, always diff the actual mockup HTML
+(`mockups/web/*.html`) — never the prose spec text in `docs/figma-make-prompts-web.md`.
+A first pass on this section compared the 5 live drawer components against the prose
+description only, concluded they "already matched," and committed that claim. The user
+immediately flagged it ("the website still have the old designs") and was right — a
+real diff against `mockups/web/moveee_connect_feed_drawers.html` turned up genuine
+mismatches, all now fixed in `HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`,
+`QuoteDetailModal.tsx`, `PulseDetailModal.tsx`, `CommunityDetailModal.tsx` (all
+`packages/shared/components/pulse/`):
+
+- Badges: `borderRadius: "2px"` → `"999px"` (full pill) everywhere, including the 6
+  template badges inside `CommunityDetailModal.tsx` (hidden-gem/cultural-take/food-review/
+  creative-showcase/itinerary/event).
+- Header background is `#faf8f5` (distinct from the panel's `var(--paper, #f3ece0)`), not
+  the same paper color as the body — padding uniform `1.25rem`.
+- "Full page"/"Open full page" link: plain underlined text, rust `#c5491f`, no border/pill/
+  icon (was previously a bordered box with an SVG arrow). **Directory drawer omits this
+  link entirely** per the mockup's own inline comment.
+- Close button: real SVG stroke "X" icon (`<path d="M6 18L18 6M6 6l12 12"/>`), not a `✕`
+  Unicode glyph.
+- Full-width CTA buttons (Happening "View Event Details →", Directory "View Full Entry →"):
+  `width: 100%, height: 52px, borderRadius: 999px` pill, not an inline-block square button.
+- Quote drawer: sharing-reason callout `borderRadius: 12px` + `boxShadow: 0 1px 2px
+  rgba(0,0,0,0.05)`; date line centered + `font-family: monospace`.
+- Pulse/Editorial drawer badge relabeled "Editorial" (bg `#eeedfe`/text `#3c3489`) — the
+  mockup's literal text, not the old "Pulse" label.
+- Community drawer's event-details block now wrapped in a white bordered card (`#fff`
+  bg, `1px solid #e8e2d8`, `borderRadius: 6px`, `boxShadow: 0 1px 2px rgba(0,0,0,0.05)`)
+  instead of plain text rows.
+- `RsvpDisplay`'s RSVP button `borderRadius: 4px` → `999px` — fixed in **both**
+  `CommunityDetailModal.tsx` and `FeedCard.tsx` (duplicate, non-shared copies per the
+  mockup's own dev-comment — any future RSVP/poll UI change must be applied to both files).
+- `ProBadge.tsx` (the "PRO" pill next to author names) was checked and already matched the
+  mockup's `rounded-sm` style (`borderRadius: Math.max(3, size*0.3)`) — no change needed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
