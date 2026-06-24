@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Feed Card Detail Drawers</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#F3ECE0',
+                        'paper-warm': '#F9F6F1',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#E8E2D8',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'drawer': '-4px 0 24px rgba(0,0,0,0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; min-width: 390px; min-height: 844px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; height: 900px; flex-shrink: 0; }
+        
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- DEV: All five drawer panels share one shell exactly — position: fixed, inset: 0, zIndex: 8000, panel width: min(520px, 100vw), backdrop rgba(20,17,13,0.55), boxShadow -4px 0 24px rgba(0,0,0,0.15). There is no CSS transition/animation anywhere in these components — render this as an instant cut, not a slide-in. -->
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: HAPPENING DRAWER                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Happening Drawer</span>
+        
+        <div class="desktop-screen bg-white rounded-xl overflow-hidden relative shadow-2xl flex border-8 border-gray-900">
+            <!-- Simulated background content -->
+            <div class="flex-1 bg-gray-100 p-8">
+                <div class="w-[60%] h-[200px] bg-white rounded-lg shadow-sm mb-4"></div>
+                <div class="w-[60%] h-[200px] bg-white rounded-lg shadow-sm"></div>
+            </div>
+
+            <!-- BACKDROP OVERLAY -->
+            <div class="absolute inset-0 bg-[#14110d]/55 z-40"></div>
+
+            <!-- DRAWER PANEL -->
+            <div class="absolute right-0 top-0 h-full w-[520px] bg-paper shadow-drawer z-50 flex flex-col">
+                
+                <!-- Sticky Header -->
+                <header class="flex items-center justify-between px-[20px] py-[20px] bg-[#FAF8F5] border-b border-ghost-light shrink-0">
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-[#eeedfe] text-[#3c3489] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">HAPPENING</span>
+                        <span class="border border-ochre text-ochre px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider bg-white">🪶 LITERATI CONNECT</span>
+                        <span class="font-sans text-[13px] text-mute">Live Music</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Full page &rarr;</a>
+                        <button class="w-[24px] h-[24px] flex items-center justify-center text-ink hover:text-ochre transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar px-[20px] py-[20px] flex flex-col gap-[20px]">
+                    
+                    <!-- Featured Image -->
+                    <div class="w-full max-h-[360px] bg-paper-warm rounded-lg border border-ghost/40 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="https://placehold.co/800x600/A66C52/ffffff?text=+" class="w-full h-full object-contain" alt="">
+                    </div>
+
+                    <!-- Title -->
+                    <h2 class="font-serif text-[22px] font-bold text-ink leading-tight">Afro Nation Lagos 2026</h2>
+
+                    <!-- Event Details Strip -->
+                    <div class="bg-white rounded-lg border border-ghost/40 p-[16px] flex flex-col gap-[12px] shadow-sm shrink-0">
+                        <div class="flex items-start gap-[12px]">
+                            <span class="w-[16px] text-center text-[14px]">📅</span>
+                            <span class="font-sans text-[14px] text-ink-soft">Saturday, 28 June 2026<br><span class="text-mute text-[13px]">12:00 PM – Late</span></span>
+                        </div>
+                        <div class="flex items-start gap-[12px]">
+                            <span class="w-[16px] text-center text-[14px]">📍</span>
+                            <span class="font-sans text-[14px] text-ink-soft">Eko Atlantic City<br><span class="text-mute text-[13px]">Victoria Island, Lagos</span></span>
+                        </div>
+                        <div class="flex items-start gap-[12px]">
+                            <span class="w-[16px] text-center text-[14px]">🎟</span>
+                            <span class="font-sans text-[14px] font-bold text-ink">₦25,000 – ₦80,000</span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="font-sans text-[14px] text-ink-soft leading-[1.6] flex flex-col gap-[12px]">
+                        <p>The world's biggest Afrobeats festival returns to Lagos. Expect a massive lineup of global superstars and emerging talent across three stages.</p>
+                        <p>Moveee Literati Connect members receive fast-track entry and access to the dedicated member lounge. <a href="#" class="text-[#3c3489] hover:underline">Read the full lineup announcement.</a></p>
+                    </div>
+
+                    <!-- Organised By -->
+                    <div class="flex flex-col gap-[8px] mt-[8px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest">Organised by</span>
+                        <a href="#" class="font-sans text-[15px] font-bold text-ochre hover:underline underline-offset-2">Moveee Events</a>
+                    </div>
+
+                    <!-- CTA -->
+                    <button class="w-full h-[52px] bg-[#3c3489] text-white rounded-full font-sans text-[14px] font-bold mt-[8px] hover:opacity-90 transition-opacity shrink-0">
+                        View Event Details &rarr;
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: DIRECTORY DRAWER                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Directory Drawer</span>
+        
+        <div class="desktop-screen bg-white rounded-xl overflow-hidden relative shadow-2xl flex border-8 border-gray-900">
+            <div class="flex-1 bg-gray-100 p-8"></div>
+            <div class="absolute inset-0 bg-[#14110d]/55 z-40"></div>
+
+            <div class="absolute right-0 top-0 h-full w-[520px] bg-paper shadow-drawer z-50 flex flex-col">
+                
+                <header class="flex items-center justify-between px-[20px] py-[20px] bg-[#FAF8F5] border-b border-ghost-light shrink-0">
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-[#e8f5ee] text-[#085041] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">DIRECTORY</span>
+                        <span class="font-sans text-[13px] text-mute">STUDIO</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <!-- Note: 'Full page' link omitted per spec for Directory -->
+                        <button class="w-[24px] h-[24px] flex items-center justify-center text-ink hover:text-ochre transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar px-[20px] py-[20px] flex flex-col gap-[20px]">
+                    
+                    <div class="w-full max-h-[260px] rounded-lg overflow-hidden shrink-0 shadow-sm bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+
+                    <div class="flex flex-col gap-[8px]">
+                        <h2 class="font-serif text-[22px] font-bold text-ink leading-tight">Bisi Ceramics</h2>
+                        <div class="flex items-center gap-[8px]">
+                            <span class="bg-[#e8f5ee] text-[#085041] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">STUDIO</span>
+                        </div>
+                        <span class="font-mono text-[11px] text-[#999] mt-[4px]">Added 14 May 2026</span>
+                    </div>
+
+                    <div class="font-sans text-[14px] text-ink-soft leading-[1.6] flex flex-col gap-[12px]">
+                        <p>Award-winning ceramics studio in Lagos making ritual objects and everyday wares inspired by Yoruba tradition.</p>
+                        <p>Founded by Adaeze Obi in 2019, the studio sources its clay entirely from Ondo state and fires pieces in a traditional kiln built behind the main workshop. They offer monthly public workshops and sell directly from their showroom.</p>
+                    </div>
+
+                    <button class="w-full h-[52px] bg-[#085041] text-white rounded-full font-sans text-[14px] font-bold mt-auto hover:opacity-90 transition-opacity shrink-0">
+                        View Full Entry &rarr;
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: QUOTE DRAWER                          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Quote Drawer (Curated)</span>
+        
+        <div class="desktop-screen bg-white rounded-xl overflow-hidden relative shadow-2xl flex border-8 border-gray-900">
+            <div class="flex-1 bg-gray-100 p-8"></div>
+            <div class="absolute inset-0 bg-[#14110d]/55 z-40"></div>
+
+            <div class="absolute right-0 top-0 h-full w-[520px] bg-paper shadow-drawer z-50 flex flex-col">
+                
+                <header class="flex items-center justify-between px-[20px] py-[20px] bg-[#FAF8F5] border-b border-ghost-light shrink-0">
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-[#f3eef8] text-[#7a4da0] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">QUOTE</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Full page &rarr;</a>
+                        <button class="w-[24px] h-[24px] flex items-center justify-center text-ink hover:text-ochre transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar px-[24px] py-[32px] flex flex-col justify-center gap-[24px]">
+                    
+                    <div class="flex flex-col">
+                        <span class="font-serif text-[64px] text-[#d8c9b0] leading-none select-none h-[40px]">"</span>
+                        <p class="font-serif text-[21px] italic text-ink leading-[1.55]">
+                            African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution. The rest will follow.
+                        </p>
+                    </div>
+
+                    <div class="border-t border-ghost-light pt-[16px]">
+                        <span class="font-sans text-[15px] font-bold text-[#c5491f] block mb-[4px]">— Ngozi Adichie</span>
+                        <span class="font-sans text-[13px] text-mute italic block">Lions on the Move, Lagos Book & Art Festival</span>
+                    </div>
+
+                    <div class="bg-[#ece5d6] rounded-xl p-[16px] shadow-sm">
+                        <span class="font-sans text-[14px] text-ink-soft">💬 A reminder of what we're actually building here.</span>
+                    </div>
+
+                    <span class="font-mono text-[11px] text-[#bbb] text-center w-full block mt-[16px]">24 May 2026</span>
+
+                    <div class="flex items-center gap-[16px] mt-auto border-t border-ghost-light pt-[24px]">
+                        <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            <span class="font-mono text-[12px]">84</span>
+                        </button>
+                        <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                            <span class="font-mono text-[12px]">22</span>
+                        </button>
+                        <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                            <span class="font-mono text-[12px]">15</span>
+                        </button>
+                        
+                        <div class="flex-1"></div>
+                        
+                        <button class="w-[32px] h-[32px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-white transition-colors">
+                            <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: COMMUNITY DRAWER (Composite)          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Community Drawer (Composite Reference)</span>
+        
+        <div class="desktop-screen bg-white rounded-xl overflow-hidden relative shadow-2xl flex border-8 border-gray-900">
+            <div class="flex-1 bg-gray-100 p-8"></div>
+            <div class="absolute inset-0 bg-[#14110d]/55 z-40"></div>
+
+            <div class="absolute right-0 top-0 h-full w-[520px] bg-paper shadow-drawer z-50 flex flex-col">
+                
+                <header class="flex items-center justify-between px-[20px] py-[20px] bg-[#FAF8F5] border-b border-ghost-light shrink-0">
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-[#edf7ed] text-[#2e7d32] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">COMMUNITY</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Open full page &rarr;</a>
+                        <button class="w-[24px] h-[24px] flex items-center justify-center text-ink hover:text-ochre transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative pb-[120px]"> <!-- extra pb to ensure scroll -->
+                    
+                    <div class="px-[20px] py-[20px]">
+                        <!-- DEV: The ⚑ report control lives only on the feed card footer (FeedCard.tsx), never inside the detail modal — clicking it does not open or affect this drawer at all. Do not add a report button to the modal mockup. -->
+                        
+                        <!-- AUTHOR ROW -->
+                        <div class="flex items-center justify-between mb-[20px]">
+                            <div class="flex items-center gap-[12px]">
+                                <!-- Pro Avatar Glow -->
+                                <div class="w-[38px] h-[38px] rounded-full shrink-0 relative" style="box-shadow: 0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6);">
+                                    <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-white"></div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-[6px]">
+                                        <span class="font-sans text-[15px] font-bold text-ink">Adaeze Obi</span>
+                                        <span class="bg-gold text-white px-[6px] py-[2px] rounded-sm font-sans text-[9px] font-bold uppercase tracking-widest">PRO</span>
+                                    </div>
+                                    <span class="font-mono text-[10px] text-mute mt-[2px]">3 hours ago</span>
+                                </div>
+                            </div>
+                            <button class="bg-[#fcfaf7] border border-gold text-gold font-sans text-[12px] font-bold px-[12px] py-[4px] rounded-full hover:bg-gold/10 transition-colors">
+                                ✓ Following
+                            </button>
+                        </div>
+
+                        <!-- TEMPLATE BADGE ROW (Composite showcase of all 10) -->
+                        <div class="flex flex-col gap-[12px] mb-[20px]">
+                            
+                            <!-- Standard Post -->
+                            <div class="flex items-center justify-between border-b border-ghost-light pb-2">
+                                <span class="font-mono text-[10px] text-ghost">Standard Post</span>
+                                <span class="font-sans text-[13px] text-ink-soft">Plain text + media only (No badge)</span>
+                            </div>
+
+                            <!-- Hidden Gem -->
+                            <div class="flex items-center justify-between border-b border-ghost-light pb-2">
+                                <span class="font-mono text-[10px] text-ghost">Hidden Gem</span>
+                                <span class="text-ochre font-sans text-[12px] font-bold">Hidden Gem ★★★★☆</span>
+                            </div>
+
+                            <!-- Cultural Take -->
+                            <div class="flex items-center justify-between border-b border-ghost-light pb-2">
+                                <span class="font-mono text-[10px] text-ghost">Cultural Take</span>
+                                <span class="bg-[#6B48A8]/10 text-[#6B48A8] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Take · Nike Art Gallery</span>
+                            </div>
+
+                            <!-- Food Review -->
+                            <div class="flex flex-col border-b border-ghost-light pb-2 gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-[10px] text-ghost">Food Review</span>
+                                    <span class="bg-[#C5491F]/10 text-ochre px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Food Review · Suya Platter</span>
+                                </div>
+                                <div class="bg-white border border-ghost-light rounded-md p-[12px] flex flex-col gap-[6px]">
+                                    <div class="flex justify-between items-center"><span class="font-sans text-[12px] text-ink-soft">Taste</span><span class="text-ochre text-[14px]">★★★★★</span></div>
+                                    <div class="flex justify-between items-center"><span class="font-sans text-[12px] text-ink-soft">Value</span><span class="text-ochre text-[14px]">★★★★<span class="text-ghost">☆</span></span></div>
+                                    <div class="flex justify-between items-center"><span class="font-sans text-[12px] text-ink-soft">Vibe</span><span class="text-ochre text-[14px]">★★★★★</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Creative Showcase -->
+                            <div class="flex items-center justify-between border-b border-ghost-light pb-2">
+                                <span class="font-mono text-[10px] text-ghost">Creative Showcase</span>
+                                <span class="bg-[#1976D2]/10 text-[#1976D2] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Creative Showcase</span>
+                            </div>
+
+                            <!-- Itinerary -->
+                            <div class="flex flex-col border-b border-ghost-light pb-2 gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-[10px] text-ghost">Itinerary</span>
+                                    <span class="bg-[#2E7D32]/10 text-[#2E7D32] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Weekend Route</span>
+                                </div>
+                                <div class="flex flex-col gap-[8px] pl-[8px] border-l-[2px] border-ghost-light">
+                                    <div class="flex items-start gap-[8px]">
+                                        <div class="w-[20px] h-[20px] rounded-full bg-paper-warm border border-ochre flex items-center justify-center shrink-0 mt-0.5"><span class="font-mono text-[10px] text-ochre font-bold">1</span></div>
+                                        <div class="flex flex-col"><span class="font-sans text-[13px] font-bold text-ink">Bisi Ceramics</span><span class="font-sans text-[12px] text-mute">Morning class</span></div>
+                                    </div>
+                                    <div class="flex items-start gap-[8px]">
+                                        <div class="w-[20px] h-[20px] rounded-full bg-paper-warm border border-ochre flex items-center justify-center shrink-0 mt-0.5"><span class="font-mono text-[10px] text-ochre font-bold">2</span></div>
+                                        <div class="flex flex-col"><span class="font-sans text-[13px] font-bold text-ink">Nok by Alara</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Community Event -->
+                            <div class="flex flex-col border-b border-ghost-light pb-2 gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-[10px] text-ghost">Community Event</span>
+                                    <span class="bg-[#C5491F]/10 text-ochre px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Event · Music</span>
+                                </div>
+                                <div class="bg-white border border-ghost-light rounded-md p-[16px] flex flex-col gap-[8px]">
+                                    <div class="flex items-center gap-[8px]"><span class="text-[14px]">📅</span><span class="font-sans text-[13px] text-ink-soft">Sat 28 Jun · 12:00 PM – Late</span></div>
+                                    <div class="flex items-center gap-[8px]"><span class="text-[14px]">📍</span><span class="font-sans text-[13px] text-ink-soft">Eko Atlantic City, Lagos</span></div>
+                                    <div class="flex items-center gap-[8px]"><span class="text-[14px]">🎟</span><span class="font-sans text-[13px] font-bold text-ink">₦25,000</span></div>
+                                    <div class="flex items-center gap-[8px]"><span class="text-[14px]">👤</span><span class="font-sans text-[13px] text-ochre hover:underline cursor-pointer">Organised by Moveee Lagos</span></div>
+                                    <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline mt-1">Get tickets &rarr;</a>
+                                    
+                                    <!-- DEV: CommunityDetailModal.tsx and FeedCard.tsx each keep their own duplicate copies of PollDisplay and RsvpDisplay (not a shared module) — if this design ever changes the poll or RSVP UI, both files need the same edit. -->
+                                    <div class="border-t border-ghost-light pt-[12px] mt-[4px] flex items-center justify-between">
+                                        <span class="font-sans text-[12px] font-bold text-ochre">14 spots left</span>
+                                        <button class="h-[32px] px-[16px] bg-ochre text-white rounded-full font-sans text-[12px] font-bold">RSVP</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Poll -->
+                            <div class="flex flex-col border-b border-ghost-light pb-2 gap-2">
+                                <span class="font-mono text-[10px] text-ghost">Poll</span>
+                                <div class="flex flex-col gap-[6px]">
+                                    <div class="relative h-[36px] bg-white border border-ghost rounded-md px-[12px] flex items-center justify-between overflow-hidden">
+                                        <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-md" style="width: 78%;"></div>
+                                        <span class="font-sans text-[13px] font-bold text-ink relative z-10">Wizkid / Davido</span>
+                                        <span class="font-mono text-[11px] text-gold font-bold relative z-10">78%</span>
+                                    </div>
+                                    <div class="relative h-[36px] bg-white border border-ghost rounded-md px-[12px] flex items-center justify-between overflow-hidden">
+                                        <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-md" style="width: 22%;"></div>
+                                        <span class="font-sans text-[13px] text-ink relative z-10">Burna Boy / Tems</span>
+                                        <span class="font-mono text-[11px] text-gold relative z-10">22%</span>
+                                    </div>
+                                    <span class="font-sans text-[11px] text-mute mt-1">342 votes · Expired</span>
+                                </div>
+                            </div>
+
+                            <!-- Quote -->
+                            <div class="flex flex-col border-b border-ghost-light pb-2 gap-2">
+                                <span class="font-mono text-[10px] text-ghost">Quote</span>
+                                <div class="relative pl-[16px] py-[8px]">
+                                    <span class="absolute top-[-8px] left-0 font-serif text-[40px] text-ghost leading-none select-none z-0">"</span>
+                                    <p class="font-serif text-[18px] font-bold text-ink leading-[1.3] relative z-10">African culture doesn't need validation from the West.</p>
+                                    <span class="font-sans text-[12px] text-[#c5491f] block mt-[8px]">— Ngozi Adichie</span>
+                                    <span class="font-sans text-[11px] text-mute italic block mt-[2px]">LBAF 2024</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Location Badge -->
+                        <div class="mb-[16px]">
+                            <span class="font-sans text-[12px] text-mute">📍 Lagos, Nigeria</span>
+                        </div>
+
+                        <!-- Post Text -->
+                        <div class="font-sans text-[15px] text-ink-soft leading-[1.6] mb-[16px]">
+                            Post text goes here. The energy in that room was something I'll carry for a long time. <span class="text-gold font-bold">@funmiosei</span> you were absolutely right about the lighting setup.
+                        </div>
+
+                        <!-- Gallery Strip -->
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar mb-[16px]">
+                            <div class="w-[280px] h-[220px] bg-gradient-to-tr from-[#A66C52] to-[#E2A684] rounded-lg shrink-0"></div>
+                            <div class="w-[280px] h-[220px] bg-gradient-to-br from-[#708090] to-[#A0AEBD] rounded-lg shrink-0"></div>
+                        </div>
+
+                    </div>
+
+                    <!-- REACTIONS & COMMENTS (Fixed at bottom of scrollable area) -->
+                    <!-- DEV: Reactions appear TWICE for community posts — once inline on the feed card itself, and again inside this same modal via a second independent ReactionBar instance (itemType="community", noBorder). Both hydrate separately against the same per-user server record; do not assume the modal "inherits" the card's reaction state. -->
+                    <div class="px-[20px] pb-[20px]">
+                        <div class="flex items-center gap-[24px] mb-[16px]">
+                            <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                                <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="font-mono text-[12px]">34</span>
+                            </button>
+                            <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                                <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                                <span class="font-mono text-[12px]">12</span>
+                            </button>
+                            <button class="flex items-center gap-[6px] text-mute hover:text-ink transition-colors">
+                                <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                                <span class="font-mono text-[12px]">8</span>
+                            </button>
+                            
+                            <div class="flex-1"></div>
+                            
+                            <button class="w-[32px] h-[32px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-white transition-colors">
+                                <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-ghost-light mb-[16px]"></div>
+
+                        <!-- Comment Loading State -->
+                        <div class="py-[24px] flex justify-center">
+                            <span class="font-sans text-[13px] text-mute">Loading comments…</span>
+                        </div>
+
+                        <!-- Simulated Comments (hidden behind loading) -->
+                        <div class="hidden flex-col gap-[16px] mb-[24px]">
+                            <div class="flex gap-[12px]">
+                                <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-[8px]">
+                                        <span class="font-sans text-[13px] font-bold text-ink">Seun B.</span>
+                                    </div>
+                                    <span class="font-sans text-[14px] text-ink-soft mt-[2px]">The silence was the loudest part.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comment Composer -->
+                        <div class="flex items-center gap-[12px] pt-[8px]">
+                            <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-br from-[#8E54E9] to-[#4776E6] shrink-0"></div>
+                            <input type="text" class="flex-1 h-[40px] bg-white border border-ghost rounded-full px-[16px] font-sans text-[13px] text-ink outline-none focus:border-ochre" placeholder="Add a comment...">
+                            <button class="h-[40px] px-[16px] bg-ochre text-white rounded-full font-sans text-[13px] font-bold">Post</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: PULSE / EDITORIAL DRAWER              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Pulse / Editorial Drawer</span>
+        
+        <div class="desktop-screen bg-white rounded-xl overflow-hidden relative shadow-2xl flex border-8 border-gray-900">
+            <div class="flex-1 bg-gray-100 p-8"></div>
+            <div class="absolute inset-0 bg-[#14110d]/55 z-40"></div>
+
+            <!-- DEV: PulseDetailModal.tsx is a fifth sibling drawer (for item.type === "pulse" cards) that exists in code but has no documented spec anywhere — give it the same shell as the other four; its content is an editorial/pulse story read view, closest in shape to HappeningDetailModal's body without the RSVP CTA. -->
+            <div class="absolute right-0 top-0 h-full w-[520px] bg-paper shadow-drawer z-50 flex flex-col">
+                
+                <header class="flex items-center justify-between px-[20px] py-[20px] bg-[#FAF8F5] border-b border-ghost-light shrink-0">
+                    <div class="flex items-center gap-[8px]">
+                        <!-- Using muted indigo per prompt spec -->
+                        <span class="bg-[#eeedfe] text-[#3c3489] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">EDITORIAL</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Full page &rarr;</a>
+                        <button class="w-[24px] h-[24px] flex items-center justify-center text-ink hover:text-ochre transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar px-[20px] py-[20px] flex flex-col gap-[20px]">
+                    
+                    <div class="w-full max-h-[360px] bg-paper-warm rounded-lg border border-ghost/40 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="https://placehold.co/800x600/C5491F/ffffff?text=+" class="w-full h-full object-contain" alt="">
+                    </div>
+
+                    <h2 class="font-serif text-[24px] font-bold text-ink leading-tight">The New Wave of Lagos Street Style</h2>
+                    
+                    <span class="font-sans text-[13px] text-mute mb-[4px]">By Fola Olawale · June 9, 2026</span>
+
+                    <div class="font-sans text-[14px] text-ink-soft leading-[1.6] flex flex-col gap-[12px]">
+                        <p>A deep dive into the alté scene and its global influence. What started as an underground movement in Lagos has now become the blueprint for global streetwear aesthetics.</p>
+                        <p>We spent three days following the designers, stylists, and creatives who are building brands that bypass traditional European houses to connect directly with a new, diasporic elite.</p>
+                        <p>This isn't just about clothes; it's about reclaiming the narrative of African luxury.</p>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light mt-[8px]"></div>
+
+                    <div class="flex items-center gap-[20px] text-mute py-[8px]">
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">142</span></button>
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">89</span></button>
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">12</span></button>
+                        <div class="flex-1"></div>
+                        <button class="w-[32px] h-[32px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-white transition-colors">
+                            <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light mb-[8px]"></div>
+
+                    <!-- Related Row -->
+                    <div class="flex flex-col gap-[12px]">
+                        <span class="font-sans text-[12px] font-bold text-ink uppercase tracking-wider">More in this series</span>
+                        
+                        <div class="bg-white rounded-lg p-[12px] border border-ghost/40 flex items-center gap-[12px] cursor-pointer hover:bg-gray-50">
+                            <div class="w-[48px] h-[48px] bg-gradient-to-bl from-[#7B1FA2] to-[#E2A684] rounded-md shrink-0"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-1">The Economics of Cool</span>
+                                <span class="font-sans text-[11px] text-mute mt-[2px]">Jun 2, 2026</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-[12px] border border-ghost/40 flex items-center gap-[12px] cursor-pointer hover:bg-gray-50">
+                            <div class="w-[48px] h-[48px] bg-gradient-to-tr from-[#182848] to-[#4B6CB7] rounded-md shrink-0"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-1">Nollywood Goes Independent</span>
+                                <span class="font-sans text-[11px] text-mute mt-[2px]">May 25, 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="#" class="font-sans text-[14px] font-bold text-[#3c3489] text-center mt-[16px] hover:underline">
+                        Read full story &rarr;
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEV: Mobile's bottom-sheet edge cases (native share sheet stacked on top, keyboard-aware comment compose bar, elastic overscroll, wifi-error empty state) have no web equivalent and are out of scope here — web has no native share sheet, no on-screen keyboard layout shift, no overscroll physics, and an errored comment fetch just leaves "Loading comments…" showing indefinitely rather than rendering a dedicated error state. -->
+
+</body>
+</html>

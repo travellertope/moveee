@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Member Directory & Profiles</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        rule: '#E8E2D8'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                        'tooltip': '0 10px 25px -5px rgba(20, 17, 13, 0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        
+        input:focus, select:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #C8BFB0; opacity: 1; }
+        
+        .hero-pattern {
+            background-color: #14110D;
+            background-image: radial-gradient(#3A342B 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20 overflow-x-auto hide-scrollbar">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: PEOPLE NEAR ME (Desktop)              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: People Near Me (Desktop)</span>
+        <div class="desktop-screen bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <!-- HERO BAND -->
+            <div class="w-full bg-paper-warm pt-[64px] flex flex-col items-center border-b border-rule shrink-0 relative">
+                <a href="#" class="absolute top-[32px] left-[32px] font-sans text-[13px] text-mute hover:text-ink transition-colors flex items-center gap-1">
+                    <span class="text-[14px] leading-none pb-0.5">&larr;</span> Back to Feed
+                </a>
+                
+                <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[12px]">Moveee · People Near Me</span>
+                <h1 class="font-serif text-[40px] text-ink leading-tight mb-[16px]">Find each <span class="italic">other.</span></h1>
+                <p class="font-sans text-[16px] text-ink-soft max-w-[480px] text-center leading-[1.6]">
+                    Members of the Moveee community near you — who they are, what they do. Filter by industry to find your people.
+                </p>
+                
+                <div class="mt-[32px] mb-[48px]">
+                    <button class="h-[48px] px-[24px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold hover:bg-[#A93C15] transition-colors shadow-sm">
+                        Update your profile &rarr;
+                    </button>
+                    <!-- Logged out alternative:
+                    <button class="h-[48px] px-[24px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold hover:bg-[#A93C15] transition-colors shadow-sm">
+                        Join & get listed &rarr;
+                    </button>
+                    -->
+                </div>
+
+                <!-- Section Nav Strip -->
+                <div class="w-full h-[56px] bg-white border-t border-rule flex items-center justify-center gap-[24px]">
+                    <button class="font-sans text-[13px] font-bold text-ink hover:underline underline-offset-4">Pulse Feed</button>
+                    <button class="font-sans text-[13px] font-bold text-ink underline underline-offset-4 decoration-ochre">People Near Me</button>
+                    <button class="font-sans text-[13px] font-bold text-ink hover:underline underline-offset-4">Membership</button>
+                </div>
+            </div>
+
+            <!-- DEV 3 -->
+            <!-- DEV: HouseFellowship band placeholder (logged-in only). Renders a sticky or embedded contextual callout based on the user's assigned cluster. -->
+            <div class="w-full bg-ink text-white py-[16px] px-[32px] flex items-center justify-between shadow-md">
+                <div class="flex items-center gap-[12px]">
+                    <span class="text-[20px]">🫂</span>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold leading-tight">London Creatives Fellowship</span>
+                        <span class="font-sans text-[12px] text-white/70">Connect with 142 members in your local cluster.</span>
+                    </div>
+                </div>
+                <button class="h-[36px] px-[16px] border border-white/20 rounded-full font-sans text-[13px] font-bold hover:bg-white/10 transition-colors">
+                    View Fellowship
+                </button>
+            </div>
+
+            <div class="w-full max-w-[1200px] mx-auto px-[32px] pt-[48px] flex flex-col gap-[32px]">
+                
+                <!-- DEV 1 -->
+                <!-- DEV: Directory controls: search input + single industry select. No location chip because this directory view is inherently location-scoped to the viewer's IP/profile region. -->
+                <div class="flex items-center justify-between bg-paper-deep p-[8px] rounded-xl border border-ghost-light">
+                    <div class="flex items-center gap-[12px] flex-1">
+                        <div class="relative w-[320px]">
+                            <svg class="w-4 h-4 text-mute absolute left-[16px] top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="w-full h-[44px] bg-white border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] font-sans text-ink outline-none focus:border-ochre" placeholder="Search name or keywords...">
+                        </div>
+                        <select class="w-[200px] h-[44px] bg-white border border-ghost rounded-lg px-[16px] text-[14px] font-sans text-ink outline-none focus:border-ochre appearance-none cursor-pointer">
+                            <option value="">All Industries</option>
+                            <option value="creative">Creative Arts</option>
+                            <option value="music">Music</option>
+                            <option value="film">Film & TV</option>
+                            <option value="tech">Technology</option>
+                            <option value="finance">Finance</option>
+                        </select>
+                    </div>
+                    <span class="font-mono text-[11px] text-mute mr-[8px]">84 members near you</span>
+                </div>
+
+                <!-- DEV 2 -->
+                <!-- DEV: Member grid cards. Initial-avatar circle (with gold ring if Pro), name + inline Pro badge, occupation, location, up to 3 discipline text chips, optional bio, optional link buttons. -->
+                <div class="grid grid-cols-3 gap-[24px]">
+                    
+                    <!-- Member Card 1 (Pro) -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] border border-ghost/20 flex flex-col hover:-translate-y-1 transition-transform cursor-pointer">
+                        <div class="flex items-start gap-[16px]">
+                            <div class="w-[64px] h-[64px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] flex items-center justify-center border-[2px] border-gold p-[2px] shrink-0">
+                                <div class="w-full h-full rounded-full bg-transparent border border-white"></div>
+                            </div>
+                            <div class="flex flex-col pt-1">
+                                <div class="flex items-center gap-[6px] mb-[2px]">
+                                    <h3 class="font-serif text-[18px] font-bold text-ink leading-tight">Zara Mensah</h3>
+                                    <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[8px] font-bold tracking-widest uppercase mt-0.5">PRO</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-ink-soft">Visual Artist & Photographer</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">📍 London, UK</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-[6px] mt-[16px] flex-wrap">
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Creative</span>
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Photography</span>
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Artist</span>
+                        </div>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.6] mt-[16px] line-clamp-2">
+                            Exploring the intersection of traditional West African motifs and digital mediums. Currently working on a new exhibition.
+                        </p>
+                        <div class="flex items-center gap-[12px] mt-[20px] pt-[16px] border-t border-ghost-light">
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">🌐</button>
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">in</button>
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">ig</button>
+                            <span class="ml-auto font-sans text-[12px] font-bold text-ochre">View Profile &rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Member Card 2 (Citizen, no bio) -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] border border-ghost/20 flex flex-col hover:-translate-y-1 transition-transform cursor-pointer">
+                        <div class="flex items-start gap-[16px]">
+                            <!-- Initial fallback -->
+                            <div class="w-[64px] h-[64px] rounded-full bg-ghost flex items-center justify-center text-white font-serif text-[24px] shrink-0 border border-ghost/40">
+                                DB
+                            </div>
+                            <div class="flex flex-col pt-1">
+                                <div class="flex items-center gap-[6px] mb-[2px]">
+                                    <h3 class="font-serif text-[18px] font-bold text-ink leading-tight">David Bello</h3>
+                                </div>
+                                <span class="font-sans text-[13px] text-ink-soft">Software Engineer</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">📍 London, UK</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-[6px] mt-[16px] flex-wrap">
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Tech</span>
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Entrepreneur</span>
+                        </div>
+                        <div class="flex items-center gap-[12px] mt-auto pt-[16px] border-t border-ghost-light">
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">in</button>
+                            <span class="ml-auto font-sans text-[12px] font-bold text-ochre">View Profile &rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Member Card 3 -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] border border-ghost/20 flex flex-col hover:-translate-y-1 transition-transform cursor-pointer">
+                        <div class="flex items-start gap-[16px]">
+                            <div class="w-[64px] h-[64px] rounded-full bg-gradient-to-bl from-[#2D9CDB] to-[#9b51e0] flex items-center justify-center shrink-0"></div>
+                            <div class="flex flex-col pt-1">
+                                <div class="flex items-center gap-[6px] mb-[2px]">
+                                    <h3 class="font-serif text-[18px] font-bold text-ink leading-tight">Amara Okeke</h3>
+                                </div>
+                                <span class="font-sans text-[13px] text-ink-soft">Music Producer</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">📍 Manchester, UK</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-[6px] mt-[16px] flex-wrap">
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Music</span>
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[11px] text-ink-soft">Creative</span>
+                        </div>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.6] mt-[16px] line-clamp-2">
+                            Blending Afrobeats with UK electronic sounds. Always open to collaborate with vocalists.
+                        </p>
+                        <div class="flex items-center gap-[12px] mt-[20px] pt-[16px] border-t border-ghost-light">
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">ig</button>
+                            <button class="w-[32px] h-[32px] rounded-full bg-paper-deep flex items-center justify-center text-ink hover:bg-ghost transition-colors">🎵</button>
+                            <span class="ml-auto font-sans text-[12px] font-bold text-ochre">View Profile &rarr;</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Empty State Block -->
+                <div class="w-full bg-white rounded-xl border border-ghost-light border-dashed p-[64px] flex flex-col items-center justify-center mt-[32px]">
+                    <span class="text-[48px] mb-[16px] grayscale opacity-40">👥</span>
+                    <h3 class="font-serif text-[24px] font-bold text-ink mb-[12px]">No one near you yet.</h3>
+                    <p class="font-sans text-[15px] text-mute text-center max-w-[400px] mb-[24px] leading-relaxed">
+                        Members who have opted into the directory will appear here once someone near you joins. Join Moveee and opt in from your profile settings to be listed.
+                    </p>
+                    <button class="h-[44px] px-[20px] rounded-full bg-ochre text-white font-sans text-[14px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors">
+                        Join & get listed &rarr;
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: PUBLIC PROFILE (COMMUNITY TAB)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Public Profile (Community Tab, Desktop)</span>
+        <div class="desktop-screen bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <!-- Minimal header -->
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-50 shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[32px] h-[32px] rounded-full bg-ghost"></div>
+                </div>
+            </div>
+
+            <!-- Cover Photo Banner -->
+            <div class="w-full h-[240px] bg-gradient-to-br from-gray-200 to-gray-400 relative">
+                <!-- Optional cover image goes here -->
+            </div>
+
+            <div class="max-w-[800px] w-full mx-auto px-[32px] flex flex-col relative">
+                
+                <!-- IDENTITY BLOCK -->
+                <div class="flex items-end justify-between -mt-[64px] relative z-10 mb-[24px]">
+                    <div class="flex flex-col">
+                        <div class="w-[128px] h-[128px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] flex items-center justify-center border-[4px] border-white p-[3px] shadow-sm bg-white mb-[16px]">
+                            <div class="w-full h-full rounded-full bg-transparent border-[2px] border-gold"></div>
+                        </div>
+                        <div class="flex items-center gap-[12px] mb-[4px]">
+                            <h1 class="font-serif text-[32px] font-bold text-ink leading-none">Zara Mensah</h1>
+                            <span class="bg-gold px-2 py-0.5 rounded text-white font-sans text-[10px] font-bold tracking-widest uppercase">PRO</span>
+                        </div>
+                        <div class="flex items-center gap-[8px] font-sans text-[15px] text-ink-soft mt-[4px]">
+                            <span class="font-mono text-[13px] text-mute">@zaramensah</span>
+                            <span class="text-ghost">&bull;</span>
+                            <span>London, UK</span>
+                            <span class="text-ghost">&bull;</span>
+                            <span>Visual Artist</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions Row -->
+                    <div class="flex items-center gap-[12px] mb-[16px]">
+                        <button class="h-[40px] px-[20px] rounded-full bg-ink text-white font-sans text-[14px] font-bold hover:bg-gray-800 transition-colors">
+                            Follow
+                        </button>
+                        <button class="w-[40px] h-[40px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-paper-deep transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                        <a href="#" class="font-sans text-[14px] text-mute hover:text-ink ml-[12px]">&larr; Directory</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-[24px]">
+                    <div class="flex flex-col gap-[12px] max-w-[500px]">
+                        <!-- Conditional Rep Tier Badge -->
+                        <div class="w-fit bg-gold/10 border border-gold/20 text-gold px-[10px] py-[4px] rounded-full font-sans text-[11px] font-bold tracking-wider uppercase">
+                            Taste Maker
+                        </div>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6]">
+                            Visual artist exploring the intersection of traditional West African motifs and digital mediums. Currently working on a new exhibition in London.
+                        </p>
+                    </div>
+                    
+                    <div class="flex flex-col items-end gap-[12px]">
+                        <!-- Stats Row -->
+                        <div class="flex items-center gap-[16px] font-sans text-[14px]">
+                            <div class="flex flex-col items-center"><span class="font-bold text-ink text-[18px] leading-none">850</span><span class="text-mute text-[12px]">pts</span></div>
+                            <div class="w-[1px] h-[24px] bg-ghost-light"></div>
+                            <div class="flex flex-col items-center"><span class="font-bold text-ink text-[18px] leading-none">42</span><span class="text-mute text-[12px]">posts</span></div>
+                            <div class="w-[1px] h-[24px] bg-ghost-light"></div>
+                            <div class="flex flex-col items-end"><span class="text-mute text-[12px]">Joined</span><span class="font-bold text-ink text-[14px] leading-none mt-1">Mar 2024</span></div>
+                        </div>
+
+                        <!-- DEV 4 -->
+                        <!-- DEV: BadgeShelf row of emoji circles. Show one in active/tooltip-open state to demonstrate interaction. -->
+                        <div class="flex items-center gap-[8px] mt-[8px]">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-[16px] cursor-pointer hover:bg-ghost-light transition-colors relative group">
+                                🎨
+                                <!-- Tooltip open state demonstration -->
+                                <div class="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-ink text-white px-[12px] py-[6px] rounded-md font-sans text-[11px] whitespace-nowrap shadow-tooltip z-50 flex flex-col items-center">
+                                    Taste Maker
+                                    <div class="absolute -bottom-[4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-ink"></div>
+                                </div>
+                            </div>
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-[16px] cursor-pointer hover:bg-ghost-light transition-colors">💎</div>
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-[16px] cursor-pointer hover:bg-ghost-light transition-colors">✍️</div>
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-[16px] cursor-pointer hover:bg-ghost-light transition-colors">🔥</div>
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-[16px] cursor-pointer hover:bg-ghost-light transition-colors">📸</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex items-center gap-[32px] border-b border-ghost-light mb-[24px]">
+                    <button class="font-sans text-[16px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Community</button>
+                    <button class="font-sans text-[16px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Portfolio</button>
+                </div>
+
+                <!-- DEV 6 -->
+                <!-- DEV: Template filter strip (All/Gems/Takes/Food/Showcases/Polls). Clicking filters the feed below. -->
+                <div class="flex items-center gap-[8px] mb-[24px] overflow-x-auto hide-scrollbar">
+                    <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[13px] font-bold">All</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] hover:bg-paper-deep">💎 Gems</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] hover:bg-paper-deep">💬 Takes</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] hover:bg-paper-deep">🍽️ Food</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] hover:bg-paper-deep">🎨 Showcases</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] hover:bg-paper-deep">📊 Polls</button>
+                </div>
+
+                <!-- Post List -->
+                <div class="flex flex-col gap-[16px]">
+                    
+                    <!-- Post 1 (Showcase) -->
+                    <div class="bg-white rounded-xl border border-ghost/40 shadow-sm p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between mb-[12px]">
+                            <div class="flex items-center gap-[8px]">
+                                <span class="bg-[#1976D2]/10 text-[#1976D2] px-[8px] py-[2px] rounded-md font-sans text-[10px] font-bold uppercase tracking-wider">🎨 Showcase</span>
+                            </div>
+                            <span class="font-mono text-[11px] text-ghost">2 days ago</span>
+                        </div>
+                        <div class="flex gap-[16px]">
+                            <div class="w-[80px] h-[80px] bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] rounded-lg shrink-0"></div>
+                            <div class="flex flex-col flex-1">
+                                <h3 class="font-sans text-[15px] font-bold text-ink leading-tight mb-[4px]">Zaria Music Visuals — Vol. 2</h3>
+                                <p class="font-sans text-[14px] text-ink-soft line-clamp-2 leading-[1.5]">Shot over two months following Zaria across Lagos, Accra, and London. All film, no digital corrections.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-[16px] mt-[16px] pt-[12px] border-t border-ghost-light font-mono text-[11px] text-mute">
+                            <span class="flex items-center gap-1 hover:text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 118</span>
+                            <span class="flex items-center gap-1 hover:text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> 31</span>
+                        </div>
+                    </div>
+
+                    <!-- Post 2 (Gem) -->
+                    <div class="bg-white rounded-xl border border-ghost/40 shadow-sm p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between mb-[12px]">
+                            <div class="flex items-center gap-[8px]">
+                                <span class="bg-[#B38238]/10 text-gold px-[8px] py-[2px] rounded-md font-sans text-[10px] font-bold uppercase tracking-wider">💎 Hidden Gem</span>
+                            </div>
+                            <span class="font-mono text-[11px] text-ghost">1 week ago</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <h3 class="font-sans text-[15px] font-bold text-ink leading-tight mb-[4px]">Bisi Ceramics Studio</h3>
+                            <p class="font-sans text-[14px] text-ink-soft line-clamp-2 leading-[1.5]">Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look. Afternoon workshop slots are completely worth it.</p>
+                        </div>
+                        <div class="flex items-center gap-[16px] mt-[16px] pt-[12px] border-t border-ghost-light font-mono text-[11px] text-mute">
+                            <span class="flex items-center gap-1 hover:text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 45</span>
+                            <span class="flex items-center gap-1 hover:text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> 12</span>
+                        </div>
+                    </div>
+
+                    <button class="w-full text-center py-[16px] font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-2">
+                        Load more
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: PUBLIC PROFILE (PORTFOLIO TAB, SPLIT) -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Public Profile (Portfolio Tab, Gated + Unlocked states, Desktop)</span>
+        
+        <div class="flex gap-[32px]">
+            
+            <!-- LEFT: GATED STATE -->
+            <div class="w-[704px] bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+                <div class="w-full h-[180px] bg-paper-deep relative"></div>
+                <div class="px-[32px] flex flex-col relative">
+                    <div class="flex items-end justify-between -mt-[48px] mb-[24px] relative z-10">
+                        <div class="flex flex-col">
+                            <div class="w-[96px] h-[96px] rounded-full bg-ghost flex items-center justify-center border-[4px] border-white text-white font-serif text-[32px] shadow-sm mb-[12px]">DB</div>
+                            <h1 class="font-serif text-[28px] font-bold text-ink leading-none">David Bello</h1>
+                            <span class="font-mono text-[12px] text-mute mt-[4px]">@davidbello</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-[32px] border-b border-ghost-light mb-[48px]">
+                        <button class="font-sans text-[15px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Community</button>
+                        <button class="font-sans text-[15px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Portfolio</button>
+                    </div>
+
+                    <!-- DEV 5 -->
+                    <!-- DEV: Gated state: Portfolio tab content is hidden behind this empty-state message if the profile owner has not reached Taste Maker status (500 pts). -->
+                    <div class="flex flex-col items-center justify-center py-[64px] bg-paper-deep rounded-xl border border-ghost-light border-dashed text-center px-[32px]">
+                        <span class="text-[40px] grayscale opacity-50 mb-[16px]">🔒</span>
+                        <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Portfolio coming soon</h3>
+                        <p class="font-sans text-[15px] text-mute max-w-[400px] leading-relaxed">
+                            The portfolio tab unlocks at Taste Maker status (500 points). This member is currently at Culture Contributor tier.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: UNLOCKED STATE -->
+            <div class="w-[704px] bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+                <div class="w-full h-[180px] bg-hero-pattern relative"></div>
+                <div class="px-[32px] flex flex-col relative">
+                    <div class="flex items-end justify-between -mt-[48px] mb-[24px] relative z-10">
+                        <div class="flex flex-col">
+                            <div class="w-[96px] h-[96px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border-[4px] border-white shadow-sm mb-[12px]"></div>
+                            <h1 class="font-serif text-[28px] font-bold text-ink leading-none">Zara Mensah</h1>
+                            <span class="font-mono text-[12px] text-mute mt-[4px]">@zaramensah</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-[32px] border-b border-ghost-light mb-[32px]">
+                        <button class="font-sans text-[15px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Community</button>
+                        <button class="font-sans text-[15px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Portfolio</button>
+                    </div>
+
+                    <!-- Flat grid mixing pinned-post cards and portfolio item cards -->
+                    <div class="grid grid-cols-2 gap-[20px]">
+                        
+                        <!-- Pinned Post Card -->
+                        <div class="bg-white rounded-xl border border-ochre shadow-sm p-[20px] flex flex-col cursor-pointer hover:shadow-md transition-shadow relative">
+                            <div class="absolute top-[12px] right-[12px] text-[16px]">📌</div>
+                            <span class="bg-[#1976D2]/10 text-[#1976D2] w-fit px-[8px] py-[2px] rounded-md font-sans text-[9px] font-bold uppercase tracking-wider mb-[12px]">🎨 Showcase</span>
+                            <div class="w-full h-[120px] bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] rounded-md mb-[12px]"></div>
+                            <p class="font-sans text-[14px] text-ink font-bold line-clamp-2 mb-[4px]">Zaria Music Visuals — Vol. 2</p>
+                            <span class="font-sans text-[13px] text-ink-soft line-clamp-2">Shot over two months following Zaria across Lagos, Accra, and London.</span>
+                        </div>
+
+                        <!-- Pinned Post Card (No image) -->
+                        <div class="bg-white rounded-xl border border-ochre shadow-sm p-[20px] flex flex-col cursor-pointer hover:shadow-md transition-shadow relative">
+                            <div class="absolute top-[12px] right-[12px] text-[16px]">📌</div>
+                            <span class="bg-[#6B48A8]/10 text-[#6B48A8] w-fit px-[8px] py-[2px] rounded-md font-sans text-[9px] font-bold uppercase tracking-wider mb-[12px]">🔥 Cultural Take</span>
+                            <p class="font-sans text-[14px] text-ink font-bold line-clamp-4 mb-[4px] leading-relaxed">
+                                The 'African Art' label is a colonial hangover. It's time to retire it entirely. Why do we group a diverse continent of 54 countries and thousands of distinct artistic traditions into a single, flattening monolith when presenting work globally?
+                            </p>
+                        </div>
+
+                        <!-- Portfolio Item Card 1 -->
+                        <div class="bg-paper-warm rounded-xl border border-ghost/40 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-ghost transition-colors group">
+                            <div class="w-full h-[180px] bg-gradient-to-br from-[#8E54E9] to-[#4776E6] relative">
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                    <span class="opacity-0 group-hover:opacity-100 bg-white text-ink font-sans text-[12px] font-bold px-4 py-2 rounded-full shadow-sm transition-opacity transform translate-y-2 group-hover:translate-y-0">View project</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col">
+                                <span class="font-mono text-[10px] text-mute uppercase tracking-widest mb-[4px]">Photography · 2025</span>
+                                <h3 class="font-serif text-[16px] font-bold text-ink leading-tight line-clamp-1">Lagos After Dark</h3>
+                                <p class="font-sans text-[13px] text-ink-soft mt-[6px] line-clamp-2">A neon study of the city's nightlife architecture.</p>
+                            </div>
+                        </div>
+
+                        <!-- Portfolio Item Card 2 -->
+                        <div class="bg-paper-warm rounded-xl border border-ghost/40 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-ghost transition-colors group">
+                            <div class="w-full h-[180px] bg-gradient-to-bl from-[#F2C94C] to-[#F2994A] relative">
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                    <span class="opacity-0 group-hover:opacity-100 bg-white text-ink font-sans text-[12px] font-bold px-4 py-2 rounded-full shadow-sm transition-opacity transform translate-y-2 group-hover:translate-y-0">View project</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col">
+                                <span class="font-mono text-[10px] text-mute uppercase tracking-widest mb-[4px]">Digital Art · 2024</span>
+                                <h3 class="font-serif text-[16px] font-bold text-ink leading-tight line-clamp-1">Diasporic Futures</h3>
+                                <p class="font-sans text-[13px] text-ink-soft mt-[6px] line-clamp-2">Reimagining traditional West African motifs in 3D spaces.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: MOBILE COMPANION                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Mobile Companion (Single Column)</span>
+        <div class="ios-screen bg-paper-deep rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 border-b border-ghost-light">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="h-[56px] flex items-center justify-between px-4 bg-white z-20 shrink-0">
+                <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1 class="text-ink font-bold text-[15px]">People Near Me</h1>
+                <div class="w-[44px]"></div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <!-- Hero Stack -->
+                <div class="bg-paper-warm px-[20px] py-[32px] flex flex-col items-center text-center border-b border-rule">
+                    <span class="font-mono text-[10px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Moveee · People Near Me</span>
+                    <h2 class="font-serif text-[28px] text-ink leading-tight mb-[12px]">Find each <span class="italic">other.</span></h2>
+                    <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px]">
+                        Members of the Moveee community near you — who they are, what they do.
+                    </p>
+                    <button class="w-full h-[48px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold shadow-sm">
+                        Update your profile
+                    </button>
+                </div>
+
+                <!-- Controls Stack -->
+                <div class="bg-white p-[16px] border-b border-ghost-light flex flex-col gap-[12px]">
+                    <div class="relative w-full">
+                        <svg class="w-4 h-4 text-mute absolute left-[16px] top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" class="w-full h-[44px] bg-paper-deep border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] font-sans text-ink outline-none" placeholder="Search name or keywords...">
+                    </div>
+                    <select class="w-full h-[44px] bg-paper-deep border border-ghost rounded-lg px-[16px] text-[14px] font-sans text-ink outline-none appearance-none">
+                        <option value="">All Industries</option>
+                        <option value="creative">Creative Arts</option>
+                    </select>
+                    <span class="font-mono text-[10px] text-mute text-center mt-[4px]">84 members near you</span>
+                </div>
+
+                <!-- Member Grid (1 Col) -->
+                <div class="p-[16px] flex flex-col gap-[16px]">
+                    
+                    <div class="bg-white rounded-xl shadow-card p-[20px] border border-ghost/20 flex flex-col">
+                        <div class="flex items-center gap-[16px] mb-[16px]">
+                            <div class="w-[56px] h-[56px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] flex items-center justify-center border-[2px] border-gold p-[2px] shrink-0">
+                                <div class="w-full h-full rounded-full bg-transparent border border-white"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-[6px] mb-[2px]">
+                                    <h3 class="font-serif text-[16px] font-bold text-ink leading-tight">Zara Mensah</h3>
+                                    <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[8px] font-bold tracking-widest uppercase">PRO</span>
+                                </div>
+                                <span class="font-sans text-[12px] text-ink-soft">Visual Artist</span>
+                                <span class="font-sans text-[11px] text-mute mt-[2px]">📍 London, UK</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-[6px] flex-wrap mb-[12px]">
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[10px] text-ink-soft">Creative</span>
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[10px] text-ink-soft">Photography</span>
+                        </div>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.6] line-clamp-2 mb-[16px]">
+                            Exploring the intersection of traditional West African motifs and digital mediums.
+                        </p>
+                        <button class="w-full h-[40px] border border-ghost rounded-lg font-sans text-[13px] font-bold text-ink">View Profile</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-card p-[20px] border border-ghost/20 flex flex-col">
+                        <div class="flex items-center gap-[16px] mb-[16px]">
+                            <div class="w-[56px] h-[56px] rounded-full bg-gradient-to-bl from-[#2D9CDB] to-[#9b51e0] flex items-center justify-center shrink-0"></div>
+                            <div class="flex flex-col">
+                                <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[2px]">Amara Okeke</h3>
+                                <span class="font-sans text-[12px] text-ink-soft">Music Producer</span>
+                                <span class="font-sans text-[11px] text-mute mt-[2px]">📍 Manchester, UK</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-[6px] flex-wrap mb-[12px]">
+                            <span class="bg-paper-deep border border-ghost px-[8px] py-[2px] rounded font-sans text-[10px] text-ink-soft">Music</span>
+                        </div>
+                        <button class="w-full h-[40px] border border-ghost rounded-lg font-sans text-[13px] font-bold text-ink">View Profile</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
