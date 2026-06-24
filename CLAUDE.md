@@ -470,6 +470,25 @@ append a new numbered section to whichever file matches the surface (mobile app 
 file; `apps/site`/`apps/connect` → the web file) rather than inventing a third file or a new
 top-level doc.
 
+### Rendered Figma mockup HTML files (distinct from the prompt catalogs above)
+
+These are the actual self-contained HTML output files (Tailwind CDN + Google Fonts, multiple
+"Frame N" sections at fixed pixel widths) generated *from* the prompt catalogs above — not to be
+confused with the `.md` prompt text files themselves. Two folders, split the same way:
+
+- `apps/figma/designs/` — **mobile app** mockups (`apps/mobile`). Pre-existing.
+- `apps/figma/designs-web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can
+  overlap with the mobile folder (e.g. `moveee_connect_settings.html`,
+  `moveee_dark_mode_ui.html`, `moveee_overlays.html`, `moveee_wallet.html`,
+  `moveee_directory.html`, `moveee_magazine.html` exist in both) — these are different files
+  with different content per surface, not duplicates. Don't dedupe across the two folders.
+
+When a user uploads a new mockup HTML file and asks to "upload"/"add" it to the repo: strip the
+random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_settings.html` →
+`moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
+surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
+location like `docs/figma-design/`.
+
 ---
 
 ## Git branch
