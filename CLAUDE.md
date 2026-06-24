@@ -803,6 +803,34 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 stories, products, latest issue, interviews, series batch.
 Events, directory, quotes, pulse, origins removed from homepage.
 
+### Figma Make web design rebuild — section-by-section status tracker (June 2026)
+
+Tracks progress against the 18 numbered sections in `docs/figma-make-prompts-web.md`
+(each section has a matching mockup in `mockups/web/`). The intent of this initiative
+is to fully override the current site design page-by-page, not just patch bugs — update
+this table whenever a section's rebuild starts or finishes so progress isn't
+re-derived from scratch each session.
+
+| § | Section | Surface | Status |
+|---|---|---|---|
+| 1 | Web Homepage | Site A | Done — rebuilt from mockup |
+| 2/3 | Shop/Lifestyle Homepage | Site A | Done — rebuilt from mockup (see "Lifestyle Shop archive page" above) |
+| 4 | Pulse Feed | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 5 | Post Composer | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 6 | Magazine / Article Detail | Site A | Done — rebuilt from mockup (see "Magazine archive page" above) |
+| 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
+| 8 | Culture Games | Site B | Not started |
+| 9 | Member Dashboard | Site B | Not started |
+| 10 | Member Settings | Site B | Not started |
+| 11 | Wallet, Perks & Coupons | Site B | Not started |
+| 12 | Member Directory & Public Profiles | Site B | Not started |
+| 13 | Notifications & Analytics | Site B | Not started |
+| 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
+| 15 | Feed Card Detail Drawers | Site B | Done — verified 2026-06-24: the 5 existing drawer components (`CommunityDetailModal.tsx`, `QuoteDetailModal.tsx`, `HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`, `PulseDetailModal.tsx`, all `packages/shared/components/pulse/`) already match the spec exactly — no code changes were needed, the doc section was written by documenting the existing implementation |
+| 16 | Design System & Core UI Components | Site A + B | Not started |
+| 17 | Authentication Flow | Site B | Not started |
+| 18 | Overlays & Micro-interactions | Site B | Not started |
+
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
 - `/opt/bitnami/php/etc/memory.conf` — `pm.max_children=5`, `memory_limit=128M`
