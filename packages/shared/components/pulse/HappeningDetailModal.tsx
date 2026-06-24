@@ -60,23 +60,23 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1rem 1.25rem",
+          padding: "1.25rem",
           borderBottom: "1px solid #e0dbd1",
           position: "sticky", top: 0,
-          background: "var(--paper, #f3ece0)", zIndex: 1,
+          background: "#faf8f5", zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
               background: "#eeedfe", color: "#3c3489",
               fontSize: "0.58rem", fontWeight: 700,
               letterSpacing: "0.1em", textTransform: "uppercase",
-              padding: "0.18rem 0.45rem", borderRadius: "2px",
+              padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Happening</span>
             {item.isLiterati && (
               <span style={{
                 fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
                 textTransform: "uppercase", color: "#b38238", background: "#f3ece0",
-                border: "1px solid #b38238", borderRadius: "2px", padding: "0.18rem 0.45rem",
+                border: "1px solid #b38238", borderRadius: "999px", padding: "0.18rem 0.45rem",
               }}>
                 🪶 Literati Connect
               </span>
@@ -87,22 +87,22 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
               </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             <Link
               href={item.href}
               style={{
-                color: "#7a6f5c", fontSize: "0.65rem", fontWeight: 700,
-                letterSpacing: "0.08em", textTransform: "uppercase",
-                textDecoration: "none", padding: "0.2rem 0.5rem",
-                border: "1px solid #d8d0c6", borderRadius: "2px",
+                color: "#c5491f", fontSize: "0.8rem", fontWeight: 400,
+                textDecoration: "underline", textUnderlineOffset: "2px",
               }}
             >
-              Full page <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginLeft: "2px" }}><path d="M3 9L9 3M4 3h5v5"/></svg>
+              Full page →
             </Link>
             <button onClick={close} aria-label="Close" style={{
               background: "none", border: "none", cursor: "pointer",
-              color: "#7a6f5c", fontSize: "1.1rem", lineHeight: 1, padding: "0.25rem",
-            }}>✕</button>
+              color: "#14110d", lineHeight: 1, padding: "0.25rem", display: "flex",
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           {/* Title */}
           <h2 style={{
             fontFamily: "var(--font-fraunces), serif",
-            fontSize: "1.25rem", fontWeight: 700, lineHeight: 1.3,
+            fontSize: "1.375rem", fontWeight: 700, lineHeight: 1.3,
             color: "#14110d", marginBottom: "0.75rem",
           }}>
             {decodeHtml(item.title)}
@@ -127,6 +127,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           {/* Event details strip */}
           <div style={{
             background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
             padding: "0.85rem 1rem", marginBottom: "1rem",
             display: "flex", flexDirection: "column", gap: "0.5rem",
           }}>
@@ -211,11 +212,11 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           <Link
             href={item.href}
             style={{
-              display: "inline-block",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: "100%", height: "52px",
               background: "#3c3489", color: "#fff",
-              fontSize: "0.75rem", fontWeight: 700,
-              letterSpacing: "0.08em", textTransform: "uppercase",
-              padding: "0.55rem 1.25rem", borderRadius: "2px",
+              fontSize: "0.85rem", fontWeight: 700,
+              borderRadius: "999px",
               textDecoration: "none",
             }}
           >

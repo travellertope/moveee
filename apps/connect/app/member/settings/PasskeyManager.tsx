@@ -138,8 +138,8 @@ export default function PasskeyManager() {
                     style={{
                       padding: "4px 10px",
                       background: "transparent",
-                      border: "1px solid rgba(197,73,31,.4)",
-                      color: "#c5491f",
+                      border: "1px solid rgba(198,40,40,.4)",
+                      color: "#c62828",
                       borderRadius: 3,
                       fontSize: "0.72rem",
                       cursor: "pointer",
@@ -191,9 +191,9 @@ export default function PasskeyManager() {
               padding: "10px 14px",
               fontSize: "0.8rem",
               borderRadius: 3,
-              background: message.ok ? "rgba(46,125,50,.06)" : "rgba(197,73,31,.06)",
-              border: `1px solid ${message.ok ? "rgba(46,125,50,.2)" : "rgba(197,73,31,.2)"}`,
-              color: message.ok ? "#2e7d32" : "#c5491f",
+              background: message.ok ? "rgba(46,125,50,.06)" : "rgba(198,40,40,.06)",
+              border: `1px solid ${message.ok ? "rgba(46,125,50,.2)" : "rgba(198,40,40,.2)"}`,
+              color: message.ok ? "#2e7d32" : "#c62828",
             }}>
               {message.text}
             </div>

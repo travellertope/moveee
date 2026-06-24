@@ -347,11 +347,20 @@ add it to the perks lists in:
 var(--ink)        /* #14110d — primary dark text / dark backgrounds */
 var(--paper)      /* #f3ece0 — primary light background */
 var(--paper-deep) /* slightly deeper paper, for card backgrounds */
-var(--ochre)      /* #b38238 — accent gold/amber */
+var(--ochre)      /* #c5491f — accent rust (NOT amber — corrected June 2026, see note below) */
+var(--gold)       /* #b38238 — accent gold/amber, distinct from ochre */
 var(--rule)       /* border colour, subtle */
 var(--mute)       /* muted text */
 var(--ink-soft)   /* softer body text */
 ```
+
+**Correction (June 2026):** this table previously listed `var(--ochre)` as `#b38238`
+(amber) — that was wrong. The actual definitions in `apps/connect/app/globals.css`
+are `--ochre: #c5491f` (rust) and `--gold: #b38238` (amber) — two distinct tokens.
+This matches the Figma Make mockups' own Tailwind config (`ochre: '#C5491F'`,
+`gold: '#B38238'`) exactly. If a future rebuild pass seems to find an "ochre vs gold
+mismatch" between mockups and the live CSS, check the real `globals.css` values first
+— they likely already match; don't assume the stale value once documented here.
 
 The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.
@@ -469,6 +478,54 @@ list flagging real engineering gotchas, then a `### PROMPT N` block broken into 
 append a new numbered section to whichever file matches the surface (mobile app → the first
 file; `apps/site`/`apps/connect` → the web file) rather than inventing a third file or a new
 top-level doc.
+
+### Rendered Figma mockup HTML files (distinct from the prompt catalogs above)
+
+These are the actual self-contained HTML output files (Tailwind CDN + Google Fonts, multiple
+"Frame N" sections at fixed pixel widths) generated *from* the prompt catalogs above — not to be
+confused with the `.md` prompt text files themselves. They live in a dedicated top-level
+**`mockups/`** folder (moved there 2026-06-24, see below for the prior locations), kept deliberately
+separate from `apps/figma/` — `apps/figma/` is a *different* artifact entirely: a live, buildable
+Figma Make code export (`src/`, `index.html`, `README.md`, a real React app for design tokens), not
+a mockup archive. Mixing static reference HTML into that folder was confusing, hence the move.
+
+- `mockups/mobile/` — **mobile app** mockups (`apps/mobile`).
+- `mockups/web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can overlap with
+  the mobile folder (e.g. `moveee_connect_settings.html`, `moveee_dark_mode_ui.html`,
+  `moveee_overlays.html`, `moveee_wallet.html`, `moveee_directory.html`, `moveee_magazine.html`
+  exist in both) — these are different files with different content per surface, not duplicates.
+  Don't dedupe across the two folders.
+
+When a user uploads a new mockup HTML file and asks to "upload"/"add" it to the repo: strip the
+random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_settings.html` →
+`moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
+surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
+location like `docs/figma-design/` or put it back under `apps/figma/`.
+
+**History (2026-06-24):** these folders were originally `apps/figma/designs/` (mobile) and
+`apps/figma/designs-web/` (web) — first consolidated together under `apps/figma/` from three
+separate locations, then immediately relocated again to the current top-level `mockups/mobile/`
+and `mockups/web/` once it became clear `apps/figma/`'s own purpose (the live design-token export
+above) shouldn't share a folder with a static mockup archive. Before that first consolidation, a
+third, older mockup location existed at the repo-root `/designs/` folder — predating any of this
+convention (single one-off HTML prototypes, not "Frame N" multi-frame Figma Make output),
+containing a mix of `apps/site` mockups (`homepage.html`, `magazine_index.html`, `shop_index.html`,
+`shop_product.html`, `origins_index.html`, `origins_journey.html`, `gele_return.html`,
+`marrakech_dispatch.html`, `portrait_feature.html`, `event_opening.html`, `events_index.html`,
+`newsletter/hub.html`, `newsletter/issue.html` — title tag `"... · The Moveee"`) and `apps/connect`
+mockups (`community_posts.html`, `composer_states.html`, `directory_detail_1.html`,
+`events_list_and_detail.html`, `feed_cards.html`, `feed-cards-v2.html`,
+`mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`, including one file with
+"mobile" in its name that is actually a 390px mobile-companion frame of a *web* mockup, not an
+`apps/mobile` screen). All of it was confirmed (by title-tag + frame-width inspection) to be
+web-surface content, so it stayed under `mockups/web/` rather than `mockups/mobile/` — but it was
+kept in its own **`mockups/web/legacy/`** subfolder rather than flattened in among the 17
+pre-existing Figma Make web mockups, since it's an older, different-vintage batch (one-off
+prototypes vs. multi-frame Figma Make exports) and the user wanted that distinction preserved even
+though both batches are confirmed same-surface. No filename collisions, nothing misclassified. If
+you see a reference to `/designs/` or `apps/figma/designs*` anywhere (e.g. stale docs), update it
+to `mockups/web/legacy/` (for the older batch) or `mockups/web/`/`mockups/mobile/` (for the Figma
+Make batch) as appropriate.
 
 ---
 
@@ -754,6 +811,183 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
 Events, directory, quotes, pulse, origins removed from homepage.
+
+### Figma Make web design rebuild — section-by-section status tracker (June 2026)
+
+Tracks progress against the 18 numbered sections in `docs/figma-make-prompts-web.md`
+(each section has a matching mockup in `mockups/web/`). The intent of this initiative
+is to fully override the current site design page-by-page, not just patch bugs — update
+this table whenever a section's rebuild starts or finishes so progress isn't
+re-derived from scratch each session.
+
+| § | Section | Surface | Status |
+|---|---|---|---|
+| 1 | Web Homepage | Site A | Done — rebuilt from mockup |
+| 2/3 | Shop/Lifestyle Homepage | Site A | Done — rebuilt from mockup (see "Lifestyle Shop archive page" above) |
+| 4 | Pulse Feed | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 5 | Post Composer | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 6 | Magazine / Article Detail | Site A | Done — rebuilt from mockup (see "Magazine archive page" above) |
+| 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
+| 8 | Culture Games | Site B | Not started |
+| 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
+| 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
+| 11 | Wallet, Perks & Coupons | Site B | Not started |
+| 12 | Member Directory & Public Profiles | Site B | Not started |
+| 13 | Notifications & Analytics | Site B | Not started |
+| 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
+| 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
+| 16 | Design System & Core UI Components | Site A + B | Not started |
+| 17 | Authentication Flow | Site B | Not started |
+| 18 | Overlays & Micro-interactions | Site B | Not started |
+
+### Member Dashboard — visual rebuild (§9, June 2026)
+
+`apps/connect/app/member/page.tsx` + `MemberDashboard.tsx`/`MemberBadges.tsx`/
+`PasskeyBanner.tsx` (`packages/shared/components/`) + `apps/connect/app/member.css`
+rebuilt against `mockups/web/moveee_dashboard_web.html`:
+
+- **Full-bleed band pattern** (new structural pattern, reusable for future sections):
+  the mockup's hero, passkey banner, and stats row are each page-width sections with
+  their own background color, while their *content* is horizontally centered at
+  `max-width: 1200px`. Previously only the hero followed this — the passkey banner and
+  stats row were nested inside `.mem-body`'s `max-width:1200px` wrapper, so they looked
+  like cards instead of full-width bands. Fixed by moving `<PasskeyBanner>` and
+  `<MemberDashboard>` out of `.mem-body` in `page.tsx`, and adding a `.mem-stats-band`
+  wrapper (full width, own background/border) around the existing `.mem-stats` grid
+  (which itself became the `max-width:1200px` centered inner element). **If a future
+  section's mockup shows a full-width tinted strip, check for this same pattern** — don't
+  assume every section lives inside the body's centered container.
+- `.mem-hero` switched from a dark `ink` background with light text to a white/paper
+  background with ink text (mockup uses light hero, not dark) — avatar enlarged to 96px
+  with a gold ring border; tier badge switched to a full pill (`border-radius: 999px`,
+  was 2px).
+- `PasskeyBanner.tsx` rewritten from a small inline-styled rounded box to a full-width
+  dark `ink`-background bar (className-based, matching the rest of the redesigned
+  components' convention) with a white pill CTA button — also fixed a copy-priority bug
+  where the "credits waiting" message never became the bold title even when
+  `creditsEscrowed > 0`.
+- `.mem-stats` grid: `repeat(4,1fr)` → `repeat(5,1fr)` (5 stats were already rendered by
+  the component; only the CSS column count was stale). `.mem-tooltip` flipped from
+  appearing above the stat to below it (`top: calc(100% + 12px)`, arrow flipped to point
+  up), matching the mockup.
+- `.mem-badges-grid`: `repeat(4,1fr)` → `repeat(2,1fr)`; `.mem-badge` restructured from a
+  centered icon-over-text column to a left-aligned row card with a 40px circular icon
+  swatch — required a matching JSX change in `MemberBadges.tsx` (wrapped name/desc in a
+  new `.mem-badge-text` div) since the row layout needs name+desc stacked beside the icon,
+  not below it.
+- Responsive breakpoints updated to match the new 5-stat/2-badge-column base (the
+  `max-width: 1024px`/`640px` overrides previously assumed a stale 4-stat/4-badge-column
+  layout) — stats wrap 3+2 at 1024px and 2-per-row at 640px via `nth-child` border rules
+  rather than the old fixed 2-column assumption.
+- **Not visually verified in a browser** — this environment has no `NEXTAUTH_SECRET` or
+  WordPress backend credentials configured, so `getServerSession()` 500s before any
+  member-page markup renders. Verified instead via: CSS brace-balance check, mockup
+  HTML re-read for exact values (colors/radii/spacing), and component/CSS class-name
+  cross-referencing. If this matters, re-check pixel fidelity against
+  `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
+  fully closed.
+
+### Member Settings — visual rebuild (§10, June 2026)
+
+`apps/connect/app/member.css` plus `app/member/settings/profile/page.tsx` and
+`app/member/settings/directory/page.tsx` (className only) and
+`app/member/settings/PasskeyManager.tsx` rebuilt against
+`mockups/web/moveee_connect_settings.html`. The underlying structure/logic
+(per-field inline-edit-with-autosave, read-only field treatment, Directory
+tab cross-tab preview, WebAuthn/Passkey management, settings-only newsletter
+preference list) was already fully implemented going into this pass — only
+visual fidelity gaps needed fixing, all confirmed by direct grep of the
+mockup HTML rather than the prose spec (see the `--ochre` correction above —
+an earlier pass on this same pass nearly went down the wrong path assuming
+`var(--ochre)` was amber rather than rust, based on the doc table that has
+now been corrected):
+
+- `.mem-card` was a flat rectangle (no radius, no shadow) — the mockup wants
+  `rounded-xl` + `shadow-card` on every card, confirmed against *both* the
+  Settings mockup and the already-completed Dashboard mockup (so this was a
+  pre-existing gap, not Settings-specific). Added `border-radius: 12px` +
+  a subtle `box-shadow` to the shared `.mem-card` base class with its
+  existing neutral border kept. Settings' editable-field cards specifically
+  also want an ochre-tinted border (`border-ochre/20` in the mockup, distinct
+  from Dashboard's neutral `border-ghost/20`) — added as a separate
+  `.mem-card--editable` modifier class, applied only to the Profile and
+  Directory settings page's wrapping `<section>` (the two pages with
+  inline-editable fields), not to Security/Notifications/Interests/
+  Newsletters (action-row or toggle-row cards, which the mockup keeps on a
+  neutral border — see the Password row in the Security frame for the
+  confirming example).
+- `.prf-tab--active::after` (the active tab's underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the active tab underline while keeping the
+  tab *text* itself `text-ink` (don't change the text color, only the
+  underline — confirmed via the mockup's literal class list,
+  `text-ink ... border-b-[2px] border-ochre`).
+- `.mem-field-btn` (Edit/Change links) defaulted to `var(--ink)`, only
+  turning ochre on hover — mockup's Edit/Change links (`text-ochre`) are
+  ochre by default. Default color changed to `var(--ochre)`; hover changed
+  to `var(--ochre-deep)` so there's still a visible hover state.
+- `.mem-toggle` (Notifications on/off buttons) was missing
+  `border-radius: 999px` — mockup uses a full pill (`rounded-full`) for these;
+  the existing on/off background colors (`var(--ink)` for "on") were already
+  correct and didn't need changing.
+- `.mem-field-input` (editable text inputs) was missing `border-radius`
+  (mockup uses `rounded-lg`, ~8px) and only showed an ochre border on focus —
+  mockup's editable inputs have a persistent `border-ochre` outline, not just
+  on focus. Added `border-radius: 8px` and changed the default border to
+  `var(--ochre)`.
+- `PasskeyManager.tsx`'s "Remove" button and inline error-message text used
+  the literal `#c5491f` (brand ochre/rust) for a destructive/error action —
+  the mockup uses a **distinct** error-red token (`error: '#C62828'`, not the
+  brand accent) for this. Swapped both to `#c62828`/`rgba(198,40,40,...)`.
+  There's no `--error` CSS variable in `globals.css` yet — this file uses a
+  literal, consistent with how other one-off colors (e.g. `var(--moss,
+  #5a7a5a)`) are already handled ad hoc in `member.css`. If a real error-red
+  variable is ever introduced, swap this literal for it.
+- `.dir-toggle`, `.dir-toggle--on`, `.dir-preview-tag`, `.dir-discipline-tag`/
+  `--on` in the Directory tab were checked against the mockup and found to
+  already be correct — no changes needed there.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as the Dashboard rebuild above. Verified via CSS
+  brace-balance check and direct mockup HTML re-read for exact class names/
+  values. Re-check pixel fidelity against `mockups/web/moveee_connect_settings.html`
+  in a real environment before considering this fully closed.
+
+### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
+
+**Gotcha that caused a false "Done" claim, then got corrected:** when verifying a Figma
+Make web rebuild section against its mockup, always diff the actual mockup HTML
+(`mockups/web/*.html`) — never the prose spec text in `docs/figma-make-prompts-web.md`.
+A first pass on this section compared the 5 live drawer components against the prose
+description only, concluded they "already matched," and committed that claim. The user
+immediately flagged it ("the website still have the old designs") and was right — a
+real diff against `mockups/web/moveee_connect_feed_drawers.html` turned up genuine
+mismatches, all now fixed in `HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`,
+`QuoteDetailModal.tsx`, `PulseDetailModal.tsx`, `CommunityDetailModal.tsx` (all
+`packages/shared/components/pulse/`):
+
+- Badges: `borderRadius: "2px"` → `"999px"` (full pill) everywhere, including the 6
+  template badges inside `CommunityDetailModal.tsx` (hidden-gem/cultural-take/food-review/
+  creative-showcase/itinerary/event).
+- Header background is `#faf8f5` (distinct from the panel's `var(--paper, #f3ece0)`), not
+  the same paper color as the body — padding uniform `1.25rem`.
+- "Full page"/"Open full page" link: plain underlined text, rust `#c5491f`, no border/pill/
+  icon (was previously a bordered box with an SVG arrow). **Directory drawer omits this
+  link entirely** per the mockup's own inline comment.
+- Close button: real SVG stroke "X" icon (`<path d="M6 18L18 6M6 6l12 12"/>`), not a `✕`
+  Unicode glyph.
+- Full-width CTA buttons (Happening "View Event Details →", Directory "View Full Entry →"):
+  `width: 100%, height: 52px, borderRadius: 999px` pill, not an inline-block square button.
+- Quote drawer: sharing-reason callout `borderRadius: 12px` + `boxShadow: 0 1px 2px
+  rgba(0,0,0,0.05)`; date line centered + `font-family: monospace`.
+- Pulse/Editorial drawer badge relabeled "Editorial" (bg `#eeedfe`/text `#3c3489`) — the
+  mockup's literal text, not the old "Pulse" label.
+- Community drawer's event-details block now wrapped in a white bordered card (`#fff`
+  bg, `1px solid #e8e2d8`, `borderRadius: 6px`, `boxShadow: 0 1px 2px rgba(0,0,0,0.05)`)
+  instead of plain text rows.
+- `RsvpDisplay`'s RSVP button `borderRadius: 4px` → `999px` — fixed in **both**
+  `CommunityDetailModal.tsx` and `FeedCard.tsx` (duplicate, non-shared copies per the
+  mockup's own dev-comment — any future RSVP/poll UI change must be applied to both files).
+- `ProBadge.tsx` (the "PRO" pill next to author names) was checked and already matched the
+  mockup's `rounded-sm` style (`borderRadius: Math.max(3, size*0.3)`) — no change needed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):

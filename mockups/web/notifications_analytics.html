@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Notifications & Analytics</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        // Chart specific
+                        'chart-earn': '#b38238',
+                        'chart-spend': '#c5491f',
+                        'chart-line': '#2a6496'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                        'dropdown': '0 10px 25px -5px rgba(20, 17, 13, 0.15), 0 8px 10px -6px rgba(20, 17, 13, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .chart-grid { stroke: #C8BFB0; stroke-width: 0.5; stroke-dasharray: 4 4; }
+        .chart-axis { stroke: #C8BFB0; stroke-width: 1; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Notification Bell Dropdown (Open + Empty)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[120px]">
+            
+            <header class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center justify-between px-[32px] shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                
+                <div class="flex items-center gap-[24px] relative">
+                    <button class="font-sans text-[14px] font-bold text-ink">Feed</button>
+                    
+                    <!-- DEV: Dropdown bell badge shows unread > 9 ? "9+" : unread — cap the count display at "9+", never render a 3-digit number in the 14px circle. -->
+                    <button class="relative w-[36px] h-[36px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center text-ink hover:bg-gray-100 transition-colors">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <div class="absolute -top-[2px] -right-[2px] w-[14px] h-[14px] rounded-full bg-[#c5491f] text-white text-[9px] font-bold flex items-center justify-center border border-white">3</div>
+                    </button>
+
+                    <!-- LEFT PANEL: Open Dropdown (Has Unread) -->
+                    <div class="absolute top-[48px] right-0 w-[340px] max-w-[calc(100vw-32px)] max-h-[440px] bg-white border border-[rgba(42,36,28,0.12)] rounded-[6px] shadow-dropdown flex flex-col overflow-hidden z-50">
+                        <div class="sticky top-0 bg-white border-b border-ghost/30 px-[16px] py-[12px] flex justify-between items-center z-10">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">Notifications <span class="text-[#c5491f]">(3)</span></h3>
+                            <button class="font-sans text-[12px] font-bold text-ochre hover:underline">Mark all read</button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col">
+                            
+                            <!-- DEV: TYPE_EMOJI is a 19-entry map duplicated independently in NotificationBell.tsx and NotificationsClient.tsx — 5 of the 19 types (cluster_activated, cluster_forming_expired, cluster_new_host, cluster_election_started, cluster_checkin_reminder) belong to the House Fellowship feature and have no mobile-catalog precedent in PROMPT 12A's 5-example set — include at least one cluster-type row in the frame to demonstrate full coverage. -->
+                            <!-- Item 1: Unread (Cluster Type) -->
+                            <div class="px-[16px] py-[12px] flex items-start gap-[12px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10">
+                                <span class="text-[1.1rem] leading-none shrink-0 pt-0.5">🫂</span>
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-sans text-[12.5px] font-[700] text-ink leading-snug">House Fellowship Reminder</span>
+                                    <span class="font-sans text-[11.5px] text-mute line-clamp-2 mt-[2px] leading-snug">Time to check in with the London Creatives cluster. Meeting starts in 1 hour.</span>
+                                    <span class="font-mono text-[10.5px] text-ghost mt-[4px]">20m ago</span>
+                                </div>
+                                <div class="w-[6px] h-[6px] rounded-full bg-ochre mt-1 shrink-0"></div>
+                            </div>
+
+                            <!-- Item 2: Unread -->
+                            <div class="px-[16px] py-[12px] flex items-start gap-[12px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10">
+                                <span class="text-[1.1rem] leading-none shrink-0 pt-0.5">💰</span>
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-sans text-[12.5px] font-[700] text-ink leading-snug">+20 Culture Points Earned!</span>
+                                    <span class="font-sans text-[11.5px] text-mute line-clamp-2 mt-[2px] leading-snug">Your hidden gem was validated by the community.</span>
+                                    <span class="font-mono text-[10.5px] text-ghost mt-[4px]">2h ago</span>
+                                </div>
+                                <div class="w-[6px] h-[6px] rounded-full bg-ochre mt-1 shrink-0"></div>
+                            </div>
+
+                            <!-- Item 3: Unread -->
+                            <div class="px-[16px] py-[12px] flex items-start gap-[12px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10">
+                                <span class="text-[1.1rem] leading-none shrink-0 pt-0.5">💬</span>
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-sans text-[12.5px] font-[700] text-ink leading-snug">New comment on your post</span>
+                                    <span class="font-sans text-[11.5px] text-mute line-clamp-2 mt-[2px] leading-snug">David replied: 'This is exactly the spot I needed to find today.'</span>
+                                    <span class="font-mono text-[10.5px] text-ghost mt-[4px]">5h ago</span>
+                                </div>
+                                <div class="w-[6px] h-[6px] rounded-full bg-ochre mt-1 shrink-0"></div>
+                            </div>
+
+                            <!-- Item 4: Read -->
+                            <div class="px-[16px] py-[12px] flex items-start gap-[12px] bg-white border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-gray-50">
+                                <span class="text-[1.1rem] leading-none shrink-0 pt-0.5">🏆</span>
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-sans text-[12.5px] font-[500] text-ink leading-snug">New badge unlocked!</span>
+                                    <span class="font-sans text-[11.5px] text-mute line-clamp-2 mt-[2px] leading-snug">You earned the 'Taste Maker' badge.</span>
+                                    <span class="font-mono text-[10.5px] text-ghost mt-[4px]">1d ago</span>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="bg-paper-deep border-t border-[rgba(42,36,28,0.06)] px-[16px] py-[12px] text-center sticky bottom-0 z-10 hover:bg-[#e8e4db] cursor-pointer transition-colors">
+                            <span class="font-sans text-[12px] font-bold text-ink">View all notifications &rarr;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL Mock (Empty State Dropdown) -->
+                <!-- Rendered statically here just to show the empty variant side-by-side -->
+                <div class="absolute top-[48px] right-[400px] w-[340px] bg-white border border-[rgba(42,36,28,0.12)] rounded-[6px] shadow-dropdown flex flex-col overflow-hidden z-40 opacity-70 pointer-events-none">
+                    <div class="bg-white border-b border-ghost/30 px-[16px] py-[12px] flex justify-between items-center">
+                        <h3 class="font-sans text-[14px] font-bold text-ink">Notifications</h3>
+                    </div>
+                    <div class="flex items-center justify-center py-[24px]">
+                        <span class="font-sans text-[13px] text-mute">No notifications yet.</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Full Notifications Page</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+            
+            <header class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center justify-between px-[32px] shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                <div class="flex items-center gap-[24px]">
+                    <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-ghost"></div>
+                </div>
+            </header>
+
+            <!-- Member Hero Band -->
+            <div class="w-full bg-white border-b border-ghost-light px-[64px] py-[40px] flex items-center gap-[24px]">
+                <div class="w-[80px] h-[80px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border-[2px] border-gold p-[2px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                <div class="flex flex-col">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">My Account</span>
+                    <h1 class="font-serif text-[32px] font-bold text-ink leading-tight">Notifications</h1>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="w-full max-w-[1200px] mx-auto px-[64px] pt-[48px] grid grid-cols-[1fr_280px] gap-[40px] items-start">
+                
+                <!-- Main Column -->
+                <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col border border-ghost/20 mem-card">
+                    <div class="h-[64px] px-[24px] border-b border-ghost/40 flex items-center justify-between bg-paper-warm/30">
+                        <h2 class="font-sans text-[16px] font-bold text-ink">All Notifications · <span class="text-ochre">3 unread</span></h2>
+                        <button class="font-sans text-[13px] font-bold text-ochre hover:underline">Mark all read</button>
+                    </div>
+
+                    <!-- DEV: Full-page list has NO Today/Earlier date sectioning and NO per-type left-border colour — unlike the mobile catalog's PROMPT 12A, this is a single flat list ordered however the API returns it (createdAt desc, server-side) with only an unread tint + dot as the visual unread signal. -->
+                    <div class="flex flex-col">
+                        
+                        <!-- Unread Row 1 -->
+                        <div class="p-[20px] flex items-start gap-[16px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10 transition-colors">
+                            <span class="text-[24px] leading-none shrink-0">🫂</span>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <h3 class="font-sans text-[15px] font-bold text-ink leading-snug">House Fellowship Reminder</h3>
+                                <p class="font-sans text-[14px] text-ink-soft mt-[2px] leading-snug max-w-[600px]">Time to check in with the London Creatives cluster. Meeting starts in 1 hour.</p>
+                                <span class="font-mono text-[11px] text-mute mt-[8px]">Mon, 22 Jun 2026</span>
+                            </div>
+                            <div class="w-[8px] h-[8px] rounded-full bg-ochre mt-2 shrink-0"></div>
+                        </div>
+
+                        <!-- Unread Row 2 -->
+                        <div class="p-[20px] flex items-start gap-[16px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10 transition-colors">
+                            <span class="text-[24px] leading-none shrink-0">💰</span>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <h3 class="font-sans text-[15px] font-bold text-ink leading-snug">+20 Culture Points Earned!</h3>
+                                <p class="font-sans text-[14px] text-ink-soft mt-[2px] leading-snug max-w-[600px]">Your hidden gem was validated by the community.</p>
+                                <span class="font-mono text-[11px] text-mute mt-[8px]">Mon, 22 Jun 2026</span>
+                            </div>
+                            <div class="w-[8px] h-[8px] rounded-full bg-ochre mt-2 shrink-0"></div>
+                        </div>
+
+                        <!-- Unread Row 3 -->
+                        <div class="p-[20px] flex items-start gap-[16px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-[#c5491f]/10 transition-colors">
+                            <span class="text-[24px] leading-none shrink-0">💬</span>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <h3 class="font-sans text-[15px] font-bold text-ink leading-snug">New comment on your post</h3>
+                                <p class="font-sans text-[14px] text-ink-soft mt-[2px] leading-snug max-w-[600px]">David replied: 'This is exactly the spot I needed to find today.'</p>
+                                <span class="font-mono text-[11px] text-mute mt-[8px]">Sun, 21 Jun 2026</span>
+                            </div>
+                            <div class="w-[8px] h-[8px] rounded-full bg-ochre mt-2 shrink-0"></div>
+                        </div>
+
+                        <!-- Read Row 1 -->
+                        <div class="p-[20px] flex items-start gap-[16px] bg-white border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="text-[24px] leading-none shrink-0">🏆</span>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <h3 class="font-sans text-[15px] font-medium text-ink leading-snug">New badge unlocked!</h3>
+                                <p class="font-sans text-[14px] text-mute mt-[2px] leading-snug max-w-[600px]">You earned the 'Taste Maker' badge.</p>
+                                <span class="font-mono text-[11px] text-ghost mt-[8px]">Sun, 21 Jun 2026</span>
+                            </div>
+                        </div>
+
+                        <!-- Read Row 2 -->
+                        <div class="p-[20px] flex items-start gap-[16px] bg-white border-b border-[rgba(42,36,28,0.06)] cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="text-[24px] leading-none shrink-0 opacity-70">✅</span>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <h3 class="font-sans text-[15px] font-medium text-ink leading-snug">Cash out approved</h3>
+                                <p class="font-sans text-[14px] text-mute mt-[2px] leading-snug max-w-[600px]">Your 500 CR request was approved.</p>
+                                <span class="font-mono text-[11px] text-ghost mt-[8px]">Fri, 19 Jun 2026</span>
+                            </div>
+                        </div>
+
+                        <!-- Load More -->
+                        <div class="p-[16px] flex justify-center bg-paper-deep/30">
+                            <button class="font-sans text-[13px] text-mute hover:text-ink transition-colors">Load more</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Column -->
+                <div class="bg-white rounded-xl shadow-card py-[8px] flex flex-col border border-ghost/20 sticky top-[24px]">
+                    <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[12px] transition-colors">Dashboard &rarr;</a>
+                    <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[12px] transition-colors">My Wallet &rarr;</a>
+                    <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[12px] transition-colors">My Coupons &rarr;</a>
+                    <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[12px] transition-colors">Settings &rarr;</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Analytics Dashboard</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+            
+            <header class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center justify-between px-[32px] shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+            </header>
+
+            <!-- Member Hero Band -->
+            <div class="w-full bg-white border-b border-ghost-light px-[64px] py-[40px] flex items-center gap-[24px]">
+                <div class="flex flex-col">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px] flex items-center gap-2">Dashboard <span class="text-ghost">&rsaquo;</span> Analytics</span>
+                    <h1 class="font-serif text-[32px] font-bold text-ink leading-tight mb-[8px]">My Analytics</h1>
+                    <div class="bg-gold/10 text-gold border border-gold/20 px-[10px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider w-fit">Moveee Pro</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-[1200px] mx-auto px-[64px] pt-[48px] flex flex-col gap-[48px]">
+                
+                <!-- DEV: Stat grid is repeat(auto-fill, minmax(140px, 1fr)) — 6 cards, not the mobile catalog's 4-card row; do not drop "Earned (30d)"/"Spent (30d)" to match mobile's count. -->
+                <!-- Stat Grid -->
+                <div class="grid gap-[16px]" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Credit Balance</span>
+                        <span class="font-sans text-[26px] font-bold text-ink leading-none mb-[4px]">1,240</span>
+                        <span class="font-sans text-[12px] text-mute">spendable credits</span>
+                    </div>
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Points</span>
+                        <span class="font-sans text-[26px] font-bold text-gold leading-none mb-[4px]">850</span>
+                        <span class="font-sans text-[12px] text-mute">all-time points</span>
+                    </div>
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Posts</span>
+                        <span class="font-sans text-[26px] font-bold text-ink leading-none mb-[4px]">42</span>
+                        <span class="font-sans text-[12px] text-mute">published</span>
+                    </div>
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Badges</span>
+                        <span class="font-sans text-[26px] font-bold text-ink leading-none mb-[4px]">6</span>
+                        <span class="font-sans text-[12px] text-mute">earned badges</span>
+                    </div>
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Earned (30d)</span>
+                        <span class="font-sans text-[26px] font-bold text-success leading-none mb-[4px]">+180</span>
+                        <span class="font-sans text-[12px] text-mute">credits earned</span>
+                    </div>
+                    <div class="bg-white border border-ghost/40 rounded-xl p-[20px] flex flex-col items-start shadow-sm">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-mute mb-[8px]">Spent (30d)</span>
+                        <span class="font-sans text-[26px] font-bold text-ochre leading-none mb-[4px]">-350</span>
+                        <span class="font-sans text-[12px] text-mute">credits spent</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-[32px] items-start">
+                    
+                    <!-- DEV: Analytics has no chart-type toggle, date-range picker, or tooltip-on-hover interaction described in the mobile catalog's PROMPT 12B for the line chart's last point — the web line chart renders dots on every point uniformly, no hover state implemented. -->
+                    <div class="flex-1 flex flex-col gap-[48px]">
+                        
+                        <!-- Bar Chart -->
+                        <!-- DEV: Bar chart's two series use ochre #b38238 (earned) and rust #c5491f (spent) — same two-colour convention as the wallet ledger; line chart uses a one-off blue #2a6496 not used anywhere else on the site (not ochre/gold like the mobile catalog's PROMPT 12B describes) — render the line chart in this blue, not gold. -->
+                        <div class="flex flex-col">
+                            <h2 class="font-serif text-[24px] font-bold text-ink mb-[24px]">Credits — Last 30 Days</h2>
+                            <div class="w-full bg-white border border-ghost/40 rounded-xl p-[32px] shadow-sm">
+                                <div class="w-full h-[240px] relative">
+                                    <svg viewBox="0 0 800 240" class="w-full h-full preserve-aspect-ratio-none">
+                                        <!-- Gridlines -->
+                                        <line x1="40" y1="20" x2="780" y2="20" class="chart-grid" />
+                                        <line x1="40" y1="70" x2="780" y2="70" class="chart-grid" />
+                                        <line x1="40" y1="120" x2="780" y2="120" class="chart-grid" />
+                                        <line x1="40" y1="170" x2="780" y2="170" class="chart-axis" />
+                                        
+                                        <!-- Y-Axis -->
+                                        <text x="30" y="24" font-size="12" fill="#7A6F5C" text-anchor="end">60</text>
+                                        <text x="30" y="74" font-size="12" fill="#7A6F5C" text-anchor="end">40</text>
+                                        <text x="30" y="124" font-size="12" fill="#7A6F5C" text-anchor="end">20</text>
+                                        <text x="30" y="174" font-size="12" fill="#7A6F5C" text-anchor="end">0</text>
+
+                                        <!-- X-Axis Labels (Thinned to ~10) -->
+                                        <text x="70" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">May 24</text>
+                                        <text x="140" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">May 27</text>
+                                        <text x="210" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">May 30</text>
+                                        <text x="280" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 2</text>
+                                        <text x="350" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 5</text>
+                                        <text x="420" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 8</text>
+                                        <text x="490" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 11</text>
+                                        <text x="560" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 14</text>
+                                        <text x="630" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 17</text>
+                                        <text x="700" y="195" font-size="11" fill="#7A6F5C" text-anchor="middle">Jun 20</text>
+                                        
+                                        <!-- Bars (Earned: #b38238, Spent: #c5491f) -->
+                                        <rect x="65" y="120" width="10" height="50" fill="#b38238" rx="2" />
+                                        <rect x="135" y="170" width="10" height="0" fill="#b38238" rx="2" />
+                                        <rect x="205" y="145" width="10" height="25" fill="#b38238" rx="2" />
+                                        <rect x="275" y="170" width="10" height="0" fill="#b38238" rx="2" />
+                                        <rect x="345" y="70" width="10" height="100" fill="#b38238" rx="2" />
+                                        <rect x="415" y="120" width="10" height="50" fill="#b38238" rx="2" />
+                                        <rect x="485" y="145" width="10" height="25" fill="#b38238" rx="2" />
+                                        <rect x="555" y="170" width="10" height="0" fill="#b38238" rx="2" />
+                                        <rect x="625" y="45" width="10" height="125" fill="#b38238" rx="2" />
+                                        <rect x="695" y="145" width="10" height="25" fill="#b38238" rx="2" />
+
+                                        <rect x="77" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="147" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="217" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="287" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="357" y="120" width="10" height="50" fill="#c5491f" rx="2" />
+                                        <rect x="427" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="497" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="567" y="20" width="10" height="150" fill="#c5491f" rx="2" /> <!-- Big spend -->
+                                        <rect x="637" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+                                        <rect x="707" y="170" width="10" height="0" fill="#c5491f" rx="2" />
+
+                                        <!-- Legend -->
+                                        <rect x="40" y="220" width="12" height="12" fill="#b38238" rx="2" />
+                                        <text x="60" y="230" font-size="12" font-family="sans-serif" fill="#3A342B">Earned</text>
+                                        
+                                        <rect x="120" y="220" width="12" height="12" fill="#c5491f" rx="2" />
+                                        <text x="140" y="230" font-size="12" font-family="sans-serif" fill="#3A342B">Spent</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Line Chart -->
+                        <div class="flex flex-col">
+                            <h2 class="font-serif text-[24px] font-bold text-ink mb-[24px]">Points Earned — Last 6 Months</h2>
+                            <div class="w-full bg-white border border-ghost/40 rounded-xl p-[32px] shadow-sm">
+                                <div class="w-full h-[240px] relative">
+                                    <svg viewBox="0 0 800 240" class="w-full h-full preserve-aspect-ratio-none">
+                                        <!-- Gridlines -->
+                                        <line x1="40" y1="20" x2="780" y2="20" class="chart-grid" />
+                                        <line x1="40" y1="70" x2="780" y2="70" class="chart-grid" />
+                                        <line x1="40" y1="120" x2="780" y2="120" class="chart-grid" />
+                                        <line x1="40" y1="170" x2="780" y2="170" class="chart-axis" />
+
+                                        <!-- Y-Axis -->
+                                        <text x="30" y="24" font-size="12" fill="#7A6F5C" text-anchor="end">150</text>
+                                        <text x="30" y="74" font-size="12" fill="#7A6F5C" text-anchor="end">100</text>
+                                        <text x="30" y="124" font-size="12" fill="#7A6F5C" text-anchor="end">50</text>
+                                        <text x="30" y="174" font-size="12" fill="#7A6F5C" text-anchor="end">0</text>
+
+                                        <!-- X-Axis (Months) -->
+                                        <text x="100" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">Jan</text>
+                                        <text x="236" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">Feb</text>
+                                        <text x="372" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">Mar</text>
+                                        <text x="508" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">Apr</text>
+                                        <text x="644" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">May</text>
+                                        <text x="780" y="195" font-size="12" fill="#7A6F5C" text-anchor="middle">Jun</text>
+
+                                        <!-- Area Fill -->
+                                        <path d="M 100 170 L 100 120 L 236 90 L 372 100 L 508 50 L 644 30 L 780 70 L 780 170 Z" fill="rgba(42, 100, 150, 0.08)" />
+
+                                        <!-- Line Path (#2a6496) -->
+                                        <path d="M 100 120 L 236 90 L 372 100 L 508 50 L 644 30 L 780 70" fill="none" stroke="#2a6496" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+                                        <!-- Dots (#2a6496) -->
+                                        <circle cx="100" cy="120" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                        <circle cx="236" cy="90" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                        <circle cx="372" cy="100" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                        <circle cx="508" cy="50" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                        <circle cx="644" cy="30" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                        <circle cx="780" cy="70" r="5" fill="#2a6496" stroke="#FFFFFF" stroke-width="2" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Top Posts -->
+                    <div class="w-[360px] flex flex-col shrink-0">
+                        <h2 class="font-serif text-[24px] font-bold text-ink mb-[24px]">Top Posts — Last 90 Days</h2>
+                        
+                        <div class="bg-white border border-ghost/40 rounded-xl shadow-sm flex flex-col">
+                            
+                            <!-- DEV: Top Posts rank badge: rank #1 gets a solid ochre filled circle with white numeral; ranks 2+ get a flat var(--paper-deep) circle with muted numeral — only the #1 spot is visually distinguished. -->
+                            <!-- Post 1 -->
+                            <div class="p-[20px] flex items-center justify-between border-b border-ghost-light">
+                                <div class="flex items-center gap-[12px] flex-1 min-w-0 pr-[16px]">
+                                    <div class="w-[28px] h-[28px] rounded-full bg-ochre text-white flex items-center justify-center font-mono font-bold text-[12px] shrink-0">1</div>
+                                    <div class="flex flex-col flex-1 min-w-0">
+                                        <span class="font-sans text-[14px] font-bold text-ink truncate block w-full">Bisi Ceramics — Lagos Island</span>
+                                        <span class="font-mono text-[10px] text-mute mt-[4px]">24 May 2026</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end shrink-0 gap-[2px]">
+                                    <span class="font-mono text-[11px] text-ink-soft">❤️ 118</span>
+                                    <span class="font-mono text-[11px] text-ink-soft">💬 31</span>
+                                    <span class="font-sans text-[11px] font-bold text-ink mt-[2px]">149 Eng</span>
+                                </div>
+                            </div>
+
+                            <!-- Post 2 -->
+                            <div class="p-[20px] flex items-center justify-between border-b border-ghost-light">
+                                <div class="flex items-center gap-[12px] flex-1 min-w-0 pr-[16px]">
+                                    <div class="w-[28px] h-[28px] rounded-full bg-paper-deep text-mute flex items-center justify-center font-mono font-bold text-[12px] shrink-0 border border-ghost/50">2</div>
+                                    <div class="flex flex-col flex-1 min-w-0">
+                                        <span class="font-sans text-[14px] font-bold text-ink truncate block w-full">Zaria Music Visuals — Vol. 2</span>
+                                        <span class="font-mono text-[10px] text-mute mt-[4px]">12 Jun 2026</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end shrink-0 gap-[2px]">
+                                    <span class="font-mono text-[11px] text-ink-soft">❤️ 86</span>
+                                    <span class="font-mono text-[11px] text-ink-soft">💬 14</span>
+                                    <span class="font-sans text-[11px] font-bold text-ink mt-[2px]">100 Eng</span>
+                                </div>
+                            </div>
+
+                            <!-- Post 3 -->
+                            <div class="p-[20px] flex items-center justify-between">
+                                <div class="flex items-center gap-[12px] flex-1 min-w-0 pr-[16px]">
+                                    <div class="w-[28px] h-[28px] rounded-full bg-paper-deep text-mute flex items-center justify-center font-mono font-bold text-[12px] shrink-0 border border-ghost/50">3</div>
+                                    <div class="flex flex-col flex-1 min-w-0">
+                                        <span class="font-sans text-[14px] font-bold text-ink truncate block w-full">Diasporic Futures Exhibition</span>
+                                        <span class="font-mono text-[10px] text-mute mt-[4px]">02 May 2026</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end shrink-0 gap-[2px]">
+                                    <span class="font-mono text-[11px] text-ink-soft">❤️ 45</span>
+                                    <span class="font-mono text-[11px] text-ink-soft">💬 12</span>
+                                    <span class="font-sans text-[11px] font-bold text-ink mt-[2px]">57 Eng</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <a href="#" class="font-sans text-[14px] font-bold text-ochre hover:underline mt-[24px]">&larr; Back to Dashboard</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Mobile Companion (Analytics + Notifications)</span>
+        <div class="flex flex-wrap gap-[32px] justify-center">
+            
+            <!-- Mobile Notifications -->
+            <div class="ios-screen bg-paper-deep rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <header class="w-full h-[56px] bg-white border-b border-ghost-light flex items-center px-[16px] shrink-0 mt-[48px] justify-between">
+                    <button class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-ghost"></button>
+                    <span class="font-sans text-[15px] font-bold text-ink">Notifications</span>
+                    <div class="w-[32px]"></div>
+                </header>
+                
+                <div class="flex-1 overflow-y-auto hide-scrollbar">
+                    <div class="h-[48px] px-[16px] border-b border-ghost/40 flex items-center justify-between bg-paper-warm/30">
+                        <span class="font-sans text-[14px] font-bold text-ink">All Notifications</span>
+                        <button class="font-sans text-[12px] font-bold text-ochre">Mark all read</button>
+                    </div>
+                    
+                    <!-- Mobile List (Flat, unread first) -->
+                    <div class="p-[16px] flex items-start gap-[12px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)]">
+                        <span class="text-[20px] leading-none shrink-0 pt-0.5">💰</span>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <h3 class="font-sans text-[14px] font-bold text-ink leading-snug">+20 Culture Points Earned!</h3>
+                            <p class="font-sans text-[13px] text-ink-soft mt-[2px] leading-snug">Your hidden gem was validated by the community.</p>
+                            <span class="font-mono text-[10px] text-mute mt-[6px]">Mon, 22 Jun 2026</span>
+                        </div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-ochre mt-2 shrink-0"></div>
+                    </div>
+                    
+                    <div class="p-[16px] flex items-start gap-[12px] bg-[#c5491f]/5 border-b border-[rgba(42,36,28,0.06)]">
+                        <span class="text-[20px] leading-none shrink-0 pt-0.5">💬</span>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <h3 class="font-sans text-[14px] font-bold text-ink leading-snug">New comment on your post</h3>
+                            <p class="font-sans text-[13px] text-ink-soft mt-[2px] leading-snug">David replied: 'This is exactly the spot I needed to find today.'</p>
+                            <span class="font-mono text-[10px] text-mute mt-[6px]">Sun, 21 Jun 2026</span>
+                        </div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-ochre mt-2 shrink-0"></div>
+                    </div>
+
+                    <div class="p-[16px] flex items-start gap-[12px] bg-white border-b border-[rgba(42,36,28,0.06)]">
+                        <span class="text-[20px] leading-none shrink-0 pt-0.5">🏆</span>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <h3 class="font-sans text-[14px] font-medium text-ink leading-snug">New badge unlocked!</h3>
+                            <p class="font-sans text-[13px] text-mute mt-[2px] leading-snug">You earned the 'Taste Maker' badge.</p>
+                            <span class="font-mono text-[10px] text-ghost mt-[6px]">Sun, 21 Jun 2026</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links below on mobile -->
+                    <div class="p-[16px]">
+                        <div class="bg-white rounded-xl shadow-card flex flex-col border border-ghost/20">
+                            <a href="#" class="font-sans text-[13px] text-ink-soft px-[16px] py-[12px] border-b border-ghost-light">Dashboard &rarr;</a>
+                            <a href="#" class="font-sans text-[13px] text-ink-soft px-[16px] py-[12px] border-b border-ghost-light">My Wallet &rarr;</a>
+                            <a href="#" class="font-sans text-[13px] text-ink-soft px-[16px] py-[12px] border-b border-ghost-light">My Coupons &rarr;</a>
+                            <a href="#" class="font-sans text-[13px] text-ink-soft px-[16px] py-[12px]">Settings &rarr;</a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Web Mobile Bottom Nav -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </button>
+                    <!-- other icons... -->
+                </nav>
+            </div>
+
+            <!-- Mobile Analytics -->
+            <div class="ios-screen bg-paper-deep rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <header class="w-full h-[56px] bg-white border-b border-ghost-light flex items-center px-[16px] shrink-0 mt-[48px] justify-center">
+                    <span class="font-sans text-[15px] font-bold text-ink">My Analytics</span>
+                </header>
+                
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] px-[16px] pt-[24px]">
+                    
+                    <div class="flex justify-between items-center mb-[24px]">
+                        <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest">Dashboard › Analytics</span>
+                        <div class="bg-gold/10 text-gold border border-gold/20 px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">Pro</div>
+                    </div>
+
+                    <!-- Stat Grid (2 cols on mobile) -->
+                    <div class="grid grid-cols-2 gap-[12px] mb-[32px]">
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Credit Balance</span>
+                            <span class="font-sans text-[22px] font-bold text-ink leading-none mb-[2px]">1,240</span>
+                            <span class="font-sans text-[11px] text-mute">spendable credits</span>
+                        </div>
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Points</span>
+                            <span class="font-sans text-[22px] font-bold text-gold leading-none mb-[2px]">850</span>
+                            <span class="font-sans text-[11px] text-mute">all-time points</span>
+                        </div>
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Posts</span>
+                            <span class="font-sans text-[22px] font-bold text-ink leading-none mb-[2px]">42</span>
+                            <span class="font-sans text-[11px] text-mute">published</span>
+                        </div>
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Badges</span>
+                            <span class="font-sans text-[22px] font-bold text-ink leading-none mb-[2px]">6</span>
+                            <span class="font-sans text-[11px] text-mute">earned badges</span>
+                        </div>
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Earned (30d)</span>
+                            <span class="font-sans text-[22px] font-bold text-success leading-none mb-[2px]">+180</span>
+                            <span class="font-sans text-[11px] text-mute">credits earned</span>
+                        </div>
+                        <div class="bg-white border border-ghost/40 rounded-xl p-[16px] flex flex-col shadow-sm">
+                            <span class="font-mono text-[10px] uppercase tracking-wider text-mute mb-[4px]">Spent (30d)</span>
+                            <span class="font-sans text-[22px] font-bold text-ochre leading-none mb-[2px]">-350</span>
+                            <span class="font-sans text-[11px] text-mute">credits spent</span>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart Mobile -->
+                    <div class="mb-[32px]">
+                        <h2 class="font-serif text-[18px] font-bold text-ink mb-[12px]">Credits — Last 30 Days</h2>
+                        <div class="w-full bg-white border border-ghost/40 rounded-xl p-[16px] shadow-sm">
+                            <div class="w-full h-[180px] relative">
+                                <svg viewBox="0 0 800 240" class="w-full h-full preserve-aspect-ratio-none">
+                                    <line x1="40" y1="20" x2="780" y2="20" class="chart-grid" />
+                                    <line x1="40" y1="70" x2="780" y2="70" class="chart-grid" />
+                                    <line x1="40" y1="120" x2="780" y2="120" class="chart-grid" />
+                                    <line x1="40" y1="170" x2="780" y2="170" class="chart-axis" />
+                                    <text x="30" y="24" font-size="24" fill="#7A6F5C" text-anchor="end">60</text>
+                                    <text x="30" y="74" font-size="24" fill="#7A6F5C" text-anchor="end">40</text>
+                                    <text x="30" y="124" font-size="24" fill="#7A6F5C" text-anchor="end">20</text>
+                                    <text x="30" y="174" font-size="24" fill="#7A6F5C" text-anchor="end">0</text>
+                                    <!-- Mobile thins labels even more -->
+                                    <text x="140" y="210" font-size="20" fill="#7A6F5C" text-anchor="middle">May 27</text>
+                                    <text x="420" y="210" font-size="20" fill="#7A6F5C" text-anchor="middle">Jun 8</text>
+                                    <text x="700" y="210" font-size="20" fill="#7A6F5C" text-anchor="middle">Jun 20</text>
+                                    <!-- Simplified bars for mobile scale -->
+                                    <rect x="135" y="120" width="16" height="50" fill="#b38238" rx="4" />
+                                    <rect x="155" y="170" width="16" height="0" fill="#c5491f" rx="4" />
+                                    <rect x="415" y="70" width="16" height="100" fill="#b38238" rx="4" />
+                                    <rect x="435" y="120" width="16" height="50" fill="#c5491f" rx="4" />
+                                    <rect x="695" y="145" width="16" height="25" fill="#b38238" rx="4" />
+                                    <rect x="715" y="170" width="16" height="0" fill="#c5491f" rx="4" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Posts Mobile (Stacked mini-stats) -->
+                    <div class="mb-[32px]">
+                        <h2 class="font-serif text-[18px] font-bold text-ink mb-[12px]">Top Posts — Last 90 Days</h2>
+                        <div class="bg-white border border-ghost/40 rounded-xl shadow-sm flex flex-col">
+                            
+                            <div class="p-[16px] border-b border-ghost-light flex flex-col gap-[8px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[24px] h-[24px] rounded-full bg-ochre text-white flex items-center justify-center font-mono font-bold text-[10px] shrink-0">1</div>
+                                    <span class="font-sans text-[13px] font-bold text-ink truncate">Bisi Ceramics — Lagos Island</span>
+                                </div>
+                                <div class="flex items-center justify-between pl-[36px]">
+                                    <span class="font-mono text-[10px] text-mute">24 May 2026</span>
+                                    <div class="flex items-center gap-[8px]">
+                                        <span class="font-mono text-[10px] text-ink-soft">❤️ 118</span>
+                                        <span class="font-mono text-[10px] text-ink-soft">💬 31</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-[16px] border-b border-ghost-light flex flex-col gap-[8px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[24px] h-[24px] rounded-full bg-paper-deep text-mute flex items-center justify-center font-mono font-bold text-[10px] shrink-0 border border-ghost/50">2</div>
+                                    <span class="font-sans text-[13px] font-bold text-ink truncate">Zaria Music Visuals — Vol. 2</span>
+                                </div>
+                                <div class="flex items-center justify-between pl-[36px]">
+                                    <span class="font-mono text-[10px] text-mute">12 Jun 2026</span>
+                                    <div class="flex items-center gap-[8px]">
+                                        <span class="font-mono text-[10px] text-ink-soft">❤️ 86</span>
+                                        <span class="font-mono text-[10px] text-ink-soft">💬 14</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline block text-center mb-[24px]">&larr; Back to Dashboard</a>
+
+                </div>
+
+                <!-- Web Mobile Bottom Nav -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </button>
+                    <!-- other icons... -->
+                </nav>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

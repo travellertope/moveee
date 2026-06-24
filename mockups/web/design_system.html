@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Design System & Core UI Components</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#ffffff',
+                        'paper-warm': '#f3ece0',
+                        'paper-deep-a': '#f2f2f2',
+                        'paper-deep-b': '#f5f5f5',
+                        'ink': '#14110d',
+                        'ink-soft': '#3a342b',
+                        'mute': '#7a6f5c',
+                        'ochre': '#c5491f',
+                        'ochre-deep': '#8a2d10',
+                        'moss': '#3d4a2a',
+                        'gold': '#b38238',
+                        'rule': 'rgba(20,17,13,0.10)',
+                        'rule-dark': 'rgba(20,17,13,0.15)',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(20,17,13,.08)',
+                        'modal': '0 20px 60px rgba(20,17,13,.18)',
+                        'fab': '0 4px 12px rgba(197,73,31,.35)',
+                        'glow-gold': '0 0 0 2px #b38238, 0 0 10px 2px rgba(179,130,56,.55)',
+                        'pro-ring': '0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-frame { width: 1440px; background-color: #FAFAFA; border: 8px solid #14110d; border-radius: 12px; margin: 0 auto; overflow: hidden; display: flex; flex-direction: column; }
+        .mobile-frame { width: 390px; height: 844px; background-color: #FFFFFF; border: 8px solid #14110d; border-radius: 40px; overflow: hidden; position: relative; }
+        
+        /* Simulated Real-World CSS Classes */
+        .con-btn-primary {
+            background-color: #c5491f;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 14px 28px;
+            border-radius: 0; /* Square corners */
+            font-weight: 700;
+        }
+        .con-btn-ghost {
+            background-color: transparent;
+            color: #7a6f5c;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #c8bfb0;
+            padding-bottom: 2px;
+            font-weight: 700;
+        }
+        .ch-btn-ghost {
+            background-color: transparent;
+            color: #14110d;
+            border: 1px solid rgba(42,36,28,.25);
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            transition: background-color 0.2s;
+        }
+        .ch-btn-ghost:hover { background-color: #f5f5f5; }
+        
+        .ch-btn-solid {
+            background-color: #14110d;
+            color: #ffffff;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            transition: opacity 0.2s;
+        }
+        .ch-btn-solid:hover { opacity: 0.82; }
+
+        .system-badge {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="desktop-frame">
+        <header class="bg-ink text-white p-8 border-b border-rule-dark">
+            <h1 class="font-serif text-[32px]">Moveee Design System & Core UI Components</h1>
+            <p class="font-mono text-[12px] opacity-70 mt-2 uppercase tracking-widest">Site A (Magazine) & Site B (Connect) Reference Sheet</p>
+        </header>
+
+        <main class="p-12 flex flex-col gap-[80px]">
+
+            <!-- ============================================== -->
+            <!-- FRAME 1: COLOR TOKENS                          -->
+            <!-- ============================================== -->
+            <section>
+                <!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an identical token set. Site B has --paper-warm(#f3ece0), a full border- radius scale,--shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark, and full dark-mode tokens under [data-theme="dark"]. Site A has none of these — its --rule is even a different type (#2a241c solid color vs Site B's rgba(20,17,13,0.10)), and it has no dark mode at all. Only --paper, --paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold are truly shared. -->
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 1 — Color Tokens</h2>
+                
+                <div class="mb-10">
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-4">Shared (both apps)</h3>
+                    <div class="flex flex-wrap gap-6">
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#ffffff] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper</span>
+                            <span class="font-mono text-[10px] text-mute">#ffffff</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-gradient-to-r from-[#f2f2f2] to-[#f5f5f5] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper-deep</span>
+                            <span class="font-mono text-[10px] text-mute">Site A: #f2f2f2<br>Site B: #f5f5f5</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#14110d] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ink</span>
+                            <span class="font-mono text-[10px] text-mute">#14110d</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#3a342b] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ink-soft</span>
+                            <span class="font-mono text-[10px] text-mute">#3a342b</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#7a6f5c] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--mute</span>
+                            <span class="font-mono text-[10px] text-mute">#7a6f5c</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#c5491f] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ochre</span>
+                            <span class="font-mono text-[10px] text-mute">#c5491f</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#8a2d10] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ochre-deep</span>
+                            <span class="font-mono text-[10px] text-mute">#8a2d10</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#3d4a2a] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--moss</span>
+                            <span class="font-mono text-[10px] text-mute">#3d4a2a</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#b38238] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--gold</span>
+                            <span class="font-mono text-[10px] text-mute">#b38238</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-10">
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-4">Site B only (apps/connect)</h3>
+                    <div class="flex flex-wrap gap-6">
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#f3ece0] border border-rule shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper-warm</span>
+                            <span class="font-mono text-[10px] text-mute">#f3ece0</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] flex items-center justify-center bg-white border border-rule shadow-sm">
+                                <div class="w-full h-1/2 bg-[rgba(20,17,13,0.10)]"></div>
+                            </div>
+                            <span class="font-mono text-[11px] font-bold">--rule</span>
+                            <span class="font-mono text-[10px] text-mute">rgba(20,17,13,.10)</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] flex items-center justify-center bg-white border border-rule shadow-sm">
+                                <div class="w-full h-1/2 bg-[rgba(20,17,13,0.15)]"></div>
+                            </div>
+                            <span class="font-mono text-[11px] font-bold">--rule-dark</span>
+                            <span class="font-mono text-[10px] text-mute">rgba(20,17,13,.15)</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-paper flex items-center justify-center border border-rule">
+                                <div class="w-[40px] h-[40px] rounded-full shadow-glow-gold bg-paper"></div>
+                            </div>
+                            <span class="font-mono text-[11px] font-bold">--glow-gold</span>
+                            <span class="font-mono text-[10px] text-mute">Box-shadow glow</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-10 bg-ink p-8 rounded-xl text-paper">
+                    <h3 class="font-sans text-[16px] font-bold text-white mb-4">Dark Mode (Site B only, [data-theme="dark"])</h3>
+                    <div class="flex flex-wrap gap-6">
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#242018] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper</span>
+                            <span class="font-mono text-[10px] text-white/60">#242018</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#1a1612] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper-warm</span>
+                            <span class="font-mono text-[10px] text-white/60">#1a1612</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#2d2820] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--paper-deep</span>
+                            <span class="font-mono text-[10px] text-white/60">#2d2820</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#f3ece0] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ink</span>
+                            <span class="font-mono text-[10px] text-white/60">#f3ece0</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#d4c9b8] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ink-soft</span>
+                            <span class="font-mono text-[10px] text-white/60">#d4c9b8</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#9e9288] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--mute</span>
+                            <span class="font-mono text-[10px] text-white/60">#9e9288</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#d4603a] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ochre</span>
+                            <span class="font-mono text-[10px] text-white/60">#d4603a</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#a83f20] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--ochre-deep</span>
+                            <span class="font-mono text-[10px] text-white/60">#a83f20</span>
+                        </div>
+                        <div class="flex flex-col gap-2 w-[120px]">
+                            <div class="w-[120px] h-[120px] bg-[#c9963f] border border-white/10 shadow-sm"></div>
+                            <span class="font-mono text-[11px] font-bold">--gold</span>
+                            <span class="font-mono text-[10px] text-white/60">#c9963f</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-10">
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-4">Radius Scale (Site B only)</h3>
+                    <div class="flex flex-wrap gap-8 items-end">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 2px;"></div>
+                            <span class="font-mono text-[11px] text-mute">sm 2px</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 4px;"></div>
+                            <span class="font-mono text-[11px] text-mute">md 4px</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 6px;"></div>
+                            <span class="font-mono text-[11px] text-mute">lg 6px</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 12px;"></div>
+                            <span class="font-mono text-[11px] text-mute">xl 12px</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 20px;"></div>
+                            <span class="font-mono text-[11px] text-mute">2xl 20px</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-[80px] h-[40px] bg-ink" style="border-radius: 9999px;"></div>
+                            <span class="font-mono text-[11px] text-mute">full 9999px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-4">Shadows (Site B only)</h3>
+                    <div class="flex gap-12 bg-paper-deep p-8 rounded-xl">
+                        <div class="w-[200px] h-[120px] bg-white rounded-lg flex items-center justify-center text-center shadow-card">
+                            <span class="font-mono text-[11px] text-mute">shadow-card<br>0 1px 3px rgba(20,17,13,.08)</span>
+                        </div>
+                        <div class="w-[200px] h-[120px] bg-white rounded-xl flex items-center justify-center text-center shadow-modal">
+                            <span class="font-mono text-[11px] text-mute">shadow-modal<br>0 20px 60px rgba(20,17,13,.18)</span>
+                        </div>
+                        <div class="w-[120px] h-[120px] bg-ochre rounded-full flex items-center justify-center text-center shadow-fab text-white">
+                            <span class="font-mono text-[11px]">shadow-fab</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FRAME 2: TYPOGRAPHY                            -->
+            <!-- ============================================== -->
+            <section>
+                <!-- DEV: var(--font-jetbrains-mono) is defined but never actually referenced anywhere in either app's CSS — every mono-font usage (button labels, meta text, badges) hardcodes the literal string 'JetBrains Mono', monospace instead. There's also a dangling var(--font-newsreader) reference in apps/connect/app/globals.css (.comment-sidebar-header h3) with no Newsreader font ever imported — flag both as known CSS debt, do not "fix" them in the mockup. -->
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 2 — Typography</h2>
+                
+                <div class="flex flex-col gap-10">
+                    <div class="border-l-4 border-ochre pl-6">
+                        <span class="font-mono text-[11px] text-mute tracking-widest uppercase mb-2 block">Fraunces (Serif, Display/Headings)</span>
+                        <div class="font-serif text-[36px] font-bold leading-tight mb-2">The quick brown fox jumps over the lazy dog</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">36px / 700 weight</span>
+
+                        <div class="font-serif text-[28px] font-bold leading-tight mb-2">The quick brown fox jumps over the lazy dog</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">28px / 700 weight</span>
+
+                        <div class="font-serif text-[22px] font-normal leading-tight mb-2">The quick brown fox jumps over the lazy dog</div>
+                        <span class="font-mono text-[10px] text-mute block">22px / 400 weight</span>
+                    </div>
+
+                    <div class="border-l-4 border-ochre pl-6">
+                        <span class="font-mono text-[11px] text-mute tracking-widest uppercase mb-2 block">DM Sans (Sans, Body/UI)</span>
+                        <div class="font-sans text-[17px] font-normal leading-relaxed mb-2">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">17px / 400 weight</span>
+
+                        <div class="font-sans text-[15px] font-normal leading-relaxed mb-2">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">15px / 400 weight</span>
+
+                        <div class="font-sans text-[13px] font-normal leading-relaxed mb-2">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">13px / 400 weight</span>
+
+                        <div class="font-sans text-[15px] font-bold leading-relaxed mb-2">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</div>
+                        <span class="font-mono text-[10px] text-mute block">15px / 700 weight</span>
+                    </div>
+
+                    <div class="border-l-4 border-ochre pl-6">
+                        <span class="font-mono text-[11px] text-mute tracking-widest uppercase mb-2 block">JetBrains Mono (Labels/Meta/Buttons)</span>
+                        <div class="font-mono text-[11px] font-normal leading-relaxed mb-2">The quick brown fox jumps over the lazy dog</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">11px / 400 weight</span>
+
+                        <div class="font-mono text-[11px] font-bold leading-relaxed mb-2">The quick brown fox jumps over the lazy dog</div>
+                        <span class="font-mono text-[10px] text-mute block mb-6">11px / 700 weight</span>
+
+                        <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] leading-relaxed mb-2">THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG</div>
+                        <span class="font-mono text-[10px] text-mute block">10px / 700 weight / uppercase / 0.1em-0.15em tracking</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FRAME 3: BUTTONS & AVATARS                     -->
+            <!-- ============================================== -->
+            <section>
+                <!-- DEV: There is no shared web <Button>/<Input>/<Avatar> component — every button is a plain element styled by one of 16+ independent className families (.con-btn-primary, .con-btn-ghost, .ch-btn-ghost, .ch-btn-solid, plus per-page families like .adm-btn-*, .mz-btn-*). Avatars are inlined per-surface with four different real-world sizes (header 34px, public profile 72px/52px mobile, member dashboard 72px/56px mobile, feed card 34px) and three different background colors (--ink, --ochre, #edf7ed) — there is no single "avatar size scale" to draw from like mobile's XS/SM/MD/LG/XL. Show the real sizes as four distinct named instances, not a clean scale. -->
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 3 — Buttons & Avatars</h2>
+                
+                <div class="mb-12">
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-6">Buttons (Fragmented classes)</h3>
+                    <div class="flex items-end gap-10">
+                        <div class="flex flex-col items-center gap-3">
+                            <button class="con-btn-primary">Primary Action</button>
+                            <span class="font-mono text-[11px] text-mute">.con-btn-primary</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-3">
+                            <button class="con-btn-ghost">Secondary Action</button>
+                            <span class="font-mono text-[11px] text-mute">.con-btn-ghost</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-3">
+                            <button class="ch-btn-ghost">Sign in</button>
+                            <span class="font-mono text-[11px] text-mute">.ch-btn-ghost</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-3">
+                            <button class="ch-btn-solid">Join</button>
+                            <span class="font-mono text-[11px] text-mute">.ch-btn-solid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-12">
+                    <h3 class="font-sans text-[16px] font-bold text-ink mb-6">Avatars (Real Instances)</h3>
+                    <div class="flex items-end gap-12 bg-paper-deep p-8 rounded-xl">
+                        <!-- Header Avatar -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-[34px] h-[34px] bg-ink text-white rounded-full flex items-center justify-center font-sans text-[12.8px] font-bold">K</div>
+                            <span class="font-mono text-[11px] text-mute text-center">Header avatar<br>34px / --ink bg</span>
+                        </div>
+                        <!-- Public Profile Avatar -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-[72px] h-[72px] bg-ink text-white rounded-full flex items-center justify-center font-serif text-[28px] font-light">K</div>
+                            <span class="font-mono text-[11px] text-mute text-center">Public profile (.prf-avatar)<br>72px / --ink bg</span>
+                        </div>
+                        <!-- Member Dashboard Avatar -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-[72px] h-[72px] bg-ochre text-white rounded-full flex items-center justify-center font-serif text-[28px]">K</div>
+                            <span class="font-mono text-[11px] text-mute text-center">Member dashboard (.mem-avatar)<br>72px / --ochre bg</span>
+                        </div>
+                        <!-- Feed Card Avatar -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-[34px] h-[34px] bg-[#edf7ed] text-[#2e7d32] border border-[#c8e6c9] rounded-full flex items-center justify-center font-sans font-bold">K</div>
+                            <span class="font-mono text-[11px] text-mute text-center">Feed card avatar<br>34px / #edf7ed bg</span>
+                        </div>
+                        <!-- Pro-tier variant -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-[34px] h-[34px] bg-ink text-white rounded-full flex items-center justify-center shadow-pro-ring">K</div>
+                            <span class="font-mono text-[11px] text-mute text-center">Feed card (Pro)<br>with gold glow ring</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-16">
+                    <div class="flex-1">
+                        <h3 class="font-sans text-[16px] font-bold text-ink mb-6">Tier Badge (ProBadge.tsx)</h3>
+                        <div class="flex items-center gap-8 bg-paper-deep p-8 rounded-xl h-[120px]">
+                            <div class="flex items-center gap-4">
+                                <div class="w-[13px] h-[13px] bg-gold rounded-[2px] flex items-center justify-center">
+                                    <svg class="w-[8px] h-[8px] text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </div>
+                                <span class="font-mono text-[11px] text-mute">size=13</span>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-[24px] h-[24px] bg-gold rounded-[4px] flex items-center justify-center">
+                                    <svg class="w-[15px] h-[15px] text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </div>
+                                <span class="font-mono text-[11px] text-mute">size=24</span>
+                            </div>
+                            <div class="w-[1px] h-full bg-ghost mx-2"></div>
+                            <div class="flex flex-col gap-2">
+                                <span class="font-sans text-[14px] font-bold text-ink">Moveee Pro</span>
+                                <span class="font-sans text-[14px] font-bold text-ink">Moveee Citizen</span>
+                                <span class="font-mono text-[9px] text-mute">Text pairing (independent)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1">
+                        <h3 class="font-sans text-[16px] font-bold text-ink mb-6">Notification Bell</h3>
+                        <div class="flex items-center gap-12 bg-paper-deep p-8 rounded-xl h-[120px]">
+                            <div class="flex flex-col items-center gap-3">
+                                <button class="relative text-ink w-[36px] h-[36px] flex items-center justify-center">
+                                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                    <div class="absolute top-1 right-[2px] w-[14px] h-[14px] bg-[#c5491f] rounded-full flex items-center justify-center text-white font-sans text-[9px] font-bold leading-none">9+</div>
+                                </button>
+                                <span class="font-mono text-[11px] text-mute text-center">Header Bell</span>
+                            </div>
+                            <div class="w-[1px] h-full bg-ghost mx-2"></div>
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-[6px] h-[6px] bg-[#c5491f] rounded-full"></div>
+                                <span class="font-mono text-[11px] text-mute text-center">Dropdown Row Dot</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FRAME 4: REACTION BAR                          -->
+            <!-- ============================================== -->
+            <section>
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 4 — Reaction Bar</h2>
+                
+                <div class="flex flex-col gap-6">
+                    <div class="flex items-center gap-[4px] p-4 bg-white border border-ghost rounded-lg w-max">
+                        <!-- Inactive -->
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-transparent border border-transparent text-[#7a6f5c] rounded-[20px] transition-colors hover:bg-gray-50">
+                            <span class="text-[13.6px] leading-none">❤️</span>
+                            <span class="font-sans text-[12.8px]">142</span>
+                        </button>
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-transparent border border-transparent text-[#7a6f5c] rounded-[20px] transition-colors hover:bg-gray-50">
+                            <span class="text-[13.6px] leading-none">🔥</span>
+                            <span class="font-sans text-[12.8px]">84</span>
+                        </button>
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-transparent border border-transparent text-[#7a6f5c] rounded-[20px] transition-colors hover:bg-gray-50">
+                            <span class="text-[13.6px] leading-none">👏</span>
+                            <span class="font-sans text-[12.8px]">12</span>
+                        </button>
+                        <div class="w-[20px]"></div>
+                        <button class="flex items-center justify-center p-[4px] text-[#7a6f5c] hover:bg-gray-50 rounded-full ml-auto">
+                            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path></svg>
+                        </button>
+                        <span class="font-mono text-[11px] text-mute ml-8">Inactive State</span>
+                    </div>
+
+                    <div class="flex items-center gap-[4px] p-4 bg-white border border-ghost rounded-lg w-max">
+                        <!-- Active (Middle one active) -->
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-transparent border border-transparent text-[#7a6f5c] rounded-[20px] transition-colors hover:bg-gray-50">
+                            <span class="text-[13.6px] leading-none">❤️</span>
+                            <span class="font-sans text-[12.8px]">142</span>
+                        </button>
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-[#f0ece4] border border-[#d8cfc4] text-[#3a342b] rounded-[20px] transition-colors">
+                            <span class="text-[13.6px] leading-none">🔥</span>
+                            <span class="font-sans text-[12.8px]">85</span>
+                        </button>
+                        <button class="flex items-center gap-[4.8px] px-[8.8px] py-[3.2px] bg-transparent border border-transparent text-[#7a6f5c] rounded-[20px] transition-colors hover:bg-gray-50">
+                            <span class="text-[13.6px] leading-none">👏</span>
+                            <span class="font-sans text-[12.8px]">12</span>
+                        </button>
+                        <div class="w-[20px]"></div>
+                        <!-- Copied state for share -->
+                        <div class="flex items-center justify-center p-[4px] text-[#2e7d32] ml-auto">
+                            <span class="font-sans text-[12px] font-bold">Copied ✓</span>
+                        </div>
+                        <span class="font-mono text-[11px] text-mute ml-8">Active / Action State</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FRAME 5: BADGE SYSTEM                          -->
+            <!-- ============================================== -->
+            <section>
+                <!-- DEV: FeedCard.tsx has no template badge at all for Poll (renders straight into PollDisplay with no header label) or Book Review (mobile-only feature, never built on web) — do not invent badge colors for these two; show them as "no badge" states instead. -->
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 5 — Badge System (FeedCard.tsx)</h2>
+                
+                <div class="flex flex-col gap-10 bg-paper-deep p-8 rounded-xl border border-ghost/50">
+                    
+                    <div>
+                        <h3 class="font-sans text-[14px] font-bold text-ink mb-4">Feed-Item-Type Badges</h3>
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <span class="system-badge" style="background: #fef3e2; color: #b38238;">Pulse</span>
+                            <span class="system-badge" style="background: #fff0eb; color: #c5491f;">Editorial</span>
+                            <span class="system-badge" style="background: #eeedfe; color: #3c3489;">Happening</span>
+                            <span class="system-badge" style="background: #e8f5ee; color: #085041;">Directory</span>
+                            <span class="system-badge" style="background: #f3eef8; color: #7a4da0;">Quote</span>
+                            <span class="system-badge" style="background: #edf7ed; color: #2e7d32;">Community</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost/50"></div>
+
+                    <div>
+                        <h3 class="font-sans text-[14px] font-bold text-ink mb-4">Community Template Badges</h3>
+                        <div class="flex flex-wrap gap-4 items-center mb-6">
+                            <span class="system-badge" style="background: rgba(179,130,56,.1); color: #b38238;">Hidden Gem ★★★★☆</span>
+                            <span class="system-badge" style="background: rgba(107,72,168,.08); color: #6b48a8;">Take · Lagos</span>
+                            <span class="system-badge" style="background: rgba(197,73,31,.08); color: #c5491f;">Food Review · Suya</span>
+                            <span class="system-badge" style="background: rgba(25,118,210,.08); color: #1976d2;">Creative Showcase</span>
+                            <span class="system-badge" style="background: rgba(46,125,50,.08); color: #2e7d32;">Weekend Route</span>
+                            <span class="system-badge" style="background: rgba(168,53,31,.08); color: #a8351f;">Event · Music</span>
+                        </div>
+                        <div class="flex gap-8 items-center bg-white p-4 border border-ghost rounded-md w-max">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-sans text-[13px] font-bold text-ink">Poll / Book Review</span>
+                                <span class="font-mono text-[10px] text-mute">No badge on web</span>
+                            </div>
+                            <div class="flex items-center gap-[8px]">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ghost shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[13px] font-bold text-ink leading-tight">Author Name</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost/50"></div>
+
+                    <div>
+                        <h3 class="font-sans text-[14px] font-bold text-ink mb-4">Literati Connect Pill (Happening)</h3>
+                        <span class="system-badge border" style="background: #f3ece0; color: #b38238; border-color: #b38238; font-size: 11px;">🪶 Literati Connect</span>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FRAME 6: NAVIGATION                            -->
+            <!-- ============================================== -->
+            <section>
+                <!-- DEV: Web has no persistent bottom tab bar — confirmed absent from both apps/connect and packages/shared. Site B's mobile nav is a slide-down hamburger overlay drawer (position: fixed; top: 60px), not a tab bar; Site A has the same hamburger pattern plus a separate cart icon. Do not design a bottom tab bar frame — replace it with the real header nav (desktop) + hamburger drawer (mobile) shown in the Navigation frame. -->
+                <h2 class="font-mono text-[13px] font-bold text-mute uppercase tracking-widest mb-6 border-b border-rule pb-2">Frame 6 — Navigation (Desktop & Mobile)</h2>
+                
+                <div class="flex flex-col gap-12">
+                    
+                    <!-- Site B Header -->
+                    <div class="flex flex-col gap-2">
+                        <span class="font-mono text-[11px] text-mute uppercase tracking-widest">Site B Header (Connect)</span>
+                        <div class="w-full h-[64px] bg-white border border-ghost shadow-sm flex items-center justify-between px-[32px]">
+                            <!-- Left: Logo & Nav -->
+                            <div class="flex items-center gap-[32px]">
+                                <div class="flex items-center">
+                                    <span class="font-serif text-[22px] font-bold text-ink tracking-tight leading-none mt-1">moveee</span>
+                                    <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-widest ml-1 mt-[2px]">connect</span>
+                                </div>
+                                <nav class="flex items-center gap-[8px]">
+                                    <a href="#" class="font-sans text-[14px] font-bold text-ink bg-paper-deep px-4 py-2 rounded-md transition-colors">Feed</a>
+                                    <a href="#" class="font-sans text-[14px] font-medium text-mute hover:text-ink px-4 py-2 rounded-md transition-colors">Events</a>
+                                    <a href="#" class="font-sans text-[14px] font-medium text-mute hover:text-ink px-4 py-2 rounded-md transition-colors">Games</a>
+                                    <a href="#" class="font-sans text-[14px] font-medium text-mute hover:text-ink px-4 py-2 rounded-md transition-colors">Magazine ↗</a>
+                                </nav>
+                            </div>
+                            <!-- Right: Actions -->
+                            <div class="flex items-center gap-[20px]">
+                                <button class="text-ink hover:text-ochre transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.494 8.67l-2.071 8.528c-.146.6-.74.965-1.332.82l-8.528-2.071c-.6-.146-.965-.74-.82-1.332l2.071-8.528c.146-.6.74-.965 1.332-.82l8.528 2.071c.6.146.965.74.82 1.332zm-6.241 1.776a2.121 2.121 0 10-2.998-3 2.121 2.121 0 002.998 3z"></path></svg></button>
+                                <button class="text-ink hover:text-ochre transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
+                                <button class="relative text-ink hover:text-ochre transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                    <div class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-[#c5491f] text-white font-sans text-[9px] font-bold rounded-full flex items-center justify-center">3</div>
+                                </button>
+                                <div class="flex items-center gap-[8px] cursor-pointer">
+                                    <div class="w-[34px] h-[34px] bg-ochre text-white rounded-full flex items-center justify-center font-sans font-bold text-[13px]">K</div>
+                                    <svg class="w-3 h-3 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7 7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Site A Header -->
+                    <div class="flex flex-col gap-2">
+                        <span class="font-mono text-[11px] text-mute uppercase tracking-widest">Site A Header (Magazine)</span>
+                        <div class="w-full h-[64px] bg-white border border-ghost shadow-sm flex items-center justify-between px-[32px]">
+                            <!-- Left: Logo & Nav -->
+                            <div class="flex items-center gap-[32px]">
+                                <div class="flex items-center">
+                                    <span class="font-serif text-[24px] font-bold text-ink tracking-tight leading-none mt-1">Moveee</span>
+                                </div>
+                                <nav class="flex items-center gap-[24px]">
+                                    <a href="#" class="font-sans text-[14px] font-medium text-mute hover:text-ink transition-colors">Feed</a>
+                                    <a href="#" class="font-sans text-[14px] font-medium text-mute hover:text-ink transition-colors">Discover</a>
+                                    <a href="#" class="font-sans text-[14px] font-bold text-ink transition-colors relative" data-active="true">
+                                        Editorials
+                                        <div class="absolute -bottom-[22px] left-0 w-full h-[2px] bg-ink"></div>
+                                    </a>
+                                </nav>
+                            </div>
+                            <!-- Right: Actions -->
+                            <div class="flex items-center gap-[20px]">
+                                <button class="text-ink hover:text-ochre transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                                <button class="relative text-ink hover:text-ochre transition-colors mr-[8px]">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                    <div class="absolute -top-1.5 -right-1.5 w-[16px] h-[16px] bg-ink text-white font-sans text-[10px] font-bold rounded-full flex items-center justify-center">2</div>
+                                </button>
+                                <a href="#" class="font-sans text-[14px] font-bold text-ink hover:text-ochre transition-colors">Sign in</a>
+                                <button class="bg-ink text-white font-sans text-[14px] font-bold px-[16px] py-[8px] rounded-[6px] hover:opacity-80 transition-opacity">Join &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Companion Hamburger -->
+                    <div class="flex flex-col gap-2 mt-4 items-center">
+                        <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center">Mobile Companion (Site B style hamburger drawer)</span>
+                        <div class="mobile-frame bg-paper-deep flex flex-col shadow-2xl">
+                            
+                            <!-- Mobile Header Bar -->
+                            <div class="w-full h-[60px] bg-white border-b border-ghost flex items-center justify-between px-[16px] z-50 relative">
+                                <div class="flex items-center">
+                                    <span class="font-serif text-[18px] font-bold text-ink tracking-tight leading-none mt-1">moveee</span>
+                                    <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-widest ml-1 mt-[2px]">connect</span>
+                                </div>
+                                <div class="flex items-center gap-[16px]">
+                                    <!-- Hamburger Open Icon -->
+                                    <button class="text-ink">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Slide-Down Overlay Drawer (Simulated Open) -->
+                            <div class="absolute top-[60px] left-0 w-full h-[calc(100%-60px)] bg-white z-40 flex flex-col pt-[16px] shadow-md">
+                                <a href="#" class="w-full py-[16px] px-[24px] font-sans text-[22px] font-bold text-ink border-b border-ghost-light">Feed</a>
+                                <a href="#" class="w-full py-[16px] px-[24px] font-sans text-[22px] font-bold text-ink border-b border-ghost-light">Events</a>
+                                <a href="#" class="w-full py-[16px] px-[24px] font-sans text-[22px] font-bold text-ink border-b border-ghost-light">Games</a>
+                                <a href="#" class="w-full py-[16px] px-[24px] font-sans text-[22px] font-bold text-mute border-b border-ghost-light flex items-center justify-between">Magazine <span>↗</span></a>
+                                
+                                <div class="mt-auto pb-[40px] px-[24px] flex flex-col gap-[16px]">
+                                    <button class="w-full h-[48px] border border-ghost rounded-full font-sans text-[15px] font-bold text-ink">Sign in</button>
+                                    <button class="w-full h-[48px] bg-ochre rounded-full font-sans text-[15px] font-bold text-white">Join Moveee</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+</body>
+</html>

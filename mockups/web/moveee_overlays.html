@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Overlays & Micro-interactions</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        'error-bg': '#FEF2F2',
+                        'error-border': 'rgba(192,57,43,0.2)',
+                        'error-text': '#C0392B',
+                        'purple-accent': '#7A4DA0',
+                        'purple-bg': '#F3EEF8',
+                        'purple-border': '#E0D4F0',
+                        'nudge-bg': '#FDF5E6',
+                        'nudge-border': '#E8D8B0'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(20, 17, 13, 0.08), 0 1px 2px rgba(20, 17, 13, 0.04)',
+                        'dropdown': '0 4px 12px rgba(20, 17, 13, 0.1)',
+                        'modal': '0 20px 40px -10px rgba(0,0,0,0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; min-height: 800px; }
+        .icon-outline { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: TEMPLATE PILL BAR (Inline)            -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">1. Template Pill Bar (Inline state swap, not a sheet/modal)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] flex flex-col gap-[32px] items-center">
+            
+            <div class="w-full max-w-[660px] flex gap-[24px]">
+                
+                <!-- State A: Update Active -->
+                <div class="flex-1 bg-white border border-ghost rounded-[6px] shadow-sm flex flex-col">
+                    <span class="px-[12px] py-[6px] bg-paper-deep text-mute font-mono text-[10px] border-b border-ghost">Sub-state A: "Update" active</span>
+                    
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+                            <span class="text-[14px]">📝</span> Update
+                        </button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-70">
+                            <span class="text-[14px]">📊</span> Poll
+                        </button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-70">
+                            <span class="text-[14px]">✦</span> Quote
+                        </button>
+                        <span class="text-[12px] text-ghost ml-2 italic">...6 more</span>
+                    </div>
+
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col">
+                            <textarea class="w-full min-h-[90px] resize-none bg-transparent text-[15px] font-sans text-ink leading-relaxed border-none outline-none" placeholder="What's happening in culture?"></textarea>
+                            <div class="flex items-center justify-between mt-[16px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-[8px]">
+                                    <div class="w-[32px] h-[32px] rounded-md border border-ghost flex items-center justify-center text-mute text-[18px]">📷</div>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre/50 text-white font-sans text-[13px] font-bold rounded-[4px] cursor-not-allowed">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- State B: Poll Active -->
+                <div class="flex-1 bg-white border border-ghost rounded-[6px] shadow-sm flex flex-col">
+                    <span class="px-[12px] py-[6px] bg-paper-deep text-mute font-mono text-[10px] border-b border-ghost">Sub-state B: "Poll" active</span>
+                    
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-70">
+                            <span class="text-[14px]">📝</span> Update
+                        </button>
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+                            <span class="text-[14px]">📊</span> Poll
+                        </button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-70">
+                            <span class="text-[14px]">✦</span> Quote
+                        </button>
+                        <span class="text-[12px] text-ghost ml-2 italic">...6 more</span>
+                    </div>
+
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[12px]">
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Ask a question… *</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink">
+                            </div>
+                            <div class="flex flex-col gap-[8px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Options *</label>
+                                <div class="flex items-center gap-2"><span class="text-ghost select-none">⠿</span><input type="text" class="flex-1 h-[40px] border border-ghost rounded-md px-[12px] text-[14px]"></div>
+                                <div class="flex items-center gap-2"><span class="text-ghost select-none">⠿</span><input type="text" class="flex-1 h-[40px] border border-ghost rounded-md px-[12px] text-[14px]"></div>
+                            </div>
+                            <div class="flex items-center justify-between mt-[4px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2"></div>
+                                <button class="h-[36px] px-[20px] bg-ochre/50 text-white font-sans text-[13px] font-bold rounded-[4px] cursor-not-allowed">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="text-center font-mono text-[10px] text-mute max-w-[600px]">
+                Note: No modal or sheet is used. Clicking a template pill instantly swaps the form fields rendered inside the same composer card component.
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: REPORT INLINE STATES                  -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. Report Action (Inline footer-row state swap)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] flex flex-col gap-[24px] items-center">
+            
+            <!-- State A: Idle -->
+            <div class="w-full max-w-[660px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20">
+                <span class="px-[12px] py-[4px] bg-paper-deep text-mute font-mono text-[10px] rounded-md mb-[12px] w-fit">Sub-state A: Idle</span>
+                <p class="font-sans text-[14px] text-ink-soft mb-[16px]">Standard feed card body content goes here...</p>
+                <div class="w-full h-[1px] bg-ghost-light mb-[12px]"></div>
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-[16px] text-mute">
+                        <span class="font-mono text-[10px] flex gap-1">❤️ 24</span>
+                        <span class="font-mono text-[10px] flex gap-1">💬 5</span>
+                    </div>
+                    <!-- The Idle Control -->
+                    <button class="font-sans text-[14px] text-[#C8BFB0] hover:text-ink transition-colors">⚑</button>
+                </div>
+            </div>
+
+            <!-- State B: Confirm -->
+            <div class="w-full max-w-[660px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20">
+                <span class="px-[12px] py-[4px] bg-paper-deep text-mute font-mono text-[10px] rounded-md mb-[12px] w-fit">Sub-state B: Confirming</span>
+                <p class="font-sans text-[14px] text-ink-soft mb-[16px]">Standard feed card body content goes here...</p>
+                <div class="w-full h-[1px] bg-ghost-light mb-[12px]"></div>
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-[16px] text-mute opacity-50">
+                        <span class="font-mono text-[10px] flex gap-1">❤️ 24</span>
+                        <span class="font-mono text-[10px] flex gap-1">💬 5</span>
+                    </div>
+                    <!-- The Confirm Control -->
+                    <div class="flex items-center gap-[8px]">
+                        <span class="font-sans text-[12px] text-mute">Report as:</span>
+                        <button class="bg-error-bg border border-error-border text-error-text px-[8px] py-[2px] rounded-[3px] font-sans text-[11px] font-bold">spam</button>
+                        <button class="bg-error-bg border border-error-border text-error-text px-[8px] py-[2px] rounded-[3px] font-sans text-[11px] font-bold">harassment</button>
+                        <button class="bg-error-bg border border-error-border text-error-text px-[8px] py-[2px] rounded-[3px] font-sans text-[11px] font-bold">inappropriate</button>
+                        <button class="ml-[4px] font-sans text-[12px] text-mute hover:text-ink">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State C: Sent -->
+            <div class="w-full max-w-[660px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20">
+                <span class="px-[12px] py-[4px] bg-paper-deep text-mute font-mono text-[10px] rounded-md mb-[12px] w-fit">Sub-state C: Sent</span>
+                <p class="font-sans text-[14px] text-ink-soft mb-[16px]">Standard feed card body content goes here...</p>
+                <div class="w-full h-[1px] bg-ghost-light mb-[12px]"></div>
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-[16px] text-mute opacity-50">
+                        <span class="font-mono text-[10px] flex gap-1">❤️ 24</span>
+                        <span class="font-mono text-[10px] flex gap-1">💬 5</span>
+                    </div>
+                    <!-- The Sent Control -->
+                    <span class="font-sans text-[12px] font-bold text-mute">Reported — thank you.</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: CONFIRM REDEEM MODAL                  -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Confirm Redeem Modal (Real Overlay)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 flex items-center justify-center relative overflow-hidden h-[800px]">
+            
+            <!-- Mock background context -->
+            <div class="absolute inset-0 p-[40px] grid grid-cols-4 gap-[24px]">
+                <div class="bg-white rounded-xl shadow-card h-[280px]"></div>
+                <div class="bg-white rounded-xl shadow-card h-[280px] p-[20px] flex flex-col relative">
+                    <!-- The Trigger Context inside the bg -->
+                    <div class="flex-1"></div>
+                    <div class="absolute top-[8px] -left-[16px] right-[16px] bg-white p-[16px] rounded-lg shadow-dropdown border border-ghost/30 z-10">
+                        <div class="flex flex-col gap-[8px]">
+                            <span class="font-mono text-[10px] font-bold text-mute bg-paper-deep px-2 py-1 rounded w-fit">Trigger State 1: Step-up needed</span>
+                            <span class="font-sans text-[13px] text-ochre hover:underline cursor-pointer">Passkey required to redeem perks.</span>
+                            
+                            <div class="w-full h-[1px] bg-ghost/30 my-[4px]"></div>
+                            
+                            <span class="font-mono text-[10px] font-bold text-mute bg-paper-deep px-2 py-1 rounded w-fit">Trigger State 2: Waiting for device</span>
+                            <span class="font-sans text-[13px] text-ink-soft">⬡ Waiting for your device biometrics…</span>
+                        </div>
+                    </div>
+                    <button class="w-full h-[40px] bg-ochre text-white rounded-full">Redeem — 150 credits</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-card h-[280px]"></div>
+                <div class="bg-white rounded-xl shadow-card h-[280px]"></div>
+            </div>
+
+            <!-- DIMMED BACKDROP -->
+            <div class="absolute inset-0 bg-[rgba(20,17,13,0.65)] z-40"></div>
+
+            <!-- THE MODAL CARD -->
+            <div class="w-full max-w-[480px] bg-paper rounded-[12px] shadow-modal flex flex-col relative z-50 pt-[36px] px-[32px] pb-[28px]">
+                
+                <button class="absolute top-[16px] right-[16px] w-[32px] h-[32px] flex items-center justify-center text-mute hover:text-ink transition-colors">
+                    <svg class="w-[24px] h-[24px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <h2 class="font-serif text-[24px] font-bold text-ink mb-[16px] pr-[24px] leading-tight">Confirm redemption</h2>
+                
+                <p class="font-sans text-[16px] text-ink-soft leading-[1.6] mb-[12px]">
+                    Spend <strong>150 credits</strong> for "10% off at Bisi Ceramics"?
+                </p>
+                
+                <p class="font-sans text-[14px] text-mute leading-[1.6] mb-[32px]">
+                    Your coupon will expire in 30 days. Your balance after: <strong>1,090 credits</strong>.
+                </p>
+
+                <div class="flex gap-[12px]">
+                    <button class="flex-1 h-[48px] rounded-[6px] border border-ghost bg-white font-sans text-[14px] font-bold text-ink-soft hover:bg-paper-deep transition-colors">
+                        Cancel
+                    </button>
+                    <!-- Show default state -->
+                    <button class="flex-1 h-[48px] rounded-[6px] bg-ink text-white font-sans text-[14px] font-bold hover:bg-gray-800 transition-colors">
+                        Confirm
+                    </button>
+                    <!-- Show processing state (visually side-by-side for reference) -->
+                    <!-- <button class="flex-1 h-[48px] rounded-[6px] bg-ink text-white font-sans text-[14px] font-bold opacity-70 cursor-not-allowed">
+                        Processing…
+                    </button> -->
+                </div>
+
+                <div class="mt-[16px] bg-paper-deep px-2 py-1 rounded w-fit mx-auto">
+                    <span class="font-mono text-[9px] text-mute">Also supports "Processing…" button state</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: SIGN OUT DROPDOWN                     -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">4. Sign Out Dropdown (No Confirm Dialog)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] flex flex-col items-center">
+            
+            <!-- Header Strip Mock -->
+            <div class="w-full h-[64px] bg-white border-b border-ghost flex items-center justify-end px-[32px] shadow-sm relative">
+                
+                <!-- Avatar Trigger -->
+                <div class="flex items-center gap-[8px] cursor-pointer">
+                    <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-gold p-[1.5px]">
+                        <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                    </div>
+                    <svg class="w-3 h-3 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7 7"></path></svg>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div role="menu" class="absolute top-[56px] right-[32px] w-[220px] bg-white border border-ghost/40 rounded-lg shadow-dropdown flex flex-col py-[8px] z-50">
+                    <button role="menuitem" class="w-full text-left px-[16px] py-[10px] font-sans text-[14px] text-ink-soft hover:bg-paper-warm transition-colors">My Dashboard</button>
+                    <button role="menuitem" class="w-full text-left px-[16px] py-[10px] font-sans text-[14px] text-ink-soft hover:bg-paper-warm transition-colors">Wallet</button>
+                    <button role="menuitem" class="w-full text-left px-[16px] py-[10px] font-sans text-[14px] text-ink-soft hover:bg-paper-warm transition-colors">Settings</button>
+                    <div class="w-full h-[1px] bg-ghost-light my-[4px]"></div>
+                    <button role="menuitem" class="w-full text-left px-[16px] py-[10px] font-sans text-[14px] font-bold text-[#E65100] hover:bg-[#FEF2F2] transition-colors group relative">
+                        Sign out
+                        <div class="absolute left-[-20px] top-[10px] bg-ink text-white font-mono text-[9px] px-2 py-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            &larr; Clicking this fires signOut() immediately. No dialog.
+                        </div>
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="mt-[160px] text-center max-w-[400px]">
+                <p class="font-sans text-[14px] text-mute leading-relaxed">
+                    There is no "Are you sure?" confirmation dialog for signing out on the web app. The action is immediate from the dropdown menu.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: IMAGE LIGHTBOX                        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">5. Image Lightbox (Fullscreen Overlay)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 flex items-center justify-center relative overflow-hidden h-[800px]">
+            
+            <!-- Mock Feed Background -->
+            <div class="absolute inset-0 p-[40px] flex flex-col items-center">
+                <div class="w-full max-w-[660px] bg-white rounded-xl shadow-card p-[16px]">
+                    <div class="flex items-center gap-[12px] mb-[12px]"><div class="w-[32px] h-[32px] rounded-full bg-ghost"></div><div class="w-[120px] h-[10px] bg-ghost rounded-full"></div></div>
+                    <div class="w-full h-[14px] bg-ghost rounded-full mb-1"></div><div class="w-[80%] h-[14px] bg-ghost rounded-full mb-[12px]"></div>
+                    
+                    <!-- Trigger Gallery -->
+                    <div class="flex gap-[8px] overflow-hidden relative">
+                        <div class="w-[200px] h-[200px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-lg shrink-0 cursor-zoom-in border-[2px] border-ochre z-10"></div>
+                        <div class="w-[200px] h-[200px] bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] rounded-lg shrink-0 opacity-50"></div>
+                        
+                        <!-- Annotation -->
+                        <div class="absolute top-[20px] left-[216px] bg-white border border-ghost shadow-sm p-2 rounded z-20">
+                            <span class="font-mono text-[10px] text-mute block">&larr; Clicking thumbnail opens lightbox</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THE LIGHTBOX OVERLAY -->
+            <div class="absolute inset-0 bg-[rgba(0,0,0,0.88)] z-50 flex items-center justify-center">
+                
+                <button class="absolute top-[16px] right-[16px] w-[36px] h-[36px] bg-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.2)] transition-colors rounded-full flex items-center justify-center text-white cursor-pointer z-50">
+                    <svg class="w-[20px] h-[20px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <!-- Fullscreen Image (Object-fit contain representation) -->
+                <div class="w-full max-w-[1000px] h-[90vh] flex items-center justify-center">
+                    <div class="w-full max-w-[700px] aspect-[4/5] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-[4px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/10"></div>
+                </div>
+
+                <!-- Annotation bottom -->
+                <div class="absolute bottom-[24px] text-center w-full pointer-events-none">
+                    <span class="font-mono text-[11px] text-white/50 bg-black/50 px-3 py-1 rounded">No pagination dots, no counter — single image focus.</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 6: INLINE SUCCESS / ERROR STATES         -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">6. Inline Success/Error States (No toasts)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] grid grid-cols-2 gap-[40px]">
+            
+            <!-- 6A: Composer Success -->
+            <div class="flex flex-col gap-2">
+                <span class="font-mono text-[10px] text-mute uppercase">6A. Composer Success (Card swap)</span>
+                <div class="w-full bg-purple-bg border border-purple-border rounded-[6px] p-[24px] text-center shadow-sm h-[140px] flex items-center justify-center">
+                    <span class="font-serif italic text-[16px] text-purple-accent">Quote submitted — it will appear after review.</span>
+                </div>
+            </div>
+
+            <!-- 6B: Composer Error -->
+            <div class="flex flex-col gap-2">
+                <span class="font-mono text-[10px] text-mute uppercase">6B. Composer Error (Inline text)</span>
+                <div class="w-full bg-white border border-ghost rounded-[6px] p-[16px] shadow-sm flex flex-col">
+                    <textarea class="w-full h-[60px] resize-none bg-transparent text-[15px] font-sans text-ink border-none outline-none">Some text here...</textarea>
+                    <div class="flex items-center justify-between mt-[16px] border-t border-ghost/40 pt-[16px]">
+                        <span class="font-sans text-[13px] text-[#C0392B] font-bold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Network error. Try again.
+                        </span>
+                        <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6C: Perk Redeem Success -->
+            <div class="flex flex-col gap-2">
+                <span class="font-mono text-[10px] text-mute uppercase">6C. Perk Redeem Success (Card swap)</span>
+                <div class="w-full bg-white border border-success/30 rounded-[12px] p-[32px] shadow-sm flex flex-col items-center text-center">
+                    <div class="w-[48px] h-[48px] bg-success/10 text-success rounded-full flex items-center justify-center text-[24px] mb-[12px]">✓</div>
+                    <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Perk redeemed!</h3>
+                    <p class="font-sans text-[14px] text-ink-soft mb-[24px]">Show this QR code at the partner venue.</p>
+                    
+                    <div class="w-[160px] h-[160px] border-[4px] border-ink p-[4px] mb-[16px] bg-white flex flex-wrap relative">
+                        <div class="absolute top-1 left-1 w-3 h-3 border-2 border-ink"></div><div class="absolute top-1 right-1 w-3 h-3 border-2 border-ink"></div><div class="absolute bottom-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                        <div class="w-full h-full opacity-80" style="background-image: repeating-linear-gradient(45deg, #14110D 25%, transparent 25%, transparent 75%, #14110D 75%, #14110D), repeating-linear-gradient(45deg, #14110D 25%, transparent 25%, transparent 75%, #14110D 75%, #14110D); background-size: 8px 8px; background-position: 0 0, 4px 4px; clip-path: polygon(1.5rem 0, 100% 0, 100% 1.5rem, 100% 100%, 1.5rem 100%, 1.5rem 1.5rem, 0 1.5rem, 0 100%, 0 0);"></div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-[4px] mb-[24px]">
+                        <span class="font-mono text-[11px] text-mute">Expires: 30 July 2026</span>
+                        <span class="font-mono text-[11px] font-bold text-ochre">New balance: 1,090 credits</span>
+                    </div>
+
+                    <div class="flex gap-[12px] w-full">
+                        <button class="flex-1 h-[44px] rounded-full border border-ghost font-sans text-[13px] font-bold text-ink hover:bg-paper-deep transition-colors">Browse more perks</button>
+                        <button class="flex-1 h-[44px] bg-ink text-white rounded-full font-sans text-[13px] font-bold hover:bg-gray-800 transition-colors">My Coupons &rarr;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6D: Perk Redeem Error -->
+            <div class="flex flex-col gap-2">
+                <span class="font-mono text-[10px] text-mute uppercase">6D. Perk Redeem Error (Inline inside modal)</span>
+                <div class="w-full bg-white rounded-[12px] border border-ghost p-[32px] flex flex-col shadow-sm">
+                    <h2 class="font-serif text-[24px] font-bold text-ink mb-[16px] leading-tight">Confirm redemption</h2>
+                    <p class="font-sans text-[16px] text-ink-soft leading-[1.6] mb-[12px]">Spend <strong>150 credits</strong> for "10% off at Bisi Ceramics"?</p>
+                    
+                    <!-- Inline Error -->
+                    <div class="bg-error-bg border border-error-border rounded-[4px] p-[12px] flex items-start gap-[8px] mb-[24px]">
+                        <svg class="w-[18px] h-[18px] text-error-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="font-sans text-[13px] font-bold text-error-text leading-snug">Insufficient credits. You need 150 CR to redeem this perk.</span>
+                    </div>
+
+                    <div class="flex gap-[12px]">
+                        <button class="flex-1 h-[48px] rounded-[6px] border border-ghost bg-paper-deep font-sans text-[14px] font-bold text-ink-soft">Cancel</button>
+                        <button class="flex-1 h-[48px] rounded-[6px] bg-ink text-white font-sans text-[14px] font-bold opacity-50 cursor-not-allowed">Confirm</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 7: "FOR YOU" NUDGE CARDS                 -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">7. "For You" Nudge Cards (Persistent, conditional UI)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] flex flex-col gap-[40px] items-center">
+            
+            <!-- 7A: No Interests Banner -->
+            <div class="w-full max-w-[660px] flex flex-col gap-2">
+                <span class="font-mono text-[10px] text-mute uppercase">7A. Above Composer (No interests set)</span>
+                
+                <div class="bg-nudge-bg border border-nudge-border rounded-[6px] p-[16px] flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-[12px]">
+                        <span class="text-[20px] leading-none">✨</span>
+                        <span class="font-sans text-[14px] text-ink-soft">Personalise your feed — pick your interests for a For You view.</span>
+                    </div>
+                    <button class="font-sans text-[14px] font-bold text-ochre hover:underline">Set interests &rarr;</button>
+                </div>
+                
+                <div class="w-full h-[60px] bg-white border border-ghost rounded-[6px] mt-2 opacity-50 flex items-center px-4">
+                    <span class="font-sans text-[13px] text-ghost">&lt;Composer Card&gt;</span>
+                </div>
+            </div>
+
+            <!-- 7B: Has Interests Sidebar Card -->
+            <div class="w-full max-w-[320px] flex flex-col gap-2 self-end mr-[200px]">
+                <span class="font-mono text-[10px] text-mute uppercase">7B. Sidebar (Has interests set)</span>
+                
+                <div class="bg-[rgba(179,130,56,0.06)] border border-[rgba(179,130,56,0.2)] rounded-xl p-[24px] flex flex-col shadow-sm">
+                    <h3 class="font-serif text-[18px] font-bold text-ink mb-[8px]">Personalised feed ready</h3>
+                    <p class="font-sans text-[14px] text-ink-soft leading-[1.5] mb-[16px]">
+                        Switch to For You to see content ranked by your interests.
+                    </p>
+                    <button class="w-full h-[40px] bg-ochre rounded-full text-white font-sans text-[13px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors">
+                        For You &rarr;
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 8: SPLIT CONTEXT ACTIONS                 -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">8. Split Context Actions (Replaces Mobile's Long-Press Menu)</span>
+        <div class="desktop-screen bg-paper-deep rounded-xl shadow-2xl border-[8px] border-gray-900 p-[40px] flex flex-col items-center">
+            
+            <div class="w-full max-w-[660px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20 relative">
+                <p class="font-sans text-[15px] text-ink-soft mb-[24px] leading-relaxed">
+                    This post demonstrates the web-native approach to context actions. Instead of a single "More" menu, primary interactions are exposed directly on the card footer.
+                </p>
+
+                <div class="w-full h-[1px] bg-ghost-light mb-[16px]"></div>
+
+                <!-- Footer Action Row -->
+                <div class="flex items-center justify-between">
+                    
+                    <!-- Left: Reactions -->
+                    <div class="flex items-center gap-[16px]">
+                        <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink transition-colors">
+                            <svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 42
+                        </button>
+                        <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink transition-colors">
+                            <svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg> 12
+                        </button>
+                        
+                        <!-- 1. The Share Action -->
+                        <div class="relative group ml-[4px]">
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink transition-colors">
+                                <svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            </button>
+                            <!-- Simulated Click State Tooltip -->
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] bg-success text-white font-sans text-[11px] px-[8px] py-[4px] rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Copied!
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-transparent border-t-success"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Comment & Report -->
+                    <div class="flex items-center gap-[20px]">
+                        <!-- 2. The Comment Trigger (Opens Modal) -->
+                        <button class="font-sans text-[13px] font-bold text-ink hover:text-ochre transition-colors">
+                            3 Comments
+                        </button>
+                        
+                        <!-- 3. The Report Trigger -->
+                        <button class="font-sans text-[13px] text-ghost hover:text-ink transition-colors" title="Report">
+                            ⚑
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Annotation Lines -->
+                <div class="absolute -right-[220px] top-1/2 -translate-y-1/2 bg-white border border-ghost shadow-sm p-[16px] rounded-lg w-[200px]">
+                    <span class="font-mono text-[10px] text-mute uppercase tracking-widest block mb-[8px]">WEB ARCHITECTURE</span>
+                    <p class="font-sans text-[12px] text-ink-soft leading-relaxed">
+                        No single grouped context menu exists — these three controls (Share, Comment, Report) together cover what mobile's one menu does, minus a "Save" action which has no web equivalent on community posts.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

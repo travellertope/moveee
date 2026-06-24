@@ -57,8 +57,10 @@ export default function MemberBadges({ initialBadges }: Props) {
               className={`mem-badge ${earned ? 'earned' : 'locked'}`}
             >
               <div className="mem-badge-icon">{earned ? '★' : '○'}</div>
-              <div className="mem-badge-name">{badge.name}</div>
-              <div className="mem-badge-desc">{badge.desc}</div>
+              <div className="mem-badge-text">
+                <div className="mem-badge-name">{badge.name}</div>
+                <div className="mem-badge-desc">{badge.desc}</div>
+              </div>
             </div>
           );
         })}

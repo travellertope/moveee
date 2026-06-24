@@ -40,7 +40,7 @@ export default async function ProfileSettingsPage() {
   } catch {}
 
   return (
-    <section className="mem-card">
+    <section className="mem-card mem-card--editable">
       <div className="mem-card-label">Profile</div>
       <ProfileEditor user={{
         displayName,

@@ -168,7 +168,7 @@ function RsvpDisplay({
           background: rsvped ? "#fff" : "var(--ochre, #b38238)",
           color: rsvped ? "#b38238" : "#fff",
           border: "1px solid #b38238",
-          borderRadius: "4px",
+          borderRadius: "999px",
           padding: "8px 16px",
           fontSize: "0.8rem",
           fontWeight: 700,
@@ -248,17 +248,17 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1rem 1.25rem",
+          padding: "1.25rem",
           borderBottom: "1px solid #e0dbd1",
           position: "sticky", top: 0,
-          background: "var(--paper, #f3ece0)", zIndex: 1,
+          background: "#faf8f5", zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
               background: "#edf7ed", color: "#2e7d32",
               fontSize: "0.58rem", fontWeight: 700,
               letterSpacing: "0.1em", textTransform: "uppercase",
-              padding: "0.18rem 0.45rem", borderRadius: "2px",
+              padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Community</span>
             {item.communityTag && (
               <span style={{ fontSize: "0.62rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -266,18 +266,16 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             {item.slug && (
               <Link
                 href={`/community/${item.slug}`}
                 style={{
-                  color: "#7a6f5c", fontSize: "0.65rem", fontWeight: 700,
-                  letterSpacing: "0.08em", textTransform: "uppercase",
-                  textDecoration: "none", padding: "0.2rem 0.5rem",
-                  border: "1px solid #d8d0c6", borderRadius: "2px",
+                  color: "#c5491f", fontSize: "0.8rem", fontWeight: 400,
+                  textDecoration: "underline", textUnderlineOffset: "2px",
                 }}
               >
-                Open full page <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginLeft: "2px" }}><path d="M3 9L9 3M4 3h5v5"/></svg>
+                Open full page →
               </Link>
             )}
             <button
@@ -285,10 +283,10 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               aria-label="Close"
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                color: "#7a6f5c", fontSize: "1.1rem", lineHeight: 1, padding: "0.25rem",
+                color: "#14110d", lineHeight: 1, padding: "0.25rem", display: "flex",
               }}
             >
-              ✕
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
@@ -331,32 +329,32 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {item.templateType && item.templateType !== "post" && (
             <div style={{ marginBottom: "0.5rem" }}>
               {item.templateType === "hidden-gem" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
                   Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
                 </span>
               )}
               {item.templateType === "cultural-take" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Take{item.locationName ? ` · ${item.locationName}` : ""}
                 </span>
               )}
               {item.templateType === "food-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Food Review{item.foodDishName ? ` · ${item.foodDishName}` : ""}
                 </span>
               )}
               {item.templateType === "creative-showcase" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Creative Showcase
                 </span>
               )}
               {item.templateType === "itinerary" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Weekend Route
                 </span>
               )}
               {item.templateType === "event" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 8px", borderRadius: "2px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
                 </span>
               )}
@@ -399,7 +397,12 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Event details + RSVP */}
           {item.templateType === "event" && (
-            <div style={{ fontSize: "0.82rem", color: "#7a6f5c", marginBottom: "0.6rem", lineHeight: 1.6 }}>
+            <div style={{
+              background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              padding: "0.85rem 1rem", marginBottom: "0.75rem",
+              fontSize: "0.82rem", color: "#7a6f5c", lineHeight: 1.6,
+            }}>
               {item.eventDate && (
                 <div>
                   📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}

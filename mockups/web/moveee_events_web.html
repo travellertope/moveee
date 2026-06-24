@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee - Happenings</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        'paper': '#FFFFFF',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        rule: '#2A241C',
+                        success: '#2D6A4F',
+                        error: '#C62828',
+                        'sys-blue': '#007AFF',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        
+        /* Ticker Animation */
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-ticker { animation: ticker 20s linear infinite; }
+        .ticker-container:hover .animate-ticker { animation-play-state: paused; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: EVENTS LIST / HOME (Desktop)          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Events List / Home</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative">
+
+            <!-- Hero -->
+            <div class="w-full bg-paper pt-[80px] pb-[64px] flex flex-col items-center border-b border-rule shrink-0">
+                <h1 class="font-serif text-[56px] text-ink leading-tight text-center">Moveee <span class="italic">Happenings</span></h1>
+                <p class="font-sans text-[18px] text-ink-soft max-w-[600px] text-center leading-[1.6] mt-[16px]">
+                    Exhibitions, talks, parties, and pop-ups. Curated by the Moveee editorial team and submitted by the community.
+                </p>
+                <div class="flex items-center gap-[40px] mt-[40px]">
+                    <div class="flex flex-col items-center">
+                        <span class="font-serif text-[32px] font-bold text-ink leading-none">248</span>
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest mt-[8px]">Happenings this year</span>
+                    </div>
+                    <div class="w-[1px] h-[40px] bg-ghost"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="font-serif text-[32px] font-bold text-ink leading-none">12</span>
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest mt-[8px]">Cities covered</span>
+                    </div>
+                    <div class="w-[1px] h-[40px] bg-ghost"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="font-serif text-[32px] font-bold text-ink leading-none">8</span>
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest mt-[8px]">Categories</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticker -->
+            <div class="w-full h-[40px] bg-ink overflow-hidden flex items-center shrink-0 relative ticker-container">
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px]">
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Design</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Community</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <!-- Duplicate -->
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Design</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Community</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                </div>
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px] absolute top-0 left-full h-full">
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Design</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Community</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <!-- Duplicate -->
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Design</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    <span class="mx-[24px]">Community</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 bg-paper-deep pt-[64px] pb-[80px]">
+                
+                <!-- Featured -->
+                <div class="max-w-[1200px] mx-auto px-[64px] mb-[64px]">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Featured</span>
+                    <h3 class="font-serif text-[32px] font-bold text-ink mb-[24px]">Spotlight</h3>
+                    
+                    <div class="grid grid-cols-4 gap-[24px]">
+                        <!-- Card 1 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform">
+                            <div class="w-full h-[180px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] relative overflow-hidden">
+                                <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                    <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUN</span>
+                                    <span class="font-serif text-[18px] font-bold text-ochre leading-none">20</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col flex-1">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">MUSIC</span>
+                                <h4 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] line-clamp-2">Amapiano Night at The Jazz Cafe</h4>
+                            </div>
+                        </a>
+                        <!-- Card 2 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform">
+                            <div class="w-full h-[180px] bg-gradient-to-br from-[#182848] to-[#4B6CB7] relative overflow-hidden">
+                                <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                    <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUN</span>
+                                    <span class="font-serif text-[18px] font-bold text-ochre leading-none">28</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col flex-1">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">COMMUNITY</span>
+                                <h4 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] line-clamp-2">Afro Nation Lagos Pre-Party</h4>
+                            </div>
+                        </a>
+                        <!-- Card 3 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform">
+                            <div class="w-full h-[180px] bg-gradient-to-bl from-[#E2B19B] to-[#C5491F] relative overflow-hidden">
+                                <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                    <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUL</span>
+                                    <span class="font-serif text-[18px] font-bold text-ochre leading-none">05</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col flex-1">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">FOOD</span>
+                                <h4 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] line-clamp-2">Diaspora Supper Club: Pan-African</h4>
+                            </div>
+                        </a>
+                        <!-- Card 4 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform">
+                            <div class="w-full h-[180px] bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] relative overflow-hidden">
+                                <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                    <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUL</span>
+                                    <span class="font-serif text-[18px] font-bold text-ochre leading-none">12</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col flex-1">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">VISUAL ART</span>
+                                <h4 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] line-clamp-2">Contemporary African Art Fair</h4>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- By City -->
+                <div class="max-w-[1200px] mx-auto px-[64px] mb-[64px]">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Explore</span>
+                    <h3 class="font-serif text-[32px] font-bold text-ink mb-[24px]">By <span class="italic">City</span></h3>
+                    
+                    <div class="grid grid-cols-6 gap-[16px]">
+                        <!-- City 1 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇳🇬</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">Lagos</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">Nigeria</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">24 live</span>
+                            </div>
+                        </a>
+                        <!-- City 2 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇬🇧</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">London</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">UK</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">18 live</span>
+                            </div>
+                        </a>
+                        <!-- City 3 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇬🇭</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">Accra</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">Ghana</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">12 live</span>
+                            </div>
+                        </a>
+                        <!-- City 4 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇰🇪</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">Nairobi</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">Kenya</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">8 live</span>
+                            </div>
+                        </a>
+                        <!-- City 5 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇺🇸</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">New York</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">USA</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">15 live</span>
+                            </div>
+                        </a>
+                        <!-- City 6 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card p-[16px] flex flex-col items-center text-center hover:bg-gray-50 transition-colors border border-ghost/30">
+                            <span class="text-[32px] mb-[8px]">🇫🇷</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight">Paris</h4>
+                            <span class="font-sans text-[12px] text-mute mt-[2px]">France</span>
+                            <div class="mt-[12px] bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                <span class="font-mono text-[10px] text-ochre font-bold">5 live</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- DEV: 3 -->
+                <!-- DEV: Literati Connect carousel: horizontal-scroll rail of event cards, rendered only when qualifying events exist, header noting "Literati Connect" theme -->
+                <div class="w-full bg-[#E8E2D8] py-[48px] mb-[64px] border-y border-ghost/40 shadow-inner">
+                    <div class="max-w-[1200px] mx-auto px-[64px]">
+                        <div class="flex items-center justify-between mb-[24px]">
+                            <div class="flex flex-col">
+                                <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[4px]">Literati Connect</span>
+                                <h3 class="font-serif text-[24px] font-bold text-ink leading-tight">Member-only gatherings</h3>
+                            </div>
+                            <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">See all &rarr;</a>
+                        </div>
+                        
+                        <div class="flex gap-[24px] overflow-x-auto hide-scrollbar pb-[8px]">
+                            <!-- Card 1 -->
+                            <div class="w-[300px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden border border-ghost/30 relative">
+                                <div class="absolute top-[12px] right-[12px] bg-gold text-white px-[8px] py-[4px] rounded-md font-sans text-[9px] font-bold uppercase tracking-wider z-10 shadow-sm">Pro Only</div>
+                                <div class="w-full h-[140px] bg-gradient-to-tr from-[#3A342B] to-[#7A6F5C] relative"></div>
+                                <div class="p-[16px] flex flex-col flex-1">
+                                    <h4 class="font-sans text-[15px] font-bold text-ink leading-snug line-clamp-2 min-h-[44px]">Supper Club: Discussing 'Things Fall Apart'</h4>
+                                    <div class="flex flex-col gap-[4px] mt-[12px]">
+                                        <span class="font-sans text-[12px] text-mute flex items-center gap-[6px]"><span class="w-[16px] text-center">📅</span> Fri 27 Jun</span>
+                                        <span class="font-sans text-[12px] text-mute flex items-center gap-[6px]"><span class="w-[16px] text-center">📍</span> London, UK</span>
+                                    </div>
+                                    <div class="mt-[16px] pt-[12px] border-t border-ghost-light flex items-center justify-between">
+                                        <span class="font-sans text-[13px] font-bold text-ink">£45</span>
+                                        <button class="h-[32px] px-[16px] bg-ochre rounded-full text-white font-sans text-[12px] font-bold shadow-sm hover:bg-[#A93C15]">RSVP</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="w-[300px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden border border-ghost/30 relative">
+                                <div class="w-full h-[140px] bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] relative"></div>
+                                <div class="p-[16px] flex flex-col flex-1">
+                                    <h4 class="font-sans text-[15px] font-bold text-ink leading-snug line-clamp-2 min-h-[44px]">Gallery Walk: Lagos Photography</h4>
+                                    <div class="flex flex-col gap-[4px] mt-[12px]">
+                                        <span class="font-sans text-[12px] text-mute flex items-center gap-[6px]"><span class="w-[16px] text-center">📅</span> Sat 28 Jun</span>
+                                        <span class="font-sans text-[12px] text-mute flex items-center gap-[6px]"><span class="w-[16px] text-center">📍</span> Lagos, Nigeria</span>
+                                    </div>
+                                    <div class="mt-[16px] pt-[12px] border-t border-ghost-light flex items-center justify-between">
+                                        <span class="font-sans text-[13px] font-bold text-ink">Free</span>
+                                        <button class="h-[32px] px-[16px] bg-ochre rounded-full text-white font-sans text-[12px] font-bold shadow-sm hover:bg-[#A93C15]">RSVP</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EventTimeline Section -->
+                <div id="timeline" class="w-full max-w-[1100px] mx-auto mb-[80px]">
+                    <div class="flex flex-col items-center mb-[48px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Timeline</span>
+                        <h3 class="font-serif text-[32px] font-bold text-ink">All Happenings</h3>
+                    </div>
+
+                    <div class="flex gap-[40px]">
+                        <div class="flex-1 max-w-[780px] bg-white rounded-xl shadow-card p-[32px] flex flex-col items-center justify-center min-h-[400px] border border-ghost/30 text-center">
+                            <span class="font-mono text-[12px] text-mute uppercase tracking-widest block mb-[16px]">&lt;EventTimeline /&gt;</span>
+                            <span class="font-serif text-[18px] italic text-ink-soft">See Frame 1B for component close-up</span>
+                        </div>
+
+                        <!-- Sidebar -->
+                        <div class="w-[280px] flex flex-col gap-[32px]">
+                            <!-- Cities -->
+                            <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/30">
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] uppercase tracking-wider">Cities</h4>
+                                <div class="flex flex-col gap-[8px]">
+                                    <a href="#" class="flex items-center justify-between group">
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">Lagos</span>
+                                        <span class="font-mono text-[11px] text-ghost">24</span>
+                                    </a>
+                                    <a href="#" class="flex items-center justify-between group">
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">London</span>
+                                        <span class="font-mono text-[11px] text-ghost">18</span>
+                                    </a>
+                                    <a href="#" class="flex items-center justify-between group">
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">Accra</span>
+                                        <span class="font-mono text-[11px] text-ghost">12</span>
+                                    </a>
+                                    <a href="#" class="flex items-center justify-between group">
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">Nairobi</span>
+                                        <span class="font-mono text-[11px] text-ghost">8</span>
+                                    </a>
+                                    <a href="#" class="flex items-center justify-between group">
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">New York</span>
+                                        <span class="font-mono text-[11px] text-ghost">15</span>
+                                    </a>
+                                </div>
+                                <a href="#" class="font-sans text-[12px] font-bold text-ochre mt-[16px] hover:underline underline-offset-2">All cities &rarr;</a>
+                            </div>
+
+                            <!-- Categories -->
+                            <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/30">
+                                <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] uppercase tracking-wider">Categories</h4>
+                                <div class="flex flex-col gap-[8px]">
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-ochre"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-ochre transition-colors">Live Music</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-[#1976D2]"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-[#1976D2] transition-colors">Film</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-[#6B48A8]"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-[#6B48A8] transition-colors">Visual Art</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-[#78350F]"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-[#78350F] transition-colors">Literature</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-[#B38238]"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-[#B38238] transition-colors">Food & Drink</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-[8px] group">
+                                        <div class="w-[6px] h-[6px] rounded-full bg-[#2D6A4F]"></div>
+                                        <span class="font-sans text-[14px] text-ink-soft group-hover:text-[#2D6A4F] transition-colors">Community</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Connect CTA Band -->
+            <div class="w-full bg-ink px-[64px] py-[64px] shrink-0">
+                <div class="max-w-[1200px] mx-auto flex gap-[64px] items-center">
+                    <div class="flex-1 flex flex-col">
+                        <span class="font-mono text-[13px] font-bold text-ochre uppercase tracking-widest mb-[12px]">Moveee</span>
+                        <h3 class="font-serif text-[40px] font-bold text-white leading-tight mb-[16px]">Members go first.</h3>
+                        <p class="font-sans text-[16px] text-white/80 leading-[1.6] max-w-[480px]">
+                            Join Moveee Pro for priority access to the events that shape the culture. Never miss a ticket release again.
+                        </p>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <ol class="flex flex-col gap-[16px] mb-[32px]">
+                            <li class="flex items-start gap-[12px]">
+                                <span class="font-mono text-[14px] text-gold font-bold leading-none mt-1">01</span>
+                                <span class="font-sans text-[16px] text-white font-medium">Early RSVP — 48 hours before public</span>
+                            </li>
+                            <li class="flex items-start gap-[12px]">
+                                <span class="font-mono text-[14px] text-gold font-bold leading-none mt-1">02</span>
+                                <span class="font-sans text-[16px] text-white font-medium">Private views & members-only dinners</span>
+                            </li>
+                            <li class="flex items-start gap-[12px]">
+                                <span class="font-mono text-[14px] text-gold font-bold leading-none mt-1">03</span>
+                                <span class="font-sans text-[16px] text-white font-medium">Priority for Origins journeys & supper tables</span>
+                            </li>
+                            <li class="flex items-start gap-[12px]">
+                                <span class="font-mono text-[14px] text-gold font-bold leading-none mt-1">04</span>
+                                <span class="font-sans text-[16px] text-white font-medium">15% off Lifestyle shop</span>
+                            </li>
+                        </ol>
+                        <div class="flex flex-col items-start gap-[8px]">
+                            <a href="#" class="h-[52px] px-[32px] bg-white rounded-full text-ink font-sans text-[15px] font-bold flex items-center justify-center hover:bg-paper-warm transition-colors shadow-sm">
+                                Become a Member &rarr;
+                            </a>
+                            <span class="font-mono text-[11px] text-white/60 ml-[16px]">from $9 / month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 1B: EVENT TIMELINE COMPONENT             -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 max-w-[1100px] mx-auto mt-[40px]">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1B: Event Timeline Component</span>
+        <div class="bg-paper-warm p-[40px] rounded-xl shadow-inner border border-ghost/40">
+            
+            <div class="w-[780px] bg-white rounded-xl shadow-card p-[32px]">
+                
+                <!-- Month Header -->
+                <div class="flex items-center gap-[12px] mb-[24px]">
+                    <div class="w-[8px] h-[8px] rounded-full bg-ochre"></div>
+                    <h3 class="font-serif text-[24px] font-bold text-ink">June 2026</h3>
+                </div>
+
+                <!-- Day Group 1 -->
+                <div class="mb-[32px] relative">
+                    <div class="flex items-baseline gap-[8px] mb-[16px]">
+                        <span class="font-serif text-[18px] font-bold text-ink">13 Jun</span>
+                        <span class="font-sans text-[13px] text-mute">Friday</span>
+                    </div>
+
+                    <div class="flex flex-col gap-[16px] border-l-[2px] border-ghost-light ml-[4px] pl-[20px]">
+                        
+                        <!-- EventRow 1 -->
+                        <!-- DEV: 2 -->
+                        <!-- DEV: small thumbnail (real image OR category-gradient placeholder with a glyph icon overlay per DEV 2) -->
+                        <div class="flex items-center gap-[16px] group cursor-pointer hover:bg-paper-deep p-[8px] rounded-md transition-colors -ml-[8px]">
+                            <div class="w-[48px] h-[48px] rounded-md bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] shrink-0 overflow-hidden relative shadow-sm">
+                                <!-- Real image mock -->
+                                <img src="https://placehold.co/100x100/A66C52/ffffff?text=+" class="w-full h-full object-cover opacity-80" alt="">
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <h4 class="font-sans text-[15px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors">Amapiano Night at The Jazz Cafe</h4>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">◍ London · Live Music</span>
+                            </div>
+                            <div class="flex flex-col items-end shrink-0">
+                                <span class="font-mono text-[12px] text-ink">9:00 PM – 3:00 AM</span>
+                                <span class="font-sans text-[12px] text-ochre font-bold mt-[2px]">£15</span>
+                            </div>
+                            <span class="text-ghost ml-[8px] text-[18px] font-light">&rarr;</span>
+                        </div>
+
+                        <!-- EventRow 2 -->
+                        <div class="flex items-center gap-[16px] group cursor-pointer hover:bg-paper-deep p-[8px] rounded-md transition-colors -ml-[8px]">
+                            <div class="w-[48px] h-[48px] rounded-md bg-gradient-to-br from-[#182848] to-[#4B6CB7] shrink-0 overflow-hidden relative shadow-sm flex items-center justify-center">
+                                <!-- Fallback SVG icon mock -->
+                                <svg class="w-[20px] h-[20px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <h4 class="font-sans text-[15px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors">African Film Festival Opening Night</h4>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">◍ Lagos · Film</span>
+                            </div>
+                            <div class="flex flex-col items-end shrink-0">
+                                <span class="font-mono text-[12px] text-ink">6:00 PM – 10:00 PM</span>
+                                <span class="font-sans text-[12px] text-ink-soft mt-[2px]">Free</span>
+                            </div>
+                            <span class="text-ghost ml-[8px] text-[18px] font-light">&rarr;</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Day Group 2 -->
+                <div class="relative">
+                    <div class="flex items-baseline gap-[8px] mb-[16px]">
+                        <span class="font-serif text-[18px] font-bold text-ink">14 Jun</span>
+                        <span class="font-sans text-[13px] text-mute">Saturday</span>
+                    </div>
+
+                    <div class="flex flex-col gap-[16px] border-l-[2px] border-ghost-light ml-[4px] pl-[20px]">
+                        
+                        <!-- EventRow 3 -->
+                        <div class="flex items-center gap-[16px] group cursor-pointer hover:bg-paper-deep p-[8px] rounded-md transition-colors -ml-[8px]">
+                            <div class="w-[48px] h-[48px] rounded-md bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] shrink-0 overflow-hidden relative shadow-sm flex items-center justify-center">
+                                <svg class="w-[20px] h-[20px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <h4 class="font-sans text-[15px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors">Contemporary African Art Fair</h4>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">◍ London · Visual Art</span>
+                            </div>
+                            <div class="flex flex-col items-end shrink-0">
+                                <span class="font-mono text-[12px] text-ink">10:00 AM – 6:00 PM</span>
+                                <span class="font-sans text-[12px] text-ochre font-bold mt-[2px]">£18</span>
+                            </div>
+                            <span class="text-ghost ml-[8px] text-[18px] font-light">&rarr;</span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: EVENT DETAIL PAGE TOP                 -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Event Detail Top</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative">
+
+            <!-- event-hero-luma -->
+            <div class="w-full bg-paper pt-[64px] pb-[64px] px-[64px] flex gap-[40px] items-start border-b border-ghost-light">
+                
+                <!-- Left: Image -->
+                <div class="w-[560px] aspect-[4/5] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-xl shadow-card relative shrink-0 overflow-hidden">
+                    <div class="absolute top-[16px] left-[16px] bg-white/90 backdrop-blur-sm px-[12px] py-[6px] rounded-full shadow-sm flex items-center gap-[6px]">
+                        <svg class="w-3 h-3 text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span class="font-sans text-[11px] font-bold text-ink uppercase tracking-wider">Featured in London</span>
+                    </div>
+                </div>
+
+                <!-- Right: Info -->
+                <div class="flex-1 flex flex-col pt-[16px] max-w-[600px]">
+                    <a href="#" class="font-sans text-[13px] text-mute hover:text-ink transition-colors flex items-center gap-[4px] mb-[32px] w-fit">
+                        <span class="text-[14px] leading-none pb-[2px]">&larr;</span> Happenings
+                    </a>
+
+                    <div class="flex items-center gap-[12px] mb-[16px]">
+                        <div class="bg-ochre/10 text-ochre px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-ochre/20">LIVE MUSIC</div>
+                        <div class="flex items-center gap-[6px]">
+                            <div class="w-[8px] h-[8px] rounded-full bg-success"></div>
+                            <span class="font-mono text-[11px] text-mute uppercase tracking-widest">Upcoming</span>
+                        </div>
+                    </div>
+
+                    <h1 class="font-serif text-[48px] font-bold text-ink leading-[1.1] mb-[12px]">Amapiano Night at The Jazz Cafe</h1>
+                    <p class="font-serif text-[20px] italic text-ink-soft leading-[1.4] mb-[40px]">
+                        An intimate Amapiano takeover at one of London's most iconic jazz rooms.
+                    </p>
+
+                    <!-- Meta Chips -->
+                    <div class="flex flex-col gap-[20px] mb-[48px]">
+                        <div class="flex items-start gap-[16px]">
+                            <div class="w-[48px] h-[48px] bg-paper-warm rounded-lg flex flex-col items-center justify-center border border-ghost/40 shadow-sm shrink-0">
+                                <span class="font-mono text-[10px] font-bold text-mute uppercase leading-none mb-[2px]">JUN</span>
+                                <span class="font-serif text-[20px] font-bold text-ink leading-none">13</span>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <span class="font-sans text-[16px] font-bold text-ink leading-tight">Friday, 13 June 2026</span>
+                                <span class="font-sans text-[14px] text-mute mt-[2px]">9:00 PM – 3:00 AM BST</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-[16px]">
+                            <div class="w-[48px] h-[48px] bg-paper-warm rounded-lg flex items-center justify-center border border-ghost/40 shadow-sm shrink-0">
+                                <svg class="w-[20px] h-[20px] text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <span class="font-sans text-[16px] font-bold text-ink leading-tight">The Jazz Cafe</span>
+                                <span class="font-sans text-[14px] text-mute mt-[2px]">5 Parkway, Camden, London NW1 7PG</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registration Box -->
+                    <div class="w-full bg-paper-deep border-[2px] border-ghost-light rounded-xl p-[24px] flex items-center justify-between shadow-sm">
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[16px] font-bold text-ink">Secure your place below.</span>
+                            <span class="font-sans text-[13px] text-mute mt-[4px]">Tickets required for entry.</span>
+                        </div>
+                        <a href="#rsvp-section" class="h-[48px] px-[24px] bg-ochre rounded-full text-white font-sans text-[14px] font-bold flex items-center justify-center shadow-md hover:bg-[#A93C15] transition-colors">
+                            RSVP Now &rarr;
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Ticker Strip -->
+            <div class="w-full h-[48px] bg-ink overflow-hidden flex items-center shrink-0 border-b border-rule ticker-container relative">
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[12px] uppercase tracking-[1px] leading-none pt-[2px]">
+                    <span class="mx-[24px] text-ochre font-bold">Amapiano Night at The Jazz Cafe</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Moveee Lagos</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">The Jazz Cafe, London</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Fri 13 Jun 2026</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Limited Capacity</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px] text-gold">★ Members: early access</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px] text-ochre font-bold">£15 Advance</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                </div>
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[12px] uppercase tracking-[1px] leading-none pt-[2px] absolute top-0 left-full h-full">
+                    <span class="mx-[24px] text-ochre font-bold">Amapiano Night at The Jazz Cafe</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Moveee Lagos</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">The Jazz Cafe, London</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Fri 13 Jun 2026</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px]">Limited Capacity</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px] text-gold">★ Members: early access</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                    <span class="mx-[24px] text-ochre font-bold">£15 Advance</span><span class="text-ghost text-[14px] leading-none -mt-1">·</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: EVENT DETAIL PAGE BODY                -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Event Detail Body</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[64px]">
+
+            <div class="w-full max-w-[1140px] mx-auto pt-[64px] flex gap-[40px] px-[20px]">
+                
+                <!-- LEFT COLUMN (~760px) -->
+                <div class="w-[760px] flex flex-col shrink-0">
+                    <h2 class="font-sans text-[13px] font-bold text-ink uppercase tracking-wider mb-[24px] border-b border-ghost-light pb-[12px]">About the event</h2>
+                    
+                    <div class="prose max-w-none font-sans text-[16px] text-ink-soft leading-[1.7] mb-[40px]">
+                        <p class="mb-[16px]">Join us for an intimate Amapiano takeover at one of London's most iconic live music venues. We're bringing the authentic sounds of South Africa straight to Camden, featuring a curated lineup of resident DJs and special guest performers.</p>
+                        <p class="mb-[16px]">Expect two rooms of music, bespoke visual installations, and a late licence until 3am. This is a celebration of the genre's global evolution and its deep roots in the diaspora.</p>
+                    </div>
+
+                    <!-- Pull-quote block -->
+                    <div class="border-l-[4px] border-ochre pl-[24px] mb-[40px] py-[8px]">
+                        <blockquote class="font-serif text-[24px] italic text-ink leading-[1.3] mb-[12px]">
+                            "We wanted to create a space where the music isn't just heard, but felt. Jazz Cafe provides that perfect, intimate container for this sound."
+                        </blockquote>
+                        <cite class="font-sans text-[14px] font-bold text-mute not-italic">— Moveee Lagos Organising Committee</cite>
+                    </div>
+
+                    <!-- Selected works grid (Optional) -->
+                    <div class="mb-[48px]">
+                        <h3 class="font-sans text-[13px] font-bold text-ink uppercase tracking-wider mb-[24px] border-b border-ghost-light pb-[12px]">Previous Editions</h3>
+                        <div class="grid grid-cols-2 gap-[24px]">
+                            <div class="flex flex-col">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-lg mb-[12px] shadow-sm"></div>
+                                <span class="font-mono text-[10px] text-mute uppercase tracking-widest mb-[4px]">N°01</span>
+                                <h4 class="font-sans text-[15px] font-bold text-ink leading-tight mb-[4px]">Vol 1. The Opening</h4>
+                                <span class="font-sans text-[13px] text-mute">Photography · Lagos · 2025</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] rounded-lg mb-[12px] shadow-sm"></div>
+                                <span class="font-mono text-[10px] text-mute uppercase tracking-widest mb-[4px]">N°02</span>
+                                <h4 class="font-sans text-[15px] font-bold text-ink leading-tight mb-[4px]">Vol 2. The Return</h4>
+                                <span class="font-sans text-[13px] text-mute">Photography · Accra · 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Programme -->
+                    <div class="mb-[32px]">
+                        <h3 class="font-sans text-[13px] font-bold text-ink uppercase tracking-wider mb-[24px] border-b border-ghost-light pb-[12px]">Programme</h3>
+                        <div class="flex flex-col">
+                            <div class="flex items-start gap-[24px] py-[16px] border-b border-ghost-light">
+                                <span class="font-mono text-[13px] font-bold text-ink w-[80px] shrink-0 pt-0.5">8:30 PM</span>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex items-center gap-[12px] mb-[4px]">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink">Early Entry & Welcome Drink</h4>
+                                        <span class="bg-gold/10 text-gold border border-gold/20 px-[8px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">Members Only</span>
+                                    </div>
+                                    <p class="font-sans text-[14px] text-ink-soft">Exclusive pre-party access for Moveee Pro members.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-[24px] py-[16px] border-b border-ghost-light">
+                                <span class="font-mono text-[13px] font-bold text-ink w-[80px] shrink-0 pt-0.5">9:00 PM</span>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex items-center gap-[12px] mb-[4px]">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink">Doors Open</h4>
+                                        <span class="bg-ghost/20 text-mute border border-ghost/40 px-[8px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">Open</span>
+                                    </div>
+                                    <p class="font-sans text-[14px] text-ink-soft">General admission opens. Main room DJ set begins.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-[24px] py-[16px] border-b border-ghost-light">
+                                <span class="font-mono text-[13px] font-bold text-ink w-[80px] shrink-0 pt-0.5">11:30 PM</span>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex items-center gap-[12px] mb-[4px]">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink">Headline Set</h4>
+                                        <span class="bg-ghost/20 text-mute border border-ghost/40 px-[8px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">Open</span>
+                                    </div>
+                                    <p class="font-sans text-[14px] text-ink-soft">Special guest performance.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT SIDEBAR (~340px) -->
+                <!-- DEV: 8 -->
+                <!-- DEV: RIGHT sidebar (~340px), stacked per DEV 8: RSVP card (id="rsvp-section", see Frame 4) → "Organised by" info-card (purple #3c3489 left border, organiser name + link to /directory/{slug}, only if resolved) → associated-journey info-card (dark bg, "View Journey →" to /origins/{slug}, only if present) → "Press & Media" info-card (always present — heading "Press enquiries" + contact copy + optional mailto link) -->
+                <div class="w-[340px] flex flex-col gap-[24px] shrink-0 sticky top-[24px] h-max">
+                    
+                    <!-- RSVP Card Placeholder (id="rsvp-section", see Frame 4) -->
+                    <div id="rsvp-section" class="w-full bg-paper-warm border-[2px] border-ghost rounded-xl p-[32px] text-center shadow-sm">
+                        <span class="font-mono text-[11px] text-mute uppercase tracking-widest block mb-[8px]">&lt;RSVPForm /&gt;</span>
+                        <span class="font-serif text-[16px] italic text-ink">See Frame 4 for states</span>
+                    </div>
+
+                    <!-- Organised by info-card -->
+                    <div class="w-full bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/30 border-l-[4px] border-l-[#3c3489]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest block mb-[12px]">Organised by</span>
+                        <div class="flex items-center gap-[12px] mb-[16px]">
+                            <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                            <span class="font-sans text-[15px] font-bold text-ink">Moveee Lagos</span>
+                        </div>
+                        <a href="#" class="font-sans text-[13px] font-bold text-[#3c3489] hover:underline underline-offset-2">View directory profile &rarr;</a>
+                    </div>
+
+                    <!-- Associated-journey info-card -->
+                    <div class="w-full bg-ink rounded-xl shadow-card p-[24px] flex flex-col text-white">
+                        <span class="font-mono text-[10px] font-bold text-ochre uppercase tracking-widest block mb-[12px]">Origins Journal</span>
+                        <h4 class="font-serif text-[18px] font-bold text-white leading-tight mb-[16px]">The Sound of the City: Lagos to London</h4>
+                        <a href="#" class="w-full h-[40px] border border-white/30 rounded-full font-sans text-[13px] font-bold text-white flex items-center justify-center hover:bg-white/10 transition-colors">
+                            View Journey &rarr;
+                        </a>
+                    </div>
+
+                    <!-- Press & Media info-card -->
+                    <div class="w-full bg-paper-deep rounded-xl p-[20px] flex flex-col border border-ghost/40">
+                        <h4 class="font-sans text-[14px] font-bold text-ink mb-[8px]">Press enquiries</h4>
+                        <p class="font-sans text-[13px] text-ink-soft leading-relaxed mb-[12px]">
+                            For press passes, media access, and high-res assets, please contact our team.
+                        </p>
+                        <a href="mailto:press@themoveee.com" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-2">press@themoveee.com</a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Artist Strip (Full width below) -->
+            <div class="w-full border-t border-ghost/40 pt-[48px] pb-[24px] max-w-[1140px] mx-auto px-[20px]">
+                <div class="bg-paper-deep rounded-2xl p-[32px] flex items-center gap-[32px] border border-ghost/20 shadow-sm">
+                    <div class="w-[120px] h-[120px] rounded-full bg-gradient-to-bl from-[#E2B19B] to-[#C5491F] shrink-0 border-[4px] border-white shadow-sm"></div>
+                    <div class="flex flex-col flex-1 justify-center">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest block mb-[6px]">The artist</span>
+                        <h3 class="font-serif text-[28px] font-bold text-ink leading-none mb-[12px]">Adekunle <span class="italic">Gold</span></h3>
+                        <p class="font-sans text-[15px] italic text-ink-soft leading-[1.6] mb-[16px] max-w-[600px]">
+                            "I'm not trying to fit into a genre anymore. I'm just trying to document what's happening right now."
+                        </p>
+                        <a href="#" class="font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-4">Read the full portrait &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: RSVP FORM COMPONENT STATES            -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: RSVP Form States (420px width)</span>
+        
+        <div class="flex flex-wrap gap-[32px] justify-center w-full max-w-[1400px] mx-auto">
+            
+            <!-- State 1: Idle / free event -->
+            <div class="w-[420px] bg-white border border-ghost rounded-xl p-[32px] shadow-card flex flex-col relative shrink-0">
+                <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest">1. Idle / Free</span>
+                
+                <h3 class="font-serif text-[22px] font-bold text-ink mb-[24px]">RSVP</h3>
+                
+                <!-- Capacity Bar -->
+                <div class="flex flex-col gap-[6px] mb-[24px]">
+                    <div class="flex justify-between items-center">
+                        <span class="font-sans text-[12px] font-bold text-ink">Capacity</span>
+                        <span class="font-sans text-[12px] text-ochre font-bold">12 spot(s) remaining</span>
+                    </div>
+                    <div class="w-full h-[6px] bg-ghost-light rounded-full overflow-hidden">
+                        <div class="h-full bg-ochre w-[85%] rounded-full"></div>
+                    </div>
+                </div>
+
+                <!-- Form Fields -->
+                <div class="flex flex-col gap-[16px] mb-[24px]">
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[13px] font-bold text-ink">Full name</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] font-sans text-[14px] text-ink" placeholder="Jane Doe">
+                    </div>
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[13px] font-bold text-ink">Email address</label>
+                        <input type="email" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] font-sans text-[14px] text-ink" placeholder="jane@example.com">
+                    </div>
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[13px] font-bold text-ink flex justify-between">
+                            How did you hear about this? <span class="text-mute font-normal">(optional)</span>
+                        </label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] font-sans text-[14px] text-ink" placeholder="e.g. Newsletter, Instagram...">
+                    </div>
+                </div>
+
+                <button class="w-full h-[52px] bg-ochre text-white font-sans text-[15px] font-bold rounded-full shadow-sm hover:bg-[#A93C15] transition-colors flex items-center justify-center">
+                    Confirm RSVP &rarr;
+                </button>
+            </div>
+
+            <!-- State 2: Idle / paid event -->
+            <!-- DEV: 5 -->
+            <!-- DEV: RSVP form behaviour branches on ticket price per DEV 5; payment-return states are read from URL params on mount, not from form interaction -->
+            <div class="w-[420px] bg-white border border-ghost rounded-xl p-[32px] shadow-card flex flex-col relative shrink-0">
+                <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest">2. Idle / Paid</span>
+                
+                <h3 class="font-serif text-[22px] font-bold text-ink mb-[24px]">Tickets</h3>
+
+                <!-- Ticket Type Row -->
+                <div class="border border-ochre rounded-lg p-[16px] mb-[24px] flex items-center justify-between bg-ochre/5 cursor-pointer">
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[15px] font-bold text-ink">General Admission</span>
+                        <span class="font-sans text-[12px] text-mute mt-[2px]">Standard entry before 11PM</span>
+                    </div>
+                    <span class="font-sans text-[16px] font-bold text-ochre">£15.00</span>
+                </div>
+
+                <!-- Form Fields -->
+                <div class="flex flex-col gap-[16px] mb-[24px]">
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[13px] font-bold text-ink">Full name</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] font-sans text-[14px] text-ink" placeholder="Jane Doe" value="Zara Mensah">
+                    </div>
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[13px] font-bold text-ink">Email address</label>
+                        <input type="email" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] font-sans text-[14px] text-ink" placeholder="jane@example.com" value="zara@example.com">
+                    </div>
+                </div>
+
+                <button class="w-full h-[52px] bg-ochre text-white font-sans text-[15px] font-bold rounded-full shadow-sm hover:bg-[#A93C15] transition-colors flex items-center justify-center">
+                    Pay £15.00 &rarr;
+                </button>
+            </div>
+
+            <!-- State 3: Loading -->
+            <div class="w-[420px] bg-white border border-ghost rounded-xl p-[32px] shadow-card flex flex-col relative shrink-0 opacity-80">
+                <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest">3. Loading</span>
+                
+                <h3 class="font-serif text-[22px] font-bold text-ink mb-[24px]">Tickets</h3>
+
+                <div class="border border-ghost rounded-lg p-[16px] mb-[24px] flex items-center justify-between bg-paper-deep">
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[15px] font-bold text-ink">General Admission</span>
+                    </div>
+                    <span class="font-sans text-[16px] font-bold text-ink">£15.00</span>
+                </div>
+
+                <div class="flex flex-col gap-[16px] mb-[24px]">
+                    <div class="w-full h-[48px] border border-ghost rounded-lg bg-paper-deep flex items-center px-[16px]">
+                        <span class="font-sans text-[14px] text-mute">Zara Mensah</span>
+                    </div>
+                    <div class="w-full h-[48px] border border-ghost rounded-lg bg-paper-deep flex items-center px-[16px]">
+                        <span class="font-sans text-[14px] text-mute">zara@example.com</span>
+                    </div>
+                </div>
+
+                <button class="w-full h-[52px] bg-ghost text-white font-sans text-[15px] font-bold rounded-full shadow-sm flex items-center justify-center cursor-not-allowed gap-[8px]">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Redirecting to payment…
+                </button>
+            </div>
+
+            <!-- State 4: Free success -->
+            <div class="w-[420px] bg-[#E6F4EA] border border-success rounded-xl p-[40px] shadow-card flex flex-col items-center text-center relative shrink-0">
+                <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest border border-ghost/40">4. Success (Free)</span>
+                
+                <div class="w-[64px] h-[64px] rounded-full bg-success flex items-center justify-center mb-[24px] shadow-sm">
+                    <svg class="w-[32px] h-[32px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="font-serif text-[28px] font-bold text-ink mb-[12px] leading-tight">You're on the list.</h3>
+                <p class="font-sans text-[15px] text-success leading-[1.6]">
+                    Confirmation sent by email · See you there.
+                </p>
+                <button class="font-sans text-[14px] font-bold text-ink mt-[32px] border-b border-ink pb-0.5 hover:opacity-70 transition-opacity">Add to calendar</button>
+            </div>
+
+            <!-- State 5: Error (Stacked variants) -->
+            <div class="w-[420px] flex flex-col gap-[24px] shrink-0">
+                
+                <div class="w-full bg-white border border-ghost rounded-xl p-[24px] shadow-card flex flex-col relative">
+                    <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest border border-ghost/40">5A. Error (Already registered)</span>
+                    
+                    <div class="bg-[#FCE8E8] border border-error rounded-lg p-[16px] flex items-start gap-[12px] mb-[24px]">
+                        <svg class="w-[20px] h-[20px] text-error shrink-0 mt-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="font-sans text-[14px] font-bold text-error leading-snug">You are already registered for this event.</span>
+                    </div>
+                    
+                    <!-- Form disabled -->
+                    <div class="flex flex-col gap-[16px] opacity-50 pointer-events-none">
+                        <div class="flex flex-col gap-[6px]">
+                            <label class="font-sans text-[13px] font-bold text-ink">Full name</label>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px]" value="Zara Mensah">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full bg-white border border-ghost rounded-xl p-[24px] shadow-card flex flex-col relative">
+                    <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest border border-ghost/40">5B. Error (Sold out)</span>
+                    
+                    <div class="bg-[#FCE8E8] border border-error rounded-lg p-[16px] flex items-start gap-[12px] mb-[24px]">
+                        <svg class="w-[20px] h-[20px] text-error shrink-0 mt-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="font-sans text-[14px] font-bold text-error leading-snug">Sorry — this event is now fully booked.</span>
+                    </div>
+                    
+                    <!-- Form disabled -->
+                    <div class="flex flex-col gap-[16px] opacity-50 pointer-events-none">
+                        <div class="w-full h-[52px] bg-ghost text-white rounded-full flex items-center justify-center">Waitlist only</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- DEV: 6 -->
+            <!-- DEV: Also show, as two additional small labelled cards beside the main 5: the `ticket_confirmed` payment-return state (green-tinted, "Ticket confirmed." + ref code) and the `ticket_pending` payment-return state (blue-tinted, "Payment received." + ref code) per DEV 6. -->
+            <!-- Return States (Small Cards) -->
+            <div class="w-[300px] flex flex-col gap-[24px] shrink-0">
+                
+                <div class="w-full bg-[#E6F4EA] border border-success rounded-xl p-[24px] shadow-sm flex flex-col items-center text-center relative">
+                    <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest border border-ghost/40">ticket_confirmed</span>
+                    <div class="w-[40px] h-[40px] rounded-full bg-success flex items-center justify-center mb-[16px]">
+                        <svg class="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h4 class="font-serif text-[20px] font-bold text-ink mb-[8px]">Ticket confirmed.</h4>
+                    <span class="font-mono text-[12px] text-success">Ref: TKT-8942A</span>
+                </div>
+
+                <div class="w-full bg-[#E3F2FD] border border-[#1976D2] rounded-xl p-[24px] shadow-sm flex flex-col items-center text-center relative">
+                    <span class="absolute -top-[10px] left-[16px] bg-paper-deep px-2 font-mono text-[10px] text-mute uppercase tracking-widest border border-ghost/40">ticket_pending</span>
+                    <div class="w-[40px] h-[40px] rounded-full bg-[#1976D2] flex items-center justify-center mb-[16px]">
+                        <svg class="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h4 class="font-serif text-[20px] font-bold text-ink mb-[8px]">Payment received.</h4>
+                    <span class="font-sans text-[13px] text-[#1976D2] mb-[8px] leading-snug">Processing your ticket...</span>
+                    <span class="font-mono text-[12px] text-[#1976D2]/70">Ref: CHK-9921B</span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: MOBILE COMPANION (390px, full scroll) -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 items-center">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Mobile Companion</span>
+        
+        <div class="ios-screen bg-paper rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Status Bar Mock -->
+            <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar">
+                
+                <!-- Hero -->
+                <div class="w-full bg-paper pt-[64px] pb-[40px] px-[24px] flex flex-col items-center border-b border-rule shrink-0">
+                    <h1 class="font-serif text-[40px] text-ink leading-[1.1] text-center">Moveee<br><span class="italic">Happenings</span></h1>
+                    <p class="font-sans text-[15px] text-ink-soft text-center leading-[1.6] mt-[16px]">
+                        Exhibitions, talks, parties, and pop-ups. Curated by the editorial team.
+                    </p>
+                    <div class="flex flex-col items-center gap-[24px] mt-[32px] w-full">
+                        <div class="flex items-center justify-between w-full border-b border-ghost-light pb-[12px]">
+                            <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest">Happenings this year</span>
+                            <span class="font-serif text-[24px] font-bold text-ink leading-none">248</span>
+                        </div>
+                        <div class="flex items-center justify-between w-full border-b border-ghost-light pb-[12px]">
+                            <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest">Cities covered</span>
+                            <span class="font-serif text-[24px] font-bold text-ink leading-none">12</span>
+                        </div>
+                        <div class="flex items-center justify-between w-full pb-[12px]">
+                            <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest">Categories</span>
+                            <span class="font-serif text-[24px] font-bold text-ink leading-none">8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticker -->
+                <div class="w-full h-[40px] bg-ink overflow-hidden flex items-center shrink-0 relative ticker-container">
+                    <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px]">
+                        <span class="mx-[16px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    </div>
+                    <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px] absolute top-0 left-full h-full">
+                        <span class="mx-[16px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                        <span class="mx-[16px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">★</span>
+                    </div>
+                </div>
+
+                <div class="bg-paper-deep pt-[40px] pb-[60px] flex flex-col gap-[48px]">
+                    
+                    <!-- Featured -->
+                    <div class="px-[20px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Featured</span>
+                        <h3 class="font-serif text-[28px] font-bold text-ink mb-[20px]">Spotlight</h3>
+                        
+                        <div class="flex flex-col gap-[16px]">
+                            <!-- Card 1 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                                <div class="w-full aspect-video bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] relative">
+                                    <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                        <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUN</span>
+                                        <span class="font-serif text-[18px] font-bold text-ochre leading-none">20</span>
+                                    </div>
+                                </div>
+                                <div class="p-[16px] flex flex-col">
+                                    <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">MUSIC</span>
+                                    <h4 class="font-serif text-[18px] font-bold text-ink leading-tight">Amapiano Night at The Jazz Cafe</h4>
+                                </div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                                <div class="w-full aspect-video bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] relative">
+                                    <div class="absolute top-[12px] right-[12px] bg-white/90 backdrop-blur-sm px-[8px] py-[4px] rounded-md shadow-sm flex flex-col items-center">
+                                        <span class="font-sans text-[9px] font-bold text-ink uppercase leading-none mb-1">JUL</span>
+                                        <span class="font-serif text-[18px] font-bold text-ochre leading-none">12</span>
+                                    </div>
+                                </div>
+                                <div class="p-[16px] flex flex-col">
+                                    <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">VISUAL ART</span>
+                                    <h4 class="font-serif text-[18px] font-bold text-ink leading-tight">Contemporary African Art Fair</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- By City -->
+                    <div class="px-[20px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Explore</span>
+                        <h3 class="font-serif text-[28px] font-bold text-ink mb-[20px]">By <span class="italic">City</span></h3>
+                        
+                        <div class="flex flex-col gap-[12px]">
+                            <!-- City Row 1 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center justify-between border border-ghost/30">
+                                <div class="flex items-center gap-[16px]">
+                                    <span class="text-[28px]">🇳🇬</span>
+                                    <div class="flex flex-col">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink leading-tight">Lagos</h4>
+                                        <span class="font-sans text-[13px] text-mute mt-[2px]">Nigeria</span>
+                                    </div>
+                                </div>
+                                <div class="bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                    <span class="font-mono text-[10px] text-ochre font-bold">24 live</span>
+                                </div>
+                            </div>
+                            <!-- City Row 2 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center justify-between border border-ghost/30">
+                                <div class="flex items-center gap-[16px]">
+                                    <span class="text-[28px]">🇬🇧</span>
+                                    <div class="flex flex-col">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink leading-tight">London</h4>
+                                        <span class="font-sans text-[13px] text-mute mt-[2px]">UK</span>
+                                    </div>
+                                </div>
+                                <div class="bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                    <span class="font-mono text-[10px] text-ochre font-bold">18 live</span>
+                                </div>
+                            </div>
+                            <!-- City Row 3 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center justify-between border border-ghost/30">
+                                <div class="flex items-center gap-[16px]">
+                                    <span class="text-[28px]">🇬🇭</span>
+                                    <div class="flex flex-col">
+                                        <h4 class="font-sans text-[16px] font-bold text-ink leading-tight">Accra</h4>
+                                        <span class="font-sans text-[13px] text-mute mt-[2px]">Ghana</span>
+                                    </div>
+                                </div>
+                                <div class="bg-paper-deep px-[10px] py-[4px] rounded-full">
+                                    <span class="font-mono text-[10px] text-ochre font-bold">12 live</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full font-sans text-[13px] font-bold text-ochre mt-[16px] text-center">View all 12 cities &rarr;</button>
+                    </div>
+
+                    <!-- EventTimeline (Single Col) -->
+                    <div class="w-full">
+                        <div class="flex flex-col items-center mb-[24px]">
+                            <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Timeline</span>
+                            <h3 class="font-serif text-[28px] font-bold text-ink">All Happenings</h3>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-card mx-[20px] p-[20px] border border-ghost/30 mb-[32px]">
+                            <!-- Month Header -->
+                            <div class="flex items-center gap-[12px] mb-[20px]">
+                                <div class="w-[8px] h-[8px] rounded-full bg-ochre"></div>
+                                <h3 class="font-serif text-[20px] font-bold text-ink">June 2026</h3>
+                            </div>
+
+                            <!-- Day Group -->
+                            <div class="relative">
+                                <div class="flex items-baseline gap-[8px] mb-[12px]">
+                                    <span class="font-serif text-[16px] font-bold text-ink">13 Jun</span>
+                                    <span class="font-sans text-[12px] text-mute">Friday</span>
+                                </div>
+
+                                <div class="flex flex-col gap-[16px] border-l-[2px] border-ghost-light ml-[4px] pl-[16px]">
+                                    <!-- EventRow -->
+                                    <div class="flex items-center gap-[12px] -ml-[6px]">
+                                        <div class="w-[40px] h-[40px] rounded-md bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] shrink-0"></div>
+                                        <div class="flex-1 flex flex-col">
+                                            <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-1">Amapiano Night at The Jazz Cafe</h4>
+                                            <span class="font-sans text-[12px] text-mute mt-[2px] line-clamp-1">◍ London · Live Music</span>
+                                        </div>
+                                    </div>
+                                    <!-- EventRow 2 -->
+                                    <div class="flex items-center gap-[12px] -ml-[6px]">
+                                        <div class="w-[40px] h-[40px] rounded-md bg-gradient-to-br from-[#182848] to-[#4B6CB7] shrink-0 flex items-center justify-center">
+                                            <svg class="w-[16px] h-[16px] text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        </div>
+                                        <div class="flex-1 flex flex-col">
+                                            <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-1">African Film Festival Opening Night</h4>
+                                            <span class="font-sans text-[12px] text-mute mt-[2px] line-clamp-1">◍ Lagos · Film</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connect CTA Band (Stacked) -->
+                    <div class="w-full bg-ink px-[24px] py-[48px]">
+                        <div class="flex flex-col text-center items-center mb-[32px]">
+                            <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Moveee</span>
+                            <h3 class="font-serif text-[32px] font-bold text-white leading-tight mb-[12px]">Members go first.</h3>
+                            <p class="font-sans text-[14px] text-white/80 leading-[1.6]">
+                                Priority access to the events that shape the culture. Never miss a ticket release again.
+                            </p>
+                        </div>
+                        
+                        <div class="bg-white/5 rounded-xl p-[20px] mb-[24px] border border-white/10">
+                            <ul class="flex flex-col gap-[16px]">
+                                <li class="flex items-start gap-[12px]">
+                                    <span class="text-[16px] text-gold mt-[2px]">★</span>
+                                    <span class="font-sans text-[14px] text-white font-medium">Early RSVP — 48 hours before public</span>
+                                </li>
+                                <li class="flex items-start gap-[12px]">
+                                    <span class="text-[16px] text-gold mt-[2px]">★</span>
+                                    <span class="font-sans text-[14px] text-white font-medium">Private views & members-only dinners</span>
+                                </li>
+                                <li class="flex items-start gap-[12px]">
+                                    <span class="text-[16px] text-gold mt-[2px]">★</span>
+                                    <span class="font-sans text-[14px] text-white font-medium">15% off Lifestyle shop</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button class="w-full h-[52px] bg-white rounded-full text-ink font-sans text-[15px] font-bold flex items-center justify-center shadow-sm">
+                            Become a Member &rarr;
+                        </button>
+                        <span class="font-mono text-[11px] text-white/60 block text-center mt-[16px]">from $9 / month</span>
+                    </div>
+
+                    <!-- Detail Luma Hero Stacked Mock -->
+                    <div class="w-full bg-white px-[20px] py-[40px] border-y border-ghost-light">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest block mb-[16px] text-center">Detail Screen Top</span>
+                        
+                        <div class="w-full aspect-square rounded-xl bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shadow-card mb-[24px] relative">
+                            <div class="absolute top-[12px] left-[12px] bg-white/90 backdrop-blur-sm px-[10px] py-[4px] rounded-full shadow-sm flex items-center gap-[4px]">
+                                <svg class="w-3 h-3 text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="font-sans text-[9px] font-bold text-ink uppercase tracking-wider">Featured</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-[8px] mb-[12px]">
+                                <div class="bg-ochre/10 text-ochre px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider border border-ochre/20">LIVE MUSIC</div>
+                                <div class="flex items-center gap-[4px]">
+                                    <div class="w-[6px] h-[6px] rounded-full bg-success"></div>
+                                    <span class="font-mono text-[9px] text-mute uppercase tracking-widest">Upcoming</span>
+                                </div>
+                            </div>
+                            <h2 class="font-serif text-[28px] font-bold text-ink leading-[1.1] mb-[8px]">Amapiano Night at The Jazz Cafe</h2>
+                            
+                            <div class="flex flex-col gap-[12px] my-[24px] bg-paper-warm p-[16px] rounded-xl border border-ghost/30">
+                                <div class="flex items-start gap-[12px]">
+                                    <span class="text-[16px] text-mute">📅</span>
+                                    <span class="font-sans text-[14px] text-ink font-medium leading-tight">Fri, 13 Jun · 9:00 PM</span>
+                                </div>
+                                <div class="flex items-start gap-[12px]">
+                                    <span class="text-[16px] text-mute">📍</span>
+                                    <span class="font-sans text-[14px] text-ink font-medium leading-tight">The Jazz Cafe, London</span>
+                                </div>
+                            </div>
+
+                            <button class="w-full h-[52px] bg-ochre rounded-full text-white font-sans text-[15px] font-bold shadow-md flex items-center justify-center">
+                                RSVP Now &rarr;
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</body>
+</html>

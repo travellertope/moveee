@@ -55,6 +55,7 @@ export default function MemberDashboard({
   const capHit    = dailyCreditsRemaining === 0;
 
   return (
+    <div className="mem-stats-band">
     <div className="mem-stats" ref={tooltipRef}>
       {/* Credits */}
       <div className="mem-stat mem-stat--credits">
@@ -115,6 +116,7 @@ export default function MemberDashboard({
         <span className="mem-stat-value">{membership}</span>
         <span className="mem-stat-label">Membership</span>
       </div>
+    </div>
     </div>
   );
 }

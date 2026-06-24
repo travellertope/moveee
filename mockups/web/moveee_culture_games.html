@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Culture Games</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        error: '#C62828',
+                        // Game specific colors
+                        'game-quotes': '#C5491F',
+                        'game-trivia': '#3D4A2A',
+                        'game-sudoku': '#1A3A5C',
+                        'game-crossword': '#5C3A1A',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: GAMES HUB (Desktop)                   -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Games Hub</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <!-- Header Band -->
+            <div class="w-full pt-[80px] pb-[64px] flex flex-col items-center text-center px-[24px]">
+                <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[12px]">Culture Games</span>
+                <h1 class="font-serif text-[56px] text-ink leading-tight">Play. <span class="italic">Learn.</span> Connect.</h1>
+                <p class="font-sans text-[18px] text-ink-soft max-w-[600px] leading-[1.6] mt-[16px]">
+                    Test your knowledge of African and diaspora culture — music, film, literature, history, and everything in between.
+                </p>
+            </div>
+
+            <!-- Games Grid -->
+            <!-- DEV: 1 -->
+            <!-- DEV: No card is dimmed or locked. -->
+            <div class="max-w-[1000px] mx-auto grid grid-cols-2 gap-[24px] px-[24px] w-full">
+                
+                <!-- GameCard 1: Who Said It -->
+                <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform border border-ghost/40">
+                    <div class="h-[12px] bg-game-quotes w-full"></div>
+                    <div class="p-[24px] flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-[16px]">
+                            <span class="text-[40px] leading-none">💬</span>
+                            <span class="bg-game-quotes/10 text-game-quotes px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-game-quotes/20">Quotes</span>
+                        </div>
+                        <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Who Said It?</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px] flex-1">
+                            A quote appears — you guess who said it. 10 rounds drawn live from our verified quote archive.
+                        </p>
+                        <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                            <div class="flex items-center gap-[12px] font-mono text-[11px] text-mute">
+                                <span>Mixed difficulty</span>
+                                <span>·</span>
+                                <span>10 rounds</span>
+                            </div>
+                            <span class="font-sans text-[14px] font-bold text-ochre group-hover:underline underline-offset-2">Play now &rarr;</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- GameCard 2: Culture Trivia -->
+                <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform border border-ghost/40">
+                    <div class="h-[12px] bg-game-trivia w-full"></div>
+                    <div class="p-[24px] flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-[16px]">
+                            <span class="text-[40px] leading-none">🧠</span>
+                            <span class="bg-game-trivia/10 text-game-trivia px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-game-trivia/20">Daily</span>
+                        </div>
+                        <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Culture Trivia</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px] flex-1">
+                            10 daily questions spanning Afrobeats, Nollywood, literature, history, and African art. Fresh questions every day.
+                        </p>
+                        <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                            <div class="flex items-center gap-[12px] font-mono text-[11px] text-mute">
+                                <span>Easy to Hard</span>
+                                <span>·</span>
+                                <span>10 questions</span>
+                            </div>
+                            <span class="font-sans text-[14px] font-bold text-ochre group-hover:underline underline-offset-2">Play now &rarr;</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- GameCard 3: Daily Sudoku -->
+                <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform border border-ghost/40">
+                    <div class="h-[12px] bg-game-sudoku w-full"></div>
+                    <div class="p-[24px] flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-[16px]">
+                            <span class="text-[40px] leading-none">🔢</span>
+                            <span class="bg-game-sudoku/10 text-game-sudoku px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-game-sudoku/20">Puzzle</span>
+                        </div>
+                        <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Daily Sudoku</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px] flex-1">
+                            One 9×9 grid a day — same puzzle for every player worldwide. No luck, pure logic.
+                        </p>
+                        <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                            <div class="flex items-center gap-[12px] font-mono text-[11px] text-mute">
+                                <span>Medium</span>
+                                <span>·</span>
+                                <span>1 daily grid</span>
+                            </div>
+                            <span class="font-sans text-[14px] font-bold text-ochre group-hover:underline underline-offset-2">Play now &rarr;</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- GameCard 4: Daily Crossword -->
+                <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col group cursor-pointer hover:-translate-y-1 transition-transform border border-ghost/40">
+                    <div class="h-[12px] bg-game-crossword w-full"></div>
+                    <div class="p-[24px] flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-[16px]">
+                            <span class="text-[40px] leading-none">📝</span>
+                            <span class="bg-game-crossword/10 text-game-crossword px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-game-crossword/20">Culture</span>
+                        </div>
+                        <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">Daily Crossword</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px] flex-1">
+                            A new African culture mini-crossword every day. Test your knowledge of people, places, and traditions.
+                        </p>
+                        <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                            <div class="flex items-center gap-[12px] font-mono text-[11px] text-mute">
+                                <span>Mixed</span>
+                                <span>·</span>
+                                <span>1 daily puzzle</span>
+                            </div>
+                            <span class="font-sans text-[14px] font-bold text-ochre group-hover:underline underline-offset-2">Play now &rarr;</span>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: TRIVIA: QUESTION IN PROGRESS          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Trivia In Progress</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative min-h-[800px]">
+            
+            <!-- Slim Nav Bar -->
+            <div class="w-full h-[56px] bg-white border-b border-ghost-light flex items-center px-[24px]">
+                <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors flex items-center gap-2">
+                    <span>&larr;</span> Games
+                </a>
+                <span class="text-ghost mx-[12px]">/</span>
+                <span class="font-sans text-[14px] font-bold text-ink">Culture Trivia</span>
+            </div>
+
+            <!-- Game Container -->
+            <div class="w-full max-w-[640px] mx-auto mt-[64px] mb-[80px]">
+                
+                <!-- Game Header -->
+                <div class="text-center mb-[32px]">
+                    <span class="font-mono text-[11px] font-bold text-game-trivia uppercase tracking-widest block mb-[8px]">Culture Trivia</span>
+                    <h2 class="font-serif text-[24px] font-bold text-ink">Today's quiz · 23 June 2026</h2>
+                </div>
+
+                <!-- Game Card -->
+                <div class="bg-white rounded-xl shadow-card p-[40px] border border-ghost/30 flex flex-col">
+                    
+                    <!-- Progress Pips -->
+                    <div class="flex items-center justify-center gap-[8px] mb-[24px]">
+                        <div class="w-[8px] h-[8px] rounded-full bg-game-trivia"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-game-trivia"></div>
+                        <!-- Active Pip -->
+                        <div class="w-[12px] h-[12px] rounded-full border-[2px] border-game-trivia bg-white"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                    </div>
+
+                    <!-- Question Header -->
+                    <div class="text-center mb-[24px]">
+                        <span class="font-mono text-[12px] text-mute uppercase tracking-widest">Question 3 of 10 · Music</span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h3 class="font-serif text-[28px] text-ink text-center leading-[1.3] mb-[40px] max-w-[480px] mx-auto">
+                        Which artist's 2020 album "Twice as Tall" won the Grammy Award for Best Global Music Album?
+                    </h3>
+
+                    <!-- Options Stack -->
+                    <div class="flex flex-col gap-[12px]">
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] hover:bg-paper-deep transition-colors group text-left">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute group-hover:bg-white shrink-0">A</span>
+                            <span class="font-sans text-[16px] text-ink">Wizkid</span>
+                        </button>
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] hover:bg-paper-deep transition-colors group text-left">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute group-hover:bg-white shrink-0">B</span>
+                            <span class="font-sans text-[16px] text-ink">Davido</span>
+                        </button>
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] hover:bg-paper-deep transition-colors group text-left">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute group-hover:bg-white shrink-0">C</span>
+                            <span class="font-sans text-[16px] text-ink">Burna Boy</span>
+                        </button>
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] hover:bg-paper-deep transition-colors group text-left">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute group-hover:bg-white shrink-0">D</span>
+                            <span class="font-sans text-[16px] text-ink">Tiwa Savage</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: TRIVIA: ANSWER REVEALED               -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Trivia Answer Revealed</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative min-h-[800px]">
+            
+            <!-- Slim Nav Bar -->
+            <div class="w-full h-[56px] bg-white border-b border-ghost-light flex items-center px-[24px]">
+                <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors flex items-center gap-2">
+                    <span>&larr;</span> Games
+                </a>
+                <span class="text-ghost mx-[12px]">/</span>
+                <span class="font-sans text-[14px] font-bold text-ink">Culture Trivia</span>
+            </div>
+
+            <!-- Game Container -->
+            <div class="w-full max-w-[640px] mx-auto mt-[64px] mb-[80px]">
+                
+                <!-- Game Header -->
+                <div class="text-center mb-[32px]">
+                    <span class="font-mono text-[11px] font-bold text-game-trivia uppercase tracking-widest block mb-[8px]">Culture Trivia</span>
+                    <h2 class="font-serif text-[24px] font-bold text-ink">Today's quiz · 23 June 2026</h2>
+                </div>
+
+                <!-- Game Card -->
+                <div class="bg-white rounded-xl shadow-card p-[40px] border border-ghost/30 flex flex-col">
+                    
+                    <!-- Progress Pips -->
+                    <div class="flex items-center justify-center gap-[8px] mb-[24px]">
+                        <div class="w-[8px] h-[8px] rounded-full bg-game-trivia"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-game-trivia"></div>
+                        <!-- Active Pip (now filled since answered) -->
+                        <div class="w-[8px] h-[8px] rounded-full bg-game-trivia"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                        <div class="w-[8px] h-[8px] rounded-full bg-ghost"></div>
+                    </div>
+
+                    <!-- Question Header -->
+                    <div class="text-center mb-[24px]">
+                        <span class="font-mono text-[12px] text-mute uppercase tracking-widest">Question 3 of 10 · Music</span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h3 class="font-serif text-[28px] text-ink text-center leading-[1.3] mb-[40px] max-w-[480px] mx-auto">
+                        Which artist's 2020 album "Twice as Tall" won the Grammy Award for Best Global Music Album?
+                    </h3>
+
+                    <!-- Options Stack (Revealed State) -->
+                    <div class="flex flex-col gap-[12px] mb-[32px]">
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] text-left opacity-50 cursor-default">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute shrink-0">A</span>
+                            <span class="font-sans text-[16px] text-ink flex-1">Wizkid</span>
+                        </button>
+                        <!-- Selected Wrong -->
+                        <button class="w-full min-h-[64px] border-[2px] border-error bg-[#FCE8E8] rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] text-left cursor-default">
+                            <span class="w-[32px] h-[32px] rounded border border-error bg-white flex items-center justify-center font-mono text-[14px] font-bold text-error shrink-0">B</span>
+                            <span class="font-sans text-[16px] font-bold text-error flex-1">Davido</span>
+                            <span class="text-error font-bold text-[18px]">×</span>
+                        </button>
+                        <!-- Correct Option -->
+                        <button class="w-full min-h-[64px] border-[2px] border-success bg-[#E6F4EA] rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] text-left cursor-default">
+                            <span class="w-[32px] h-[32px] rounded border border-success bg-white flex items-center justify-center font-mono text-[14px] font-bold text-success shrink-0">C</span>
+                            <span class="font-sans text-[16px] font-bold text-success flex-1">Burna Boy</span>
+                            <span class="text-success font-bold text-[18px]">✓</span>
+                        </button>
+                        <button class="w-full min-h-[64px] border border-ghost rounded-lg px-[20px] py-[12px] flex items-center gap-[16px] text-left opacity-50 cursor-default">
+                            <span class="w-[32px] h-[32px] rounded border border-ghost flex items-center justify-center font-mono text-[14px] font-bold text-mute shrink-0">D</span>
+                            <span class="font-sans text-[16px] text-ink flex-1">Tiwa Savage</span>
+                        </button>
+                    </div>
+
+                    <!-- Explanation Box -->
+                    <div class="bg-paper-deep rounded-lg p-[24px] border border-ghost-light mb-[32px]">
+                        <span class="font-sans text-[13px] font-bold text-ink uppercase tracking-wider block mb-[8px]">Did you know?</span>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6]">
+                            "Twice as Tall" is Burna Boy's fifth studio album. It won Best Global Music Album at the 63rd Annual Grammy Awards, making him the first Nigerian artist to win in this category.
+                        </p>
+                    </div>
+
+                    <!-- Next Button -->
+                    <button class="w-full h-[56px] bg-ochre text-white rounded-full font-sans text-[16px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors">
+                        Next Question &rarr;
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: SHARED GAME DONE SCREEN (Component)   -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 w-full max-w-[1024px]">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Shared Game Done Screen (Quiz & Puzzle States)</span>
+        
+        <div class="flex gap-[40px] justify-center">
+            
+            <!-- Quiz Game State -->
+            <!-- DEV: 2 -->
+            <!-- DEV: "Already played today" renders the GameDoneScreen result for that day's already-recorded score, no countdown timer anywhere. -->
+            <div class="w-[480px] bg-white rounded-xl shadow-card border border-ghost/40 flex flex-col overflow-hidden shrink-0">
+                <!-- Card Header -->
+                <div class="h-[48px] bg-paper-deep px-[20px] flex items-center justify-between border-b border-ghost-light">
+                    <span class="font-serif text-[14px] font-bold text-ink uppercase tracking-wider">THE MOVEEE</span>
+                    <span class="font-sans text-[12px] font-bold text-game-trivia bg-game-trivia/10 px-[8px] py-[2px] rounded-full">🧠 Culture Trivia</span>
+                </div>
+
+                <!-- Result Zone -->
+                <div class="p-[40px] flex flex-col items-center text-center border-b border-ghost-light bg-paper-warm">
+                    <div class="bg-white px-[12px] py-[6px] rounded-full shadow-sm border border-ghost/30 mb-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-ink uppercase tracking-widest">🔥 SHARP</span>
+                    </div>
+                    
+                    <span class="text-[72px] leading-none mb-[16px]">🔥</span>
+                    
+                    <div class="flex items-baseline gap-[4px] mb-[12px]">
+                        <span class="font-serif text-[48px] font-bold text-ink leading-none">8</span>
+                        <span class="font-sans text-[24px] text-mute font-medium">/10</span>
+                        <span class="font-mono text-[14px] font-bold text-ochre ml-[8px]">80%</span>
+                    </div>
+
+                    <p class="font-serif text-[18px] italic text-ink-soft">"Culture is in your blood."</p>
+
+                    <!-- Meta Row -->
+                    <div class="flex items-center gap-[8px] mt-[24px]">
+                        <span class="font-mono text-[11px] text-mute">23 June 2026</span>
+                        <span class="w-[4px] h-[4px] rounded-full bg-ghost"></span>
+                        <span class="font-sans text-[11px] font-bold text-ink bg-white px-[8px] py-[2px] rounded-md border border-ghost/40 shadow-sm">Already played today</span>
+                    </div>
+                </div>
+
+                <!-- Actions Zone -->
+                <div class="p-[32px] flex flex-col gap-[24px]">
+                    <button class="w-full h-[52px] border-[2px] border-ink rounded-full font-sans text-[15px] font-bold text-ink hover:bg-paper-deep transition-colors flex items-center justify-center gap-[8px]">
+                        Share your score &rarr;
+                    </button>
+
+                    <!-- Email Capture -->
+                    <div class="bg-paper-deep rounded-xl p-[20px] border border-ghost/30">
+                        <span class="font-sans text-[13px] font-bold text-ink block mb-[12px]">Get daily game reminders</span>
+                        <div class="flex gap-[8px]">
+                            <input type="email" placeholder="Your email address" class="flex-1 h-[44px] px-[16px] rounded-lg border border-ghost font-sans text-[14px] bg-white">
+                            <button class="h-[44px] px-[16px] bg-ink text-white rounded-lg font-sans text-[13px] font-bold hover:bg-gray-800 transition-colors">Notify me</button>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="flex items-center justify-between pt-[8px]">
+                        <button class="font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-2">Try Who Said It? &rarr;</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink transition-colors">All Games</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Puzzle Game State -->
+            <!-- DEV: 3 -->
+            <!-- DEV: Result badges by score band for quiz games. COMPLETE badge for puzzle games. Score fraction + percentage omitted for puzzle games. -->
+            <div class="w-[480px] bg-white rounded-xl shadow-card border border-ghost/40 flex flex-col overflow-hidden shrink-0">
+                <!-- Card Header -->
+                <div class="h-[48px] bg-paper-deep px-[20px] flex items-center justify-between border-b border-ghost-light">
+                    <span class="font-serif text-[14px] font-bold text-ink uppercase tracking-wider">THE MOVEEE</span>
+                    <span class="font-sans text-[12px] font-bold text-game-crossword bg-game-crossword/10 px-[8px] py-[2px] rounded-full">📝 Daily Crossword</span>
+                </div>
+
+                <!-- Result Zone (Puzzle Version) -->
+                <div class="p-[40px] flex flex-col items-center text-center border-b border-ghost-light bg-paper-warm flex-1">
+                    <div class="bg-white px-[12px] py-[6px] rounded-full shadow-sm border border-ghost/30 mb-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-ink uppercase tracking-widest">🏅 COMPLETE</span>
+                    </div>
+                    
+                    <span class="text-[72px] leading-none mb-[24px]">🏅</span>
+
+                    <p class="font-serif text-[18px] italic text-ink-soft">"Puzzle solved."</p>
+
+                    <!-- Meta Row -->
+                    <div class="flex items-center gap-[8px] mt-[24px]">
+                        <span class="font-mono text-[11px] text-mute">23 June 2026</span>
+                    </div>
+                </div>
+
+                <!-- Actions Zone -->
+                <div class="p-[32px] flex flex-col gap-[24px] shrink-0">
+                    <button class="w-full h-[52px] border-[2px] border-ink rounded-full font-sans text-[15px] font-bold text-ink hover:bg-paper-deep transition-colors flex items-center justify-center gap-[8px] relative overflow-hidden">
+                        <!-- Simulated copy feedback -->
+                        <div class="absolute inset-0 bg-success flex items-center justify-center">
+                            <span class="text-white font-bold">✓ Copied to clipboard</span>
+                        </div>
+                    </button>
+
+                    <!-- Email Capture (Success State) -->
+                    <div class="bg-[#E6F4EA] rounded-xl p-[20px] border border-success/30 flex items-center gap-[12px]">
+                        <div class="w-[24px] h-[24px] rounded-full bg-success flex items-center justify-center shrink-0">
+                            <span class="text-white text-[12px] font-bold">✓</span>
+                        </div>
+                        <span class="font-sans text-[13px] font-bold text-success leading-snug">You're on the list — we'll ping you daily.</span>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="flex items-center justify-between pt-[8px]">
+                        <button class="font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-2">Try Daily Sudoku &rarr;</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink transition-colors">All Games</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: MOBILE COMPANION                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 items-center mt-[40px]">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Mobile Companion</span>
+        
+        <div class="flex gap-[40px] justify-center flex-wrap">
+            
+            <!-- Mobile Games Hub -->
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Status Bar Mock -->
+                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                    <!-- Header Band -->
+                    <div class="w-full pt-[80px] pb-[40px] flex flex-col items-center text-center px-[24px]">
+                        <span class="font-mono text-[10px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Culture Games</span>
+                        <h1 class="font-serif text-[36px] text-ink leading-tight">Play. <span class="italic">Learn.</span> Connect.</h1>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mt-[12px]">
+                            Test your knowledge of African and diaspora culture.
+                        </p>
+                    </div>
+
+                    <!-- Games Stack -->
+                    <div class="px-[20px] flex flex-col gap-[16px]">
+                        <!-- Card 1 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col border border-ghost/40">
+                            <div class="h-[8px] bg-game-quotes w-full"></div>
+                            <div class="p-[20px] flex flex-col">
+                                <div class="flex justify-between items-start mb-[12px]">
+                                    <span class="text-[32px] leading-none">💬</span>
+                                    <span class="bg-game-quotes/10 text-game-quotes px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider border border-game-quotes/20">Quotes</span>
+                                </div>
+                                <h3 class="font-serif text-[20px] font-bold text-ink mb-[8px]">Who Said It?</h3>
+                                <p class="font-sans text-[13px] text-ink-soft leading-[1.6] mb-[20px]">
+                                    A quote appears — you guess who said it. 10 rounds drawn live from our verified quote archive.
+                                </p>
+                                <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                                    <div class="flex items-center gap-[8px] font-mono text-[10px] text-mute">
+                                        <span>Mixed</span><span>·</span><span>10 rds</span>
+                                    </div>
+                                    <span class="font-sans text-[13px] font-bold text-ochre">Play now &rarr;</span>
+                                </div>
+                            </div>
+                        </a>
+                        <!-- Card 2 -->
+                        <a href="#" class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col border border-ghost/40">
+                            <div class="h-[8px] bg-game-trivia w-full"></div>
+                            <div class="p-[20px] flex flex-col">
+                                <div class="flex justify-between items-start mb-[12px]">
+                                    <span class="text-[32px] leading-none">🧠</span>
+                                    <span class="bg-game-trivia/10 text-game-trivia px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider border border-game-trivia/20">Daily</span>
+                                </div>
+                                <h3 class="font-serif text-[20px] font-bold text-ink mb-[8px]">Culture Trivia</h3>
+                                <p class="font-sans text-[13px] text-ink-soft leading-[1.6] mb-[20px]">
+                                    10 daily questions spanning Afrobeats, Nollywood, literature, history, and African art.
+                                </p>
+                                <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                                    <div class="flex items-center gap-[8px] font-mono text-[10px] text-mute">
+                                        <span>Easy-Hard</span><span>·</span><span>10 q's</span>
+                                    </div>
+                                    <span class="font-sans text-[13px] font-bold text-ochre">Play now &rarr;</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Trivia Question -->
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    </div>
+                </div>
+
+                <div class="w-full h-[52px] bg-white border-b border-ghost-light flex items-center px-[20px] mt-[48px] shrink-0">
+                    <span class="font-sans text-[14px] text-mute">&larr; Games</span>
+                    <span class="text-ghost mx-[8px]">/</span>
+                    <span class="font-sans text-[14px] font-bold text-ink">Trivia</span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto px-[20px] py-[32px] flex flex-col">
+                    <div class="text-center mb-[24px]">
+                        <span class="font-mono text-[10px] font-bold text-game-trivia uppercase tracking-widest block mb-[4px]">Culture Trivia</span>
+                        <h2 class="font-serif text-[18px] font-bold text-ink">Today's quiz · 23 Jun</h2>
+                    </div>
+
+                    <!-- Progress Pips -->
+                    <div class="flex items-center justify-center gap-[6px] mb-[24px]">
+                        <div class="w-[6px] h-[6px] rounded-full bg-game-trivia"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-game-trivia"></div>
+                        <div class="w-[10px] h-[10px] rounded-full border-[2px] border-game-trivia bg-white"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-ghost"></div>
+                        <div class="w-[6px] h-[6px] rounded-full bg-ghost"></div>
+                    </div>
+
+                    <div class="text-center mb-[16px]">
+                        <span class="font-mono text-[10px] text-mute uppercase tracking-widest">Question 3 of 10 · Music</span>
+                    </div>
+
+                    <h3 class="font-serif text-[22px] text-ink text-center leading-[1.3] mb-[32px]">
+                        Which artist's 2020 album "Twice as Tall" won the Grammy Award for Best Global Music Album?
+                    </h3>
+
+                    <div class="flex flex-col gap-[10px] mt-auto">
+                        <button class="w-full min-h-[56px] bg-white border border-ghost rounded-lg px-[16px] py-[12px] flex items-center gap-[12px] text-left">
+                            <span class="w-[28px] h-[28px] rounded border border-ghost flex items-center justify-center font-mono text-[12px] font-bold text-mute shrink-0">A</span>
+                            <span class="font-sans text-[15px] text-ink">Wizkid</span>
+                        </button>
+                        <button class="w-full min-h-[56px] bg-white border border-ghost rounded-lg px-[16px] py-[12px] flex items-center gap-[12px] text-left">
+                            <span class="w-[28px] h-[28px] rounded border border-ghost flex items-center justify-center font-mono text-[12px] font-bold text-mute shrink-0">B</span>
+                            <span class="font-sans text-[15px] text-ink">Davido</span>
+                        </button>
+                        <button class="w-full min-h-[56px] bg-white border border-ghost rounded-lg px-[16px] py-[12px] flex items-center gap-[12px] text-left">
+                            <span class="w-[28px] h-[28px] rounded border border-ghost flex items-center justify-center font-mono text-[12px] font-bold text-mute shrink-0">C</span>
+                            <span class="font-sans text-[15px] text-ink">Burna Boy</span>
+                        </button>
+                        <button class="w-full min-h-[56px] bg-white border border-ghost rounded-lg px-[16px] py-[12px] flex items-center gap-[12px] text-left">
+                            <span class="w-[28px] h-[28px] rounded border border-ghost flex items-center justify-center font-mono text-[12px] font-bold text-mute shrink-0">D</span>
+                            <span class="font-sans text-[15px] text-ink">Tiwa Savage</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Game Done -->
+            <div class="ios-screen bg-paper-deep rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl justify-center px-[20px]">
+                
+                <div class="w-full bg-white rounded-xl shadow-card border border-ghost/40 flex flex-col overflow-hidden">
+                    <div class="h-[44px] bg-paper-deep px-[16px] flex items-center justify-between border-b border-ghost-light">
+                        <span class="font-serif text-[12px] font-bold text-ink uppercase tracking-wider">THE MOVEEE</span>
+                        <span class="font-sans text-[10px] font-bold text-game-trivia bg-game-trivia/10 px-[8px] py-[2px] rounded-full">🧠 Culture Trivia</span>
+                    </div>
+
+                    <div class="p-[32px] flex flex-col items-center text-center border-b border-ghost-light bg-paper-warm">
+                        <div class="bg-white px-[10px] py-[4px] rounded-full shadow-sm border border-ghost/30 mb-[20px]">
+                            <span class="font-mono text-[10px] font-bold text-ink uppercase tracking-widest">🔥 SHARP</span>
+                        </div>
+                        
+                        <span class="text-[64px] leading-none mb-[12px]">🔥</span>
+                        
+                        <div class="flex items-baseline gap-[4px] mb-[8px]">
+                            <span class="font-serif text-[40px] font-bold text-ink leading-none">8</span>
+                            <span class="font-sans text-[20px] text-mute font-medium">/10</span>
+                        </div>
+
+                        <p class="font-serif text-[16px] italic text-ink-soft">"Culture is in your blood."</p>
+
+                        <div class="flex items-center gap-[8px] mt-[20px]">
+                            <span class="font-mono text-[10px] text-mute">23 Jun 2026</span>
+                            <span class="w-[4px] h-[4px] rounded-full bg-ghost"></span>
+                            <span class="font-sans text-[10px] font-bold text-ink bg-white px-[6px] py-[2px] rounded border border-ghost/40 shadow-sm">Already played</span>
+                        </div>
+                    </div>
+
+                    <div class="p-[20px] flex flex-col gap-[20px]">
+                        <button class="w-full h-[48px] border-[2px] border-ink rounded-full font-sans text-[14px] font-bold text-ink flex items-center justify-center gap-[8px]">
+                            Share your score &rarr;
+                        </button>
+
+                        <div class="bg-paper-deep rounded-xl p-[16px] border border-ghost/30">
+                            <span class="font-sans text-[12px] font-bold text-ink block mb-[8px]">Get reminders</span>
+                            <div class="flex gap-[8px]">
+                                <input type="email" placeholder="Email" class="flex-1 h-[40px] px-[12px] rounded-lg border border-ghost font-sans text-[13px] bg-white">
+                                <button class="h-[40px] px-[12px] bg-ink text-white rounded-lg font-sans text-[12px] font-bold">Notify</button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-[4px]">
+                            <button class="font-sans text-[13px] font-bold text-ochre">Try Sudoku &rarr;</button>
+                            <button class="font-sans text-[13px] text-mute">All Games</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

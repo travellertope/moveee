@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Pulse Feed (Web)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        rule: '#E8E2D8',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .ios-screen { width: 390px; height: 844px; flex-shrink: 0; }
+        
+        /* Outline Icons Shared Classes */
+        .icon-outline { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: DESKTOP, LOGGED-OUT                   -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Desktop, Logged-Out</span>
+        <div class="desktop-screen bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative">
+
+            <!-- DEV: <note> -->
+            <!-- DEV: ConnectHero.tsx checks useSession() client-side and renders null for logged-in users — it is NOT conditionally mounted by the server. Keep this client-side check pattern in the generated component rather than gating it in the parent RSC, to avoid layout-shift on session hydration (see the comment already in apps/connect/app/feed/page.tsx). -->
+            
+            <!-- CONNECT HERO -->
+            <div class="w-full bg-paper-warm pt-[64px] flex flex-col items-center border-b border-rule">
+                <span class="font-sans text-[11px] font-bold text-ochre uppercase tracking-widest mb-[12px]">Moveee</span>
+                <h1 class="font-serif text-[40px] text-ink leading-tight mb-[16px]">Where culture <span class="italic">gathers.</span></h1>
+                <p class="font-sans text-[16px] text-ink-soft max-w-[480px] text-center leading-[1.6]">
+                    Village square for culture loving creatives, entrepreneurs, professionals.
+                </p>
+                
+                <div class="flex flex-col items-center gap-[12px] mt-[32px] mb-[48px]">
+                    <button class="h-[48px] px-[24px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold hover:bg-[#A93C15] transition-colors">Join Moveee &rarr;</button>
+                    <button class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Already a member? Sign in</button>
+                </div>
+
+                <!-- Section Nav Strip -->
+                <div class="w-full h-[56px] bg-white border-t border-rule flex items-center justify-center gap-[24px]">
+                    <button class="font-sans text-[13px] font-bold text-ink underline underline-offset-4">Pulse Feed</button>
+                    <button class="font-sans text-[13px] font-bold text-ink hover:underline underline-offset-4">People Near Me</button>
+                    <button class="font-sans text-[13px] font-bold text-ink hover:underline underline-offset-4">Membership</button>
+                </div>
+            </div>
+
+            <!-- DEV: <note> -->
+            <!-- DEV: grid-template-columns: 190px 1fr 220px, max-width: 1080px, centred. Below 860px both sidebars are display: none and the grid collapses to 1fr — see apps/connect/app/pulse-layout.css. Do not hardcode pixel widths in the generated component; reuse the existing .pulse-layout/.pulse-sidebar-left/.pulse-timeline/ .pulse-sidebar-right classes. -->
+            
+            <!-- 3-COLUMN FEED GRID -->
+            <div class="w-full max-w-[1080px] mx-auto grid grid-cols-[190px_1fr_220px] bg-white min-h-[800px]">
+                
+                <!-- LEFT RAIL -->
+                <div class="border-r border-rule pt-[32px] pr-[16px] flex flex-col pb-[32px] sticky top-0 h-max">
+                    
+                    <div class="mb-[32px]">
+                        <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">SECTIONS</h2>
+                        <ul class="flex flex-col">
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">People Near Me</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Membership</button></li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-[32px]">
+                        <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">CONTENT TYPE</h2>
+                        <ul class="flex flex-col">
+                            <li><button class="w-full text-left font-sans text-[13px] font-bold text-ochre py-[6px] pl-[10px] border-l-[2px] border-ochre bg-ochre/5">All</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Pulse</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">News</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Editorial</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Event</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Directory</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Quote</button></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">CATEGORY</h2>
+                        <ul class="flex flex-col">
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Music</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Film</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Art</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Fashion</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Literature</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Food</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Tech</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Sport</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Travel</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Design</button></li>
+                            <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Ideas</button></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CENTER TIMELINE -->
+                <div class="border-r border-rule pb-[64px] flex flex-col items-center">
+                    
+                    <!-- Category Pill Strip -->
+                    <div class="w-full border-b border-rule px-[24px] py-[16px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar sticky top-0 bg-white/95 backdrop-blur z-30">
+                        <button class="h-[32px] px-[16px] rounded-full bg-ochre text-white font-sans text-[13px] font-bold shrink-0">All</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Music</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Film</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Art</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Fashion</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Literature</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Food</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Tech</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Sport</button>
+                        <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Travel</button>
+                    </div>
+
+                    <div class="w-full max-w-[680px] px-[24px] pt-[24px] flex flex-col gap-[24px]">
+                        
+                        <!-- Card 1: Editorial -->
+                        <article class="bg-white border-b border-rule pb-[24px] flex flex-col">
+                            <div class="flex gap-[16px]">
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-[0.1em] mb-[4px]">The Culture Brief</span>
+                                    <h3 class="font-serif text-[18px] font-bold text-ink leading-[1.3] line-clamp-2">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h3>
+                                    <p class="font-sans text-[14px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.6]">Local designers are bypassing traditional European houses to build direct relationships with a new global elite.</p>
+                                </div>
+                                <div class="w-[120px] h-[120px] rounded-lg bg-gradient-to-tr from-[#D18E70] to-[#E2A684] shrink-0 relative overflow-hidden mt-1"></div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[16px]">
+                                <div class="flex items-center gap-[8px]">
+                                    <div class="w-[24px] h-[24px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                                    <span class="font-sans text-[13px] font-bold text-ink">Funmi Osei</span>
+                                </div>
+                                <span class="font-mono text-[11px] text-ghost">· 6 min read</span>
+                            </div>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">24</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[11px]">9</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[11px]">16</span></button>
+                            </div>
+                        </article>
+
+                        <!-- Card 2: Community (Hidden Gem) -->
+                        <article class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-rule/50">
+                            <div class="flex items-center justify-between mb-[12px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-bl from-teal-400 to-blue-500 shrink-0 border-[2px] border-gold p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                                    <div class="flex flex-col">
+                                        <span class="font-sans text-[15px] font-bold text-ink leading-tight">David K.</span>
+                                        <div class="flex items-center gap-1 mt-[2px]">
+                                            <span class="font-sans text-[13px] text-mute">@david.k</span>
+                                            <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[8px] font-bold tracking-widest uppercase">PRO</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="font-mono text-[11px] text-ghost">· 3d</span>
+                            </div>
+
+                            <div class="mb-[8px]">
+                                <span class="bg-[#B38238]/10 text-gold px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider inline-block">💎 HIDDEN GEM</span>
+                            </div>
+
+                            <h3 class="font-serif text-[18px] font-bold text-ink mt-[4px]">Bisi Ceramics — Lagos Island</h3>
+                            <span class="font-mono text-[12px] text-ghost mt-[4px] flex items-center gap-1">📍 Balogun Market area</span>
+
+                            <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[12px]">
+                                Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look.
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-[8px] mt-[16px]">
+                                <div class="h-[180px] rounded-lg bg-gradient-to-br from-[#EAECC6] to-[#2BC0E4]"></div>
+                                <div class="h-[180px] rounded-lg bg-gradient-to-tl from-[#F2C94C] to-[#F2994A]"></div>
+                            </div>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">22</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[11px]">8</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[11px]">15</span></button>
+                            </div>
+                        </article>
+
+                        <!-- Card 3: Quote -->
+                        <article class="bg-paper-warm rounded-xl shadow-card p-[24px] flex flex-col relative border border-rule/50">
+                            <span class="absolute top-[16px] left-[16px] font-serif text-[64px] text-ghost leading-none select-none">"</span>
+                            
+                            <p class="font-serif text-[20px] font-bold text-ink leading-[1.4] pl-[32px] relative z-10 pt-[12px]">
+                                African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution. The rest will follow.
+                            </p>
+                            
+                            <span class="font-sans text-[14px] text-ink-soft mt-[16px] pl-[32px]">— Ngozi Adichie</span>
+                            <span class="font-mono text-[11px] text-ghost mt-[4px] pl-[32px]">Lagos Book & Art Festival · 2024</span>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[20px] pl-[32px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">48</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg><span class="font-mono text-[11px]">22</span></button>
+                            </div>
+                        </article>
+
+                        <!-- Card 4: Poll -->
+                        <article class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-rule/50">
+                            <div class="flex items-center justify-between mb-[12px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[44px] h-[44px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center shrink-0"><svg class="w-5 h-5 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+                                    <div class="flex flex-col">
+                                        <span class="font-sans text-[15px] font-bold text-ink leading-tight">Moveee Community</span>
+                                    </div>
+                                </div>
+                                <span class="font-mono text-[11px] text-ghost">· Closes in 1d</span>
+                            </div>
+
+                            <div class="mb-[8px]">
+                                <span class="bg-[#6B48A8]/10 text-[#6B48A8] px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider inline-block">📊 POLL</span>
+                            </div>
+
+                            <h3 class="font-sans text-[16px] font-bold text-ink leading-[1.3] mt-[8px]">What's the greatest era of Afrobeats?</h3>
+                            
+                            <div class="flex flex-col gap-[8px] mt-[16px]">
+                                <div class="relative h-[48px] bg-white border border-ghost rounded-lg px-[16px] flex items-center justify-between overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 12%;"></div>
+                                    <span class="font-sans text-[14px] text-ink relative z-10">90s Fela Era</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">12%</span>
+                                </div>
+                                <div class="relative h-[48px] bg-white border-[1.5px] border-ochre rounded-lg px-[16px] flex items-center justify-between overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 38%;"></div>
+                                    <div class="relative z-10 flex items-center gap-2">
+                                        <span class="font-sans text-[14px] font-bold text-ink">Wizkid / Davido 2010s</span>
+                                        <span class="text-[14px]">👑</span>
+                                    </div>
+                                    <span class="font-mono text-[12px] text-gold font-bold relative z-10">38%</span>
+                                </div>
+                                <div class="relative h-[48px] bg-white border border-ghost rounded-lg px-[16px] flex items-center justify-between overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 35%;"></div>
+                                    <span class="font-sans text-[14px] text-ink relative z-10">Burna Boy / Tems era</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">35%</span>
+                                </div>
+                                <div class="relative h-[48px] bg-white border border-ghost rounded-lg px-[16px] flex items-center justify-between overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 15%;"></div>
+                                    <span class="font-sans text-[14px] text-ink relative z-10">Right now — it's still evolving</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">15%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-[12px]">
+                                <span class="font-mono text-[11px] text-ghost">342 votes</span>
+                                <span class="font-sans text-[12px] text-gold">You voted: 2010s ✓</span>
+                            </div>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">58</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[11px]">31</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[11px]">9</span></button>
+                            </div>
+                        </article>
+
+                        <!-- Card 5: Editorial -->
+                        <article class="bg-white border-b border-rule pb-[24px] flex flex-col">
+                            <div class="flex gap-[16px]">
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-[0.1em] mb-[4px]">Origins Journal</span>
+                                    <h3 class="font-serif text-[18px] font-bold text-ink leading-[1.3] line-clamp-2">Where things come from: The Artisans of Osogbo</h3>
+                                </div>
+                                <div class="w-[120px] h-[120px] rounded-lg bg-gradient-to-br from-[#8E54E9] to-[#4776E6] shrink-0"></div>
+                            </div>
+                        </article>
+
+                        <!-- DEV: <note> -->
+                        <!-- DEV: Inserted via array slicing — visible.slice(0,5) then the carousel then visible.slice(5) — not a ref/index check. This is what makes 'once, after the 5th item, never re-inserted on infinite-scroll pagination' work without extra state, since position 5 in the already-rendered array is stable across re-renders. See PulseFeed.tsx's render block. Full scoring/filtering spec already documented in the mobile §3B prompt — reuse, don't redefine here. -->
+                        
+                        <!-- EVENT SPOTLIGHT CAROUSEL -->
+                        <div class="w-full bg-[#F5F0E6] py-[24px] mb-[24px] -mx-[24px] px-[24px] border-y border-rule/40 w-[calc(100%+48px)]">
+                            <div class="flex items-center justify-between mb-[16px]">
+                                <h2 class="font-sans text-[16px] font-bold text-ink flex items-center gap-[8px]">📅 Upcoming Near You</h2>
+                                <button class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-2">See all &rarr;</button>
+                            </div>
+
+                            <div class="flex gap-[16px] overflow-x-auto hide-scrollbar pb-[8px]">
+                                <!-- Spotlight Card 1 (Default) -->
+                                <div class="w-[236px] bg-white rounded-xl shadow-card shrink-0 flex flex-col cursor-pointer hover:-translate-y-1 transition-transform">
+                                    <div class="px-[12px] pt-[12px] pb-[8px] flex items-center justify-between">
+                                        <div class="flex items-center gap-[6px]">
+                                            <div class="w-[6px] h-[6px] rounded-full bg-[#C5491F]"></div>
+                                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-widest leading-none pt-0.5">Live Music</span>
+                                        </div>
+                                    </div>
+                                    <div class="px-[12px] flex items-baseline gap-[6px] mt-[8px]">
+                                        <span class="font-mono text-[11px] font-bold text-ochre uppercase leading-none">FRI 13 JUN</span>
+                                        <span class="font-sans text-[11px] text-mute leading-none">9:00 PM</span>
+                                    </div>
+                                    <div class="px-[12px] flex flex-col flex-1 mt-[6px]">
+                                        <h3 class="font-sans text-[15px] font-bold text-ink leading-snug line-clamp-2 min-h-[44px]">Amapiano Night at Jazz Cafe</h3>
+                                        <span class="font-sans text-[12px] text-mute mt-[4px] truncate">📍 Jazz Cafe, Camden</span>
+                                    </div>
+                                    <div class="mx-[12px] mt-[10px] mb-[12px] pt-[8px] border-t border-ghost-light flex items-center justify-between">
+                                        <span class="font-sans text-[12px] text-ink-soft">Free</span>
+                                        <span class="font-sans text-[11px] text-mute">👥 47 going</span>
+                                    </div>
+                                </div>
+
+                                <!-- Spotlight Card 2 (Featured) -->
+                                <div class="w-[236px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative overflow-hidden cursor-pointer hover:-translate-y-1 transition-transform">
+                                    <div class="absolute top-0 left-0 w-full h-[2px] bg-gold z-10"></div>
+                                    <div class="px-[12px] pt-[12px] pb-[8px] flex items-center justify-between relative z-0">
+                                        <div class="flex items-center gap-[6px]">
+                                            <div class="w-[6px] h-[6px] rounded-full bg-[#6B48A8]"></div>
+                                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-widest leading-none pt-0.5">Visual Art</span>
+                                        </div>
+                                        <span class="text-gold text-[12px] leading-none pb-0.5">★</span>
+                                    </div>
+                                    <div class="px-[12px] flex items-baseline gap-[6px] mt-[8px]">
+                                        <span class="font-mono text-[11px] font-bold text-ochre uppercase leading-none">SAT 14 JUN</span>
+                                        <span class="font-sans text-[11px] text-mute leading-none">1:00 PM</span>
+                                    </div>
+                                    <div class="px-[12px] flex flex-col flex-1 mt-[6px]">
+                                        <h3 class="font-sans text-[15px] font-bold text-ink leading-snug line-clamp-2 min-h-[44px]">Contemporary African Art Fair</h3>
+                                        <span class="font-sans text-[12px] text-mute mt-[4px] truncate">📍 Somerset House</span>
+                                    </div>
+                                    <div class="mx-[12px] mt-[10px] mb-[12px] pt-[8px] border-t border-ghost-light flex items-center justify-between">
+                                        <span class="font-sans text-[12px] font-bold text-ochre">£18 day pass</span>
+                                        <span class="font-sans text-[11px] text-mute">👥 342 going</span>
+                                    </div>
+                                </div>
+
+                                <!-- Spotlight Card 3 (Community) -->
+                                <div class="w-[236px] bg-white rounded-xl shadow-card shrink-0 flex flex-col cursor-pointer hover:-translate-y-1 transition-transform">
+                                    <div class="px-[12px] pt-[12px] pb-[8px] flex items-center justify-between">
+                                        <div class="flex items-center gap-[6px]">
+                                            <div class="w-[6px] h-[6px] rounded-full bg-[#B38238]"></div>
+                                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-widest leading-none pt-0.5">Food & Drink</span>
+                                        </div>
+                                    </div>
+                                    <div class="px-[12px] flex items-baseline gap-[6px] mt-[8px]">
+                                        <span class="font-mono text-[11px] font-bold text-ochre uppercase leading-none">SAT 14 JUN</span>
+                                        <span class="font-sans text-[11px] text-mute leading-none">6:30 PM</span>
+                                    </div>
+                                    <div class="px-[12px] flex flex-col flex-1 mt-[6px]">
+                                        <h3 class="font-sans text-[15px] font-bold text-ink leading-snug line-clamp-2 min-h-[44px]">Diaspora Supper Club</h3>
+                                        <span class="font-sans text-[12px] text-mute mt-[4px] truncate">📍 Secret Location</span>
+                                    </div>
+                                    <div class="mx-[12px] mt-[10px] mb-[12px] pt-[8px] border-t border-ghost-light flex items-center justify-between">
+                                        <div class="flex items-center gap-[8px]">
+                                            <span class="font-sans text-[12px] font-bold text-ochre">£65</span>
+                                            <div class="bg-[#E6F4EA] px-[6px] py-[2px] rounded-full inline-flex items-center h-[16px]">
+                                                <span class="font-sans text-[9px] font-bold text-success uppercase leading-none">🌱 Community</span>
+                                            </div>
+                                        </div>
+                                        <span class="font-sans text-[11px] text-mute">👥 18 going</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 6: Community -->
+                        <article class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-rule/50">
+                            <div class="flex items-center justify-between mb-[12px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] shrink-0 border border-ghost"></div>
+                                    <div class="flex flex-col">
+                                        <span class="font-sans text-[15px] font-bold text-ink leading-tight">Amara O.</span>
+                                        <span class="font-sans text-[13px] text-mute mt-[2px]">@amara</span>
+                                    </div>
+                                </div>
+                                <span class="font-mono text-[11px] text-ghost">· 8h</span>
+                            </div>
+
+                            <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[4px]">
+                                Any recommendations for a quiet workspace in Yaba? The usual spots are way too loud today.
+                            </p>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">8</span></button>
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[11px]">12</span></button>
+                            </div>
+                        </article>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDEBAR -->
+                <!-- DEV: <note> -->
+                <!-- DEV: Text rows with a left ochre border accent (title + reaction count) — this is NOT the mobile catalog's image-based 160×80px Trending Strip mini-cards. Different visual treatment for the same getTrending() data, by design, since the sidebar is narrow (220px) and persistent rather than a one-off horizontal scroll. -->
+                <div class="pt-[32px] pl-[16px] flex flex-col pb-[32px] sticky top-0 h-max">
+                    
+                    <!-- Trending List -->
+                    <div class="mb-[32px]">
+                        <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[16px]">HOT THIS WEEK 🔥</h2>
+                        <div class="flex flex-col gap-[16px]">
+                            <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">Tems Announces Third Studio Album, Coming This October</h3>
+                                <span class="font-mono text-[10px] text-mute mt-[4px]">241 reactions</span>
+                            </div>
+                            <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">Streaming killed the African album format.</h3>
+                                <span class="font-mono text-[10px] text-mute mt-[4px]">158 reactions</span>
+                            </div>
+                            <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">48 Hours in Lagos: The Culture Route</h3>
+                                <span class="font-mono text-[10px] text-mute mt-[4px]">104 reactions</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- About Card -->
+                    <div class="bg-white rounded-[4px] border border-rule p-[14px]">
+                        <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[8px]">About Moveee</h2>
+                        <p class="font-sans text-[12px] text-ink-soft leading-[1.6]">
+                            The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- DEV: <note> -->
+            <!-- DEV: These are separate <section> blocks in app/feed/page.tsx, not part of PulseFeed.tsx itself — they render below the feed for all visitors regardless of scroll position, not as feed items. -->
+
+            <!-- DIRECTORY TEASER -->
+            <div class="w-full bg-paper-deep py-[80px]">
+                <div class="w-full max-w-[1080px] mx-auto flex items-center justify-between">
+                    <div class="flex flex-col max-w-[500px]">
+                        <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Find Each Other</span>
+                        <h2 class="font-serif text-[28px] font-bold text-ink leading-tight mb-[12px]">The Directory</h2>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6]">
+                            A searchable index of members — who they are, what they do, and where they're based. The Lagos photographer. The UK art director. The Nigerian lawyer in New York.
+                        </p>
+                    </div>
+                    <button class="font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-4">Browse the directory &rarr;</button>
+                </div>
+            </div>
+
+            <!-- MEMBERSHIP TEASER -->
+            <div class="w-full bg-white border-t border-rule py-[80px]">
+                <div class="w-full max-w-[1080px] mx-auto flex items-center justify-between">
+                    <div class="flex flex-col max-w-[500px]">
+                        <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Membership</span>
+                        <h2 class="font-serif text-[28px] font-bold text-ink leading-tight mb-[12px]">Moveee Citizen & Moveee Pro</h2>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6]">
+                            Free membership gets you in. Moveee Pro gets you featured, gated content, a Pro badge, and more. Two tiers. One community.
+                        </p>
+                    </div>
+                    <button class="font-sans text-[14px] font-bold text-ochre hover:underline underline-offset-4">View membership &rarr;</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: DESKTOP, LOGGED-IN + FOR YOU          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 mt-16">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Desktop, Logged-In + "For You" Active</span>
+            <div class="desktop-screen bg-white rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative">
+
+                <!-- 3-COLUMN FEED GRID (No Hero) -->
+                <div class="w-full max-w-[1080px] mx-auto grid grid-cols-[190px_1fr_220px] bg-white min-h-[800px]">
+                    
+                    <!-- LEFT RAIL -->
+                    <div class="border-r border-rule pt-[32px] pr-[16px] flex flex-col pb-[32px] sticky top-0 h-max">
+                        
+                        <!-- DEV: <note> -->
+                        <!-- DEV: Only rendered at all when hasInterests (i.e. session.user.interests.length > 0); ranking logic is rankFeed() from lib/feed-recommendations.ts — do not reimplement scoring here, this prompt only needs the toggle's two visual states. -->
+                        <div class="mb-[32px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">PERSONALISED</h2>
+                            <ul class="flex flex-col">
+                                <li><button class="w-full text-left font-sans text-[13px] font-bold text-ochre py-[6px] pl-[10px] border-l-[2px] border-ochre bg-ochre/5">For You</button></li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-[32px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">SECTIONS</h2>
+                            <ul class="flex flex-col">
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">People Near Me</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Membership</button></li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-[32px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">CONTENT TYPE</h2>
+                            <ul class="flex flex-col">
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">All</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Pulse</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">News</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Editorial</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Event</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Directory</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Quote</button></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[12px] pl-[12px]">CATEGORY</h2>
+                            <ul class="flex flex-col">
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Music</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Film</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-ink-soft py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-ink hover:bg-gray-50">Art</button></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- CENTER TIMELINE -->
+                    <div class="border-r border-rule pb-[64px] flex flex-col items-center">
+                        
+                        <!-- DEV: <note> -->
+                        <!-- DEV: This is SubmitPost.tsx rendered directly in the timeline flow, not a modal or FAB. It already exists and supports all 10 post templates — do not redesign its internals here, just reserve the layout slot above the category-pill strip. -->
+                        
+                        <!-- Inline Composer (Collapsed) -->
+                        <div class="w-full max-w-[680px] px-[24px] pt-[24px] pb-[16px]">
+                            <div class="bg-white border border-rule rounded-[4px] p-[16px] shadow-sm cursor-text hover:border-ghost transition-colors">
+                                <span class="font-sans text-[13px] text-mute block mb-[12px]">Share something with the community…</span>
+                                <div class="flex items-center gap-[12px] text-mute">
+                                    <span class="text-[16px]">📝</span>
+                                    <span class="text-[16px]">💎</span>
+                                    <span class="text-[16px]">💬</span>
+                                    <span class="text-[16px]">🍽️</span>
+                                    <span class="text-[16px]">🎨</span>
+                                    <span class="text-[16px]">📊</span>
+                                    <span class="text-[16px]">🗺️</span>
+                                    <span class="text-[16px]">📅</span>
+                                    <span class="text-[16px]">✦</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Pill Strip -->
+                        <div class="w-full border-y border-rule px-[24px] py-[12px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar sticky top-0 bg-white/95 backdrop-blur z-30">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ochre text-white font-sans text-[13px] font-bold shrink-0">All</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Music</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Film</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Art</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] shrink-0 hover:bg-gray-50">Fashion</button>
+                        </div>
+
+                        <div class="w-full max-w-[680px] px-[24px] pt-[24px] flex flex-col gap-[24px]">
+                            
+                            <!-- Card 1: Editorial (For You) -->
+                            <article class="bg-white border-b border-rule pb-[24px] flex flex-col relative">
+                                <div class="absolute top-0 right-0 bg-ochre text-white px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold z-10 shadow-sm">✦ For You</div>
+                                <div class="flex gap-[16px] mt-[8px]">
+                                    <div class="flex-1 flex flex-col">
+                                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-[0.1em] mb-[4px]">The Culture Brief</span>
+                                        <h3 class="font-serif text-[18px] font-bold text-ink leading-[1.3] line-clamp-2">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h3>
+                                        <p class="font-sans text-[14px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.6]">Local designers are bypassing traditional European houses to build direct relationships with a new global elite.</p>
+                                    </div>
+                                    <div class="w-[120px] h-[120px] rounded-lg bg-gradient-to-tr from-[#D18E70] to-[#E2A684] shrink-0 relative overflow-hidden mt-1"></div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-[16px]">
+                                    <div class="flex items-center gap-[8px]">
+                                        <div class="w-[24px] h-[24px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                                        <span class="font-sans text-[13px] font-bold text-ink">Funmi Osei</span>
+                                    </div>
+                                    <span class="font-mono text-[11px] text-ghost">· 6 min read</span>
+                                </div>
+
+                                <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">24</span></button>
+                                </div>
+                            </article>
+
+                            <!-- Card 2: Community (For You) -->
+                            <article class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-rule/50 relative">
+                                <div class="absolute top-[-10px] right-[20px] bg-ochre text-white px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold z-10 shadow-sm">✦ For You</div>
+                                <div class="flex items-center justify-between mb-[12px]">
+                                    <div class="flex items-center gap-[12px]">
+                                        <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-bl from-teal-400 to-blue-500 shrink-0 border-[2px] border-gold p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                                        <div class="flex flex-col">
+                                            <span class="font-sans text-[15px] font-bold text-ink leading-tight">David K.</span>
+                                            <div class="flex items-center gap-1 mt-[2px]">
+                                                <span class="font-sans text-[13px] text-mute">@david.k</span>
+                                                <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[8px] font-bold tracking-widest uppercase">PRO</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="font-mono text-[11px] text-ghost">· 3d</span>
+                                </div>
+
+                                <div class="mb-[8px]">
+                                    <span class="bg-[#B38238]/10 text-gold px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider inline-block">💎 HIDDEN GEM</span>
+                                </div>
+
+                                <h3 class="font-serif text-[18px] font-bold text-ink mt-[4px]">Bisi Ceramics — Lagos Island</h3>
+                                <span class="font-mono text-[12px] text-ghost mt-[4px] flex items-center gap-1">📍 Balogun Market area</span>
+
+                                <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[12px]">
+                                    Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look.
+                                </p>
+
+                                <div class="grid grid-cols-2 gap-[8px] mt-[16px]">
+                                    <div class="h-[180px] rounded-lg bg-gradient-to-br from-[#EAECC6] to-[#2BC0E4]"></div>
+                                    <div class="h-[180px] rounded-lg bg-gradient-to-tl from-[#F2C94C] to-[#F2994A]"></div>
+                                </div>
+
+                                <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">22</span></button>
+                                </div>
+                            </article>
+
+                            <!-- DEV: <note> -->
+                            <!-- DEV: Logged-in-only, rendered at the exact same array position as the Event Spotlight Carousel (visible.length > 5 && session?.user). No mobile-catalog equivalent yet — this card is new to the web feed only as of this prompt. -->
+                            
+                            <!-- House Fellowship Reminder Card -->
+                            <div class="bg-paper-warm rounded-xl shadow-card p-[20px] flex items-center justify-between border-l-[4px] border-l-ochre">
+                                <div class="flex items-center gap-[16px]">
+                                    <div class="w-[48px] h-[48px] bg-white rounded-full flex items-center justify-center shadow-sm">
+                                        <span class="text-[20px]">🫂</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <h3 class="font-serif text-[16px] font-bold text-ink">House Fellowship this Thursday</h3>
+                                        <span class="font-sans text-[13px] text-ink-soft mt-1">Join the community sync at 7PM WAT.</span>
+                                    </div>
+                                </div>
+                                <button class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-2">View &rarr;</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- RIGHT SIDEBAR -->
+                    <div class="pt-[32px] pl-[16px] flex flex-col pb-[32px] sticky top-0 h-max">
+                        
+                        <!-- Trending List -->
+                        <div class="mb-[32px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[16px]">HOT THIS WEEK 🔥</h2>
+                            <div class="flex flex-col gap-[16px]">
+                                <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                    <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">Tems Announces Third Studio Album, Coming This October</h3>
+                                    <span class="font-mono text-[10px] text-mute mt-[4px]">241 reactions</span>
+                                </div>
+                                <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                    <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">Streaming killed the African album format.</h3>
+                                    <span class="font-mono text-[10px] text-mute mt-[4px]">158 reactions</span>
+                                </div>
+                                <div class="border-l-[2px] border-ochre pl-[10px] flex flex-col cursor-pointer group">
+                                    <h3 class="font-sans text-[12px] font-bold text-ink leading-tight line-clamp-2 group-hover:text-ochre transition-colors">48 Hours in Lagos: The Culture Route</h3>
+                                    <span class="font-mono text-[10px] text-mute mt-[4px]">104 reactions</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- About Card -->
+                        <div class="bg-white rounded-[4px] border border-rule p-[14px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-mute tracking-[0.15em] mb-[8px]">About Moveee</h2>
+                            <p class="font-sans text-[12px] text-ink-soft leading-[1.6]">
+                                The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: MOBILE COMPANION (390px)              -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 mt-16">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Mobile Companion (Logged-in)</span>
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="h-[56px] flex items-center justify-between px-4 bg-white border-b border-ghost z-20 shrink-0 mt-[48px]">
+                    <div class="flex items-center">
+                        <span class="font-serif text-[18px] font-bold text-ink tracking-tight">moveee</span>
+                        <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-widest ml-1 mt-1">connect</span>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <button class="relative text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[80px]">
+                    
+                    <!-- Mobile Filter Strip -->
+                    <div class="w-full bg-white border-b border-rule flex items-center h-[48px]">
+                        <div class="flex-1 overflow-x-auto hide-scrollbar flex items-center gap-[8px] px-[16px]">
+                            <button class="bg-ochre text-white text-[13px] font-bold px-[16px] h-[32px] rounded-full shrink-0">All</button>
+                            <button class="border border-rule text-ink-soft text-[13px] px-[16px] h-[32px] rounded-full shrink-0">Pulse</button>
+                            <button class="border border-rule text-ink-soft text-[13px] px-[16px] h-[32px] rounded-full shrink-0">News</button>
+                            <button class="border border-rule text-ink-soft text-[13px] px-[16px] h-[32px] rounded-full shrink-0">Editorial</button>
+                        </div>
+                        <div class="h-full px-[12px] flex items-center justify-center border-l border-rule bg-white shadow-[-4px_0_12px_rgba(255,255,255,0.9)] z-10 shrink-0">
+                            <button class="font-sans text-[13px] font-bold text-ink bg-paper-deep px-3 py-1.5 rounded-md flex items-center gap-1">⊞ Sections</button>
+                        </div>
+                    </div>
+
+                    <!-- Inline Composer (Collapsed - Replaces FAB on web-mobile) -->
+                    <div class="px-[16px] pt-[16px] pb-[8px]">
+                        <div class="bg-white border border-rule rounded-[4px] p-[12px] shadow-sm cursor-text hover:border-ghost transition-colors">
+                            <span class="font-sans text-[13px] text-mute block mb-[8px]">Share something with the community…</span>
+                            <div class="flex items-center gap-[12px] text-mute overflow-x-hidden">
+                                <span class="text-[16px]">📝</span>
+                                <span class="text-[16px]">💎</span>
+                                <span class="text-[16px]">💬</span>
+                                <span class="text-[16px]">🍽️</span>
+                                <span class="text-[16px]">🎨</span>
+                                <span class="text-[16px]">📊</span>
+                                <span class="text-[16px]">🗺️</span>
+                                <span class="text-[16px]">📅</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Strip -->
+                    <div class="w-full px-[16px] py-[8px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar sticky top-0 bg-paper-warm/95 backdrop-blur z-30">
+                        <button class="h-[28px] px-[12px] rounded-full bg-ochre text-white font-sans text-[11px] font-bold shrink-0">All</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[11px] shrink-0">Music</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[11px] shrink-0">Film</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[11px] shrink-0">Art</button>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[16px] pt-[8px]">
+                        
+                        <!-- Card 1 -->
+                        <article class="bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-rule/50">
+                            <div class="flex items-center justify-between mb-[12px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost"></div>
+                                    <div class="flex flex-col">
+                                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                        <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                                    </div>
+                                </div>
+                                <span class="font-mono text-[10px] text-ghost">· 2h</span>
+                            </div>
+
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-3">
+                                Saw Tems perform at an intimate venue last night and I'm still not over it...
+                            </p>
+
+                            <div class="w-full h-[160px] rounded-md bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] mt-[12px]"></div>
+
+                            <div class="flex items-center gap-[24px] text-mute mt-[16px]">
+                                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[11px]">34</span></button>
+                            </div>
+                        </article>
+                    </div>
+
+                </div>
+
+                <!-- Web Mobile Bottom Nav (5 tabs, no FAB) -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="text-ochre flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                        <span class="text-[10px] font-bold">Home</span>
+                    </button>
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px]">Discover</span>
+                    </button>
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <!-- Generic game icon representation -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[10px]">Games</span>
+                    </button>
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span class="text-[10px]">Events</span>
+                    </button>
+                    <button class="text-mute flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px]">Me</span>
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="mt-4 max-w-[390px] text-center">
+                <span class="font-mono text-[10px] text-mute bg-paper-deep border border-ghost/40 rounded p-[8px] block leading-relaxed shadow-sm">
+                    DEV NOTE — MOBILE COMPANION: Uses the single collapsed inline composer at the top of the feed instead of a floating pencil FAB, matching the web implementation pattern.
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

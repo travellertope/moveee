@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Magazine</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-deep': '#F2F2F2',
+                        'paper-warm': '#F3ECE0',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ochre: '#C5491F',
+                        'ochre-deep': '#8A2D10',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        rule: '#2A241C',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .card-shadow { box-shadow: 0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04); }
+        
+        /* Ticker Animation */
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-ticker { animation: ticker 20s linear infinite; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: MAGAZINE HOME (Desktop)               -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Magazine Home</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col">
+
+            <!-- HEADER (mag-head) -->
+            <div class="w-full bg-paper pt-[64px] pb-[16px] px-[64px] flex flex-col items-center text-center">
+                <h1 class="font-serif text-[44px] text-ink font-light leading-tight">Moveee <span class="italic">Editorials</span></h1>
+                <p class="font-sans text-[15px] text-ink-soft max-w-[480px] leading-[1.6] mt-[16px]">
+                    Long-form essays, interviews, and cultural commentary. The editorial heart of The Moveee.
+                </p>
+
+                <!-- Category Nav + Filters -->
+                <div class="w-full flex items-center justify-between mt-[48px] border-b border-ghost-light">
+                    <!-- Tabs -->
+                    <div class="flex gap-[24px]">
+                        <button class="font-sans text-[14px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">All Stories</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Music</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Film</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Art</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Fashion</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Food</button>
+                        <button class="font-sans text-[14px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Ideas</button>
+                    </div>
+                    <!-- Secondary Filters -->
+                    <div class="flex gap-[16px] pb-[12px]">
+                        <button class="font-sans text-[12px] text-ink-soft flex items-center gap-1 border border-ghost px-[10px] py-[4px] rounded hover:border-ink transition-colors">Industry <span class="text-[9px]">▼</span></button>
+                        <button class="font-sans text-[12px] text-ink-soft flex items-center gap-1 border border-ghost px-[10px] py-[4px] rounded hover:border-ink transition-colors">Country <span class="text-[9px]">▼</span></button>
+                        <button class="font-sans text-[12px] text-ink-soft flex items-center gap-1 border border-ghost px-[10px] py-[4px] rounded hover:border-ink transition-colors">Series <span class="text-[9px]">▼</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY TICKER -->
+            <div class="w-full h-[40px] bg-ink overflow-hidden flex items-center border-y border-rule shrink-0 relative group">
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px]">
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <!-- Duplicate -->
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                </div>
+                <!-- Duplicate positioned absolutely to create a seamless loop -->
+                <div class="flex whitespace-nowrap animate-ticker items-center text-white font-mono text-[11px] uppercase tracking-[2px] leading-none pt-[2px] absolute top-0 left-full h-full">
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <!-- Duplicate -->
+                    <span class="mx-[24px]">Visual Art</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Film</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Literature</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Music</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Fashion</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                    <span class="mx-[24px]">Food</span><span class="text-ochre text-[14px] leading-none -mt-1">✦</span>
+                </div>
+            </div>
+
+            <!-- HERO FEATURE (2-col) -->
+            <div class="w-full max-w-[1200px] mx-auto px-[64px] py-[64px] flex gap-[40px]">
+                <!-- Left: hf-main (~65%) -->
+                <article class="flex-1 flex flex-col group cursor-pointer">
+                    <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[12px]">MUSIC</span>
+                    <div class="w-full aspect-[16/9] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-lg mb-[24px] overflow-hidden">
+                        <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                    </div>
+                    <h2 class="font-serif text-[36px] font-bold text-ink leading-tight mb-[12px] group-hover:text-ochre transition-colors">Afrobeats at the Crossroads: A Conversation with Adekunle Gold</h2>
+                    <p class="font-sans text-[16px] text-ink-soft leading-[1.6] mb-[24px] max-w-[640px]">
+                        On globalisation, authenticity, and what it means to make music that travels. The Yoruba pop architect has stopped explaining himself to anyone.
+                    </p>
+                    <div class="flex items-center justify-between border-t border-ghost/40 pt-[16px]">
+                        <span class="font-mono text-[11px] text-ghost">June 9, 2026</span>
+                        <span class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">Read Extended Edit ↗</span>
+                    </div>
+                </article>
+
+                <!-- Divider: hf-divider -->
+                <div class="w-[1px] bg-ghost/40"></div>
+
+                <!-- Right: hf-sidebar (~35%) -->
+                <aside class="w-[320px] flex flex-col gap-[24px]">
+                    <!-- Stacked compact card 1 -->
+                    <article class="flex gap-[16px] group cursor-pointer pb-[24px] border-b border-ghost/40">
+                        <div class="flex-1 flex flex-col">
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FASHION</span>
+                            <h3 class="font-serif text-[18px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors mb-[8px]">The New Wave of Lagos Street Style</h3>
+                            <span class="font-mono text-[10px] text-ghost mt-auto">Jun 8</span>
+                        </div>
+                        <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-110 transition-transform duration-500"></div>
+                        </div>
+                    </article>
+                    <!-- Stacked compact card 2 -->
+                    <article class="flex gap-[16px] group cursor-pointer pb-[24px] border-b border-ghost/40">
+                        <div class="flex-1 flex flex-col">
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">ART</span>
+                            <h3 class="font-serif text-[18px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors mb-[8px]">Visualising Diaspora: A Photo Essay</h3>
+                            <span class="font-mono text-[10px] text-ghost mt-auto">Jun 5</span>
+                        </div>
+                        <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-110 transition-transform duration-500"></div>
+                        </div>
+                    </article>
+                    <!-- Stacked compact card 3 -->
+                    <article class="flex gap-[16px] group cursor-pointer">
+                        <div class="flex-1 flex flex-col">
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FOOD</span>
+                            <h3 class="font-serif text-[18px] font-bold text-ink leading-tight group-hover:text-ochre transition-colors mb-[8px]">The Secret History of Suya</h3>
+                            <span class="font-mono text-[10px] text-ghost mt-auto">Jun 1</span>
+                        </div>
+                        <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#D18E70] to-[#E2A684] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-110 transition-transform duration-500"></div>
+                        </div>
+                    </article>
+                </aside>
+            </div>
+
+            <!-- SECTION BAND: Featured Stories -->
+            <div class="w-full border-t border-ghost/40 pt-[64px] pb-[80px] px-[64px] max-w-[1200px] mx-auto">
+                <div class="flex flex-col mb-[32px]">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">SELECTED</span>
+                    <div class="flex justify-between items-end">
+                        <h2 class="font-serif text-[28px] text-ink font-bold">Featured <span class="italic">Stories</span></h2>
+                        <a href="#" class="font-sans text-[13px] text-ochre font-bold hover:underline underline-offset-4">View all &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-[32px]">
+                    <!-- Card 1 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-bl from-[#E2B19B] to-[#F3ECE0] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-700"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">LITERATURE</span>
+                        <h3 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">The African Sci-Fi Renaissance</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-2 mb-[16px]">How a new generation of writers are building futures beyond post-colonial tropes.</p>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 28</span>
+                    </article>
+                    <!-- Card 2 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-tr from-[#1976D2] to-[#8FD3F4] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-700"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FILM</span>
+                        <h3 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Nollywood Goes Independent</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-2 mb-[16px]">The directors refusing studio money to tell smaller, sharper stories.</p>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 22</span>
+                    </article>
+                    <!-- Card 3 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-bl from-[#2E7D32] to-[#84FAB0] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-700"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">ARCHITECTURE</span>
+                        <h3 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Tropical Modernism Returned</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-2 mb-[16px]">Reclaiming the climate-responsive design language of the 1960s.</p>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 15</span>
+                    </article>
+                </div>
+            </div>
+
+            <!-- PORTRAIT SCROLL: In Focus -->
+            <div class="w-full border-t border-ghost/40 pt-[64px] pb-[80px]">
+                <div class="px-[64px] max-w-[1200px] mx-auto mb-[32px]">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px] block">VISUAL</span>
+                    <h2 class="font-serif text-[28px] text-ink font-bold">In Focus</h2>
+                </div>
+                
+                <div class="flex gap-[24px] overflow-x-auto hide-scrollbar px-[64px] pb-[8px]">
+                    <!-- 5 Portrait Cards -->
+                    <!-- 1 -->
+                    <article class="w-[280px] shrink-0 flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/5] bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">PHOTO ESSAY</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors line-clamp-2">Lagos After Dark: A Neon Study</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 10</span>
+                    </article>
+                    <!-- 2 -->
+                    <article class="w-[280px] shrink-0 flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/5] bg-gradient-to-br from-[#8E54E9] to-[#4776E6] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">PORTRAITS</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors line-clamp-2">The Alté Scene in 12 Faces</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Apr 28</span>
+                    </article>
+                    <!-- 3 -->
+                    <article class="w-[280px] shrink-0 flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/5] bg-gradient-to-bl from-[#EAECC6] to-[#2BC0E4] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">STUDIO VISIT</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors line-clamp-2">Inside the Kiln at Bisi Ceramics</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Apr 14</span>
+                    </article>
+                    <!-- 4 -->
+                    <article class="w-[280px] shrink-0 flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/5] bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">ARCHIVE</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors line-clamp-2">Festac '77 Restored</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Mar 30</span>
+                    </article>
+                    <!-- 5 -->
+                    <article class="w-[280px] shrink-0 flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/5] bg-gradient-to-tl from-[#7B1FA2] to-[#E2A684] rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FASHION</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors line-clamp-2">Aso-oke Reimagined</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Mar 12</span>
+                    </article>
+                </div>
+            </div>
+
+            <!-- EDITORIAL SECTION Placeholder -->
+            <div class="w-full bg-paper-warm border-y border-ghost/40 py-[80px] flex items-center justify-center">
+                <div class="text-center">
+                    <span class="font-mono text-[12px] text-mute uppercase tracking-widest block mb-[12px]">&lt;EditorialSection /&gt; Component</span>
+                    <p class="font-sans text-[14px] text-ink-soft max-w-[400px]">Generic feature-band placeholder matching the site's card visual language.</p>
+                </div>
+            </div>
+
+            <!-- DIGEST: Quick Reads -->
+            <div class="w-full max-w-[1200px] mx-auto px-[64px] py-[80px]">
+                <div class="flex flex-col mb-[32px]">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">DIGEST</span>
+                    <h2 class="font-serif text-[28px] text-ink font-bold">Quick Reads</h2>
+                </div>
+
+                <div class="grid grid-cols-4 gap-[24px]">
+                    <!-- Compact card 1 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] rounded-lg mb-[16px]"></div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">NEWS</span>
+                        <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">ArtX Lagos Announces Dates</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">2 hours ago</span>
+                    </article>
+                    <!-- Compact card 2 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-square bg-gradient-to-bl from-[#4B6CB7] to-[#182848] rounded-lg mb-[16px]"></div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">MUSIC</span>
+                        <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Tems' Third Studio Album Tracklist Leaks</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">4 hours ago</span>
+                    </article>
+                    <!-- Compact card 3 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#D18E70] to-[#E2A684] rounded-lg mb-[16px]"></div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FOOD</span>
+                        <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Review: The New Suya Spot in Peckham</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Yesterday</span>
+                    </article>
+                    <!-- Compact card 4 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] rounded-lg mb-[16px]"></div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">BOOKS</span>
+                        <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Achebe's 'Things Fall Apart' Gets Reissue</h3>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">Yesterday</span>
+                    </article>
+                </div>
+            </div>
+
+            <!-- OPINIONS & ESSAYS -->
+            <div class="w-full bg-paper-deep py-[80px] border-t border-ghost/30">
+                <div class="max-w-[1200px] mx-auto px-[64px]">
+                    <div class="flex flex-col mb-[48px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">VOICES</span>
+                        <h2 class="font-serif text-[28px] text-ink font-bold">Opinions & Essays</h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-[40px]">
+                        <!-- Opinion 1 -->
+                        <article class="bg-paper p-[32px] rounded-xl shadow-card border-l-[4px] border-ochre flex flex-col group cursor-pointer hover:shadow-md transition-shadow">
+                            <h3 class="font-serif text-[24px] italic text-ink leading-[1.3] mb-[16px] group-hover:text-ochre transition-colors">
+                                "We are exporting our sound faster than we are building the infrastructure to sustain it."
+                            </h3>
+                            <span class="font-sans text-[15px] font-bold text-ink mb-[12px]">Ade Cole</span>
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-3 mb-[24px]">
+                                The global appetite for Afrobeats is undeniable, but the underlying mechanisms of distribution and royalty collection remain alarmingly underdeveloped on the continent...
+                            </p>
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mt-auto">MUSIC INDUSTRY</span>
+                        </article>
+                        
+                        <!-- Opinion 2 -->
+                        <article class="bg-paper p-[32px] rounded-xl shadow-card border-l-[4px] border-ochre flex flex-col group cursor-pointer hover:shadow-md transition-shadow">
+                            <h3 class="font-serif text-[24px] italic text-ink leading-[1.3] mb-[16px] group-hover:text-ochre transition-colors">
+                                "The 'African Art' label is a colonial hangover. It's time to retire it entirely."
+                            </h3>
+                            <span class="font-sans text-[15px] font-bold text-ink mb-[12px]">Zara Mensah</span>
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-3 mb-[24px]">
+                                Why do we group a diverse continent of 54 countries and thousands of distinct artistic traditions into a single, flattening monolith when presenting work globally?
+                            </p>
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mt-auto">CRITIQUE</span>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA BAND (cta-band) -->
+            <div class="w-full bg-ink text-white py-[64px] px-[64px]">
+                <div class="max-w-[1200px] mx-auto grid grid-cols-3 gap-[40px] items-center">
+                    
+                    <!-- Left: Eyebrow + Heading -->
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[8px]">Weekly Dispatch</span>
+                        <h2 class="font-serif text-[32px] font-bold leading-tight">The Moveee <span class="italic text-gold">Newsletter</span></h2>
+                    </div>
+
+                    <!-- Mid: Copy + Tags -->
+                    <div class="flex flex-col">
+                        <p class="font-sans text-[15px] text-white/85 leading-[1.6] mb-[16px]">
+                            Culture, art, heritage, and the stories worth reading — curated from Lagos, London, Accra, and beyond. In your inbox every Friday.
+                        </p>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <span class="border border-ghost/40 text-ghost/80 px-[10px] py-[4px] rounded-full font-sans text-[11px]">Film</span>
+                            <span class="border border-ghost/40 text-ghost/80 px-[10px] py-[4px] rounded-full font-sans text-[11px]">Art</span>
+                            <span class="border border-ghost/40 text-ghost/80 px-[10px] py-[4px] rounded-full font-sans text-[11px]">Fashion</span>
+                            <span class="border border-ghost/40 text-ghost/80 px-[10px] py-[4px] rounded-full font-sans text-[11px]">Heritage</span>
+                            <span class="border border-ghost/40 text-ghost/80 px-[10px] py-[4px] rounded-full font-sans text-[11px]">Music</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Button + Note -->
+                    <div class="flex flex-col items-start pl-[20px]">
+                        <button class="bg-paper text-ink px-[24px] h-[48px] rounded-full font-sans text-[14px] font-bold hover:bg-paper-deep transition-colors shadow-sm mb-[12px]">
+                            Browse Issues &rarr;
+                        </button>
+                        <span class="font-mono text-[11px] text-ghost/60">Free · Published every Tuesday</span>
+                    </div>
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: ISSUES ARCHIVE (Desktop)              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Issues Archive</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col min-h-[600px] px-[64px] py-[80px]">
+            
+            <div class="max-w-[1200px] mx-auto w-full">
+                <!-- Header -->
+                <div class="mb-[64px]">
+                    <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[8px] block">Magazine</span>
+                    <h1 class="font-serif text-[40px] font-bold text-ink leading-tight">All Issues</h1>
+                </div>
+
+                <!-- Grid (mag-issues-grid) -->
+                <div class="grid grid-cols-4 gap-[32px]">
+                    
+                    <!-- Card 1 -->
+                    <a href="#" class="flex flex-col group">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] rounded-lg mb-[16px] shadow-card overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[12px] font-bold text-ink uppercase tracking-wider mb-[4px]">Issue 14</span>
+                        <span class="font-serif text-[14px] italic text-ink-soft">The Maker Edition</span>
+                    </a>
+
+                    <!-- Card 2 -->
+                    <a href="#" class="flex flex-col group">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] rounded-lg mb-[16px] shadow-card overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[12px] font-bold text-ink uppercase tracking-wider mb-[4px]">Issue 13</span>
+                        <span class="font-serif text-[14px] italic text-ink-soft">The Sound Issue</span>
+                    </a>
+
+                    <!-- Card 3 -->
+                    <a href="#" class="flex flex-col group">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] rounded-lg mb-[16px] shadow-card overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[12px] font-bold text-ink uppercase tracking-wider mb-[4px]">Issue 12</span>
+                        <span class="font-serif text-[14px] italic text-ink-soft">Cities & Culture</span>
+                    </a>
+
+                    <!-- Card 4 -->
+                    <a href="#" class="flex flex-col group">
+                        <div class="w-full aspect-[3/4] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] rounded-lg mb-[16px] shadow-card overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[12px] font-bold text-ink uppercase tracking-wider mb-[4px]">Issue 11</span>
+                        <span class="font-serif text-[14px] italic text-ink-soft">Fashion Forward</span>
+                    </a>
+
+                </div>
+                
+                <!-- Empty state demo (hidden normally) -->
+                <!-- <div class="w-full py-[120px] flex justify-center">
+                    <span class="font-serif text-[20px] italic text-mute">No issues published yet.</span>
+                </div> -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: ARTICLE DETAIL TOP (Desktop)          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Article Detail Top (Image variant)</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+            
+            <!-- Progress Bar -->
+            <div class="fixed top-0 left-0 w-full h-[2px] bg-white z-50">
+                <div class="h-full bg-ochre w-[15%]"></div> <!-- Mock progress -->
+            </div>
+
+            <!-- HERO (image variant — article-hero) -->
+            <div class="w-full h-[60vh] min-h-[500px] relative bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] flex flex-col justify-between">
+                <!-- Overlay gradient -->
+                <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent"></div>
+                
+                <!-- Breadcrumb -->
+                <div class="relative z-10 px-[64px] pt-[32px] flex items-center gap-[8px] text-white/80 font-mono text-[11px] uppercase tracking-wider">
+                    <span>Home</span> <span class="text-ochre">/</span>
+                    <span>Editorials</span> <span class="text-ochre">/</span>
+                    <span>Music</span> <span class="text-ochre">/</span>
+                    <span class="text-white">Afrobeats at the Crossroads</span>
+                </div>
+
+                <!-- Hero Text Block -->
+                <div class="relative z-10 px-[64px] pb-[64px] max-w-[900px]">
+                    <span class="font-mono text-[13px] font-bold text-ochre uppercase tracking-[2px] block mb-[16px]">★ MUSIC · NIGERIA</span>
+                    <h1 class="font-serif text-[48px] font-bold text-white leading-[1.1] mb-[16px]">Afrobeats at the Crossroads: A Conversation with Adekunle Gold</h1>
+                    <p class="font-sans text-[18px] text-white/85 leading-[1.5] max-w-[720px] mb-[32px]">
+                        On globalisation, authenticity, and what it means to make music that travels. The Yoruba pop architect has stopped explaining himself to anyone.
+                    </p>
+                    
+                    <!-- Byline bar -->
+                    <div class="flex items-center justify-between border-t border-white/20 pt-[24px]">
+                        <div class="flex items-center gap-[32px]">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Words by</span>
+                                <span class="font-serif text-[15px] font-bold text-white">Fola Olawale</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Published</span>
+                                <span class="font-sans text-[15px] text-white">June 9, 2026</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Reading time</span>
+                                <span class="font-sans text-[15px] text-white">12 minutes</span>
+                            </div>
+                        </div>
+                        
+                        <!-- ArticleActions -->
+                        <div class="flex items-center gap-[12px]">
+                            <button class="w-[40px] h-[40px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white hover:bg-ink/60 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            </button>
+                            <button class="w-[40px] h-[40px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white hover:bg-ink/60 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                            </button>
+                            <button class="h-[40px] px-[16px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white hover:bg-ink/60 transition-colors gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="font-mono text-[12px]">847</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-COLUMN BODY (article-wrap) -->
+                <div class="w-full max-w-[1100px] mx-auto mt-[64px] grid grid-cols-[200px_1fr_260px] gap-[48px]">
+                    
+                    <!-- LEFT (toc) -->
+                    <aside class="sticky top-[40px] h-max">
+                        <h3 class="font-sans text-[13px] font-bold text-ink mb-[16px]">In this piece</h3>
+                        <ul class="flex flex-col gap-[12px] mb-[32px]">
+                            <li>
+                                <a href="#" class="flex gap-3 group">
+                                    <span class="font-mono text-[11px] font-bold text-ochre mt-[2px]">01</span>
+                                    <span class="font-sans text-[14px] text-ink leading-snug group-hover:text-ochre transition-colors">On the Label Deal That Fell Through</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex gap-3 group">
+                                    <span class="font-mono text-[11px] font-bold text-ochre mt-[2px]">02</span>
+                                    <span class="font-sans text-[14px] text-ink leading-snug group-hover:text-ochre transition-colors">What Globalisation Takes From You</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex gap-3 group">
+                                    <span class="font-mono text-[11px] font-bold text-ochre mt-[2px]">03</span>
+                                    <span class="font-sans text-[14px] text-ink leading-snug group-hover:text-ochre transition-colors">What Comes Next</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="w-full h-[1px] bg-ghost/40 mb-[32px]"></div>
+
+                        <!-- toc-meta block -->
+                        <div class="flex flex-col gap-[16px]">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-mono text-[10px] font-bold uppercase text-mute tracking-widest">WRITER</span>
+                                <span class="font-sans text-[13px] text-ink">Fola Olawale</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-mono text-[10px] font-bold uppercase text-mute tracking-widest">LOCATION</span>
+                                <span class="font-sans text-[13px] text-ink">Lagos, Nigeria</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-mono text-[10px] font-bold uppercase text-mute tracking-widest">SECTION</span>
+                                <span class="font-sans text-[13px] text-ink">Interviews</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-mono text-[10px] font-bold uppercase text-mute tracking-widest">SERIES</span>
+                                <span class="font-sans text-[13px] text-ochre hover:underline">Culture Economy</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-mono text-[10px] font-bold uppercase text-mute tracking-widest">INDUSTRY</span>
+                                <span class="font-sans text-[13px] text-ink">Music & Ents</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- CENTER (prose) -->
+                    <main class="relative pb-[64px]">
+                        <p class="font-sans text-[18px] text-ink-soft leading-[1.8] mb-[24px]">
+                            There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone. His evolution from highlife-infused sweetheart to an unapologetic rockstar is a masterclass in sonic pivoting.
+                        </p>
+                        <p class="font-sans text-[18px] text-ink-soft leading-[1.8] mb-[24px]">
+                            He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers, the faint hum of a generator. It's an auditory tapestry that anchors his latest project.
+                        </p>
+                        
+                        <!-- Fade out paragraph -->
+                        <div class="relative">
+                            <p class="font-sans text-[18px] text-ink-soft leading-[1.8] opacity-80">
+                                When I ask about the international label deal that fell through in 2023, he doesn't flinch. He leans back in his chair, taking a slow sip from a dark mug. "They wanted to erase the Lagos in my voice," he says finally. "I said no. Some deals aren't worth making. The industry here is..."
+                            </p>
+                            <!-- 160px bottom gradient -->
+                            <div class="absolute bottom-0 left-0 w-full h-[160px] bg-gradient-to-t from-paper to-transparent"></div>
+                        </div>
+
+                        <!-- The Gate Card renders here (mocking its position, real design in Frame 4) -->
+                        <div class="w-full border-t border-ghost mt-[24px] pt-[24px] text-center text-mute font-mono text-[11px]">
+                            &lt;ContentGate /&gt; renders here
+                        </div>
+                    </main>
+
+                    <!-- RIGHT (sidebar) -->
+                    <aside class="sticky top-[40px] h-max flex flex-col gap-[24px]">
+                        
+                        <!-- Issue Card -->
+                        <div class="bg-white rounded-xl shadow-card border border-ghost/30 border-l-[4px] border-l-ochre p-[16px] flex flex-col cursor-pointer hover:shadow-md transition-shadow">
+                            <span class="font-sans text-[11px] text-mute mb-[4px]">This piece is from</span>
+                            <span class="font-serif text-[16px] font-bold text-ink italic mb-[12px]">Issue 14: The Maker Edition</span>
+                            <span class="font-sans text-[12px] font-bold text-ochre">Read the full issue &rarr;</span>
+                        </div>
+
+                        <!-- Shop the Edit -->
+                        <div class="bg-white rounded-xl shadow-card border border-ghost/30 p-[16px] flex flex-col">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[12px]">Shop the Edit</h3>
+                            <div class="flex gap-[8px] mb-[12px]">
+                                <div class="w-1/2 aspect-square rounded-md bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+                                <div class="w-1/2 aspect-square rounded-md bg-gradient-to-br from-[#708090] to-[#A0AEBD]"></div>
+                            </div>
+                            <button class="w-full h-[36px] bg-paper-deep rounded-md font-sans text-[12px] font-bold text-ink hover:bg-ghost-light transition-colors">Browse all products &rarr;</button>
+                        </div>
+
+                        <!-- Newsletter Card (Culture Drop) -->
+                        <div class="bg-paper-warm rounded-xl p-[16px] flex flex-col">
+                            <h3 class="font-serif text-[16px] font-bold text-ink mb-[8px]">★ Culture Drop</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[16px]">
+                                Culture in your inbox, every Tuesday. Film picks, exhibition openings, music worth your time. No noise.
+                            </p>
+                            <button class="w-full h-[40px] bg-ochre rounded-full font-sans text-[13px] font-bold text-white shadow-sm hover:bg-[#a63d1a] transition-colors">Subscribe free &rarr;</button>
+                        </div>
+
+                        <!-- Related Story -->
+                        <div class="bg-white rounded-xl shadow-card border border-ghost/30 overflow-hidden flex flex-col cursor-pointer group">
+                            <div class="w-full h-[120px] bg-gradient-to-tr from-[#4B6CB7] to-[#182848]"></div>
+                            <div class="p-[16px] flex flex-col">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">MUSIC</span>
+                                <h4 class="font-serif text-[15px] font-bold text-ink leading-tight mb-[6px] group-hover:text-ochre transition-colors">What Afrobeats Owes to Jazz</h4>
+                                <p class="font-sans text-[12px] text-mute line-clamp-2 mb-[12px]">Tracking the horn arrangements from Fela's shrine to today's global charts.</p>
+                                <span class="font-sans text-[12px] font-bold text-ochre">Read &rarr;</span>
+                            </div>
+                        </div>
+
+                        <!-- Dark Archive Card -->
+                        <div class="bg-ink rounded-xl p-[20px] flex flex-col">
+                            <span class="font-sans text-[11px] font-bold text-ochre uppercase tracking-wider mb-[4px]">From the archive</span>
+                            <h3 class="font-serif text-[20px] font-bold text-white leading-tight mb-[12px]">Explore the full magazine</h3>
+                            <p class="font-sans text-[13px] text-white/70 leading-[1.5] mb-[20px]">
+                                Browse all essays, interviews, and dispatches from The Moveee editorial team.
+                            </p>
+                            <button class="w-full h-[40px] border border-white/30 rounded-full font-sans text-[13px] font-bold text-white hover:bg-white/10 transition-colors">All stories &rarr;</button>
+                        </div>
+
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: CONTENT GATE STATES                   -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 max-w-[1300px] mx-auto pb-[64px]">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Content Gate States (Component Close-up, ~700px width)</span>
+        
+        <div class="flex gap-[32px] justify-center items-start overflow-x-auto hide-scrollbar bg-paper-deep p-[40px] rounded-[24px] border-[4px] border-white shadow-inner">
+            
+            <!-- State 1: Member-only, logged out -->
+            <div class="w-[480px] shrink-0 bg-white rounded-xl shadow-card border-t-[4px] border-ochre p-[32px] flex flex-col">
+                <div class="flex items-center gap-[12px] mb-[16px]">
+                    <svg class="w-[24px] h-[24px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest">★ Moveee Community</span>
+                </div>
+                <h3 class="font-serif text-[24px] font-bold text-ink mb-[12px]">This one's for the community.</h3>
+                <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mb-[24px]">
+                    Create a free Moveee account to read this and everything else in the member archive. Takes 30 seconds — no card needed, free forever.
+                </p>
+                <div class="flex flex-col gap-[12px]">
+                    <button class="w-full h-[48px] bg-ink text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-gray-800 transition-colors">Join free — it takes 30 seconds &rarr;</button>
+                    <button class="w-full h-[48px] border border-ghost text-ink rounded-full font-sans text-[14px] font-bold hover:bg-paper-deep transition-colors">Already have an account? Sign in</button>
+                </div>
+                <span class="font-mono text-[10px] text-mute mt-[20px] text-center">Free membership · No credit card · Cancel anytime</span>
+            </div>
+
+            <!-- State 2: Patron-only, logged out -->
+            <div class="w-[480px] shrink-0 bg-white rounded-xl shadow-card border-t-[4px] border-gold p-[32px] flex flex-col">
+                <div class="flex items-center gap-[12px] mb-[16px]">
+                    <svg class="w-[24px] h-[24px] text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span class="font-mono text-[11px] font-bold text-gold uppercase tracking-widest">★ Moveee Pro</span>
+                </div>
+                <h3 class="font-serif text-[24px] font-bold text-ink mb-[12px]">There's more on the other side.</h3>
+                <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mb-[24px]">
+                    This piece goes deeper — reserved for Moveee Pro members. Join a global community of culture-forward people, with exclusive editorials, a Pro badge, and long-form content worth your time.
+                </p>
+                <div class="flex flex-col gap-[12px]">
+                    <button class="w-full h-[48px] bg-gold text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-[#9a6a2c] transition-colors">Explore Moveee Pro &rarr;</button>
+                    <button class="w-full h-[48px] border border-ghost text-ink rounded-full font-sans text-[14px] font-bold hover:bg-paper-deep transition-colors">Already a member? Sign in</button>
+                </div>
+                <span class="font-mono text-[10px] text-mute mt-[20px] text-center">Moveee Pro · {yearly price} · Cancel anytime · Free account always available</span>
+            </div>
+
+            <!-- State 3: Patron-only, logged in as Citizen -->
+            <div class="w-[480px] shrink-0 bg-white rounded-xl shadow-card border-t-[4px] border-gold p-[32px] flex flex-col">
+                <div class="flex items-center gap-[12px] mb-[16px]">
+                    <svg class="w-[24px] h-[24px] text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span class="font-mono text-[11px] font-bold text-gold uppercase tracking-widest">★ Moveee Pro</span>
+                </div>
+                <h3 class="font-serif text-[24px] font-bold text-ink mb-[12px]">You're one step away.</h3>
+                <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mb-[24px]">
+                    This piece is part of our Moveee Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.
+                </p>
+                <div class="flex flex-col gap-[12px]">
+                    <button class="w-full h-[48px] bg-gold text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-[#9a6a2c] transition-colors">Upgrade to Moveee Pro &rarr;</button>
+                </div>
+                <span class="font-mono text-[10px] text-mute mt-[20px] text-center">{yearly price} · Cancel anytime</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: ARTICLE END MODULES (Desktop)         -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Article End Modules</span>
+        <div class="desktop-screen bg-paper rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col py-[64px]">
+            
+            <div class="w-full max-w-[700px] mx-auto flex flex-col gap-[48px]">
+                
+                <!-- FinishReading banner -->
+                <div class="w-full bg-[#C5491F]/10 border border-[#C5491F]/20 rounded-xl p-[16px] flex items-center justify-between">
+                    <div class="flex items-center gap-[12px]">
+                        <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white shrink-0">
+                            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span class="font-serif text-[20px] italic text-ink">Article complete!</span>
+                    </div>
+                    <span class="font-sans text-[13px] font-bold text-mute">+ 15 Culture Points earned</span>
+                </div>
+
+                <!-- Series context strip -->
+                <div class="w-full bg-paper-deep rounded-xl p-[24px] text-center">
+                    <span class="font-sans text-[12px] text-mute block mb-[4px]">Part of the series</span>
+                    <a href="#" class="font-serif text-[22px] font-bold text-ochre hover:underline underline-offset-4 decoration-ochre/40 block mb-[12px]">Culture Economy</a>
+                    <p class="font-sans text-[14px] text-ink-soft leading-[1.6] max-w-[480px] mx-auto">
+                        An ongoing exploration of the financial mechanisms, global exports, and domestic realities of Africa's creative industries.
+                    </p>
+                </div>
+
+                <!-- Author band -->
+                <div class="w-full border-y border-ghost/40 py-[32px] flex items-center gap-[32px]">
+                    <div class="w-[120px] h-[120px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border-[2px] border-ghost/20"></div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <div class="flex items-baseline gap-[6px] mb-[8px]">
+                            <span class="font-sans text-[12px] text-mute uppercase tracking-widest">Words by</span>
+                            <span class="font-serif text-[24px] font-bold text-ink">Fola <span class="italic">Olawale</span></span>
+                        </div>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mb-[16px] max-w-[400px]">
+                            Culture Editor at The Moveee. Covering music, fashion, and cultural politics. Her work has appeared in The Guardian and i-D.
+                        </p>
+                        <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4 w-fit">More by Fola &rarr;</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Shop the Edit mobile-strip section (Rendered full width for demonstration, noted hidden on desktop normally) -->
+            <div class="w-full max-w-[1200px] mx-auto mt-[64px] border-2 border-dashed border-mute/30 p-[32px] rounded-xl relative">
+                <div class="absolute -top-[12px] left-[32px] bg-paper px-2 font-mono text-[10px] text-mute uppercase tracking-widest">CSS-Hidden &ge; Desktop Breakpoint</div>
+                
+                <div class="flex justify-between items-end mb-[24px]">
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[4px]">Shop the Edit</span>
+                        <h2 class="font-serif text-[28px] font-bold text-ink">From this story</h2>
+                    </div>
+                    <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">Browse all products &rarr;</a>
+                </div>
+
+                <div class="flex gap-[16px] overflow-x-auto hide-scrollbar pb-[8px]">
+                    <!-- Product 1 -->
+                    <div class="w-[220px] bg-white rounded-xl shadow-card border border-ghost/20 overflow-hidden flex flex-col shrink-0">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+                        <div class="p-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Bisi Ceramics</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2 mb-[12px]">Terracotta Ritual Bowl</h4>
+                            <span class="font-sans text-[14px] font-bold text-ink mt-auto">£68</span>
+                        </div>
+                    </div>
+                    <!-- Product 2 -->
+                    <div class="w-[220px] bg-white rounded-xl shadow-card border border-ghost/20 overflow-hidden flex flex-col shrink-0">
+                        <div class="w-full aspect-square bg-gradient-to-bl from-[#708090] to-[#A0AEBD]"></div>
+                        <div class="p-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Loom Lagos</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2 mb-[12px]">Kente Cap</h4>
+                            <span class="font-sans text-[14px] font-bold text-ink mt-auto">£42</span>
+                        </div>
+                    </div>
+                    <!-- Product 3 -->
+                    <div class="w-[220px] bg-white rounded-xl shadow-card border border-ghost/20 overflow-hidden flex flex-col shrink-0">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#8E54E9] to-[#4776E6]"></div>
+                        <div class="p-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[10px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Zara Mensah Studio</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2 mb-[12px]">Lagos Print Tote</h4>
+                            <span class="font-sans text-[14px] font-bold text-ink mt-auto">£55</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related "Keep reading" section -->
+            <div class="w-full max-w-[1200px] mx-auto mt-[80px]">
+                <div class="flex justify-between items-end mb-[32px]">
+                    <h3 class="font-serif text-[28px] font-bold text-ink">Keep <span class="italic">reading</span></h3>
+                    <a href="#" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">All stories &rarr;</a>
+                </div>
+
+                <div class="grid grid-cols-3 gap-[32px]">
+                    <!-- Article 1 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/3] bg-gradient-to-tr from-rose-400 to-orange-300 rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">FASHION</span>
+                        <h4 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h4>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 28</span>
+                    </article>
+                    <!-- Article 2 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/3] bg-gradient-to-bl from-teal-400 to-blue-500 rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">BUSINESS</span>
+                        <h4 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">The Economics of Cool: How African Creatives Are Building</h4>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 22</span>
+                    </article>
+                    <!-- Article 3 -->
+                    <article class="flex flex-col group cursor-pointer">
+                        <div class="w-full aspect-[4/3] bg-gradient-to-tr from-purple-500 to-indigo-500 rounded-lg mb-[16px] overflow-hidden">
+                            <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"></div>
+                        </div>
+                        <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[8px]">MUSIC</span>
+                        <h4 class="font-serif text-[20px] font-bold text-ink leading-tight mb-[8px] group-hover:text-ochre transition-colors">Music, Markets, and Meaning: A Year in African Sound</h4>
+                        <span class="font-mono text-[10px] text-ghost mt-auto">May 15</span>
+                    </article>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 6: MOBILE COMPANION (Full Scroll)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 items-center">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 6: Mobile Companion</span>
+        <div class="ios-screen bg-paper rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Status Bar Mock over hero -->
+            <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-white z-50">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Back/Nav floating buttons -->
+            <div class="absolute top-[48px] left-[16px] z-50">
+                <button class="w-[40px] h-[40px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+            </div>
+            <div class="absolute top-[48px] right-[16px] z-50 flex gap-2">
+                <button class="w-[40px] h-[40px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                </button>
+                <button class="w-[40px] h-[40px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                </button>
+            </div>
+
+            <!-- Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <!-- Hero Image -->
+                <div class="w-full aspect-[16/9] min-h-[300px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] relative">
+                    <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent"></div>
+                    
+                    <div class="absolute bottom-0 left-0 w-full p-[20px] flex flex-col justify-end">
+                        <span class="font-mono text-[10px] font-bold text-ochre uppercase tracking-widest mb-[8px]">★ MUSIC · NIGERIA</span>
+                        <h1 class="font-serif text-[28px] font-bold text-white leading-tight mb-[8px]">Afrobeats at the Crossroads: A Conversation with Adekunle Gold</h1>
+                        <p class="font-sans text-[14px] text-white/85 leading-snug mb-[16px] line-clamp-3">
+                            On globalisation, authenticity, and what it means to make music that travels.
+                        </p>
+                        
+                        <div class="flex flex-col gap-1 border-t border-white/20 pt-[12px]">
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Words by</span>
+                                <span class="font-serif text-[14px] font-bold text-white">Fola Olawale</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Published</span>
+                                <span class="font-sans text-[13px] text-white">June 9, 2026</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-[11px] text-white/60 uppercase tracking-wider">Reading time</span>
+                                <span class="font-sans text-[13px] text-white">12 minutes</span>
+                            </div>
+                        </div>
+
+                        <!-- Mobile ArticleActions Inline -->
+                        <div class="flex items-center gap-[12px] mt-[16px]">
+                            <button class="h-[32px] px-[12px] rounded-full bg-ink/40 backdrop-blur border border-white/20 flex items-center justify-center text-white gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="font-mono text-[10px]">847</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOC Collapsed Accordion -->
+                <div class="w-full bg-paper-deep border-b border-ghost-light px-[20px] py-[12px] flex items-center justify-between cursor-pointer">
+                    <span class="font-sans text-[13px] font-bold text-ink">In this piece</span>
+                    <span class="font-sans text-[12px] text-mute">▾</span>
+                </div>
+
+                <!-- Prose Content -->
+                <main class="px-[20px] pt-[24px] relative">
+                    <p class="font-sans text-[16px] text-ink-soft leading-[1.7] mb-[20px]">
+                        There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone.
+                    </p>
+                    <p class="font-sans text-[16px] text-ink-soft leading-[1.7] mb-[20px]">
+                        He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers, the faint hum of a generator.
+                    </p>
+                    
+                    <div class="relative">
+                        <p class="font-sans text-[16px] text-ink-soft leading-[1.7] opacity-80">
+                            When I ask about the international label deal that fell through in 2023, he doesn't flinch. He leans back in his chair. "They wanted to erase the Lagos in my voice," he says finally.
+                        </p>
+                        <!-- 160px bottom gradient -->
+                        <div class="absolute bottom-0 left-0 w-full h-[160px] bg-gradient-to-t from-paper to-transparent"></div>
+                    </div>
+
+                    <!-- Gate Card (Mobile sizing) -->
+                    <div class="w-full bg-white rounded-xl shadow-card border-t-[4px] border-gold p-[24px] flex flex-col mt-[16px] relative z-10">
+                        <div class="flex items-center gap-[8px] mb-[12px]">
+                            <svg class="w-[20px] h-[20px] text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            <span class="font-mono text-[10px] font-bold text-gold uppercase tracking-widest">★ Moveee Pro</span>
+                        </div>
+                        <h3 class="font-serif text-[20px] font-bold text-ink mb-[8px] leading-tight">You're one step away.</h3>
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.5] mb-[20px]">
+                            This piece is part of our Moveee Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further.
+                        </p>
+                        <button class="w-full h-[44px] bg-gold text-white rounded-full font-sans text-[13px] font-bold shadow-sm">Upgrade to Moveee Pro &rarr;</button>
+                        <span class="font-mono text-[9px] text-mute mt-[16px] text-center">{yearly price} · Cancel anytime</span>
+                    </div>
+                </main>
+
+                <!-- Sidebar Cards stacked full-width -->
+                <div class="px-[20px] py-[32px] flex flex-col gap-[20px] bg-paper-deep border-t border-ghost-light mt-[32px]">
+                    
+                    <!-- Issue Card -->
+                    <div class="bg-white rounded-xl shadow-card border border-ghost/30 border-l-[4px] border-l-ochre p-[16px] flex flex-col">
+                        <span class="font-sans text-[11px] text-mute mb-[2px]">This piece is from</span>
+                        <span class="font-serif text-[15px] font-bold text-ink italic mb-[8px]">Issue 14: The Maker Edition</span>
+                        <span class="font-sans text-[12px] font-bold text-ochre">Read the full issue &rarr;</span>
+                    </div>
+
+                    <!-- Shop the Edit Strip (Visible on mobile) -->
+                    <div class="bg-white rounded-xl shadow-card border border-ghost/30 py-[16px] flex flex-col overflow-hidden">
+                        <div class="px-[16px] flex justify-between items-end mb-[12px]">
+                            <div class="flex flex-col">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[2px]">Shop the Edit</span>
+                                <h2 class="font-serif text-[18px] font-bold text-ink">From this story</h2>
+                            </div>
+                        </div>
+                        <div class="flex gap-[12px] overflow-x-auto hide-scrollbar px-[16px] pb-[4px]">
+                            <div class="w-[140px] border border-ghost/20 rounded-lg overflow-hidden shrink-0">
+                                <div class="w-full aspect-square bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+                                <div class="p-2">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1">Ritual Bowl</h4>
+                                    <span class="font-sans text-[12px] font-bold text-ink">£68</span>
+                                </div>
+                            </div>
+                            <div class="w-[140px] border border-ghost/20 rounded-lg overflow-hidden shrink-0">
+                                <div class="w-full aspect-square bg-gradient-to-bl from-[#708090] to-[#A0AEBD]"></div>
+                                <div class="p-2">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1">Kente Cap</h4>
+                                    <span class="font-sans text-[12px] font-bold text-ink">£42</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-[16px] mt-[12px]">
+                            <button class="w-full h-[36px] bg-paper-deep rounded-md font-sans text-[12px] font-bold text-ink">Browse all products &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Card -->
+                    <div class="bg-paper-warm rounded-xl p-[16px] flex flex-col shadow-sm">
+                        <h3 class="font-serif text-[16px] font-bold text-ink mb-[6px]">★ Culture Drop</h3>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[12px]">
+                            Culture in your inbox, every Tuesday. Film picks, exhibition openings, music worth your time.
+                        </p>
+                        <button class="w-full h-[40px] bg-ochre rounded-full font-sans text-[13px] font-bold text-white">Subscribe free &rarr;</button>
+                    </div>
+
+                    <!-- Dark Archive Card -->
+                    <div class="bg-ink rounded-xl p-[20px] flex flex-col">
+                        <span class="font-sans text-[10px] font-bold text-ochre uppercase tracking-wider mb-[4px]">From the archive</span>
+                        <h3 class="font-serif text-[18px] font-bold text-white leading-tight mb-[8px]">Explore the full magazine</h3>
+                        <p class="font-sans text-[13px] text-white/70 leading-[1.5] mb-[16px]">
+                            Browse all essays, interviews, and dispatches.
+                        </p>
+                        <button class="w-full h-[40px] border border-white/30 rounded-full font-sans text-[13px] font-bold text-white">All stories &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- Author Band Stacked -->
+                <div class="w-full border-t border-ghost/40 py-[32px] px-[20px] flex flex-col items-center text-center">
+                    <div class="w-[80px] h-[80px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border-[2px] border-ghost/20 mb-[12px]"></div>
+                    <span class="font-sans text-[11px] text-mute uppercase tracking-widest mb-[2px]">Words by</span>
+                    <span class="font-serif text-[22px] font-bold text-ink mb-[12px]">Fola <span class="italic">Olawale</span></span>
+                    <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[16px]">
+                        Culture Editor at The Moveee. Covering music, fashion, and cultural politics.
+                    </p>
+                    <a href="#" class="font-sans text-[13px] font-bold text-ochre">More by Fola &rarr;</a>
+                </div>
+
+                <!-- Related Mobile Stack -->
+                <div class="w-full bg-white px-[20px] py-[40px] border-t border-ghost/40">
+                    <div class="flex justify-between items-end mb-[20px]">
+                        <h3 class="font-serif text-[22px] font-bold text-ink">Keep <span class="italic">reading</span></h3>
+                        <a href="#" class="font-sans text-[13px] font-bold text-ochre">All stories &rarr;</a>
+                    </div>
+
+                    <div class="flex flex-col gap-[16px]">
+                        <article class="flex flex-col group">
+                            <div class="w-full aspect-[16/9] bg-gradient-to-tr from-rose-400 to-orange-300 rounded-lg mb-[12px]"></div>
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">FASHION</span>
+                            <h4 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[6px]">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h4>
+                            <span class="font-mono text-[10px] text-ghost">May 28</span>
+                        </article>
+                        <article class="flex flex-col group">
+                            <div class="w-full aspect-[16/9] bg-gradient-to-bl from-teal-400 to-blue-500 rounded-lg mb-[12px]"></div>
+                            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[6px]">BUSINESS</span>
+                            <h4 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[6px]">The Economics of Cool: How African Creatives Are Building</h4>
+                            <span class="font-mono text-[10px] text-ghost">May 22</span>
+                        </article>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
