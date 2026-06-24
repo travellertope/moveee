@@ -324,9 +324,11 @@ export default async function MagazineArchiveWrapper({
           {/* ── PORTRAIT SCROLL ── */}
           {portraitStories.length > 0 && (
             <section className="mg-portrait">
-              <div className="mg-sec-label">Visual</div>
-              <div className="mg-sec-header">
-                <h3>In <em>Focus</em></h3>
+              <div className="mg-portrait-header">
+                <div className="mg-sec-label">Visual</div>
+                <div className="mg-sec-header">
+                  <h3>In <em>Focus</em></h3>
+                </div>
               </div>
               <div className="mg-portrait-scroll">
                 {portraitStories.map((story) => (

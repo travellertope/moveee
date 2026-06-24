@@ -1,7 +1,7 @@
 # Shop Pages Build Plan — WooCommerce + Multivendor Integration
 
 ## What This Is
-Building out the Moveee Lifestyle shop — a headless WooCommerce frontend matching the HTML design prototypes in `mockups/web/shop_index.html` and `mockups/web/shop_product.html`.
+Building out the Moveee Lifestyle shop — a headless WooCommerce frontend matching the HTML design prototypes in `mockups/web/legacy/shop_index.html` and `mockups/web/legacy/shop_product.html`.
 
 ---
 

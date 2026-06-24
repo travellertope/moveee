@@ -509,9 +509,14 @@ mockups (`community_posts.html`, `composer_states.html`, `directory_detail_1.htm
 `mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`, including one file with
 "mobile" in its name that is actually a 390px mobile-companion frame of a *web* mockup, not an
 `apps/mobile` screen). All of it was confirmed (by title-tag + frame-width inspection) to be
-web-surface content and merged into what's now `mockups/web/` — no filename collisions, nothing
-misclassified. If you see a reference to `/designs/` or `apps/figma/designs*` anywhere (e.g. stale
-docs), update it to `mockups/web/` or `mockups/mobile/` as appropriate.
+web-surface content, so it stayed under `mockups/web/` rather than `mockups/mobile/` — but it was
+kept in its own **`mockups/web/legacy/`** subfolder rather than flattened in among the 17
+pre-existing Figma Make web mockups, since it's an older, different-vintage batch (one-off
+prototypes vs. multi-frame Figma Make exports) and the user wanted that distinction preserved even
+though both batches are confirmed same-surface. No filename collisions, nothing misclassified. If
+you see a reference to `/designs/` or `apps/figma/designs*` anywhere (e.g. stale docs), update it
+to `mockups/web/legacy/` (for the older batch) or `mockups/web/`/`mockups/mobile/` (for the Figma
+Make batch) as appropriate.
 
 ---
 
