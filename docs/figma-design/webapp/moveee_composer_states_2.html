@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Post Composer (Web)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#E0D8CE', /* Updated ghost token per prompt */
+                        success: '#2D6A4F',
+                        purple: '#7A4DA0', /* Quote template accent */
+                        'purple-light': '#F3EEF8',
+                        'purple-border': '#E0D4F0'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                        'tooltip': '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input:focus, textarea:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #E0D8CE; }
+        .drag-dots { letter-spacing: -2px; }
+    </style>
+</head>
+<body class="text-ink font-sans min-h-screen pt-8 pb-12 flex flex-col items-center break-words">
+
+    <div class="flex flex-col items-center gap-[64px] w-full max-w-[1440px]">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: LOGGED-OUT STATE                      -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 w-full items-center px-4">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Logged-Out State</span>
+            
+            <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] py-[16px] px-[20px] flex items-center gap-[12px] shadow-sm">
+                <!-- Avatar Placeholder -->
+                <div class="w-[34px] h-[34px] rounded-full bg-paper-deep shrink-0"></div>
+                
+                <!-- Prompt Button -->
+                <button class="flex-1 h-[44px] bg-paper-warm border border-ghost rounded-full px-[20px] flex items-center text-left hover:bg-[#eae3d5] transition-colors cursor-pointer">
+                    <span class="font-sans text-[14px] text-ink-soft">What's happening in culture? Join the community to share.</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: TEMPLATE BAR + STANDARD POST          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 w-full items-center px-4">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Template Bar + Standard Post</span>
+            
+            <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                
+                <!-- DEV: <note> -->
+                <!-- DEV: composer-template-bar — exactly 9 pills, always visible, no modal/sheet step. Switching pills calls handleTemplateChange() which resets the section tag to TEMPLATE_TAGS[t] (food-review→Food, itinerary→Travel, creative-showcase→Art) or clears it for templates with no default. Do not design a 10th 'Book Review' pill — it does not exist on web, see CLAUDE.md. -->
+                <!-- TEMPLATE BAR -->
+                <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar">
+                    <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+                        <span class="text-[14px] leading-none">📝</span> Update
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">💎</span> Gem
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">💬</span> Take
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">🍽️</span> Food
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">🎨</span> Showcase
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">📊</span> Poll
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">🗺️</span> Route
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">📅</span> Event
+                    </button>
+                    <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 hover:bg-gray-50">
+                        <span class="text-[14px] leading-none">✦</span> Quote
+                    </button>
+                </div>
+
+                <!-- FORM BODY -->
+                <div class="p-[16px] flex items-start gap-[12px]">
+                    <!-- DEV: <note> -->
+                    <!-- DEV: 34px circle, border colour swaps to purple (#7a4da0) only for the Quote template, ochre (#c5491f) for every other template — user.avatarUrl image if set, else initials from user.name. -->
+                    <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                    
+                    <div class="flex-1 flex flex-col min-w-0">
+                        
+                        <!-- DEV: <note> -->
+                        <!-- DEV: handleTextChange() auto-detects a section tag from keyword matching once the body exceeds 20 characters (detectTagFromContent()), unless the user has manually picked a tag (tagLocked). Show this as a state where the tag bar's active pill visibly shifts a beat after the user stops typing — no toast or explicit confirmation in the real UI, so don't invent one here. -->
+                        <div class="relative w-full">
+                            <textarea class="w-full min-h-[90px] resize-none bg-transparent text-[15px] font-sans text-ink leading-relaxed border-none outline-none" placeholder="What's happening in culture?">The Lagos jazz scene is having a real moment right now — three new venues opened this year alone.</textarea>
+                            <div class="absolute bottom-0 right-0 bg-white pl-2">
+                                <span class="font-mono text-[11px] text-mute">118 / 3000</span>
+                            </div>
+                        </div>
+
+                        <!-- DEV: <note> -->
+                        <!-- DEV: A debounced (800ms) fetch to /api/community/link-preview fires automatically when a URL appears in the body text — renders via SourcePreviewCard once resolved. Citizens (non-Pro) are blocked from posting links at all by the spam-protection layer server-side (see CLAUDE.md 'Community feed spam protection') — the link preview can still render client-side before that rejection happens, so design a brief inline error state for this case ('Links are a Moveee Pro feature' or similar) since none currently exists. -->
+                        <!-- Inline Link Error State Demo -->
+                        <div class="bg-paper-warm border-l-[3px] border-ochre rounded-r-md px-[12px] py-[8px] mt-[8px] flex items-center justify-between mb-[12px]">
+                            <span class="font-sans text-[12px] text-ink-soft">Links are a Moveee Pro feature.</span>
+                            <button class="font-sans text-[12px] font-bold text-ochre hover:underline">Upgrade</button>
+                        </div>
+
+                        <!-- Section Tags -->
+                        <div class="flex gap-[8px] mt-[12px] overflow-x-auto hide-scrollbar pb-1 border-t border-ghost/40 pt-[12px]">
+                            <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold shrink-0">Music</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Film</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Art</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Fashion</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Food</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Sport</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Travel</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Ideas</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Literature</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Design</button>
+                            <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px] shrink-0 hover:bg-gray-50">Tech</button>
+                        </div>
+
+                        <!-- DEV: <note> -->
+                        <!-- DEV: Capped at 4 files via .slice(0, 4) in handleGalleryChange(), base64 preview via FileReader, actual upload happens on submit via /api/community/upload-image (R2-backed) — not per-file on add. -->
+                        <div class="mt-[12px]">
+                            <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                                <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost bg-paper-deep flex flex-col items-center justify-center shrink-0 cursor-pointer hover:bg-[#e8e4db] transition-colors">
+                                    <svg class="w-5 h-5 text-mute mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#A66C52] to-[#E2A684] relative shrink-0">
+                                    <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white/90 rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                                </div>
+                                <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#708090] to-[#A0AEBD] relative shrink-0">
+                                    <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white/90 rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                                </div>
+                            </div>
+                            <span class="block font-sans text-[11px] text-mute mt-[6px]">Up to 4 photos</span>
+                        </div>
+
+                        <!-- Actions Row -->
+                        <div class="flex items-center justify-between mt-[16px]">
+                            <div class="flex-1"></div>
+                            <div class="flex items-center gap-[12px]">
+                                <span class="font-sans text-[12px] text-ghost italic">disabled until valid</span>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px] opacity-50 cursor-not-allowed">
+                                    Post
+                                </button>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px] hover:bg-[#A93C15] transition-colors">
+                                    Post
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: TEMPLATE BAR STATES                   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 w-full items-center px-4">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Template Bar States</span>
+            
+            <div class="w-full max-w-[660px] flex flex-col gap-[24px]">
+                
+                <!-- Row A: All Inactive -->
+                <div class="w-full bg-white border border-ghost rounded-[6px] shadow-sm overflow-hidden flex flex-col">
+                    <span class="px-[12px] py-[6px] bg-paper-deep text-mute font-mono text-[10px] border-b border-ghost">Row A: Default (All inactive)</span>
+                    <div class="w-full px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar">
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📝</span> Update</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💎</span> Gem</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💬</span> Take</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🍽️</span> Food</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🎨</span> Showcase</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📊</span> Poll</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🗺️</span> Route</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📅</span> Event</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">✦</span> Quote</button>
+                    </div>
+                </div>
+
+                <!-- DEV: <note> -->
+                <!-- DEV: Both require Taste Maker (2,500 rep) or Moveee Pro — gate enforced server-side in apps/connect/app/api/community/submit/route.ts (403 on submit), but there is currently NO client-side lock/disabled state on these two pills in the real component — clicking through and submitting as an ineligible user fails only after pressing Post. This prompt should design the missing inline lock affordance (greyed pill + 🔒 + tooltip 'Taste Maker or Pro required') as a recommended UI gap-fill, not a transcription of existing behaviour. -->
+                
+                <!-- DEV: <note> -->
+                <!-- DEV: Requires Culture Contributor (500 rep) or Pro, same client-side gap as #3 above — same recommended lock affordance applies. -->
+                <!-- Row B: Poll Locked Tooltip -->
+                <div class="w-full bg-white border border-ghost rounded-[6px] shadow-sm overflow-hidden flex flex-col relative pb-4">
+                    <span class="px-[12px] py-[6px] bg-paper-deep text-mute font-mono text-[10px] border-b border-ghost">Row B: Locked Affordance (Poll / Route / Event)</span>
+                    <div class="w-full px-[8px] py-[8px] flex items-center gap-[6px] overflow-visible">
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📝</span> Update</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💎</span> Gem</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💬</span> Take</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🍽️</span> Food</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🎨</span> Showcase</button>
+                        
+                        <!-- Locked State Component -->
+                        <div class="relative group">
+                            <button class="h-[28px] bg-[#F9F9F9] border border-ghost text-mute px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-60 cursor-not-allowed">
+                                <span class="text-[14px]">📊</span> Poll <span class="text-[10px] leading-none ml-0.5">🔒</span>
+                            </button>
+                            
+                            <!-- Tooltip -->
+                            <div class="absolute top-[100%] left-1/2 -translate-x-1/2 mt-[6px] bg-ink text-white font-sans text-[11px] px-[10px] py-[6px] rounded-[4px] whitespace-nowrap z-50 shadow-tooltip flex flex-col items-center">
+                                Taste Maker or Pro required
+                                <!-- Tooltip Triangle -->
+                                <div class="absolute -top-[4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[5px] border-b-ink"></div>
+                            </div>
+                        </div>
+
+                        <button class="h-[28px] bg-[#F9F9F9] border border-ghost text-mute px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0 opacity-60 cursor-not-allowed"><span class="text-[14px]">🗺️</span> Route <span class="text-[10px] leading-none ml-0.5">🔒</span></button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📅</span> Event</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">✦</span> Quote</button>
+                    </div>
+                </div>
+
+                <!-- Row C: Quote Active -->
+                <div class="w-full bg-white border border-ghost rounded-[6px] shadow-sm overflow-hidden flex flex-col">
+                    <span class="px-[12px] py-[6px] bg-paper-deep text-mute font-mono text-[10px] border-b border-ghost">Row C: Quote Active (Purple Accent)</span>
+                    <div class="w-full px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar">
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📝</span> Update</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💎</span> Gem</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💬</span> Take</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🍽️</span> Food</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🎨</span> Showcase</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📊</span> Poll</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">🗺️</span> Route</button>
+                        <button class="h-[28px] bg-white border border-ghost text-ink-soft px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">📅</span> Event</button>
+                        <button class="h-[28px] bg-purple text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+                            <span class="text-[14px] leading-none">✦</span> Quote
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: REMAINING 7 TEMPLATE STACKS           -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 w-full items-center px-4">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: The 7 Remaining Templates</span>
+            
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-[32px] w-full max-w-[1360px] justify-items-center">
+                
+                <!-- 1. HIDDEN GEM -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">💬</span> Take</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px] min-w-0">
+                            
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Search or add a location *</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Search places..." value="Peckham Vinyl Exchange">
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Tell us about this gem — what makes it special? *</label>
+                                <textarea class="w-full min-h-[90px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">Finally found a spot in South London that stocks obscure 70s Nigerian disco and highlife prints. Unmarked from the street.</textarea>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Rating (optional)</label>
+                                    <div class="flex text-[20px] text-ochre tracking-widest leading-none">★★★★★</div>
+                                </div>
+                                <div class="flex flex-col gap-[4px] items-end">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Price (optional)</label>
+                                    <div class="flex gap-1">
+                                        <button class="px-[12px] py-[4px] border border-ghost rounded-full text-[12px] font-sans">£</button>
+                                        <button class="px-[12px] py-[4px] border border-ochre bg-ochre text-white rounded-full text-[12px] font-sans font-bold">££</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tags and submit -->
+                            <div class="flex items-center justify-between mt-[16px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Music</button>
+                                    <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[11px]">Culture</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. CULTURAL TAKE -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-purple text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5 shrink-0"><span class="text-[14px]">✦</span> Quote</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <!-- Note purple border for quote template per spec -->
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-purple shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px] min-w-0">
+                            
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">What are you writing about? (optional)</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Search directory...">
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Share your take… *</label>
+                                <textarea class="w-full min-h-[140px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">Streaming killed the African album format. We've spent the last decade celebrating the globalisation of Afrobeats. But look at what's actually been released: endless singles...</textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[16px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Music</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. FOOD REVIEW -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">🍽️</span> Food</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="grid grid-cols-2 gap-[12px]">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Dish or item name *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="e.g. Suya Platter" value="Suya Platter for Two">
+                                </div>
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Which restaurant or venue? *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Search directory..." value="Nok by Alara">
+                                </div>
+                            </div>
+
+                            <div class="bg-paper-deep p-[12px] rounded-md border border-ghost/50 grid grid-cols-3 gap-4">
+                                <div class="flex flex-col gap-1 items-center">
+                                    <span class="font-sans text-[11px] text-ink-soft font-bold">Taste *</span>
+                                    <span class="text-[18px] text-ochre tracking-widest leading-none">★★★★★</span>
+                                </div>
+                                <div class="flex flex-col gap-1 items-center">
+                                    <span class="font-sans text-[11px] text-ink-soft font-bold">Value *</span>
+                                    <span class="text-[18px] text-ochre tracking-widest leading-none">★★★★<span class="text-ghost">☆</span></span>
+                                </div>
+                                <div class="flex flex-col gap-1 items-center">
+                                    <span class="font-sans text-[11px] text-ink-soft font-bold">Vibe *</span>
+                                    <span class="text-[18px] text-ochre tracking-widest leading-none">★★★★★</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">How was the food? *</label>
+                                <textarea class="w-full min-h-[70px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">The smoky flavor is unmatched. Best jollof in Victoria Island.</textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[16px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Food</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. CREATIVE SHOWCASE -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">🎨</span> Showcase</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="flex gap-[12px]">
+                                <div class="flex-1 flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Title of your work *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Title" value="Zaria Music Visuals">
+                                </div>
+                                <div class="flex-1 flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Medium *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="e.g. Photography" value="Photography">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Caption (optional)</label>
+                                <textarea class="w-full min-h-[70px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">Shot over two months on film, no digital corrections.</textarea>
+                            </div>
+
+                            <div>
+                                <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Upload Media *</label>
+                                <div class="w-full h-[120px] rounded-md border-[1.5px] border-dashed border-ghost bg-paper-deep flex flex-col items-center justify-center cursor-pointer hover:bg-[#e8e4db] transition-colors relative">
+                                    <svg class="w-6 h-6 text-mute mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                                    <span class="font-sans text-[13px] text-mute">Add photos or video</span>
+                                    
+                                    <!-- Image mock inside -->
+                                    <div class="absolute bottom-2 bg-white border border-ghost rounded-md p-1 pr-2 flex items-center gap-2 shadow-sm">
+                                        <div class="w-[24px] h-[24px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-sm"></div>
+                                        <span class="font-mono text-[10px] text-ink">visuals.jpg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[8px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Art</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. POLL -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">📊</span> Poll</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Ask a question… *</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink font-bold" placeholder="Question" value="What's the greatest era of Afrobeats?">
+                            </div>
+
+                            <div class="flex flex-col gap-[8px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Options *</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-ghost select-none">⠿</span>
+                                    <input type="text" class="flex-1 h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="90s Fela Era">
+                                    <button class="text-ghost hover:text-ink">✕</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-ghost select-none">⠿</span>
+                                    <input type="text" class="flex-1 h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="2010s Wizkid/Davido">
+                                    <button class="text-ghost hover:text-ink">✕</button>
+                                </div>
+                                <div class="flex items-center gap-2 opacity-50">
+                                    <span class="text-ghost select-none">⠿</span>
+                                    <input type="text" class="flex-1 h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Option 3...">
+                                </div>
+                                <button class="font-sans text-[12px] text-mute text-left mt-1">+ Add option</button>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <label class="font-sans text-[11px] font-bold text-mute">Duration *</label>
+                                <select class="h-[32px] border border-ghost rounded-md px-2 text-[12px] font-sans">
+                                    <option>1 Day</option>
+                                    <option selected>3 Days</option>
+                                    <option>7 Days</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[8px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Music</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. ROUTE/ITINERARY -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">🗺️</span> Route</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="grid grid-cols-2 gap-[12px]">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Trip title *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Title" value="48 Hours in Lagos">
+                                </div>
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">City/Region *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Location" value="Lagos, Nigeria">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[8px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Stops *</label>
+                                <div class="border border-ghost rounded-md p-[12px] flex flex-col gap-3 relative">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-full bg-paper-warm flex items-center justify-center font-mono text-[11px] font-bold text-mute shrink-0">1</div>
+                                        <div class="flex-1 flex flex-col gap-1">
+                                            <input type="text" class="w-full border-none outline-none font-sans font-bold text-[14px] p-0" value="Nike Art Gallery">
+                                            <span class="font-sans text-[12px] text-ochre">🗂 Linked directory entry</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-3 opacity-60">
+                                        <div class="w-6 h-6 rounded-full bg-paper-warm flex items-center justify-center font-mono text-[11px] font-bold text-mute shrink-0">2</div>
+                                        <div class="flex-1 flex flex-col gap-1">
+                                            <input type="text" class="w-full border-none outline-none font-sans text-[14px] p-0" placeholder="Add place...">
+                                        </div>
+                                    </div>
+                                    <button class="font-sans text-[12px] text-ochre text-left mt-1 w-max">Add stop +</button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Describe your route… *</label>
+                                <textarea class="w-full min-h-[60px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">The ultimate culture route for a weekend trip.</textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[8px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Travel</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEV: <note> -->
+                <!-- DEV: Requires Culture Contributor (500 rep) or Pro, same client-side gap as #3 above — same recommended lock affordance applies. -->
+                <!-- 7. EVENT -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-ochre text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">📅</span> Event</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-ochre shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Event name *</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Name" value="Amapiano Night at The Jazz Cafe">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-[12px]">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Start date & time *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="Fri 20 Jun, 9:00 PM">
+                                </div>
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">End date & time</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" placeholder="Optional">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-[12px]">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Venue</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="The Jazz Cafe">
+                                </div>
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">City *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="London">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Admission</label>
+                                <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="£15 advance">
+                            </div>
+
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">Describe the event — what to expect, why it matters… (optional)</label>
+                                <textarea class="w-full min-h-[60px] border border-ghost rounded-md p-[12px] resize-none bg-transparent text-[14px] font-sans text-ink leading-relaxed">An intimate Amapiano takeover.</textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[8px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Music</button>
+                                </div>
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. QUOTE -->
+                <div class="w-full max-w-[660px] bg-white border border-ghost rounded-[6px] flex flex-col shadow-sm">
+                    <div class="w-full border-b border-ghost px-[8px] py-[8px] flex items-center gap-[6px] overflow-x-auto hide-scrollbar shrink-0">
+                        <button class="h-[28px] bg-purple text-white px-[11px] rounded-full font-sans text-[12px] font-bold flex items-center gap-1.5"><span class="text-[14px]">✦</span> Quote</button>
+                    </div>
+                    <div class="p-[16px] flex items-start gap-[12px]">
+                        <!-- Note purple border for quote template per spec -->
+                        <div class="w-[34px] h-[34px] rounded-full border-[1.5px] border-purple shrink-0 bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        <div class="flex-1 flex flex-col gap-[16px]">
+                            
+                            <div class="flex flex-col gap-[4px]">
+                                <label class="font-sans text-[11px] font-bold text-mute">The quote… *</label>
+                                <div class="w-full bg-paper-warm p-[16px] rounded-md border border-ghost flex flex-col relative">
+                                    <span class="absolute top-2 left-3 font-serif text-[40px] text-ghost opacity-50 select-none leading-none">"</span>
+                                    <textarea class="w-full flex-1 resize-none bg-transparent text-[18px] font-serif italic text-ink z-10 leading-relaxed mt-4">African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution.</textarea>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-[12px]">
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Who said it *</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="Ngozi Adichie">
+                                </div>
+                                <div class="flex flex-col gap-[4px]">
+                                    <label class="font-sans text-[11px] font-bold text-mute">Source (optional)</label>
+                                    <input type="text" class="w-full h-[40px] border border-ghost rounded-md px-[12px] text-[14px] font-sans text-ink" value="Lagos Book & Art Festival · 2024">
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-[8px] border-t border-ghost/40 pt-[16px]">
+                                <div class="flex gap-2">
+                                    <button class="h-[28px] px-[12px] rounded-full bg-ink text-white font-sans text-[11px] font-bold">Ideas</button>
+                                </div>
+                                <!-- Note standard ochre post button even for quote template -->
+                                <button class="h-[36px] px-[20px] bg-ochre text-white font-sans text-[13px] font-bold rounded-[4px]">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: SUCCESS STATE                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col gap-3 w-full items-center px-4">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Success State</span>
+            
+            <!-- DEV: <note> -->
+            <!-- DEV: Replaces the entire composer card with a single purple-tinted banner (#f3eef8 bg, #e0d4f0 border, #7a4da0 text, italic Fraunces) — there is no separate 'view your post' or 'post again' CTA in this state, it's transient (the parent feed already prepends the new item via onPosted). -->
+            <div class="w-full max-w-[660px] bg-purple-light border border-purple-border rounded-[6px] py-[14px] px-[16px] text-center shadow-sm">
+                <span class="font-serif italic text-[14px] text-purple">Posted! Your update is now live in the feed.</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
