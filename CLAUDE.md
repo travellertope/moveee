@@ -820,7 +820,7 @@ re-derived from scratch each session.
 | 6 | Magazine / Article Detail | Site A | Done — rebuilt from mockup (see "Magazine archive page" above) |
 | 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
 | 8 | Culture Games | Site B | Not started |
-| 9 | Member Dashboard | Site B | Not started |
+| 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
 | 10 | Member Settings | Site B | Not started |
 | 11 | Wallet, Perks & Coupons | Site B | Not started |
 | 12 | Member Directory & Public Profiles | Site B | Not started |
@@ -830,6 +830,53 @@ re-derived from scratch each session.
 | 16 | Design System & Core UI Components | Site A + B | Not started |
 | 17 | Authentication Flow | Site B | Not started |
 | 18 | Overlays & Micro-interactions | Site B | Not started |
+
+### Member Dashboard — visual rebuild (§9, June 2026)
+
+`apps/connect/app/member/page.tsx` + `MemberDashboard.tsx`/`MemberBadges.tsx`/
+`PasskeyBanner.tsx` (`packages/shared/components/`) + `apps/connect/app/member.css`
+rebuilt against `mockups/web/moveee_dashboard_web.html`:
+
+- **Full-bleed band pattern** (new structural pattern, reusable for future sections):
+  the mockup's hero, passkey banner, and stats row are each page-width sections with
+  their own background color, while their *content* is horizontally centered at
+  `max-width: 1200px`. Previously only the hero followed this — the passkey banner and
+  stats row were nested inside `.mem-body`'s `max-width:1200px` wrapper, so they looked
+  like cards instead of full-width bands. Fixed by moving `<PasskeyBanner>` and
+  `<MemberDashboard>` out of `.mem-body` in `page.tsx`, and adding a `.mem-stats-band`
+  wrapper (full width, own background/border) around the existing `.mem-stats` grid
+  (which itself became the `max-width:1200px` centered inner element). **If a future
+  section's mockup shows a full-width tinted strip, check for this same pattern** — don't
+  assume every section lives inside the body's centered container.
+- `.mem-hero` switched from a dark `ink` background with light text to a white/paper
+  background with ink text (mockup uses light hero, not dark) — avatar enlarged to 96px
+  with a gold ring border; tier badge switched to a full pill (`border-radius: 999px`,
+  was 2px).
+- `PasskeyBanner.tsx` rewritten from a small inline-styled rounded box to a full-width
+  dark `ink`-background bar (className-based, matching the rest of the redesigned
+  components' convention) with a white pill CTA button — also fixed a copy-priority bug
+  where the "credits waiting" message never became the bold title even when
+  `creditsEscrowed > 0`.
+- `.mem-stats` grid: `repeat(4,1fr)` → `repeat(5,1fr)` (5 stats were already rendered by
+  the component; only the CSS column count was stale). `.mem-tooltip` flipped from
+  appearing above the stat to below it (`top: calc(100% + 12px)`, arrow flipped to point
+  up), matching the mockup.
+- `.mem-badges-grid`: `repeat(4,1fr)` → `repeat(2,1fr)`; `.mem-badge` restructured from a
+  centered icon-over-text column to a left-aligned row card with a 40px circular icon
+  swatch — required a matching JSX change in `MemberBadges.tsx` (wrapped name/desc in a
+  new `.mem-badge-text` div) since the row layout needs name+desc stacked beside the icon,
+  not below it.
+- Responsive breakpoints updated to match the new 5-stat/2-badge-column base (the
+  `max-width: 1024px`/`640px` overrides previously assumed a stale 4-stat/4-badge-column
+  layout) — stats wrap 3+2 at 1024px and 2-per-row at 640px via `nth-child` border rules
+  rather than the old fixed 2-column assumption.
+- **Not visually verified in a browser** — this environment has no `NEXTAUTH_SECRET` or
+  WordPress backend credentials configured, so `getServerSession()` 500s before any
+  member-page markup renders. Verified instead via: CSS brace-balance check, mockup
+  HTML re-read for exact values (colors/radii/spacing), and component/CSS class-name
+  cross-referencing. If this matters, re-check pixel fidelity against
+  `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
+  fully closed.
 
 ### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
 
