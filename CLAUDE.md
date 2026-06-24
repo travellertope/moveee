@@ -474,38 +474,44 @@ top-level doc.
 
 These are the actual self-contained HTML output files (Tailwind CDN + Google Fonts, multiple
 "Frame N" sections at fixed pixel widths) generated *from* the prompt catalogs above — not to be
-confused with the `.md` prompt text files themselves. Two folders, split the same way, both under
-`apps/figma/` (consolidated there 2026-06-24 — see below for the prior, now-removed locations):
+confused with the `.md` prompt text files themselves. They live in a dedicated top-level
+**`mockups/`** folder (moved there 2026-06-24, see below for the prior locations), kept deliberately
+separate from `apps/figma/` — `apps/figma/` is a *different* artifact entirely: a live, buildable
+Figma Make code export (`src/`, `index.html`, `README.md`, a real React app for design tokens), not
+a mockup archive. Mixing static reference HTML into that folder was confusing, hence the move.
 
-- `apps/figma/designs-mobile/` — **mobile app** mockups (`apps/mobile`). Renamed from
-  `apps/figma/designs/` for naming symmetry with `designs-web`.
-- `apps/figma/designs-web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can
-  overlap with the mobile folder (e.g. `moveee_connect_settings.html`,
-  `moveee_dark_mode_ui.html`, `moveee_overlays.html`, `moveee_wallet.html`,
-  `moveee_directory.html`, `moveee_magazine.html` exist in both) — these are different files
-  with different content per surface, not duplicates. Don't dedupe across the two folders.
+- `mockups/mobile/` — **mobile app** mockups (`apps/mobile`).
+- `mockups/web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can overlap with
+  the mobile folder (e.g. `moveee_connect_settings.html`, `moveee_dark_mode_ui.html`,
+  `moveee_overlays.html`, `moveee_wallet.html`, `moveee_directory.html`, `moveee_magazine.html`
+  exist in both) — these are different files with different content per surface, not duplicates.
+  Don't dedupe across the two folders.
 
 When a user uploads a new mockup HTML file and asks to "upload"/"add" it to the repo: strip the
 random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_settings.html` →
 `moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
 surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
-location like `docs/figma-design/`.
+location like `docs/figma-design/` or put it back under `apps/figma/`.
 
-**Consolidation note (2026-06-24):** a third, older mockup location existed at the repo-root
-`/designs/` folder — predating the `apps/figma/` convention entirely (single one-off HTML
-prototypes, not "Frame N" multi-frame Figma Make output), containing a mix of `apps/site`
-mockups (`homepage.html`, `magazine_index.html`, `shop_index.html`, `shop_product.html`,
-`origins_index.html`, `origins_journey.html`, `gele_return.html`, `marrakech_dispatch.html`,
-`portrait_feature.html`, `event_opening.html`, `events_index.html`, `newsletter/hub.html`,
-`newsletter/issue.html` — title tag `"... · The Moveee"`) and `apps/connect` mockups
-(`community_posts.html`, `composer_states.html`, `directory_detail_1.html`,
+**History (2026-06-24):** these folders were originally `apps/figma/designs/` (mobile) and
+`apps/figma/designs-web/` (web) — first consolidated together under `apps/figma/` from three
+separate locations, then immediately relocated again to the current top-level `mockups/mobile/`
+and `mockups/web/` once it became clear `apps/figma/`'s own purpose (the live design-token export
+above) shouldn't share a folder with a static mockup archive. Before that first consolidation, a
+third, older mockup location existed at the repo-root `/designs/` folder — predating any of this
+convention (single one-off HTML prototypes, not "Frame N" multi-frame Figma Make output),
+containing a mix of `apps/site` mockups (`homepage.html`, `magazine_index.html`, `shop_index.html`,
+`shop_product.html`, `origins_index.html`, `origins_journey.html`, `gele_return.html`,
+`marrakech_dispatch.html`, `portrait_feature.html`, `event_opening.html`, `events_index.html`,
+`newsletter/hub.html`, `newsletter/issue.html` — title tag `"... · The Moveee"`) and `apps/connect`
+mockups (`community_posts.html`, `composer_states.html`, `directory_detail_1.html`,
 `events_list_and_detail.html`, `feed_cards.html`, `feed-cards-v2.html`,
-`mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`). All of it was moved into
-`apps/figma/designs-web/` (no filename collisions) since that folder's scope already covers both
-`apps/site` and `apps/connect`. The root `/designs/` folder no longer exists — if you see a
-reference to it anywhere (e.g. stale docs), update it to `apps/figma/designs-web/`.
-`SHOP_BUILD_PLAN.md`'s reference to `/designs/shop_index.html`/`/designs/shop_product.html` was
-updated as part of this move.
+`mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`, including one file with
+"mobile" in its name that is actually a 390px mobile-companion frame of a *web* mockup, not an
+`apps/mobile` screen). All of it was confirmed (by title-tag + frame-width inspection) to be
+web-surface content and merged into what's now `mockups/web/` — no filename collisions, nothing
+misclassified. If you see a reference to `/designs/` or `apps/figma/designs*` anywhere (e.g. stale
+docs), update it to `mockups/web/` or `mockups/mobile/` as appropriate.
 
 ---
 
