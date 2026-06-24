@@ -138,6 +138,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const weekday      = dateValid.toLocaleDateString("en-GB", { weekday: "long" });
   const dayNum       = dateValid.toLocaleDateString("en-GB", { day: "numeric" });
   const monthShort   = dateValid.toLocaleDateString("en-GB", { month: "short" }).toUpperCase();
+  // The WP Admin "Event Date" field is a datetime-local input, so the time entered when
+  // creating the event lives in eventDate itself — only fall back to openingHours
+  // (a separate, unrelated "gallery hours" field) or "Time TBA" if eventDate has no time.
+  const hasTime      = /T\d{2}:\d{2}/.test(dateRaw) || /\d{1,2}:\d{2}/.test(dateRaw);
+  const timeFormatted = hasTime ? dateValid.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" }) : null;
 
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
@@ -211,7 +216,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
             <div>
               <p className="ehl-date-weekday">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-              <p className="ehl-date-time">{event.openingHours || "Time TBA"}</p>
+              <p className="ehl-date-time">{timeFormatted || event.openingHours || "Time TBA"}</p>
             </div>
           </div>
 
@@ -348,7 +353,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             ) : (
               <>
                 <h3>Secure your <em>place</em></h3>
-                <div className="event-date">{event.location} · {event.openingHours || "See details"}</div>
+                <div className="event-date">{event.location} · {timeFormatted || event.openingHours || "See details"}</div>
                 <RSVPForm
                   eventSlug={event.slug} eventTitle={event.title}
                   capacity={event.rsvpCapacity ?? undefined}
