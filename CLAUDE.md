@@ -831,7 +831,7 @@ re-derived from scratch each session.
 | 8 | Culture Games | Site B | Not started |
 | 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
-| 11 | Wallet, Perks & Coupons | Site B | Not started |
+| 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
 | 12 | Member Directory & Public Profiles | Site B | Not started |
 | 13 | Notifications & Analytics | Site B | Not started |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
@@ -950,6 +950,57 @@ now been corrected):
   brace-balance check and direct mockup HTML re-read for exact class names/
   values. Re-check pixel fidelity against `mockups/web/moveee_connect_settings.html`
   in a real environment before considering this fully closed.
+
+### Wallet, Perks & Coupons — visual rebuild (§11, June 2026)
+
+Three routes (`/member/wallet` → `WalletClient.tsx`, `/connect/perks` →
+`PerksClient.tsx`, `/member/coupons` → `CouponsClient.tsx`) rebuilt against the
+single mockup `mockups/web/moveee_wallet.html` (674 lines, 5 frames: Wallet
+History, Wallet Cash Out, Perks + redeem modal/QR success, Coupons, plus a
+mobile companion frame). Confirmed via direct HTML read, not the prose spec.
+
+- **New semantic color tokens** added to `apps/connect/app/globals.css`:
+  `--success`, `--error`, `--warning`, `--warning-dark` — previously every
+  success/error indicator across these three pages used literal hex
+  (`#2e7d32`/`#c5491f`/`rgba(198,40,40,...)`) rather than a shared token, even
+  though the mockup treats these as distinct semantic colors from the brand
+  ochre/rust accent. `WalletClient.tsx`'s ledger amount color, step-up error
+  banner, and cash-out result banner all swapped from literal hex to
+  `var(--success)`/`var(--error)`.
+- **`CouponsClient.tsx` Active/Used/Expired rebuild** — Active coupons now
+  render as a `repeat(auto-fill, minmax(220px,1fr))` grid of centered cards
+  (`--radius-xl` + `--shadow-card`, success-tinted border by default, flipping
+  to warning-tinted when `daysUntil(expires_at) <= 3`), each with an
+  absolutely-positioned top-right pill badge ("Active", tinted to match the
+  card's state), a centered QR, and a bold expiry line. Used/Expired now
+  render as rounded (`--radius-lg`), opacity-reduced rows (Used: 0.6, Expired:
+  0.4 + title strikethrough) with a trailing pill status badge — previously
+  both were a flatter, non-pill, non-card treatment. Mirrors the
+  success/error/warning token convention introduced above.
+- **`perks.css`**: added `.perk-stepup-working { animation: perk-pulse 1.8s
+  ease-in-out infinite; }` + the `@keyframes perk-pulse` rule itself —
+  `PerksClient.tsx`'s "waiting for biometrics" banner already had this
+  className applied in JSX but no matching CSS existed, so the mockup's
+  `animate-pulse` behavior was silently missing.
+- **Investigated, deliberately left unchanged**: `.perk-redeem-btn` is dead
+  CSS (grepped across `apps/connect/`, including the compiled `.next` output —
+  no `.tsx` references it; `PerksClient.tsx` uses `.perk-card-btn` instead).
+  `.perks-filter-btn`'s underline-tab style (not a pill) was checked against
+  the mockup's own Frame 2 tab markup (`border-b-[2px] border-ochre`, not a
+  rounded pill) and confirmed already correct — no change needed.
+- **DEV note, preserved verbatim (do not "fix"):** `WalletClient.tsx` has
+  `feePercent = 30` (the live calculator, ~line 108) alongside static copy
+  reading "A flat 40% fee applies" (~line 228) — both numbers genuinely
+  coexist in the live code and were confirmed present before this pass.
+  Per the project's render-exactly-what-the-code-does rule, this mismatch
+  was intentionally left untouched rather than reconciled one way or the
+  other.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as the Dashboard/Settings rebuilds above. Verified via CSS
+  brace-balance checks (`perks.css`, `globals.css`) and a full `tsc --noEmit`
+  pass on `apps/connect` (clean). Re-check pixel fidelity against
+  `mockups/web/moveee_wallet.html` in a real environment before considering
+  this fully closed.
 
 ### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
 
