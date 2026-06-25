@@ -219,25 +219,6 @@ export default function ConnectHeader() {
           </>
         )}
 
-        {status === "authenticated" && user && (
-          <>
-            <div className="ch-mobile-nav-divider" />
-            <Link href="/member" className="ch-mobile-nav-link">My Dashboard</Link>
-            <Link href="/member/wallet" className="ch-mobile-nav-link">Wallet</Link>
-            <Link href="/member/settings" className="ch-mobile-nav-link">Settings</Link>
-            {user.isVendor && (
-              <Link href="/vendor/dashboard" className="ch-mobile-nav-link">Vendor Dashboard</Link>
-            )}
-            <div className="ch-mobile-nav-divider" />
-            <button
-              className="ch-mobile-nav-link ch-user-item--danger"
-              style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
-              onClick={() => signOut({ callbackUrl: "/login" })}
-            >
-              Sign out
-            </button>
-          </>
-        )}
       </nav>
     </>
   );
