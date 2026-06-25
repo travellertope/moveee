@@ -6,7 +6,7 @@ import CreateClusterClient from "./CreateClusterClient";
 export const metadata = { title: "Start a House Fellowship · Moveee" };
 
 export default async function CreateClusterPage() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions as any)) as any;
   if (!session?.user) redirect("/login?callbackUrl=/cluster/create");
 
   return (
