@@ -10,6 +10,7 @@ import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
 import ProBadge from "@/components/ProBadge";
+import ImageLightbox from "./ImageLightbox";
 
 function AuthorFollowToggle({ username }: { username: string }) {
   const { data: session, status } = useSession();
@@ -200,6 +201,8 @@ interface CommunityDetailModalProps {
 export default function CommunityDetailModal({ item, onClose, onMentionClick }: CommunityDetailModalProps) {
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
 
   const close = useCallback(() => onClose(), [onClose]);
 
@@ -436,7 +439,14 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {item.galleryImages && item.galleryImages.length >= 1 && (
             <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
               {item.galleryImages.map((img: string, i: number) => (
-                <img key={i} src={img} alt="" style={{ height: "220px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                <img
+                  key={i}
+                  src={img}
+                  alt=""
+                  onClick={() => setLightbox({ images: item.galleryImages!, index: i })}
+                  style={{ height: "220px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                  loading="lazy"
+                />
               ))}
             </div>
           )}
@@ -485,9 +495,20 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Single image (only when no gallery) */}
           {item.image && !item.galleryImages?.length && (
-            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+            <div
+              onClick={() => setLightbox({ images: [item.image!], index: 0 })}
+              style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+            >
               <img src={item.image} alt="" style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "320px" }} loading="lazy" />
             </div>
+          )}
+          {lightbox && (
+            <ImageLightbox
+              images={lightbox.images}
+              initialIndex={lightbox.index}
+              alt={item.title}
+              onClose={closeLightbox}
+            />
           )}
 
           {/* Link preview (only if no image) */}

@@ -12,6 +12,7 @@ import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
 import ProBadge from "@/components/ProBadge";
+import ImageLightbox from "./ImageLightbox";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -206,62 +207,7 @@ function stripTrailingUrl(text: string, sourceUrl?: string): string {
   return text.replace(new RegExp(`\\s*${escaped}\\s*$`), "").trimEnd();
 }
 
-function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(0,0,0,0.88)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "1rem",
-        cursor: "zoom-out",
-      }}
-    >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        aria-label="Close"
-        style={{
-          position: "absolute", top: "1rem", right: "1rem",
-          background: "rgba(255,255,255,0.12)", border: "none",
-          borderRadius: "50%", width: "36px", height: "36px",
-          color: "#fff", fontSize: "1rem", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        ✕
-      </button>
-
-      {/* Image — stop click propagating so clicking image itself doesn't close */}
-      <img
-        src={src}
-        alt={alt}
-        onClick={e => e.stopPropagation()}
-        style={{
-          maxWidth: "100%",
-          maxHeight: "90vh",
-          objectFit: "contain",
-          borderRadius: "4px",
-          cursor: "default",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
-        }}
-      />
-    </div>
-  );
-}
-
-function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
+function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: number) => void }) {
   const count = images.length;
 
   if (count === 0) return null;
@@ -272,7 +218,7 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
         <img
           src={images[0]}
           alt=""
-          onClick={() => onTap(images[0])}
+          onClick={() => onTap(0)}
           style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block", cursor: "zoom-in" }}
           loading="lazy"
         />
@@ -282,6 +228,8 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
 
   // Multi-image strip — fixed-size square thumbnails, several visible at once
   // (mirrors apps/mobile's GalleryStrip rather than a one-slide-per-view carousel).
+  // Tapping any thumbnail opens the shared ImageLightbox, which then supports
+  // swipe/arrow-key/button navigation across the full `images` array.
   return (
     <div
       className="hide-scrollbar"
@@ -298,7 +246,7 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
           key={i}
           src={img}
           alt=""
-          onClick={() => onTap(img)}
+          onClick={() => onTap(i)}
           style={{
             height: "200px",
             width: "200px",
@@ -443,7 +391,7 @@ export default function FeedCard({
   // ── Community card (tweet-style) ──
   if (item.type === "community") {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [lightbox, setLightbox] = useState<string | null>(null);
+    const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeLightbox = useCallback(() => setLightbox(null), []);
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -689,7 +637,7 @@ export default function FeedCard({
 
             {/* Gallery carousel — all image-capable templates */}
             {item.galleryImages && item.galleryImages.length >= 1 && (
-              <GalleryCarousel images={item.galleryImages} onTap={setLightbox} />
+              <GalleryCarousel images={item.galleryImages} onTap={(index) => setLightbox({ images: item.galleryImages!, index })} />
             )}
 
             {/* Video embed */}
@@ -736,13 +684,20 @@ export default function FeedCard({
             {/* Single image — only when no gallery */}
             {item.image && !item.galleryImages?.length && (
               <div
-                onClick={() => setLightbox(item.image!)}
+                onClick={() => setLightbox({ images: [item.image!], index: 0 })}
                 style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
               >
                 <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
               </div>
             )}
-            {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
+            {lightbox && (
+              <ImageLightbox
+                images={lightbox.images}
+                initialIndex={lightbox.index}
+                alt={item.title}
+                onClose={closeLightbox}
+              />
+            )}
 
             {/* Link preview card (only if no image) */}
             {!item.image && item.sourceUrl && (
