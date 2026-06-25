@@ -421,16 +421,16 @@
   }
 
   .compact-logo {
-    font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--ink);
-    text-decoration: none;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
     flex-shrink: 0;
+    text-decoration: none;
     transition: opacity 0.2s;
+  }
+  .compact-logo img {
+    height: 32px;
+    width: auto;
+    display: block;
   }
   .compact-logo:hover { opacity: 0.75; }
 

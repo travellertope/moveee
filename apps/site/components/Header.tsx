@@ -36,7 +36,10 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         {/* Left zone: logo + divider + nav */}
         <div className="compact-header-left">
           <Link href="/" className="compact-logo">
-            Moveee
+            <img
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
+              alt="The Moveee Logo"
+            />
           </Link>
           <div className="compact-logo-divider" />
           <nav className="compact-nav">
