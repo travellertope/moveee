@@ -279,12 +279,14 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-8px);
   opacity: 0;
+  pointer-events: none;
   transition: transform 0.2s, opacity 0.2s;
 }
 
 .ch-mobile-nav.open {
   transform: translateY(0);
   opacity: 1;
+  pointer-events: auto;
 }
 
 .ch-mobile-nav-link {
