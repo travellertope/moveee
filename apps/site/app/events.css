@@ -127,8 +127,10 @@ html {
 .works-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px; }
 .works-header h3 { font-size: 48px; font-weight: 400; }
 .works-header h3 em { font-style: italic; color: var(--ochre); }
-.works-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.work-card .work-frame { aspect-ratio: 3/4; background: var(--ink); overflow: hidden; margin-bottom: 14px; position: relative; }
+.works-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+.work-card { display: flex; flex-direction: column; max-width: 100%; }
+.work-card .work-frame { height: 280px; width: auto; background: var(--ink); overflow: hidden; margin-bottom: 14px; position: relative; cursor: pointer; }
+.work-card .work-frame img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
 .work-num { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; }
 .work-title { font-family: var(--font-serif); font-size: 16px; font-style: italic; font-weight: 400; margin-bottom: 4px; }
 .work-meta { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; color: var(--mute); }
@@ -454,7 +456,7 @@ html {
   .page-body { padding: 40px 24px; }
   .gallery-run { padding: 40px 24px; }
   .gallery-portrait { aspect-ratio: 4/3; }
-  .works-grid { grid-template-columns: 1fr 1fr; }
+  .work-card .work-frame { height: 200px; }
   .events-grid { grid-template-columns: 1fr; }
   .programme-row { grid-template-columns: 80px 1fr; gap: 16px; }
 }

@@ -113,16 +113,9 @@ export default function CommunityTab({ username }: Props) {
             {posts.map(post => <PostRow key={post.id} post={post} />)}
           </div>
           {hasMore && (
-            <div style={{ textAlign: "center", marginTop: "24px" }}>
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                className="prf-filter-pill"
-                style={{ padding: "8px 20px" }}
-              >
-                {loading ? "Loading…" : "Load more"}
-              </button>
-            </div>
+            <button onClick={loadMore} disabled={loading} className="prf-load-more">
+              {loading ? "Loading…" : "Load more"}
+            </button>
           )}
         </>
       )}

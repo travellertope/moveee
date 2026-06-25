@@ -25,6 +25,13 @@ const DEFAULT_TICKETS: TicketType[] = [
 ];
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error' | 'ticket_confirmed' | 'ticket_pending';
+type ErrorCode = 'already_registered' | 'sold_out' | 'generic' | null;
+
+function formatPrice(amount?: number | null, currency?: string | null): string {
+  if (!amount) return 'Free';
+  const symbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : currency === 'NGN' ? '₦' : '';
+  return `${symbol}${amount.toLocaleString()}`;
+}
 
 const RSVPForm: React.FC<RSVPFormProps> = ({
   eventSlug,
@@ -37,6 +44,7 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   const tickets = (ticketTypes && ticketTypes.length > 0) ? ticketTypes : DEFAULT_TICKETS;
 
   const [status, setStatus] = useState<FormStatus>('idle');
+  const [errorCode, setErrorCode] = useState<ErrorCode>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [ticketCode, setTicketCode] = useState('');
   const [spotsRemaining, setSpotsRemaining] = useState(initialSpotsRemaining);
@@ -64,9 +72,11 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
       setStatus('ticket_pending');
     } else if (failed) {
       setErrorMsg('Payment unsuccessful. Please try again.');
+      setErrorCode('generic');
       setStatus('error');
     } else if (cancelled) {
       setErrorMsg('Payment was cancelled.');
+      setErrorCode('generic');
       setStatus('error');
     }
   }, []);
@@ -81,13 +91,14 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
     } catch { /* non-critical */ }
   };
 
+  const selectedTicket = tickets.find(t => t.ticketSlug === formData.ticket) ?? tickets[0];
+  const isPaid = (selectedTicket?.ticketAmount ?? 0) > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
     setErrorMsg('');
-
-    const selectedTicket = tickets.find(t => t.ticketSlug === formData.ticket) ?? tickets[0];
-    const isPaid = (selectedTicket?.ticketAmount ?? 0) > 0;
+    setErrorCode(null);
 
     try {
       if (isPaid) {
@@ -116,6 +127,7 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
         }
 
         setErrorMsg(data?.message ?? 'Could not initialize payment. Please try again.');
+        setErrorCode('generic');
         setStatus('error');
         return;
       }
@@ -142,18 +154,23 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
 
       const data = await res.json().catch(() => ({}));
       const code = data?.error ?? '';
-      const msg =
-        code === 'already_registered'
-          ? 'You are already registered for this event.'
-          : code === 'sold_out'
-          ? 'Sorry — this event is now fully booked.'
-          : data?.message || 'Something went wrong — please try again.';
 
-      setErrorMsg(msg);
+      if (code === 'already_registered') {
+        setErrorMsg('You are already registered for this event.');
+        setErrorCode('already_registered');
+      } else if (code === 'sold_out') {
+        setErrorMsg('Sorry — this event is now fully booked.');
+        setErrorCode('sold_out');
+      } else {
+        setErrorMsg(data?.message || 'Something went wrong — please try again.');
+        setErrorCode('generic');
+      }
+
       setStatus('error');
       refreshCapacity();
     } catch {
       setErrorMsg('Something went wrong — please try again.');
+      setErrorCode('generic');
       setStatus('error');
     }
   };
@@ -161,13 +178,14 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Confirmed via Paystack callback ─────────────────────────────────────────
   if (status === 'ticket_confirmed') {
     return (
-      <div style={{ background: 'rgba(61,74,42,0.08)', border: '1px solid rgba(61,74,42,0.3)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
-          Ticket confirmed.
-        </p>
-        <p className="rsvp-small" style={{ marginTop: 0 }}>
-          Your ticket has been emailed to you. Ref: <code style={{ fontSize: '12px', letterSpacing: '0.05em' }}>{ticketCode}</code>
-        </p>
+      <div className="evt-state-card evt-state-card--confirmed evt-state-card--small">
+        <div className="evt-state-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3>Ticket confirmed.</h3>
+        <p className="evt-state-ref">Ref: {ticketCode}</p>
       </div>
     );
   }
@@ -175,13 +193,15 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Stripe pending — webhook fires asynchronously ───────────────────────────
   if (status === 'ticket_pending') {
     return (
-      <div style={{ background: 'rgba(30,60,90,0.06)', border: '1px solid rgba(100,160,220,0.3)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
-          Payment received.
-        </p>
-        <p className="rsvp-small" style={{ marginTop: 0 }}>
-          Your ticket confirmation will arrive by email shortly. Ref: <code style={{ fontSize: '12px', letterSpacing: '0.05em' }}>{ticketCode}</code>
-        </p>
+      <div className="evt-state-card evt-state-card--pending evt-state-card--small">
+        <div className="evt-state-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3>Payment received.</h3>
+        <p>Processing your ticket...</p>
+        <p className="evt-state-ref">Ref: {ticketCode}</p>
       </div>
     );
   }
@@ -189,117 +209,125 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Free RSVP success ───────────────────────────────────────────────────────
   if (status === 'success') {
     return (
-      <div style={{ background: 'rgba(61,74,42,0.08)', border: '1px solid rgba(61,74,42,0.3)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
-          You&rsquo;re on the list.
-        </p>
-        <p className="rsvp-small" style={{ marginTop: 0 }}>
-          Confirmation sent by email · See you there.
-        </p>
+      <div className="evt-state-card evt-state-card--success">
+        <div className="evt-state-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3>You&rsquo;re on the list.</h3>
+        <p>Confirmation sent by email · See you there.</p>
+        <button type="button" className="evt-state-cal-link">Add to calendar</button>
       </div>
     );
   }
 
-  const usedPercent =
-    capacity != null && spotsRemaining != null && capacity > 0
-      ? Math.round(((capacity - spotsRemaining) / capacity) * 100)
-      : null;
-
-  const selectedTicket = tickets.find(t => t.ticketSlug === formData.ticket) ?? tickets[0];
-  const isPaid = (selectedTicket?.ticketAmount ?? 0) > 0;
+  const isLoading = status === 'loading';
+  const showWaitlistOnly = status === 'error' && errorCode === 'sold_out';
+  const showDisabledForm = status === 'error' && errorCode === 'already_registered';
 
   return (
-    <>
-      {/* Capacity bar */}
-      {capacity != null && capacity > 0 && spotsRemaining != null && (
-        <div className="capacity-bar">
-          <div className="cap-label">
-            <span>Capacity</span>
-            <span className="spots">{spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} remaining</span>
-          </div>
-          <div className="bar-track">
-            <div className="bar-fill" style={{ width: `${usedPercent ?? 0}%` }} />
-          </div>
+    <div className={`evt-rsvp-card${isLoading ? ' evt-rsvp-loading' : ''}`}>
+      <h3 className="evt-rsvp-heading">{isPaid ? 'Tickets' : 'RSVP'}</h3>
+
+      {status === 'error' && errorMsg && (
+        <div className="evt-alert-banner evt-alert-banner--error">
+          <svg className="evt-alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Ticket type rows */}
-      {tickets.map((t, i) => (
-        <div className="ticket-type" key={i}>
-          <div>
-            <div className="ticket-name">{t.ticketName}</div>
-            <div className="ticket-info">{t.ticketInfo}</div>
+      {showWaitlistOnly ? (
+        <button type="button" className="evt-waitlist-pill" disabled>Waitlist only</button>
+      ) : (
+        <form onSubmit={handleSubmit} className={showDisabledForm ? 'evt-rsvp-disabled' : undefined}>
+          {!isPaid && capacity != null && capacity > 0 && spotsRemaining != null && (
+            <div className="evt-capacity-block">
+              <div className="evt-capacity-row">
+                <span>Capacity</span>
+                <span>{spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} remaining</span>
+              </div>
+              <div className="evt-capacity-track">
+                <div className="evt-capacity-fill" style={{ width: `${Math.min(100, (spotsRemaining / capacity) * 100)}%` }} />
+              </div>
+            </div>
+          )}
+
+          {isPaid && (
+            <div
+              className="evt-ticket-row"
+              onClick={() => !isLoading && setFormData(f => ({ ...f, ticket: selectedTicket.ticketSlug }))}
+            >
+              <div>
+                <div className="evt-ticket-name">{selectedTicket.ticketName}</div>
+                <div className="evt-ticket-sub">{selectedTicket.ticketInfo}</div>
+              </div>
+              <div className="evt-ticket-price">
+                {selectedTicket.ticketPrice ?? formatPrice(selectedTicket.ticketAmount, selectedTicket.ticketCurrency)}
+              </div>
+            </div>
+          )}
+
+          <div className="evt-field">
+            <label>Full name</label>
+            <input
+              type="text"
+              required
+              disabled={isLoading}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
           </div>
-          <div className={`ticket-price${(!t.ticketAmount || t.ticketAmount === 0) ? ' free' : ''}`}>
-            {t.ticketPrice ?? ((!t.ticketAmount || t.ticketAmount === 0) ? 'Free' : null)}
+
+          <div className="evt-field">
+            <label>Email address</label>
+            <input
+              type="email"
+              required
+              disabled={isLoading}
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
           </div>
-        </div>
-      ))}
 
-      {/* Form */}
-      <form className="rsvp-form" onSubmit={handleSubmit}>
-        {membersNote && (
-          <div className="members-note">{membersNote}</div>
-        )}
+          {!isPaid && (
+            <div className="evt-field">
+              <label>How did you hear about this? <span className="evt-optional">(optional)</span></label>
+              <input
+                type="text"
+                disabled={isLoading}
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+              />
+            </div>
+          )}
 
-        <input
-          type="text"
-          placeholder="Full name"
-          required
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          disabled={status === 'loading'}
-        />
-        <input
-          type="email"
-          placeholder="Email address"
-          required
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          disabled={status === 'loading'}
-        />
+          {membersNote && <p className="evt-rsvp-members-note">{membersNote}</p>}
 
-        {tickets.length > 1 && (
-          <select
-            value={formData.ticket}
-            onChange={(e) => setFormData({ ...formData, ticket: e.target.value })}
-            disabled={status === 'loading'}
+          <button
+            type="submit"
+            className={`evt-submit-btn${isLoading ? ' evt-submit-btn--loading' : ''}`}
+            disabled={isLoading}
           >
-            {tickets.map((t) => (
-              <option key={t.ticketSlug} value={t.ticketSlug}>
-                {t.ticketName}{t.ticketInfo ? ` — ${t.ticketInfo}` : ''}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <input
-          type="text"
-          placeholder="How did you hear about this? (optional)"
-          value={formData.source}
-          onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-          disabled={status === 'loading'}
-        />
-
-        <button type="submit" className="rsvp-submit" disabled={status === 'loading'}>
-          {status === 'loading'
-            ? (isPaid ? 'Redirecting to payment…' : 'Processing…')
-            : (isPaid ? `Pay ${selectedTicket?.ticketPrice ?? ''} →` : 'Confirm RSVP →')}
-        </button>
-
-        {status === 'error' && (
-          <p className="rsvp-small" style={{ color: 'var(--ochre)', marginTop: '10px' }}>
-            {errorMsg}
-          </p>
-        )}
-
-        <p className="rsvp-small">
-          {isPaid
-            ? 'You will be redirected to a secure payment page · Confirmation sent by email'
-            : 'Confirmation sent by email · Please bring this email or your name at the door'}
-        </p>
-      </form>
-    </>
+            {isLoading ? (
+              <>
+                <svg className="evt-submit-btn-spinner" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                  <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                Redirecting to payment…
+              </>
+            ) : isPaid ? (
+              `Pay ${selectedTicket.ticketPrice ?? formatPrice(selectedTicket.ticketAmount, selectedTicket.ticketCurrency)} →`
+            ) : (
+              'Confirm RSVP →'
+            )}
+          </button>
+        </form>
+      )}
+    </div>
   );
 };
 

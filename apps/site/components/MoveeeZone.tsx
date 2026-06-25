@@ -92,22 +92,30 @@ export default function MoveeeZone() {
           <p className="mz-trust">Free to join · iOS &amp; Android · No spam, ever</p>
         </div>
         <div className="mz-hero-visual" aria-hidden="true">
-          <img
-            src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=900&q=80&auto=format&fit=crop"
-            alt=""
-            className="mz-hero-photo"
-            loading="eager"
-          />
-          <div className="mz-hero-visual-card mz-hero-visual-card--1">
-            <span className="mz-hero-visual-tag">🌊 Pulse Feed</span>
-            <span className="mz-hero-visual-react">🔥 24 · 💬 6</span>
+          <div className="mz-hero-visual-bg" />
+          <div className="mz-hero-photo-frame">
+            <img
+              src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=900&q=80&auto=format&fit=crop"
+              alt=""
+              className="mz-hero-photo"
+              loading="eager"
+            />
           </div>
-          <div className="mz-hero-visual-card mz-hero-visual-card--2">
-            <span className="mz-hero-visual-badge">🏆 Badge unlocked: Culture Contributor</span>
+          <div className="mz-hero-quote-card">
+            <div className="mz-hero-quote-head">
+              <span className="mz-hero-quote-avatar" />
+              <div>
+                <span className="mz-hero-quote-name">Funmi Osei</span>
+                <span className="mz-hero-quote-handle">@funmiosei</span>
+              </div>
+            </div>
+            <span className="mz-hero-quote-tag">🔥 Cultural Take</span>
+            <p className="mz-hero-quote-text">
+              Streaming killed the African album format. We&apos;re losing something and calling it progress.
+            </p>
           </div>
-          <div className="mz-hero-visual-card mz-hero-visual-card--3">
-            <span className="mz-hero-visual-tag">🧭 Discover</span>
-            <span className="mz-hero-visual-react">+312 Cr earned</span>
+          <div className="mz-hero-points-chip">
+            <span>🏆</span> +10 Culture Points
           </div>
         </div>
         </div>

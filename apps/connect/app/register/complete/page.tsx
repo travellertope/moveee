@@ -318,15 +318,14 @@ function CompleteProfileForm() {
                       padding: "14px 8px",
                       border: active ? "2px solid #14110d" : "2px solid #d4cbbf",
                       borderRadius: 4,
-                      background: active ? "rgba(20,17,13,.05)" : "#fff",
+                      background: active ? "#14110d" : "#fff",
                       cursor: "pointer",
                       transition: "border-color 0.15s, background 0.15s",
                       fontFamily: "inherit",
-                      boxShadow: active ? "0 0 0 2px #14110d" : "none",
                     }}
                   >
                     <span style={{ fontSize: 22 }}>{emoji}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: "#14110d", textAlign: "center", lineHeight: 1.3 }}>{label}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? "#fff" : "#14110d", textAlign: "center", lineHeight: 1.3 }}>{label}</span>
                   </button>
                 );
               })}
@@ -374,13 +373,13 @@ function CompleteProfileForm() {
             <button
               type="button"
               onClick={() => setBillingCycle("monthly")}
-              style={{ ...styles.cycleBtn, background: billingCycle === "monthly" ? "#14110d" : "transparent", color: billingCycle === "monthly" ? "#fff" : "#7a6f5c" }}
+              style={{ ...styles.cycleBtn, background: billingCycle === "monthly" ? "#fff" : "transparent", color: billingCycle === "monthly" ? "#14110d" : "#7a6f5c", boxShadow: billingCycle === "monthly" ? "0 1px 3px rgba(20,17,13,.12)" : "none" }}
               disabled={tier !== "patron"}
             >Monthly</button>
             <button
               type="button"
               onClick={() => setBillingCycle("yearly")}
-              style={{ ...styles.cycleBtn, background: billingCycle === "yearly" ? "#14110d" : "transparent", color: billingCycle === "yearly" ? "#fff" : "#7a6f5c" }}
+              style={{ ...styles.cycleBtn, background: billingCycle === "yearly" ? "#fff" : "transparent", color: billingCycle === "yearly" ? "#14110d" : "#7a6f5c", boxShadow: billingCycle === "yearly" ? "0 1px 3px rgba(20,17,13,.12)" : "none" }}
               disabled={tier !== "patron"}
             >Annually</button>
             <div style={styles.savingsTag}>{currency === "NGN" ? "Save ₦9,000" : "Save $8"}</div>
@@ -483,15 +482,15 @@ const styles: Record<string, React.CSSProperties> = {
   stepHeading: { fontSize: 18, fontWeight: 600, margin: "0 0 20px", color: "#14110d" },
   row: { display: "flex", gap: 16 },
   field: { marginBottom: 18 },
-  label: { display: "block", fontSize: 13, fontWeight: 600, color: "#14110d", marginBottom: 6, letterSpacing: "0.02em" },
+  label: { display: "block", fontSize: 11, fontWeight: 400, color: "#7a6f5c", marginBottom: 6, letterSpacing: "0.02em" },
   input: { display: "block", width: "100%", padding: "10px 14px", border: "1px solid #d4cbbf", borderRadius: 3, fontSize: 15, color: "#14110d", background: "#fff", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" },
   billingToggle: { display: "flex", alignItems: "center", gap: 8, marginBottom: 20, background: "#f0ede6", padding: 4, borderRadius: 6, width: "fit-content", transition: "opacity 0.2s" },
   cycleBtn: { padding: "6px 16px", border: "none", borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" },
-  savingsTag: { fontSize: 11, fontWeight: 700, color: "#c5491f", background: "#fdf2f0", padding: "2px 8px", borderRadius: 10, marginLeft: 4 },
+  savingsTag: { fontSize: 11, fontWeight: 700, color: "#27ae60", background: "#e6f4ea", padding: "2px 8px", borderRadius: 10, marginLeft: 4 },
   tierGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 8 },
   tierCard: { cursor: "pointer", padding: "20px 18px", border: "2px solid #d4cbbf", borderRadius: 4, transition: "border-color 0.2s, box-shadow 0.2s", display: "block", position: "relative" as const },
-  tierLabel: { margin: "0 0 4px", fontSize: 17, fontWeight: 600, color: "#14110d" },
-  tierPrice: { display: "inline-block", fontWeight: 700, color: "#8b6f47", fontSize: 18 },
+  tierLabel: { margin: "0 0 4px", fontSize: 11, fontWeight: 400, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "#7a6f5c" },
+  tierPrice: { display: "inline-block", fontWeight: 300, color: "#14110d", fontSize: 28, fontFamily: "Georgia, serif" },
   priceContainer: { display: "flex", alignItems: "baseline", gap: 4, marginBottom: 12 },
   pricePeriod: { fontSize: 13, color: "#7a6f5c", fontWeight: 400 },
   tierPerks: { margin: 0, padding: "0 0 0 16px", fontSize: 13, color: "#7a6f5c", lineHeight: 1.7 },

@@ -4,107 +4,179 @@
 
 /* ── Profile hero ── */
 .mem-hero {
-  background: var(--ink);
+  background: var(--paper);
+  border-bottom: 1px solid rgba(42,36,28,.1);
   position: relative;
   z-index: 2;
-}
-.mem-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 15% 50%, rgba(197,73,31,.2), transparent 50%),
-              radial-gradient(ellipse at 85% 30%, rgba(179,130,56,.1), transparent 45%);
-  pointer-events: none;
 }
 .mem-hero-inner {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 60px 60px 56px;
+  padding: 48px 60px 32px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 }
 .mem-avatar {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   background: var(--ochre);
   color: var(--paper);
   font-family: 'Fraunces', serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   line-height: 1;
+  border: 3px solid var(--gold);
+  padding: 3px;
+  box-sizing: border-box;
 }
 .mem-hero-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .mem-eyebrow {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: .2em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.4);
+  color: var(--ochre);
 }
 .mem-name {
   font-family: 'Fraunces', serif;
   font-size: clamp(26px, 3vw, 40px);
-  font-weight: 300;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -.02em;
-  color: var(--paper);
+  color: var(--ink);
   margin: 0;
 }
 .mem-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(243,236,224,.5);
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mute);
   flex-wrap: wrap;
 }
-.mem-sep { opacity: .35; }
+.mem-sep { opacity: .5; }
 .mem-tier-badge {
   padding: 3px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .15em;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  border-radius: 2px;
+  border-radius: 999px;
 }
 .mem-tier-badge.patron {
   background: var(--gold);
-  color: var(--ink);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
 }
 .mem-tier-badge.citizen {
-  background: rgba(243,236,224,.12);
-  color: var(--paper);
-  border: 1px solid rgba(243,236,224,.2);
+  background: var(--paper-deep);
+  color: var(--mute);
+  border: 1px solid rgba(42,36,28,.2);
 }
 
-/* ── Stats bar ── */
-.mem-body {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 60px 80px;
+/* ── Passkey banner (full-bleed) ── */
+.mem-passkey-banner {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 16px 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-wrap: wrap;
+}
+.mem-passkey-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.mem-passkey-banner-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.mem-passkey-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mem-passkey-banner-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.mem-passkey-banner-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(243,236,224,.7);
+}
+.mem-passkey-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.mem-passkey-banner-dismiss {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(243,236,224,.5);
+  cursor: pointer;
+  transition: color .15s;
+}
+.mem-passkey-banner-dismiss:hover { color: var(--paper); }
+.mem-passkey-banner-cta {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ── Stats bar (full-bleed band) ── */
+.mem-stats-band {
+  width: 100%;
+  background: var(--paper);
+  border-bottom: 1px solid rgba(42,36,28,.1);
+  padding: 24px 0;
 }
 .mem-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-bottom: 2px solid var(--rule);
-  margin-bottom: 48px;
+  grid-template-columns: repeat(5, 1fr);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+}
+.mem-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 60px 80px;
 }
 .mem-stat {
-  padding: 28px 24px;
+  padding: 0 24px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -144,7 +216,7 @@
 .mem-stat-info:hover { opacity: 1; color: var(--ochre); }
 .mem-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   background: var(--ink);
@@ -155,27 +227,27 @@
   letter-spacing: 0;
   text-transform: none;
   line-height: 1.5;
-  padding: 12px 14px;
-  border-radius: 6px;
-  width: 220px;
+  padding: 16px;
+  border-radius: 8px;
+  width: 240px;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 10px 25px -5px rgba(20,17,13,.15);
   pointer-events: none;
 }
 .mem-tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 /* ── Two-column grid ── */
 .mem-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 32px;
   align-items: start;
 }
@@ -184,16 +256,22 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 /* ── Cards ── */
 .mem-card {
   background: var(--paper);
   border: 1px solid rgba(42,36,28,.12);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(20,17,13,.06);
   padding: 28px 28px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.mem-card--editable {
+  border-color: rgba(197,73,31,.2);
 }
 .mem-card--dark {
   background: var(--ink);
@@ -228,47 +306,71 @@
 /* ── Badges grid ── */
 .mem-badges-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 .mem-badge {
-  padding: 16px 12px;
-  border: 1px solid rgba(42,36,28,.12);
+  padding: 16px;
+  border: 1px solid rgba(42,36,28,.1);
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
   transition: background .2s;
+  min-width: 0;
 }
 .mem-badge.earned {
-  background: var(--paper-deep);
-  border-color: var(--ochre);
+  background: #fff;
+  border-color: rgba(42,36,28,.08);
+  box-shadow: 0 1px 3px rgba(20,17,13,.08);
 }
 .mem-badge.locked {
-  opacity: .45;
+  background: var(--paper-deep);
+  opacity: .6;
 }
 .mem-badge-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Fraunces', serif;
   font-size: 18px;
-  color: var(--ochre);
   line-height: 1;
+  background: var(--paper-deep);
+  border: 1px solid rgba(179,130,56,.2);
+  color: var(--ochre);
 }
-.mem-badge.locked .mem-badge-icon { color: var(--mute); }
+.mem-badge.locked .mem-badge-icon {
+  background: rgba(42,36,28,.06);
+  border-color: transparent;
+  color: var(--mute);
+}
+.mem-badge-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .mem-badge-name {
-  font-family: 'Fraunces', serif;
-  font-size: 13px;
-  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--ink);
   line-height: 1.2;
 }
-.mem-badge.locked .mem-badge-name { color: var(--mute); }
+.mem-badge.locked .mem-badge-name { color: var(--ink); }
 .mem-badge-desc {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: .08em;
-  color: var(--mute);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--ink-soft);
   line-height: 1.4;
+  margin-top: 2px;
 }
+.mem-badge.locked .mem-badge-desc { color: var(--mute); }
 
 /* ── Points list ── */
 .mem-points-list { display: flex; flex-direction: column; }
@@ -467,15 +569,15 @@
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--ochre);
   text-decoration: none;
-  border-bottom: 1px solid rgba(42,36,28,.25);
+  border-bottom: 1px solid rgba(197,73,31,.25);
   padding-bottom: 2px;
   white-space: nowrap;
   flex-shrink: 0;
   transition: color .15s, border-color .15s;
 }
-.mem-field-btn:hover { color: var(--ochre); border-color: var(--ochre); }
+.mem-field-btn:hover { color: var(--ochre-deep); border-color: var(--ochre-deep); }
 .mem-field-btn--muted { color: var(--mute); border-color: rgba(42,36,28,.15); }
 .mem-field-btn--muted:hover { color: var(--ochre); border-color: var(--ochre); }
 
@@ -518,7 +620,8 @@
   font-size: 14px;
   color: var(--ink);
   background: var(--paper-deep);
-  border: 1px solid rgba(42,36,28,.2);
+  border: 1px solid var(--ochre);
+  border-radius: 8px;
   padding: 8px 10px;
   outline: none;
   transition: border-color .15s;
@@ -558,7 +661,7 @@ select.mem-field-input { cursor: pointer; }
 
 .mem-settings-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 32px;
   align-items: start;
   margin-top: 32px;
@@ -618,6 +721,7 @@ select.mem-field-input { cursor: pointer; }
   text-transform: uppercase;
   padding: 8px 14px;
   border: 1px solid rgba(42,36,28,.2);
+  border-radius: 999px;
   background: transparent;
   color: var(--mute);
   cursor: pointer;
@@ -656,18 +760,20 @@ select.mem-field-input { cursor: pointer; }
 @media (max-width: 1024px) {
   .mem-hero-inner { padding: 48px 32px 44px; }
   .mem-body { padding: 0 32px 60px; }
-  .mem-grid { grid-template-columns: 1fr; }
+  .mem-grid { grid-template-columns: minmax(0, 1fr); }
   .mem-col-side { order: -1; }
-  .mem-stats { grid-template-columns: repeat(2, 1fr); }
-  .mem-stat:nth-child(2) { border-right: none; }
-  .mem-badges-grid { grid-template-columns: repeat(4, 1fr); }
-  .mem-settings-grid { grid-template-columns: 1fr; }
+  .mem-stats { grid-template-columns: repeat(3, 1fr); padding: 0 32px; row-gap: 20px; }
+  .mem-stat:nth-child(3) { border-right: none; }
+  .mem-stat:nth-child(n+4) { border-right: 1px solid rgba(42,36,28,.12); padding-top: 16px; }
+  .mem-stat:nth-child(5) { border-right: none; }
+  .mem-settings-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
   .mem-hero-inner { padding: 36px 22px 32px; gap: 20px; }
   .mem-body { padding: 0 22px 48px; }
-  .mem-stats { grid-template-columns: repeat(2, 1fr); }
-  .mem-badges-grid { grid-template-columns: repeat(2, 1fr); }
+  .mem-stats { grid-template-columns: repeat(2, 1fr); padding: 0 22px; row-gap: 20px; }
+  .mem-stat { border-right: none !important; }
+  .mem-stat:nth-child(odd) { border-right: 1px solid rgba(42,36,28,.12) !important; }
   .mem-avatar { width: 56px; height: 56px; font-size: 22px; }
   .mem-pref-row { flex-direction: column; gap: 12px; }
   .mem-pref-action { flex-direction: row; align-items: center; }
@@ -969,7 +1075,7 @@ select.mem-field-input { cursor: pointer; }
   left: 0;
   right: 24px;
   height: 2px;
-  background: var(--ink);
+  background: var(--ochre);
 }
 
 .mem-action-btn {

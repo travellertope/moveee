@@ -36,19 +36,7 @@ interface PulseFeedProps {
 }
 
 function SidebarHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{
-      color: "#7a6f5c",
-      fontSize: "0.6rem",
-      fontWeight: 700,
-      letterSpacing: "0.15em",
-      textTransform: "uppercase",
-      marginBottom: "0.4rem",
-      paddingLeft: "0.75rem",
-    }}>
-      {children}
-    </p>
-  );
+  return <p className="pulse-sidebar-heading">{children}</p>;
 }
 
 function SidebarLink({
@@ -58,20 +46,7 @@ function SidebarLink({
     <li style={{ listStyle: "none" }}>
       <button
         onClick={onClick}
-        style={{
-          width: "100%",
-          textAlign: "left",
-          background: "transparent",
-          border: "none",
-          borderLeft: active ? "2px solid #c5491f" : "2px solid transparent",
-          padding: "0.28rem 0.75rem",
-          color: active ? "#c5491f" : "#3a342b",
-          fontSize: "0.83rem",
-          fontWeight: active ? 600 : 400,
-          cursor: "pointer",
-          transition: "color 0.1s, border-color 0.1s",
-          lineHeight: 1.4,
-        }}
+        className={`pulse-sidebar-link${active ? " pulse-sidebar-link--active" : ""}`}
       >
         {label}
       </button>
@@ -258,33 +233,9 @@ const handleType = (type: FeedItemType | "all") => {
 
         {/* ── Left Sidebar ── */}
         <aside className="pulse-sidebar-left">
-          <nav style={{ padding: "1.25rem 0" }}>
-            <div style={{ marginBottom: "1.25rem" }}>
-              <SidebarHeading>Sections</SidebarHeading>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {[
-                  { label: "People Near Me", href: "/connect/people" },
-                  { label: "Membership",        href: "/connect/membership" },
-                ].map(({ label, href }) => (
-                  <li key={label} style={{ listStyle: "none" }}>
-                    <Link href={href} style={{
-                      display: "block",
-                      borderLeft: "2px solid transparent",
-                      padding: "0.28rem 0.75rem",
-                      color: "#3a342b",
-                      fontSize: "0.83rem",
-                      fontWeight: 400,
-                      textDecoration: "none",
-                    }}>
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
+          <nav>
             {hasInterests && (
-              <div style={{ marginBottom: "1.25rem" }}>
+              <div className="pulse-sidebar-group">
                 <SidebarHeading>Personalised</SidebarHeading>
                 <ul style={{ margin: 0, padding: 0 }}>
                   <SidebarLink label="For You" active={forYou} onClick={handleForYou} />
@@ -292,7 +243,23 @@ const handleType = (type: FeedItemType | "all") => {
               </div>
             )}
 
-            <div style={{ marginBottom: "1.25rem" }}>
+            <div className="pulse-sidebar-group">
+              <SidebarHeading>Sections</SidebarHeading>
+              <ul style={{ margin: 0, padding: 0 }}>
+                {[
+                  { label: "People Near Me", href: "/connect/people" },
+                  { label: "Membership",        href: "/connect/membership" },
+                ].map(({ label, href }) => (
+                  <li key={label} style={{ listStyle: "none" }}>
+                    <Link href={href} className="pulse-sidebar-link" style={{ display: "block", textDecoration: "none" }}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="pulse-sidebar-group">
               <SidebarHeading>Content Type</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {TYPE_FILTERS.map(({ label, value }) => (
@@ -306,7 +273,7 @@ const handleType = (type: FeedItemType | "all") => {
               </ul>
             </div>
 
-            <div style={{ marginTop: "1.25rem" }}>
+            <div className="pulse-sidebar-group">
               <SidebarHeading>Category</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {CATEGORY_FILTERS.map(cat => (
@@ -436,7 +403,7 @@ const handleType = (type: FeedItemType | "all") => {
             </div>
           )}
 
-          <SubmitPost onPosted={handlePosted} />
+          {session?.user && <SubmitPost onPosted={handlePosted} />}
 
           {/* Category filter strip */}
           <div className="feed-category-strip">
@@ -494,76 +461,65 @@ const handleType = (type: FeedItemType | "all") => {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
-          <div style={{ padding: "1.25rem 1rem" }}>
-            {/* Most engaged posts this week */}
-            {trending.length > 0 && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.65rem" }}>
-                  Hot this week 🔥
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {trending.map(item => {
-                    const totalEng = (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0)
-                                   + (item.reactions?.clap ?? 0) + (item.commentCount ?? 0);
-                    return (
-                      <div key={item.id} style={{ borderLeft: "2px solid var(--ochre)", paddingLeft: 8 }}>
-                        <p style={{ margin: "0 0 2px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>
-                          {item.title.length > 60 ? item.title.slice(0, 57) + "…" : item.title}
+          {/* Most engaged posts this week */}
+          {trending.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <p className="pulse-trending-heading">Hot this week 🔥</p>
+              <div>
+                {trending.map(item => {
+                  const totalEng = (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0)
+                                 + (item.reactions?.clap ?? 0) + (item.commentCount ?? 0);
+                  return (
+                    <div key={item.id} className="pulse-trending-item">
+                      <p className="pulse-trending-title">
+                        {item.title.length > 60 ? item.title.slice(0, 57) + "…" : item.title}
+                      </p>
+                      {totalEng > 0 && (
+                        <p className="pulse-trending-count">
+                          {totalEng} reaction{totalEng !== 1 ? "s" : ""}
                         </p>
-                        {totalEng > 0 && (
-                          <p style={{ margin: 0, fontSize: "0.66rem", color: "var(--mute)" }}>
-                            {totalEng} reaction{totalEng !== 1 ? "s" : ""}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-
-            {/* For You hint */}
-            {hasInterests && !forYou && (
-              <div style={{
-                background: "rgba(179,130,56,.06)",
-                border: "1px solid rgba(179,130,56,.2)",
-                borderRadius: 4,
-                padding: "0.75rem",
-                marginBottom: "1.5rem",
-              }}>
-                <p style={{ margin: "0 0 6px", fontSize: "0.72rem", fontWeight: 700, color: "var(--ink)" }}>
-                  Personalised feed ready
-                </p>
-                <p style={{ margin: "0 0 8px", fontSize: "0.7rem", color: "var(--mute)", lineHeight: 1.4 }}>
-                  Switch to For You to see content ranked by your interests.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleForYou}
-                  style={{
-                    background: "var(--ochre)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 3,
-                    padding: "5px 10px",
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    letterSpacing: ".06em",
-                  }}
-                >
-                  For You →
-                </button>
-              </div>
-            )}
-
-            <div style={{ background: "#fff", border: "1px solid #e8e2d8", borderRadius: "4px", padding: "0.85rem" }}>
-              <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem" }}>About Moveee</p>
-              <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: 0 }}>
-                The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
-              </p>
             </div>
+          )}
+
+          {/* For You hint */}
+          {hasInterests && !forYou && (
+            <div className="pulse-foryou-hint">
+              <p style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
+                Personalised feed ready
+              </p>
+              <p>Switch to For You to see content ranked by your interests.</p>
+              <button
+                type="button"
+                onClick={handleForYou}
+                style={{
+                  background: "var(--ochre)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 3,
+                  padding: "5px 10px",
+                  fontSize: "0.7rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  letterSpacing: ".06em",
+                  marginTop: 8,
+                }}
+              >
+                For You →
+              </button>
+            </div>
+          )}
+
+          <div className="pulse-about-card">
+            <p className="pulse-trending-heading" style={{ marginBottom: 8 }}>About Moveee</p>
+            <p className="pulse-about-desc">
+              The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
+            </p>
           </div>
         </aside>
       </div>

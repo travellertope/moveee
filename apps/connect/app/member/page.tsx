@@ -91,20 +91,20 @@ export default async function MemberPage() {
         </div>
       </div>
 
-      <div className="mem-body">
-        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
-        {/* ── STATS (live data) ── */}
-        <MemberDashboard
-          initialPoints={liveReputation}
-          initialBadges={liveBadges}
-          referralCount={user.referralCount ?? 0}
-          membership={isPatron ? "Moveee Pro" : "Moveee Citizen"}
-          initialCredits={liveCredits}
-          initialReputation={liveReputation}
-          reputationTier={liveReputationTier}
-          dailyCreditsRemaining={liveDailyCreditsRemaining}
-        />
+      {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
+      {/* ── STATS (live data) ── */}
+      <MemberDashboard
+        initialPoints={liveReputation}
+        initialBadges={liveBadges}
+        referralCount={user.referralCount ?? 0}
+        membership={isPatron ? "Moveee Pro" : "Moveee Citizen"}
+        initialCredits={liveCredits}
+        initialReputation={liveReputation}
+        reputationTier={liveReputationTier}
+        dailyCreditsRemaining={liveDailyCreditsRemaining}
+      />
 
+      <div className="mem-body">
         <div className="mem-grid">
           {/* ── MAIN COLUMN ── */}
           <div className="mem-col-main">

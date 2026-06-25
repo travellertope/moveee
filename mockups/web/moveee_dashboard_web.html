@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Member Dashboard (Web)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                        'tooltip': '0 10px 25px -5px rgba(20, 17, 13, 0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        
+        /* Table styles */
+        .earn-table th { text-align: left; padding: 12px 16px; border-bottom: 1px solid #C8BFB0; }
+        .earn-table td { padding: 12px 16px; border-bottom: 1px solid #EEE8DF; }
+        .earn-table tr:last-child td { border-bottom: none; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: DASHBOARD, MOVEEE PRO (Desktop)       -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Dashboard, Moveee Pro</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <!-- Slim Nav Bar Mock -->
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee</span>
+                <span class="font-sans text-[14px] font-bold text-ink">Dashboard</span>
+            </div>
+
+            <!-- HERO STRIP -->
+            <div class="w-full bg-white pt-[48px] pb-[32px] px-[64px] flex items-center border-b border-ghost/40">
+                <div class="w-[120px] h-[120px] rounded-full border-[3px] border-gold p-[3px] bg-white shrink-0">
+                    <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                </div>
+                <div class="flex flex-col ml-[24px]">
+                    <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[4px]">The Moveee — Culture Community</span>
+                    <div class="flex items-center gap-[12px] mb-[6px]">
+                        <h1 class="font-serif text-[40px] font-bold text-ink leading-none">Zara Mensah</h1>
+                    </div>
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-gold text-white px-[10px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shadow-sm">Moveee Pro</span>
+                        <span class="font-sans text-[15px] text-mute">·</span>
+                        <span class="font-sans text-[15px] text-mute">📍 London, UK</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSKEY BANNER (No escrowed credits variant) -->
+            <!-- DEV: 5 -->
+            <!-- DEV: show the generic copy variant here -->
+            <div class="w-full bg-ink text-white px-[64px] py-[16px] flex items-center justify-between border-b border-gray-800">
+                <div class="flex items-center gap-[16px]">
+                    <span class="text-[20px]">🔑</span>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[15px] font-bold">Set up a Passkey to unlock Credits</span>
+                        <span class="font-sans text-[13px] text-white/70">Passkeys are required to spend credits and redeem partner perks. Takes 30 seconds.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-[16px]">
+                    <button class="font-sans text-[13px] text-white/50 hover:text-white transition-colors">Dismiss</button>
+                    <button class="h-[36px] px-[16px] bg-white text-ink rounded-full font-sans text-[13px] font-bold shadow-sm">Set up Passkey &rarr;</button>
+                </div>
+            </div>
+
+            <!-- 5-STAT ROW -->
+            <div class="w-full bg-white px-[64px] py-[24px] border-b border-ghost-light">
+                <div class="grid grid-cols-5 divide-x divide-ghost w-full">
+                    
+                    <!-- 1. Moveee Credits -->
+                    <div class="flex flex-col px-[24px] group cursor-pointer relative">
+                        <div class="flex items-center gap-[6px] mb-[4px]">
+                            <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest">Moveee Credits</span>
+                            <span class="text-ghost text-[14px] group-hover:text-ink transition-colors cursor-help">ⓘ</span>
+                        </div>
+                        <span class="font-sans text-[32px] font-bold text-ochre leading-none">1,240</span>
+                    </div>
+
+                    <!-- 2. Points -->
+                    <div class="flex flex-col px-[24px] group cursor-pointer relative">
+                        <div class="flex items-center gap-[6px] mb-[4px]">
+                            <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest">Points</span>
+                            <span class="text-ghost text-[14px] group-hover:text-ink transition-colors cursor-help">ⓘ</span>
+                        </div>
+                        <span class="font-sans text-[32px] font-bold text-gold leading-none">850</span>
+                        <span class="font-sans text-[12px] font-bold text-gold mt-[2px]">Taste Maker</span>
+                    </div>
+
+                    <!-- 3. Badges Earned -->
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Badges Earned</span>
+                        <span class="font-sans text-[32px] font-bold text-ink leading-none">12<span class="text-[20px] text-ghost font-medium">/18</span></span>
+                    </div>
+
+                    <!-- 4. Referrals -->
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Referrals</span>
+                        <span class="font-sans text-[32px] font-bold text-ink leading-none">4</span>
+                    </div>
+
+                    <!-- 5. Membership -->
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Membership</span>
+                        <span class="font-sans text-[24px] font-bold text-ink leading-none mt-1">Moveee Pro</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2-COLUMN BODY -->
+            <div class="max-w-[1200px] w-full mx-auto px-[64px] mt-[48px] flex gap-[40px] items-start">
+                
+                <!-- MAIN COLUMN (~65%) -->
+                <div class="flex-1 flex flex-col gap-[48px]">
+                    
+                    <!-- Achievements Grid -->
+                    <div class="flex flex-col">
+                        <div class="flex items-baseline justify-between mb-[20px] border-b border-ghost-light pb-[12px]">
+                            <h2 class="font-serif text-[24px] font-bold text-ink">Achievements</h2>
+                            <span class="font-mono text-[12px] text-mute">12 of 18 earned</span>
+                        </div>
+
+                        <!-- Full 18-Badge Grid (Earned first, then locked) -->
+                        <div class="grid grid-cols-2 gap-[16px]">
+                            <!-- Earned -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">🎨</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Taste Maker</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Reach 500 Reputation Points.</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">💎</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Gem Hunter</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Post 5 validated Hidden Gems.</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">📸</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Visual Artist</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Post 10 Creative Showcases.</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">🔥</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Hot Take</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Spark a 20+ comment debate.</span>
+                                </div>
+                            </div>
+                            <!-- ... imagine 8 more earned badges here ... -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">⭐</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Featured</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Get featured on the homepage.</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">✍️</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Culture Contributor</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Reach 100 Reputation Points.</span>
+                                </div>
+                            </div>
+
+                            <!-- Locked -->
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Culture Authority</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Reach 1,500 Reputation Points.</span>
+                                </div>
+                            </div>
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Directory Editor</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Submit 10 accepted directory entries.</span>
+                                </div>
+                            </div>
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Super Host</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Organise 5 community events.</span>
+                                </div>
+                            </div>
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Food Critic</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Post 20 validated Food Reviews.</span>
+                                </div>
+                            </div>
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Connector</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Successfully refer 10 friends.</span>
+                                </div>
+                            </div>
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Daily Scholar</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Hit a 30-day game streak.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- How to Earn Table -->
+                    <div class="flex flex-col mb-[32px]">
+                        <h2 class="font-serif text-[24px] font-bold text-ink mb-[8px]">How to Earn</h2>
+                        <span class="font-sans text-[13px] text-mute mb-[20px]">Credits are spendable (capped at 50/day). Points are permanent and unlock status.</span>
+
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden border border-ghost/20">
+                            <table class="w-full text-left earn-table border-collapse">
+                                <thead>
+                                    <tr class="bg-paper-deep font-mono text-[10px] font-bold text-mute uppercase tracking-widest">
+                                        <th>Action</th>
+                                        <th class="w-[100px]">Credits</th>
+                                        <th class="w-[100px]">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="font-sans text-[14px] text-ink">
+                                    <tr>
+                                        <td>Post validated <span class="text-[12px] text-mute">(5 reactions or 3 comments)</span></td>
+                                        <td class="font-bold text-ochre">+10 cr</td>
+                                        <td class="font-bold text-gold">+5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Hidden Gem or Food Review validated</td>
+                                        <td class="font-bold text-ochre">+15 cr</td>
+                                        <td class="font-bold text-gold">+10</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Event RSVP</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Event check-in</td>
+                                        <td class="font-bold text-ochre">+2 cr</td>
+                                        <td class="font-bold text-gold">+15</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Refer a member</td>
+                                        <td class="font-bold text-ochre">+3 cr</td>
+                                        <td class="font-bold text-gold">+25</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Newsletter comment</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+10</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Share a quote</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+10</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Quote liked by others</td>
+                                        <td class="font-bold text-mute">—</td>
+                                        <td class="font-bold text-gold">+1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Read a magazine article</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Share a magazine article</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Directory entry submitted</td>
+                                        <td class="font-bold text-ochre">+2 cr</td>
+                                        <td class="font-bold text-gold">+15</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Game completed</td>
+                                        <td class="font-bold text-ochre">+1 cr</td>
+                                        <td class="font-bold text-gold">+5</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SIDE COLUMN (~35%) -->
+                <div class="w-[320px] flex flex-col gap-[24px] shrink-0 sticky top-[24px] h-max">
+                    
+                    <!-- Referral Card -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] border border-ghost/20 flex flex-col">
+                        <div class="flex items-center gap-[12px] mb-[12px]">
+                            <span class="text-[24px]">✉️</span>
+                            <h3 class="font-serif text-[20px] font-bold text-ink leading-tight">Invite a Friend</h3>
+                        </div>
+                        <p class="font-sans text-[14px] text-ink-soft mb-[16px] leading-[1.5]">
+                            Share your link. Earn +30 reputation and +5 credits for every member who joins.
+                        </p>
+                        
+                        <div class="flex items-center h-[44px] bg-paper-deep rounded-lg border border-ghost px-[12px] mb-[16px] cursor-pointer hover:bg-ghost-light transition-colors group">
+                            <span class="font-mono text-[11px] text-ink flex-1 truncate">moveee.com/r/zaramensah</span>
+                            <span class="font-sans text-[12px] font-bold text-ochre group-hover:underline">Copy</span>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-ghost-light pt-[16px]">
+                            <span class="font-sans text-[13px] font-bold text-ink">4 successful referral(s)</span>
+                            <button class="font-sans text-[12px] text-ochre hover:underline">View details &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- DEV: 6 -->
+                    <!-- Quick Links List -->
+                    <div class="bg-white rounded-xl shadow-card py-[8px] flex flex-col border border-ghost/20">
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Wallet</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Coupons</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Notifications</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Analytics</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors font-bold text-ink">My Events <span class="font-mono text-[9px] text-gold font-normal bg-gold/10 px-1 rounded ml-1">PRO</span></a>
+                        
+                        <!-- Conditional: If clustered -->
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors bg-paper-deep/50 border-y border-ghost-light my-1">
+                            My House Fellowship
+                        </a>
+
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Refer a Friend</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Browse Perks</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Collection</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Account Settings</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Newsletters</a>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light my-[4px]"></div>
+                        
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Upcoming Events</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Magazine</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Discover</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Quotes Archive</a>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light my-[4px]"></div>
+                        
+                        <a href="#" class="font-sans text-[14px] font-bold text-mute hover:text-ink px-[24px] py-[10px] transition-colors">Sign out</a>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: DASHBOARD, MOVEEE CITIZEN (Desktop)   -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Dashboard, Moveee Citizen</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee</span>
+                <span class="font-sans text-[14px] font-bold text-ink">Dashboard</span>
+            </div>
+
+            <!-- HERO STRIP (Citizen) -->
+            <div class="w-full bg-white pt-[48px] pb-[32px] px-[64px] flex items-center border-b border-ghost/40">
+                <div class="w-[120px] h-[120px] rounded-full border-[2px] border-ghost p-[2px] bg-white shrink-0">
+                    <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0]"></div>
+                </div>
+                <div class="flex flex-col ml-[24px]">
+                    <span class="font-mono text-[11px] font-bold text-ochre uppercase tracking-widest mb-[4px]">The Moveee — Culture Community</span>
+                    <div class="flex items-center gap-[12px] mb-[6px]">
+                        <h1 class="font-serif text-[40px] font-bold text-ink leading-none">Ade Cole</h1>
+                    </div>
+                    <div class="flex items-center gap-[8px]">
+                        <span class="bg-paper-deep text-mute border border-ghost px-[10px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shadow-sm">Moveee Citizen</span>
+                        <span class="font-sans text-[15px] text-mute">·</span>
+                        <span class="font-sans text-[15px] text-mute">📍 Lagos, Nigeria</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSKEY BANNER (With escrowed credits) -->
+            <!-- DEV: 5 -->
+            <!-- DEV: specific "{N} credits waiting" copy -->
+            <div class="w-full bg-ink text-white px-[64px] py-[16px] flex items-center justify-between border-b border-gray-800">
+                <div class="flex items-center gap-[16px]">
+                    <span class="text-[20px]">🎁</span>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[15px] font-bold">You have 120 credits waiting — they'll be released once you add a passkey.</span>
+                        <span class="font-sans text-[13px] text-white/70">Passkeys are required to spend credits and redeem partner perks. Takes 30 seconds.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-[16px]">
+                    <button class="h-[36px] px-[16px] bg-white text-ink rounded-full font-sans text-[13px] font-bold shadow-sm">Set up Passkey &rarr;</button>
+                </div>
+            </div>
+
+            <!-- 5-STAT ROW (Citizen - lower stats) -->
+            <div class="w-full bg-white px-[64px] py-[24px] border-b border-ghost-light">
+                <div class="grid grid-cols-5 divide-x divide-ghost w-full">
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Moveee Credits</span>
+                        <span class="font-sans text-[32px] font-bold text-ochre leading-none">120</span>
+                        <span class="font-sans text-[11px] text-mute mt-[4px] italic">Locked (Add passkey)</span>
+                    </div>
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Points</span>
+                        <span class="font-sans text-[32px] font-bold text-gold leading-none">45</span>
+                        <span class="font-sans text-[12px] font-bold text-gold mt-[2px]">Member</span>
+                    </div>
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Badges Earned</span>
+                        <span class="font-sans text-[32px] font-bold text-ink leading-none">1<span class="text-[20px] text-ghost font-medium">/18</span></span>
+                    </div>
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Referrals</span>
+                        <span class="font-sans text-[32px] font-bold text-ink leading-none">0</span>
+                    </div>
+                    <div class="flex flex-col px-[24px]">
+                        <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[4px]">Membership</span>
+                        <span class="font-sans text-[24px] font-bold text-ink leading-none mt-1">Moveee Citizen</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-[1200px] w-full mx-auto px-[64px] mt-[48px] flex gap-[40px] items-start">
+                
+                <!-- MAIN COLUMN (~65%) -->
+                <div class="flex-1 flex flex-col gap-[48px]">
+                    <!-- Achievements Grid (Abbreviated visual for space, same structure as Frame 1) -->
+                    <div class="flex flex-col">
+                        <div class="flex items-baseline justify-between mb-[20px] border-b border-ghost-light pb-[12px]">
+                            <h2 class="font-serif text-[24px] font-bold text-ink">Achievements</h2>
+                            <span class="font-mono text-[12px] text-mute">1 of 18 earned</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-[16px]">
+                            <!-- Earned -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-start gap-[12px] border border-ghost/20">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[20px] shrink-0 shadow-sm">🌱</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Starter</span>
+                                    <span class="font-sans text-[12px] text-ink-soft leading-snug mt-[2px]">Make your first post.</span>
+                                </div>
+                            </div>
+                            <!-- Locked -->
+                            <div class="bg-paper-deep rounded-xl p-[16px] flex items-start gap-[12px] border border-ghost-light opacity-60">
+                                <div class="w-[40px] h-[40px] rounded-full bg-ghost/20 flex items-center justify-center text-[16px] text-mute shrink-0">○</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">Taste Maker</span>
+                                    <span class="font-sans text-[12px] text-mute leading-snug mt-[2px]">Reach 500 Reputation Points.</span>
+                                </div>
+                            </div>
+                            <!-- ... placeholder ... -->
+                        </div>
+                    </div>
+
+                    <!-- How to Earn Table (Matches Frame 1) -->
+                    <div class="flex flex-col mb-[32px] opacity-70 pointer-events-none">
+                        <h2 class="font-serif text-[24px] font-bold text-ink mb-[8px]">How to Earn</h2>
+                        <span class="font-sans text-[13px] text-mute mb-[20px]">&lt;Table identical to Frame 1&gt;</span>
+                    </div>
+                </div>
+
+                <!-- SIDE COLUMN (~35%) -->
+                <div class="w-[320px] flex flex-col gap-[24px] shrink-0 sticky top-[24px] h-max">
+                    
+                    <!-- UPGRADE CARD (Citizen Only) -->
+                    <div class="bg-ink rounded-xl shadow-card p-[24px] border-[2px] border-gold flex flex-col text-white">
+                        <h3 class="font-serif text-[22px] font-bold mb-[8px]">Upgrade to Moveee Pro</h3>
+                        <span class="font-sans text-[14px] text-white/80 mb-[20px]">Unlock the full experience.</span>
+                        
+                        <ul class="flex flex-col gap-[12px] mb-[24px]">
+                            <li class="flex items-start gap-[8px]">
+                                <span class="text-gold text-[16px] leading-none pt-0.5">★</span>
+                                <span class="font-sans text-[13px]">Moveee Pro badge on your Pulse posts</span>
+                            </li>
+                            <li class="flex items-start gap-[8px]">
+                                <span class="text-gold text-[16px] leading-none pt-0.5">★</span>
+                                <span class="font-sans text-[13px]">Exclusive gated content & editorials</span>
+                            </li>
+                            <li class="flex items-start gap-[8px]">
+                                <span class="text-gold text-[16px] leading-none pt-0.5">★</span>
+                                <span class="font-sans text-[13px]">10% Moveee Shop discount</span>
+                            </li>
+                            <li class="flex items-start gap-[8px]">
+                                <span class="text-gold text-[16px] leading-none pt-0.5">★</span>
+                                <span class="font-sans text-[13px]">Early access to new features</span>
+                            </li>
+                        </ul>
+
+                        <button class="w-full h-[48px] bg-gold rounded-full text-ink font-sans text-[14px] font-bold shadow-sm hover:bg-[#A93C15] hover:text-white transition-colors">
+                            Become a Moveee Pro &rarr;
+                        </button>
+                    </div>
+
+                    <!-- Referral Card (Matches Frame 1) -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] border border-ghost/20 flex flex-col opacity-70 pointer-events-none">
+                        <div class="flex items-center gap-[12px] mb-[12px]">
+                            <span class="text-[24px]">✉️</span>
+                            <h3 class="font-serif text-[20px] font-bold text-ink leading-tight">Invite a Friend</h3>
+                        </div>
+                        <p class="font-sans text-[14px] text-ink-soft mb-[16px] leading-[1.5]">Share your link. Earn +30 reputation and +5 credits.</p>
+                        <!-- ... -->
+                    </div>
+
+                    <!-- Quick Links List (Citizen Variant) -->
+                    <div class="bg-white rounded-xl shadow-card py-[8px] flex flex-col border border-ghost/20">
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Wallet</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">My Coupons</a>
+                        <!-- Notice: 'My Events' is omitted here -->
+                        
+                        <!-- Conditional: If not clustered -->
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors bg-paper-deep/50 border-y border-ghost-light my-1">
+                            Find your House Fellowship
+                        </a>
+
+                        <a href="#" class="font-sans text-[14px] text-ink-soft hover:text-ochre hover:bg-paper-warm px-[24px] py-[10px] transition-colors">Newsletters</a>
+                        <div class="w-full h-[1px] bg-ghost-light my-[4px]"></div>
+                        <a href="#" class="font-sans text-[14px] font-bold text-mute hover:text-ink px-[24px] py-[10px] transition-colors">Sign out</a>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: STAT TOOLTIPS (Desktop Component)     -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Stat Tooltips (Hover/Click States)</span>
+        
+        <div class="w-[800px] bg-white rounded-xl shadow-card p-[40px] flex gap-[40px] justify-center items-start border border-ghost/30">
+            
+            <!-- Credits Tooltip -->
+            <div class="relative flex flex-col px-[24px]">
+                <div class="flex items-center gap-[6px] mb-[4px]">
+                    <span class="font-mono text-[11px] font-bold text-ink uppercase tracking-widest">Moveee Credits</span>
+                    <span class="text-ink text-[14px] cursor-help">ⓘ</span>
+                </div>
+                <span class="font-sans text-[32px] font-bold text-ochre leading-none">1,240</span>
+
+                <!-- Tooltip Bubble -->
+                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-[12px] w-[280px] bg-ink text-white rounded-lg p-[16px] shadow-tooltip z-50">
+                    <!-- Pointer -->
+                    <div class="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-ink"></div>
+                    
+                    <p class="font-sans text-[13px] leading-[1.6]">
+                        Moveee Credits are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Moveee Pro only, 40% fee).
+                    </p>
+                    <div class="mt-[8px] pt-[8px] border-t border-white/20">
+                        <span class="font-mono text-[10px] text-gold uppercase tracking-wider">Daily cap: 50 credits.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Tooltip -->
+            <div class="relative flex flex-col px-[24px]">
+                <div class="flex items-center gap-[6px] mb-[4px]">
+                    <span class="font-mono text-[11px] font-bold text-ink uppercase tracking-widest">Points</span>
+                    <span class="text-ink text-[14px] cursor-help">ⓘ</span>
+                </div>
+                <span class="font-sans text-[32px] font-bold text-gold leading-none">850</span>
+                <span class="font-sans text-[12px] font-bold text-gold mt-[2px]">Taste Maker</span>
+
+                <!-- Tooltip Bubble -->
+                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-[12px] w-[280px] bg-ink text-white rounded-lg p-[16px] shadow-tooltip z-50">
+                    <div class="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-ink"></div>
+                    
+                    <p class="font-sans text-[13px] leading-[1.6]">
+                        Points is your permanent standing in the community — it never decreases. It unlocks status tiers:
+                    </p>
+                    <ul class="font-mono text-[10px] mt-[8px] flex flex-col gap-[4px] text-white/80">
+                        <li>Culture Contributor (100)</li>
+                        <li class="text-gold font-bold">Taste Maker (500) &larr; You</li>
+                        <li>Culture Authority (1,500)</li>
+                    </ul>
+                    <div class="mt-[8px] pt-[8px] border-t border-white/20">
+                        <span class="font-sans text-[11px] text-mute">Unlike credits, points cannot be spent.</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: MOBILE COMPANION (Moveee Pro)         -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 items-center mt-[40px]">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Mobile Companion (Moveee Pro)</span>
+        
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Status Bar Mock -->
+            <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="w-full h-[52px] bg-white border-b border-ghost-light flex items-center px-[20px] justify-between mt-[48px] shrink-0">
+                <span class="font-serif text-[18px] font-bold text-ink tracking-tight">moveee</span>
+                <span class="font-sans text-[13px] font-bold text-ink">Dashboard</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <!-- MOBILE HERO -->
+                <div class="bg-white px-[20px] py-[32px] flex flex-col items-center text-center border-b border-ghost/40">
+                    <div class="w-[80px] h-[80px] rounded-full border-[3px] border-gold p-[2px] bg-white mb-[16px]">
+                        <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                    </div>
+                    <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-widest mb-[4px]">The Moveee Community</span>
+                    <h1 class="font-serif text-[28px] font-bold text-ink leading-tight mb-[8px]">Zara Mensah</h1>
+                    <div class="flex items-center gap-[8px] justify-center">
+                        <span class="bg-gold text-white px-[10px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">Moveee Pro</span>
+                    </div>
+                </div>
+
+                <!-- MOBILE PASSKEY BANNER -->
+                <div class="bg-ink text-white px-[20px] py-[16px] flex flex-col gap-[12px] border-b border-gray-800">
+                    <div class="flex items-start gap-[12px]">
+                        <span class="text-[18px] pt-0.5">🔑</span>
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[14px] font-bold leading-tight">Set up a Passkey to unlock Credits</span>
+                            <span class="font-sans text-[12px] text-white/70 mt-[4px] leading-snug">Passkeys are required to spend credits and redeem perks.</span>
+                        </div>
+                    </div>
+                    <button class="w-full h-[40px] bg-white text-ink rounded-full font-sans text-[13px] font-bold shadow-sm">Set up Passkey</button>
+                </div>
+
+                <!-- MOBILE STATS (Wrapped) -->
+                <div class="bg-white p-[20px] border-b border-ghost-light">
+                    <div class="grid grid-cols-2 gap-y-[24px] gap-x-[16px] divide-x divide-ghost w-full">
+                        <div class="flex flex-col px-[8px]">
+                            <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest mb-[2px]">Credits</span>
+                            <span class="font-sans text-[28px] font-bold text-ochre leading-none">1,240</span>
+                        </div>
+                        <div class="flex flex-col pl-[16px]">
+                            <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest mb-[2px]">Points</span>
+                            <span class="font-sans text-[28px] font-bold text-gold leading-none">850</span>
+                        </div>
+                        <div class="flex flex-col px-[8px] pt-[8px] border-t border-ghost/40">
+                            <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest mb-[2px]">Badges</span>
+                            <span class="font-sans text-[28px] font-bold text-ink leading-none">12<span class="text-[16px] text-ghost">/18</span></span>
+                        </div>
+                        <div class="flex flex-col pl-[16px] pt-[8px] border-t border-ghost/40">
+                            <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest mb-[2px]">Referrals</span>
+                            <span class="font-sans text-[28px] font-bold text-ink leading-none">4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STACKED BODY (Main then Side) -->
+                <div class="px-[20px] py-[32px] flex flex-col gap-[32px]">
+                    
+                    <!-- Achievements Grid (Mobile: side scroll) -->
+                    <div class="flex flex-col">
+                        <h2 class="font-serif text-[20px] font-bold text-ink mb-[12px]">Achievements</h2>
+                        <div class="flex gap-[12px] overflow-x-auto hide-scrollbar pb-[8px] -mx-[20px] px-[20px]">
+                            <div class="w-[200px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20 shrink-0">
+                                <div class="w-[32px] h-[32px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[16px] mb-[8px]">🎨</div>
+                                <span class="font-sans text-[13px] font-bold text-ink">Taste Maker</span>
+                                <span class="font-sans text-[11px] text-ink-soft mt-[2px] line-clamp-2">Reach 500 Reputation Points.</span>
+                            </div>
+                            <div class="w-[200px] bg-white rounded-xl shadow-card p-[16px] flex flex-col border border-ghost/20 shrink-0">
+                                <div class="w-[32px] h-[32px] rounded-full bg-paper-warm border border-ochre/20 flex items-center justify-center text-[16px] mb-[8px]">💎</div>
+                                <span class="font-sans text-[13px] font-bold text-ink">Gem Hunter</span>
+                                <span class="font-sans text-[11px] text-ink-soft mt-[2px] line-clamp-2">Post 5 validated Hidden Gems.</span>
+                            </div>
+                            <div class="w-[200px] bg-paper-deep rounded-xl p-[16px] flex flex-col border border-ghost-light opacity-60 shrink-0">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ghost/20 flex items-center justify-center text-[14px] text-mute mb-[8px]">○</div>
+                                <span class="font-sans text-[13px] font-bold text-ink">Culture Authority</span>
+                                <span class="font-sans text-[11px] text-mute mt-[2px] line-clamp-2">Reach 1,500 Reputation Points.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- How to Earn Table (Mobile compressed) -->
+                    <div class="flex flex-col">
+                        <h2 class="font-serif text-[20px] font-bold text-ink mb-[12px]">How to Earn</h2>
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden border border-ghost/20">
+                            <!-- Show 4 rows for mock -->
+                            <div class="flex items-center justify-between p-[12px] border-b border-ghost-light">
+                                <span class="font-sans text-[12px] text-ink flex-1 pr-[8px] leading-snug">Post validated</span>
+                                <span class="font-sans text-[12px] font-bold text-ochre w-[40px] text-right">+10</span>
+                                <span class="font-sans text-[12px] font-bold text-gold w-[40px] text-right">+5</span>
+                            </div>
+                            <div class="flex items-center justify-between p-[12px] border-b border-ghost-light bg-paper-deep/50">
+                                <span class="font-sans text-[12px] text-ink flex-1 pr-[8px] leading-snug">Hidden Gem / Food Review</span>
+                                <span class="font-sans text-[12px] font-bold text-ochre w-[40px] text-right">+15</span>
+                                <span class="font-sans text-[12px] font-bold text-gold w-[40px] text-right">+10</span>
+                            </div>
+                            <div class="flex items-center justify-between p-[12px] border-b border-ghost-light">
+                                <span class="font-sans text-[12px] text-ink flex-1 pr-[8px] leading-snug">Event check-in</span>
+                                <span class="font-sans text-[12px] font-bold text-ochre w-[40px] text-right">+2</span>
+                                <span class="font-sans text-[12px] font-bold text-gold w-[40px] text-right">+15</span>
+                            </div>
+                            <div class="flex items-center justify-between p-[12px] bg-paper-deep/50">
+                                <span class="font-sans text-[12px] text-ink flex-1 pr-[8px] leading-snug">Refer a member</span>
+                                <span class="font-sans text-[12px] font-bold text-ochre w-[40px] text-right">+3</span>
+                                <span class="font-sans text-[12px] font-bold text-gold w-[40px] text-right">+25</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral Card -->
+                    <div class="bg-white rounded-xl shadow-card p-[20px] border border-ghost/20 flex flex-col">
+                        <h3 class="font-serif text-[18px] font-bold text-ink mb-[8px]">Invite a Friend</h3>
+                        <p class="font-sans text-[13px] text-ink-soft mb-[16px]">Share your link. Earn +30 reputation and +5 credits.</p>
+                        <button class="w-full h-[40px] bg-paper-deep border border-ghost rounded-lg font-sans text-[13px] font-bold text-ochre">Copy Link</button>
+                    </div>
+
+                    <!-- Quick Links List (Pro Variant) -->
+                    <div class="bg-white rounded-xl shadow-card py-[4px] flex flex-col border border-ghost/20">
+                        <a href="#" class="font-sans text-[14px] text-ink-soft px-[20px] py-[12px] border-b border-ghost-light">My Wallet</a>
+                        <a href="#" class="font-sans text-[14px] font-bold text-ink px-[20px] py-[12px] border-b border-ghost-light flex items-center justify-between">My Events <span class="font-mono text-[9px] text-gold font-normal bg-gold/10 px-1 rounded">PRO</span></a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft px-[20px] py-[12px] border-b border-ghost-light bg-paper-deep/50">My House Fellowship</a>
+                        <a href="#" class="font-sans text-[14px] text-ink-soft px-[20px] py-[12px] border-b border-ghost-light">Account Settings</a>
+                        <a href="#" class="font-sans text-[14px] font-bold text-mute px-[20px] py-[12px]">Sign out</a>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

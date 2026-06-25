@@ -64,7 +64,7 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'var(--ochre-deep)',
+              background: 'var(--ochre)',
               zIndex: -1,
             }}
           />

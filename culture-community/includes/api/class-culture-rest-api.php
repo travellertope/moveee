@@ -2122,7 +2122,7 @@ class Culture_REST_API {
         $segment = $request->get_param( 'segment' ) ?: '';
         $tier    = $request->get_param( 'tier' ) ?: '';
 
-        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
+        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
         if ( ! in_array( $list, $allowed_lists, true ) ) {
             $list = 'culture-drop';
         }
@@ -2153,6 +2153,9 @@ class Culture_REST_API {
 
             if ( is_array( $existing ) ) {
                 // Already an object — add list if not present, refresh segment/pro tag.
+                // NOTE: we intentionally do not force-add 'announcements' here — an
+                // existing subscriber may have already opted out of it via preferences,
+                // and re-subscribing to a different list shouldn't silently undo that.
                 $lists = $existing['lists'] ?? array();
                 if ( ! in_array( $list, $lists, true ) ) {
                     $lists[] = $list;
@@ -2166,12 +2169,14 @@ class Culture_REST_API {
                 }
                 update_option( 'culture_newsletter_subscribers', $subscribers, false );
             } else {
-                // Upgrade legacy plain-string to object, add new list.
+                // Upgrade legacy plain-string to object, add new list. Legacy entries
+                // predate the 'announcements' list, so they get backfilled onto it too
+                // (mirrors maybe_backfill_announcements() in Culture_Subscribers).
                 $subscribers[ $found_idx ] = array(
                     'email'   => $email,
                     'name'    => $name,
                     'date'    => current_time( 'mysql' ),
-                    'lists'   => array( 'getmelit', $list ),
+                    'lists'   => array( 'getmelit', $list, 'announcements' ),
                     'segment' => $segment,
                     'pro'     => $is_pro,
                 );
@@ -2184,12 +2189,17 @@ class Culture_REST_API {
             ) );
         }
 
-        // New subscriber.
+        // New subscriber. 'announcements' is opt-out (default ON) — every new
+        // subscriber is added to it unless they later remove it via preferences.
+        $new_lists = array( $list );
+        if ( ! in_array( 'announcements', $new_lists, true ) ) {
+            $new_lists[] = 'announcements';
+        }
         $subscribers[] = array(
             'email'   => $email,
             'name'    => $name,
             'date'    => current_time( 'mysql' ),
-            'lists'   => array( $list ),
+            'lists'   => $new_lists,
             'segment' => $segment,
             'pro'     => $is_pro,
         );
@@ -2796,6 +2806,7 @@ class Culture_REST_API {
             'getmelit'        => true,
             'culture-drop'    => true,
             'events'          => true,
+            'announcements'   => true,
         );
 
         if ( $user ) {
@@ -2824,7 +2835,7 @@ class Culture_REST_API {
             return new WP_Error( 'invalid_subs', 'subscriptions must be an object.', array( 'status' => 400 ) );
         }
 
-        $allowed = array( 'cultural-digest', 'getmelit', 'culture-drop', 'events' );
+        $allowed = array( 'cultural-digest', 'getmelit', 'culture-drop', 'events', 'announcements' );
         $clean   = array();
         foreach ( $allowed as $key ) {
             if ( isset( $subs[ $key ] ) ) {

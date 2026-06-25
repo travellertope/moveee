@@ -38,6 +38,28 @@ add_filter( 'register_taxonomy_args', function ( $args, $taxonomy ) {
 }, 10, 2 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 1b. Register product_material taxonomy — non-hierarchical, attached to the
+//     WooCommerce 'product' post type. Exposed to the frontend via a manual
+//     GraphQL resolver field (productMaterials, see section 2 below) rather
+//     than show_in_graphql auto-wiring, since 'product' isn't a core WP
+//     post type and WPGraphQL WooCommerce — not WP core — is what wires its
+//     taxonomy connections (productCategories/productTags); a taxonomy
+//     registered here has no guarantee of being picked up the same way.
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'init', function () {
+    register_taxonomy( 'product_material', 'product', [
+        'label'             => 'Materials',
+        'hierarchical'      => false,
+        'public'            => true,
+        'show_admin_column' => true,
+        'show_in_rest'      => true,
+        'show_ui'           => true,
+        'show_in_graphql'   => false,
+        'rewrite'           => false,
+    ] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 2. Register custom GraphQL types + fields
 //    Priority 99 — runs after WPGraphQL WooCommerce has registered its types.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -170,6 +192,37 @@ add_action( 'graphql_register_types', function () {
                 $pid = absint( $product->databaseId ?? 0 );
                 if ( ! $pid ) return null;
                 return moveee_product_meta( $pid );
+            },
+        ] );
+
+        register_graphql_field( $type, 'averageRating', [
+            'type'        => 'String',
+            'description' => 'Average approved-review rating (0.0–5.0)',
+            'resolve'     => function ( $product ) {
+                $pid = absint( $product->databaseId ?? 0 );
+                if ( ! $pid ) return '0.0';
+                $val = (float) get_post_meta( $pid, '_wc_average_rating', true );
+                return number_format( $val, 1 );
+            },
+        ] );
+
+        register_graphql_field( $type, 'reviewCount', [
+            'type'        => 'Int',
+            'description' => 'Number of approved reviews',
+            'resolve'     => function ( $product ) {
+                $pid = absint( $product->databaseId ?? 0 );
+                return $pid ? (int) get_post_meta( $pid, '_wc_review_count', true ) : 0;
+            },
+        ] );
+
+        register_graphql_field( $type, 'productMaterials', [
+            'type'        => [ 'list_of' => 'String' ],
+            'description' => 'Material tags (e.g. Linen, Oak, Brass)',
+            'resolve'     => function ( $product ) {
+                $pid = absint( $product->databaseId ?? 0 );
+                if ( ! $pid ) return [];
+                $terms = wp_get_post_terms( $pid, 'product_material', [ 'fields' => 'names' ] );
+                return is_wp_error( $terms ) ? [] : array_values( $terms );
             },
         ] );
     }
@@ -726,6 +779,145 @@ add_action( 'rest_api_init', function () {
                     ];
                 }
                 return rest_ensure_response( $products );
+            },
+        ],
+    ] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. REST API — Product reviews
+//     GET  /moveee/v1/products/{id}/reviews — public, list approved reviews
+//     POST /moveee/v1/products/{id}/reviews — Authorization: Bearer {culture_api_secret}
+//     (mirrors Culture_Rest_Api::api_key_permission's verify_bearer_token
+//     convention from culture-community — same 'culture_api_secret' WP option,
+//     same 'Authorization: Bearer {secret}' header, reimplemented locally
+//     here since this plugin doesn't depend on culture-community's classes.)
+// ─────────────────────────────────────────────────────────────────────────────
+function moveee_verify_api_secret( WP_REST_Request $request ): bool {
+    $stored = get_option( 'culture_api_secret', '' );
+    if ( empty( $stored ) ) return false;
+    $header = $request->get_header( 'Authorization' );
+    return ! empty( $header ) && hash_equals( 'Bearer ' . $stored, (string) $header );
+}
+
+// Recomputes and stores the native WooCommerce rating meta from approved
+// review comments, so averageRating/reviewCount (and any other WooCommerce
+// code reading the standard _wc_average_rating/_wc_review_count keys) stay
+// in sync the moment a review is submitted.
+function moveee_recalculate_product_rating( int $product_id ): void {
+    global $wpdb;
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT AVG( cm.meta_value + 0 ) AS avg_rating, COUNT(*) AS cnt
+           FROM {$wpdb->comments} c
+           JOIN {$wpdb->commentmeta} cm ON cm.comment_id = c.comment_ID AND cm.meta_key = 'rating'
+          WHERE c.comment_post_ID  = %d
+            AND c.comment_type     = 'review'
+            AND c.comment_approved = '1'",
+        $product_id
+    ) );
+    $avg   = $row ? round( (float) $row->avg_rating, 1 ) : 0;
+    $count = $row ? (int) $row->cnt : 0;
+    update_post_meta( $product_id, '_wc_average_rating', $avg );
+    update_post_meta( $product_id, '_wc_review_count', $count );
+    if ( function_exists( 'wc_delete_product_transients' ) ) {
+        wc_delete_product_transients( $product_id );
+    }
+}
+
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'moveee/v1', '/products/(?P<id>\d+)/reviews', [
+        [
+            'methods'             => 'GET',
+            'permission_callback' => '__return_true',
+            'callback'            => function ( WP_REST_Request $req ) {
+                $product_id = absint( $req->get_param( 'id' ) );
+                $comments = get_comments( [
+                    'post_id' => $product_id,
+                    'type'    => 'review',
+                    'status'  => 'approve',
+                    'order'   => 'DESC',
+                ] );
+                $out = [];
+                foreach ( $comments as $c ) {
+                    $out[] = [
+                        'id'        => (int) $c->comment_ID,
+                        'rating'    => (int) get_comment_meta( $c->comment_ID, 'rating', true ),
+                        'content'   => $c->comment_content,
+                        'author'    => $c->comment_author,
+                        'avatarUrl' => get_avatar_url( $c->user_id ?: $c->comment_author_email, [ 'size' => 80 ] ),
+                        'date'      => $c->comment_date,
+                    ];
+                }
+                return rest_ensure_response( $out );
+            },
+        ],
+        [
+            'methods'             => 'POST',
+            'permission_callback' => 'moveee_verify_api_secret',
+            'args'                => [
+                'user_id' => [ 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ],
+                'rating'  => [ 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ],
+                'content' => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ],
+            ],
+            'callback'            => function ( WP_REST_Request $req ) {
+                $product_id = absint( $req->get_param( 'id' ) );
+                $user_id    = absint( $req->get_param( 'user_id' ) );
+                $rating     = absint( $req->get_param( 'rating' ) );
+                $content    = trim( (string) $req->get_param( 'content' ) );
+
+                if ( get_post_type( $product_id ) !== 'product' ) {
+                    return new WP_Error( 'not_found', 'Product not found.', [ 'status' => 404 ] );
+                }
+                $user = get_userdata( $user_id );
+                if ( ! $user ) {
+                    return new WP_Error( 'invalid_user', 'User not found.', [ 'status' => 404 ] );
+                }
+                if ( $rating < 1 || $rating > 5 ) {
+                    return new WP_Error( 'invalid_rating', 'Rating must be between 1 and 5.', [ 'status' => 400 ] );
+                }
+                if ( $content === '' ) {
+                    return new WP_Error( 'invalid_content', 'Review text is required.', [ 'status' => 400 ] );
+                }
+
+                // One review per user per product — resubmitting edits the existing comment.
+                $existing = get_comments( [
+                    'post_id' => $product_id,
+                    'user_id' => $user_id,
+                    'type'    => 'review',
+                    'number'  => 1,
+                ] );
+
+                if ( ! empty( $existing ) ) {
+                    $comment_id = (int) $existing[0]->comment_ID;
+                    wp_update_comment( [
+                        'comment_ID'      => $comment_id,
+                        'comment_content' => $content,
+                    ] );
+                } else {
+                    $comment_id = wp_insert_comment( [
+                        'comment_post_ID'      => $product_id,
+                        'comment_content'      => $content,
+                        'comment_author'       => $user->display_name,
+                        'comment_author_email' => $user->user_email,
+                        'user_id'              => $user_id,
+                        'comment_type'         => 'review',
+                        'comment_approved'     => 1,
+                    ] );
+                }
+
+                if ( ! $comment_id ) {
+                    return new WP_Error( 'server_error', 'Could not save review.', [ 'status' => 500 ] );
+                }
+
+                update_comment_meta( $comment_id, 'rating', $rating );
+                moveee_recalculate_product_rating( $product_id );
+
+                return rest_ensure_response( [
+                    'success'       => true,
+                    'id'            => $comment_id,
+                    'averageRating' => number_format( (float) get_post_meta( $product_id, '_wc_average_rating', true ), 1 ),
+                    'reviewCount'   => (int) get_post_meta( $product_id, '_wc_review_count', true ),
+                ] );
             },
         ],
     ] );

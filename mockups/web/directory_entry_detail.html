@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Directory Entry Detail</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dir-ink': '#14110d',
+                        'dir-paper': '#ffffff',
+                        'dir-ochre': '#b38238',
+                        'dir-muted': 'rgba(20,17,13,.55)',
+                        'dir-border': 'rgba(20,17,13,.12)',
+                        'dir-dark-bg': '#14110d',
+                        'dir-dark-ink': '#f5f0e8',
+                        'dir-infobox': '#faf7f2',
+                        'dir-nameplate': '#f3ede0',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .desktop-canvas { width: 1440px; background-color: white; }
+        .mobile-canvas { width: 390px; background-color: white; min-height: 844px; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-dir-ink min-h-screen">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: DESKTOP LAYOUT SHELL (PERSON)         -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-[#7A6F5C] font-bold font-mono text-[14px] tracking-wide uppercase">1. Desktop Layout Shell (Person)</span>
+        
+        <div class="desktop-canvas rounded-[8px] shadow-2xl overflow-hidden flex flex-col border border-gray-300">
+            <!-- Header Nav Placeholder -->
+            <div class="h-[64px] border-b border-dir-border w-full flex items-center px-8 bg-dir-paper">
+                <span class="font-serif text-[20px] font-bold text-dir-ink">moveee connect</span>
+            </div>
+
+            <!-- Page Container -->
+            <div class="w-full max-w-[1360px] mx-auto px-[32px] pt-[28px] pb-[100px]">
+                
+                <!-- Topbar -->
+                <div class="mb-[36px]">
+                    <a href="#" class="font-mono text-[13px] text-dir-ink hover:text-dir-ochre transition-colors">&larr; Discover</a>
+                </div>
+
+                <!-- 3-Column Grid -->
+                <div class="grid grid-cols-[220px_1fr_260px] gap-[36px] items-start">
+                    
+                    <!-- LEFT COLUMN -->
+                    <div class="flex flex-col gap-[16px] sticky top-[80px]">
+                        <!-- DEV: Sidebar "See all ->" link points to /discover?type={slug} NOT a /directory?type= listing... -->
+                        <div class="bg-dir-infobox border border-dir-border p-[18px_16px]">
+                            <h3 class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px] pb-[10px] border-b border-dir-border">Related Persons</h3>
+                            
+                            <div class="flex flex-col">
+                                <a href="#" class="flex gap-3 py-3 border-b border-dir-border hover:bg-black/5 transition-colors">
+                                    <div class="w-[36px] h-[36px] bg-gradient-to-tr from-[#A66C52] to-[#E2A684] rounded-[2px] shrink-0"></div>
+                                    <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Tony Allen</span>
+                                </a>
+                                <a href="#" class="flex gap-3 py-3 border-b border-dir-border hover:bg-black/5 transition-colors">
+                                    <div class="w-[36px] h-[36px] bg-gradient-to-tr from-[#182848] to-[#4B6CB7] rounded-[2px] shrink-0"></div>
+                                    <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Seun Kuti</span>
+                                </a>
+                                <a href="#" class="flex gap-3 py-3 border-b border-dir-border hover:bg-black/5 transition-colors">
+                                    <div class="w-[36px] h-[36px] bg-gradient-to-br from-[#8E54E9] to-[#4776E6] rounded-[2px] shrink-0"></div>
+                                    <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Femi Kuti</span>
+                                </a>
+                                <a href="#" class="flex gap-3 py-3 border-b border-dir-border hover:bg-black/5 transition-colors">
+                                    <div class="w-[36px] h-[36px] bg-gradient-to-bl from-[#C5491F] to-[#E2A684] rounded-[2px] shrink-0"></div>
+                                    <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Burna Boy</span>
+                                </a>
+                                <a href="#" class="flex gap-3 py-3 hover:bg-black/5 transition-colors">
+                                    <div class="w-[36px] h-[36px] bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] rounded-[2px] shrink-0"></div>
+                                    <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Roy Ayers</span>
+                                </a>
+                            </div>
+
+                            <div class="pt-[12px] border-t border-dir-border mt-1">
+                                <a href="/discover?type=person" class="font-mono text-[9px] uppercase text-dir-ochre hover:underline underline-offset-2">See all Persons &rarr;</a>
+                            </div>
+                        </div>
+
+                        <!-- DEV: The "Improve" CTA panel is visually distinct from every other card on the page — it uses the literal dark `--dir-dark-bg`/`--dir-dark-ink` pair (near-black bg, warm-white text)... -->
+                        <div class="bg-dir-dark-bg p-[16px] flex flex-col items-start">
+                            <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[4px]">★ Community Wiki</span>
+                            <p class="text-[12px] text-[rgba(245,240,232,.65)] leading-snug mb-[12px]">Know more? Help improve this entry.</p>
+                            <a href="/directory/submit?improve=fela-kuti" class="inline-flex items-center justify-center bg-dir-dark-ink text-dir-dark-bg font-sans text-[13px] font-bold px-[16px] py-[8px] rounded-full hover:opacity-90 transition-opacity">
+                                Improve &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- CENTER COLUMN (ARTICLE) -->
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px]">PERSON</span>
+                        <h1 class="font-serif font-[300] text-[46px] leading-[1.05] text-dir-ink mb-[16px]">Fela Kuti</h1>
+                        
+                        <p class="text-[17px] leading-[1.7] text-dir-muted">
+                            Fela Anikulapo Kuti was a Nigerian musician, bandleader, composer, political activist, and Pan-Africanist. He is universally regarded as the pioneer of Afrobeat, a Nigerian music genre that combines West African music with American funk and jazz.
+                        </p>
+                        
+                        <div class="font-mono text-[10px] text-dir-ink/35 mt-[16px]">Added to directory 12 March 2025</div>
+                        
+                        <div class="border-b border-dir-border my-[24px]"></div>
+                        
+                        <!-- Prose -->
+                        <div class="text-[16px] leading-[1.75] text-dir-ink flex flex-col gap-[20px]">
+                            <p>At the height of his popularity, he was referred to as one of Africa's most challenging and charismatic music performers. His music was highly politically charged, addressing the dictatorial nature of the Nigerian military governments and the lingering effects of colonialism.</p>
+                            
+                            <h2 class="font-serif text-[22px] font-[400] mt-[12px]">The Kalakuta Republic</h2>
+                            <p>In 1970, he founded the Kalakuta Republic commune, which declared itself independent from the Nigerian state. The commune housed his family, band members, and recording studio. His rebellious lifestyle and outspoken lyrics made him a continuous target for the authorities.</p>
+                            
+                            <p>His music, characterized by complex instrumentation, hypnotic rhythms, and call-and-response vocals, laid the foundation for modern global movements in African music.</p>
+                        </div>
+
+                        <!-- Topics -->
+                        <div class="mt-[40px] pt-[28px] border-t border-dir-border">
+                            <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-muted block mb-[12px]">Topics</span>
+                            <div class="flex flex-wrap gap-[8px]">
+                                <a href="#" class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink hover:bg-black/5 transition-colors">Afrobeat</a>
+                                <a href="#" class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink hover:bg-black/5 transition-colors">Music Production</a>
+                                <a href="#" class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink hover:bg-black/5 transition-colors">Activism</a>
+                                <a href="#" class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink hover:bg-black/5 transition-colors">Pan-Africanism</a>
+                            </div>
+                        </div>
+
+                        <!-- Selected Works -->
+                        <h2 class="font-serif text-[20px] font-[400] text-dir-ink border-b border-dir-border pb-[8px] mt-[40px] mb-[24px]">Selected Works</h2>
+                        <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-[16px]">
+                            <a href="#" class="flex flex-col gap-[8px] group">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-br from-[#182848] to-[#4B6CB7] rounded-[2px] overflow-hidden relative"></div>
+                                <span class="font-sans text-[12px] font-bold text-dir-ink group-hover:text-dir-ochre transition-colors line-clamp-2 leading-tight">Zombie (1976)</span>
+                            </a>
+                            <a href="#" class="flex flex-col gap-[8px] group">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-tr from-[#A66C52] to-[#E2A684] rounded-[2px] overflow-hidden relative"></div>
+                                <span class="font-sans text-[12px] font-bold text-dir-ink group-hover:text-dir-ochre transition-colors line-clamp-2 leading-tight">Water No Get Enemy (1975)</span>
+                            </a>
+                            <a href="#" class="flex flex-col gap-[8px] group">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-bl from-[#7B1FA2] to-[#E2A684] rounded-[2px] overflow-hidden relative"></div>
+                                <span class="font-sans text-[12px] font-bold text-dir-ink group-hover:text-dir-ochre transition-colors line-clamp-2 leading-tight">Expensive Shit (1975)</span>
+                            </a>
+                            <a href="#" class="flex flex-col gap-[8px] group">
+                                <div class="w-full aspect-[4/3] bg-gradient-to-tr from-[#2c3e50] to-[#bdc3c7] rounded-[2px] overflow-hidden relative"></div>
+                                <span class="font-sans text-[12px] font-bold text-dir-ink group-hover:text-dir-ochre transition-colors line-clamp-2 leading-tight">Sorrow Tears and Blood (1977)</span>
+                            </a>
+                        </div>
+
+                        <!-- Community Reviews & Takes -->
+                        <div class="flex items-center gap-[12px] border-b border-dir-border pb-[8px] mt-[40px] mb-[24px]">
+                            <h2 class="font-serif text-[20px] font-[400] text-dir-ink">Community Reviews & Takes</h2>
+                            <div class="flex items-center gap-[6px]">
+                                <span class="text-[14px] text-[#B38238] tracking-widest leading-none">★★★★½</span>
+                                <span class="font-bold text-[14px] text-dir-ink">4.8</span>
+                                <span class="text-[13px] text-dir-muted font-sans">(124 reviews)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col gap-[16px]">
+                            <!-- Review Card 1 -->
+                            <div class="bg-dir-paper border border-dir-border rounded-[8px] p-[16px] flex flex-col">
+                                <div class="flex items-center justify-between mb-[12px]">
+                                    <div class="flex items-center gap-[12px]">
+                                        <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-dir-border"></div>
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center gap-[6px]">
+                                                <span class="font-sans text-[14px] font-bold text-dir-ink leading-none">Lekan Dada</span>
+                                                <span class="bg-[#B38238] text-white px-[4px] py-[2px] rounded-sm font-sans text-[7px] font-bold tracking-widest uppercase leading-none">PRO</span>
+                                            </div>
+                                            <span class="font-mono text-[10px] text-dir-muted mt-[4px] leading-none">3 days ago</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[14px] text-[#B38238] tracking-widest leading-none">★★★★★</span>
+                                </div>
+                                <p class="font-sans text-[14px] text-dir-ink leading-[1.65]">The sheer musical genius of his arrangements often gets overshadowed by his political activism, but sit down and listen to the horn sections on 'Water No Get Enemy'. He created a symphony orchestra structure within West African polyrhythms. Untouchable.</p>
+                                <div class="flex items-center justify-between mt-[16px] pt-[12px] border-t border-dir-border/50">
+                                    <div class="flex items-center gap-[16px]">
+                                        <div class="flex items-center gap-[6px] text-dir-muted"><span class="text-[14px]">🔥</span> <span class="font-mono text-[10px]">142</span></div>
+                                        <div class="flex items-center gap-[6px] text-dir-muted"><span class="text-[14px]">👏</span> <span class="font-mono text-[10px]">89</span></div>
+                                    </div>
+                                    <a href="#" class="font-sans text-[12px] text-dir-ochre font-bold hover:underline underline-offset-2">Read full post &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Events -->
+                        <h2 class="font-serif text-[20px] font-[400] text-dir-ink border-b border-dir-border pb-[8px] mt-[40px] mb-[24px]">Upcoming Events</h2>
+                        
+                        <div class="flex flex-col gap-[12px]">
+                            <!-- Event Row -->
+                            <a href="#" class="flex items-start gap-[16px] bg-dir-paper border border-dir-border rounded-[8px] p-[16px] hover:shadow-md transition-shadow group">
+                                <div class="w-[72px] h-[72px] rounded-[4px] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] shrink-0"></div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="bg-[#eeedfe] text-[#3c3489] px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block w-fit mb-[6px]">HAPPENING</span>
+                                    <div class="font-mono text-[10px] text-dir-ochre font-bold mb-[2px]">SAT 15 OCT 2026 · 8:00 PM</div>
+                                    <h3 class="font-sans text-[15px] font-bold text-dir-ink leading-tight group-hover:text-dir-ochre transition-colors">Felabration 2026 Opening Night</h3>
+                                    <span class="font-sans text-[12px] text-dir-muted mt-[4px]">New Afrika Shrine · Ikeja, Lagos · ₦10,000</span>
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN (INFOBOX) -->
+                    <div class="flex flex-col sticky top-[80px] h-max">
+                        <div class="bg-dir-infobox border border-dir-border rounded-[2px] overflow-hidden flex flex-col">
+                            <div class="w-full aspect-[4/3] bg-gradient-to-b from-[#A66C52] to-[#14110d] relative overflow-hidden">
+                                <!-- simulated vintage photo -->
+                                <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 4px 4px;"></div>
+                            </div>
+                            
+                            <div class="bg-dir-nameplate py-[10px] px-[12px] border-b border-dir-border text-center">
+                                <span class="font-serif text-[15px] font-[500] text-dir-ink">Fela Kuti</span>
+                            </div>
+                            
+                            <div class="flex flex-col pb-[8px]">
+                                <!-- System pairs -->
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Type</span>
+                                    <span class="text-[13px] text-dir-ink">Person</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Category</span>
+                                    <span class="text-[13px] text-dir-ink">Music, Activism</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Added</span>
+                                    <span class="text-[13px] text-dir-ink">12 March 2025</span>
+                                </div>
+                                
+                                <div class="h-[2px] bg-dir-border w-full my-[4px]"></div>
+                                
+                                <!-- Dynamic fields -->
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Born</span>
+                                    <span class="text-[13px] text-dir-ink">1938, Abeokuta</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Died</span>
+                                    <span class="text-[13px] text-dir-ink">1997, Lagos</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Nationality</span>
+                                    <span class="text-[13px] text-dir-ink">Nigerian</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Occupation</span>
+                                    <span class="text-[13px] text-dir-ink">Musician, Activist</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Known For</span>
+                                    <span class="text-[13px] text-dir-ink">Afrobeat</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Active Yrs</span>
+                                    <span class="text-[13px] text-dir-ink">1958–1997</span>
+                                </div>
+
+                                <div class="h-[2px] bg-dir-border w-full my-[4px]"></div>
+
+                                <!-- Links -->
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Website</span>
+                                    <a href="#" class="text-[13px] text-dir-ochre hover:underline underline-offset-2 break-all">felakuti.com</a>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Wikipedia</span>
+                                    <a href="#" class="text-[13px] text-dir-ochre hover:underline underline-offset-2 break-all">Fela_Kuti</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: MOBILE COMPANION (REORDERED STACK)    -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 mt-16">
+        <span class="text-[#7A6F5C] font-bold font-mono text-[14px] tracking-wide uppercase">2. Mobile Companion (Reordered)</span>
+        
+        <div class="mobile-canvas rounded-[40px] shadow-2xl overflow-hidden flex flex-col border-[8px] border-gray-900 relative">
+            
+            <div class="h-[44px] border-b border-dir-border w-full flex items-center px-[16px] bg-dir-paper shrink-0 justify-between">
+                <a href="#" class="font-mono text-[12px] text-dir-ink">&larr; Discover</a>
+                <span class="font-serif text-[16px] font-bold text-dir-ink">moveee</span>
+            </div>
+
+            <!-- Page Container - Flex Col to allow reordering -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col px-[16px] pt-[16px] pb-[80px]">
+                
+                <!-- MOBILE RIGHT COLUMN (INFOBOX) - ORDER 1 -->
+                <div class="order-1 w-full bg-dir-infobox border border-dir-border rounded-[2px] overflow-hidden flex flex-col mb-[24px]">
+                    <!-- Image now 16:7 aspect ratio -->
+                    <div class="w-full aspect-[16/7] bg-gradient-to-b from-[#A66C52] to-[#14110d] relative overflow-hidden"></div>
+                    <div class="bg-dir-nameplate py-[10px] px-[12px] border-b border-dir-border text-center">
+                        <span class="font-serif text-[15px] font-[500] text-dir-ink">Fela Kuti</span>
+                    </div>
+                    <div class="flex flex-col pb-[8px]">
+                        <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Type</span>
+                            <span class="text-[13px] text-dir-ink">Person</span>
+                        </div>
+                        <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Added</span>
+                            <span class="text-[13px] text-dir-ink">12 March 2025</span>
+                        </div>
+                        <div class="h-[2px] bg-dir-border w-full my-[4px]"></div>
+                        <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Born</span>
+                            <span class="text-[13px] text-dir-ink">1938, Abeokuta</span>
+                        </div>
+                        <!-- simplified fields for mock -->
+                        <div class="h-[2px] bg-dir-border w-full my-[4px]"></div>
+                        <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline">
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Website</span>
+                            <a href="#" class="text-[13px] text-dir-ochre break-all">felakuti.com</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MOBILE CENTER COLUMN (ARTICLE) - ORDER 2 -->
+                <div class="order-2 flex flex-col w-full mb-[32px]">
+                    <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[10px]">PERSON</span>
+                    <h1 class="font-serif font-[300] text-[32px] leading-[1.1] text-dir-ink mb-[12px]">Fela Kuti</h1>
+                    
+                    <p class="text-[16px] leading-[1.7] text-dir-muted">
+                        Fela Anikulapo Kuti was a Nigerian musician, bandleader, composer, political activist, and Pan-Africanist.
+                    </p>
+                    
+                    <div class="font-mono text-[10px] text-dir-ink/35 mt-[12px]">Added to directory 12 March 2025</div>
+                    <div class="border-b border-dir-border my-[20px]"></div>
+                    
+                    <div class="text-[15px] leading-[1.75] text-dir-ink flex flex-col gap-[16px]">
+                        <p>At the height of his popularity, he was referred to as one of Africa's most challenging and charismatic music performers.</p>
+                        <h2 class="font-serif text-[20px] font-[400] mt-[8px]">The Kalakuta Republic</h2>
+                        <p>In 1970, he founded the Kalakuta Republic commune, which declared itself independent from the Nigerian state.</p>
+                    </div>
+
+                    <!-- Topics -->
+                    <div class="mt-[32px] pt-[24px] border-t border-dir-border">
+                        <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-muted block mb-[12px]">Topics</span>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <span class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink">Afrobeat</span>
+                            <span class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink">Activism</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MOBILE LEFT COLUMN (RELATED) - ORDER 3 -->
+                <div class="order-3 flex flex-col gap-[16px] w-full">
+                    <div class="bg-dir-infobox border border-dir-border p-[16px]">
+                        <h3 class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[12px] pb-[8px] border-b border-dir-border">Related Persons</h3>
+                        <div class="flex flex-col">
+                            <div class="flex gap-3 py-3 border-b border-dir-border">
+                                <div class="w-[36px] h-[36px] bg-gradient-to-tr from-[#A66C52] to-[#E2A684] rounded-[2px] shrink-0"></div>
+                                <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Tony Allen</span>
+                            </div>
+                            <div class="flex gap-3 py-3 border-b border-dir-border">
+                                <div class="w-[36px] h-[36px] bg-gradient-to-tr from-[#182848] to-[#4B6CB7] rounded-[2px] shrink-0"></div>
+                                <span class="text-[12px] text-dir-ink flex-1 self-center leading-snug">Seun Kuti</span>
+                            </div>
+                        </div>
+                        <div class="pt-[12px] border-t border-dir-border mt-1">
+                            <span class="font-mono text-[9px] uppercase text-dir-ochre">See all Persons &rarr;</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-dir-dark-bg p-[16px] flex flex-col items-start w-full">
+                        <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[4px]">★ Community Wiki</span>
+                        <p class="text-[12px] text-[rgba(245,240,232,.65)] leading-snug mb-[12px]">Know more? Help improve this entry.</p>
+                        <button class="inline-flex items-center justify-center bg-dir-dark-ink text-dir-dark-bg font-sans text-[13px] font-bold px-[16px] py-[8px] rounded-full">
+                            Improve &rarr;
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: CONTENT-GATED STATE (BOOK)            -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 mt-16">
+        <span class="text-[#7A6F5C] font-bold font-mono text-[14px] tracking-wide uppercase">3. Content-Gated State (Book)</span>
+        
+        <div class="desktop-canvas rounded-[8px] shadow-2xl overflow-hidden flex flex-col border border-gray-300">
+            <div class="w-full max-w-[1360px] mx-auto px-[32px] pt-[28px] pb-[100px]">
+                
+                <div class="mb-[36px]">
+                    <a href="#" class="font-mono text-[13px] text-dir-ink">&larr; Discover</a>
+                </div>
+
+                <div class="grid grid-cols-[220px_1fr_260px] gap-[36px] items-start">
+                    
+                    <div class="flex flex-col gap-[16px] sticky top-[80px]">
+                        <div class="bg-dir-infobox border border-dir-border p-[18px_16px]">
+                            <h3 class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px] pb-[10px] border-b border-dir-border">Related Books</h3>
+                            <div class="flex flex-col">
+                                <div class="flex gap-3 py-3 border-b border-dir-border"><div class="w-[36px] h-[36px] bg-[#D2B48C] rounded-[2px] shrink-0"></div><span class="text-[12px] text-dir-ink self-center">No Longer at Ease</span></div>
+                                <div class="flex gap-3 py-3 border-b border-dir-border"><div class="w-[36px] h-[36px] bg-[#A0AEBD] rounded-[2px] shrink-0"></div><span class="text-[12px] text-dir-ink self-center">Arrow of God</span></div>
+                            </div>
+                            <div class="pt-[12px] border-t border-dir-border mt-1"><span class="font-mono text-[9px] uppercase text-dir-ochre">See all Books &rarr;</span></div>
+                        </div>
+                        <div class="bg-dir-dark-bg p-[16px] flex flex-col items-start">
+                            <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[4px]">★ Community Wiki</span>
+                            <p class="text-[12px] text-[rgba(245,240,232,.65)] leading-snug mb-[12px]">Know more? Help improve this entry.</p>
+                            <button class="bg-dir-dark-ink text-dir-dark-bg text-[13px] font-bold px-[16px] py-[8px] rounded-full">Improve &rarr;</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px]">BOOK</span>
+                        <h1 class="font-serif font-[300] text-[46px] leading-[1.05] text-dir-ink mb-[16px]">Things Fall Apart</h1>
+                        <p class="text-[17px] leading-[1.7] text-dir-muted">A classic novel by Chinua Achebe that chronicles pre-colonial life in the southeastern part of Nigeria and the arrival of Europeans during the late 19th century.</p>
+                        <div class="font-mono text-[10px] text-dir-ink/35 mt-[16px]">Added to directory 12 March 2025</div>
+                        <div class="border-b border-dir-border my-[24px]"></div>
+                        
+                        <!-- THE GATE (Replacing body prose) -->
+                        <div class="bg-dir-paper border-[1.5px] border-[#B38238] rounded-xl p-[40px] flex flex-col items-center text-center shadow-sm my-[16px]">
+                            <svg class="w-[32px] h-[32px] text-[#B38238] mb-[12px]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                            <span class="font-mono text-[11px] font-bold text-dir-ink uppercase tracking-wider mb-[8px]">★ Moveee Pro</span>
+                            <h3 class="font-serif text-[24px] font-bold text-dir-ink mb-[12px]">You're one step away.</h3>
+                            <p class="font-sans text-[15px] text-dir-muted max-w-[420px] leading-relaxed mb-[24px]">
+                                This piece is part of our Moveee Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.
+                            </p>
+                            <button class="w-[280px] h-[52px] bg-dir-ink text-dir-paper font-sans font-bold text-[14px] rounded-full hover:opacity-90 transition-opacity">
+                                Upgrade to Moveee Pro &rarr;
+                            </button>
+                            <span class="font-mono text-[10px] text-dir-muted mt-[16px]">₦4,500/mo · Cancel anytime</span>
+                        </div>
+                        
+                        <!-- Annotation -->
+                        <div class="w-full text-center mt-2 border-t-2 border-blue-400 pt-2 pointer-events-none">
+                            <span class="font-sans text-[12px] text-blue-600 font-bold">ContentGate replaces ONLY the body — not a blur overlay, not a full-page lock. Topics & Reviews still render below.</span>
+                        </div>
+
+                        <div class="mt-[40px] pt-[28px] border-t border-dir-border">
+                            <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-muted block mb-[12px]">Topics</span>
+                            <div class="flex flex-wrap gap-[8px]">
+                                <span class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink">Post-Colonial</span>
+                                <span class="border border-dir-border rounded-full px-[12px] py-[6px] text-[13px] text-dir-ink">Fiction</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sticky top-[80px] h-max">
+                        <div class="bg-dir-infobox border border-dir-border rounded-[2px] overflow-hidden flex flex-col">
+                            <div class="bg-dir-nameplate py-[10px] px-[12px] border-b border-dir-border text-center mt-[120px]">
+                                <span class="font-serif text-[15px] font-[500] text-dir-ink">Things Fall Apart</span>
+                            </div>
+                            <div class="flex flex-col pb-[8px]">
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Type</span>
+                                    <span class="text-[13px] text-dir-ink">Book</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Author</span>
+                                    <span class="text-[13px] text-dir-ink">Chinua Achebe</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Published</span>
+                                    <span class="text-[13px] text-dir-ink">1958</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: EMPTY CONTENT STATE (MOVEMENT)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 mt-16">
+        <span class="text-[#7A6F5C] font-bold font-mono text-[14px] tracking-wide uppercase">4. Empty-Content State (Movement)</span>
+        
+        <div class="desktop-canvas rounded-[8px] shadow-2xl overflow-hidden flex flex-col border border-gray-300">
+            <div class="w-full max-w-[1360px] mx-auto px-[32px] pt-[28px] pb-[100px]">
+                
+                <div class="mb-[36px]">
+                    <a href="#" class="font-mono text-[13px] text-dir-ink">&larr; Discover</a>
+                </div>
+
+                <div class="grid grid-cols-[220px_1fr_260px] gap-[36px] items-start">
+                    
+                    <div class="flex flex-col gap-[16px] sticky top-[80px]">
+                        <div class="bg-dir-infobox border border-dir-border p-[18px_16px]">
+                            <h3 class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px] pb-[10px] border-b border-dir-border">Related Movements</h3>
+                            <!-- Empty Sidebar List -->
+                            <div class="py-[12px] flex items-center justify-center border-b border-dir-border">
+                                <span class="text-[12px] text-dir-muted italic">No related entries yet.</span>
+                            </div>
+                            <div class="pt-[12px] border-t border-dir-border mt-1"><span class="font-mono text-[9px] uppercase text-dir-ochre">See all Movements &rarr;</span></div>
+                        </div>
+                        <div class="bg-dir-dark-bg p-[16px] flex flex-col items-start">
+                            <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[4px]">★ Community Wiki</span>
+                            <p class="text-[12px] text-[rgba(245,240,232,.65)] leading-snug mb-[12px]">Know more? Help improve this entry.</p>
+                            <button class="bg-dir-dark-ink text-dir-dark-bg text-[13px] font-bold px-[16px] py-[8px] rounded-full">Improve &rarr;</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] uppercase tracking-[.16em] text-dir-ochre mb-[14px]">MOVEMENT</span>
+                        <h1 class="font-serif font-[300] text-[46px] leading-[1.05] text-dir-ink mb-[16px]">Négritude</h1>
+                        <p class="text-[17px] leading-[1.7] text-dir-muted">A literary and ideological movement developed by francophone black intellectuals in France during the 1930s.</p>
+                        <div class="font-mono text-[10px] text-dir-ink/35 mt-[16px]">Added to directory 12 March 2025</div>
+                        <div class="border-b border-dir-border my-[24px]"></div>
+                        
+                        <!-- THE EMPTY STATE (Replacing body prose) -->
+                        <div class="py-[40px]">
+                            <p class="font-sans text-[16px] italic text-dir-muted">Full article coming soon. Know this subject? Help us build it.</p>
+                        </div>
+                        
+                        <!-- NO Works, NO Community, NO Events blocks rendered here -->
+                        
+                    </div>
+
+                    <div class="flex flex-col sticky top-[80px] h-max">
+                        <div class="bg-dir-infobox border border-dir-border rounded-[2px] overflow-hidden flex flex-col">
+                            <div class="bg-dir-nameplate py-[10px] px-[12px] border-b border-dir-border text-center mt-[40px]">
+                                <span class="font-serif text-[15px] font-[500] text-dir-ink">Négritude</span>
+                            </div>
+                            <div class="flex flex-col pb-[8px]">
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Type</span>
+                                    <span class="text-[13px] text-dir-ink">Movement</span>
+                                </div>
+                                <div class="grid grid-cols-[90px_1fr] p-[8px] items-baseline border-b border-dir-border">
+                                    <span class="font-mono text-[9px] uppercase tracking-[.12em] text-dir-muted">Active</span>
+                                    <span class="text-[13px] text-dir-ink">1930s–1960s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

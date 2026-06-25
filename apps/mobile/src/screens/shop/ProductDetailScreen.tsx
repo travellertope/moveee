@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Image, Dimensions, ActivityIndicator, NativeScrollEvent,
-  NativeSyntheticEvent,
+  NativeSyntheticEvent, Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
@@ -92,7 +92,7 @@ function ImageGallery({
         <Ionicons
           name={liked ? "heart" : "heart-outline"}
           size={20}
-          color={liked ? c.error : c.ink}
+          color={liked ? "#C62828" : c.ink}
         />
       </TouchableOpacity>
 
@@ -155,7 +155,7 @@ function createGalleryStyles(c: ColorPalette) {
       top: 16, right: 16,
       width: 40, height: 40,
       borderRadius: 20,
-      backgroundColor: "rgba(255,255,255,0.9)",
+      backgroundColor: `${c.paper}E6`,
       justifyContent: "center",
       alignItems: "center",
       zIndex: 20,
@@ -491,9 +491,10 @@ function MakerCard({ detail, product }: { detail: ShopProductDetail; product?: S
   const makerName = detail.makerName || product?.makerName || "";
   const makerCity = detail.makerCity || product?.makerCity || "";
 
-  const goToMakerShop = () => {
+  const goToMakerProfile = () => {
     if (makerName) {
-      nav.navigate("ShopListing", { categoryName: makerName, categorySlug: "", makerName });
+      const slug = makerName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      nav.navigate("MakerProfile", { makerSlug: slug, makerName });
     }
   };
 
@@ -501,7 +502,7 @@ function MakerCard({ detail, product }: { detail: ShopProductDetail; product?: S
     <View style={mkS.card}>
       <View style={mkS.cardHeader}>
         <Text style={mkS.cardTitle}>About the Maker</Text>
-        <TouchableOpacity onPress={goToMakerShop}>
+        <TouchableOpacity onPress={goToMakerProfile}>
           <Text style={mkS.cardAction}>See full shop →</Text>
         </TouchableOpacity>
       </View>
@@ -538,7 +539,7 @@ function MakerCard({ detail, product }: { detail: ShopProductDetail; product?: S
       {detail.makerBio ? (
         <Text style={mkS.bio} numberOfLines={3}>{detail.makerBio}</Text>
       ) : null}
-      <TouchableOpacity onPress={goToMakerShop}>
+      <TouchableOpacity onPress={goToMakerProfile}>
         <Text style={mkS.viewAll}>View all their products →</Text>
       </TouchableOpacity>
     </View>
@@ -715,6 +716,18 @@ export default function ProductDetailScreen() {
 
   const variant = [colourName, sizeName].filter(Boolean).join(" / ") || undefined;
 
+  const handleShare = useCallback(async () => {
+    if (!product) return;
+    try {
+      await Share.share({
+        message: `Check out ${product.name} on Moveee — https://themoveee.com/shop/${product.slug}`,
+        url: `https://themoveee.com/shop/${product.slug}`,
+      });
+    } catch {
+      // user cancelled share
+    }
+  }, [product]);
+
   const handleAddToBag = () => {
     if (!product) return;
     addItem({
@@ -744,8 +757,8 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
           <Text style={s.headerSub}>Lifestyle</Text>
           <View style={s.headerRight}>
-            <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="share-social-outline" size={24} color={c.ink} />
+            <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={handleShare}>
+              <Ionicons name="share-outline" size={24} color={c.ink} />
             </TouchableOpacity>
             <TouchableOpacity
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

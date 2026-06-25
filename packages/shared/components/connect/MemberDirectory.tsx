@@ -94,6 +94,9 @@ export default function MemberDirectory({ viewerCity = "", viewerCountry = "" }:
             ))}
           </select>
         </div>
+        {!loading && members.length > 0 && (
+          <span className="mco-dir-count">{members.length} members near you</span>
+        )}
       </div>
 
       {loading ? (
@@ -104,6 +107,7 @@ export default function MemberDirectory({ viewerCity = "", viewerCountry = "" }:
         </div>
       ) : members.length === 0 ? (
         <div className="mco-dir-empty">
+          <span className="mco-dir-empty-icon" aria-hidden="true">👥</span>
           <p className="mco-dir-empty-title">No one near you yet.</p>
           <p className="mco-dir-empty-body">
             Members who have opted into the directory will appear here once someone near you
@@ -133,11 +137,11 @@ function MemberCard({ member }: { member: Member }) {
     return `https://${value}`;
   };
   const links = [
-    member.instagram && { label: "Instagram", href: toUrl("instagram", member.instagram) },
-    member.linkedin  && { label: "LinkedIn",  href: toUrl("linkedin", member.linkedin) },
-    member.website   && { label: "Website",   href: toUrl("website", member.website) },
-    member.twitter   && { label: "Twitter",   href: toUrl("twitter", member.twitter) },
-  ].filter(Boolean) as { label: string; href: string }[];
+    member.website   && { label: "Website",   glyph: "🌐", href: toUrl("website", member.website) },
+    member.linkedin  && { label: "LinkedIn",   glyph: "in", href: toUrl("linkedin", member.linkedin) },
+    member.instagram && { label: "Instagram",  glyph: "ig", href: toUrl("instagram", member.instagram) },
+    member.twitter   && { label: "Twitter",    glyph: "𝕏",  href: toUrl("twitter", member.twitter) },
+  ].filter(Boolean) as { label: string; glyph: string; href: string }[];
 
   const inner = (
     <div className={`mco-member-card${isPatron ? " mco-member-card--patron" : ""}`}>
@@ -177,9 +181,10 @@ function MemberCard({ member }: { member: Member }) {
                 aria-label={`${member.displayName} on ${l.label}`}
                 onClick={e => e.stopPropagation()}
               >
-                {l.label}
+                {l.glyph}
               </a>
             ))}
+            <span className="mco-member-view">View Profile →</span>
           </div>
         )}
       </div>

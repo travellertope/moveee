@@ -1,6 +1,6 @@
 "use client";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { getCategoryImage, getCategoryGradient } from "../utils/categoryImages";
+import { getCategoryGradient } from "../utils/categoryImages";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,10 +13,13 @@ interface CarouselEvent {
   date?: string;
   location?: string;
   city?: string;
+  admission?: string;
   featuredImage?: { node?: { sourceUrl?: string } };
   eventImageUrl?: string;
   cultureInterests?: { nodes: Array<{ name: string; slug: string }> };
   isAiGenerated?: boolean;
+  isPro?: boolean;
+  href?: string;
 }
 
 interface EventsCarouselProps {
@@ -27,7 +30,7 @@ function fmtDate(raw?: string): string {
   if (!raw) return "TBA";
   const d = new Date(raw);
   if (isNaN(d.getTime())) return "TBA";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase();
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
 export default function EventsCarousel({ events }: EventsCarouselProps) {
@@ -57,55 +60,51 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
   const scroll = useCallback((dir: "prev" | "next") => {
     const el = trackRef.current;
     if (!el) return;
-    const card = el.querySelector<HTMLElement>(".evc-card");
-    const amount = (card?.offsetWidth ?? 340) + 20;
+    const card = el.querySelector<HTMLElement>(".evt-carousel-card");
+    const amount = (card?.offsetWidth ?? 300) + 24;
     el.scrollBy({ left: dir === "next" ? amount : -amount, behavior: "smooth" });
   }, []);
 
   if (!events.length) return null;
 
   return (
-    <div className="evc-wrap">
+    <div className="evt-carousel-wrap">
       <button
-        className={`evc-btn evc-btn--prev${canPrev ? "" : " evc-btn--hidden"}`}
+        className={`evt-carousel-btn evt-carousel-btn--prev${canPrev ? "" : " evt-carousel-btn--hidden"}`}
         onClick={() => scroll("prev")}
         aria-label="Previous"
         tabIndex={canPrev ? 0 : -1}
       >←</button>
 
-      <div className="evc-track" ref={trackRef}>
+      <div className="evt-carousel-track" ref={trackRef}>
         {events.map((event) => {
           const dateStr = fmtDate(event.eventDate || event.date);
           const catNode = event.cultureInterests?.nodes?.[0];
-          const cat = catNode?.name || "";
           const catSlug = catNode?.slug || "";
           const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
           const place = event.city || event.location || "";
+          const free = !event.admission || /free/i.test(event.admission);
 
           return (
-            <Link key={event.slug} href={`/events/${event.slug}`} className="evc-card">
-              <div className="evc-image">
-                <Image
-                  src={img || getCategoryImage(catSlug)}
-                  alt={event.title}
-                  fill
-                  style={{ objectFit: "cover" }}
-                  onError={(e) => {
-                    const el = e.currentTarget as HTMLImageElement;
-                    el.style.display = "none";
-                    const ph = el.parentElement?.querySelector<HTMLElement>(".evc-placeholder");
-                    if (ph) { ph.style.display = "block"; ph.style.background = getCategoryGradient(catSlug); }
-                  }}
-                />
-                <div className="evc-placeholder" style={{ display: "none", background: getCategoryGradient(catSlug) }} />
-                <div className="evc-image-overlay">
-                  <span className="evc-overlay-date">{dateStr}</span>
-                  {place && <span className="evc-overlay-place">{place}</span>}
-                </div>
+            <Link key={event.slug} href={event.href || `/events/${event.slug}`} className="evt-carousel-card">
+              {event.isPro && <span className="evt-carousel-pro-badge">Pro Only</span>}
+              <div className="evt-carousel-img" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
+                {img && <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />}
               </div>
-              <div className="evc-body">
-                {cat && <span className="evc-cat">{cat}</span>}
-                <h4 className="evc-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+              <div className="evt-carousel-body">
+                <h4 className="evt-carousel-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+                <div className="evt-carousel-row">
+                  <span>📅 {dateStr}</span>
+                </div>
+                {place && (
+                  <div className="evt-carousel-row">
+                    <span>📍 {place}</span>
+                  </div>
+                )}
+                <div className="evt-carousel-footer">
+                  <span className="evt-carousel-price">{free ? "Free" : event.admission}</span>
+                  <span className="evt-carousel-rsvp-pill">RSVP</span>
+                </div>
               </div>
             </Link>
           );
@@ -113,7 +112,7 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
       </div>
 
       <button
-        className={`evc-btn evc-btn--next${canNext ? "" : " evc-btn--hidden"}`}
+        className={`evt-carousel-btn evt-carousel-btn--next${canNext ? "" : " evt-carousel-btn--hidden"}`}
         onClick={() => scroll("next")}
         aria-label="Next"
         tabIndex={canNext ? 0 : -1}

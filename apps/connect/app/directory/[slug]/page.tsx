@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import DirectoryLightboxImage from "./DirectoryLightboxImage";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -238,9 +239,13 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                   <li key={e.slug}>
                     <Link href={`/directory/${e.slug}`} className="dir-wiki-related-link">
                       {e.featuredImage?.node?.sourceUrl && (
-                        <div className="dir-wiki-related-thumb">
+                        <DirectoryLightboxImage
+                          className="dir-wiki-related-thumb"
+                          src={e.featuredImage.node.sourceUrl}
+                          alt={e.title}
+                        >
                           <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
-                        </div>
+                        </DirectoryLightboxImage>
                       )}
                       <span className="dir-wiki-related-title">{e.title}</span>
                     </Link>
@@ -309,9 +314,9 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 {works.map((w, i) => (
                   <div key={i} className="dir-wiki-work-card">
                     {w.imageUrl && (
-                      <div className="dir-wiki-work-img">
-                        <Image src={w.imageUrl} alt={w.title} fill style={{ objectFit: "cover" }} />
-                      </div>
+                      <DirectoryLightboxImage className="dir-wiki-work-img" src={w.imageUrl} alt={w.title}>
+                        <Image src={w.imageUrl} alt={w.title} fill style={{ objectFit: "contain" }} />
+                      </DirectoryLightboxImage>
                     )}
                     {w.title && <div className="dir-wiki-work-title">{w.title}</div>}
                   </div>
@@ -338,13 +343,19 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 {communityPosts.map((post) => (
                   <div key={post.id} className={`dir-community-card dir-community-card--${post.template_type}`}>
                     <div className="dir-community-card-header">
-                      <img
+                      <DirectoryLightboxImage
                         src={post.author.avatar}
-                        alt=""
-                        className="dir-community-avatar"
-                        width={32}
-                        height={32}
-                      />
+                        alt={post.author.name}
+                        style={{ display: "inline-block", width: 32, height: 32, flexShrink: 0 }}
+                      >
+                        <img
+                          src={post.author.avatar}
+                          alt=""
+                          className="dir-community-avatar"
+                          width={32}
+                          height={32}
+                        />
+                      </DirectoryLightboxImage>
                       <div className="dir-community-card-meta">
                         <span className="dir-community-author">{post.author.name}</span>
                         {post.author.tier === "patron" && (
@@ -400,13 +411,19 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                     ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                     : null;
                   return (
-                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
+                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
                       {ev.image && (
-                        <img src={ev.image} alt={ev.title} style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "4px", flexShrink: 0 }} loading="lazy" />
+                        <DirectoryLightboxImage
+                          src={ev.image}
+                          alt={ev.title}
+                          style={{ width: "72px", height: "72px", borderRadius: "4px", flexShrink: 0, overflow: "hidden" }}
+                        >
+                          <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                        </DirectoryLightboxImage>
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.3rem" }}>
-                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px" }}>Happening</span>
+                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "999px" }}>Happening</span>
                           {evDate && (
                             <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600 }}>
                               {evDate}{endDate && endDate !== evDate ? ` — ${endDate}` : ""}
@@ -434,9 +451,9 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           <div className="dir-wiki-infobox">
             {/* Featured image */}
             {img && (
-              <div className="dir-wiki-infobox-img">
-                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "cover" }} />
-              </div>
+              <DirectoryLightboxImage className="dir-wiki-infobox-img" src={img} alt={entry.title ?? ""}>
+                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "contain" }} />
+              </DirectoryLightboxImage>
             )}
 
             {/* Title inside infobox */}

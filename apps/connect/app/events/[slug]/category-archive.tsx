@@ -114,19 +114,17 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
   })).filter((c) => c.count > 0);
 
   return (
-    <div className="ev-archive-page">
-      <div className="ev-archive-header">
-        <div className="ev-archive-header-inner">
-          <Link href="/events" className="ev-archive-back">← All Happenings</Link>
-          <div className="ev-archive-title-row">
-            <span className="ev-archive-icon">{categoryInfo.icon}</span>
-            <h1><em>{categoryInfo.name}</em></h1>
-          </div>
-          <p className="ev-archive-meta">{categoryInfo.desc} · {upcoming.length} upcoming</p>
+    <div className="evt-archive-page">
+      <div className="evt-archive-header">
+        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
+        <div className="evt-archive-title-row">
+          <span className="evt-archive-icon">{categoryInfo.icon}</span>
+          <h1><em>{categoryInfo.name}</em></h1>
         </div>
+        <p className="evt-archive-meta">{categoryInfo.desc} · {upcoming.length} upcoming</p>
       </div>
 
-      <div className="ev-timeline-section">
+      <div className="evt-timeline-section">
         <EventTimeline
           events={upcoming}
           sidebarCities={sidebarCities}
@@ -136,8 +134,8 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
         />
       </div>
 
-      <div className="ev-archive-footer">
-        <Link href="/events" className="ev-archive-back">← All Happenings</Link>
+      <div className="evt-archive-footer">
+        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
       </div>
     </div>
   );

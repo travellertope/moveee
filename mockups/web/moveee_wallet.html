@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Wallet, Perks & Coupons</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        error: '#C62828',
+                        warning: '#F59E0B'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                        'modal': '0 25px 50px -12px rgba(20, 17, 13, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .ios-screen { width: 390px; flex-shrink: 0; }
+        
+        input:focus, select:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #C8BFB0; opacity: 1; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: WALLET: TRANSACTION HISTORY TAB       -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 1: Wallet History (Desktop)</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-10 shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                <nav class="flex items-center gap-[24px]">
+                    <a href="#" class="font-sans text-[14px] font-bold text-ink">Wallet</a>
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Perks</a>
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Coupons</a>
+                </nav>
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-ghost"></div>
+                </div>
+            </div>
+
+            <div class="max-w-[800px] w-full mx-auto px-[32px] pt-[48px] flex flex-col gap-[32px]">
+                
+                <div class="flex items-end justify-between">
+                    <div class="flex flex-col">
+                        <h1 class="font-serif text-[40px] font-bold text-ink leading-tight">Wallet</h1>
+                        <div class="flex items-baseline gap-[8px] mt-[8px]">
+                            <span class="font-sans text-[32px] font-bold text-ochre leading-none">1,240</span>
+                            <span class="font-mono text-[13px] text-mute uppercase tracking-widest">Credits</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Switcher -->
+                <nav class="flex items-center gap-[32px] border-b border-ghost-light pb-[-1px]">
+                    <button class="font-sans text-[15px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Transaction History</button>
+                    <button class="font-sans text-[15px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Cash Out</button>
+                </nav>
+
+                <!-- History List -->
+                <div class="flex flex-col">
+                    <span class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest mb-[16px] px-[4px]">Recent Transactions</span>
+                    
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden border border-ghost/20 flex flex-col">
+                        
+                        <!-- Row 1 (Earned) -->
+                        <div class="flex items-center justify-between p-[20px] border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-deep flex items-center justify-center text-[16px]">✉️</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink leading-tight">Referral bonus</span>
+                                    <span class="font-mono text-[11px] text-mute mt-[2px]">23 Jun 2026</span>
+                                </div>
+                            </div>
+                            <span class="font-sans text-[16px] font-bold text-success">+30 CR</span>
+                        </div>
+
+                        <!-- Row 2 (Earned) -->
+                        <div class="flex items-center justify-between p-[20px] border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-deep flex items-center justify-center text-[16px]">📝</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink leading-tight">Post published</span>
+                                    <span class="font-mono text-[11px] text-mute mt-[2px]">22 Jun 2026</span>
+                                </div>
+                            </div>
+                            <span class="font-sans text-[16px] font-bold text-success">+10 CR</span>
+                        </div>
+
+                        <!-- Row 3 (Spent) -->
+                        <div class="flex items-center justify-between p-[20px] border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-deep flex items-center justify-center text-[16px]">🎁</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink leading-tight">Perk redeemed</span>
+                                    <span class="font-mono text-[11px] text-mute mt-[2px]">20 Jun 2026</span>
+                                </div>
+                            </div>
+                            <span class="font-sans text-[16px] font-bold text-ochre">–150 CR</span>
+                        </div>
+
+                        <!-- Row 4 (Spent) -->
+                        <div class="flex items-center justify-between p-[20px] border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-deep flex items-center justify-center text-[16px]">💸</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink leading-tight">Cash out</span>
+                                    <span class="font-mono text-[11px] text-mute mt-[2px]">15 Jun 2026</span>
+                                </div>
+                            </div>
+                            <span class="font-sans text-[16px] font-bold text-ochre">–500 CR</span>
+                        </div>
+
+                        <!-- Row 5 (Earned) -->
+                        <div class="flex items-center justify-between p-[20px] border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-paper-deep flex items-center justify-center text-[16px]">🗳️</div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink leading-tight">Poll vote</span>
+                                    <span class="font-mono text-[11px] text-mute mt-[2px]">12 Jun 2026</span>
+                                </div>
+                            </div>
+                            <span class="font-sans text-[16px] font-bold text-success">+2 CR</span>
+                        </div>
+                        
+                        <div class="p-[16px] flex justify-center bg-paper-deep/30">
+                            <button class="font-sans text-[13px] text-mute hover:text-ink transition-colors">Load more</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State Demo (Hidden visually but structurally present) -->
+                <!--
+                <div class="flex flex-col items-center justify-center py-[64px]">
+                    <span class="font-serif text-[18px] italic text-mute">No transactions yet.</span>
+                </div>
+                -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: WALLET: CASH OUT TAB (Non-Pro & Pro)  -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 2: Wallet Cash Out (Desktop, Split State)</span>
+        <div class="flex gap-[32px]">
+            
+            <!-- LEFT: NON-PRO -->
+            <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative w-[704px] shrink-0 min-h-[700px]">
+                <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-10 shrink-0">
+                    <span class="font-sans text-[14px] font-bold text-ink">Wallet</span>
+                </div>
+
+                <div class="w-full mx-auto px-[32px] pt-[48px] flex flex-col">
+                    <nav class="flex items-center gap-[32px] border-b border-ghost-light pb-[-1px] mb-[32px]">
+                        <button class="font-sans text-[15px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Transaction History</button>
+                        <button class="font-sans text-[15px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Cash Out</button>
+                    </nav>
+
+                    <div class="bg-white rounded-xl shadow-card p-[40px] flex flex-col items-center text-center border-[2px] border-ochre relative overflow-hidden">
+                        <div class="absolute top-[16px] right-[16px]">
+                            <span class="bg-gold/10 text-gold px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-gold/20">Moveee Pro</span>
+                        </div>
+                        
+                        <span class="text-[48px] leading-none mb-[16px]">💸</span>
+                        <h2 class="font-serif text-[28px] font-bold text-ink mb-[12px]">Cash out your credits</h2>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6] max-w-[360px] mb-[32px]">
+                            Convert your earned credits to real money — a Moveee Pro exclusive. Upgrade to start cashing out.
+                        </p>
+                        <button class="h-[48px] px-[24px] bg-gold text-white rounded-full font-sans text-[15px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors">
+                            Upgrade to Moveee Pro &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: PRO -->
+            <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative w-[704px] shrink-0 min-h-[700px]">
+                <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-10 shrink-0">
+                    <span class="font-sans text-[14px] font-bold text-ink">Wallet</span>
+                </div>
+
+                <div class="w-full mx-auto px-[32px] pt-[48px] flex flex-col">
+                    <nav class="flex items-center gap-[32px] border-b border-ghost-light pb-[-1px] mb-[32px]">
+                        <button class="font-sans text-[15px] text-mute hover:text-ink pb-[12px] border-b-[2px] border-transparent transition-colors">Transaction History</button>
+                        <button class="font-sans text-[15px] font-bold text-ink pb-[12px] border-b-[2px] border-ochre">Cash Out</button>
+                    </nav>
+
+                    <div class="bg-white rounded-xl shadow-card p-[32px] flex flex-col border border-ghost/20">
+                        
+                        <!-- DEV 1 -->
+                        <!-- DEV: showing the 30% live-calculator number and the 40% static-copy number as written in code -->
+                        <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mb-[24px] bg-paper-deep p-[16px] rounded-lg border border-ghost-light">
+                            Minimum 100 credits. A flat 40% fee applies. Partner perks are fee-free — <a href="#" class="text-ochre hover:underline">browse perks instead.</a><br><br>
+                            <span class="font-bold text-ink flex items-center gap-[6px]">🔑 Passkey verification required at checkout.</span>
+                        </p>
+
+                        <div class="flex flex-col gap-[24px]">
+                            
+                            <!-- Amount Row -->
+                            <div class="flex gap-[16px] items-end">
+                                <div class="flex-1 flex flex-col gap-[8px]">
+                                    <label class="font-sans text-[12px] font-bold text-ink">Credits to cash out</label>
+                                    <input type="number" class="w-full h-[48px] px-[16px] rounded-lg border border-ghost bg-white font-sans text-[16px] text-ink focus:border-ochre" value="500">
+                                </div>
+                                <div class="flex-1 flex flex-col bg-paper-deep p-[12px] rounded-lg border border-ghost-light justify-center h-[48px]">
+                                    <span class="font-sans text-[13px] text-mute flex justify-between w-full">
+                                        <span>Fee (30%):</span>
+                                        <span class="font-bold text-ink">150 CR</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Receive Hint -->
+                            <div class="flex items-center gap-[8px]">
+                                <span class="text-[18px]">💸</span>
+                                <span class="font-sans text-[14px] text-ink-soft">You receive: <strong class="text-success text-[16px]">£35.00</strong> (350 CR equivalent)</span>
+                            </div>
+
+                            <div class="w-full h-[1px] bg-ghost-light my-[4px]"></div>
+
+                            <!-- Currency Select -->
+                            <div class="flex flex-col gap-[8px]">
+                                <label class="font-sans text-[12px] font-bold text-ink">Payout Currency</label>
+                                <select class="w-[200px] h-[48px] px-[16px] rounded-lg border border-ghost bg-white font-sans text-[15px] text-ink focus:border-ochre">
+                                    <option selected>GBP (£)</option>
+                                    <option>USD ($)</option>
+                                    <option>NGN (₦)</option>
+                                </select>
+                            </div>
+
+                            <!-- Account Name -->
+                            <div class="flex flex-col gap-[8px]">
+                                <label class="font-sans text-[12px] font-bold text-ink">Account holder name</label>
+                                <input type="text" class="w-full h-[48px] px-[16px] rounded-lg border border-ghost bg-white font-sans text-[15px] text-ink focus:border-ochre" placeholder="Full name on account">
+                            </div>
+
+                            <!-- DEV 3 -->
+                            <!-- DEV: currency-conditional fields. Showing GBP specific fields here. -->
+                            <!-- Conditional Bank Fields (GBP) -->
+                            <div class="flex gap-[16px]">
+                                <div class="flex-1 flex flex-col gap-[8px]">
+                                    <label class="font-sans text-[12px] font-bold text-ink">Sort Code</label>
+                                    <input type="text" class="w-full h-[48px] px-[16px] rounded-lg border border-ghost bg-white font-mono text-[15px] text-ink tracking-wider focus:border-ochre" placeholder="12-34-56">
+                                </div>
+                                <div class="flex-1 flex flex-col gap-[8px]">
+                                    <label class="font-sans text-[12px] font-bold text-ink">Account Number</label>
+                                    <input type="text" class="w-full h-[48px] px-[16px] rounded-lg border border-ghost bg-white font-mono text-[15px] text-ink tracking-wider focus:border-ochre" placeholder="8 digit number">
+                                </div>
+                            </div>
+
+                            <button class="w-full h-[52px] bg-ochre text-white rounded-full font-sans text-[15px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors mt-[8px]">
+                                Request Cash Out
+                            </button>
+                        </div>
+
+                        <!-- Success State Demo (Visually hidden here, shown as separate state logic usually) -->
+                        <!--
+                        <div class="bg-[#E6F4EA] border-[2px] border-success rounded-xl p-[24px] flex flex-col items-center text-center mt-[24px]">
+                            <span class="text-[32px] mb-[12px]">✅</span>
+                            <h3 class="font-sans text-[16px] font-bold text-success mb-[8px]">Cash out request submitted.</h3>
+                            <p class="font-sans text-[14px] text-success/80">You'll receive £35.00 after admin approval (48 hr hold).</p>
+                        </div>
+                        -->
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: PERKS BROWSE + STEP-UP STATES         -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 3: Perks Browse & Modals (Desktop)</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative pb-[80px]">
+
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-10 shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                <nav class="flex items-center gap-[24px]">
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Wallet</a>
+                    <a href="#" class="font-sans text-[14px] font-bold text-ink">Perks</a>
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Coupons</a>
+                </nav>
+                <div class="flex items-center gap-[12px]">
+                    <span class="font-sans text-[14px] font-bold text-ochre bg-ochre/10 px-[12px] py-[4px] rounded-full">1,240 CR</span>
+                </div>
+            </div>
+
+            <!-- DEV 2 -->
+            <!-- DEV: Step-up banners. Both shown stacked here for design reference. Only one or neither shows in real use. -->
+            <div class="w-full px-[32px] pt-[24px] flex flex-col gap-[12px]">
+                <div class="bg-warning/10 border border-warning text-warning-dark px-[24px] py-[12px] rounded-lg flex items-center justify-between">
+                    <span class="font-sans text-[14px] font-medium flex items-center gap-[8px]">⚠️ Passkey required to redeem perks. <a href="#" class="font-bold underline">Set up a passkey in settings &rarr;</a></span>
+                </div>
+                <div class="bg-ink text-white px-[24px] py-[12px] rounded-lg flex items-center justify-center">
+                    <span class="font-sans text-[14px] font-medium flex items-center gap-[8px] animate-pulse">⬡ Waiting for your device biometrics…</span>
+                </div>
+            </div>
+
+            <div class="w-full mx-auto px-[32px] pt-[32px] flex flex-col gap-[32px]">
+                
+                <h1 class="font-serif text-[40px] font-bold text-ink leading-tight">Partner Perks</h1>
+
+                <!-- DEV 5 -->
+                <!-- DEV: Perk grid. responsive columns -->
+                <div class="grid grid-cols-4 gap-[24px]">
+                    
+                    <!-- Card 1: Redeem -->
+                    <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/20 h-full">
+                        <span class="font-sans text-[20px] font-bold text-ochre mb-[12px]">150 CR</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">10% off any purchase</h3>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[24px] flex-1">Bisi Ceramics studio store.</p>
+                        
+                        <div class="flex justify-between items-center border-t border-ghost-light pt-[16px] mb-[16px]">
+                            <span class="font-mono text-[10px] text-mute">Min spend: £50</span>
+                            <span class="font-mono text-[10px] text-mute">Valid 30 days</span>
+                        </div>
+                        
+                        <button class="w-full h-[40px] bg-ink text-white rounded-md font-sans text-[13px] font-bold hover:bg-gray-800 transition-colors">
+                            Redeem — 150 credits
+                        </button>
+                    </div>
+
+                    <!-- Card 2: Sign in (Mocked as if logged out for this specific card's state demo) -->
+                    <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/20 h-full">
+                        <span class="font-sans text-[20px] font-bold text-ochre mb-[12px]">500 CR</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">Free Studio Day Pass</h3>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[24px] flex-1">Lagos Creative Hub coworking space.</p>
+                        
+                        <div class="flex justify-between items-center border-t border-ghost-light pt-[16px] mb-[16px]">
+                            <span class="font-mono text-[10px] text-mute">Min spend: None</span>
+                            <span class="font-mono text-[10px] text-mute">Valid 7 days</span>
+                        </div>
+                        
+                        <button class="w-full h-[40px] bg-white border border-ghost text-ink rounded-md font-sans text-[13px] font-bold hover:bg-paper-deep transition-colors">
+                            Sign in to redeem
+                        </button>
+                    </div>
+
+                    <!-- Card 3: Sold Out -->
+                    <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/20 h-full opacity-60">
+                        <span class="font-sans text-[20px] font-bold text-mute mb-[12px] line-through">80 CR</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">Free delivery on first order</h3>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[24px] flex-1">Aké Books online store.</p>
+                        
+                        <div class="flex justify-between items-center border-t border-ghost-light pt-[16px] mb-[16px]">
+                            <span class="font-mono text-[10px] text-mute">Min spend: £20</span>
+                            <span class="font-mono text-[10px] text-mute">Valid 14 days</span>
+                        </div>
+                        
+                        <button class="w-full h-[40px] bg-paper-deep text-mute rounded-md font-sans text-[13px] font-bold cursor-not-allowed border border-ghost">
+                            Sold out
+                        </button>
+                    </div>
+
+                    <!-- Card 4: Not Enough Credits -->
+                    <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/20 h-full">
+                        <span class="font-sans text-[20px] font-bold text-error mb-[12px]">2,500 CR</span>
+                        <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">VIP Opening Night Ticket</h3>
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mb-[24px] flex-1">Contemporary African Art Fair.</p>
+                        
+                        <div class="flex justify-between items-center border-t border-ghost-light pt-[16px] mb-[16px]">
+                            <span class="font-mono text-[10px] text-mute">Min spend: None</span>
+                            <span class="font-mono text-[10px] text-mute">Valid specific date</span>
+                        </div>
+                        
+                        <button class="w-full h-[40px] bg-paper-deep text-mute rounded-md font-sans text-[13px] font-bold cursor-not-allowed border border-ghost">
+                            Not enough credits
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MODAL OVERLAYS (Displayed absolutely for design reference) -->
+            <div class="absolute inset-0 z-50 pointer-events-none flex items-center justify-center gap-[40px] bg-ink/20 pt-[64px]">
+                
+                <!-- Confirm Modal -->
+                <div class="w-[400px] bg-white rounded-2xl shadow-modal p-[32px] flex flex-col pointer-events-auto border border-ghost/20">
+                    <h2 class="font-serif text-[24px] font-bold text-ink mb-[16px]">Confirm redemption</h2>
+                    <p class="font-sans text-[16px] text-ink-soft leading-[1.5] mb-[8px]">
+                        Spend <strong>150 credits</strong> for "<strong>10% off any purchase</strong>"?
+                    </p>
+                    <p class="font-sans text-[14px] text-mute leading-[1.5] mb-[32px] bg-paper-deep p-[12px] rounded-lg">
+                        Your coupon will expire in 30 days.<br>
+                        Your balance after: <strong class="text-ink">1,090 credits</strong>.
+                    </p>
+                    <div class="flex items-center gap-[12px]">
+                        <button class="flex-1 h-[44px] bg-white border border-ghost text-ink rounded-full font-sans text-[14px] font-bold hover:bg-paper-deep transition-colors">Cancel</button>
+                        <button class="flex-1 h-[44px] bg-ink text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-gray-800 transition-colors">Confirm</button>
+                    </div>
+                </div>
+
+                <!-- Success Modal -->
+                <div class="w-[400px] bg-white rounded-2xl shadow-modal p-[32px] flex flex-col items-center pointer-events-auto border-[2px] border-success text-center">
+                    <span class="text-[40px] mb-[8px] leading-none">🎉</span>
+                    <h2 class="font-serif text-[24px] font-bold text-success mb-[8px]">Perk redeemed!</h2>
+                    
+                    <!-- Fake QR -->
+                    <div class="w-[160px] h-[160px] bg-white border-[4px] border-ink p-[4px] my-[16px] relative">
+                        <div class="absolute top-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                        <div class="absolute top-1 right-1 w-3 h-3 border-2 border-ink"></div>
+                        <div class="absolute bottom-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                        <div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMTQxMTBEIi8+Cjwvc3ZnPg==')] opacity-80"></div>
+                    </div>
+
+                    <p class="font-sans text-[14px] text-ink-soft leading-[1.5] mb-[12px]">Show this QR code at the partner venue.</p>
+                    <p class="font-mono text-[11px] text-mute mb-[4px]">Expires: 23 July 2026</p>
+                    <p class="font-mono text-[11px] text-ochre mb-[24px] font-bold">New balance: 1,090 credits</p>
+
+                    <div class="flex flex-col gap-[12px] w-full">
+                        <button class="w-full h-[44px] bg-ink text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-gray-800 transition-colors">My Coupons &rarr;</button>
+                        <button class="font-sans text-[13px] text-mute hover:text-ink transition-colors">Browse more perks</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Empty State Demo (Hidden visually) -->
+            <!--
+            <div class="flex flex-col items-center justify-center py-[100px] w-full">
+                <span class="text-[48px] mb-[16px] grayscale opacity-50">🎁</span>
+                <h3 class="font-serif text-[24px] font-bold text-ink mb-[8px]">No perks available yet</h3>
+                <p class="font-sans text-[15px] text-mute text-center max-w-[300px]">Partner perks are coming soon. Keep earning credits in the meantime!</p>
+            </div>
+            -->
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: COUPONS PAGE                          -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Coupons (Desktop)</span>
+        <div class="desktop-screen bg-paper-warm rounded-xl shadow-2xl overflow-hidden border-[8px] border-gray-900 flex flex-col relative min-h-[800px]">
+
+            <div class="w-full h-[64px] bg-white border-b border-ghost-light flex items-center px-[32px] justify-between z-10 shrink-0">
+                <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee <span class="font-sans text-[10px] text-gold uppercase tracking-widest ml-1">Connect</span></span>
+                <nav class="flex items-center gap-[24px]">
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Wallet</a>
+                    <a href="#" class="font-sans text-[14px] text-mute hover:text-ink transition-colors">Perks</a>
+                    <a href="#" class="font-sans text-[14px] font-bold text-ink">Coupons</a>
+                </nav>
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-ghost"></div>
+                </div>
+            </div>
+
+            <div class="w-full mx-auto px-[32px] pt-[48px] flex flex-col gap-[40px] max-w-[1000px] pb-[80px]">
+                
+                <h1 class="font-serif text-[40px] font-bold text-ink leading-tight">My Coupons</h1>
+
+                <!-- Active Section -->
+                <div class="flex flex-col gap-[24px]">
+                    <h2 class="font-sans text-[18px] font-bold text-ink border-b border-ghost-light pb-[8px]">Active Coupons (2)</h2>
+                    
+                    <div class="grid grid-cols-3 gap-[24px]">
+                        <!-- Active Card 1 -->
+                        <div class="bg-white rounded-xl shadow-card p-[24px] flex flex-col items-center text-center border border-success/30 relative">
+                            <div class="absolute top-[12px] right-[12px] bg-[#E6F4EA] text-success px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">ACTIVE</div>
+                            <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[16px] mt-[12px]">10% off any purchase</h3>
+                            
+                            <div class="w-[140px] h-[140px] bg-white border-[3px] border-ink p-[4px] my-[8px] relative">
+                                <div class="absolute top-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="absolute top-1 right-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="absolute bottom-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMTQxMTBEIi8+Cjwvc3ZnPg==')] opacity-80"></div>
+                            </div>
+                            
+                            <span class="font-mono text-[10px] text-mute mt-[8px]">150 credits · Redeemed 23 Jun 2026</span>
+                            <span class="font-sans text-[12px] font-bold text-success mt-[8px]">Expires in 30 days</span>
+                        </div>
+
+                        <!-- Active Card 2 (Expiring Soon) -->
+                        <div class="bg-white rounded-xl shadow-card p-[24px] flex flex-col items-center text-center border border-warning/30 relative">
+                            <div class="absolute top-[12px] right-[12px] bg-warning/10 text-warning-dark px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">ACTIVE</div>
+                            <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[16px] mt-[12px]">Free Studio Day Pass</h3>
+                            
+                            <div class="w-[140px] h-[140px] bg-white border-[3px] border-ink p-[4px] my-[8px] relative">
+                                <div class="absolute top-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="absolute top-1 right-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="absolute bottom-1 left-1 w-3 h-3 border-2 border-ink"></div>
+                                <div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMTQxMTBEIi8+Cjwvc3ZnPg==')] opacity-80"></div>
+                            </div>
+                            
+                            <span class="font-mono text-[10px] text-mute mt-[8px]">500 credits · Redeemed 17 Jun 2026</span>
+                            <span class="font-sans text-[12px] font-bold text-warning mt-[8px]">Expires today</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State Demo (Active) -->
+                <!--
+                <div class="flex flex-col items-center justify-center py-[48px] bg-white rounded-xl border border-ghost-light border-dashed">
+                    <span class="font-serif text-[18px] italic text-mute mb-[8px]">No active coupons.</span>
+                    <a href="#" class="font-sans text-[14px] font-bold text-ochre hover:underline">Browse perks to redeem one.</a>
+                </div>
+                -->
+
+                <!-- DEV 6 -->
+                <!-- DEV: Used and Expired sections render as compact rows -->
+                
+                <!-- Used Section -->
+                <div class="flex flex-col gap-[16px]">
+                    <h2 class="font-sans text-[18px] font-bold text-ink border-b border-ghost-light pb-[8px]">Used (1)</h2>
+                    
+                    <div class="bg-paper-deep rounded-lg p-[16px] flex items-center justify-between border border-ghost/20 opacity-60">
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[15px] font-bold text-ink">Free delivery on first order</span>
+                            <span class="font-mono text-[11px] text-mute mt-[4px]">80 credits · Redeemed 10 May 2026</span>
+                        </div>
+                        <span class="bg-ghost/30 text-ink-soft px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">USED</span>
+                    </div>
+                </div>
+
+                <!-- Expired Section -->
+                <div class="flex flex-col gap-[16px]">
+                    <h2 class="font-sans text-[18px] font-bold text-ink border-b border-ghost-light pb-[8px]">Expired (1)</h2>
+                    
+                    <div class="bg-paper-deep rounded-lg p-[16px] flex items-center justify-between border border-ghost/20 opacity-40">
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[15px] font-bold text-ink line-through decoration-ghost">15% off fashion items</span>
+                            <span class="font-mono text-[11px] text-mute mt-[4px]">120 credits · Redeemed 1 Apr 2026</span>
+                        </div>
+                        <span class="bg-error/10 text-error px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider border border-error/20">EXPIRED</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: MOBILE COMPANION                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Mobile Companion (Wallet > Cash Out shown)</span>
+        
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <header class="h-[56px] w-full bg-white border-b border-ghost-light flex items-center px-[16px] justify-between z-10 shrink-0 mt-[48px]">
+                <span class="font-sans text-[14px] font-bold text-ink">Wallet</span>
+                <button class="w-[32px] h-[32px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] border border-ghost"></button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <div class="bg-white p-[24px] flex flex-col items-center border-b border-ghost-light">
+                    <span class="font-mono text-[10px] font-bold text-mute uppercase tracking-widest mb-[4px]">Credits</span>
+                    <span class="font-sans text-[40px] font-bold text-ochre leading-none mb-[8px]">1,240</span>
+                </div>
+
+                <nav class="flex items-center gap-[24px] px-[24px] border-b border-ghost-light bg-white sticky top-0 z-20">
+                    <button class="font-sans text-[14px] text-mute pb-[12px] pt-[12px] border-b-[2px] border-transparent">History</button>
+                    <button class="font-sans text-[14px] font-bold text-ink pb-[12px] pt-[12px] border-b-[2px] border-ochre">Cash Out</button>
+                </nav>
+
+                <div class="p-[20px] flex flex-col gap-[20px]">
+                    
+                    <div class="bg-white rounded-xl shadow-card p-[20px] flex flex-col border border-ghost/20">
+                        <p class="font-sans text-[13px] text-ink-soft leading-[1.6] mb-[20px] bg-paper-deep p-[12px] rounded-lg border border-ghost-light">
+                            Minimum 100 credits. A flat 40% fee applies. Partner perks are fee-free.<br><br>
+                            <span class="font-bold text-ink flex items-center gap-[4px]"><span class="text-[14px]">🔑</span> Passkey required at checkout.</span>
+                        </p>
+
+                        <div class="flex flex-col gap-[16px]">
+                            
+                            <!-- Amount Row (Stacked for mobile) -->
+                            <div class="flex flex-col gap-[6px]">
+                                <label class="font-sans text-[11px] font-bold text-ink">Credits to cash out</label>
+                                <input type="number" class="w-full h-[44px] px-[12px] rounded-lg border border-ghost bg-white font-sans text-[15px] text-ink focus:border-ochre" value="500">
+                            </div>
+
+                            <div class="flex items-center justify-between bg-paper-deep p-[12px] rounded-lg border border-ghost-light">
+                                <span class="font-sans text-[12px] text-mute">Fee (30%):</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">150 CR</span>
+                            </div>
+
+                            <div class="flex items-center gap-[8px] justify-center my-[4px]">
+                                <span class="text-[16px]">💸</span>
+                                <span class="font-sans text-[13px] text-ink-soft">You receive: <strong class="text-success text-[15px]">£35.00</strong></span>
+                            </div>
+
+                            <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                            <!-- Currency Select -->
+                            <div class="flex flex-col gap-[6px]">
+                                <label class="font-sans text-[11px] font-bold text-ink">Payout Currency</label>
+                                <select class="w-full h-[44px] px-[12px] rounded-lg border border-ghost bg-white font-sans text-[14px] text-ink focus:border-ochre">
+                                    <option selected>GBP (£)</option>
+                                    <option>USD ($)</option>
+                                    <option>NGN (₦)</option>
+                                </select>
+                            </div>
+
+                            <!-- Bank Fields (GBP) -->
+                            <div class="flex flex-col gap-[6px]">
+                                <label class="font-sans text-[11px] font-bold text-ink">Account holder name</label>
+                                <input type="text" class="w-full h-[44px] px-[12px] rounded-lg border border-ghost bg-white font-sans text-[14px] text-ink focus:border-ochre" placeholder="Full name">
+                            </div>
+
+                            <div class="flex gap-[12px]">
+                                <div class="flex-1 flex flex-col gap-[6px]">
+                                    <label class="font-sans text-[11px] font-bold text-ink">Sort Code</label>
+                                    <input type="text" class="w-full h-[44px] px-[12px] rounded-lg border border-ghost bg-white font-mono text-[14px] text-ink tracking-wider focus:border-ochre" placeholder="12-34-56">
+                                </div>
+                                <div class="flex-1 flex flex-col gap-[6px]">
+                                    <label class="font-sans text-[11px] font-bold text-ink">Account No.</label>
+                                    <input type="text" class="w-full h-[44px] px-[12px] rounded-lg border border-ghost bg-white font-mono text-[14px] text-ink tracking-wider focus:border-ochre" placeholder="8 digits">
+                                </div>
+                            </div>
+
+                            <button class="w-full h-[48px] bg-ochre text-white rounded-full font-sans text-[14px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors mt-[12px]">
+                                Request Cash Out
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Nav Bar Mock -->
+                <div class="absolute bottom-0 w-full h-[64px] bg-white border-t border-ghost flex justify-around items-center z-50">
+                    <button class="font-sans text-[10px] font-bold text-ochre flex flex-col items-center gap-[4px]"><span class="text-[18px]">💰</span>Wallet</button>
+                    <button class="font-sans text-[10px] text-mute flex flex-col items-center gap-[4px]"><span class="text-[18px] grayscale opacity-60">🎁</span>Perks</button>
+                    <button class="font-sans text-[10px] text-mute flex flex-col items-center gap-[4px]"><span class="text-[18px] grayscale opacity-60">🎟️</span>Coupons</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

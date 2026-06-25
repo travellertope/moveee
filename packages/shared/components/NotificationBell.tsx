@@ -167,6 +167,7 @@ export default function NotificationBell() {
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "inherit",
+            border: "1px solid #fff",
           }}>
             {unread > 9 ? "9+" : unread}
           </span>
@@ -184,8 +185,10 @@ export default function NotificationBell() {
           background: "#fff",
           border: "1px solid rgba(42,36,28,.12)",
           borderRadius: 6,
-          boxShadow: "0 8px 32px rgba(20,17,13,.12)",
+          boxShadow: "0 10px 25px -5px rgba(20,17,13,0.15), 0 8px 10px -6px rgba(20,17,13,0.1)",
           zIndex: 200,
+          display: "flex",
+          flexDirection: "column",
         }}>
           {/* Header */}
           <div style={{
@@ -210,7 +213,8 @@ export default function NotificationBell() {
                   border: "none",
                   cursor: "pointer",
                   fontSize: "0.72rem",
-                  color: "#b38238",
+                  fontWeight: 700,
+                  color: "#c5491f",
                   fontFamily: "inherit",
                   padding: 0,
                 }}
@@ -239,10 +243,11 @@ export default function NotificationBell() {
                     gap: 10,
                     padding: "12px 16px",
                     borderBottom: "1px solid rgba(42,36,28,.06)",
-                    background: isUnread ? "rgba(179,130,56,.04)" : "transparent",
+                    background: isUnread ? "rgba(197,73,31,.05)" : "#fff",
                     cursor: "pointer",
-                    transition: "background .15s",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.1)" : "#f9fafb"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.05)" : "#fff"; }}
                   onClick={() => isUnread && markRead(n.id)}
                 >
                   <div style={{ fontSize: "1.1rem", flexShrink: 0, lineHeight: 1.2, marginTop: 1 }}>
@@ -271,7 +276,7 @@ export default function NotificationBell() {
                         {n.body}
                       </div>
                     )}
-                    <div style={{ fontSize: "0.66rem", color: "#9c8e7a", marginTop: 4 }}>
+                    <div style={{ fontSize: "0.66rem", color: "#c8bfb0", marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
                       {timeAgo(n.created_at)}
                     </div>
                   </div>
@@ -291,16 +296,28 @@ export default function NotificationBell() {
             })
           )}
 
-          {items.length >= 20 && (
-            <div style={{ padding: "10px 16px", textAlign: "center" }}>
-              <Link
-                href="/member/notifications"
-                style={{ fontSize: "0.75rem", color: "#b38238", textDecoration: "none" }}
-                onClick={() => setOpen(false)}
-              >
-                View all notifications →
-              </Link>
-            </div>
+          {!loading && (
+            <Link
+              href="/member/notifications"
+              onClick={() => setOpen(false)}
+              style={{
+                display: "block",
+                padding: "12px 16px",
+                textAlign: "center",
+                textDecoration: "none",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "#14110d",
+                background: "#f5f5f5",
+                borderTop: "1px solid rgba(42,36,28,.08)",
+                position: "sticky",
+                bottom: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#e8e4db"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#f5f5f5"; }}
+            >
+              View all notifications →
+            </Link>
           )}
         </div>
       )}

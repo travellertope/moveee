@@ -76,8 +76,8 @@ function BarChart({
         const y = PAD.top + chartH - (chartH * i) / yTicks;
         return (
           <g key={i}>
-            <line x1={PAD.left - 4} x2={PAD.left + chartW} y1={y} y2={y} stroke="#e5ddd0" strokeWidth={0.5} />
-            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#9c8e7a">{val}</text>
+            <line x1={PAD.left - 4} x2={PAD.left + chartW} y1={y} y2={y} stroke="#c8bfb0" strokeWidth={0.5} strokeDasharray="4 4" />
+            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#7a6f5c">{val}</text>
           </g>
         );
       })}
@@ -106,7 +106,7 @@ function BarChart({
         const label = d["_label"] ?? d["day"] ?? d["month"] ?? "";
         const short = label.length > 5 ? label.slice(5) : label;
         return (
-          <text key={gi} x={x} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={8} fill="#9c8e7a">
+          <text key={gi} x={x} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={8} fill="#7a6f5c">
             {short}
           </text>
         );
@@ -166,8 +166,8 @@ function LineChart({
         const val = Math.round(maxVal * t);
         return (
           <g key={t}>
-            <line x1={PAD.left} x2={PAD.left + chartW} y1={y} y2={y} stroke="#e5ddd0" strokeWidth={0.5} />
-            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#9c8e7a">{val}</text>
+            <line x1={PAD.left} x2={PAD.left + chartW} y1={y} y2={y} stroke="#c8bfb0" strokeWidth={0.5} strokeDasharray="4 4" />
+            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#7a6f5c">{val}</text>
           </g>
         );
       })}
@@ -194,7 +194,7 @@ function LineChart({
         const label = d["month"] ?? d["day"] ?? "";
         const short = label.length > 7 ? label.slice(2) : label;
         return (
-          <text key={i} x={x} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={8} fill="#9c8e7a">
+          <text key={i} x={x} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={8} fill="#7a6f5c">
             {short}
           </text>
         );
@@ -208,13 +208,14 @@ function LineChart({
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div style={{
-      background: "var(--paper)",
-      border: "1px solid var(--rule)",
-      borderRadius: 6,
-      padding: "16px 18px",
+      background: "#fff",
+      border: "1px solid rgba(42,36,28,.1)",
+      borderRadius: 12,
+      padding: 20,
+      boxShadow: "0 1px 2px rgba(20,17,13,.05)",
     }}>
-      <div style={{ fontSize: "0.68rem", letterSpacing: "0.12em", color: "var(--mute)", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--mute)", textTransform: "uppercase", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -294,12 +295,19 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
       </section>
 
       {/* ── Top posts ── */}
-      <section className="mem-card" style={{ marginBottom: 32 }}>
-        <div className="mem-card-label">Top Posts — Last 90 Days</div>
+      <section style={{
+        marginBottom: 32,
+        background: "#fff",
+        border: "1px solid rgba(42,36,28,.1)",
+        borderRadius: 12,
+        boxShadow: "0 1px 2px rgba(20,17,13,.05)",
+        overflow: "hidden",
+      }}>
+        <div className="mem-card-label" style={{ padding: "16px 20px 0" }}>Top Posts — Last 90 Days</div>
         {data.top_posts.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No published posts yet.</p>
+          <p style={{ fontSize: "0.78rem", color: "var(--mute)", padding: 20 }}>No published posts yet.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
             {data.top_posts.map((p, i) => {
               const engagement = parseInt(p.reactions ?? "0") + parseInt(p.comment_count ?? "0");
               return (
@@ -309,15 +317,15 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 12,
-                    padding: "10px 0",
-                    borderBottom: i < data.top_posts.length - 1 ? "1px solid var(--rule)" : "none",
+                    padding: 20,
+                    borderBottom: i < data.top_posts.length - 1 ? "1px solid rgba(42,36,28,.08)" : "none",
                   }}
                 >
                   <div style={{
                     width: 24,
                     height: 24,
                     borderRadius: "50%",
-                    background: i === 0 ? "#b38238" : "var(--paper-deep)",
+                    background: i === 0 ? "#c5491f" : "var(--paper-deep)",
                     color: i === 0 ? "#fff" : "var(--mute)",
                     fontSize: "0.72rem",
                     fontWeight: 700,
@@ -336,19 +344,12 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
                       {new Date(p.post_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ochre)" }}>{p.reactions ?? 0}</div>
-                      <div style={{ fontSize: "0.62rem", color: "var(--mute)" }}>react</div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
+                    <div style={{ display: "flex", gap: 10, fontSize: "0.78rem", color: "var(--ink-soft)" }}>
+                      <span>❤️ {p.reactions ?? 0}</span>
+                      <span>💬 {p.comment_count ?? 0}</span>
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-soft)" }}>{p.comment_count ?? 0}</div>
-                      <div style={{ fontSize: "0.62rem", color: "var(--mute)" }}>cmnt</div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)" }}>{engagement}</div>
-                      <div style={{ fontSize: "0.62rem", color: "var(--mute)" }}>total</div>
-                    </div>
+                    <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--ink)" }}>{engagement} Eng</div>
                   </div>
                 </div>
               );

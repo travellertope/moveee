@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { MessageCircle, Flag } from "lucide-react";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
@@ -39,10 +40,15 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
     setVoting(false);
   }
 
+  const leadingIndex = showResults && totalVotes > 0
+    ? pollOpts.reduce((best, o, i, arr) => (o.votes > arr[best].votes ? i : best), 0)
+    : -1;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "0.6rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0.6rem" }}>
       {pollOpts.map((opt, i) => {
         const pct = showResults && totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        const isLeading = i === leadingIndex;
         return (
           <button
             key={i}
@@ -51,30 +57,59 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
             disabled={showResults || voting}
             style={{
               position: "relative",
-              background: showResults
-                ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)`
-                : "#fff",
-              border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`,
-              borderRadius: "4px",
-              padding: "8px 12px",
+              overflow: "hidden",
+              background: "#fff",
+              border: isLeading ? "1.5px solid var(--ochre, #c5491f)" : "1px solid #e0d8ce",
+              borderRadius: "8px",
+              padding: "9px 12px",
               textAlign: "left",
               cursor: showResults ? "default" : "pointer",
               fontSize: "0.82rem",
               color: "#14110d",
-              fontFamily: "inherit",
+              fontFamily: "var(--font-sans), sans-serif",
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            <span>{opt.text}</span>
-            {showResults && <span style={{ fontSize: "0.72rem", color: "#7a6f5c", fontWeight: 600 }}>{pct}%</span>}
+            {showResults && (
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                width: `${pct}%`,
+                background: "rgba(197,73,31,0.15)",
+                zIndex: 0,
+              }} />
+            )}
+            <span style={{ position: "relative", zIndex: 1, fontWeight: isLeading ? 700 : 400 }}>
+              {isLeading && "👑 "}{opt.text}
+            </span>
+            {showResults && (
+              <span style={{
+                position: "relative", zIndex: 1,
+                fontSize: "0.74rem",
+                color: "var(--gold, #b38238)",
+                fontWeight: 700,
+                flexShrink: 0,
+                marginLeft: "8px",
+              }}>
+                {pct}%
+              </span>
+            )}
           </button>
         );
       })}
-      <div style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>
-        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
-        {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
-        {expired && " · ended"}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.68rem", color: "#c8bfb0", fontFamily: "var(--font-mono), monospace" }}>
+        <span>
+          {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+          {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+          {expired && " · ended"}
+        </span>
+        {voted !== null && (
+          <span style={{ color: "var(--gold, #b38238)", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600 }}>
+            · You voted: {pollOpts[voted]?.text} ✓
+          </span>
+        )}
       </div>
     </div>
   );
@@ -139,7 +174,7 @@ function RsvpDisplay({
           background: rsvped ? "#fff" : "var(--ochre, #b38238)",
           color: rsvped ? "#b38238" : "#fff",
           border: "1px solid #b38238",
-          borderRadius: "4px",
+          borderRadius: "999px",
           padding: "7px 14px",
           fontSize: "0.78rem",
           fontWeight: 700,
@@ -343,43 +378,60 @@ export default function FeedCard({
         <article
           onClick={() => setModalOpen(true)}
           style={{
-            background: "#fff",
-            borderBottom: "1px solid #e8e2d8",
+            position: "relative",
+            background: "var(--paper-warm, #f3ece0)",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             overflow: "hidden",
             minWidth: 0,
-            padding: "1.1rem 1.25rem",
+            padding: "20px 24px 20px 24px",
             cursor: "pointer",
           }}
         >
-          <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
-            <span style={{ color: "#d8c9b0", fontFamily: "serif", fontSize: "2rem", lineHeight: 0.9, flexShrink: 0, marginTop: "0.2rem" }}>"</span>
-            <div style={{ flex: 1 }}>
-              <p style={{
-                color: "#14110d",
-                fontFamily: "var(--font-fraunces), serif",
-                fontSize: "0.95rem",
-                lineHeight: 1.55,
-                fontStyle: "italic",
-                marginBottom: "0.6rem",
-              }}>
-                {item.title}
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Badge {...typeMeta} />
-                {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
-                {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
-                <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-                <Link
-                  href={item.href}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
-                  aria-label="View quote"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                </Link>
-              </div>
+          <span
+            style={{
+              position: "absolute",
+              top: "16px",
+              left: "16px",
+              color: "#c8bfb0",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "64px",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            "
+          </span>
+          <div style={{ paddingLeft: "32px" }}>
+            <p style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "20px",
+              fontWeight: 700,
+              lineHeight: 1.4,
+              margin: "0 0 12px",
+            }}>
+              {item.title}
+            </p>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
+              {item.quoteAuthor && (
+                <span style={{ color: "#14110d", fontSize: "0.8rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                  — {item.quoteAuthor}
+                </span>
+              )}
+              {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.74rem", fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
+              <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+            </div>
+            <div onClick={(e) => e.stopPropagation()}>
+              <ReactionBar
+                itemId={item.wpId ?? item.id}
+                itemType="quote"
+                initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                shareUrl={item.href}
+                noBorder
+              />
             </div>
           </div>
         </article>
@@ -421,9 +473,12 @@ export default function FeedCard({
         <article
           id={`community-${item.id.replace("community-", "")}`}
           style={{
+            position: "relative",
             background: "#fff",
-            borderBottom: "1px solid #e8e2d8",
-            borderLeft: "3px solid #81c784",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             padding: "1rem 1.25rem",
             display: "flex",
             gap: "0.75rem",
@@ -431,6 +486,24 @@ export default function FeedCard({
             minWidth: 0,
           }}
         >
+          {interestMatch && (
+            <span style={{
+              position: "absolute",
+              top: "-10px",
+              right: "20px",
+              background: "var(--ochre, #c5491f)",
+              color: "#fff",
+              fontFamily: "var(--font-sans), sans-serif",
+              fontSize: "9px",
+              fontWeight: 700,
+              padding: "2px 8px",
+              borderRadius: "9999px",
+              zIndex: 10,
+              boxShadow: "0px 1px 2px rgba(20,17,13,0.1)",
+            }}>
+              ✦ For You
+            </span>
+          )}
           {/* Avatar */}
           {item.communityAuthorUsername ? (
             <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
@@ -503,21 +576,6 @@ export default function FeedCard({
                   {item.communityTag}
                 </button>
               )}
-              {interestMatch && (
-                <span title="Matches your interests" style={{
-                  fontSize: "0.55rem",
-                  fontWeight: 700,
-                  letterSpacing: ".08em",
-                  textTransform: "uppercase",
-                  color: "var(--ochre, #b38238)",
-                  border: "1px solid rgba(179,130,56,.4)",
-                  borderRadius: 2,
-                  padding: "0.1rem 0.35rem",
-                  flexShrink: 0,
-                }}>
-                  ✦ For You
-                </span>
-              )}
             </div>
 
             {/* Text — clicking opens modal */}
@@ -529,8 +587,13 @@ export default function FeedCard({
               {item.templateType && item.templateType !== "post" && (
                 <div style={{ marginBottom: "0.4rem" }}>
                   {item.templateType === "hidden-gem" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold, #b38238)", background: "rgba(179,130,56,0.1)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
+                      💎 Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                    </span>
+                  )}
+                  {item.templateType === "poll" && (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.1)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
+                      📊 Poll
                     </span>
                   )}
                   {item.templateType === "cultural-take" && (
@@ -722,9 +785,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
@@ -735,9 +796,9 @@ export default function FeedCard({
                 <button
                   onClick={() => setReportState("confirm")}
                   title="Report this post"
-                  style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
+                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", flexShrink: 0, lineHeight: 1 }}
                 >
-                  ⚑
+                  <Flag size={13} strokeWidth={1.8} />
                 </button>
               )}
               {reportState === "confirm" && (
@@ -794,26 +855,30 @@ export default function FeedCard({
       <>
         <article
           style={{
+            position: "relative",
             background: "#fff",
-            borderBottom: "1px solid #e8e2d8",
+            border: "1px solid rgba(232,226,216,0.5)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
             padding: "1rem 1.25rem",
             overflow: "hidden",
             minWidth: 0,
           }}
         >
-          {/* Badges row */}
-          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-            <span style={{ display: "inline-block", background: "#fef3e2", color: "#b38238", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.18rem 0.45rem", borderRadius: "2px" }}>
-              Pulse
+          {/* Eyebrow row — plain mono text, no colored pill */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre, #c5491f)" }}>
+              Pulse Wire
             </span>
             {item.region && (
-              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, alignSelf: "center" }}>
-                {item.region}
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                · {item.region}
               </span>
             )}
             {item.arm && (
-              <span style={{ fontSize: "0.58rem", color: "#c5491f", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, alignSelf: "center" }}>
-                {item.arm}
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                · {item.arm}
               </span>
             )}
             <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
@@ -912,9 +977,7 @@ export default function FeedCard({
                 }}
                 aria-label="View comments"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <MessageCircle size={15} strokeWidth={1.8} />
                 {(item.commentCount ?? 0) > 0 && (
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
                 )}
@@ -935,16 +998,45 @@ export default function FeedCard({
     const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
-    const typeMeta = TYPE_BADGE.editorial;
 
     return (
-      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-        {/* Badges row */}
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <Badge {...typeMeta} />
+      <article style={{
+        position: "relative",
+        background: "#fff",
+        border: "1px solid rgba(232,226,216,0.5)",
+        borderRadius: "12px",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        margin: "12px 16px",
+        padding: "1rem 1.25rem 1.5rem",
+        overflow: "hidden",
+        minWidth: 0,
+      }}>
+        {interestMatch && (
+          <span style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            background: "var(--ochre, #c5491f)",
+            color: "#fff",
+            fontFamily: "var(--font-sans), sans-serif",
+            fontSize: "9px",
+            fontWeight: 700,
+            padding: "2px 8px",
+            borderRadius: "9999px",
+            zIndex: 10,
+            boxShadow: "0px 1px 2px rgba(20,17,13,0.1)",
+          }}>
+            ✦ For You
+          </span>
+        )}
+        {/* Eyebrow row — plain mono text */}
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre, #c5491f)" }}>
+            The Culture Brief
+          </span>
           {item.category && (
-            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-              {item.category}
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              · {item.category}
             </span>
           )}
           <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
@@ -997,17 +1089,28 @@ export default function FeedCard({
     const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
-    const typeMeta = TYPE_BADGE.directory;
 
     return (
       <>
-        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-          {/* Badges row */}
-          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-            <Badge {...typeMeta} />
+        <article style={{
+          position: "relative",
+          background: "#fff",
+          border: "1px solid rgba(232,226,216,0.5)",
+          borderRadius: "12px",
+          boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+          margin: "12px 16px",
+          padding: "1rem 1.25rem",
+          overflow: "hidden",
+          minWidth: 0,
+        }}>
+          {/* Eyebrow row — plain mono text */}
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#085041" }}>
+              Directory
+            </span>
             {item.entryType && (
-              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-                {item.entryType}
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                · {item.entryType}
               </span>
             )}
             <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>

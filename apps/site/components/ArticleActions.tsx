@@ -99,35 +99,32 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
   };
 
   return (
-    <div className="share-row">
+    <div className="ar-actions">
       <button
-        className="sh-btn"
+        className={`ar-action-btn${copied ? ' ar-action-btn--active' : ''}`}
         aria-label={copied ? "Link copied!" : "Share"}
         onClick={handleShare}
         title={copied ? "Link copied!" : "Share this article"}
-        style={copied ? { background: "var(--gold)", borderColor: "var(--gold)" } : {}}
       >
         <Share2 size={14} strokeWidth={1.5} />
       </button>
 
       <button
-        className="sh-btn"
+        className={`ar-action-btn${bookmarked ? ' ar-action-btn--active' : ''}`}
         aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
         onClick={() => toggleAction('bookmark')}
         disabled={isSyncing}
         title={bookmarked ? "Remove bookmark" : "Save to collection"}
-        style={bookmarked ? { background: "var(--gold)", borderColor: "var(--gold)" } : {}}
       >
         <Bookmark size={14} strokeWidth={1.5} fill={bookmarked ? "currentColor" : "none"} />
       </button>
 
       <button
-        className="sh-btn"
+        className={`ar-action-btn${liked ? ' ar-action-btn--active' : ''}`}
         aria-label={liked ? "Unlike" : "Like"}
         onClick={() => toggleAction('like')}
         disabled={isSyncing}
         title={liked ? "Unlike this article" : "Like this article"}
-        style={liked ? { background: "var(--ochre)", borderColor: "var(--ochre)" } : {}}
       >
         <Heart size={14} strokeWidth={1.5} fill={liked ? "currentColor" : "none"} />
         {likeCount > 0 && <span style={{ fontSize: "11px", marginLeft: 3 }}>{likeCount}</span>}

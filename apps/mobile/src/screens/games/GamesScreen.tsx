@@ -138,23 +138,19 @@ export default function GamesScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Card 3 — Crossword */}
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => nav.navigate("Crossword")}
-            activeOpacity={0.85}
-          >
+          {/* Card 3 — Crossword (disabled — puzzle quality issue) */}
+          <View style={[styles.card, styles.cardDim]}>
             <View style={[styles.cardTop, { backgroundColor: c.paperDeep }]}>
-              <CrosswordIllustration />
+              <CrosswordIllustration styles={styles} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Crossword</Text>
               <Text style={styles.cardDesc}>Mini 7×7 · cultural clues</Text>
-              <View style={styles.playBtn}>
-                <Text style={styles.playBtnText}>Play now →</Text>
+              <View style={styles.comingSoonPill}>
+                <Text style={styles.comingSoonText}>Coming soon</Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
 
           {/* Card 4 — Sudoku */}
           <TouchableOpacity

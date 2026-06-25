@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
@@ -138,6 +139,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const weekday      = dateValid.toLocaleDateString("en-GB", { weekday: "long" });
   const dayNum       = dateValid.toLocaleDateString("en-GB", { day: "numeric" });
   const monthShort   = dateValid.toLocaleDateString("en-GB", { month: "short" }).toUpperCase();
+  // The WP Admin "Event Date" field is a datetime-local input, so the time entered when
+  // creating the event lives in eventDate itself — only fall back to openingHours
+  // (a separate, unrelated "gallery hours" field) or "Time TBA" if eventDate has no time.
+  const hasTime      = /T\d{2}:\d{2}/.test(dateRaw) || /\d{1,2}:\d{2}/.test(dateRaw);
+  const timeFormatted = hasTime ? dateValid.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" }) : null;
 
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
@@ -211,7 +217,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
             <div>
               <p className="ehl-date-weekday">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-              <p className="ehl-date-time">{event.openingHours || "Time TBA"}</p>
+              <p className="ehl-date-time">{timeFormatted || event.openingHours || "Time TBA"}</p>
             </div>
           </div>
 
@@ -298,18 +304,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 {showcaseLabel ? <h3>{showcaseLabel}</h3> : <h3>Selected <em>works</em></h3>}
                 <small>Preview · {event.showcase.length} items</small>
               </div>
-              <div className="works-grid">
-                {event.showcase.map((item: any, i: number) => (
-                  <div key={i} className="work-card">
-                    <div className="work-frame">
-                      {item.imageUrl && <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />}
-                    </div>
-                    <div className="work-num">N°0{i + 1}</div>
-                    <div className="work-title">{item.title}</div>
-                    <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
-                  </div>
-                ))}
-              </div>
+              <ShowcaseGallery items={event.showcase} />
             </div>
           )}
 
@@ -348,7 +343,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             ) : (
               <>
                 <h3>Secure your <em>place</em></h3>
-                <div className="event-date">{event.location} · {event.openingHours || "See details"}</div>
+                <div className="event-date">{event.location} · {timeFormatted || event.openingHours || "See details"}</div>
                 <RSVPForm
                   eventSlug={event.slug} eventTitle={event.title}
                   capacity={event.rsvpCapacity ?? undefined}

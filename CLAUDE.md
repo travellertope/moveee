@@ -341,17 +341,74 @@ add it to the perks lists in:
 
 ---
 
+## Hidden / opt-out newsletter lists (e.g. "Announcements", added June 2026)
+
+Not every list follows the standard opt-in + frontend-visible pattern above.
+**Announcements** (`announcements`) is a general-purpose list for periodic
+operational notices that must never be selectable or visible on the public
+`/newsletter` archive, and that every subscriber (existing and new) is on by
+default unless they explicitly opt out.
+
+This required two deviations from the standard process:
+
+1. **Archive exclusion is a data filter, not a missing tab.** Omitting a
+   `NL_LABELS` entry/filter tab is not enough — the "All" tab in
+   `apps/site/app/newsletter/page.tsx` renders the full unfiltered
+   `newsletters` array. `announcements`-tagged posts are filtered out of that
+   array immediately after fetch, before any counts/filtering run:
+   ```ts
+   newsletters = newsletters.filter((n) => (n.nlList || "") !== "announcements");
+   ```
+   Do not add `announcements` to `NL_LABELS` or add a filter tab for it — that
+   omission is deliberate and permanent, not a TODO.
+2. **Default-ON (opt-out) instead of default-OFF (opt-in)** — the subscriber
+   data model (`culture_newsletter_subscribers` option) only has an opt-in
+   `lists[]` array, no native opt-out flag, so "everyone is on by default" is
+   simulated two ways:
+   - **One-time backfill** for existing subscribers:
+     `Culture_Subscribers::maybe_backfill_announcements()` (gated by the
+     `culture_announcements_backfilled` option so it runs exactly once and
+     never re-adds the list after a subscriber opts out later).
+   - **Default-include on creation** for new subscribers, everywhere a new
+     subscriber record can be created: `Culture_Subscribers::merge_subscribers()`
+     (covers bulk import, MailPoet sync, WP user import, and
+     auto-subscribe-on-registration — all four funnel through this one
+     helper) and `handle_newsletter_subscribe()` in `class-culture-rest-api.php`
+     (the public-facing REST endpoint used by the website's own subscribe
+     forms) both add `'announcements'` to a brand-new subscriber's `lists[]`.
+     **Existing** subscribers being added to a *different* list are
+     deliberately NOT force-re-added to `announcements` in this code path —
+     that would silently undo a prior opt-out.
+
+It otherwise still follows the standard list-registration process above
+(send-meta-box dropdown/config, subscriber-list checkbox, queue email footer
+label, analytics label, REST `$allowed_lists` arrays, settings preferences
+list) — only the archive visibility and default-subscription behavior differ.
+If a future newsletter needs the same "hidden + opt-out" treatment, follow
+this section instead of (or in addition to) the standard one.
+
+---
+
 ## CSS custom properties (from globals)
 
 ```css
 var(--ink)        /* #14110d — primary dark text / dark backgrounds */
 var(--paper)      /* #f3ece0 — primary light background */
 var(--paper-deep) /* slightly deeper paper, for card backgrounds */
-var(--ochre)      /* #b38238 — accent gold/amber */
+var(--ochre)      /* #c5491f — accent rust (NOT amber — corrected June 2026, see note below) */
+var(--gold)       /* #b38238 — accent gold/amber, distinct from ochre */
 var(--rule)       /* border colour, subtle */
 var(--mute)       /* muted text */
 var(--ink-soft)   /* softer body text */
 ```
+
+**Correction (June 2026):** this table previously listed `var(--ochre)` as `#b38238`
+(amber) — that was wrong. The actual definitions in `apps/connect/app/globals.css`
+are `--ochre: #c5491f` (rust) and `--gold: #b38238` (amber) — two distinct tokens.
+This matches the Figma Make mockups' own Tailwind config (`ochre: '#C5491F'`,
+`gold: '#B38238'`) exactly. If a future rebuild pass seems to find an "ochre vs gold
+mismatch" between mockups and the live CSS, check the real `globals.css` values first
+— they likely already match; don't assume the stale value once documented here.
 
 The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.
@@ -506,6 +563,54 @@ append a new numbered section to whichever file matches the surface (mobile app 
 file; `apps/site`/`apps/connect` → the web file) rather than inventing a third file or a new
 top-level doc.
 
+### Rendered Figma mockup HTML files (distinct from the prompt catalogs above)
+
+These are the actual self-contained HTML output files (Tailwind CDN + Google Fonts, multiple
+"Frame N" sections at fixed pixel widths) generated *from* the prompt catalogs above — not to be
+confused with the `.md` prompt text files themselves. They live in a dedicated top-level
+**`mockups/`** folder (moved there 2026-06-24, see below for the prior locations), kept deliberately
+separate from `apps/figma/` — `apps/figma/` is a *different* artifact entirely: a live, buildable
+Figma Make code export (`src/`, `index.html`, `README.md`, a real React app for design tokens), not
+a mockup archive. Mixing static reference HTML into that folder was confusing, hence the move.
+
+- `mockups/mobile/` — **mobile app** mockups (`apps/mobile`).
+- `mockups/web/` — **webapp** mockups (`apps/site` + `apps/connect`). Filenames can overlap with
+  the mobile folder (e.g. `moveee_connect_settings.html`, `moveee_dark_mode_ui.html`,
+  `moveee_overlays.html`, `moveee_wallet.html`, `moveee_directory.html`, `moveee_magazine.html`
+  exist in both) — these are different files with different content per surface, not duplicates.
+  Don't dedupe across the two folders.
+
+When a user uploads a new mockup HTML file and asks to "upload"/"add" it to the repo: strip the
+random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_settings.html` →
+`moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
+surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
+location like `docs/figma-design/` or put it back under `apps/figma/`.
+
+**History (2026-06-24):** these folders were originally `apps/figma/designs/` (mobile) and
+`apps/figma/designs-web/` (web) — first consolidated together under `apps/figma/` from three
+separate locations, then immediately relocated again to the current top-level `mockups/mobile/`
+and `mockups/web/` once it became clear `apps/figma/`'s own purpose (the live design-token export
+above) shouldn't share a folder with a static mockup archive. Before that first consolidation, a
+third, older mockup location existed at the repo-root `/designs/` folder — predating any of this
+convention (single one-off HTML prototypes, not "Frame N" multi-frame Figma Make output),
+containing a mix of `apps/site` mockups (`homepage.html`, `magazine_index.html`, `shop_index.html`,
+`shop_product.html`, `origins_index.html`, `origins_journey.html`, `gele_return.html`,
+`marrakech_dispatch.html`, `portrait_feature.html`, `event_opening.html`, `events_index.html`,
+`newsletter/hub.html`, `newsletter/issue.html` — title tag `"... · The Moveee"`) and `apps/connect`
+mockups (`community_posts.html`, `composer_states.html`, `directory_detail_1.html`,
+`events_list_and_detail.html`, `feed_cards.html`, `feed-cards-v2.html`,
+`mobile-article-detail-v2.html` — title tag `"Moveee Connect - ..."`, including one file with
+"mobile" in its name that is actually a 390px mobile-companion frame of a *web* mockup, not an
+`apps/mobile` screen). All of it was confirmed (by title-tag + frame-width inspection) to be
+web-surface content, so it stayed under `mockups/web/` rather than `mockups/mobile/` — but it was
+kept in its own **`mockups/web/legacy/`** subfolder rather than flattened in among the 17
+pre-existing Figma Make web mockups, since it's an older, different-vintage batch (one-off
+prototypes vs. multi-frame Figma Make exports) and the user wanted that distinction preserved even
+though both batches are confirmed same-surface. No filename collisions, nothing misclassified. If
+you see a reference to `/designs/` or `apps/figma/designs*` anywhere (e.g. stale docs), update it
+to `mockups/web/legacy/` (for the older batch) or `mockups/web/`/`mockups/mobile/` (for the Figma
+Make batch) as appropriate.
+
 ---
 
 ## Git branch
@@ -622,10 +727,574 @@ Both share `cms.themoveee.com` (WordPress) as the backend.
 | 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
 | 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
+### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
+
+`apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
+`products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
+page in this exact order: 1. Shop Head, 2. Trust Strip, [inside
+`ShopFilterProvider`] 3. `ShopFilterBar`, 3b. Ticker, 4. Featured Editorial
+Picks, 5. Editorial Bridge (Magazine), 6. `ShopProductGrid`, 7. Editorial
+Bridge (Origins, `.ed-bridge--origins`), [outside provider] 8. Category Grid,
+9. Vendor Strip ("Meet the Makers"), 10. Member Band (Moveee Pro), 11. Origins
+Bridge Closing (full image+copy block, `.ob-*` classes — visually distinct
+from the compact text-only `.ed-bridge` banners in steps 5/7).
+
+**Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
+mockup's filter bar and product grid aren't adjacent (other sections sit
+between them), so state had to move to a shared React Context instead of one
+combined client component:
+- `components/ShopFilterContext.tsx` — `ShopFilterProvider` + `useShopFilter()`
+  hook; owns all filter/sort/view state and the derived `filtered` list, plus
+  shared helper exports (`vendorName`, `parsePrice`, `formatGBP`, `isNew`,
+  `isOutOfStock`, `averageRating`, `reviewCount`, `PRICE_BANDS`).
+- `components/ShopFilterBar.tsx` — renders the filter dropdown pills, search
+  toggle, sort select, view toggle, and active-filter chips. Pure consumer of
+  `useShopFilter()`, no local state.
+- `components/ShopProductGrid.tsx` — renders the actual product cards from
+  `filtered`. Also a pure consumer of `useShopFilter()`.
+
+Both `ShopFilterBar` and `ShopProductGrid` must be rendered inside
+`ShopFilterProvider` (see the section order above — sections 3 through 7 are
+nested inside the provider in `ShopArchiveWrapper.tsx`; the category
+grid/vendor strip/member band/origins-closing sections after it are outside,
+since they don't need filter state).
+
+- Facets: price bands (4 fixed ranges), tag pills derived from `productTags`
+  (excluding the `"new"` tag slug), **Material pills** (from the
+  `product_material` taxonomy, June 2026) and **Maker-Location pills**
+  (derived from `vendorProfile.city`/`.country`, falling back to country
+  when city is empty) — both added in the same pass as the reviews system
+  below, replacing the prior "no material taxonomy exists" gap.
+- Sort: Featured (default), Price Low–High/High–Low, Newest, and
+  **Most Loved** (sorts by `reviewCount` desc, tiebreak `averageRating`
+  desc) — added alongside the reviews system.
+- Pro price (10% off) is computed client-side from the existing `price`
+  string (same `replace(/<[^>]*>/g,"").replace(/[^0-9.]/g,"")` parse pattern
+  used in `app/shop/[slug]/page.tsx`) rather than fetched from
+  `moveeeMeta.memberPrice` — that field lives in `wp.ts`'s `GET_PRODUCT_EXTRA`
+  query, which is **deliberately kept separate** from the shared
+  `PRODUCT_FIELDS_FRAGMENT` so the product page still renders if the
+  moveee-graphql-bridge plugin isn't active; merging it into the listing
+  fragment would risk failing the whole shop grid query in any environment
+  where that plugin/field isn't available. Don't merge them — compute Pro
+  price client-side instead, as done here.
+- Each card shows `★ {averageRating} ({reviewCount})` when `reviewCount > 0`,
+  otherwise falls back to the static "New listing" placeholder.
+- The member-band section now says "Moveee Pro" (was stale "Connect
+  Members" copy) and its CTA links to `/register?tier=patron`. The "2,400
+  Members & growing" stat in that section is still a hardcoded literal, not
+  a live count — out of scope until there's a backend count to wire up
+  (explicitly deferred — not part of the reviews/facets/sort build below).
+
+**Mobile-companion responsive styling (June 2026)** — added a dedicated block at
+the top of `shop.css`'s existing `@media (max-width: 640px)` query (right after
+the masthead/trust-strip rules) covering all archive sections: horizontally
+scrolling filter pills (`.filter-dd-row` gets `overflow-x: auto` + hidden
+scrollbar instead of wrapping), featured picks stack to 1 column, 2-up product
+grid (`.product-grid`/`.cat-grid`/`.vendor-cards` all `repeat(2, 1fr)`), shrunk
+`.pcard`/`.pimg` dimensions (460px→320px / 280px→160px) with proportional font
+sizes, compact "mini" vendor cards (`.vc-desc` hidden), non-overlapping member
+band, and a full-bleed edge-to-edge origins-bridge image. This is **CSS-only** —
+no changes to `ShopFilterBar.tsx`/`ShopFilterContext.tsx`; the filter dropdowns
+stay native `<select>` pills (just restyled to scroll), not real bottom sheets.
+**Two bugs caught and fixed in this pass**: (1) `.member-band-inner`'s
+`@media (max-width: 1200px)` override set `grid-template-columns: 1fr`, which
+was a no-op since the element's base `display` is `flex` not `grid` — changed
+to `flex-direction: column` (this also makes the pre-existing `.mb-img`/
+`.mb-float` mobile rules actually take effect for the first time). (2) `.padd`
+(the product-card "Add to Cart" button) is hover-revealed (`opacity: 0` until
+`:hover`), which never fires on touch devices — added `opacity: 1; transform:
+none;` inside the mobile override so the button is visible by default on
+mobile. **If you add a hover-revealed element anywhere in the shop UI, check
+whether it also needs a mobile always-visible override** — touch devices never
+trigger `:hover`.
+
+### Lifestyle Shop product reviews + Material/Location facets (June 2026)
+
+Built on top of the existing WooCommerce **native** comment-based review
+system (`comment_type = 'review'`, `_wc_average_rating`/`_wc_review_count`
+postmeta) rather than inventing a new table — `moveee-graphql-bridge.php`
+(repo root) only adds a thin REST + GraphQL layer on top of WooCommerce's own
+storage, so any other WooCommerce code reading those two postmeta keys stays
+in sync automatically.
+
+- **Taxonomy**: `product_material` (non-hierarchical, `show_in_graphql:
+  false` — deliberately not auto-wired through WPGraphQL's generic taxonomy
+  support; exposed manually instead, see below) registered on `product` in
+  `moveee-graphql-bridge.php`. Tag products with materials (Linen, Oak,
+  Brass, etc.) via the normal WP Admin taxonomy UI on the product edit
+  screen.
+- **GraphQL fields** (`averageRating: String`, `reviewCount: Int`,
+  `productMaterials: [String]`) added via `register_graphql_field` at
+  priority 99 on the four product types, exactly mirroring the existing
+  `vendorProfile`/`moveeeMeta` manual-resolver pattern — chosen over relying
+  on `show_in_graphql` taxonomy auto-wiring since WPGraphQL WooCommerce's
+  taxonomy connections (`productCategories`/`productTags`) are themselves
+  manually wired by that third-party plugin, not generic WP core behavior.
+  Fetched via two new isolated queries in `wp.ts`,
+  `GET_PRODUCTS_EXTRA`/`GET_PRODUCTS_BY_VENDOR_EXTRA` (listing grid) and an
+  extension of the existing `GET_PRODUCT_EXTRA` (single product page) — all
+  three follow the same `Promise.allSettled` + merge-by-`databaseId`
+  isolation pattern as `vendorProfile`/`moveeeMeta`, so a bridge-plugin
+  outage degrades gracefully (no rating/materials shown, "New listing"
+  placeholder, no facets) rather than failing the whole shop.
+- **REST endpoints** (`moveee-graphql-bridge.php`, namespace `moveee/v1`,
+  separate from the WordPress plugin's own `culture/v1` namespace):
+  `GET /moveee/v1/products/{id}/reviews` (public, lists approved reviews) and
+  `POST /moveee/v1/products/{id}/reviews` (requires `Authorization: Bearer
+  {culture_api_secret}` — mirrors `Culture_Rest_Api::api_key_permission()`'s
+  `verify_bearer_token()` convention, **not** the `X-Culture-Secret` header
+  that `apps/site/app/api/comments/route.ts` sends, which WordPress never
+  actually checks for that route). One review per user per product —
+  resubmitting updates the existing comment via `wp_update_comment()` rather
+  than inserting a duplicate. `moveee_recalculate_product_rating()` recomputes
+  `_wc_average_rating`/`_wc_review_count` via a raw-SQL `AVG()`/`COUNT()`
+  join against `wp_comments`/`wp_commentmeta` after every submit and busts
+  WooCommerce's product transients.
+- **Next.js proxy**: `app/api/shop/reviews/route.ts` — `GET` is a thin public
+  passthrough; `POST` requires `getServerSession(authOptions)` (consistent
+  with the comments route's auth pattern) and forwards
+  `Authorization: Bearer ${CULTURE_API_SECRET}` to the bridge endpoint.
+- **UI**: `app/shop/[slug]/ProductReviews.tsx` (client component) — review
+  list + a session-gated review form (5-star picker + textarea), rendered as
+  its own section on the product page between "Vendor Profile" and "More
+  From This Category". Average rating + material pills also surfaced near
+  the product title/lede in `[slug]/page.tsx`. `ShopBrowser.tsx`'s
+  `availableMaterials`/`availableLocations` facet pills and the "Most Loved"
+  sort option (see above) read `productMaterials`/`vendorProfile.city`/
+  `averageRating`/`reviewCount` off the same merged product objects.
+
+### Magazine archive page — "The Edit" section gotcha (fixed June 2026)
+
+`apps/site/components/EditorialSection.tsx` (renders "The Edit" hover-swap spotlight
+block on `/magazine`) uses its own classname scheme (`.editorial`, `.editorial-inner`,
+`.ed-left`, `.ed-grid`, `.ed-item`, `.ed-visual`, `.ek`, `.em`) that is **separate from**
+the page's `mg-*` namespace in `magazine.css` — this is intentional (it's a
+component-scoped style, not part of the archive's section-by-section `mg-*` system) but
+it means **the CSS for this component must be added to `magazine.css` manually; it does
+not come along "for free" when the rest of the `mg-*` system is touched.** A prior page
+rebuild moved the whole archive to the `mg-*` system but never added equivalent rules for
+`.editorial`/`.ed-*`, leaving the section completely unstyled (plain text, no card/image
+layout) — and because `.ed-visual` had no `position: relative`, the absolutely-positioned
+hover-swap `<Image fill>` elements and the ochre fallback tint inside it escaped to the
+nearest positioned ancestor and visually overlapped unrelated sections elsewhere on the
+page (looked like random "floating orange squares"). **Lesson: any container with an
+absolutely-positioned child must itself be `position: relative` (or similar) — an
+unstyled wrapper around `fill`/`inset: 0` elements doesn't just look unstyled, it lets
+those children paint outside their intended box.** Also fixed: `EditorialSection.tsx`
+referenced a `var(--ochre-deep)` CSS custom property that was never defined anywhere
+(only a Tailwind utility class `bg-ochre-deep` exists, not a CSS var) — swapped to the
+real `var(--ochre)` token. Separately, `.mg-nav-tabs` (the category tab row) lacked
+`flex: 1 1 auto; min-width: 0`, so on category-heavy lists it could overflow past its
+flex sibling `.mg-nav-filters` instead of scrolling within its own bounds — fixed the
+same way. The Opinions & Essays section (`opinionStories` slice in
+`MagazineArchiveWrapper.tsx`) is capped at 2 articles, not 6 — `.mg-op-grid` is already a
+2-column grid so this needs no CSS change if the cap changes again.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
 Events, directory, quotes, pulse, origins removed from homepage.
+
+### Figma Make web design rebuild — section-by-section status tracker (June 2026)
+
+Tracks progress against the 18 numbered sections in `docs/figma-make-prompts-web.md`
+(each section has a matching mockup in `mockups/web/`). The intent of this initiative
+is to fully override the current site design page-by-page, not just patch bugs — update
+this table whenever a section's rebuild starts or finishes so progress isn't
+re-derived from scratch each session.
+
+| § | Section | Surface | Status |
+|---|---|---|---|
+| 1 | Web Homepage | Site A | Done — rebuilt from mockup |
+| 2/3 | Shop/Lifestyle Homepage | Site A | Done — rebuilt from mockup (see "Lifestyle Shop archive page" above) |
+| 4 | Pulse Feed | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 5 | Post Composer | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
+| 6 | Magazine / Article Detail | Site A | Done — rebuilt from mockup (see "Magazine archive page" above) |
+| 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
+| 8 | Culture Games | Site B | Not started |
+| 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
+| 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
+| 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
+| 12 | Member Directory & Public Profiles | Site B | Done — rebuilt from mockup 2026-06-25 (see "Member Directory & Public Profiles — visual rebuild" below) |
+| 13 | Notifications & Analytics | Site B | Done — rebuilt from mockup 2026-06-25 (see "Notifications & Analytics — visual rebuild" below) |
+| 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
+| 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
+| 16 | Design System & Core UI Components | Site A + B | Not started |
+| 17 | Authentication Flow | Site B | Done — rebuilt from mockup 2026-06-25 (see "Authentication Flow — visual rebuild" below) |
+| 18 | Overlays & Micro-interactions | Site B | Not started |
+
+### Member Dashboard — visual rebuild (§9, June 2026)
+
+`apps/connect/app/member/page.tsx` + `MemberDashboard.tsx`/`MemberBadges.tsx`/
+`PasskeyBanner.tsx` (`packages/shared/components/`) + `apps/connect/app/member.css`
+rebuilt against `mockups/web/moveee_dashboard_web.html`:
+
+- **Full-bleed band pattern** (new structural pattern, reusable for future sections):
+  the mockup's hero, passkey banner, and stats row are each page-width sections with
+  their own background color, while their *content* is horizontally centered at
+  `max-width: 1200px`. Previously only the hero followed this — the passkey banner and
+  stats row were nested inside `.mem-body`'s `max-width:1200px` wrapper, so they looked
+  like cards instead of full-width bands. Fixed by moving `<PasskeyBanner>` and
+  `<MemberDashboard>` out of `.mem-body` in `page.tsx`, and adding a `.mem-stats-band`
+  wrapper (full width, own background/border) around the existing `.mem-stats` grid
+  (which itself became the `max-width:1200px` centered inner element). **If a future
+  section's mockup shows a full-width tinted strip, check for this same pattern** — don't
+  assume every section lives inside the body's centered container.
+- `.mem-hero` switched from a dark `ink` background with light text to a white/paper
+  background with ink text (mockup uses light hero, not dark) — avatar enlarged to 96px
+  with a gold ring border; tier badge switched to a full pill (`border-radius: 999px`,
+  was 2px).
+- `PasskeyBanner.tsx` rewritten from a small inline-styled rounded box to a full-width
+  dark `ink`-background bar (className-based, matching the rest of the redesigned
+  components' convention) with a white pill CTA button — also fixed a copy-priority bug
+  where the "credits waiting" message never became the bold title even when
+  `creditsEscrowed > 0`.
+- `.mem-stats` grid: `repeat(4,1fr)` → `repeat(5,1fr)` (5 stats were already rendered by
+  the component; only the CSS column count was stale). `.mem-tooltip` flipped from
+  appearing above the stat to below it (`top: calc(100% + 12px)`, arrow flipped to point
+  up), matching the mockup.
+- `.mem-badges-grid`: `repeat(4,1fr)` → `repeat(2,1fr)`; `.mem-badge` restructured from a
+  centered icon-over-text column to a left-aligned row card with a 40px circular icon
+  swatch — required a matching JSX change in `MemberBadges.tsx` (wrapped name/desc in a
+  new `.mem-badge-text` div) since the row layout needs name+desc stacked beside the icon,
+  not below it.
+- Responsive breakpoints updated to match the new 5-stat/2-badge-column base (the
+  `max-width: 1024px`/`640px` overrides previously assumed a stale 4-stat/4-badge-column
+  layout) — stats wrap 3+2 at 1024px and 2-per-row at 640px via `nth-child` border rules
+  rather than the old fixed 2-column assumption.
+- **Not visually verified in a browser** — this environment has no `NEXTAUTH_SECRET` or
+  WordPress backend credentials configured, so `getServerSession()` 500s before any
+  member-page markup renders. Verified instead via: CSS brace-balance check, mockup
+  HTML re-read for exact values (colors/radii/spacing), and component/CSS class-name
+  cross-referencing. If this matters, re-check pixel fidelity against
+  `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
+  fully closed.
+
+### Member Settings — visual rebuild (§10, June 2026)
+
+`apps/connect/app/member.css` plus `app/member/settings/profile/page.tsx` and
+`app/member/settings/directory/page.tsx` (className only) and
+`app/member/settings/PasskeyManager.tsx` rebuilt against
+`mockups/web/moveee_connect_settings.html`. The underlying structure/logic
+(per-field inline-edit-with-autosave, read-only field treatment, Directory
+tab cross-tab preview, WebAuthn/Passkey management, settings-only newsletter
+preference list) was already fully implemented going into this pass — only
+visual fidelity gaps needed fixing, all confirmed by direct grep of the
+mockup HTML rather than the prose spec (see the `--ochre` correction above —
+an earlier pass on this same pass nearly went down the wrong path assuming
+`var(--ochre)` was amber rather than rust, based on the doc table that has
+now been corrected):
+
+- `.mem-card` was a flat rectangle (no radius, no shadow) — the mockup wants
+  `rounded-xl` + `shadow-card` on every card, confirmed against *both* the
+  Settings mockup and the already-completed Dashboard mockup (so this was a
+  pre-existing gap, not Settings-specific). Added `border-radius: 12px` +
+  a subtle `box-shadow` to the shared `.mem-card` base class with its
+  existing neutral border kept. Settings' editable-field cards specifically
+  also want an ochre-tinted border (`border-ochre/20` in the mockup, distinct
+  from Dashboard's neutral `border-ghost/20`) — added as a separate
+  `.mem-card--editable` modifier class, applied only to the Profile and
+  Directory settings page's wrapping `<section>` (the two pages with
+  inline-editable fields), not to Security/Notifications/Interests/
+  Newsletters (action-row or toggle-row cards, which the mockup keeps on a
+  neutral border — see the Password row in the Security frame for the
+  confirming example).
+- `.prf-tab--active::after` (the active tab's underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the active tab underline while keeping the
+  tab *text* itself `text-ink` (don't change the text color, only the
+  underline — confirmed via the mockup's literal class list,
+  `text-ink ... border-b-[2px] border-ochre`).
+- `.mem-field-btn` (Edit/Change links) defaulted to `var(--ink)`, only
+  turning ochre on hover — mockup's Edit/Change links (`text-ochre`) are
+  ochre by default. Default color changed to `var(--ochre)`; hover changed
+  to `var(--ochre-deep)` so there's still a visible hover state.
+- `.mem-toggle` (Notifications on/off buttons) was missing
+  `border-radius: 999px` — mockup uses a full pill (`rounded-full`) for these;
+  the existing on/off background colors (`var(--ink)` for "on") were already
+  correct and didn't need changing.
+- `.mem-field-input` (editable text inputs) was missing `border-radius`
+  (mockup uses `rounded-lg`, ~8px) and only showed an ochre border on focus —
+  mockup's editable inputs have a persistent `border-ochre` outline, not just
+  on focus. Added `border-radius: 8px` and changed the default border to
+  `var(--ochre)`.
+- `PasskeyManager.tsx`'s "Remove" button and inline error-message text used
+  the literal `#c5491f` (brand ochre/rust) for a destructive/error action —
+  the mockup uses a **distinct** error-red token (`error: '#C62828'`, not the
+  brand accent) for this. Swapped both to `#c62828`/`rgba(198,40,40,...)`.
+  There's no `--error` CSS variable in `globals.css` yet — this file uses a
+  literal, consistent with how other one-off colors (e.g. `var(--moss,
+  #5a7a5a)`) are already handled ad hoc in `member.css`. If a real error-red
+  variable is ever introduced, swap this literal for it.
+- `.dir-toggle`, `.dir-toggle--on`, `.dir-preview-tag`, `.dir-discipline-tag`/
+  `--on` in the Directory tab were checked against the mockup and found to
+  already be correct — no changes needed there.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as the Dashboard rebuild above. Verified via CSS
+  brace-balance check and direct mockup HTML re-read for exact class names/
+  values. Re-check pixel fidelity against `mockups/web/moveee_connect_settings.html`
+  in a real environment before considering this fully closed.
+
+### Wallet, Perks & Coupons — visual rebuild (§11, June 2026)
+
+Three routes (`/member/wallet` → `WalletClient.tsx`, `/connect/perks` →
+`PerksClient.tsx`, `/member/coupons` → `CouponsClient.tsx`) rebuilt against the
+single mockup `mockups/web/moveee_wallet.html` (674 lines, 5 frames: Wallet
+History, Wallet Cash Out, Perks + redeem modal/QR success, Coupons, plus a
+mobile companion frame). Confirmed via direct HTML read, not the prose spec.
+
+- **New semantic color tokens** added to `apps/connect/app/globals.css`:
+  `--success`, `--error`, `--warning`, `--warning-dark` — previously every
+  success/error indicator across these three pages used literal hex
+  (`#2e7d32`/`#c5491f`/`rgba(198,40,40,...)`) rather than a shared token, even
+  though the mockup treats these as distinct semantic colors from the brand
+  ochre/rust accent. `WalletClient.tsx`'s ledger amount color, step-up error
+  banner, and cash-out result banner all swapped from literal hex to
+  `var(--success)`/`var(--error)`.
+- **`CouponsClient.tsx` Active/Used/Expired rebuild** — Active coupons now
+  render as a `repeat(auto-fill, minmax(220px,1fr))` grid of centered cards
+  (`--radius-xl` + `--shadow-card`, success-tinted border by default, flipping
+  to warning-tinted when `daysUntil(expires_at) <= 3`), each with an
+  absolutely-positioned top-right pill badge ("Active", tinted to match the
+  card's state), a centered QR, and a bold expiry line. Used/Expired now
+  render as rounded (`--radius-lg`), opacity-reduced rows (Used: 0.6, Expired:
+  0.4 + title strikethrough) with a trailing pill status badge — previously
+  both were a flatter, non-pill, non-card treatment. Mirrors the
+  success/error/warning token convention introduced above.
+- **`perks.css`**: added `.perk-stepup-working { animation: perk-pulse 1.8s
+  ease-in-out infinite; }` + the `@keyframes perk-pulse` rule itself —
+  `PerksClient.tsx`'s "waiting for biometrics" banner already had this
+  className applied in JSX but no matching CSS existed, so the mockup's
+  `animate-pulse` behavior was silently missing.
+- **Investigated, deliberately left unchanged**: `.perk-redeem-btn` is dead
+  CSS (grepped across `apps/connect/`, including the compiled `.next` output —
+  no `.tsx` references it; `PerksClient.tsx` uses `.perk-card-btn` instead).
+  `.perks-filter-btn`'s underline-tab style (not a pill) was checked against
+  the mockup's own Frame 2 tab markup (`border-b-[2px] border-ochre`, not a
+  rounded pill) and confirmed already correct — no change needed.
+- **Cashout fee confirmed at 40% (fixed June 2026):** `WalletClient.tsx`'s live
+  fee calculator (`feePercent`, ~line 108) previously read `30`, mismatching
+  both the static copy on the same page ("A flat 40% fee applies", ~line 228)
+  and the PHP backend (`Culture_Perks::cashout_fee_percent()` — already
+  hardcoded to `40`). The user confirmed 40% is the correct, intended fee —
+  `feePercent` is now `40`, matching the backend and the static copy. Grepped
+  the rest of the web app, mobile app, and `culture-community/` for any other
+  stray "30%"/cashout-fee literals — none found; this was the only place the
+  wrong number lived.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as the Dashboard/Settings rebuilds above. Verified via CSS
+  brace-balance checks (`perks.css`, `globals.css`) and a full `tsc --noEmit`
+  pass on `apps/connect` (clean). Re-check pixel fidelity against
+  `mockups/web/moveee_wallet.html` in a real environment before considering
+  this fully closed.
+
+### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
+
+**Gotcha that caused a false "Done" claim, then got corrected:** when verifying a Figma
+Make web rebuild section against its mockup, always diff the actual mockup HTML
+(`mockups/web/*.html`) — never the prose spec text in `docs/figma-make-prompts-web.md`.
+A first pass on this section compared the 5 live drawer components against the prose
+description only, concluded they "already matched," and committed that claim. The user
+immediately flagged it ("the website still have the old designs") and was right — a
+real diff against `mockups/web/moveee_connect_feed_drawers.html` turned up genuine
+mismatches, all now fixed in `HappeningDetailModal.tsx`, `DirectoryDetailModal.tsx`,
+`QuoteDetailModal.tsx`, `PulseDetailModal.tsx`, `CommunityDetailModal.tsx` (all
+`packages/shared/components/pulse/`):
+
+- Badges: `borderRadius: "2px"` → `"999px"` (full pill) everywhere, including the 6
+  template badges inside `CommunityDetailModal.tsx` (hidden-gem/cultural-take/food-review/
+  creative-showcase/itinerary/event).
+- Header background is `#faf8f5` (distinct from the panel's `var(--paper, #f3ece0)`), not
+  the same paper color as the body — padding uniform `1.25rem`.
+- "Full page"/"Open full page" link: plain underlined text, rust `#c5491f`, no border/pill/
+  icon (was previously a bordered box with an SVG arrow). **Directory drawer omits this
+  link entirely** per the mockup's own inline comment.
+- Close button: real SVG stroke "X" icon (`<path d="M6 18L18 6M6 6l12 12"/>`), not a `✕`
+  Unicode glyph.
+- Full-width CTA buttons (Happening "View Event Details →", Directory "View Full Entry →"):
+  `width: 100%, height: 52px, borderRadius: 999px` pill, not an inline-block square button.
+- Quote drawer: sharing-reason callout `borderRadius: 12px` + `boxShadow: 0 1px 2px
+  rgba(0,0,0,0.05)`; date line centered + `font-family: monospace`.
+- Pulse/Editorial drawer badge relabeled "Editorial" (bg `#eeedfe`/text `#3c3489`) — the
+  mockup's literal text, not the old "Pulse" label.
+- Community drawer's event-details block now wrapped in a white bordered card (`#fff`
+  bg, `1px solid #e8e2d8`, `borderRadius: 6px`, `boxShadow: 0 1px 2px rgba(0,0,0,0.05)`)
+  instead of plain text rows.
+- `RsvpDisplay`'s RSVP button `borderRadius: 4px` → `999px` — fixed in **both**
+  `CommunityDetailModal.tsx` and `FeedCard.tsx` (duplicate, non-shared copies per the
+  mockup's own dev-comment — any future RSVP/poll UI change must be applied to both files).
+- `ProBadge.tsx` (the "PRO" pill next to author names) was checked and already matched the
+  mockup's `rounded-sm` style (`borderRadius: Math.max(3, size*0.3)`) — no change needed.
+
+### Member Directory & Public Profiles — visual rebuild (§12, June 2026)
+
+`mockups/web/moveee_directory.html` (4 frames: People Near Me Desktop, Public Profile Community
+Tab Desktop, Public Profile Portfolio Tab split gated/unlocked Desktop, Mobile Companion). Diffed
+directly against the mockup HTML, not the prose spec. Touches `packages/shared/components/connect/
+MemberDirectory.tsx` (shared — directory grid + member cards), `apps/connect/app/feed/feed.css`
+(`mco-*` namespace), and `apps/connect/app/connect/[username]/{CommunityTab,PortfolioTab,
+profile.css}` (`prf-*` namespace).
+
+- `.prf-tab--active::after` (the active Community/Portfolio tab underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the underline while keeping the tab text itself `text-ink` (same
+  text-stays/underline-changes pattern already established for Settings tabs in §10 — don't change
+  the text color, only the underline).
+- `MemberDirectory.tsx` was missing the mockup's "{N} members near you" live count caption next to
+  the filter controls — added a `.mco-dir-count` span, monospace, muted, rendered only once loaded
+  and non-empty.
+- Member card footer links were plain underlined text labels ("Website", "LinkedIn", …) — mockup
+  renders a footer row (top border, gap) of circular 32px icon-glyph buttons (🌐 / `in` / `ig` / `𝕏`)
+  followed by a trailing ochre "View Profile →" link. Rebuilt `.mco-member-links`/`.mco-member-link`
+  in `feed.css` to match, and changed the `links` array in `MemberDirectory.tsx` to carry a `glyph`
+  per platform (rendered instead of the label) plus reordered to website/linkedin/instagram/twitter
+  per the mockup's icon order.
+- Portfolio tab's pinned community posts (`PinnedPostCard`) rendered identically to regular
+  portfolio items, with no visual distinction — mockup gives pinned cards an ochre border, a 📌 pin
+  glyph in the top-right corner, and a colored category badge (Showcase=blue, Cultural Take=purple,
+  Hidden Gem=green, Food Review=red, fallback=ochre) instead of the generic type label. Added a
+  `PINNED_BADGE` lookup map in `PortfolioTab.tsx` and matching `.prf-pinned-card`/`.prf-pinned-pin`/
+  `.prf-pinned-badge--*` rules in `profile.css`.
+- `.mco-dir-empty` (the "No one near you yet" empty state) had no icon and a flat background —
+  mockup shows a dashed border card with a large grayscale 👥 glyph above the title. Added both.
+- `CommunityTab`'s "Load more" button was a `.prf-filter-pill`-styled pill with an inline padding
+  override — mockup's is a plain full-width text link (ochre, bold, underline-on-hover, no
+  border/background). Replaced with a dedicated `.prf-load-more` class.
+- CSS tokens verified against the live `globals.css` before use (per the project's `--ochre`-vs-
+  `--gold` precedent): `--paper-deep` (`#f2f2f2` light) is close enough to the mockup's standalone
+  Tailwind `#F5F5F5` — no token fix needed; `.prf-badge-tooltip`'s new shadow uses
+  `var(--shadow-tooltip, <fallback>)`, the same already-established fallback pattern used elsewhere
+  in `globals.css` (no literal `--shadow-tooltip` variable exists anywhere in the codebase, by
+  design — see the existing precedent at the line that already does this).
+- **Deliberately left unchanged**: regular (non-pinned) `PortfolioCard` items still open a click-to-
+  modal lightbox rather than the mockup's hover-reveal "View project" overlay — a judgment call
+  favoring touch/accessibility-friendliness over literal mockup replication, since hover-reveal
+  controls don't work on touch devices (see the existing "hover-revealed elements need a mobile
+  always-visible override" lesson from the Lifestyle Shop mobile-responsive pass) and there was no
+  mockup-specified touch fallback for this interaction.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as the
+  Dashboard/Settings/Wallet rebuilds above. Verified via `tsc --noEmit` (clean) on
+  `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
+  `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
+  `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
+
+### Notifications & Analytics — visual rebuild (§13, June 2026)
+
+`mockups/web/notifications_analytics.html` diffed directly against the live components, not the
+prose spec. Touches `packages/shared/components/NotificationBell.tsx` (shared header dropdown),
+`apps/connect/app/member/notifications/NotificationsClient.tsx` (full-page list), and
+`apps/connect/app/member/analytics/AnalyticsClient.tsx` (stat cards, SVG bar/line charts, top
+posts). No CSS files were touched in this pass — all three components use inline `style={{...}}`
+objects exclusively, so there's nothing to brace-balance-check, only `tsc --noEmit`.
+
+- **Recurring color-family bug, found in two separate files**: both `NotificationBell.tsx`'s
+  dropdown rows and `NotificationsClient.tsx`'s full-page rows used a **gold**-family tint
+  (`rgba(179,130,56,...)` = `#b38238`) for the unread-row background — the mockup specifies an
+  **ochre/rust** tint (`#c5491f` at low opacity) instead. Fixed in both files (dropdown rows in
+  `NotificationBell.tsx` in an earlier pass this session; full-page rows in
+  `NotificationsClient.tsx` in this pass). The same gold-vs-ochre mixup recurred a third time in
+  `AnalyticsClient.tsx`'s Top Posts rank-#1 badge (see below) — **if a future surface shows an
+  unread/highlight/rank-1 accent that looks "off-brand," check whether it's using `--gold`
+  (`#b38238`, amber) where the mockup actually wants `--ochre` (`#c5491f`, rust)** — this is now a
+  3-for-3 pattern in this codebase, not a one-off.
+- `NotificationBell.tsx` (dropdown): badge border, dropdown shadow, mark-all-read color+weight,
+  the unread/read background fix above (+ matching hover handlers), timestamp color+font, and the
+  footer redesigned from a conditionally-shown link to an always-visible sticky bottom bar.
+- `NotificationsClient.tsx` (full page): header row rebuilt into a fixed-height (64px) banded bar
+  with its own background/border (was a plain flex row with `marginBottom`); row padding increased
+  to a uniform 20px with 16px gap (was 14px/14px); emoji size increased to 24px, title to 15px;
+  body/date text now conditionally colored brighter when unread vs. muted when read (previously
+  both were always `var(--mute)` regardless of read state); unread dot enlarged 7px→8px; added a
+  client-side "Load more" pagination affordance (`visibleCount` state, `PAGE_SIZE = 20`, slices the
+  already-fetched `items` array — the notifications API has no offset/pagination param wired up
+  server-side, so this is a pure client-side reveal rather than a new network request per page).
+- `AnalyticsClient.tsx`: the one confirmed functional/color bug was the Top Posts rank-#1 badge
+  using gold (`#b38238`) instead of ochre (`#c5491f`) — fixed. Remaining changes are pure visual
+  polish to match the mockup: chart gridlines in both `BarChart` and `LineChart` changed from a
+  solid `#e5ddd0` line to a dashed (`strokeDasharray="4 4"`) `#c8bfb0` line; axis/label text color
+  changed from `#9c8e7a` to the project's documented `var(--mute)`-equivalent literal `#7a6f5c`
+  throughout both charts; `StatCard` restyled from a flat tan card to a white card with 12px
+  radius, a subtle box-shadow, and a monospace uppercase label (was a plain sans label); the Top
+  Posts container restyled from the generic shared `.mem-card` class to its own white
+  card-with-shadow wrapper (the mockup gives this section a distinct rounded/shadowed treatment),
+  and each row's reaction/comment counts switched from a three-column plain-number layout to
+  emoji-prefixed (`❤️`/`💬`) counts on one line plus a bold "{N} Eng" total beneath.
+- **Confirmed already correct, no bug** — checked against the mockup and found matching, no
+  changes made: the 6-stat-card grid (Credit Balance, Points, Posts, Badges, Earned (30d), Spent
+  (30d)); `BarChart`'s earned/spent bar colors (`["#b38238", "#c5491f"]`, gold=earned/ochre=spent —
+  matches the mockup's `chart-earn`/`chart-spend` tokens exactly); `LineChart`'s call-site color
+  override (`color="#2a6496"`, a one-off blue distinct from both ochre and gold, matching the
+  mockup's dedicated `chart-line` token); the "← Back to Dashboard" link's `var(--ochre)` color.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
+  `apps/connect`. Re-check pixel fidelity against `mockups/web/notifications_analytics.html` in a
+  real environment before considering this fully closed.
+
+### Authentication Flow — visual rebuild (§17, June 2026)
+
+`mockups/web/authentication_flow.html` diffed directly against the 5 live auth pages in
+`apps/connect/app/` — `login/page.tsx`, `register/page.tsx`, `register/complete/page.tsx`,
+`forgot-password/page.tsx`, `reset-password/page.tsx`. All five already had the correct
+functionality (NextAuth credentials/passkey/Google sign-in, registration verification flow,
+forgot/reset password) — this was a targeted visual fidelity pass, not a rebuild, same as the
+§9–§15 passes before it. All five files use inline `style={{...}}` / a `Record<string,
+React.CSSProperties>` object at the bottom of the file (no CSS modules/files for this surface),
+so verification was `tsc --noEmit` only — no brace-balance check applicable.
+
+- **Systemic `.form-label` fix, all 5 pages**: every form label across the auth flow used a
+  bold, dark, 13px treatment (`fontSize:13, fontWeight:600, color:"#14110d"`) — the mockup's
+  `.form-label` token is light/muted/non-bold (`fontSize:11, fontWeight:400, color:"#7a6f5c"`),
+  matching the same label styling already used elsewhere in the codebase (e.g. Settings'
+  `.mem-field-label` per §10). Fixed in `login`, `register`, `register/complete`,
+  `forgot-password`, `reset-password` — this is now the 5-for-5 pattern across the whole flow,
+  not a one-off.
+- **`login/page.tsx`**: error-state inputs (`username`/`password`) get a visible red-tinted
+  border (`rgba(192,57,43,.5)`) when an error is present, instead of staying neutral; the
+  Google "G" icon button restyled to match the mockup's icon sizing/spacing; the
+  forgot-password/create-account footer links consolidated into a single flex-column container
+  (`gap: 12`) instead of two separately-margined `<p>` tags.
+- **`register/page.tsx`**: same footer-consolidation treatment as login (sign-in link +
+  "Upgrade after joining" link into one flex-column block).
+- **`reset-password/page.tsx`**: added a `successBlock` style (green-tinted card —
+  `background:"#f0fdf4"`, `border:"1px solid rgba(39,174,96,.15)"`, `color:"#27ae60"`) for the
+  post-submit success message, matching the mockup's `.success-block` pattern — previously this
+  state had no dedicated styling.
+- **`register/complete/page.tsx`** (Steps 2/3 — DOB/country/city/occupation, interests,
+  membership tier):
+  - Membership tier card: `tierLabel` changed from a prominent bold 17px dark heading to a
+    muted uppercase eyebrow-style label (`fontSize:11, fontWeight:400, textTransform:
+    "uppercase", color:"#7a6f5c"`); `tierPrice` changed from a bold brownish accent
+    (`color:"#8b6f47"`) to a large dark serif price (`Georgia, serif, fontWeight:300,
+    fontSize:28`) — matching the serif/weight-300 heading pattern used across the rest of the
+    auth flow (login/register/forgot-password/reset-password headings all follow this same
+    `Georgia, serif` + `fontWeight:300` convention).
+  - `savingsTag` color corrected from brand ochre/rust (`#c5491f`/`#fdf2f0`) to a distinct
+    semantic green (`#27ae60`/`#e6f4ea`) — "savings" is a positive/success indicator, not a
+    brand-accent callout, consistent with the green/success token already established
+    elsewhere (e.g. the Wallet/Perks/Coupons rebuild's `--success` token, §11).
+  - Billing-cycle toggle (Monthly/Annually) softened from a solid black/white active pill to a
+    white-background "chip" with a subtle shadow (`boxShadow: "0 1px 3px rgba(20,17,13,.12)"`)
+    when active, matching the mockup's lighter toggle treatment.
+  - Interest-grid pills' active state changed from a light background tint + ring box-shadow to
+    a solid black fill with white label text, matching the mockup's selected-state styling. No
+    changes to the underlying 18-slug `INTERESTS` data or 3-column grid layout — visual-only.
+  - The `ProgressBar` helper component's step-indicator sizing (32px circular nodes) was left
+    unchanged — a minor, deliberately accepted deviation, not revisited in this pass.
+- **Dead code removed**: `apps/connect/app/login/login/` (`page.tsx` + `layout.tsx`) — an
+  orphaned duplicate route under `/login/login` with zero genuine source references anywhere in
+  the codebase. Confirmed dead before removal (not a in-progress feature) and removed via
+  `git rm -r`. Its removal left stale references in the auto-generated Next.js route-validator
+  type files (`.next/types/validator.ts`, `.next/dev/types/validator.ts`) that only cleared
+  after `rm -rf .next` — if a future `tsc --noEmit` run reports errors pointing at a route you
+  just deleted, clear the `.next` cache before assuming the deletion is incomplete.
+- **`packages/shared/components/PasskeyBanner.tsx` deliberately out of scope** — it's a
+  dashboard-context component (rendered on `/member`, not any of the 5 auth pages above); the
+  mockup's passkey-prompt frame is illustrative of the concept, not a literal target for this
+  pass.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean, zero errors
+  after clearing the stale `.next` cache) across all 5 edited files. Re-check pixel fidelity
+  against `mockups/web/authentication_flow.html` in a real environment before considering this
+  fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
@@ -1208,6 +1877,51 @@ source of truth for icons across the PHP/TS boundary.
 
 ---
 
+## Events/Happenings web surface — full visual rebuild (`evt-*` namespace, June 2026)
+
+`apps/connect/app/events/` (homepage `page.tsx`, `[slug]/page.tsx` detail page, and
+all of `app/events/components/`) was rebuilt from scratch off a new mockup, replacing
+every prior CSS namespace (`ev-*`, `ticker-wrap`/`page-body`/`left-col`/`sidebar`,
+`ehl-*`, `rsvp-card`/`info-card`/`artist-strip`, heavy inline `style={{...}}` props)
+with a single canonical namespace: **`evt-*`**, fully defined in `app/events.css`.
+This is now the only namespace to use for any future work on this surface — don't
+reintroduce the old classnames or inline styles even for small tweaks.
+
+- **Three event sources unified into one shape**: editorial/seeded `culture_event`
+  CPT events (`getEventsWithFallback()`), community-published `culture_post` events
+  with `_template_type = "event"` (`getCommunityPosts()` + `isEventItem()`), and
+  backend-created `culture_event` CPT events (same fetch path as the first — no
+  special-casing needed, they're indistinguishable from seeded events once published).
+  `mapCommunityEvent()` in `app/events/page.tsx` converts a community `FeedItem` into
+  the same shape editorial events already use (`cultureInterests.nodes[0]` for
+  category, etc.) so both render through the same `EventTimeline`/`EventsCarousel`
+  components.
+- **`href` override pattern**: `TimelineEvent`/`CarouselEvent` interfaces both carry
+  an optional `href?: string`. Editorial events fall back to `/events/{slug}`;
+  community events set `href` explicitly to `/community/{slug}` (their real detail
+  page) via `mapCommunityEvent()`. Any new mixed-source list component should follow
+  this same pattern rather than hardcoding `/events/${slug}`.
+- **AI-generated events are unaffected** — `[slug]/page.tsx` still delegates to
+  `DiscoveredEventPage` unchanged when `event.isAiGenerated` is true; that component
+  and its siblings (`CommunityRadarSection.tsx`, `EventCard.tsx`, `SpotlightCard.tsx`,
+  `DiscoveredEventRow.tsx`) were deliberately left untouched by this rebuild.
+- **Ticker pattern**: any `evt-ticker-track` (`.evt-ticker`/`.evt-detail-ticker`) needs
+  to be rendered as **two tracks** (`evt-ticker-track` + `evt-ticker-track--b`, second
+  one `aria-hidden`), not one — the CSS animation moves `translateX(0)` →
+  `translateX(-100%)` on a loop, which only looks seamless if the content is
+  duplicated into a second track positioned at `left: 100%`. A single track will
+  visibly snap/gap at the loop boundary. `events/page.tsx`'s homepage ticker and
+  `[slug]/page.tsx`'s detail ticker both follow this `["a","b"].map(...)` pattern.
+- `RSVPForm.tsx` was already on the `evt-*` namespace going into this pass (`evt-rsvp-card`,
+  `evt-state-card`, `evt-capacity-block`, `evt-submit-btn`, etc.) — no changes needed there.
+- City/category archive pages (`city-archive.tsx`/`category-archive.tsx`) delegate to
+  the same rebuilt `EventTimeline` and needed only their own header/wrapper classes
+  updated to `evt-archive-*`.
+- Every class needed for this rebuild already existed in `app/events.css` going in —
+  no new CSS was authored, only the JSX/classname layer changed across all 9 files.
+
+---
+
 ## Event Spotlight carousel (June 2026)
 
 Horizontally-scrolling carousel merging editorial `culture_event` items + community
@@ -1341,6 +2055,37 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 - Category field now present (maps to `culture_event_categories` taxonomy)
 - Organiser field: `DirectorySearch` component, typeFilter="person"
 - Image upload via WP Media API (not URL input)
+
+### Composer client-side gating UI (web, June 2026)
+
+Two client-side affordances added to `packages/shared/components/pulse/SubmitPost.tsx` to
+surface server-side gates *before* submit instead of only after a 403 — previously a user
+could fill out an entire Poll/Itinerary/Event form, or type a link into a standard Post, and
+only find out it was rejected after pressing Post.
+
+- **Reputation-gated template pills**: `TEMPLATE_REP_GATE` maps `poll`/`itinerary` → Taste
+  Maker (2,500 rep) and `event` → Culture Contributor (500 rep), mirroring the existing
+  server-side gate in `handle_submit_post()` (mobile) and
+  `apps/connect/app/api/community/submit/route.ts` (web) — Moveee Pro always bypasses, same
+  as the server. `meetsTemplateGate()` checks `session.user.reputation` against this map;
+  pills that fail the gate render dimmed with a 🔒 and a `title` tooltip, and clicking one
+  shows an inline `.composer-template-lock-tip` banner (auto-dismisses after 4s) instead of
+  switching the form to that template. **Keep `TEMPLATE_REP_GATE` in sync with the PHP/route
+  thresholds if those ever change** — there's no shared source of truth across the
+  PHP/TS boundary here, same caveat as the notification icon maps elsewhere in this file.
+- **Inline link-blocked warning**: Citizens (non-`patron`) typing a URL into a standard Post
+  now see a `.composer-link-warning` banner ("Links are a Moveee Pro feature…" + an Upgrade
+  link to `/register?upgrade=patron`) the moment `URL_RE` matches the text, and `canSubmit()`
+  disables the Post button while a link is present for non-Pro users — both mirror the
+  link-block rule already enforced server-side in `packages/utils/spam-protection.ts`
+  (`checkPostSpam()`'s literal `tier === "patron"` check, no reputation bypass for this one).
+  The link-preview fetch effect itself is also now gated on `isPro` so non-Pro users don't
+  fire a wasted preview request for a link that will be rejected anyway.
+- Both additions are CSS-duplicated across `apps/connect/app/globals.css` and
+  `apps/site/app/globals.css` (`.composer-template-pill--locked`, `.composer-template-lock`,
+  `.composer-template-lock-tip`, `.composer-link-warning`) — same duplication pattern the
+  rest of the composer CSS already follows in both files, since `SubmitPost.tsx` is a shared
+  component consumed from both apps (`PulseFeed.tsx`, `CategoryPage.tsx`).
 
 ---
 
@@ -1778,6 +2523,109 @@ convention.
   community posts that link to a directory entry via `_linked_directory_id`)
   — flagged in the original mockup but not built in this pass.
 
+### Directory Entry Detail page — visual fidelity pass (June 2026)
+
+`mockups/web/directory_entry_detail.html` ("Moveee Connect - Directory Entry Detail", 4
+frames: Desktop Person, Mobile Reordered, Gated Book, Empty Movement). Targets
+`apps/connect/app/directory/[slug]/page.tsx` + `apps/connect/app/directory.css`
+(`dir-wiki-*` namespace) — **not** `apps/site/app/directory/[slug]/`, which is dead code:
+`apps/site/proxy.ts`'s `connectPrefixes` array already includes `/directory`, so that whole
+route tree 308-redirects to `web.themoveee.com` and is unreachable in production.
+
+This page was already structurally very close to the mockup going in (same `dir-wiki-*`
+classnames, same 220px/1fr/260px three-column grid, same `--dir-*` token values, same
+`/discover` back-link, same body-only `ContentGate` paywall pattern, same empty-content
+copy, same per-type infobox field definitions for all 11 `culture_directory` entry types)
+— this was a targeted fidelity pass, not a rebuild. Fixes applied:
+
+- **Non-cropping images (explicit user requirement):** the Selected Works thumbnail
+  (`page.tsx`'s `.dir-wiki-work-img`) and the infobox featured image
+  (`.dir-wiki-infobox-img`) both used `objectFit: "cover"` (crops to fill). Changed both to
+  `objectFit: "contain"` so the original aspect ratio is always fully visible — both
+  container divs already had a background color behind the image (`var(--dir-border)` /
+  `var(--dir-dark-bg)`), so `contain`'s letterboxing reads as an intentional fill rather
+  than empty space. **If a future image requirement says "don't crop," `contain` +
+  a background on the wrapping element is the established pattern here** — don't reach for
+  `cover` by default on directory/profile imagery going forward.
+- `.dir-improve-btn` was a square (`border-radius: 2px`), ochre-background, mono-font
+  button — mockup wants a pill (`rounded-full`), `bg-dir-dark-ink`/`text-dir-dark-bg`
+  (i.e. the light `--dir-dark-ink` token on dark `--dir-dark-bg`, since this button sits
+  inside the dark `.dir-improve-cta` section), sans-bold 13px. Rebuilt to match.
+  `--dir-dark-ink`/`--dir-dark-bg` are named from the *dark section's* perspective (ink =
+  the light foreground color used on a dark background, bg = the dark background itself)
+  — don't assume "dark-ink" means a dark color literal.
+  - `--dir-bg` (used by `.dir-wiki-page`'s background) was never defined in `:root` — only
+    `--dir-paper` exists. Dead/typo'd variable reference, silently resolving to nothing.
+  - Fixed to `var(--dir-paper)`.
+- Upcoming Events card badge (`Happening`) was `border-radius: 2px` — squared off, not a
+  pill — and the event card itself was `border-radius: 6px` vs the mockup's `8px`. Fixed
+  both (badge to `999px`, card to `8px`).
+- `.dir-community-card` (Community Reviews & Takes) used `var(--paper-deep)`/`var(--rule)`
+  (the page's tan/neutral globals.css tokens) at `border-radius: 4px` — mockup wants white
+  `bg-dir-paper`/`border-dir-border` at `8px`. Also, `.dir-community-stars`,
+  `.dir-community-pro-badge`, `.dir-community-star-rating`, and `.dir-community-read-more`
+  all used `var(--ochre)` (`#c5491f`, brand rust) where the mockup explicitly specifies
+  `#B38238` — that's `var(--dir-ochre)` (this page's own gold token, distinct from the
+  global ochre/gold pair, see the `--ochre`-vs-`--gold` precedent elsewhere in this file).
+  All four swapped to `var(--dir-ochre)`. **This page has its own `--dir-*` color
+  namespace, separate from `globals.css`'s `--ochre`/`--gold` — don't mix the two systems
+  when touching `directory.css`.**
+- `.dir-wiki-sidebar-empty` ("No related entries yet.") was unstyled inline text — mockup
+  wraps it in a centered, bottom-bordered row. Added `display: flex; align-items: center;
+  justify-content: center; padding: 12px 0; border-bottom: 1px solid var(--dir-border);`
+  plus `font-style: italic` to match.
+- `ContentGate` (`packages/shared/components/ContentGate.tsx`, the shared Pro-paywall used
+  here and on article pages) was checked against the mockup's Frame 3 gate design (bordered
+  box, lock icon, "★ Moveee Pro" label, "You're one step away." headline, pill CTA, price
+  footnote via `PatronPrice`) and already matches — it's a shared cross-surface component,
+  not specific to this page, so it was deliberately left untouched.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) and a
+  CSS brace-balance check on `directory.css` (180/180). Re-check pixel fidelity against
+  `mockups/web/directory_entry_detail.html` in a real environment before considering this
+  fully closed.
+
+### Directory Entry Detail page — follow-up bug-fix pass (double border, radius, lightbox; June 2026)
+
+User-reported, from a live screenshot of `web.themoveee.com/directory/{slug}`: a double border
+under the title area, inconsistent/no border-radius on boxes, and a request to make every image on
+the page open in a lightbox. All three fixed in `apps/connect/app/directory.css` and
+`apps/connect/app/directory/[slug]/page.tsx`.
+
+- **Double border root cause**: `.dir-wiki-divider` (rendered in JSX immediately above the entry
+  body) already draws the single intended rule (`border-top` + `margin: 24px 0`). `.dir-single-body`
+  — a "legacy" class name (no `wiki` infix) that looks like dead fallback CSS but is actually still
+  the live class used to render entry body HTML on this page — had its own independent
+  `border-top: 1px solid var(--dir-border); padding-top: 36px;`, producing two stacked rules.
+  Fixed by deleting both properties from `.dir-single-body`; `.dir-wiki-divider`'s own margin
+  already provides the spacing. **Lesson: a class name implying "legacy/unused" doesn't mean it's
+  dead — grep for actual JSX usage before assuming, especially in this file's "kept for fallback"
+  section.**
+- **Border-radius**: added/bumped radius on exactly the 5 `dir-wiki-*` box classes that belong to
+  this page (confirmed via Grep that every other unradiused `2px` box in `directory.css` belongs to
+  the separate directory listing/archive page or `/directory/submit`, out of scope) —
+  `.dir-wiki-sidebar-card` (8px, was 0), `.dir-wiki-related-thumb` (2px→6px, kept smaller since it's
+  only 36px), `.dir-wiki-improve` (8px, was 0), `.dir-wiki-work-card` (2px→8px),
+  `.dir-wiki-infobox` (8px, was 0 — already has `overflow:hidden` so its featured image/rows clip
+  cleanly to the new radius).
+- **Lightbox**: new generic client component `apps/connect/app/directory/[slug]/DirectoryLightboxImage.tsx`
+  — wraps any existing thumbnail markup (`className`/`style` passed through unchanged, so
+  `next/image fill` layouts are unaffected), manages its own open state, closes on Escape or
+  backdrop click, locks `document.body.style.overflow` while open, renders a fixed full-screen
+  `rgba(20,17,13,0.9)` backdrop with a plain `<img>` at `maxWidth/Height: 92vw/92vh` + a close
+  button. Wired onto all 5 images on the page: related-entries sidebar thumb, Selected Works card
+  thumb, community review avatar, Upcoming Events list thumb, and the right-sidebar infobox
+  featured image. **Three of these (related-entries thumb, Upcoming Events thumb) sit inside a
+  `<Link>`** — the component's trigger `onClick` calls `e.preventDefault()` +
+  `e.stopPropagation()` before opening, so clicking the image opens the lightbox instead of
+  navigating; this guard is built into the component itself, so any future image wrapped in it
+  is automatically Link-safe with no extra wiring. **If a future page needs an image lightbox,
+  reuse this exact component rather than building a per-page one** — it's already generic
+  (`src`/`alt`/optional `className`/`style`/`children`).
+- **Not visually verified in a browser** — same credentials gap as above. Verified via
+  `tsc --noEmit` (clean) on `apps/connect` and a CSS brace-balance check on `directory.css`
+  (180/180, confirmed unchanged after these edits).
+
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
 same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.
@@ -1994,10 +2842,21 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ## Community feed spam protection
 
-All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
+All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
+`@/lib/spam-protection` — resolves there via the `@/lib/*` tsconfig paths entry, which checks
+`packages/shared/lib/*` first, then `packages/utils/*`, then the app-local `./lib/*`; this file
+lives in `packages/utils`, not `packages/shared/lib`, despite the import alias) before posts reach
+WordPress.
 
 **Checks applied to posts (`app/api/community/submit/route.ts`):**
-1. URL/link blocking — Citizens cannot post links; Moveee Pro members can
+1. URL/link blocking — Citizens cannot post links; Moveee Pro members can. Gate is a literal
+   `tier === "patron"` check in `checkPostSpam()`/`checkCommentSpam()` — no reputation-based bypass
+   for this one (unlike Poll/Itinerary/Event templates, which bypass on reputation OR Pro). There's
+   also an `process.env.ALLOW_LINKS_FOR_PRO === "false"` escape hatch that — despite the variable's
+   name — disables the link block for **everyone** (not just Pro) when explicitly set to the string
+   `"false"`; this looks like a kill-switch for the whole feature, not a per-tier toggle. Don't rely
+   on this env var being set in normal operation; the default behavior with it unset is the
+   Citizen/Pro split described above.
 2. Rate limit — 5 posts per 10 minutes per user (HTTP 429)
 3. Duplicate detection — same text rejected within 30 minutes (HTTP 409)
 4. Keyword blocklist — default phrases + admin-configured custom phrases (HTTP 400)

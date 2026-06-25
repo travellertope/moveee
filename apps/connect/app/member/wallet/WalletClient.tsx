@@ -105,7 +105,7 @@ export default function WalletClient({
   }
 
   const creditsNum  = parseInt(cashCredits) || 0;
-  const feePercent  = 30;
+  const feePercent  = 40;
   const feeCredits  = Math.round(creditsNum * feePercent / 100);
   const netCredits  = creditsNum - feeCredits;
   const symbol      = CURRENCY_SYMBOL[currency] ?? currency;
@@ -192,7 +192,7 @@ export default function WalletClient({
                     fontFamily: "'JetBrains Mono', monospace",
                     fontSize: "0.82rem",
                     fontWeight: 700,
-                    color: e.amount > 0 ? "#2e7d32" : "#c5491f",
+                    color: e.amount > 0 ? "var(--success)" : "var(--error)",
                   }}>
                     {e.amount > 0 ? "+" : ""}{e.amount}
                   </span>
@@ -234,7 +234,7 @@ export default function WalletClient({
           </p>
 
           {stepUpError && (
-            <div style={{ padding: "10px 14px", background: "rgba(197,73,31,.06)", border: "1px solid rgba(197,73,31,.2)", borderRadius: 3, fontSize: "0.8rem", color: "#c5491f", marginBottom: 12 }}>
+            <div style={{ padding: "10px 14px", background: "rgba(198,40,40,.06)", border: "1px solid rgba(198,40,40,.2)", borderRadius: 3, fontSize: "0.8rem", color: "var(--error)", marginBottom: 12 }}>
               {stepUpError}
             </div>
           )}
@@ -242,10 +242,10 @@ export default function WalletClient({
           {cashResult ? (
             <div style={{
               padding: "16px",
-              background: cashResult.success ? "rgba(46,125,50,.06)" : "rgba(197,73,31,.06)",
-              border: `1px solid ${cashResult.success ? "rgba(46,125,50,.2)" : "rgba(197,73,31,.2)"}`,
+              background: cashResult.success ? "rgba(45,106,79,.06)" : "rgba(198,40,40,.06)",
+              border: `1px solid ${cashResult.success ? "rgba(45,106,79,.2)" : "rgba(198,40,40,.2)"}`,
               fontSize: "0.82rem",
-              color: cashResult.success ? "#2e7d32" : "#c5491f",
+              color: cashResult.success ? "var(--success)" : "var(--error)",
               lineHeight: 1.5,
             }}>
               {cashResult.message}

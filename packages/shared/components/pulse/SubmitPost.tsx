@@ -57,6 +57,14 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
+// Templates gated by reputation tier (Moveee Pro always bypasses) — mirrors the
+// server-side gate in handle_submit_post() / apps/connect/app/api/community/submit/route.ts
+const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
+  poll:      { minRep: 2500, tierLabel: "Taste Maker" },
+  itinerary: { minRep: 2500, tierLabel: "Taste Maker" },
+  event:     { minRep: 500,  tierLabel: "Culture Contributor" },
+};
+
 const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
   post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
@@ -180,12 +188,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [eventRsvpEnabled, setEventRsvpEnabled] = useState(false);
   const [eventRsvpCapacity, setEventRsvpCapacity] = useState("");
 
+  const [lockedTip, setLockedTip] = useState<TemplateType | null>(null);
+  const lockedTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current); }, []);
+
   const user = session?.user as any;
   const isPro = user?.tier === "patron";
   const loggedIn = status === "authenticated";
   const maxChars = MAX_CHARS[template] ?? 3000;
   const charCount = text.length;
   const charRemaining = maxChars - charCount;
+  const reputation = Number(user?.reputation ?? 0);
+
+  function meetsTemplateGate(t: TemplateType): boolean {
+    const gate = TEMPLATE_REP_GATE[t];
+    if (!gate) return true;
+    return isPro || reputation >= gate.minRep;
+  }
 
   const fetchLinkPreview = useCallback((url: string) => {
     if (previewFetchRef.current) clearTimeout(previewFetchRef.current);
@@ -204,7 +223,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }, []);
 
   useEffect(() => {
-    if (template !== "post") return;
+    if (template !== "post" || !isPro) return;
     const match = text.match(URL_RE);
     if (match) {
       const url = match[0];
@@ -276,6 +295,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function handleTemplateChange(t: TemplateType) {
+    if (!meetsTemplateGate(t)) {
+      setLockedTip(t);
+      if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current);
+      lockedTipTimer.current = setTimeout(() => setLockedTip(null), 4000);
+      return;
+    }
+    setLockedTip(null);
     setTemplate(t);
     setError("");
     if (!lockedTag) {
@@ -304,6 +330,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
     switch (template) {
       case "post":
+        if (!isPro && URL_RE.test(text)) return false;
         return text.trim().length >= 1;
       case "quote":
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
@@ -462,6 +489,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         templateType: template,
       });
       resetForm();
+      setSuccess("Posted! Your update is now live in the feed.");
+      setTimeout(() => setSuccess(""), 4000);
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
       setUploading(false);
@@ -475,7 +504,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   if (!loggedIn) {
     return (
       <div className="composer-card" style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#f0ece4", border: "1px solid #e0d8ce", flexShrink: 0 }} />
+        <div className="composer-avatar" />
         <button onClick={() => window.dispatchEvent(new Event("open-auth-modal"))} className="composer-prompt-btn">
           What&apos;s happening in culture? Join the community to share.
         </button>
@@ -489,7 +518,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   if (success) {
     return (
       <div className="composer-card" style={{ padding: "1rem 1.25rem" }}>
-        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "6px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
+        <div className="composer-success-banner">
           {success}
         </div>
       </div>
@@ -512,34 +541,43 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     <div className="composer-card">
       {/* Template selector */}
       <div className="composer-template-bar">
-        {TEMPLATES.map(t => (
-          <button
-            key={t.slug}
-            type="button"
-            className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}`}
-            onClick={() => handleTemplateChange(t.slug)}
-          >
-            <span className="composer-template-emoji">{t.emoji}</span>
-            <span className="composer-template-label">{t.label}</span>
-          </button>
-        ))}
+        <div className="composer-template-scroll">
+          {TEMPLATES.map(t => {
+            const gate = TEMPLATE_REP_GATE[t.slug];
+            const locked = gate ? !meetsTemplateGate(t.slug) : false;
+            const isQuote = t.slug === "quote";
+            return (
+              <span key={t.slug} className="composer-template-pill-wrap">
+                <button
+                  type="button"
+                  className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
+                  onClick={() => handleTemplateChange(t.slug)}
+                >
+                  <span className="composer-template-emoji">{t.emoji}</span>
+                  <span className="composer-template-label">{t.label}</span>
+                  {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
+                </button>
+                {locked && gate && (
+                  <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
+      {lockedTip && TEMPLATE_REP_GATE[lockedTip] && (
+        <p className="composer-template-lock-tip">
+          {TEMPLATE_REP_GATE[lockedTip]!.tierLabel} ({TEMPLATE_REP_GATE[lockedTip]!.minRep.toLocaleString()} rep) or Moveee Pro required to use the {TEMPLATES.find(t => t.slug === lockedTip)?.label} template.
+        </p>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="composer-form-body">
         <div style={{ display: "flex", gap: "0.75rem" }}>
           {/* Avatar */}
-          <div style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            background: template === "quote" ? "#f3eef8" : "#fff0eb",
-            border: `1.5px solid ${template === "quote" ? "#7a4da0" : "#c5491f"}`,
-            color: template === "quote" ? "#7a4da0" : "#c5491f",
-            fontSize: "0.65rem", fontWeight: 700, flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            overflow: "hidden",
-          }}>
+          <div className={`composer-avatar${template === "quote" ? " composer-avatar--quote" : ""}`}>
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={user.avatarUrl} alt="" />
             ) : initials}
           </div>
 
@@ -698,14 +736,38 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             </div>
 
             {/* Main text area */}
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={handleTextChange}
-              placeholder={placeholders[template]}
-              rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
-              className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
-            />
+            {template === "quote" ? (
+              <div className="composer-quote-box">
+                <span className="composer-quote-glyph" aria-hidden>&ldquo;</span>
+                <div className="composer-textarea-wrap">
+                  <textarea
+                    ref={textareaRef}
+                    value={text}
+                    onChange={handleTextChange}
+                    placeholder={placeholders[template]}
+                    rows={4}
+                    className="composer-textarea composer-textarea--italic"
+                  />
+                  <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
+                    {charCount}/{maxChars}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="composer-textarea-wrap">
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={handleTextChange}
+                  placeholder={placeholders[template]}
+                  rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
+                  className="composer-textarea"
+                />
+                <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
+                  {charCount}/{maxChars}
+                </span>
+              </div>
+            )}
 
             {/* Quote author/source */}
             {template === "quote" && (
@@ -778,10 +840,18 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               <ItineraryBuilder stops={itineraryStops} onChange={setItineraryStops} />
             )}
 
+            {/* Link blocked warning — Citizens can't post links (server-side gate in spam-protection.ts) */}
+            {template === "post" && !isPro && URL_RE.test(text) && (
+              <div className="composer-link-warning">
+                <span>Links are a Moveee Pro feature — this post will be rejected with a link in it.</span>
+                <a href="/register?upgrade=patron">Upgrade →</a>
+              </div>
+            )}
+
             {/* Link preview (post only) */}
-            {template === "post" && !imagePreview && linkPreview && (
+            {template === "post" && isPro && !imagePreview && linkPreview && (
               previewLoading ? (
-                <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
+                <p className="composer-link-loading">Fetching link preview…</p>
               ) : (
                 <SourcePreviewCard
                   goUrl={linkPreview.url}
@@ -794,33 +864,34 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               )
             )}
 
-            {/* Single image preview */}
-            {imagePreview && (
-              <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
-                <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }} />
-                <button type="button" onClick={removeImage} aria-label="Remove image" style={{
-                  position: "absolute", top: "4px", right: "4px",
-                  background: "rgba(20,17,13,0.65)", border: "none", borderRadius: "50%",
-                  width: "20px", height: "20px", color: "#fff", fontSize: "0.7rem",
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                }}>✕</button>
-              </div>
-            )}
-
-            {/* Gallery previews (creative-showcase, hidden-gem, food-review) */}
-            {galleryPreviews.length > 0 && (
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {/* Photo grid — single image (event) or gallery (post/hidden-gem/food-review/creative-showcase/itinerary) */}
+            {template === "event" ? (
+              imagePreview && (
+                <div className="composer-photo-row">
+                  <div className="composer-photo-thumb">
+                    <img src={imagePreview} alt="Preview" />
+                    <button type="button" onClick={removeImage} aria-label="Remove image" className="composer-photo-remove">✕</button>
+                  </div>
+                </div>
+              )
+            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && (
+              <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
-                  <div key={i} style={{ position: "relative", width: "72px", height: "72px" }}>
-                    <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px", border: "1px solid #e0d8ce" }} />
-                    <button type="button" onClick={() => removeGalleryImage(i)} style={{
-                      position: "absolute", top: "2px", right: "2px",
-                      background: "rgba(20,17,13,0.65)", border: "none", borderRadius: "50%",
-                      width: "16px", height: "16px", color: "#fff", fontSize: "0.6rem",
-                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>✕</button>
+                  <div key={i} className="composer-photo-thumb">
+                    <img src={p} alt="" />
+                    <button type="button" onClick={() => removeGalleryImage(i)} aria-label="Remove image" className="composer-photo-remove">✕</button>
                   </div>
                 ))}
+                {galleryFiles.length < 4 && (
+                  <button type="button" className="composer-photo-add" onClick={() => fileInputRef.current?.click()} aria-label="Add photo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </button>
+                )}
+                <p className="composer-photo-hint">Up to 4 photos</p>
               </div>
             )}
 
@@ -859,8 +930,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 )
               )}
 
-              {/* Image button (not for poll, quote, cultural-take, book-review) */}
-              {template !== "poll" && template !== "quote" && template !== "cultural-take" && (
+              {/* Image button — only for event (other image templates use the inline add-tile in the photo row) */}
+              {template === "event" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -880,9 +951,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               <button
                 type="submit"
                 disabled={!canSubmit()}
-                className={`composer-submit${template === "quote" ? " composer-submit--quote" : ""}`}
+                className="composer-submit"
               >
-                {uploading ? "Uploading…" : loading ? "Posting…" : template === "quote" ? "Submit" : "Post"}
+                {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
               </button>
             </div>
             {error && <p className="composer-error">{error}</p>}

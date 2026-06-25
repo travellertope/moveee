@@ -188,7 +188,7 @@ const createStyles = (c: ColorPalette) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
     },
-    pillActive: { backgroundColor: c.ink, borderColor: c.ink },
+    pillActive: { backgroundColor: c.ochre, borderColor: c.ochre },
     pillText: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.ink },
     pillTextActive: { color: "#FFFFFF" },
     sortList: { gap: space[1] },

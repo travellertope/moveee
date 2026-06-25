@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
@@ -138,6 +139,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const weekday      = dateValid.toLocaleDateString("en-GB", { weekday: "long" });
   const dayNum       = dateValid.toLocaleDateString("en-GB", { day: "numeric" });
   const monthShort   = dateValid.toLocaleDateString("en-GB", { month: "short" }).toUpperCase();
+  // The WP Admin "Event Date" field is a datetime-local input, so the time entered when
+  // creating the event lives in eventDate itself — only fall back to openingHours
+  // (a separate, unrelated "gallery hours" field) or "Time TBA" if eventDate has no time.
+  const hasTime      = /T\d{2}:\d{2}/.test(dateRaw) || /\d{1,2}:\d{2}/.test(dateRaw);
+  const timeFormatted = hasTime ? dateValid.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" }) : null;
 
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
@@ -154,7 +160,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       }))
     : undefined;
 
-  const hasMetrics  = event.metrics?.length > 0;
   const hasSchedule = Array.isArray(event.schedule) && event.schedule.length > 0;
   const hasShowcase = Array.isArray(event.showcase) && event.showcase.length > 0;
   const hasHost     = event.featuredHost && typeof event.featuredHost === "object" && event.featuredHost?.title;
@@ -170,161 +175,149 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     : null;
 
   return (
-    <div className="events-page-wrapper">
+    <div className="bg-paper">
 
-      {/* ── COMPACT HERO — image LEFT, info RIGHT (Luma-inspired) ── */}
-      <section className="event-hero-luma">
-
-        {/* Left: portrait image */}
-        <div className="ehl-image-col">
-          {citySlug && (
-            <Link href={`/events/${citySlug}`} className="ehl-location-chip">
-              ↗ Featured in {event.city}
-            </Link>
-          )}
-          {img ? (
-            <Image src={img} alt={event.title} fill priority className="ehl-img" style={{ objectFit: "cover" }} />
-          ) : (
-            <div className="ehl-img-placeholder">
-              <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
-                <rect width="400" height="500" fill="var(--ink)" />
-                <circle cx="200" cy="250" r="100" fill="var(--ochre)" opacity="0.1" />
+      {/* ── DETAIL HERO ── */}
+      <section className="evt-detail-hero">
+        <div className="evt-detail-img-col">
+          <div className="evt-detail-img">
+            {citySlug && (
+              <Link href={`/events/${citySlug}`} className="evt-detail-featured-pill">
+                ↗ Featured in {event.city}
+              </Link>
+            )}
+            {img ? (
+              <Image src={img} alt={event.title} fill priority style={{ objectFit: "cover" }} />
+            ) : (
+              <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <rect width="400" height="500" fill="var(--evt-ink)" />
+                <circle cx="200" cy="250" r="100" fill="var(--evt-ochre)" opacity="0.1" />
               </svg>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Right: info + RSVP */}
-        <div className="ehl-info-col">
-          <Link href="/events" className="ehl-back">← Happenings</Link>
+        <div className="evt-detail-info-col">
+          <Link href="/events" className="evt-detail-back">← Happenings</Link>
 
-          <div className="ehl-cat-pill">{cat} · <span className={`ehl-status ${eventStatus.toLowerCase()}`}>● {eventStatus}</span></div>
+          <div className="evt-detail-badges">
+            <span className="evt-detail-cat-pill">{cat}</span>
+            <span className="evt-detail-status">
+              <span className="evt-status-dot" />
+              {eventStatus}
+            </span>
+          </div>
 
-          <h1 className="ehl-title">{event.title}</h1>
-          {event.tagline && <p className="ehl-tagline">{event.tagline}</p>}
+          <h1 className="evt-detail-title">{event.title}</h1>
+          {event.tagline && <p className="evt-detail-tagline">{event.tagline}</p>}
 
-          {/* Date chip */}
-          <div className="ehl-date-chip">
-            <div className="ehl-date-icon">
-              <span className="ehl-date-month">{monthShort}</span>
-              <span className="ehl-date-day">{dayNum}</span>
+          {/* Date row */}
+          <div className="evt-meta-row">
+            <div className="evt-meta-icon-box">
+              <span className="evt-meta-icon-month">{monthShort}</span>
+              <span className="evt-meta-icon-day">{dayNum}</span>
             </div>
             <div>
-              <p className="ehl-date-weekday">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-              <p className="ehl-date-time">{event.openingHours || "Time TBA"}</p>
+              <p className="evt-meta-text-main">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
+              <p className="evt-meta-text-sub">{timeFormatted || event.openingHours || "Time TBA"}</p>
             </div>
           </div>
 
-          {/* Venue chip */}
-          <div className="ehl-venue-chip">
-            <span className="ehl-venue-pin">📍</span>
+          {/* Venue row */}
+          <div className="evt-meta-row">
+            <div className="evt-meta-icon-box">
+              <span style={{ fontSize: "18px" }}>📍</span>
+            </div>
             <div>
-              <p className="ehl-venue-name">{event.location || "Venue TBA"}</p>
-              {venueAddress && <p className="ehl-venue-addr">{venueAddress}</p>}
+              <p className="evt-meta-text-main">{event.location || "Venue TBA"}</p>
+              {venueAddress && <p className="evt-meta-text-sub">{venueAddress}</p>}
             </div>
           </div>
 
           {/* Registration box */}
-          <div className="ehl-register-box">
-            <div className="ehl-register-label">Event Details</div>
+          <div className="evt-register-box">
+            <div>
+              <div className="evt-register-label">Event Details</div>
+              {event.ticketingUrl ? (
+                <p className="evt-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
+              ) : (
+                <p className="evt-register-note">Secure your place below.</p>
+              )}
+            </div>
             {event.ticketingUrl ? (
-              <>
-                <p className="ehl-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
-                <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="ehl-register-btn">
-                  Find Out More →
-                </a>
-              </>
+              <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="evt-register-btn">
+                Find Out More →
+              </a>
             ) : (
-              <>
-                <p className="ehl-register-note">Secure your place below.</p>
-                <a href="#rsvp-section" className="ehl-register-btn">RSVP Now →</a>
-              </>
+              <a href="#rsvp-section" className="evt-register-btn">RSVP Now →</a>
             )}
           </div>
         </div>
       </section>
 
-      {/* ── TICKER ── */}
-      <div className="ticker-wrap">
-        <div className="ticker-track">
-          <span className="accent">{event.title}</span>
-          {host?.title && <span>{host.title}</span>}
-          <span className="accent">★</span>
-          {event.location && <span>{event.location}</span>}
-          <span className="accent">{dateFormatted}</span>
-          {hasShowcase ? <span>{event.showcase.length} Works</span> : <span>Culture Archive</span>}
-          <span className="accent">★</span>
-          {event.rsvpCapacity ? <span>Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
-          {membersNote && <span>★ Members: early access</span>}
-          <span className="accent">★</span>
-          <span>{event.admission || "Free Admission"}</span>
-          <span className="accent">★</span>
-          {/* duplicate for seamless loop */}
-          <span className="accent">{event.title}</span>
-          {host?.title && <span>{host.title}</span>}
-          <span className="accent">★</span>
-          {event.location && <span>{event.location}</span>}
-          <span className="accent">{dateFormatted}</span>
-          {hasShowcase ? <span>{event.showcase.length} Works</span> : <span>Culture Archive</span>}
-          <span className="accent">★</span>
-          {event.rsvpCapacity ? <span>Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
-          {membersNote && <span>★ Members: early access</span>}
-          <span className="accent">★</span>
-          <span>{event.admission || "Free Admission"}</span>
-          <span className="accent">★</span>
+      {/* ── DETAIL TICKER ── */}
+      <div className="evt-detail-ticker">
+        <div className="evt-ticker-container">
+          {["a", "b"].map((variant) => (
+            <div key={variant} className={`evt-ticker-track${variant === "b" ? " evt-ticker-track--b" : ""}`} aria-hidden={variant === "b"}>
+              <span className="evt-ticker-item evt-ticker-item--bold">{event.title}</span>
+              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
+              {host?.title && <span className="evt-ticker-item">{host.title}</span>}
+              {host?.title && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
+              {event.location && <span className="evt-ticker-item">{event.location}</span>}
+              {event.location && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
+              <span className="evt-ticker-item evt-ticker-item--bold">{dateFormatted}</span>
+              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
+              {hasShowcase ? <span className="evt-ticker-item">{event.showcase.length} Works</span> : <span className="evt-ticker-item">Culture Archive</span>}
+              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
+              {event.rsvpCapacity ? <span className="evt-ticker-item">Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
+              {event.rsvpCapacity && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
+              {membersNote && <span className="evt-ticker-item evt-ticker-item--gold">Members: early access</span>}
+              {membersNote && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
+              <span className="evt-ticker-item">{event.admission || "Free Admission"}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* ── BODY ── */}
-      <main className="page-body">
+      <main className="evt-body">
         {/* LEFT COLUMN */}
-        <div className="left-col">
-          <div className="section-label">{aboutLabel}</div>
-          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content || "<p>Event details coming soon.</p>") }} />
+        <div className="evt-body-left">
+          <div className="evt-section-label">{aboutLabel}</div>
+          <div className="evt-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content || "<p>Event details coming soon.</p>") }} />
 
           {event.tagline && (
-            <div className="pull-quote">
-              <div className="bar" />
-              <div>
-                <blockquote>"{event.tagline}"</blockquote>
-                {(host?.title || event.attribution) && <cite>— {host?.title || event.attribution}</cite>}
-              </div>
+            <div className="evt-pull-quote">
+              <blockquote>"{event.tagline}"</blockquote>
+              {(host?.title || event.attribution) && <cite>— {host?.title || event.attribution}</cite>}
             </div>
           )}
 
           {hasShowcase && (
-            <div className="works-section">
-              <div className="works-header">
-                {showcaseLabel ? <h3>{showcaseLabel}</h3> : <h3>Selected <em>works</em></h3>}
-                <small>Preview · {event.showcase.length} items</small>
+            <div className="evt-works-section">
+              <div className="evt-section-label" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                {showcaseLabel ? <span>{showcaseLabel}</span> : <span>Selected <em>works</em></span>}
+                <small style={{ fontWeight: 400, textTransform: "none" }}>Preview · {event.showcase.length} items</small>
               </div>
-              <div className="works-grid">
-                {event.showcase.map((item: any, i: number) => (
-                  <div key={i} className="work-card">
-                    <div className="work-frame">
-                      {item.imageUrl && <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />}
-                    </div>
-                    <div className="work-num">N°0{i + 1}</div>
-                    <div className="work-title">{item.title}</div>
-                    <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
-                  </div>
-                ))}
-              </div>
+              <ShowcaseGallery items={event.showcase} />
             </div>
           )}
 
           {hasSchedule && (
-            <div className="programme" id="programme-section">
-              <div className="section-label">Programme</div>
+            <div className="evt-programme" id="programme-section">
+              <div className="evt-section-label">Programme</div>
               {event.schedule.map((item: any, i: number) => (
-                <div key={i} className="programme-row">
-                  <div className="prog-time">{item.time}</div>
-                  <div>
-                    <div className="prog-event-title">{item.title}</div>
-                    <div className="prog-event-desc">{item.description}</div>
-                    <span className={`prog-tag ${item.access === "members_only" ? "members" : "open"}`}>
-                      {item.access?.replace("_", " ")}
-                    </span>
+                <div key={i} className="evt-prog-row">
+                  <div className="evt-prog-time">{item.time}</div>
+                  <div className="evt-prog-body">
+                    <div className="evt-prog-title-row">
+                      <span className="evt-prog-title">{item.title}</span>
+                      <span className={`evt-prog-tag ${item.access === "members_only" ? "evt-prog-tag--members" : "evt-prog-tag--open"}`}>
+                        {item.access?.replace("_", " ")}
+                      </span>
+                    </div>
+                    <div className="evt-prog-desc">{item.description}</div>
                   </div>
                 </div>
               ))}
@@ -333,65 +326,59 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
 
         {/* SIDEBAR */}
-        <aside className="sidebar">
-          <div className="rsvp-card" id="rsvp-section">
-            <div className="top-label">RSVP · {dateFormatted}</div>
+        <aside className="evt-body-sidebar">
+          <div className="evt-sidebar-card" id="rsvp-section">
             {event.ticketingUrl ? (
               <>
-                <h3>More <em>details</em></h3>
-                <div className="event-date">{event.location} · {event.admission || "Paid Entry"}</div>
-                <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ display: "block", textAlign: "center", marginTop: "24px" }}>
+                <h3 className="evt-rsvp-heading">More <em>details</em></h3>
+                <p className="evt-meta-text-sub" style={{ marginBottom: "20px" }}>{event.location} · {event.admission || "Paid Entry"}</p>
+                <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="evt-submit-btn" style={{ display: "flex", textDecoration: "none" }}>
                   Find Out More →
                 </a>
-                <p className="rsvp-small">Opens external partner site</p>
+                <p className="evt-rsvp-members-note">Opens external partner site</p>
               </>
             ) : (
-              <>
-                <h3>Secure your <em>place</em></h3>
-                <div className="event-date">{event.location} · {event.openingHours || "See details"}</div>
-                <RSVPForm
-                  eventSlug={event.slug} eventTitle={event.title}
-                  capacity={event.rsvpCapacity ?? undefined}
-                  spotsRemaining={event.spotsRemaining ?? undefined}
-                  ticketTypes={rsvpTicketTypes} membersNote={membersNote || undefined}
-                />
-              </>
+              <RSVPForm
+                eventSlug={event.slug} eventTitle={event.title}
+                capacity={event.rsvpCapacity ?? undefined}
+                spotsRemaining={event.spotsRemaining ?? undefined}
+                ticketTypes={rsvpTicketTypes} membersNote={membersNote || undefined}
+              />
             )}
           </div>
 
-
           {event.organiserName && (
-            <div className="info-card" style={{ borderLeft: "3px solid #3c3489" }}>
-              <span className="label" style={{ color: "#3c3489" }}>Organised by</span>
+            <div className="evt-sidebar-card evt-sidebar-card--organiser">
+              <span className="evt-sidebar-eyebrow" style={{ color: "#3c3489" }}>Organised by</span>
               {event.organiserSlug ? (
-                <Link href={`/directory/${event.organiserSlug}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#14110d", textDecoration: "none" }}>
-                  <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{event.organiserName}</span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a6f5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                <Link href={`/directory/${event.organiserSlug}`} className="evt-organiser-row" style={{ justifyContent: "space-between", textDecoration: "none" }}>
+                  <span className="evt-organiser-name">{event.organiserName}</span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--evt-mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
                 </Link>
               ) : (
-                <p style={{ fontWeight: 700, margin: 0 }}>{event.organiserName}</p>
+                <p className="evt-organiser-name">{event.organiserName}</p>
               )}
             </div>
           )}
 
           {event.associatedJourney && (
-            <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>
-              <span className="label" style={{ color: "var(--ochre)" }}>★ {event.associatedJourney.title}</span>
-              <p style={{ color: "rgba(243,236,224,0.85)" }}>Join the exclusive journey</p>
-              <Link href={`/origins/${event.associatedJourney.slug}`} style={{ color: "var(--paper)", borderColor: "var(--paper)" }}>
+            <div className="evt-sidebar-card evt-sidebar-card--dark">
+              <span className="evt-sidebar-eyebrow">★ {event.associatedJourney.title}</span>
+              <h4>Join the exclusive journey</h4>
+              <Link href={`/origins/${event.associatedJourney.slug}`} className="evt-outline-pill">
                 View Journey →
               </Link>
             </div>
           )}
 
-          <div className="info-card">
-            <span className="label">{event.pressDetails?.eyebrow || "Press & Media"}</span>
-            <p>{event.pressDetails?.title || "Press enquiries"}</p>
-            <small>
+          <div className="evt-sidebar-card evt-sidebar-card--press">
+            <span className="evt-sidebar-eyebrow">{event.pressDetails?.eyebrow || "Press & Media"}</span>
+            <h4>{event.pressDetails?.title || "Press enquiries"}</h4>
+            <p>
               {event.pressDetails?.content
                 ? event.pressDetails.content.replace(/<[^>]*>/g, "")
                 : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
-            </small>
+            </p>
             {event.pressDetails?.link && (
               <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
             )}
@@ -401,25 +388,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
       {/* ARTIST STRIP */}
       {hasHost && (
-        <section className="artist-strip">
-          <div className="artist-avatar">
-            {host.featuredImage?.node?.sourceUrl && (
-              <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
-            )}
-          </div>
-          <div className="artist-info">
-            <div className="section-label">{artistSectionLabel}</div>
-            <h3>{host.title?.split(" ")[0] || "Featured"} <em>{host.title?.split(" ").slice(1).join(" ") || "Artist"}</em></h3>
-            <div style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(host.excerpt) }} />
-            <Link href={`/directory/${host.slug}`}
-              style={{ display: "inline-block", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", borderBottom: "1px solid var(--ink)", paddingBottom: "2px", textDecoration: "none", color: "var(--ink)" }}>
-              {artistLinkLabel} →
-            </Link>
+        <section className="evt-artist-strip">
+          <div className="evt-artist-card">
+            <div className="evt-artist-avatar" style={{ position: "relative", overflow: "hidden" }}>
+              {host.featuredImage?.node?.sourceUrl && (
+                <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill style={{ objectFit: "cover" }} />
+              )}
+            </div>
+            <div>
+              <span className="evt-artist-eyebrow">{artistSectionLabel}</span>
+              <h3 className="evt-artist-name">{host.title?.split(" ")[0] || "Featured"} <em>{host.title?.split(" ").slice(1).join(" ") || "Artist"}</em></h3>
+              <p className="evt-artist-excerpt" dangerouslySetInnerHTML={{ __html: sanitizeHtml(host.excerpt) }} />
+              <Link href={`/directory/${host.slug}`} className="evt-artist-link">
+                {artistLinkLabel} →
+              </Link>
+            </div>
           </div>
         </section>
       )}
     </div>
   );
 }
-

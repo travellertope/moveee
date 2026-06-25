@@ -20,6 +20,9 @@ class Culture_Newsletter_Send {
         add_action( 'wp_ajax_culture_nl_get_status', array( __CLASS__, 'ajax_get_status' ) );
     }
 
+    const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
+    const ALLOWED_SEGMENTS = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au', 'pro' );
+
     /**
      * Save _culture_nl_list and _culture_nl_segment post meta when the newsletter is saved.
      */
@@ -29,16 +32,24 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
-        $list = sanitize_key( $_POST['culture_nl_list'] ?? 'getmelit' );
-        if ( in_array( $list, $allowed_lists, true ) ) {
+        self::persist_list_meta( $post_id, $_POST['culture_nl_list'] ?? 'getmelit', $_POST['culture_nl_segment'] ?? '' );
+    }
+
+    /**
+     * Validate and persist the target list/segment for a newsletter post.
+     * Shared by save_list_meta() (on post save) and the Send Test / Send Issue
+     * AJAX handlers (so a send always targets whatever is currently selected
+     * in the dropdowns, even if the post hasn't been saved yet).
+     */
+    private static function persist_list_meta( $post_id, $list, $segment ) {
+        $list = sanitize_key( $list );
+        if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
             update_post_meta( $post_id, '_culture_nl_list', $list );
         }
 
         // Segment is optional — empty string means send to all segments of this list.
-        $allowed_segments = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au', 'pro' );
-        $segment = sanitize_key( $_POST['culture_nl_segment'] ?? '' );
-        if ( in_array( $segment, $allowed_segments, true ) ) {
+        $segment = sanitize_key( $segment );
+        if ( in_array( $segment, self::ALLOWED_SEGMENTS, true ) ) {
             if ( $segment ) {
                 update_post_meta( $post_id, '_culture_nl_segment', $segment );
             } else {
@@ -128,6 +139,7 @@ class Culture_Newsletter_Send {
             'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
             'vendor-letter'             => 'The Vendor Letter (waitlist)',
             'origins-field-notes'       => 'Origins Field Notes (waitlist)',
+            'announcements'             => 'Announcements (hidden from frontend archive)',
         );
 
         $segments_config = array(
@@ -143,8 +155,9 @@ class Culture_Newsletter_Send {
 
         // Build counts[list][segment] — empty string segment = whole list total.
         $counts_map = array(
-            'getmelit'     => array( '' => 0 ),
-            'culture-drop' => array( '' => 0 ),
+            'getmelit'      => array( '' => 0 ),
+            'culture-drop'  => array( '' => 0 ),
+            'announcements' => array( '' => 0 ),
         );
 
         if ( is_array( $subscribers ) ) {
@@ -317,30 +330,29 @@ class Culture_Newsletter_Send {
                         <?php esc_html_e( 'Send to All Subscribers', 'culture-community' ); ?>
                     </label>
 
-                    <?php if ( 0 === $sub_count ) : ?>
-                        <p class="culture-nl-notice"><?php esc_html_e( 'No subscribers on this list yet.', 'culture-community' ); ?></p>
+                    <p class="culture-nl-notice js-nl-notice-empty" style="<?php echo 0 === $sub_count ? '' : 'display:none;'; ?>">
+                        <?php esc_html_e( 'No subscribers on this list yet.', 'culture-community' ); ?>
+                    </p>
+                    <p class="culture-nl-notice js-nl-notice-full" style="<?php echo 0 === $sub_count ? 'display:none;' : ''; ?>">
+                        <?php
+                        printf(
+                            /* translators: 1: formatted subscriber count, 2: list name */
+                            esc_html__( 'Will email %1$s %2$s subscribers in batches of 50 per minute via your connected SMTP.', 'culture-community' ),
+                            '<strong class="js-nl-notice-count">' . number_format( $sub_count ) . '</strong>',
+                            '<span class="js-nl-notice-list">' . esc_html( $lists_config[ $nl_list ] ?? '' ) . '</span>'
+                        );
+                        ?>
+                    </p>
+                    <?php if ( 'sent' === $status ) : ?>
+                        <button type="button" class="button button-secondary js-nl-send-btn" style="width:100%;" <?php disabled( 0 === $sub_count ); ?>>
+                            <span class="dashicons dashicons-controls-repeat" style="margin-top:3px;"></span>
+                            <?php esc_html_e( 'Resend to All Subscribers', 'culture-community' ); ?>
+                        </button>
                     <?php else : ?>
-                        <p class="culture-nl-notice">
-                            <?php
-                            printf(
-                                /* translators: 1: formatted subscriber count, 2: list name */
-                                esc_html__( 'Will email %1$s %2$s subscribers in batches of 50 per minute via your connected SMTP.', 'culture-community' ),
-                                '<strong>' . number_format( $sub_count ) . '</strong>',
-                                esc_html( $lists_config[ $nl_list ] ?? '' )
-                            );
-                            ?>
-                        </p>
-                        <?php if ( 'sent' === $status ) : ?>
-                            <button type="button" class="button button-secondary js-nl-send-btn" style="width:100%;">
-                                <span class="dashicons dashicons-controls-repeat" style="margin-top:3px;"></span>
-                                <?php esc_html_e( 'Resend to All Subscribers', 'culture-community' ); ?>
-                            </button>
-                        <?php else : ?>
-                            <button type="button" class="button button-primary js-nl-send-btn" style="width:100%;height:36px;line-height:34px;">
-                                <span class="dashicons dashicons-megaphone" style="margin-top:7px;"></span>
-                                <?php esc_html_e( 'Send Issue', 'culture-community' ); ?>
-                            </button>
-                        <?php endif; ?>
+                        <button type="button" class="button button-primary js-nl-send-btn" style="width:100%;height:36px;line-height:34px;" <?php disabled( 0 === $sub_count ); ?>>
+                            <span class="dashicons dashicons-megaphone" style="margin-top:7px;"></span>
+                            <?php esc_html_e( 'Send Issue', 'culture-community' ); ?>
+                        </button>
                     <?php endif; ?>
                 </div>
 
@@ -373,6 +385,12 @@ class Culture_Newsletter_Send {
             wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'culture-community' ) ) );
         }
 
+        // The dropdowns may not have been saved to post meta yet (no "Update" click) —
+        // persist whatever is currently selected so the test reflects the visible UI.
+        if ( isset( $_POST['list'] ) ) {
+            self::persist_list_meta( $post_id, $_POST['list'], $_POST['segment'] ?? '' );
+        }
+
         $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email );
 
         if ( $sent ) {
@@ -399,6 +417,12 @@ class Culture_Newsletter_Send {
 
         if ( ! $post_id ) {
             wp_send_json_error( array( 'message' => __( 'Invalid post.', 'culture-community' ) ) );
+        }
+
+        // Same as the test-send handler — make sure the actual send targets
+        // whatever list/segment is currently selected, not stale saved meta.
+        if ( isset( $_POST['list'] ) ) {
+            self::persist_list_meta( $post_id, $_POST['list'], $_POST['segment'] ?? '' );
         }
 
         $count = Culture_Newsletter_Queue::schedule_send( $post_id );

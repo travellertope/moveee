@@ -19,6 +19,7 @@ interface TimelineEvent {
   featuredImage?: { node?: { sourceUrl?: string } };
   eventImageUrl?: string;
   cultureInterests?: { nodes: Array<{ name: string; slug: string }> };
+  href?: string;
 }
 
 interface SidebarCity  { slug: string; name: string; country: string; count: number }
@@ -63,6 +64,19 @@ function fmtDayHeading(raw?: string): { short: string; weekday: string } {
   };
 }
 
+function fmtTimeRange(eventDate?: string, endDate?: string): string {
+  const fmt = (raw?: string) => {
+    if (!raw) return "";
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" }).toUpperCase();
+  };
+  const start = fmt(eventDate);
+  const end   = fmt(endDate);
+  if (!start) return "";
+  return end ? `${start} – ${end}` : start;
+}
+
 function groupByDay(events: TimelineEvent[]) {
   const map = new Map<string, { heading: { short: string; weekday: string }; events: TimelineEvent[] }>();
   for (const e of events) {
@@ -85,11 +99,32 @@ function groupByMonth(events: TimelineEvent[]) {
   return Array.from(map.entries()).map(([month, evs]) => ({ month, days: groupByDay(evs) }));
 }
 
-const CAT_ICONS: Record<string, string> = {
-  music: "♪", film: "◉", "visual-arts": "◈", fashion: "✦",
-  food: "◆", literature: "▬", design: "◻", performance: "★",
-  community: "◇", tech: "○",
+const CAT_DOT: Record<string, string> = {
+  music: "#C5491F",
+  film: "#1976D2",
+  "visual-arts": "#6B48A8",
+  literature: "#78350F",
+  food: "#B38238",
+  community: "#2D6A4F",
 };
+
+function CatIcon({ catSlug }: { catSlug: string }) {
+  if (catSlug === "film") {
+    return (
+      <svg className="evt-row-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    );
+  }
+  if (catSlug === "visual-arts") {
+    return (
+      <svg className="evt-row-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    );
+  }
+  return <span className="evt-row-thumb-icon evt-row-thumb-glyph">★</span>;
+}
 
 function EventRow({ event }: { event: TimelineEvent }) {
   const img     = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
@@ -97,40 +132,33 @@ function EventRow({ event }: { event: TimelineEvent }) {
   const cat     = catNode?.name || "";
   const catSlug = catNode?.slug || "default";
   const place   = event.city || event.location || "";
-  const dateRange = fmtDateRange(event.eventDate || event.date, event.endDate);
+  const timeRange = fmtTimeRange(event.eventDate, event.endDate);
+  const free = !event.admission || /free/i.test(event.admission);
 
   return (
-    <Link href={`/events/${event.slug}`} className="etl-row">
-      <div className="etl-thumb">
-        <Image
-          src={img || getCategoryImage(catSlug)}
-          alt={event.title}
-          fill
-          style={{ objectFit: "cover" }}
-        />
-        {/* gradient + icon overlay shown only if image fails — CSS hides by default */}
-        <div
-          className="etl-thumb-ph"
-          data-cat-ph={catSlug}
-          style={{ background: getCategoryGradient(catSlug) }}
-        >
-          <div className="ev-cat-ph">
-            <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
-          </div>
+    <Link href={event.href || `/events/${event.slug}`} className="evt-row">
+      <div className="evt-row-thumb" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
+        {img ? (
+          <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
+        ) : (
+          <CatIcon catSlug={catSlug} />
+        )}
+      </div>
+      <div className="evt-row-body">
+        <h4 className="evt-row-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+        <div className="evt-row-meta">
+          {place && <span>◍ {place}</span>}
+          {place && cat && <span> · </span>}
+          {cat && <span>{cat}</span>}
         </div>
       </div>
-      <div className="etl-body">
-        <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
-        <div className="etl-meta">
-          {place && <span className="etl-place">◍ {place}</span>}
-          {cat && <span className="etl-cat">{cat}</span>}
-        </div>
+      <div className="evt-row-right">
+        {timeRange && <span className="evt-row-time">{timeRange}</span>}
+        <span className={`evt-row-price${free ? " evt-row-price--free" : ""}`}>
+          {free ? "Free" : event.admission}
+        </span>
       </div>
-      <div className="etl-right">
-        <span className="etl-date">{dateRange}</span>
-        {event.admission && <span className="etl-admission">{event.admission}</span>}
-      </div>
-      <span className="etl-arrow">→</span>
+      <span className="evt-row-arrow">→</span>
     </Link>
   );
 }
@@ -146,26 +174,25 @@ export default function EventTimeline({
   const months = groupByMonth(events);
 
   return (
-    <div className="etl-wrap">
-      {/* ── Main timeline ── */}
-      <div className="etl-main">
+    <div className="evt-timeline-wrap">
+      <div className="evt-timeline-main">
         {events.length === 0 ? (
-          <p className="etl-empty">{emptyMessage}</p>
+          <p className="evt-empty">{emptyMessage}</p>
         ) : (
           months.map(({ month, days }) => (
-            <div key={month} className="etl-month">
-              <div className="etl-month-heading">
-                <span className="etl-month-dot" />
-                <span className="etl-month-label">{month}</span>
+            <div key={month} className="evt-month">
+              <div className="evt-month-heading">
+                <span className="evt-month-dot" />
+                <span className="evt-month-label">{month}</span>
               </div>
 
               {days.map(({ heading, events: dayEvents }, di) => (
-                <div key={di} className="etl-day">
-                  <div className="etl-day-heading">
-                    <span className="etl-day-short">{heading.short}</span>
-                    <span className="etl-day-weekday">{heading.weekday}</span>
+                <div key={di} className="evt-day">
+                  <div className="evt-day-heading">
+                    <span className="evt-day-num">{heading.short}</span>
+                    <span className="evt-day-weekday">{heading.weekday}</span>
                   </div>
-                  <div className="etl-day-rows">
+                  <div className="evt-day-rows">
                     {dayEvents.map((e) => <EventRow key={e.id} event={e} />)}
                   </div>
                 </div>
@@ -175,36 +202,35 @@ export default function EventTimeline({
         )}
       </div>
 
-      {/* ── Sidebar ── */}
-      <aside className="etl-sidebar">
+      <aside className="evt-timeline-sidebar">
         {sidebarCities.length > 0 && (
-          <div className="etl-sb-block">
-            <div className="etl-sb-label">Cities</div>
+          <div className="evt-sb-block">
+            <div className="evt-sb-label">Cities</div>
             {sidebarCities.map((c) => (
               <Link
                 key={c.slug}
                 href={`/events/${c.slug}`}
-                className={`etl-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
+                className={`evt-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
               >
-                <span className="etl-sb-name">{c.name}</span>
-                <span className="etl-sb-count">{c.count}</span>
+                <span className="evt-sb-name">{c.name}</span>
+                <span className="evt-sb-count">{c.count}</span>
               </Link>
             ))}
-            <Link href="/events" className="etl-sb-all">All cities →</Link>
+            <Link href="/events" className="evt-sb-all">All cities →</Link>
           </div>
         )}
 
         {sidebarCategories.length > 0 && (
-          <div className="etl-sb-block">
-            <div className="etl-sb-label">Categories</div>
+          <div className="evt-sb-block">
+            <div className="evt-sb-label">Categories</div>
             {sidebarCategories.map((c) => (
               <Link
                 key={c.slug}
                 href={`/events/${c.slug}`}
-                className={`etl-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
+                className={`evt-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
               >
-                <span className="etl-sb-icon">{c.icon}</span>
-                <span className="etl-sb-name">{c.name}</span>
+                <span className="evt-sb-dot" style={{ background: CAT_DOT[c.slug] || "var(--evt-gold)" }} />
+                <span className="evt-sb-name">{c.name}</span>
               </Link>
             ))}
           </div>

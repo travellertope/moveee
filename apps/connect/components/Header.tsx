@@ -25,8 +25,25 @@ export default function ConnectHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navTop, setNavTop] = useState(60);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const user = session?.user as any;
+
+  // Keep the mobile drawer pinned to the header's real bottom edge — the
+  // header isn't always at viewport y:0 (the app download banner can sit
+  // above it), so a hardcoded `top: 60px` overlaps the header whenever the
+  // banner is showing and the page hasn't scrolled past it yet.
+  useEffect(() => {
+    function measure() {
+      if (headerRef.current) {
+        setNavTop(headerRef.current.getBoundingClientRect().bottom);
+      }
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [mobileOpen]);
 
   // Close user dropdown on outside click
   useEffect(() => {
@@ -58,7 +75,7 @@ export default function ConnectHeader() {
 
   return (
     <>
-      <header className="ch-header">
+      <header className="ch-header" ref={headerRef}>
         <div className="ch-inner">
           {/* Logo */}
           <Link href={SITE_URL} className="ch-logo">
@@ -93,16 +110,7 @@ export default function ConnectHeader() {
             <Link
               href="/discover"
               aria-label="Discover"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px",
-                display: "flex",
-                alignItems: "center",
-                color: "var(--ink)",
-                lineHeight: 1,
-              }}
+              className="ch-icon-btn"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -113,16 +121,7 @@ export default function ConnectHeader() {
               type="button"
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px",
-                display: "flex",
-                alignItems: "center",
-                color: "var(--ink)",
-                lineHeight: 1,
-              }}
+              className="ch-icon-btn"
             >
               {theme === "dark" ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -213,6 +212,7 @@ export default function ConnectHeader() {
         id="ch-mobile-nav"
         className={`ch-mobile-nav${mobileOpen ? " open" : ""}`}
         aria-label="Mobile navigation"
+        style={{ top: navTop }}
       >
         {NAV.map((item) => (
           <Link
@@ -237,25 +237,6 @@ export default function ConnectHeader() {
           </>
         )}
 
-        {status === "authenticated" && user && (
-          <>
-            <div className="ch-mobile-nav-divider" />
-            <Link href="/member" className="ch-mobile-nav-link">My Dashboard</Link>
-            <Link href="/member/wallet" className="ch-mobile-nav-link">Wallet</Link>
-            <Link href="/member/settings" className="ch-mobile-nav-link">Settings</Link>
-            {user.isVendor && (
-              <Link href="/vendor/dashboard" className="ch-mobile-nav-link">Vendor Dashboard</Link>
-            )}
-            <div className="ch-mobile-nav-divider" />
-            <button
-              className="ch-mobile-nav-link ch-user-item--danger"
-              style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
-              onClick={() => signOut({ callbackUrl: "/login" })}
-            >
-              Sign out
-            </button>
-          </>
-        )}
       </nav>
     </>
   );

@@ -450,6 +450,7 @@ class Culture_Newsletter_Queue {
             'culture-narratives-digest' => 'Culture Narratives Digest',
             'vendor-letter'             => 'The Vendor Letter',
             'origins-field-notes'       => 'Origins Field Notes',
+            'announcements'             => 'Announcements',
         );
         $nl_label  = $nl_labels[ $nl_list ] ?? 'GetMeLit';
 

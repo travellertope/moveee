@@ -22,6 +22,11 @@ const NEWSLETTERS = [
     name: "Events & Experiences",
     desc: "As needed — first access to new events and exclusive member invites.",
   },
+  {
+    id: "announcements",
+    name: "Announcements",
+    desc: "Occasional — general site notices and operational updates from the Moveee team.",
+  },
 ];
 
 export default function NewsletterPreferences({ email }: Props) {
@@ -39,12 +44,13 @@ export default function NewsletterPreferences({ email }: Props) {
           "getmelit": true,
           "culture-drop": true,
           "events": true,
+          "announcements": true,
         });
         setLoadState("ready");
       })
       .catch(() => {
         // Fall back to all-on so we don't wrongly unsubscribe anyone
-        setSubscribed({ "getmelit": true, "culture-drop": true, "events": true });
+        setSubscribed({ "getmelit": true, "culture-drop": true, "events": true, "announcements": true });
         setLoadState("ready");
       });
   }, [email]);

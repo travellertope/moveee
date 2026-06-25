@@ -3,6 +3,7 @@ import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./homepage.css";
 import "./moveee-zone.css";
+import "./features.css";
 import "./editorial.css";
 import "./not-found.css";
 import "./legal.css";

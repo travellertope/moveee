@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Dark Mode Full App</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Strict Dark Mode Palette per prompt specs
+                        'dm-paper': '#242018',
+                        'dm-paper-warm': '#1a1612',
+                        'dm-paper-deep': '#2d2820',
+                        'dm-ink': '#f3ece0',
+                        'dm-ink-soft': '#d4c9b8',
+                        'dm-mute': '#9e9288',
+                        'dm-rule': 'rgba(61,53,48,.6)',
+                        'dm-rule-dark': '#3d3530',
+                        'dm-ochre': '#d4603a',
+                        'dm-ochre-deep': '#a83f20',
+                        'dm-gold': '#c9963f',
+                        'dm-moss': '#3d4a2a'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'dm-card': '0 1px 3px rgba(0, 0, 0, 0.4)',
+                        'dm-modal': '0 20px 60px rgba(0, 0, 0, 0.55)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #0A0807; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="font-sans text-dm-pri min-h-screen">
+
+    <div class="flex flex-col gap-16 max-w-[1500px] mx-auto pb-12">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: THEME TOGGLE STATES                   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-dm-sec font-mono text-[11px] uppercase tracking-wider font-bold">1. Theme Toggle States</span>
+            <div class="flex gap-8 items-center bg-[#1A1612] p-8 rounded-xl border border-[#3D3530]">
+                
+                <!-- Light Mode State -->
+                <div class="flex flex-col items-center gap-3 p-6 bg-white rounded-lg border border-[#E8E2D8] shadow-[0_1px_3px_rgba(20,17,13,.08)]">
+                    <button class="w-[40px] h-[40px] rounded-full flex items-center justify-center text-[#14110D] hover:bg-[#F5F5F5] transition-colors border border-transparent">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </button>
+                    <span class="font-mono text-[10px] text-[#7A6F5C]">Light Mode<br>(text: #14110d)</span>
+                </div>
+
+                <div class="w-[1px] h-[40px] bg-[#3D3530]"></div>
+
+                <!-- Dark Mode State -->
+                <div class="flex flex-col items-center gap-3 p-6 bg-[#2d2820] rounded-lg border border-[#3d3530] shadow-[0_1px_3px_rgba(0,0,0,.4)]">
+                    <button class="w-[40px] h-[40px] rounded-full flex items-center justify-center text-[#f3ece0] hover:bg-[#3d3530] transition-colors border border-transparent">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                    <span class="font-mono text-[10px] text-[#9e9288]">Dark Mode<br>(text: #f3ece0)</span>
+                </div>
+
+                <!-- Annotation -->
+                <div class="ml-4 max-w-[300px] border-l-2 border-[#d4603a] pl-4 py-2">
+                    <p class="font-sans text-[13px] text-[#d4c9b8] leading-relaxed">
+                        Binary toggle only. Clicking switches <code class="bg-[#2d2820] px-1 text-[11px] rounded text-[#f3ece0]">[data-theme="dark"]</code> on the HTML root and updates <code class="bg-[#2d2820] px-1 text-[11px] rounded text-[#f3ece0]">localStorage</code>. No "System Theme" option exists in the UI. Boot script prevents FOUC.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: CONNECT FEED (THE BUG)                -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-dm-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. Connect Feed (Dark Mode Adaptation Bug)</span>
+            
+            <div class="desktop-screen bg-[#1a1612] rounded-[16px] border-[8px] border-[#14110d] overflow-hidden relative flex flex-col shadow-2xl min-h-[800px]">
+                
+                <!-- HEADER (Correctly Dark) -->
+                <header class="h-[64px] flex items-center justify-between px-[32px] bg-[#2d2820] border-b border-[#3d3530] z-20 shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
+                    <div class="flex items-center gap-[32px]">
+                        <div class="flex items-center">
+                            <span class="font-serif text-[22px] font-bold text-[#f3ece0] tracking-tight leading-none mt-1">moveee</span>
+                            <span class="font-sans text-[9px] font-bold text-[#c9963f] uppercase tracking-widest ml-1 mt-[2px]">connect</span>
+                        </div>
+                        <nav class="flex items-center gap-[24px]">
+                            <a href="#" class="font-sans text-[14px] font-bold text-[#f3ece0] bg-[#1a1612] px-4 py-2 rounded-md">Feed</a>
+                            <a href="#" class="font-sans text-[14px] font-medium text-[#9e9288] hover:text-[#f3ece0] px-4 py-2 rounded-md">Events</a>
+                        </nav>
+                    </div>
+                    <div class="flex items-center gap-[16px]">
+                        <button class="text-[#f3ece0] hover:bg-[#3d3530] p-2 rounded-full transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
+                        <div class="w-[32px] h-[32px] rounded-full border border-[#3d3530] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                    </div>
+                </header>
+
+                <div class="w-full max-w-[1080px] mx-auto grid grid-cols-[190px_1fr_220px] bg-transparent mt-[32px] gap-[24px]">
+                    
+                    <!-- LEFT RAIL (Correctly Dark) -->
+                    <div class="flex flex-col sticky top-[32px] h-max">
+                        <div class="mb-[32px]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-[#9e9288] tracking-[0.15em] mb-[12px] pl-[12px]">CONTENT TYPE</h2>
+                            <ul class="flex flex-col">
+                                <li><button class="w-full text-left font-sans text-[13px] font-bold text-[#d4603a] py-[6px] pl-[10px] border-l-[2px] border-[#d4603a] bg-[#d4603a]/10 rounded-r-md">All</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-[#d4c9b8] py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-[#f3ece0]">Pulse</button></li>
+                                <li><button class="w-full text-left font-sans text-[13px] text-[#d4c9b8] py-[6px] pl-[10px] border-l-[2px] border-transparent hover:text-[#f3ece0]">Directory</button></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- CENTER TIMELINE (THE BUG: Light Mode Cards on Dark BG) -->
+                    <div class="flex flex-col gap-[24px] pb-[64px] relative">
+                        
+                        <!-- Callout overlay -->
+                        <div class="absolute -left-[60px] top-[140px] z-50 flex items-center gap-3">
+                            <div class="bg-[#d4603a] text-white p-3 rounded-lg shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] max-w-[280px]">
+                                <p class="font-sans text-[13px] font-bold leading-snug">FeedCard.tsx hardcodes hex colors — does not adapt to dark mode (real bug, not a design choice).</p>
+                            </div>
+                            <div class="w-0 h-0 border-t-[8px] border-t-transparent border-l-[12px] border-l-[#d4603a] border-b-[8px] border-b-transparent"></div>
+                        </div>
+
+                        <!-- Pill Strip (Correctly Dark shell, mostly) -->
+                        <div class="w-full flex items-center gap-[8px] overflow-x-auto hide-scrollbar z-30 mb-2">
+                            <button class="h-[32px] px-[16px] rounded-full bg-[#d4603a] text-white font-sans text-[13px] font-bold shrink-0">All</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-[#242018] border border-rgba(61,53,48,.6) text-[#d4c9b8] font-sans text-[13px] shrink-0">Music</button>
+                        </div>
+
+                        <!-- INCORRECT CARD 1 (Hardcoded White/Light tokens) -->
+                        <article class="bg-[#ffffff] border border-[#e8e2d8] rounded-[12px] pb-[24px] flex flex-col shadow-[0_1px_3px_rgba(20,17,13,.08)]">
+                            <div class="flex gap-[16px] p-[16px]">
+                                <div class="flex-1 flex flex-col">
+                                    <span class="font-mono text-[9px] font-bold text-[#c5491f] uppercase tracking-[0.1em] mb-[4px]">The Culture Brief</span>
+                                    <h3 class="font-serif text-[18px] font-bold text-[#14110d] leading-[1.3] line-clamp-2">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h3>
+                                    <p class="font-sans text-[14px] text-[#3a342b] line-clamp-2 mt-[6px] leading-[1.6]">Local designers are bypassing traditional European houses to build direct relationships with a new global elite.</p>
+                                </div>
+                                <div class="w-[120px] h-[120px] rounded-lg bg-gradient-to-tr from-[#D18E70] to-[#E2A684] shrink-0 relative overflow-hidden mt-1"></div>
+                            </div>
+                            <div class="flex items-center justify-between px-[16px] border-t border-[#e8e2d8] pt-[16px] mt-2">
+                                <div class="flex items-center gap-[8px]">
+                                    <div class="w-[24px] h-[24px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                                    <span class="font-sans text-[13px] font-bold text-[#14110d]">Funmi Osei</span>
+                                </div>
+                                <span class="font-mono text-[11px] text-[#c8bfb0]">· 6 min read</span>
+                            </div>
+                        </article>
+
+                        <!-- INCORRECT CARD 2 (Community - Hardcoded White/Light tokens) -->
+                        <article class="bg-[#ffffff] rounded-xl shadow-[0_1px_3px_rgba(20,17,13,.08)] p-[20px] flex flex-col border border-[#e8e2d8]">
+                            <div class="flex items-center justify-between mb-[12px]">
+                                <div class="flex items-center gap-[12px]">
+                                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-bl from-teal-400 to-blue-500 shrink-0 border-[2px] border-[#B38238] p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                                    <div class="flex flex-col">
+                                        <span class="font-sans text-[15px] font-bold text-[#14110d] leading-tight">David K.</span>
+                                        <div class="flex items-center gap-1 mt-[2px]">
+                                            <span class="font-sans text-[13px] text-[#7a6f5c]">@david.k</span>
+                                            <span class="bg-[#b38238] px-1.5 py-0.5 rounded-sm text-white font-sans text-[8px] font-bold tracking-widest uppercase">PRO</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="font-mono text-[11px] text-[#c8bfb0]">· 3d</span>
+                            </div>
+
+                            <div class="mb-[8px]">
+                                <!-- Hardcoded light badge -->
+                                <span class="bg-[#fef3e2] text-[#b38238] px-[10px] py-[4px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider inline-block">💎 HIDDEN GEM</span>
+                            </div>
+
+                            <h3 class="font-serif text-[18px] font-bold text-[#14110d] mt-[4px]">Bisi Ceramics — Lagos Island</h3>
+                            
+                            <p class="font-sans text-[15px] text-[#3a342b] leading-[1.6] mt-[12px]">
+                                Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look.
+                            </p>
+                        </article>
+
+                    </div>
+
+                    <!-- RIGHT SIDEBAR (Correctly Dark) -->
+                    <div class="flex flex-col sticky top-[32px] h-max gap-[32px]">
+                        <!-- Trending List -->
+                        <div class="bg-[#242018] rounded-xl p-[20px] border border-[#3d3530] shadow-[0_1px_3px_rgba(0,0,0,.4)]">
+                            <h2 class="font-sans text-[9px] font-bold uppercase text-[#9e9288] tracking-[0.15em] mb-[16px]">HOT THIS WEEK 🔥</h2>
+                            <div class="flex flex-col gap-[16px]">
+                                <div class="border-l-[2px] border-[#d4603a] pl-[10px] flex flex-col cursor-pointer group">
+                                    <h3 class="font-sans text-[13px] font-bold text-[#f3ece0] leading-tight line-clamp-2 hover:text-[#d4603a] transition-colors">Tems Announces Third Studio Album, Coming This October</h3>
+                                    <span class="font-mono text-[10px] text-[#9e9288] mt-[4px]">241 reactions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: MEMBER DASHBOARD (CORRECT DARK MODE)  -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-dm-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Member Dashboard (Correct Implementation)</span>
+            
+            <div class="desktop-screen bg-[#1a1612] rounded-[16px] border-[8px] border-[#14110d] overflow-hidden relative flex flex-col shadow-2xl min-h-[800px]">
+                
+                <!-- HEADER -->
+                <header class="h-[64px] flex items-center justify-between px-[32px] bg-[#2d2820] border-b border-[#3d3530] z-20 shrink-0">
+                    <span class="font-serif text-[20px] font-bold text-[#f3ece0] tracking-tight leading-none mt-1">moveee</span>
+                    <nav class="flex items-center gap-[24px]">
+                        <a href="#" class="font-sans text-[14px] text-[#9e9288] hover:text-[#f3ece0]">Feed</a>
+                        <a href="#" class="font-sans text-[14px] text-[#9e9288] hover:text-[#f3ece0]">Events</a>
+                        <a href="#" class="font-sans text-[14px] font-bold text-[#f3ece0] bg-[#1a1612] px-4 py-2 rounded-md">My Account</a>
+                    </nav>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[80px]">
+                    <!-- HERO STRIP -->
+                    <div class="w-full bg-[#242018] pt-[48px] pb-[32px] px-[64px] flex items-center border-b border-[#3d3530]">
+                        <div class="w-[120px] h-[120px] rounded-full border-[3px] border-[#c9963f] p-[3px] bg-[#242018] shrink-0">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        </div>
+                        <div class="flex flex-col ml-[24px]">
+                            <span class="font-mono text-[11px] font-bold text-[#d4603a] uppercase tracking-widest mb-[4px]">The Moveee — Culture Community</span>
+                            <div class="flex items-center gap-[12px] mb-[6px]">
+                                <h1 class="font-serif text-[40px] font-bold text-[#f3ece0] leading-none">Zara Mensah</h1>
+                            </div>
+                            <div class="flex items-center gap-[8px]">
+                                <span class="bg-[#c9963f] text-[#14110d] px-[10px] py-[2px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider">Moveee Pro</span>
+                                <span class="font-sans text-[15px] text-[#9e9288]">· 📍 London, UK</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5-STAT ROW -->
+                    <div class="w-full bg-[#2d2820] px-[64px] py-[24px] border-b border-[rgba(61,53,48,.6)] shadow-inner">
+                        <div class="grid grid-cols-5 divide-x divide-[#3d3530] w-full">
+                            <div class="flex flex-col px-[24px]">
+                                <span class="font-mono text-[11px] font-bold text-[#9e9288] uppercase tracking-widest mb-[4px]">Moveee Credits</span>
+                                <span class="font-sans text-[32px] font-bold text-[#d4603a] leading-none">1,240</span>
+                            </div>
+                            <div class="flex flex-col px-[24px]">
+                                <span class="font-mono text-[11px] font-bold text-[#9e9288] uppercase tracking-widest mb-[4px]">Points</span>
+                                <span class="font-sans text-[32px] font-bold text-[#c9963f] leading-none">850</span>
+                                <span class="font-sans text-[12px] font-bold text-[#c9963f] mt-[2px]">Taste Maker</span>
+                            </div>
+                            <div class="flex flex-col px-[24px]">
+                                <span class="font-mono text-[11px] font-bold text-[#9e9288] uppercase tracking-widest mb-[4px]">Badges Earned</span>
+                                <span class="font-sans text-[32px] font-bold text-[#f3ece0] leading-none">12<span class="text-[20px] text-[#9e9288] font-medium">/18</span></span>
+                            </div>
+                            <div class="flex flex-col px-[24px]">
+                                <span class="font-mono text-[11px] font-bold text-[#9e9288] uppercase tracking-widest mb-[4px]">Referrals</span>
+                                <span class="font-sans text-[32px] font-bold text-[#f3ece0] leading-none">4</span>
+                            </div>
+                            <div class="flex flex-col px-[24px]">
+                                <span class="font-mono text-[11px] font-bold text-[#9e9288] uppercase tracking-widest mb-[4px]">Membership</span>
+                                <span class="font-sans text-[24px] font-bold text-[#f3ece0] leading-none mt-1">Moveee Pro</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2-COLUMN BODY -->
+                    <div class="max-w-[1200px] w-full mx-auto px-[64px] mt-[48px] flex gap-[40px] items-start">
+                        
+                        <!-- MAIN COLUMN -->
+                        <div class="flex-1 flex flex-col gap-[48px]">
+                            <div class="flex flex-col">
+                                <div class="flex items-baseline justify-between mb-[20px] border-b border-[rgba(61,53,48,.6)] pb-[12px]">
+                                    <h2 class="font-serif text-[24px] font-bold text-[#f3ece0]">Achievements</h2>
+                                </div>
+                                <div class="grid grid-cols-2 gap-[16px]">
+                                    <!-- Earned -->
+                                    <div class="bg-[#242018] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,.4)] p-[16px] flex items-start gap-[12px] border border-[#3d3530]">
+                                        <div class="w-[40px] h-[40px] rounded-full bg-[#1a1612] border border-[#d4603a]/40 flex items-center justify-center text-[20px] shrink-0">🎨</div>
+                                        <div class="flex flex-col">
+                                            <span class="font-sans text-[14px] font-bold text-[#f3ece0]">Taste Maker</span>
+                                            <span class="font-sans text-[12px] text-[#d4c9b8] leading-snug mt-[2px]">Reach 500 Reputation Points.</span>
+                                        </div>
+                                    </div>
+                                    <!-- Locked -->
+                                    <div class="bg-[#2d2820] rounded-xl p-[16px] flex items-start gap-[12px] border border-[rgba(61,53,48,.6)] opacity-60">
+                                        <div class="w-[40px] h-[40px] rounded-full bg-[#1a1612] flex items-center justify-center text-[16px] text-[#9e9288] shrink-0">○</div>
+                                        <div class="flex flex-col">
+                                            <span class="font-sans text-[14px] font-bold text-[#f3ece0]">Culture Authority</span>
+                                            <span class="font-sans text-[12px] text-[#9e9288] leading-snug mt-[2px]">Reach 1,500 Reputation Points.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SIDE COLUMN -->
+                        <div class="w-[320px] flex flex-col gap-[24px] shrink-0 sticky top-[24px] h-max">
+                            <div class="bg-[#242018] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,.4)] p-[24px] border border-[#3d3530] flex flex-col">
+                                <div class="flex items-center gap-[12px] mb-[12px]">
+                                    <span class="text-[24px]">✉️</span>
+                                    <h3 class="font-serif text-[20px] font-bold text-[#f3ece0] leading-tight">Invite a Friend</h3>
+                                </div>
+                                <p class="font-sans text-[14px] text-[#d4c9b8] mb-[16px] leading-[1.5]">
+                                    Share your link. Earn +30 reputation and +5 credits for every member who joins.
+                                </p>
+                            </div>
+                            <!-- Quick Links -->
+                            <div class="bg-[#242018] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,.4)] py-[8px] flex flex-col border border-[#3d3530]">
+                                <a href="#" class="font-sans text-[14px] text-[#d4c9b8] hover:text-[#d4603a] hover:bg-[#1a1612] px-[24px] py-[10px] transition-colors">My Wallet</a>
+                                <a href="#" class="font-sans text-[14px] text-[#d4c9b8] hover:text-[#d4603a] hover:bg-[#1a1612] px-[24px] py-[10px] transition-colors">My Coupons</a>
+                                <a href="#" class="font-sans text-[14px] text-[#d4c9b8] hover:text-[#d4603a] hover:bg-[#1a1612] px-[24px] py-[10px] transition-colors">Notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Callout -->
+            <div class="w-[300px] border-t-2 border-[#4ADE80] pt-2 mt-4 self-center">
+                <p class="font-sans text-[13px] text-white text-center font-bold">
+                    Correctly dark-mode-aware, unlike Frame 2. Tokens map flawlessly to the `mem-card` components.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
+```
+
+```html:Moveee Loading States:loading_states.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Loading States & Skeletons</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #0A0807; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .desktop-screen { width: 1440px; flex-shrink: 0; }
+        
+        /* Specific Shimmer Spec per Prompt */
+        .shimmer-pulse {
+            background: linear-gradient(90deg, #f0ece6 25%, #e8e2da 50%, #f0ece6 75%);
+            background-size: 400% 100%;
+            animation: shimmer-sweep 1.4s ease-in-out infinite;
+            border-radius: 2px;
+        }
+
+        @keyframes shimmer-sweep {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+        
+        /* Dashed callout box */
+        .empty-callout {
+            background-image: repeating-linear-gradient(45deg, #14110d 0, #14110d 2px, transparent 2px, transparent 10px);
+            border: 2px dashed #3D3530;
+        }
+    </style>
+</head>
+<body class="font-sans text-ink min-h-screen">
+
+    <div class="flex flex-col gap-16 max-w-[1500px] mx-auto pb-12">
+
+        <!-- Annotation Block -->
+        <div class="w-full bg-[#1A1612] rounded-xl border-l-[4px] border-[#C5491F] p-[24px]">
+            <p class="font-sans text-[15px] text-[#F3ECE0] leading-relaxed max-w-[800px]">
+                <strong>No shared Skeleton component exists</strong> — each route copy-pastes its own shimmer style object. Hardcoded hex, not dark-mode aware. Most other routes (dashboard, events, shop, notifications, public profile, games) have either no <code class="text-[#c5491f]">loading.tsx</code> or a plain-text-only one — do not assume skeleton coverage beyond pulse and community.
+            </p>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4A: FEED LOADING (PLAIN TEXT)            -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold">4A. Feed Loading (/feed)</span>
+            
+            <div class="desktop-screen bg-white rounded-[16px] border-[8px] border-[#14110d] overflow-hidden relative flex flex-col shadow-2xl min-h-[400px]">
+                
+                <header class="h-[64px] flex items-center justify-between px-[32px] bg-white border-b border-[#E8E2D8] z-20 shrink-0">
+                    <span class="font-serif text-[22px] font-bold text-ink">moveee connect</span>
+                </header>
+
+                <div class="flex-1 flex items-center justify-center bg-paper-warm">
+                    <!-- Real bare-text loading state -->
+                    <span class="font-sans text-[16px] text-ink-soft">Loading feed…</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4B: PULSE SKELETON                       -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold">4B. Pulse Loading (/pulse)</span>
+            
+            <div class="desktop-screen bg-white rounded-[16px] border-[8px] border-[#14110d] overflow-hidden relative flex flex-col shadow-2xl min-h-[800px]">
+                
+                <header class="h-[64px] bg-white border-b border-[#E8E2D8] shrink-0"></header>
+
+                <div class="w-full max-w-[1080px] mx-auto grid grid-cols-[190px_1fr_220px] bg-transparent mt-[32px] gap-[24px] flex-1">
+                    
+                    <!-- Left Sidebar Fake Bars -->
+                    <div class="flex flex-col gap-3">
+                        <div class="h-[12px] w-[80%] shimmer-pulse mb-2"></div>
+                        <div class="h-[10px] w-full shimmer-pulse"></div>
+                        <div class="h-[10px] w-full shimmer-pulse"></div>
+                        <div class="h-[10px] w-[90%] shimmer-pulse"></div>
+                        <div class="h-[10px] w-[95%] shimmer-pulse"></div>
+                        <div class="h-[10px] w-full shimmer-pulse"></div>
+                        
+                        <div class="h-[12px] w-[70%] shimmer-pulse mt-8 mb-2"></div>
+                        <div class="h-[10px] w-full shimmer-pulse"></div>
+                        <div class="h-[10px] w-[85%] shimmer-pulse"></div>
+                        <div class="h-[10px] w-[90%] shimmer-pulse"></div>
+                    </div>
+
+                    <!-- Center Timeline Fake Bars -->
+                    <div class="flex flex-col gap-6">
+                        <div class="h-[40px] w-full shimmer-pulse mb-2"></div> <!-- Tab strip mock -->
+                        
+                        <!-- Post 1 (Image) -->
+                        <div class="flex gap-4">
+                            <div class="flex-1 flex flex-col gap-3 pt-2">
+                                <div class="h-[14px] w-[90%] shimmer-pulse"></div>
+                                <div class="h-[14px] w-[70%] shimmer-pulse"></div>
+                                <div class="h-[10px] w-[40%] shimmer-pulse mt-4"></div>
+                            </div>
+                            <div class="w-[90px] h-[90px] shimmer-pulse shrink-0"></div>
+                        </div>
+                        <div class="h-[1px] w-full bg-[#E8E2D8]"></div>
+
+                        <!-- Post 2 (Text only) -->
+                        <div class="flex gap-4">
+                            <div class="flex-1 flex flex-col gap-3 pt-2">
+                                <div class="h-[14px] w-full shimmer-pulse"></div>
+                                <div class="h-[14px] w-[85%] shimmer-pulse"></div>
+                                <div class="h-[10px] w-[30%] shimmer-pulse mt-4"></div>
+                            </div>
+                        </div>
+                        <div class="h-[1px] w-full bg-[#E8E2D8]"></div>
+
+                        <!-- Post 3 (Image) -->
+                        <div class="flex gap-4">
+                            <div class="flex-1 flex flex-col gap-3 pt-2">
+                                <div class="h-[14px] w-[80%] shimmer-pulse"></div>
+                                <div class="h-[14px] w-[60%] shimmer-pulse"></div>
+                                <div class="h-[10px] w-[50%] shimmer-pulse mt-4"></div>
+                            </div>
+                            <div class="w-[90px] h-[90px] shimmer-pulse shrink-0"></div>
+                        </div>
+                        <div class="h-[1px] w-full bg-[#E8E2D8]"></div>
+
+                        <!-- Post 4 (Text only) -->
+                        <div class="flex gap-4">
+                            <div class="flex-1 flex flex-col gap-3 pt-2">
+                                <div class="h-[14px] w-[95%] shimmer-pulse"></div>
+                                <div class="h-[14px] w-[75%] shimmer-pulse"></div>
+                                <div class="h-[10px] w-[35%] shimmer-pulse mt-4"></div>
+                            </div>
+                        </div>
+                        <div class="h-[1px] w-full bg-[#E8E2D8]"></div>
+                        
+                        <!-- Posts 5-8 omitted for brevity, implied scroll -->
+
+                    </div>
+
+                    <!-- Right Sidebar Fake Bars -->
+                    <div class="flex flex-col gap-3">
+                        <div class="h-[12px] w-[80%] shimmer-pulse mb-2"></div>
+                        <div class="h-[10px] w-full shimmer-pulse mb-4"></div>
+                        <div class="h-[10px] w-[90%] shimmer-pulse mb-4"></div>
+                        <div class="h-[10px] w-full shimmer-pulse mb-4"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4C: COMMUNITY SKELETON                   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold">4C. Community Loading (/community)</span>
+            
+            <div class="desktop-screen bg-white rounded-[16px] border-[8px] border-[#14110d] overflow-hidden relative flex flex-col shadow-2xl min-h-[600px] items-center pt-[64px]">
+                
+                <div class="w-full max-w-[660px] bg-white border border-[#E8E2D8] rounded-[6px] shadow-[0_1px_3px_rgba(20,17,13,.08)] p-[20px] flex flex-col">
+                    
+                    <!-- Avatar + Header -->
+                    <div class="flex items-center gap-[12px] mb-[20px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-pulse shrink-0"></div>
+                        <div class="flex flex-col gap-[8px] flex-1">
+                            <div class="h-[12px] w-[140px] shimmer-pulse"></div>
+                            <div class="h-[10px] w-[80px] shimmer-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="flex flex-col gap-[10px] mb-[24px]">
+                        <div class="h-[12px] w-full shimmer-pulse"></div>
+                        <div class="h-[12px] w-[90%] shimmer-pulse"></div>
+                        <div class="h-[12px] w-[75%] shimmer-pulse"></div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="h-[1px] w-full bg-[#E8E2D8] mb-[20px]"></div>
+
+                    <!-- Fake Comment 1 -->
+                    <div class="flex items-start gap-[12px] mb-[16px]">
+                        <div class="w-[28px] h-[28px] rounded-full shimmer-pulse shrink-0"></div>
+                        <div class="flex flex-col gap-[6px] flex-1 mt-1">
+                            <div class="h-[10px] w-[80px] shimmer-pulse"></div>
+                            <div class="h-[10px] w-[60%] shimmer-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fake Comment 2 -->
+                    <div class="flex items-start gap-[12px] mb-[16px]">
+                        <div class="w-[28px] h-[28px] rounded-full shimmer-pulse shrink-0"></div>
+                        <div class="flex flex-col gap-[6px] flex-1 mt-1">
+                            <div class="h-[10px] w-[90px] shimmer-pulse"></div>
+                            <div class="h-[10px] w-[85%] shimmer-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fake Comment 3 -->
+                    <div class="flex items-start gap-[12px]">
+                        <div class="w-[28px] h-[28px] rounded-full shimmer-pulse shrink-0"></div>
+                        <div class="flex flex-col gap-[6px] flex-1 mt-1">
+                            <div class="h-[10px] w-[70px] shimmer-pulse"></div>
+                            <div class="h-[10px] w-[40%] shimmer-pulse"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: NO SPLASH SCREEN (CALLOUT)            -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+            <span class="text-white font-mono text-[11px] uppercase tracking-wider font-bold">5. Application Boot (Negative Space)</span>
+            
+            <div class="desktop-screen bg-[#0A0807] rounded-[16px] overflow-hidden relative flex flex-col min-h-[400px] items-center justify-center empty-callout p-12">
+                
+                <h3 class="font-serif text-[28px] font-bold text-[#F3ECE0] mb-4">No Root Splash Screen</h3>
+                <p class="font-sans text-[16px] text-[#9E9288] text-center max-w-[600px] leading-relaxed">
+                    <code class="bg-[#1A1612] px-2 py-1 rounded text-[#d4c9b8]">apps/connect</code> has no root <code class="bg-[#1A1612] px-2 py-1 rounded text-[#d4c9b8]">loading.tsx</code> and no splash screen — this pattern does not exist on Site B.<br><br>
+                    (Site A has its own <code class="bg-[#1A1612] px-2 py-1 rounded text-[#d4c9b8]">app/loading.tsx</code>, out of scope here.)
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

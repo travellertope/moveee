@@ -285,7 +285,7 @@
    ═══════════════════════════════════════════════════════ */
 
 .dir-wiki-page {
-  background: var(--dir-bg);
+  background: var(--dir-paper);
   min-height: 100vh;
   padding-bottom: 80px;
 }
@@ -315,6 +315,7 @@
 .dir-wiki-sidebar-card {
   background: #faf7f2;
   border: 1px solid var(--dir-border);
+  border-radius: 8px;
   padding: 18px 16px;
   margin-bottom: 16px;
 }
@@ -331,9 +332,15 @@
 }
 
 .dir-wiki-sidebar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
+  font-style: italic;
   color: var(--dir-muted);
   margin: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--dir-border);
 }
 
 .dir-wiki-related-list {
@@ -363,7 +370,7 @@
   height: 36px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 6px;
   background: var(--dir-border);
 }
 
@@ -391,6 +398,7 @@
 
 .dir-wiki-improve {
   background: var(--dir-dark-bg);
+  border-radius: 8px;
   padding: 16px;
 }
 .dir-wiki-improve-label {
@@ -473,7 +481,7 @@
 .dir-wiki-work-card {
   border: 1px solid var(--dir-border);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .dir-wiki-work-img {
@@ -497,6 +505,7 @@
 
 .dir-wiki-infobox {
   border: 1px solid var(--dir-border);
+  border-radius: 8px;
   background: #faf7f2;
   font-size: 13px;
   overflow: hidden;
@@ -657,8 +666,6 @@
   font-size: 16px;
   line-height: 1.75;
   color: var(--dir-ink);
-  border-top: 1px solid var(--dir-border);
-  padding-top: 36px;
   margin-bottom: 40px;
 }
 
@@ -730,16 +737,18 @@
 }
 
 .dir-improve-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background: var(--dir-ochre);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--dir-dark-ink);
   color: var(--dir-dark-bg);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
-  border-radius: 2px;
+  border-radius: 999px;
+  transition: opacity 0.15s ease;
 }
 .dir-improve-btn:hover {
   opacity: 0.9;
@@ -1090,16 +1099,16 @@
   gap: 6px;
   font-size: 13px;
 }
-.dir-community-stars { color: var(--ochre); letter-spacing: 1px; }
+.dir-community-stars { color: var(--dir-ochre); letter-spacing: 1px; }
 .dir-community-rating-num { font-weight: 700; color: var(--ink); }
 .dir-community-rating-count { color: var(--mute); }
 
 .dir-community-posts { display: flex; flex-direction: column; gap: 16px; }
 
 .dir-community-card {
-  background: var(--paper-deep, #ede8df);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  background: var(--dir-paper);
+  border: 1px solid var(--dir-border);
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -1120,17 +1129,17 @@
 .dir-community-author { font-weight: 600; color: var(--ink); margin-right: 4px; }
 .dir-community-pro-badge {
   display: inline-block;
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--ochre);
+  background: var(--dir-ochre);
   color: #fff;
-  padding: 1px 5px;
+  padding: 2px 4px;
   border-radius: 2px;
   margin-right: 4px;
 }
-.dir-community-star-rating { color: var(--ochre); letter-spacing: 1px; font-size: 13px; margin-left: auto; }
+.dir-community-star-rating { color: var(--dir-ochre); letter-spacing: 1px; font-size: 13px; margin-left: auto; }
 
 .dir-community-content {
   font-size: 14px;
@@ -1150,7 +1159,7 @@
 .dir-community-reaction { font-size: 13px; color: var(--mute); }
 .dir-community-read-more {
   font-size: 0.72rem;
-  color: var(--ochre, #b38238);
+  color: var(--dir-ochre);
   text-decoration: none;
   white-space: nowrap;
   font-weight: 600;
