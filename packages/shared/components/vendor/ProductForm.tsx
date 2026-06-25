@@ -77,16 +77,16 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="vd-form">
-      {error && <div className="vd-form-error">{error}</div>}
-      {success && <div className="vd-form-success">Product saved successfully.</div>}
+    <form ref={formRef} onSubmit={handleSubmit} className="vpf-wrap">
+      {error && <div className="vpf-error">{error}</div>}
+      {success && <div className="vpf-success">Product saved successfully.</div>}
 
-      <div className="vd-form-section">
-        <div className="vd-form-group">
-          <label className="vd-form-label" htmlFor="pf-name">Product name *</label>
+      <div className="vpf-section">
+        <div className="vpf-field">
+          <label className="vpf-label" htmlFor="pf-name">Product name *</label>
           <input
             id="pf-name"
-            className="vd-form-input"
+            className="vpf-input"
             required
             value={values.name}
             onChange={set("name")}
@@ -94,12 +94,12 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
           />
         </div>
 
-        <div className="vd-form-row">
-          <div className="vd-form-group">
-            <label className="vd-form-label" htmlFor="pf-price">Price *</label>
+        <div className="vpf-row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+          <div className="vpf-field">
+            <label className="vpf-label" htmlFor="pf-price">Price *</label>
             <input
               id="pf-price"
-              className="vd-form-input"
+              className="vpf-input"
               required
               type="number"
               min="0"
@@ -109,11 +109,11 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
               placeholder="0.00"
             />
           </div>
-          <div className="vd-form-group">
-            <label className="vd-form-label" htmlFor="pf-sale-price">Sale price</label>
+          <div className="vpf-field">
+            <label className="vpf-label" htmlFor="pf-sale-price">Sale price</label>
             <input
               id="pf-sale-price"
-              className="vd-form-input"
+              className="vpf-input"
               type="number"
               min="0"
               step="0.01"
@@ -122,26 +122,26 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
               placeholder="0.00"
             />
           </div>
-          <div className="vd-form-group">
-            <label className="vd-form-label" htmlFor="pf-stock">Stock quantity</label>
+          <div className="vpf-field">
+            <label className="vpf-label" htmlFor="pf-stock">Stock quantity</label>
             <input
               id="pf-stock"
-              className="vd-form-input"
+              className="vpf-input"
               type="number"
               min="0"
               step="1"
               value={values.stock}
               onChange={set("stock")}
-              placeholder="Leave blank for unlimited"
+              placeholder="Unlimited"
             />
           </div>
         </div>
 
-        <div className="vd-form-group">
-          <label className="vd-form-label" htmlFor="pf-short-desc">Short description</label>
+        <div className="vpf-field">
+          <label className="vpf-label" htmlFor="pf-short-desc">Short description</label>
           <textarea
             id="pf-short-desc"
-            className="vd-form-textarea"
+            className="vpf-textarea vpf-textarea--sm"
             rows={2}
             value={values.short_description}
             onChange={set("short_description")}
@@ -149,11 +149,11 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
           />
         </div>
 
-        <div className="vd-form-group">
-          <label className="vd-form-label" htmlFor="pf-desc">Full description</label>
+        <div className="vpf-field">
+          <label className="vpf-label" htmlFor="pf-desc">Full description</label>
           <textarea
             id="pf-desc"
-            className="vd-form-textarea"
+            className="vpf-textarea"
             rows={6}
             value={values.description}
             onChange={set("description")}
@@ -161,22 +161,22 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
           />
         </div>
 
-        <div className="vd-form-row">
-          <div className="vd-form-group">
-            <label className="vd-form-label" htmlFor="pf-cats">Categories</label>
+        <div className="vpf-row">
+          <div className="vpf-field">
+            <label className="vpf-label" htmlFor="pf-cats">Categories</label>
             <input
               id="pf-cats"
-              className="vd-form-input"
+              className="vpf-input"
               value={values.categories}
               onChange={set("categories")}
               placeholder="Comma-separated, e.g. Bags, Accessories"
             />
           </div>
-          <div className="vd-form-group">
-            <label className="vd-form-label" htmlFor="pf-tags">Tags</label>
+          <div className="vpf-field">
+            <label className="vpf-label" htmlFor="pf-tags">Tags</label>
             <input
               id="pf-tags"
-              className="vd-form-input"
+              className="vpf-input"
               value={values.tags}
               onChange={set("tags")}
               placeholder="Comma-separated tags"
@@ -184,16 +184,16 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
           </div>
         </div>
 
-        <div className="vd-form-group">
-          <label className="vd-form-label" htmlFor="pf-status">Status</label>
-          <select id="pf-status" className="vd-form-select" value={values.status} onChange={set("status")}>
+        <div className="vpf-field">
+          <label className="vpf-label" htmlFor="pf-status">Status</label>
+          <select id="pf-status" className="vpf-select" value={values.status} onChange={set("status")}>
             <option value="draft">Draft</option>
             <option value="publish">Published</option>
           </select>
         </div>
       </div>
 
-      <div className="vd-form-actions">
+      <div className="vpf-actions">
         <button type="submit" className="vd-btn-primary" disabled={saving}>
           {saving ? "Saving…" : productId ? "Save changes" : "Add product"}
         </button>

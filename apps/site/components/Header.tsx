@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, ShoppingBag, User } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
@@ -18,11 +19,26 @@ interface HeaderProps {
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const { itemCount, openDrawer } = useCart();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const active = (href: string) =>
     pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const user = session?.user as any;
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const tickerData = siteSettings?.mastheadTicker || {};
   const issueText = tickerData.issueText || "";
@@ -36,7 +52,10 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         {/* Left zone: logo + divider + nav */}
         <div className="compact-header-left">
           <Link href="/" className="compact-logo">
-            Moveee
+            <img
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
+              alt="The Moveee Logo"
+            />
           </Link>
           <div className="compact-logo-divider" />
           <nav className="compact-nav">
@@ -78,7 +97,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           </div>
         )}
 
-        {/* Right zone: lang pills + icons + join */}
+        {/* Right zone */}
         <div className="compact-header-right">
           {/* Language pills */}
           <div className="lang-pills">
@@ -118,16 +137,58 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
 
           <div className="compact-divider" />
 
-          <div className="compact-sign-in-wrap">
-            <a href={`${CONNECT_URL}/login`} className="compact-icon-btn" aria-label="Sign in">
-              <User size={17} strokeWidth={1.5} />
-            </a>
-            <div className="compact-sign-in-tooltip">Sign in</div>
-          </div>
-
-          <a href={CONNECT_URL} className="compact-join-btn" style={{ textDecoration: "none" }}>
-            Join →
-          </a>
+          {/* Session-aware auth zone */}
+          {status === "authenticated" && user ? (
+            <div className="compact-user-wrap" ref={userMenuRef}>
+              <button
+                className="compact-avatar-btn"
+                onClick={() => setUserMenuOpen((v) => !v)}
+                aria-label="User menu"
+                aria-expanded={userMenuOpen}
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="compact-avatar-img" />
+                ) : (
+                  <span className="compact-avatar-initial">
+                    {(user.name || user.username || "M").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </button>
+              {userMenuOpen && (
+                <div className="compact-user-menu" role="menu">
+                  <div className="compact-user-name">{user.displayName || user.name}</div>
+                  <div className="compact-user-tier">
+                    {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
+                  </div>
+                  <div className="compact-user-divider" />
+                  <a href={`${CONNECT_URL}/member`} className="compact-user-item" role="menuitem">My Dashboard</a>
+                  <a href={`${CONNECT_URL}/feed`} className="compact-user-item" role="menuitem">Feed</a>
+                  <a href={`${CONNECT_URL}/member/wallet`} className="compact-user-item" role="menuitem">Wallet</a>
+                  <a href={`${CONNECT_URL}/member/settings`} className="compact-user-item" role="menuitem">Settings</a>
+                  <div className="compact-user-divider" />
+                  <button
+                    className="compact-user-item compact-user-item--danger"
+                    role="menuitem"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : status === "unauthenticated" ? (
+            <>
+              <div className="compact-sign-in-wrap">
+                <a href={`${CONNECT_URL}/login`} className="compact-icon-btn" aria-label="Sign in">
+                  <User size={17} strokeWidth={1.5} />
+                </a>
+                <div className="compact-sign-in-tooltip">Sign in</div>
+              </div>
+              <a href={CONNECT_URL} className="compact-join-btn" style={{ textDecoration: "none" }}>
+                Join →
+              </a>
+            </>
+          ) : null /* loading — render nothing to avoid flash */}
         </div>
 
         {/* Mobile: search + cart + hamburger */}
@@ -173,10 +234,28 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
         </div>
         <div className="mobile-menu-actions">
-          <a href={`${CONNECT_URL}/login`} className="mobile-menu-signin">Sign in</a>
-          <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
-            Join Moveee →
-          </a>
+          {status === "authenticated" && user ? (
+            <>
+              <a href={`${CONNECT_URL}/member`} className="mobile-menu-member-link">
+                {user.avatarUrl
+                  ? <img src={user.avatarUrl} alt="" className="mobile-menu-avatar" />
+                  : <span className="mobile-menu-avatar mobile-menu-avatar--initial">{(user.name || "M").charAt(0).toUpperCase()}</span>
+                }
+                <span>{user.displayName || user.name}</span>
+              </a>
+              <button
+                className="mobile-menu-signout"
+                onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <div className="mobile-menu-auth-row">
+              <a href={`${CONNECT_URL}/login`} className="mobile-menu-signin">Sign in</a>
+              <a href={CONNECT_URL} className="mobile-menu-join">Join Moveee →</a>
+            </div>
+          )}
         </div>
       </nav>
 
