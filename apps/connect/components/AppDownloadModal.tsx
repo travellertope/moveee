@@ -7,6 +7,7 @@ const SHOWN_KEY = "moveee_app_modal_shown";
 const VIEW_COUNT_KEY = "moveee_app_modal_views";
 const PAGE_VIEW_THRESHOLD = 3;
 const APP_LINK = "https://themoveee.com/#download";
+export const OPEN_APP_MODAL_EVENT = "moveee-open-app-modal";
 
 export default function AppDownloadModal() {
   const pathname = usePathname();
@@ -24,6 +25,17 @@ export default function AppDownloadModal() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Lets other components (e.g. the persistent banner's CTA) open this
+  // modal directly instead of linking out, without prop-drilling state
+  // through layout.tsx.
+  useEffect(() => {
+    function handleOpen() {
+      setOpen(true);
+    }
+    window.addEventListener(OPEN_APP_MODAL_EVENT, handleOpen);
+    return () => window.removeEventListener(OPEN_APP_MODAL_EVENT, handleOpen);
+  }, []);
 
   if (!open) return null;
 
