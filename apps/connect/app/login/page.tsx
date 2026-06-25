@@ -99,7 +99,7 @@ function LoginForm() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
+              style={error ? { ...styles.input, borderColor: "rgba(192,57,43,.5)" } : styles.input}
               disabled={loading}
             />
           </div>
@@ -115,7 +115,7 @@ function LoginForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              style={error ? { ...styles.input, borderColor: "rgba(192,57,43,.5)" } : styles.input}
               disabled={loading}
             />
           </div>
@@ -185,21 +185,23 @@ function LoginForm() {
             marginTop: 10,
           }}
         >
-          <span style={{ fontSize: 16 }}>G</span>
+          <span style={{ fontSize: 16, fontWeight: "bold", fontFamily: "sans-serif", width: 16, textAlign: "center" }}>G</span>
           Continue with Google
         </button>
 
-        <p style={{ ...styles.footer, marginTop: 16 }}>
-          <Link href="/forgot-password" style={styles.link}>
-            Forgot your password?
-          </Link>
-        </p>
-        <p style={styles.footer}>
-          New to the community?{" "}
-          <Link href="/register" style={styles.link}>
-            Create an account
-          </Link>
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+          <p style={styles.footer}>
+            <Link href="/forgot-password" style={styles.link}>
+              Forgot your password?
+            </Link>
+          </p>
+          <p style={styles.footer}>
+            New to the community?{" "}
+            <Link href="/register" style={styles.link}>
+              Create an account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -237,7 +239,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.2em",
     textTransform: "uppercase",
     color: "#7a6f5c",
-    margin: "0 0 20px",
+    margin: "0 0 12px",
   },
   heading: {
     fontSize: 28,
@@ -247,19 +249,19 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#14110d",
   },
   subheading: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#7a6f5c",
-    lineHeight: 1.6,
-    margin: "0 0 28px",
+    lineHeight: 1.5,
+    margin: "0 0 24px",
   },
   field: {
     marginBottom: 18,
   },
   label: {
     display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#14110d",
+    fontSize: 11,
+    fontWeight: 400,
+    color: "#7a6f5c",
     marginBottom: 6,
     letterSpacing: "0.02em",
   },
@@ -288,7 +290,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: {
     display: "block",
     width: "100%",
-    padding: "12px 24px",
+    padding: "14px 20px",
     background: "#14110d",
     color: "#ffffff",
     border: "none",

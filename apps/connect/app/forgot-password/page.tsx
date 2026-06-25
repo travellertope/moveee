@@ -121,7 +121,7 @@ const s: Record<string, React.CSSProperties> = {
     letterSpacing: "0.2em",
     textTransform: "uppercase",
     color: "#7a6f5c",
-    margin: "0 0 20px",
+    margin: "0 0 12px",
   },
   heading: {
     fontSize: 26,
@@ -139,9 +139,9 @@ const s: Record<string, React.CSSProperties> = {
   field: { marginBottom: 18 },
   label: {
     display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#14110d",
+    fontSize: 11,
+    fontWeight: 400,
+    color: "#7a6f5c",
     marginBottom: 6,
   },
   input: {
