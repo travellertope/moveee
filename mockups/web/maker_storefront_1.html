@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Magazine - Maker Storefront</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#ffffff',
+                        'paper-deep': '#f2f2f2',
+                        'ink': '#14110d',
+                        'mute': '#7a6f5c',
+                        'ochre': '#c5491f',
+                        'rule': '#2a241c',
+                    },
+                    borderRadius: {
+                        'sm': '2px',
+                        'md': '4px',
+                        'lg': '6px',
+                        'xl': '12px',
+                        '2xl': '20px',
+                        'full': '9999px',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 40px; 
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .desktop-canvas { width: 1440px; background-color: var(--paper); }
+        .mobile-canvas { width: 390px; background-color: var(--paper); min-height: 844px; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink min-h-screen pb-24">
+
+    <!-- Global Annotation Banner -->
+    <div class="w-full max-w-[800px] bg-[#fffdf8] border border-[#e8e0d4] rounded-lg shadow-sm p-[20px] text-left sticky top-[20px] z-50">
+        <div class="text-ochre font-bold mb-2">
+            <!-- DEV: mobile's `MakerProfileScreen.tsx` has the identical problem on its own platform — it calls
+            `${MOBILE_API}/shop/maker/${makerId}`, which also doesn't exist, and silently falls back to
+            hardcoded placeholder data with no error state. Both platforms need the same real backend work;
+            this is not a web-only gap. -->
+            <span class="font-mono text-[11px] uppercase tracking-wider block">⚠️ Dev Note: Backend Gap</span>
+        </div>
+        <p class="font-mono text-[11px] text-mute leading-relaxed tracking-wide">
+            mobile's <code class="bg-paper-deep px-1">MakerProfileScreen.tsx</code> has the identical problem on its own platform — it calls <code class="bg-paper-deep px-1">${MOBILE_API}/shop/maker/${makerId}</code>, which also doesn't exist, and silently falls back to hardcoded placeholder data with no error state. Both platforms need the same real backend work; this is not a web-only gap.<br><br>
+            <strong>June 2026 UI Rollout:</strong> Border-radius convention applied globally. Hero panels use <code class="bg-paper-deep px-1">--radius-xl</code> (12px), buttons and cards use <code class="bg-paper-deep px-1">--radius-lg</code> (6px), pill badges use <code class="bg-paper-deep px-1">--radius-full</code>.
+        </p>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: DESKTOP STOREFRONT (POPULATED)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 w-full">
+        <span class="text-mute font-mono text-[12px] uppercase tracking-wider font-bold">1. Desktop Storefront (Populated)</span>
+        
+        <div class="desktop-canvas rounded-lg overflow-hidden flex flex-col shadow-2xl">
+            
+            <!-- Breadcrumb -->
+            <nav class="w-full px-[32px] py-[24px] bg-paper">
+                <span class="font-mono text-[11px] text-mute tracking-widest">Shop <span class="mx-[6px]">&rarr;</span> Makers <span class="mx-[6px]">&rarr;</span> <span class="text-ink">Bisi Ceramics</span></span>
+            </nav>
+
+            <!-- Hero -->
+            <section class="grid grid-cols-2 gap-[16px] min-h-[520px] px-[32px] pb-[32px] bg-paper">
+                <!-- Left: Banner Image -->
+                <div class="relative w-full h-full rounded-xl bg-paper-deep overflow-hidden">
+                    <!-- DEV: bannerUrl, no upload UI exists yet -->
+                    <div class="absolute top-[16px] left-[16px] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm border border-gray-200 z-10 pointer-events-none">
+                        <span class="font-mono text-[10px] text-mute uppercase tracking-widest leading-none">DEV: bannerUrl, no upload UI exists yet</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1440&auto=format&fit=crop" alt="Bisi Ceramics Studio" class="w-full h-full object-cover grayscale-[20%]">
+                </div>
+                
+                <!-- Right: Info Block -->
+                <div class="flex flex-col justify-center py-[64px] pl-[32px] pr-[16px]">
+                    <div class="mb-[16px]">
+                        <span class="bg-ochre text-paper font-mono text-[10px] uppercase tracking-[.12em] px-[12px] py-[6px] rounded-full inline-block leading-none">★ Vetted Maker</span>
+                    </div>
+                    
+                    <h1 class="font-serif text-[40px] font-[500] text-ink leading-[1.1] mb-[8px]">Bisi Ceramics</h1>
+                    <span class="font-sans text-[14px] text-mute mb-[20px] block">Lagos, Nigeria</span>
+                    
+                    <p class="font-sans text-[15px] text-ink leading-[1.6] max-w-[440px] mb-[32px]">
+                        Adaeze Obi creates ceremonial objects and everyday wares inspired by Yoruba ritual traditions, using locally sourced terracotta clay from Ondo state. Hand-thrown in her Lagos Island studio.
+                    </p>
+                    
+                    <!-- Stats Row -->
+                    <div class="flex bg-paper-deep rounded-lg py-[20px] px-[24px] mb-[32px] w-max">
+                        <div class="flex flex-col border-r border-rule pr-[24px] mr-[24px] justify-center items-center">
+                            <span class="font-serif text-[28px] text-ink leading-none mb-[8px]">2019</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Maker since</span>
+                        </div>
+                        <div class="flex flex-col border-r border-rule pr-[24px] mr-[24px] justify-center items-center">
+                            <span class="font-serif text-[28px] text-ink leading-none mb-[8px]">24</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Products</span>
+                        </div>
+                        <div class="flex flex-col justify-center items-center">
+                            <span class="font-serif text-[28px] text-ink leading-none mb-[8px]">★ 4.9</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Moveee rating</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Row -->
+                    <div class="flex items-center gap-[16px] mb-[24px]">
+                        <button class="bg-ink text-paper font-mono text-[11px] uppercase rounded-lg px-[28px] py-[16px] hover:bg-ochre transition-colors inline-block leading-none">
+                            Shop all products &rarr;
+                        </button>
+                        <a href="/directory/bisi-ceramics" class="border border-ink bg-transparent text-ink font-mono text-[11px] uppercase rounded-lg px-[28px] py-[16px] hover:bg-paper-deep transition-colors inline-block leading-none">
+                            View profile
+                        </a>
+                    </div>
+
+                    <!-- Social Row -->
+                    <div class="flex items-center gap-[24px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Website &nearr;</a>
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Instagram &nearr;</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section class="w-full px-[32px] pt-[64px] pb-[96px] bg-paper">
+                <div class="flex items-baseline justify-between mb-[32px]">
+                    <h2 class="font-serif text-[28px] text-ink">Work by <em class="italic">Bisi Ceramics</em></h2>
+                    <span class="font-mono text-[11px] uppercase text-mute">24 pieces</span>
+                </div>
+
+                <div class="w-full mb-[24px]">
+                    <!-- DEV: real product data here depends on the broken moveee/v1 vendor-products endpoint — this frame shows the intended populated state, not the current always-empty reality. -->
+                    <div class="bg-paper-warm border border-ochre/20 rounded-lg p-3 inline-block">
+                        <span class="font-mono text-[10px] text-ochre uppercase tracking-widest leading-none">DEV: real product data here depends on the broken moveee/v1 vendor-products endpoint — this frame shows the intended populated state, not the current always-empty reality.</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-[16px]">
+                    
+                    <!-- Product 1 -->
+                    <a href="/shop/terracotta-ritual-bowl" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=600&auto=format&fit=crop" alt="Terracotta Ritual Bowl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Terracotta Ritual Bowl</span>
+                            <!-- Raw HTML price pattern -->
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;68.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 2 -->
+                    <a href="/shop/clay-water-carafe" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=600&auto=format&fit=crop" alt="Clay Water Carafe" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Clay Water Carafe</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;95.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 3 -->
+                    <a href="/shop/slate-meditation-bowl" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1590005024862-6b67679a29fb?q=80&w=600&auto=format&fit=crop" alt="Slate Meditation Bowl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Slate Meditation Bowl</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;78.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 4 -->
+                    <a href="/shop/obsidian-offering-plate" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#1A1A1A] group-hover:scale-105 transition-transform duration-500 ease-out"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Obsidian Offering Plate</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;55.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 5 -->
+                    <a href="/shop/matcha-cup-set" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#D18E70] group-hover:scale-105 transition-transform duration-500 ease-out"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Small Tea Cup Set</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;48.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 6 -->
+                    <a href="/shop/hand-thrown-mug" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#E2B19B] group-hover:scale-105 transition-transform duration-500 ease-out"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Hand-thrown Mug</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;24.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 7 -->
+                    <a href="/shop/incense-plate" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#A66C52] group-hover:scale-105 transition-transform duration-500 ease-out"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Herb-drying Bowl</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;38.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 8 -->
+                    <a href="/shop/tall-pitcher-jug" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#8C5E45] group-hover:scale-105 transition-transform duration-500 ease-out"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[14px] text-ink truncate">Tall Pitcher Jug</span>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;120.00</span>
+                        </div>
+                    </a>
+
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: DESKTOP STOREFRONT (EMPTY)            -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 w-full">
+        <span class="text-mute font-mono text-[12px] uppercase tracking-wider font-bold">2. Desktop Empty-Products State</span>
+        
+        <div class="desktop-canvas rounded-lg overflow-hidden flex flex-col shadow-2xl">
+            
+            <nav class="w-full px-[32px] py-[24px] bg-paper">
+                <span class="font-mono text-[11px] text-mute tracking-widest">Shop <span class="mx-[6px]">&rarr;</span> Makers <span class="mx-[6px]">&rarr;</span> <span class="text-ink">Loom Lagos</span></span>
+            </nav>
+
+            <!-- Hero -->
+            <section class="grid grid-cols-2 gap-[16px] min-h-[520px] px-[32px] pb-[32px] bg-paper">
+                <!-- Left: Empty Banner Fallback -->
+                <div class="relative w-full h-full rounded-xl bg-paper-deep flex items-center justify-center overflow-hidden">
+                    <span class="font-serif text-[120px] text-mute opacity-30 select-none">L</span>
+                </div>
+                
+                <!-- Right: Info Block (Omitted conditional stats) -->
+                <div class="flex flex-col justify-center py-[64px] pl-[32px] pr-[16px]">
+                    <div class="mb-[16px]">
+                        <span class="bg-ochre text-paper font-mono text-[10px] uppercase tracking-[.12em] px-[12px] py-[6px] rounded-full inline-block leading-none">★ Vetted Maker</span>
+                    </div>
+                    
+                    <h1 class="font-serif text-[40px] font-[500] text-ink leading-[1.1] mb-[8px]">Loom Lagos</h1>
+                    <span class="font-sans text-[14px] text-mute mb-[20px] block">Lagos, Nigeria</span>
+                    
+                    <p class="font-sans text-[15px] text-ink leading-[1.6] max-w-[440px] mb-[32px]">
+                        Independent textile studio preserving indigenous weaving techniques through contemporary silhouettes and homeware.
+                    </p>
+                    
+                    <!-- Stats Row (Conditional empty - 0 Products, no ratings, no year) -->
+                    <div class="flex bg-paper-deep rounded-lg py-[20px] px-[24px] mb-[32px] w-max">
+                        <div class="flex flex-col justify-center items-center">
+                            <span class="font-serif text-[28px] text-ink leading-none mb-[8px]">0</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Products</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Row -->
+                    <div class="flex items-center gap-[16px] mb-[24px]">
+                        <a href="/directory/loom-lagos" class="border border-ink bg-transparent text-ink font-mono text-[11px] uppercase rounded-lg px-[28px] py-[16px] hover:bg-paper-deep transition-colors inline-block leading-none">
+                            View profile
+                        </a>
+                    </div>
+
+                    <!-- Social Row -->
+                    <div class="flex items-center gap-[24px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Instagram &nearr;</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Section (Empty State) -->
+            <section class="w-full px-[32px] pt-[64px] pb-[96px] bg-paper">
+                <div class="flex items-baseline justify-between mb-[32px]">
+                    <h2 class="font-serif text-[28px] text-ink">Work by <em class="italic">Loom Lagos</em></h2>
+                    <!-- Count omitted -->
+                </div>
+
+                <!-- Empty State Panel -->
+                <div class="w-full bg-paper-deep rounded-lg py-[80px] flex items-center justify-center">
+                    <p class="font-sans text-[15px] text-mute">No products listed yet. Check back soon.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: MOBILE COMPANION                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 w-full">
+        <span class="text-mute font-mono text-[12px] uppercase tracking-wider font-bold">3. Mobile Companion</span>
+        
+        <div class="mobile-canvas rounded-[40px] overflow-hidden flex flex-col shadow-2xl border-[8px] border-gray-900">
+            
+            <!-- Breadcrumb (Truncated) -->
+            <nav class="w-full px-[16px] py-[20px] bg-paper">
+                <span class="font-mono text-[11px] text-mute tracking-widest">&larr; Makers</span>
+            </nav>
+
+            <!-- Hero (Stacked) -->
+            <section class="flex flex-col bg-paper min-h-0 px-[16px]">
+                <!-- Top: Banner Image -->
+                <div class="relative w-full h-[220px] bg-paper-deep shrink-0 rounded-xl overflow-hidden mb-[24px]">
+                    <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=800&auto=format&fit=crop" alt="Bisi Ceramics Studio" class="w-full h-full object-cover grayscale-[20%]">
+                </div>
+                
+                <!-- Bottom: Info Block -->
+                <div class="flex flex-col">
+                    <div class="mb-[12px]">
+                        <span class="bg-ochre text-paper font-mono text-[10px] uppercase tracking-[.12em] px-[12px] py-[6px] rounded-full inline-block leading-none">★ Vetted Maker</span>
+                    </div>
+                    
+                    <h1 class="font-serif text-[32px] font-[500] text-ink leading-[1.1] mb-[8px]">Bisi Ceramics</h1>
+                    <span class="font-sans text-[14px] text-mute mb-[16px] block">Lagos, Nigeria</span>
+                    
+                    <p class="font-sans text-[15px] text-ink leading-[1.6] mb-[24px]">
+                        Adaeze Obi creates ceremonial objects and everyday wares inspired by Yoruba ritual traditions, using locally sourced terracotta clay from Ondo state. Hand-thrown in her Lagos Island studio.
+                    </p>
+                    
+                    <!-- Stats Row (Horizontally scrollable) -->
+                    <div class="flex overflow-x-auto hide-scrollbar bg-paper-deep rounded-lg py-[20px] px-[20px] mb-[24px] gap-[24px]">
+                        <div class="flex flex-col shrink-0 items-center justify-center border-r border-rule pr-[24px]">
+                            <span class="font-serif text-[24px] text-ink leading-none mb-[8px]">2019</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Maker since</span>
+                        </div>
+                        <div class="flex flex-col shrink-0 items-center justify-center border-r border-rule pr-[24px]">
+                            <span class="font-serif text-[24px] text-ink leading-none mb-[8px]">24</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Products</span>
+                        </div>
+                        <div class="flex flex-col shrink-0 items-center justify-center pr-[4px]">
+                            <span class="font-serif text-[24px] text-ink leading-none mb-[8px]">★ 4.9</span>
+                            <span class="font-mono text-[9px] uppercase tracking-[.12em] text-mute">Moveee rating</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Row (Stacked) -->
+                    <div class="flex flex-col gap-[12px] w-full mb-[24px]">
+                        <button class="w-full bg-ink text-paper font-mono text-[11px] uppercase rounded-lg py-[16px] hover:bg-ochre transition-colors text-center leading-none">
+                            Shop all products &rarr;
+                        </button>
+                        <a href="/directory/bisi-ceramics" class="w-full border border-ink bg-transparent text-ink font-mono text-[11px] uppercase rounded-lg py-[16px] hover:bg-paper-deep transition-colors text-center block leading-none">
+                            View profile
+                        </a>
+                    </div>
+
+                    <!-- Social Row -->
+                    <div class="flex flex-wrap gap-[16px]">
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Website &nearr;</a>
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Instagram &nearr;</a>
+                        <a href="#" class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">X / Twitter &nearr;</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section class="w-full px-[16px] pt-[48px] pb-[64px] bg-paper mt-[16px]">
+                <div class="flex flex-col mb-[24px]">
+                    <h2 class="font-serif text-[24px] text-ink mb-[4px]">Work by <em class="italic">Bisi Ceramics</em></h2>
+                    <span class="font-mono text-[11px] uppercase text-mute">24 pieces</span>
+                </div>
+
+                <!-- Grid (2 Columns) -->
+                <div class="grid grid-cols-2 gap-[16px]">
+                    
+                    <!-- Product 1 -->
+                    <a href="/shop/terracotta-ritual-bowl" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=600&auto=format&fit=crop" alt="Terracotta Ritual Bowl" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[13px] text-ink truncate">Terracotta Ritual Bowl</span>
+                            <span class="font-sans text-[12px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;68.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 2 -->
+                    <a href="/shop/clay-water-carafe" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=600&auto=format&fit=crop" alt="Clay Water Carafe" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[13px] text-ink truncate">Clay Water Carafe</span>
+                            <span class="font-sans text-[12px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;95.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 3 -->
+                    <a href="/shop/slate-meditation-bowl" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep relative overflow-hidden">
+                            <div class="absolute top-2 left-2 bg-rule text-paper font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 z-10 rounded-full">Sale</div>
+                            <img src="https://images.unsplash.com/photo-1590005024862-6b67679a29fb?q=80&w=600&auto=format&fit=crop" alt="Slate Meditation Bowl" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[13px] text-ink truncate">Slate Meditation Bowl</span>
+                            <span class="font-sans text-[12px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true"><del class="text-mute mr-1">&#163;95.00</del> &#163;78.00</span>
+                        </div>
+                    </a>
+
+                    <!-- Product 4 -->
+                    <a href="/shop/obsidian-offering-plate" class="bg-paper rounded-lg border border-rule overflow-hidden flex flex-col group hover:shadow-card hover:-translate-y-1 transition-all">
+                        <div class="aspect-square bg-paper-deep overflow-hidden">
+                            <div class="w-full h-full bg-[#1A1A1A]"></div>
+                        </div>
+                        <div class="p-[10px] flex flex-col bg-paper border-t border-rule">
+                            <span class="font-sans text-[13px] text-ink truncate">Obsidian Offering Plate</span>
+                            <span class="font-sans text-[12px] text-ochre mt-[4px]" dangerouslySetInnerHTML="true">&#163;55.00</span>
+                        </div>
+                    </a>
+
+                </div>
+            </section>
+        </div>
+    </div>
+
+</body>
+</html>
