@@ -5,12 +5,15 @@ import {
   Modal, FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
+import type { AppParamList } from "../../hooks/useNav";
+import type { RouteProp } from "@react-navigation/native";
 
 const DAYS = [
   { value: "monday",    label: "Monday" },
@@ -27,6 +30,8 @@ const COUNTRIES = [
   "Canada", "Australia", "Germany", "France", "Netherlands", "Sweden",
   "UAE", "Jamaica", "Trinidad & Tobago",
 ];
+
+type Route = RouteProp<AppParamList, "StartClusterScreen">;
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
@@ -63,18 +68,23 @@ function createStyles(c: ColorPalette) {
     pickerBtnText: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
     pickerBtnPlaceholder: { color: c.ghost },
 
-    howItWorks: {
+    // Onboarding summary card
+    summaryCard: {
       backgroundColor: c.paperDeep, borderRadius: radius.xl, padding: 16,
-      marginBottom: space[4], gap: 10,
+      marginBottom: space[4], gap: 6,
     },
-    howTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, marginBottom: 2 },
-    howStep: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-    howNum: {
-      width: 22, height: 22, borderRadius: 11,
-      backgroundColor: c.ochre, justifyContent: "center", alignItems: "center", flexShrink: 0,
+    summaryHeader: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      marginBottom: 8,
     },
-    howNumText: { fontFamily: fonts.sansBold, fontSize: 11, color: "#fff" },
-    howText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 18, flex: 1 },
+    summaryTitle: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.mute, textTransform: "uppercase", letterSpacing: 1,
+    },
+    summaryEditBtn: { fontFamily: fonts.sans, fontSize: 12, color: c.ochre },
+    summaryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    summaryDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: c.ochre, flexShrink: 0 },
+    summaryText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, flex: 1, lineHeight: 17 },
 
     modalOverlay: {
       flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
@@ -100,6 +110,8 @@ function createStyles(c: ColorPalette) {
 
 export default function StartClusterScreen() {
   const nav = useNav();
+  const route = useRoute<Route>();
+  const params = route.params ?? {};
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const user = useAuthStore((s) => s.user);
@@ -107,13 +119,27 @@ export default function StartClusterScreen() {
   const [name, setName] = useState("");
   const [city, setCity] = useState(user?.city ?? "");
   const [street, setStreet] = useState("");
-  const [country, setCountry] = useState(user?.countryOfResidence ?? "");
+  // Pre-fill country from onboarding if provided
+  const [country, setCountry] = useState(
+    (params as { country?: string }).country ?? user?.countryOfResidence ?? ""
+  );
   const [meetingDay, setMeetingDay] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
   const [locationNote, setLocationNote] = useState("");
-  const [capacity, setCapacity] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const onboardingParams = params as {
+    country?: string;
+    venueType?: string;
+    hostNote?: string;
+    realisticCapacity?: number;
+    accessible?: boolean;
+    addressVisible?: string;
+    localityConfirmed?: boolean;
+  };
+
+  const hasOnboarding = Boolean(onboardingParams.venueType);
 
   const canSubmit =
     name.trim().length > 0 &&
@@ -141,8 +167,15 @@ export default function StartClusterScreen() {
         meeting_day: meetingDay,
         meeting_time: meetingTime.trim(),
         location_note: locationNote.trim(),
+        // Onboarding-collected fields
+        venue_type:          onboardingParams.venueType ?? "",
+        host_note:           onboardingParams.hostNote ?? "",
+        realistic_capacity:  onboardingParams.realisticCapacity ?? 0,
+        accessible:          onboardingParams.accessible ? 1 : 0,
+        address_visible:     onboardingParams.addressVisible ?? "members_only",
+        locality_confirmed:  onboardingParams.localityConfirmed ? 1 : 0,
       };
-      if (capacity.trim()) body.capacity = Number(capacity.trim());
+
       const res = await api.post<{ id: number }>(`${MOBILE_API}/cluster/create`, body as Record<string, string>);
       if (res?.id) {
         const url = `https://web.themoveee.com/cluster/${res.id}/invite`;
@@ -181,6 +214,20 @@ export default function StartClusterScreen() {
 
   const selectedDay = DAYS.find((d) => d.value === meetingDay);
 
+  const venueLabel = (v?: string) => {
+    const map: Record<string, string> = {
+      home: "Home", cafe: "Café", coworking: "Coworking space", other: "Other",
+    };
+    return v ? (map[v] ?? v) : "";
+  };
+
+  const addrLabel = (a?: string) => {
+    const map: Record<string, string> = {
+      members_only: "Members only", on_request: "On request", area_only: "Area only",
+    };
+    return a ? (map[a] ?? a) : "";
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -205,28 +252,45 @@ export default function StartClusterScreen() {
       >
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <Text style={styles.intro}>
-            Start a weekly meet-up for Moveee members on your street. Open to all tiers — no upgrade required.
+            Name your Fellowship and set your meeting schedule. Members on
+            your street can join and you'll unlock check-ins and rewards once
+            four people have joined.
           </Text>
 
-          <View style={styles.howItWorks}>
-            <Text style={styles.howTitle}>How it works</Text>
-            <View style={styles.howStep}>
-              <View style={styles.howNum}><Text style={styles.howNumText}>1</Text></View>
-              <Text style={styles.howText}>Fill in the details below and create your fellowship.</Text>
+          {/* Onboarding summary — shown when arriving via HostOnboardingScreen */}
+          {hasOnboarding && (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryHeader}>
+                <Text style={styles.summaryTitle}>Your setup</Text>
+                <TouchableOpacity onPress={() => nav.goBack()}>
+                  <Text style={styles.summaryEditBtn}>Edit ↑</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryDot} />
+                <Text style={styles.summaryText}>
+                  {venueLabel(onboardingParams.venueType)}
+                  {" · "}
+                  {onboardingParams.realisticCapacity} people
+                  {onboardingParams.accessible ? " · step-free" : ""}
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryDot} />
+                <Text style={styles.summaryText}>
+                  Address: {addrLabel(onboardingParams.addressVisible)}
+                </Text>
+              </View>
+              {onboardingParams.hostNote ? (
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryDot} />
+                  <Text style={styles.summaryText} numberOfLines={1}>
+                    {onboardingParams.hostNote}
+                  </Text>
+                </View>
+              ) : null}
             </View>
-            <View style={styles.howStep}>
-              <View style={styles.howNum}><Text style={styles.howNumText}>2</Text></View>
-              <Text style={styles.howText}>Share the invite link with neighbours and friends so they can join.</Text>
-            </View>
-            <View style={styles.howStep}>
-              <View style={styles.howNum}><Text style={styles.howNumText}>3</Text></View>
-              <Text style={styles.howText}>Once 4 members have joined, the fellowship activates — unlocking check-ins, host elections, and rewards.</Text>
-            </View>
-            <View style={styles.howStep}>
-              <View style={styles.howNum}><Text style={styles.howNumText}>4</Text></View>
-              <Text style={styles.howText}>Meet weekly, scan the host's QR code to check in, and earn Culture Credits.</Text>
-            </View>
-          </View>
+          )}
 
           <Text style={styles.sectionLabel}>Name</Text>
           <TextInput
@@ -280,7 +344,7 @@ export default function StartClusterScreen() {
             onChangeText={setMeetingTime}
           />
 
-          <Text style={styles.sectionLabel}>Location note (optional)</Text>
+          <Text style={styles.sectionLabel}>Arrival note (optional)</Text>
           <TextInput
             style={styles.fieldInput}
             placeholder="e.g. Meet at the blue gate, 3rd house"
@@ -289,19 +353,10 @@ export default function StartClusterScreen() {
             onChangeText={setLocationNote}
           />
 
-          <Text style={styles.sectionLabel}>Capacity override (optional)</Text>
-          <TextInput
-            style={styles.fieldInput}
-            placeholder="Leave blank for default"
-            placeholderTextColor={c.ghost}
-            value={capacity}
-            onChangeText={setCapacity}
-            keyboardType="number-pad"
-          />
-
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </ScrollView>
       </KeyboardAvoidingView>
+
       {/* Day Picker Modal */}
       <Modal visible={showDayPicker} transparent animationType="fade" onRequestClose={() => setShowDayPicker(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowDayPicker(false)}>

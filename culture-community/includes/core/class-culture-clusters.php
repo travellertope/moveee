@@ -136,8 +136,13 @@ class Culture_Clusters {
             'meetingDay'     => get_post_meta( $cluster_id, '_cluster_meeting_day', true ),
             'meetingTime'    => get_post_meta( $cluster_id, '_cluster_meeting_time', true ),
             'locationNote'   => get_post_meta( $cluster_id, '_cluster_meeting_location_note', true ),
-            'createdAt'      => get_post_meta( $cluster_id, '_cluster_created_at', true ),
-            'activatedAt'    => get_post_meta( $cluster_id, '_cluster_activated_at', true ),
+            'createdAt'         => get_post_meta( $cluster_id, '_cluster_created_at', true ),
+            'activatedAt'       => get_post_meta( $cluster_id, '_cluster_activated_at', true ),
+            'venueType'         => get_post_meta( $cluster_id, '_cluster_venue_type', true ) ?: '',
+            'hostNote'          => get_post_meta( $cluster_id, '_cluster_host_note', true ) ?: '',
+            'realisticCapacity' => (int) get_post_meta( $cluster_id, '_cluster_realistic_capacity', true ),
+            'accessible'        => (bool) get_post_meta( $cluster_id, '_cluster_accessible', true ),
+            'addressVisible'    => get_post_meta( $cluster_id, '_cluster_address_visible', true ) ?: 'members_only',
         );
     }
 
@@ -350,6 +355,12 @@ class Culture_Clusters {
         update_post_meta( $post_id, '_cluster_meeting_day', sanitize_text_field( $data['meetingDay'] ?? '' ) );
         update_post_meta( $post_id, '_cluster_meeting_time', sanitize_text_field( $data['meetingTime'] ?? '' ) );
         update_post_meta( $post_id, '_cluster_meeting_location_note', sanitize_text_field( $data['locationNote'] ?? '' ) );
+        update_post_meta( $post_id, '_cluster_venue_type', sanitize_text_field( $data['venueType'] ?? '' ) );
+        update_post_meta( $post_id, '_cluster_host_note', sanitize_textarea_field( $data['hostNote'] ?? '' ) );
+        update_post_meta( $post_id, '_cluster_realistic_capacity', (int) ( $data['realisticCapacity'] ?? 0 ) );
+        update_post_meta( $post_id, '_cluster_accessible', (int) ( $data['accessible'] ?? 0 ) );
+        update_post_meta( $post_id, '_cluster_address_visible', sanitize_text_field( $data['addressVisible'] ?? 'members_only' ) );
+        update_post_meta( $post_id, '_cluster_host_locality_confirmed', (int) ( $data['localityConfirmed'] ?? 0 ) );
         update_post_meta( $post_id, '_cluster_created_at', $now );
 
         global $wpdb;

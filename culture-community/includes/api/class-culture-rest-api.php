@@ -1741,14 +1741,20 @@ class Culture_REST_API {
     public static function handle_cluster_create( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );
         $data    = array(
-            'name'          => (string) $request->get_param( 'name' ),
-            'city'          => (string) $request->get_param( 'city' ),
-            'street'        => (string) $request->get_param( 'street' ),
-            'country'       => (string) $request->get_param( 'country' ),
-            'capacity'      => $request->get_param( 'capacity' ),
-            'meetingDay'    => (string) $request->get_param( 'meeting_day' ),
-            'meetingTime'   => (string) $request->get_param( 'meeting_time' ),
-            'locationNote'  => (string) $request->get_param( 'location_note' ),
+            'name'              => (string) $request->get_param( 'name' ),
+            'city'              => (string) $request->get_param( 'city' ),
+            'street'            => (string) $request->get_param( 'street' ),
+            'country'           => (string) $request->get_param( 'country' ),
+            'capacity'          => $request->get_param( 'capacity' ),
+            'meetingDay'        => (string) $request->get_param( 'meeting_day' ),
+            'meetingTime'       => (string) $request->get_param( 'meeting_time' ),
+            'locationNote'      => (string) $request->get_param( 'location_note' ),
+            'venueType'         => (string) $request->get_param( 'venue_type' ),
+            'hostNote'          => (string) $request->get_param( 'host_note' ),
+            'realisticCapacity' => (int) ( $request->get_param( 'realistic_capacity' ) ?: 0 ),
+            'accessible'        => (bool) $request->get_param( 'accessible' ),
+            'addressVisible'    => (string) ( $request->get_param( 'address_visible' ) ?: 'members_only' ),
+            'localityConfirmed' => (bool) $request->get_param( 'locality_confirmed' ),
         );
 
         $result = Culture_Clusters::create_cluster( $user_id, $data );
