@@ -782,6 +782,34 @@
   }
   .mobile-menu-auth-row .mobile-menu-join:hover { background: var(--ochre); }
 
+  /* ── Mobile header auth buttons (sit in the header bar, outside the dropdown) ── */
+  .mobile-header-signin,
+  .mobile-header-join {
+    display: none; /* shown only at mobile breakpoint below */
+    align-items: center;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    padding: 6px 12px;
+    line-height: 1;
+    transition: background 0.2s;
+  }
+  .mobile-header-signin {
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    background: transparent;
+  }
+  .mobile-header-signin:hover { background: var(--paper-deep); }
+  .mobile-header-join {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .mobile-header-join:hover { background: var(--ochre); }
+
   /* Mobile — logged-in state */
   .mobile-menu-member-link {
     display: flex;
@@ -841,6 +869,8 @@
     .compact-nav { display: none; }
     .compact-header-right { display: none; }
     .compact-header .masthead-mobile-actions { display: flex; }
+    .mobile-header-signin,
+    .mobile-header-join { display: flex; }
   }
 
   /* ========== HERO ========== */
@@ -1866,6 +1896,8 @@
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 16px; padding-right: 16px; }
     .masthead-mobile-actions { gap: 6px; }
     .masthead-mobile-actions .masthead-icon-btn { padding: 5px; }
+    .mobile-header-signin { padding: 5px 10px; font-size: 11px; }
+    .mobile-header-join { padding: 5px 10px; font-size: 11px; }
     .masthead { padding: 12px 16px; }
     .wordmark img { height: 24px !important; }
     .wordmark .kicker { display: none; }

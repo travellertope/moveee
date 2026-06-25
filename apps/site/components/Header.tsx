@@ -191,7 +191,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           ) : null /* loading — render nothing to avoid flash */}
         </div>
 
-        {/* Mobile: search + cart + hamburger */}
+        {/* Mobile: search + cart + auth (unauthenticated) + hamburger */}
         <div className="masthead-mobile-actions">
           <button
             className="masthead-icon-btn"
@@ -211,6 +211,12 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
             )}
           </button>
+          {status === "unauthenticated" && (
+            <>
+              <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-header-signin">Sign in</a>
+              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-header-join">Join →</a>
+            </>
+          )}
           <button
             className="masthead-hamburger"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -233,30 +239,23 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <a href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
           <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
         </div>
-        <div className="mobile-menu-actions">
-          {status === "authenticated" && user ? (
-            <>
-              <a href={`${CONNECT_URL}/member`} className="mobile-menu-member-link">
-                {user.avatarUrl
-                  ? <img src={user.avatarUrl} alt="" className="mobile-menu-avatar" />
-                  : <span className="mobile-menu-avatar mobile-menu-avatar--initial">{(user.name || "M").charAt(0).toUpperCase()}</span>
-                }
-                <span>{user.displayName || user.name}</span>
-              </a>
-              <button
-                className="mobile-menu-signout"
-                onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <div className="mobile-menu-auth-row">
-              <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-menu-signin">Sign in</a>
-              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-menu-join">Join Moveee →</a>
-            </div>
-          )}
-        </div>
+        {status === "authenticated" && user && (
+          <div className="mobile-menu-actions">
+            <a href={`${CONNECT_URL}/member`} className="mobile-menu-member-link">
+              {user.avatarUrl
+                ? <img src={user.avatarUrl} alt="" className="mobile-menu-avatar" />
+                : <span className="mobile-menu-avatar mobile-menu-avatar--initial">{(user.name || "M").charAt(0).toUpperCase()}</span>
+              }
+              <span>{user.displayName || user.name}</span>
+            </a>
+            <button
+              className="mobile-menu-signout"
+              onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </nav>
 
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
