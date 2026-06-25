@@ -97,30 +97,52 @@ export default function CouponsClient() {
             No active coupons. <a href="/connect/perks" style={{ color: "var(--ochre)" }}>Browse perks</a> to redeem one.
           </p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "24px" }}>
             {active.map(r => {
-              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`${SITE_URL}/api/perks/verify?token=${r.qr_token}`)}`;
+              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`${SITE_URL}/api/perks/verify?token=${r.qr_token}`)}`;
               const days = daysUntil(r.expires_at!);
+              const expiringSoon = days <= 3;
+              const stateColor = expiringSoon ? "var(--warning)" : "var(--success)";
+              const badgeBg = expiringSoon ? "rgba(245,158,11,.1)" : "rgba(45,106,79,.1)";
+              const badgeText = expiringSoon ? "var(--warning-dark)" : "var(--success)";
               return (
-                <div key={r.id} style={{ border: "1px solid rgba(42,36,28,.1)", padding: "16px", display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
+                <div key={r.id} style={{
+                  background: "var(--paper)",
+                  borderRadius: "var(--radius-xl)",
+                  boxShadow: "var(--shadow-card)",
+                  border: `1px solid ${expiringSoon ? "rgba(245,158,11,.3)" : "rgba(45,106,79,.3)"}`,
+                  padding: "24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  textAlign: "center",
+                  position: "relative",
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    background: badgeBg,
+                    color: badgeText,
+                    padding: "2px 8px",
+                    borderRadius: "var(--radius-full)",
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: ".06em",
+                  }}>
+                    Active
+                  </span>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--ink)", margin: "12px 0 16px", lineHeight: 1.3 }}>
+                    {r.perk_title || `Perk #${r.perk_id}`}
+                  </h3>
                   <img src={qrUrl} alt="QR" width={120} height={120} style={{ flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: "200px" }}>
-                    <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
-                      {r.perk_title || `Perk #${r.perk_id}`}
-                    </div>
-                    <div style={{ fontSize: "0.78rem", color: "var(--mute)", marginBottom: "4px" }}>
-                      {r.credits_spent} credits · Redeemed {formatDate(r.created_at)}
-                    </div>
-                    <div style={{
-                      fontSize: "0.72rem",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: ".08em",
-                      textTransform: "uppercase",
-                      color: days <= 3 ? "#c5491f" : "#2e7d32",
-                    }}>
-                      {days === 0 ? "Expires today" : `Expires in ${days} day${days !== 1 ? "s" : ""}`}
-                    </div>
-                  </div>
+                  <span style={{ fontSize: "0.7rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace", marginTop: "8px" }}>
+                    {r.credits_spent} credits · Redeemed {formatDate(r.created_at)}
+                  </span>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 700, color: stateColor, marginTop: "8px" }}>
+                    {days === 0 ? "Expires today" : `Expires in ${days} day${days !== 1 ? "s" : ""}`}
+                  </span>
                 </div>
               );
             })}
@@ -132,14 +154,39 @@ export default function CouponsClient() {
       {used.length > 0 && (
         <section className="mem-card">
           <div className="mem-card-label">Used ({used.length})</div>
-          {used.map(r => (
-            <div key={r.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(42,36,28,.06)", display: "flex", justifyContent: "space-between", opacity: 0.6 }}>
-              <span style={{ fontSize: "0.82rem" }}>{r.perk_title || `Perk #${r.perk_id}`}</span>
-              <span style={{ fontSize: "0.72rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace" }}>
-                {formatDate(r.created_at)}
-              </span>
-            </div>
-          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {used.map(r => (
+              <div key={r.id} style={{
+                background: "var(--paper-deep, #ede6d9)",
+                borderRadius: "var(--radius-lg)",
+                border: "1px solid rgba(42,36,28,.08)",
+                padding: "16px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                opacity: 0.6,
+              }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)" }}>{r.perk_title || `Perk #${r.perk_id}`}</span>
+                  <span style={{ fontSize: "0.7rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace", marginTop: "4px" }}>
+                    {r.credits_spent} credits · Redeemed {formatDate(r.created_at)}
+                  </span>
+                </div>
+                <span style={{
+                  background: "rgba(42,36,28,.12)",
+                  color: "var(--ink-soft)",
+                  padding: "4px 10px",
+                  borderRadius: "var(--radius-full)",
+                  fontSize: "0.62rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: ".06em",
+                }}>
+                  Used
+                </span>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -147,14 +194,42 @@ export default function CouponsClient() {
       {expired.length > 0 && (
         <section className="mem-card">
           <div className="mem-card-label">Expired ({expired.length})</div>
-          {expired.map(r => (
-            <div key={r.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(42,36,28,.06)", display: "flex", justifyContent: "space-between", opacity: 0.4 }}>
-              <span style={{ fontSize: "0.82rem" }}>{r.perk_title || `Perk #${r.perk_id}`}</span>
-              <span style={{ fontSize: "0.72rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace" }}>
-                {formatDate(r.created_at)}
-              </span>
-            </div>
-          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {expired.map(r => (
+              <div key={r.id} style={{
+                background: "var(--paper-deep, #ede6d9)",
+                borderRadius: "var(--radius-lg)",
+                border: "1px solid rgba(42,36,28,.08)",
+                padding: "16px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                opacity: 0.4,
+              }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)", textDecoration: "line-through" }}>
+                    {r.perk_title || `Perk #${r.perk_id}`}
+                  </span>
+                  <span style={{ fontSize: "0.7rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace", marginTop: "4px" }}>
+                    {r.credits_spent} credits · Redeemed {formatDate(r.created_at)}
+                  </span>
+                </div>
+                <span style={{
+                  background: "rgba(198,40,40,.1)",
+                  color: "var(--error)",
+                  border: "1px solid rgba(198,40,40,.2)",
+                  padding: "4px 10px",
+                  borderRadius: "var(--radius-full)",
+                  fontSize: "0.62rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: ".06em",
+                }}>
+                  Expired
+                </span>
+              </div>
+            ))}
+          </div>
         </section>
       )}
     </>

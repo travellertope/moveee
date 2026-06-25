@@ -58,6 +58,10 @@
   --ochre-deep: #8a2d10;
   --moss: #3d4a2a;
   --gold: #b38238;
+  --success: #2d6a4f;
+  --error: #c62828;
+  --warning: #f59e0b;
+  --warning-dark: #92400e;
 
   /* Radius scale — mirrors apps/mobile/src/theme.ts */
   --radius-sm: 2px;
@@ -90,6 +94,10 @@
   --ochre-deep: #a83f20;
   --gold: #c9963f;
   --moss: #3d4a2a;
+  --success: #4a9b76;
+  --error: #e05d5d;
+  --warning: #f5a623;
+  --warning-dark: #d4a657;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.55);

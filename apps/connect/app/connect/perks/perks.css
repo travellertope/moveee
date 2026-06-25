@@ -54,6 +54,7 @@
   background: var(--paper-deep, #ede6d9);
   border: 1px solid rgba(42,36,28,.12);
   padding: 10px 18px;
+  border-radius: var(--radius-full);
 }
 .perks-balance-label {
   font-family: 'JetBrains Mono', monospace;
@@ -153,8 +154,11 @@
 .perk-card {
   background: var(--paper);
   border: 1px solid rgba(42,36,28,.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   transition: border-color .15s, transform .15s;
 }
 .perk-card:hover {
@@ -240,6 +244,15 @@
   color: var(--mute);
 }
 
+/* ── Step-up working banner ── */
+.perk-stepup-working {
+  animation: perk-pulse 1.8s ease-in-out infinite;
+}
+@keyframes perk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
 /* ── Redeem button ── */
 .perk-redeem-btn {
   font-family: 'JetBrains Mono', monospace;
@@ -292,6 +305,8 @@
   width: 100%;
   padding: 36px 32px 28px;
   position: relative;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
 }
 .perk-modal-close {
   position: absolute;
@@ -455,6 +470,7 @@
   text-decoration: none;
   width: 100%;
   margin-top: auto;
+  border-radius: var(--radius-full);
 }
 .perk-card-btn:hover:not(:disabled) { background: var(--ochre); border-color: var(--ochre); }
 .perk-card-btn:disabled { opacity: .5; cursor: not-allowed; }

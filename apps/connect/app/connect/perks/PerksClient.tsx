@@ -133,13 +133,14 @@ export default function PerksClient({
       {/* No passkey — prompt to set up */}
       {stepUpNeeded && (
         <div style={{
-          background: "rgba(179,130,56,.08)",
-          border: "1px solid rgba(179,130,56,.25)",
-          borderRadius: 6,
+          background: "rgba(245,166,35,.1)",
+          border: "1px solid var(--warning)",
+          borderRadius: "var(--radius-lg)",
           padding: "14px 18px",
           margin: "0 0 20px",
           fontSize: "0.82rem",
           lineHeight: 1.5,
+          color: "var(--warning-dark)",
         }}>
           <strong>Passkey required to redeem perks.</strong>{" "}
           <Link href="/member/settings#passkeys" style={{ color: "var(--ochre)" }}>
@@ -150,14 +151,14 @@ export default function PerksClient({
 
       {/* Step-up working state */}
       {stepUpWorking && (
-        <div style={{
-          background: "rgba(42,36,28,.04)",
-          border: "1px solid rgba(42,36,28,.1)",
-          borderRadius: 6,
+        <div className="perk-stepup-working" style={{
+          background: "var(--ink)",
+          border: "1px solid var(--ink)",
+          borderRadius: "var(--radius-lg)",
           padding: "14px 18px",
           margin: "0 0 20px",
           fontSize: "0.82rem",
-          color: "var(--ochre)",
+          color: "#fff",
         }}>
           ⬡ Waiting for your device biometrics…
         </div>
