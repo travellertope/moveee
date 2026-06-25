@@ -832,7 +832,7 @@ re-derived from scratch each session.
 | 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
-| 12 | Member Directory & Public Profiles | Site B | Not started |
+| 12 | Member Directory & Public Profiles | Site B | Done — rebuilt from mockup 2026-06-25 (see "Member Directory & Public Profiles — visual rebuild" below) |
 | 13 | Notifications & Analytics | Site B | Not started |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
 | 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
@@ -1039,6 +1039,57 @@ mismatches, all now fixed in `HappeningDetailModal.tsx`, `DirectoryDetailModal.t
   mockup's own dev-comment — any future RSVP/poll UI change must be applied to both files).
 - `ProBadge.tsx` (the "PRO" pill next to author names) was checked and already matched the
   mockup's `rounded-sm` style (`borderRadius: Math.max(3, size*0.3)`) — no change needed.
+
+### Member Directory & Public Profiles — visual rebuild (§12, June 2026)
+
+`mockups/web/moveee_directory.html` (4 frames: People Near Me Desktop, Public Profile Community
+Tab Desktop, Public Profile Portfolio Tab split gated/unlocked Desktop, Mobile Companion). Diffed
+directly against the mockup HTML, not the prose spec. Touches `packages/shared/components/connect/
+MemberDirectory.tsx` (shared — directory grid + member cards), `apps/connect/app/feed/feed.css`
+(`mco-*` namespace), and `apps/connect/app/connect/[username]/{CommunityTab,PortfolioTab,
+profile.css}` (`prf-*` namespace).
+
+- `.prf-tab--active::after` (the active Community/Portfolio tab underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the underline while keeping the tab text itself `text-ink` (same
+  text-stays/underline-changes pattern already established for Settings tabs in §10 — don't change
+  the text color, only the underline).
+- `MemberDirectory.tsx` was missing the mockup's "{N} members near you" live count caption next to
+  the filter controls — added a `.mco-dir-count` span, monospace, muted, rendered only once loaded
+  and non-empty.
+- Member card footer links were plain underlined text labels ("Website", "LinkedIn", …) — mockup
+  renders a footer row (top border, gap) of circular 32px icon-glyph buttons (🌐 / `in` / `ig` / `𝕏`)
+  followed by a trailing ochre "View Profile →" link. Rebuilt `.mco-member-links`/`.mco-member-link`
+  in `feed.css` to match, and changed the `links` array in `MemberDirectory.tsx` to carry a `glyph`
+  per platform (rendered instead of the label) plus reordered to website/linkedin/instagram/twitter
+  per the mockup's icon order.
+- Portfolio tab's pinned community posts (`PinnedPostCard`) rendered identically to regular
+  portfolio items, with no visual distinction — mockup gives pinned cards an ochre border, a 📌 pin
+  glyph in the top-right corner, and a colored category badge (Showcase=blue, Cultural Take=purple,
+  Hidden Gem=green, Food Review=red, fallback=ochre) instead of the generic type label. Added a
+  `PINNED_BADGE` lookup map in `PortfolioTab.tsx` and matching `.prf-pinned-card`/`.prf-pinned-pin`/
+  `.prf-pinned-badge--*` rules in `profile.css`.
+- `.mco-dir-empty` (the "No one near you yet" empty state) had no icon and a flat background —
+  mockup shows a dashed border card with a large grayscale 👥 glyph above the title. Added both.
+- `CommunityTab`'s "Load more" button was a `.prf-filter-pill`-styled pill with an inline padding
+  override — mockup's is a plain full-width text link (ochre, bold, underline-on-hover, no
+  border/background). Replaced with a dedicated `.prf-load-more` class.
+- CSS tokens verified against the live `globals.css` before use (per the project's `--ochre`-vs-
+  `--gold` precedent): `--paper-deep` (`#f2f2f2` light) is close enough to the mockup's standalone
+  Tailwind `#F5F5F5` — no token fix needed; `.prf-badge-tooltip`'s new shadow uses
+  `var(--shadow-tooltip, <fallback>)`, the same already-established fallback pattern used elsewhere
+  in `globals.css` (no literal `--shadow-tooltip` variable exists anywhere in the codebase, by
+  design — see the existing precedent at the line that already does this).
+- **Deliberately left unchanged**: regular (non-pinned) `PortfolioCard` items still open a click-to-
+  modal lightbox rather than the mockup's hover-reveal "View project" overlay — a judgment call
+  favoring touch/accessibility-friendliness over literal mockup replication, since hover-reveal
+  controls don't work on touch devices (see the existing "hover-revealed elements need a mobile
+  always-visible override" lesson from the Lifestyle Shop mobile-responsive pass) and there was no
+  mockup-specified touch fallback for this interaction.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as the
+  Dashboard/Settings/Wallet rebuilds above. Verified via `tsc --noEmit` (clean) on
+  `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
+  `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
+  `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
