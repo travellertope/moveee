@@ -657,6 +657,7 @@
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    border-radius: var(--radius-lg);
     transition: background 0.2s;
     white-space: nowrap;
   }
