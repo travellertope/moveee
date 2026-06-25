@@ -179,12 +179,12 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           ) : status === "unauthenticated" ? (
             <>
               <div className="compact-sign-in-wrap">
-                <a href={`${CONNECT_URL}/login`} className="compact-icon-btn" aria-label="Sign in">
+                <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="compact-icon-btn" aria-label="Sign in">
                   <User size={17} strokeWidth={1.5} />
                 </a>
                 <div className="compact-sign-in-tooltip">Sign in</div>
               </div>
-              <a href={CONNECT_URL} className="compact-join-btn" style={{ textDecoration: "none" }}>
+              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="compact-join-btn" style={{ textDecoration: "none" }}>
                 Join →
               </a>
             </>
@@ -252,8 +252,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             </>
           ) : (
             <div className="mobile-menu-auth-row">
-              <a href={`${CONNECT_URL}/login`} className="mobile-menu-signin">Sign in</a>
-              <a href={CONNECT_URL} className="mobile-menu-join">Join Moveee →</a>
+              <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-menu-signin">Sign in</a>
+              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-menu-join">Join Moveee →</a>
             </div>
           )}
         </div>
