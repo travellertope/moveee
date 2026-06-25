@@ -388,6 +388,14 @@
     height: 32px;
     padding: 4px;
   }
+
+  /* The mobile drawer (hamburger) already lists My Dashboard / Wallet /
+     Settings / Vendor Dashboard / Sign out, so the avatar's own dropdown
+     is a duplicate menu on top of it — suppress it on mobile and let the
+     drawer be the single nav source. */
+  .ch-user-menu {
+    display: none !important;
+  }
 }
 
 @media (max-width: 480px) {
