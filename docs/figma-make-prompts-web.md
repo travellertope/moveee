@@ -3876,13 +3876,16 @@ The following `<!-- DEV: ... -->` notes MUST appear in the prompt at the
 indicated insertion points:
 
 1. `<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
-   identical token set. Site B has `--paper-warm` (#f3ece0), a full border-
-   radius scale, `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`,
-   `--rule-dark`, and full dark-mode tokens under `[data-theme="dark"]`. Site A
-   has none of these — its `--rule` is even a different type (`#2a241c` solid
-   color vs Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all.
-   Only `--paper`, `--paper-deep`, `--ink`, `--ink-soft`, `--mute`, `--ochre`,
-   `--ochre-deep`, `--moss`, `--gold` are truly shared. -->` — insert at the top
+   identical token set. Site B has `--paper-warm` (#f3ece0),
+   `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`, `--rule-dark`,
+   and full dark-mode tokens under `[data-theme="dark"]`. Site A has none of
+   these — its `--rule` is even a different type (`#2a241c` solid color vs
+   Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all. As of the
+   site-wide border-radius rollout (June 2026, see CLAUDE.md "Border-radius
+   convention"), BOTH apps now define the identical `--radius-*` scale — this
+   is no longer a Site-B-only token. Only `--paper`, `--paper-deep`, `--ink`,
+   `--ink-soft`, `--mute`, `--ochre`, `--ochre-deep`, `--moss`, `--gold`, and
+   now `--radius-*` are truly shared. -->` — insert at the top
    of the Color Tokens frame.
 2. `<!-- DEV: There is no shared web `<Button>`/`<Input>`/`<Avatar>` component
    — every button is a plain element styled by one of 16+ independent
@@ -3922,13 +3925,15 @@ both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
 web.themoveee.com). Desktop frame 1440px wide, scrollable.
 
 <!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
-identical token set. Site B has --paper-warm (#f3ece0), a full border-radius
-scale, --shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark,
-and full dark-mode tokens under [data-theme="dark"]. Site A has none of these
-— its --rule is even a different type (#2a241c solid color vs Site B's
-rgba(20,17,13,0.10)), and it has no dark mode at all. Only --paper,
---paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold
-are truly shared. -->
+identical token set. Site B has --paper-warm (#f3ece0),
+--shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark, and full
+dark-mode tokens under [data-theme="dark"]. Site A has none of these — its
+--rule is even a different type (#2a241c solid color vs Site B's
+rgba(20,17,13,0.10)), and it has no dark mode at all. Both apps now share an
+identical --radius-* scale (added site-wide June 2026, see CLAUDE.md
+"Border-radius convention") — radius is no longer Site-B-only. Only --paper,
+--paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold,
+and --radius-* are truly shared. -->
 
 ════════════════════════════════════════════
 FRAME 1 — COLOR TOKENS
@@ -3950,7 +3955,7 @@ DARK MODE swatches (Site B only, [data-theme="dark"], second labelled row):
   --ink #f3ece0 · --ink-soft #d4c9b8 · --mute #9e9288 · --ochre #d4603a ·
   --ochre-deep #a83f20 · --gold #c9963f.
 
-RADIUS SCALE (Site B only — Site A has no radius scale), 6 rounded rectangles
+RADIUS SCALE (shared by both apps since June 2026), 6 rounded rectangles
   labelled: sm 2px · md 4px · lg 6px · xl 12px · 2xl 20px · full 9999px (pill).
 
 SHADOWS (Site B only, 3 sample cards):
@@ -4944,36 +4949,41 @@ visual polish of the mockup imply the feature is wired end-to-end.
 Real grounding: apps/site/app/makers/[slug]/page.tsx (222 lines) + apps/site/app/makers/makers.css
 (lines 128–347). Brand tokens (real, from apps/site/app/globals.css — NOT the CLAUDE.md mobile
 values): --ink:#14110d, --paper:#ffffff, --ochre:#c5491f, --rule, --mute. Fonts: var(--font-serif)
-"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono". NO border-radius
-anywhere on this page in the real CSS — every card/button/grid cell is flush-rectangular; this is
-a deliberate editorial-aesthetic departure from the rounded radius-xl cards mobile uses for the
-same page, and should be preserved exactly, not "improved" with rounded corners.
+"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono". Per the site-wide
+border-radius rollout (June 2026, see CLAUDE.md "Border-radius convention"), this page's previous
+flush-rectangle look is retired — apply the shared --radius-* scale (sm 2px / md 4px / lg 6px /
+xl 12px / 2xl 20px / full 9999px, identical on both web apps and mirroring mobile's radius scale)
+throughout: --radius-xl on the hero banner/visual, --radius-full on pill badges, --radius-lg on
+CTA buttons and product cards.
 
 FRAME 1 — DESKTOP STOREFRONT (1440px), populated/ideal state, maker "Bisi Ceramics":
 
 1. Breadcrumb (full-width, top): "Shop" / "→" / "Makers" / "→" / "Bisi Ceramics" — JetBrains Mono
    11px, var(--mute), var(--ink) for the current page, "→" separators in var(--mute).
 
-2. Hero — `grid-template-columns: 1fr 1fr`, min-height 520px, no gap, no radius, divided by a
-   single var(--rule) vertical line:
-   - LEFT half: full-bleed banner/studio image (object-fit: cover) — <!-- DEV: bannerUrl, no
-     upload UI exists yet --> — falls back to a flush-rectangular placeholder block in
-     var(--paper-deep) with a single giant initial letter centered (Fraunces, ~120px, var(--mute))
-     when no image exists.
-   - RIGHT half (vertically centered, ~64px padding): "★ Vetted Maker" badge — small flush
-     rectangular pill, var(--ochre) background, var(--paper) text, JetBrains Mono 10px uppercase
-     letter-spacing .12em. Below it: maker name "Bisi Ceramics" — Fraunces serif, ~40px, var(--ink),
-     weight 500. Below that: location "Lagos, Nigeria" — DM Sans 14px, var(--mute). Below that: bio
-     paragraph (2–3 lines) — DM Sans 15px, var(--ink), line-height 1.6, max-width ~440px.
-   - Stats row (3 flush columns, hairline var(--rule) vertical dividers between them, no
-     background): each column = big number (Fraunces, 28px, var(--ink)) over a small label
-     (JetBrains Mono 9px uppercase letter-spacing .12em, var(--mute)) — "12" / "Maker since" (only
-     if yearsActive present), "24" / "Products", "★ 4.9" / "Moveee rating" (or "★ New" if no
-     rating yet).
-   - CTA row: "Shop all products →" — solid var(--ink) background, var(--paper) text, flush
-     rectangle, JetBrains Mono 11px uppercase, padding 16px 28px, hover → var(--ochre) background.
-     Beside it (only if `directorySlug` present): "View profile" — outline button, 1px var(--ink)
-     border, transparent background, same type treatment, links to `/directory/{directorySlug}`.
+2. Hero — `grid-template-columns: 1fr 1fr`, min-height 520px, 16px gap (gap added so each half
+   reads as its own rounded panel rather than a seamless split), divided visually by the gap
+   itself rather than a hard rule line:
+   - LEFT half: full-bleed banner/studio image (object-fit: cover, border-radius: var(--radius-xl)
+     on all 4 corners) — <!-- DEV: bannerUrl, no upload UI exists yet --> — falls back to a
+     placeholder block in var(--paper-deep), same var(--radius-xl) corners, with a single giant
+     initial letter centered (Fraunces, ~120px, var(--mute)) when no image exists.
+   - RIGHT half (vertically centered, ~64px padding): "★ Vetted Maker" badge — pill,
+     border-radius: var(--radius-full), var(--ochre) background, var(--paper) text, JetBrains Mono
+     10px uppercase letter-spacing .12em. Below it: maker name "Bisi Ceramics" — Fraunces serif,
+     ~40px, var(--ink), weight 500. Below that: location "Lagos, Nigeria" — DM Sans 14px,
+     var(--mute). Below that: bio paragraph (2–3 lines) — DM Sans 15px, var(--ink), line-height
+     1.6, max-width ~440px.
+   - Stats row (3 columns inside a single rounded panel, border-radius: var(--radius-lg),
+     var(--paper-deep) background, hairline var(--rule) vertical dividers between columns): each
+     column = big number (Fraunces, 28px, var(--ink)) over a small label (JetBrains Mono 9px
+     uppercase letter-spacing .12em, var(--mute)) — "12" / "Maker since" (only if yearsActive
+     present), "24" / "Products", "★ 4.9" / "Moveee rating" (or "★ New" if no rating yet).
+   - CTA row: "Shop all products →" — solid var(--ink) background, var(--paper) text,
+     border-radius: var(--radius-lg), JetBrains Mono 11px uppercase, padding 16px 28px, hover →
+     var(--ochre) background. Beside it (only if `directorySlug` present): "View profile" —
+     outline button, same var(--radius-lg) corners, 1px var(--ink) border, transparent background,
+     same type treatment, links to `/directory/{directorySlug}`.
    - Social row (only rendered if any of website/instagram/twitter present): "Website ↗" /
      "Instagram ↗" / "X / Twitter ↗" — DM Sans 13px, var(--ochre) link color, each opens in a new
      tab, separated by ~24px gaps, no underline by default, underline on hover.
@@ -4981,21 +4991,22 @@ FRAME 1 — DESKTOP STOREFRONT (1440px), populated/ideal state, maker "Bisi Cera
 3. Products section (full-width, below hero, ~64px top padding):
    - Header row: "Work by *Bisi Ceramics*" (maker name in italic) — Fraunces 28px — on the left;
      "24 pieces" count — JetBrains Mono 11px uppercase, var(--mute) — on the right, baseline-aligned.
-   - 4-column grid (`repeat(4, 1fr)`, only 2px gap, no radius, hairline var(--rule) border per
-     card): each card = product image (aspect ~1:1, object-fit cover) over a body block (10px
-     padding) with product name (DM Sans 14px, var(--ink)) and price (DM Sans 13px, var(--ochre),
-     rendered from raw HTML via the existing `sanitizeHtml()` — keep the dangerouslySetInnerHTML
-     pattern, don't redesign price formatting away from it). Whole card is a single link to
-     `/shop/{product-slug}`, hover → subtle image zoom only (no card lift/shadow — matches the
-     flush, non-elevated aesthetic of the rest of the page).
+   - 4-column grid (`repeat(4, 1fr)`, 16px gap, each card border-radius: var(--radius-lg), 1px
+     var(--rule) border, overflow hidden so the product image respects the rounded corners): each
+     card = product image (aspect ~1:1, object-fit cover, rounded top corners only via the card's
+     own overflow:hidden) over a body block (10px padding) with product name (DM Sans 14px,
+     var(--ink)) and price (DM Sans 13px, var(--ochre), rendered from raw HTML via the existing
+     `sanitizeHtml()` — keep the dangerouslySetInnerHTML pattern, don't redesign price formatting
+     away from it). Whole card is a single link to `/shop/{product-slug}`, hover → subtle image
+     zoom + shadow-card lift.
    <!-- DEV: real product data here depends on the broken moveee/v1 vendor-products endpoint — this
    frame shows the intended populated state, not the current always-empty reality. -->
 
 FRAME 2 — DESKTOP EMPTY-PRODUCTS STATE: identical hero, but the products section shows only the
-header ("Work by *Bisi Ceramics*", no count badge) followed by a single centered flush-rectangular
-panel in var(--paper-deep): "No products listed yet. Check back soon." — DM Sans 15px, var(--mute),
-~80px vertical padding, no icon/illustration (matches the existing plain-text empty state, don't
-add decoration that isn't in the real code).
+header ("Work by *Bisi Ceramics*", no count badge) followed by a single centered panel,
+border-radius: var(--radius-lg), in var(--paper-deep): "No products listed yet. Check back soon."
+— DM Sans 15px, var(--mute), ~80px vertical padding, no icon/illustration (matches the existing
+plain-text empty state, don't add decoration that isn't in the real code).
 
 FRAME 3 — MOBILE COMPANION (390px width): hero collapses to single column (image on top, full
 width, ~220px height fixed rather than the desktop's 1fr-1fr ratio; info block below it, same
@@ -5007,8 +5018,8 @@ Breadcrumb truncates to just "← Makers" back-link style on this width rather t
 three-step trail, to save header space.
 
 CONSTRAINTS:
-- No rounded corners anywhere — this page's entire visual identity is flush rectangles, hairline
-  rule dividers, and a 2-column hero grid. Do not import mobile's rounded-card language.
+- Apply the shared --radius-* scale consistently (xl for the hero banner, lg for buttons/cards/
+  stat panel, full for pills) — do not leave any of the boxed elements above flush/square-cornered.
 - The "mini website" feel comes from the hero's banner+info richness and the full catalogue below
   it, not from any tabs/sub-navigation — there is no internal nav within this page in the real
   code (no "About / Products / Reviews" tab bar); don't invent one without flagging it as new.
@@ -5120,9 +5131,12 @@ var(--rule) bottom border (down from 2px — lighter chrome), z-index above page
   site-wide) <!-- DEV: this is the one real content trade-off in this redesign — decide whether
   announcement/locations earn a still-visible compact treatment or move to a homepage-only
   secondary surface; do not silently drop them without a decision recorded here. -->.
-- RIGHT zone: search icon, cart icon w/ badge, EN/FR toggle (now small text buttons inline, not a
-  separate black block), "Sign in" (icon-only at this height, label restored on hover via tooltip
-  or visible ≥1024px), solid-ink "Join →" button (smaller padding, 10px JetBrains Mono).
+- RIGHT zone: search icon, cart icon w/ badge (badge itself border-radius: var(--radius-full)),
+  EN/FR toggle (now small rounded text-pill buttons inline, border-radius: var(--radius-full),
+  not a separate black block), "Sign in" (icon-only at this height, label restored on hover via
+  tooltip or visible ≥1024px), solid-ink "Join →" button (smaller padding, 10px JetBrains Mono,
+  border-radius: var(--radius-full) — per the site-wide border-radius rollout, June 2026, see
+  CLAUDE.md "Border-radius convention").
 <!-- DEV: total height drops from ~132px (two rows) to 64px (one row) — annotate this delta
 explicitly as the headline win of the redesign. Sticky positioning is a new behavior, not present
 today — call this out since it changes scroll interaction across every Site A page. -->

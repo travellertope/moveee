@@ -360,6 +360,42 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ---
 
+## Border-radius convention (site-wide, June 2026 — supersedes the old flush/rectangular look)
+
+**Rounded corners are now the default everywhere it's feasible** — cards, buttons, badges,
+images, inputs, panels, pills. Several Site A surfaces (`apps/site/app/makers/makers.css`,
+`legal.css`, `not-found.css`, `pulse-layout.css`, `sections.css`,
+`components/CartDrawer.css`) previously had **zero** `border-radius` anywhere — a deliberate
+flush-rectangle editorial aesthetic. That aesthetic is retired; do not introduce new flush,
+hard-cornered components, and apply radius retroactively when touching any of the files above.
+
+Canonical radius scale — same values on both web apps and mirrors
+`apps/mobile/src/theme.ts`'s `radius` object exactly, so all three surfaces stay visually
+consistent:
+
+```css
+var(--radius-sm)    /* 2px  — hairline elements, small chips */
+var(--radius-md)    /* 4px  — inputs, small buttons, thumbnails */
+var(--radius-lg)    /* 6px  — standard cards, buttons */
+var(--radius-xl)    /* 12px — larger cards, modals, image frames */
+var(--radius-2xl)   /* 20px — hero panels, prominent CTAs */
+var(--radius-full)  /* 9999px — pills, avatars, dots */
+```
+
+Defined as CSS custom properties in both `apps/site/app/globals.css` and
+`apps/connect/app/globals.css` `:root`/`@theme` blocks — use `var(--radius-*)`, never a
+hardcoded px value, in new or edited CSS. `apps/mobile`'s `theme.ts` `radius` object
+(`sm`(2)/`md`(4)/`lg`(6)/`xl`(12)/`"2xl"`(20)/`full`(9999)) is the source of truth this scale
+mirrors — if the mobile scale ever changes, update both web `globals.css` files to match.
+
+When writing or updating a Figma Make prompt (`docs/figma-make-prompts.md` /
+`docs/figma-make-prompts-web.md`), do not describe any new surface as "flush" or
+"no border-radius" — use the scale above instead. Existing prompt sections that documented the
+old flush aesthetic (e.g. the Maker storefront and Shop sections) should be treated as
+superseded by this convention going forward.
+
+---
+
 ## Raw SQL REST endpoints
 
 Several REST handlers bypass `WP_Query` / `get_user_meta` / `get_option` and
