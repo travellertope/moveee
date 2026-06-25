@@ -1179,6 +1179,7 @@
 }
 
 .evt-work-frame {
+  position: relative;
   aspect-ratio: 4 / 3;
   border-radius: 8px;
   overflow: hidden;
