@@ -50,6 +50,11 @@ export default async function NewsletterArchive({
     // CMS unreachable
   }
 
+  // "announcements" is an internal/operational list (periodic notices) and must
+  // never appear on the public archive — exclude it before any counts/filters run,
+  // since the "all" tab renders this array unfiltered.
+  newsletters = newsletters.filter((n: any) => (n.nlList || "") !== "announcements");
+
   const activeFilter = searchParams?.list ?? "all";
   const allCount    = newsletters.length;
   const cdCount     = newsletters.filter((n: any) => (n.nlList || "") === "culture-drop").length;

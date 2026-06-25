@@ -513,6 +513,7 @@ class Culture_NL_Analytics {
         'culture-narratives-digest' => 'Culture Narratives Digest',
         'vendor-letter'             => 'The Vendor Letter',
         'origins-field-notes'       => 'Origins Field Notes',
+        'announcements'             => 'Announcements',
     );
     const SEGMENT_LABELS = array(
         'us'  => 'The Moveee America (US)',

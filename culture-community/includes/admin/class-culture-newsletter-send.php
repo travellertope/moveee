@@ -29,7 +29,7 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
+        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
         $list = sanitize_key( $_POST['culture_nl_list'] ?? 'getmelit' );
         if ( in_array( $list, $allowed_lists, true ) ) {
             update_post_meta( $post_id, '_culture_nl_list', $list );
@@ -128,6 +128,7 @@ class Culture_Newsletter_Send {
             'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
             'vendor-letter'             => 'The Vendor Letter (waitlist)',
             'origins-field-notes'       => 'Origins Field Notes (waitlist)',
+            'announcements'             => 'Announcements (hidden from frontend archive)',
         );
 
         $segments_config = array(
@@ -143,8 +144,9 @@ class Culture_Newsletter_Send {
 
         // Build counts[list][segment] — empty string segment = whole list total.
         $counts_map = array(
-            'getmelit'     => array( '' => 0 ),
-            'culture-drop' => array( '' => 0 ),
+            'getmelit'      => array( '' => 0 ),
+            'culture-drop'  => array( '' => 0 ),
+            'announcements' => array( '' => 0 ),
         );
 
         if ( is_array( $subscribers ) ) {

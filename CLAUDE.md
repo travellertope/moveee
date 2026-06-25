@@ -341,6 +341,54 @@ add it to the perks lists in:
 
 ---
 
+## Hidden / opt-out newsletter lists (e.g. "Announcements", added June 2026)
+
+Not every list follows the standard opt-in + frontend-visible pattern above.
+**Announcements** (`announcements`) is a general-purpose list for periodic
+operational notices that must never be selectable or visible on the public
+`/newsletter` archive, and that every subscriber (existing and new) is on by
+default unless they explicitly opt out.
+
+This required two deviations from the standard process:
+
+1. **Archive exclusion is a data filter, not a missing tab.** Omitting a
+   `NL_LABELS` entry/filter tab is not enough — the "All" tab in
+   `apps/site/app/newsletter/page.tsx` renders the full unfiltered
+   `newsletters` array. `announcements`-tagged posts are filtered out of that
+   array immediately after fetch, before any counts/filtering run:
+   ```ts
+   newsletters = newsletters.filter((n) => (n.nlList || "") !== "announcements");
+   ```
+   Do not add `announcements` to `NL_LABELS` or add a filter tab for it — that
+   omission is deliberate and permanent, not a TODO.
+2. **Default-ON (opt-out) instead of default-OFF (opt-in)** — the subscriber
+   data model (`culture_newsletter_subscribers` option) only has an opt-in
+   `lists[]` array, no native opt-out flag, so "everyone is on by default" is
+   simulated two ways:
+   - **One-time backfill** for existing subscribers:
+     `Culture_Subscribers::maybe_backfill_announcements()` (gated by the
+     `culture_announcements_backfilled` option so it runs exactly once and
+     never re-adds the list after a subscriber opts out later).
+   - **Default-include on creation** for new subscribers, everywhere a new
+     subscriber record can be created: `Culture_Subscribers::merge_subscribers()`
+     (covers bulk import, MailPoet sync, WP user import, and
+     auto-subscribe-on-registration — all four funnel through this one
+     helper) and `handle_newsletter_subscribe()` in `class-culture-rest-api.php`
+     (the public-facing REST endpoint used by the website's own subscribe
+     forms) both add `'announcements'` to a brand-new subscriber's `lists[]`.
+     **Existing** subscribers being added to a *different* list are
+     deliberately NOT force-re-added to `announcements` in this code path —
+     that would silently undo a prior opt-out.
+
+It otherwise still follows the standard list-registration process above
+(send-meta-box dropdown/config, subscriber-list checkbox, queue email footer
+label, analytics label, REST `$allowed_lists` arrays, settings preferences
+list) — only the archive visibility and default-subscription behavior differ.
+If a future newsletter needs the same "hidden + opt-out" treatment, follow
+this section instead of (or in addition to) the standard one.
+
+---
+
 ## CSS custom properties (from globals)
 
 ```css
