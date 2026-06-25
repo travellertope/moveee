@@ -36,7 +36,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(520px, 100vw)",
-          background: "var(--paper, #f3ece0)",
+          background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
@@ -47,13 +47,13 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "1.25rem",
-          borderBottom: "1px solid #e0dbd1",
+          borderBottom: "1px solid var(--rule)",
           position: "sticky", top: 0,
-          background: "#faf8f5", zIndex: 1,
+          background: "var(--paper-header)", zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
-              background: "#f3eef8", color: "#7a4da0",
+              background: "var(--cat-quote-bg)", color: "var(--cat-quote-fg)",
               fontSize: "0.58rem", fontWeight: 700,
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
@@ -63,7 +63,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             <Link
               href={item.href}
               style={{
-                color: "#c5491f", fontSize: "0.8rem", fontWeight: 400,
+                color: "var(--ochre)", fontSize: "0.8rem", fontWeight: 400,
                 textDecoration: "underline", textUnderlineOffset: "2px",
               }}
             >
@@ -71,7 +71,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             </Link>
             <button onClick={close} aria-label="Close" style={{
               background: "none", border: "none", cursor: "pointer",
-              color: "#14110d", lineHeight: 1, padding: "0.25rem", display: "flex",
+              color: "var(--ink)", lineHeight: 1, padding: "0.25rem", display: "flex",
             }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -85,7 +85,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
         }}>
           {/* Decorative quote mark */}
           <span style={{
-            color: "#d8c9b0", fontFamily: "serif",
+            color: "var(--rule)", fontFamily: "serif",
             fontSize: "4rem", lineHeight: 0.8, marginBottom: "0.5rem",
           }}>"</span>
 
@@ -95,7 +95,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             fontSize: "1.35rem",
             lineHeight: 1.55,
             fontStyle: "italic",
-            color: "#14110d",
+            color: "var(--ink)",
             marginBottom: "1.25rem",
           }}>
             {item.title}
@@ -104,18 +104,18 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
           {/* Attribution */}
           <div style={{
             display: "flex", flexDirection: "column", gap: "0.25rem",
-            paddingTop: "1rem", borderTop: "1px solid #e8e2d8",
+            paddingTop: "1rem", borderTop: "1px solid var(--rule)",
           }}>
             {item.quoteAuthor && (
               <span style={{
-                color: "#c5491f", fontSize: "0.95rem", fontWeight: 600,
+                color: "var(--ochre)", fontSize: "0.95rem", fontWeight: 600,
                 fontFamily: "var(--font-fraunces), serif",
               }}>
                 — {item.quoteAuthor}
               </span>
             )}
             {item.quoteSource && (
-              <span style={{ color: "#7a6f5c", fontSize: "0.82rem", fontStyle: "italic" }}>
+              <span style={{ color: "var(--mute)", fontSize: "0.82rem", fontStyle: "italic" }}>
                 {item.quoteSource}
               </span>
             )}
@@ -125,22 +125,22 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
           {item.quoteSharingReason && (
             <div style={{
               marginTop: "1.25rem", padding: "1rem",
-              background: "#ece5d6", borderRadius: "12px",
+              background: "var(--paper-deep)", borderRadius: "12px",
               boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              color: "#5a5142", fontSize: "0.85rem", lineHeight: 1.5,
+              color: "var(--ink-soft)", fontSize: "0.85rem", lineHeight: 1.5,
             }}>
               💬 {item.quoteSharingReason}
             </div>
           )}
 
           {/* Date */}
-          <div style={{ fontFamily: "monospace", fontSize: "0.68rem", color: "#bbb", marginTop: "1.5rem", textAlign: "center", display: "block", width: "100%" }}>
+          <div style={{ fontFamily: "monospace", fontSize: "0.68rem", color: "var(--mute)", marginTop: "1.5rem", textAlign: "center", display: "block", width: "100%" }}>
             {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </div>
 
           {/* Reactions */}
           {item.wpId && (
-            <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e8e2d8" }}>
+            <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid var(--rule)" }}>
               <ReactionBar
                 noBorder
                 itemId={item.wpId}

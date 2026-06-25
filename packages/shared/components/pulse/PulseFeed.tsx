@@ -393,11 +393,11 @@ const handleType = (type: FeedItemType | "all") => {
 
           {/* Interests nudge for logged-in users with no interests set */}
           {session && !hasInterests && (
-            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "#fdf5e6", border: "1px solid #e8d8b0", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#7a6f5c", lineHeight: 1.5 }}>
-                <strong style={{ color: "#14110d" }}>Personalise your feed</strong> — pick your interests for a For You view.
+            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-warm)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.5 }}>
+                <strong style={{ color: "var(--ink)" }}>Personalise your feed</strong> — pick your interests for a For You view.
               </p>
-              <Link href="/member/settings/interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <Link href="/member/settings/interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ink)", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 Set interests →
               </Link>
             </div>
@@ -500,8 +500,9 @@ const handleType = (type: FeedItemType | "all") => {
                   background: "var(--ochre)",
                   color: "#fff",
                   border: "none",
-                  borderRadius: 3,
-                  padding: "5px 10px",
+                  borderRadius: 999,
+                  padding: "8px 10px",
+                  width: "100%",
                   fontSize: "0.7rem",
                   fontWeight: 600,
                   cursor: "pointer",
