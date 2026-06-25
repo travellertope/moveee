@@ -17,6 +17,7 @@ class Culture_Subscribers {
         'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
         'vendor-letter'             => 'The Vendor Letter (waitlist)',
         'origins-field-notes'       => 'Origins Field Notes (waitlist)',
+        'announcements'             => 'Announcements (hidden from frontend archive)',
     );
     const SEGMENT_OPTIONS = array(
         ''    => 'All segments',
@@ -32,6 +33,7 @@ class Culture_Subscribers {
     public static function init() {
         // Run migration if needed
         self::maybe_migrate();
+        self::maybe_backfill_announcements();
 
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_post_culture_delete_subscriber',    array( __CLASS__, 'handle_delete' ) );
@@ -71,6 +73,40 @@ class Culture_Subscribers {
             }
             update_option( 'culture_newsletter_subscribers', $migrated, false );
         }
+    }
+
+    /**
+     * One-time backfill: add every existing subscriber to the 'announcements' list,
+     * since it is an opt-out (default ON) list rather than opt-in. Runs once, gated
+     * by the 'culture_announcements_backfilled' option, so a future un-subscribe from
+     * 'announcements' (via newsletter preferences) is never silently re-added.
+     */
+    private static function maybe_backfill_announcements() {
+        if ( '1' === get_option( 'culture_announcements_backfilled', '' ) ) {
+            return;
+        }
+
+        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $changed     = false;
+
+        foreach ( $subscribers as &$sub ) {
+            if ( ! is_array( $sub ) ) {
+                continue;
+            }
+            $lists = $sub['lists'] ?? array();
+            if ( ! in_array( 'announcements', $lists, true ) ) {
+                $lists[]       = 'announcements';
+                $sub['lists']  = $lists;
+                $changed       = true;
+            }
+        }
+        unset( $sub );
+
+        if ( $changed ) {
+            update_option( 'culture_newsletter_subscribers', $subscribers, false );
+        }
+
+        update_option( 'culture_announcements_backfilled', '1' );
     }
 
     /**
@@ -755,6 +791,9 @@ class Culture_Subscribers {
                 'name'     => sanitize_text_field( $item['name'] ?? '' ),
                 'location' => sanitize_text_field( $item['location'] ?? '' ),
                 'date'     => $now,
+                // 'announcements' is opt-out (default ON) — every new subscriber gets it unless
+                // they later remove it via newsletter preferences.
+                'lists'    => array( 'announcements' ),
             );
             $existing_emails[] = strtolower( $email );
             $added++;
