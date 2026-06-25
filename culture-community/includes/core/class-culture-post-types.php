@@ -238,6 +238,13 @@ class Culture_Post_Types {
             '_cluster_activated_at'         => 'string',
             '_cluster_election_open_until'  => 'string',
             '_cluster_election_votes'       => 'string', // JSON: {voter_user_id: candidate_user_id}
+            // Host onboarding fields (added with onboarding flow).
+            '_cluster_venue_type'              => 'string',  // home|cafe|coworking|other
+            '_cluster_host_note'               => 'string',  // context note visible to confirmed members
+            '_cluster_realistic_capacity'      => 'integer', // physical gathering size (distinct from enrollment cap)
+            '_cluster_accessible'              => 'integer', // 1 if step-free/accessible
+            '_cluster_address_visible'         => 'string',  // members_only|on_request|area_only
+            '_cluster_host_locality_confirmed' => 'integer', // 1 if host confirmed local presence
         );
         foreach ( $cluster_meta as $meta_key => $type ) {
             register_post_meta( 'culture_cluster', $meta_key, array(

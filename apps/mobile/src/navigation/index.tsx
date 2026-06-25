@@ -32,6 +32,7 @@ import DirectoryPostsScreen from "../screens/community/DirectoryPostsScreen";
 import DiscoverScreen from "../screens/community/DiscoverScreen";
 import ClusterScreen from "../screens/community/ClusterScreen";
 import StartClusterScreen from "../screens/community/StartClusterScreen";
+import HostOnboardingScreen from "../screens/community/HostOnboardingScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -127,8 +128,9 @@ function ConnectStack() {
       <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
       <Stack.Screen name="DirectoryPosts"   component={DirectoryPostsScreen} />
       <Stack.Screen name="Discover"         component={DiscoverScreen} />
-      <Stack.Screen name="ClusterScreen"      component={ClusterScreen} />
-      <Stack.Screen name="StartClusterScreen" component={StartClusterScreen} />
+      <Stack.Screen name="ClusterScreen"         component={ClusterScreen} />
+      <Stack.Screen name="HostOnboardingScreen" component={HostOnboardingScreen} />
+      <Stack.Screen name="StartClusterScreen"   component={StartClusterScreen} />
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />

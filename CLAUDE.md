@@ -124,6 +124,22 @@ React Native can't use the DOM-dependent shared package — edit both when those
   feed reminder card) are all live. The feature is fully shipped. See the plan doc's
   own status line for the authoritative, up-to-date detail — keep this summary in sync
   with it rather than re-deriving phase status here.
+
+  **Host onboarding flow (added 2026-06-25):** a 5-step pre-creation journey runs
+  before the cluster creation form, collecting: (1) country (UK/Nigeria/Other — drives
+  context-aware copy in subsequent steps), (2) venue type (home/café/coworking/other)
+  + optional host note, (3) realistic gathering capacity (2–20) + step-free access
+  toggle, (4) locality commitment checkbox (`_cluster_host_locality_confirmed`),
+  (5) address visibility (members_only/on_request/area_only). New meta fields:
+  `_cluster_venue_type`, `_cluster_host_note`, `_cluster_realistic_capacity`,
+  `_cluster_accessible`, `_cluster_address_visible`, `_cluster_host_locality_confirmed`.
+  Mobile: `HostOnboardingScreen.tsx` (`screens/community/`) → `StartClusterScreen`
+  (accepts params, shows compact summary card, removed "How it works" block).
+  `MemberDirectoryScreen`'s "Start" buttons now route to `HostOnboardingScreen`.
+  Web: `/cluster/create` (`app/cluster/create/page.tsx` + `CreateClusterClient.tsx`
+  in `apps/connect`). `HouseFellowship.tsx`'s inline `StartClusterModal` removed —
+  "Start" buttons are now `<Link href="/cluster/create">`.
+  CSS namespace: `hfc-*` in `apps/connect/app/member.css`.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
   Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
   emails/admin labels) — this superseded the prior naming and is now fully applied
