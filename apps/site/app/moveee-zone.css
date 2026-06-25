@@ -64,7 +64,8 @@
 }
 
 .mz-h1 em {
-  font-style: italic;
+  font-style: normal;
+  color: var(--ochre);
 }
 
 .mz-subhead {

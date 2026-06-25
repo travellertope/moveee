@@ -56,6 +56,7 @@ export default function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const [items, setItems]   = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dropdownRight, setDropdownRight] = useState<number>(0);
   const ref = useRef<HTMLDivElement>(null);
 
   const loggedIn = !!(session?.user as any)?.id;
@@ -101,6 +102,17 @@ export default function NotificationBell() {
     }
     if (open) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  // Clamp dropdown so it never overflows left viewport edge.
+  useEffect(() => {
+    if (!open || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const dropdownW = Math.min(340, window.innerWidth - 32);
+    // `right: 0` means dropdown left edge = rect.right - dropdownW
+    const leftEdge = rect.right - dropdownW;
+    const overflow = leftEdge < 8 ? 8 - leftEdge : 0;
+    setDropdownRight(-overflow);
   }, [open]);
 
   async function handleOpen() {
@@ -178,7 +190,7 @@ export default function NotificationBell() {
         <div style={{
           position: "absolute",
           top: "calc(100% + 8px)",
-          right: 0,
+          right: dropdownRight,
           width: "min(340px, calc(100vw - 32px))",
           maxHeight: 440,
           overflowY: "auto",

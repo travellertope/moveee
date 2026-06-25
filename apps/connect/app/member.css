@@ -360,6 +360,8 @@
   font-weight: 700;
   color: var(--ink);
   line-height: 1.2;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .mem-badge.locked .mem-badge-name { color: var(--ink); }
 .mem-badge-desc {
