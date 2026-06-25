@@ -90,6 +90,22 @@
 
         $( '.js-nl-count-num' ).text( count.toLocaleString() );
         $( '.js-nl-count-label' ).text( label );
+
+        // Keep the "Send to All Subscribers" notice + buttons in sync too.
+        var listLabel = listLabels[ list ] || list;
+
+        $( '.js-nl-notice-count' ).text( count.toLocaleString() );
+        $( '.js-nl-notice-list' ).text( listLabel );
+
+        if ( 0 === count ) {
+            $( '.js-nl-notice-empty' ).show();
+            $( '.js-nl-notice-full' ).hide();
+        } else {
+            $( '.js-nl-notice-empty' ).hide();
+            $( '.js-nl-notice-full' ).show();
+        }
+
+        $( '.js-nl-send-btn' ).prop( 'disabled', 0 === count );
     }
 
     $( function () {
@@ -119,6 +135,8 @@
                 nonce:       cultureNLSend.nonce,
                 post_id:     cultureNLSend.postId,
                 test_email:  testEmail,
+                list:        $( '[name="culture_nl_list"]' ).val()    || '',
+                segment:     $( '[name="culture_nl_segment"]' ).val() || '',
             }, function ( res ) {
                 $btn.prop( 'disabled', false ).text( cultureNLSend.i18n.sendTest );
 
@@ -152,6 +170,8 @@
                 action:  'culture_nl_send_issue',
                 nonce:   cultureNLSend.nonce,
                 post_id: cultureNLSend.postId,
+                list:    $( '[name="culture_nl_list"]' ).val()    || '',
+                segment: $( '[name="culture_nl_segment"]' ).val() || '',
             }, function ( res ) {
                 if ( res.success ) {
                     showFeedback( '✓ ' + res.data.message, 'success' );
