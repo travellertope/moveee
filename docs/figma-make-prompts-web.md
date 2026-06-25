@@ -4656,3 +4656,218 @@ Output 5 frames: Frame 1 (Theme Toggle), Frame 2 (Feed dark mode — adaptation 
 splash screen — negative-space callout).
 
 ---
+
+## 20. DIRECTORY ENTRY DETAIL PAGE — WEB (Site B, web.themoveee.com/directory/[slug])
+
+### Brand architecture
+Site B (web.themoveee.com). Real route: `apps/connect/app/directory/[slug]/page.tsx`, styled by
+`apps/connect/app/directory.css` (shared with the `/directory` listing page and `/directory/submit`).
+
+### Why this section exists
+Mobile §11 has **PROMPT 11B — Directory Entry Detail Page (All 11 Entry Types)**: a single-screen
+app-card shell (nav header → 220px hero with type badge → entry header card → body card → infobox
+card → horizontal "Works" rail → horizontal community-reviews rail → horizontal upcoming-events
+rail → horizontal related-entries chips → improve CTA card) reused across all 11 entry types
+(person/place/food/book/film/genre/movement/artwork/concept/fashion/tv-series), each just swapping
+its per-type infobox fields and badge color. Web's real equivalent at `/directory/[slug]` is an
+entirely different page architecture — **not** a stack of cards, but a sticky three-column
+Wikipedia-style layout (220px related-entries sidebar | flexible-width article column | 260px
+sticky infobox sidebar) with a serif editorial title treatment, no hero image bleed (the photo
+lives inside the infobox card instead), and per-type infobox field tables defined directly in the
+page component (`INFOBOX_DEFS`) rather than as a generic key–value list. This is distinct from
+**web §15**'s `DirectoryDetailModal.tsx`, which is the off-canvas drawer shown when a directory
+card is clicked *from inside a feed* — that drawer is a lightweight preview; this page is the full
+standalone destination it links to ("View full entry →").
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Back link: **"← Discover"**
+- Sidebar heading pattern: **"Related {TypeLabel}s"** (e.g. "Related Persons", "Related Places")
+- Sidebar empty state: **"No related entries yet."**
+- Sidebar footer link: **"See all {TypeLabel}s →"**
+- Improve panel eyebrow: **"★ Community Wiki"**
+- Improve panel body: **"Know more? Help improve this entry."**
+- Improve panel CTA: **"Improve →"**
+- No-content fallback (gated-off or empty body): **"Full article coming soon. Know this subject? Help us build it."**
+- Date line: **"Added to directory {D Month YYYY}"**
+- Topics label: **"Topics"**
+- Selected works heading: **"Selected Works"**
+- Community section heading: **"Community Reviews & Takes"**
+- Community post "read more": **"Read full post →"**
+- Upcoming events section heading: **"Upcoming Events"**
+- Happening pill on linked events: **"Happening"**
+- Infobox name-plate, "Type", "Category", "Added" rows: as rendered, verbatim labels
+- External link infobox row labels: **"Website"**, **"Instagram"**, **"X / Twitter"**
+
+<!-- DEV 1: Three-column CSS grid (`.dir-wiki-layout`, `grid-template-columns: 220px 1fr 260px`,
+gap 36px, max-width 1360px). Both side columns are `position: sticky; top: 80px`. Below 860px the
+grid collapses to a single column and CSS `order` re-stacks it as infobox → article → related
+(`.dir-wiki-right { order: -1 }`, `.dir-wiki-main { order: 0 }`, `.dir-wiki-left { order: 1 }`) —
+i.e. on mobile the infobox card appears FIRST, above the title, not last. -->
+<!-- DEV 2: Color tokens are page-local CSS vars, NOT the shared `--ink`/`--paper`/etc. used
+elsewhere in apps/connect: `--dir-ink:#14110d`, `--dir-paper:#ffffff`, `--dir-ochre:#b38238`,
+`--dir-muted:rgba(20,17,13,.55)`, `--dir-border:rgba(20,17,13,.12)`, `--dir-dark-bg:#14110d`,
+`--dir-dark-ink:#f5f0e8`. Sidebar/infobox card fill is a literal `#faf7f2` (not a var), and the
+infobox name-plate strip is a literal `#f3ede0`. -->
+<!-- DEV 3: There is NO full-bleed hero image and no per-type badge color table on this page —
+that treatment exists only in the off-canvas drawer (web §15) and mobile's PROMPT 11B, not here.
+The only image is inside the infobox card, 4:3 aspect ratio, at the very top of the sticky right
+sidebar, above a centered serif name-plate row repeating the title. -->
+<!-- DEV 4: Title is NOT a fixed size — `clamp(28px, 5vw, 48px)` Fraunces weight 300 (`.dir-single-title`)
+for the real single-column legacy class, but the wiki layout's actual title class
+(`.dir-wiki-title`) clamps `28px–46px` at weight 300 — both are noticeably lighter-weight than
+mobile's bold 22px serif title. Eyebrow type label above the title (`.dir-single-type`) is
+JetBrains Mono 9px uppercase ochre — there is no colored pill/badge here, just plain mono text. -->
+<!-- DEV 5: Per-type infobox fields are a hardcoded `INFOBOX_DEFS` map keyed by the 11 type slugs
+— field sets differ meaningfully from mobile's per-type INFOBOX in PROMPT 11B (e.g. web's "person"
+fields are Born/Died/Nationality/Occupation/Known For/Origin/Active Years/Labels-Affiliations/
+Education/Notable Awards — there is no "Also known as" row on web). Only fields with a non-empty
+value in the `infobox` JSON actually render a row — never pad with empty/placeholder rows. A
+divider (`.dir-wiki-infobox-divider`, 2px border-top) separates the fixed Type/Category/Added rows
+from the per-type fields, and a second one separates per-type fields from the external-links block
+(Website/Instagram/X) — both dividers are conditional, only rendered when there's content on both
+sides. -->
+<!-- DEV 6: Content gating reuses the existing `ContentGate` component (`getAccessLevel`/
+`canViewContent` from `lib/access.ts`) — if the entry's access level is member-only or patron-only
+and the viewer doesn't qualify, the ENTIRE body — not just a blurred snippet — is replaced by
+ContentGate's own upsell UI; everything else on the page (infobox, related sidebar, community
+section, events) still renders normally regardless of gating. -->
+<!-- DEV 7: The "Selected Works" grid (`.dir-wiki-works-grid`, `repeat(auto-fill, minmax(160px,1fr))`,
+4:3 image cards) only renders if `entry.selectedWorks` is non-empty — there is no horizontal-scroll
+rail like mobile's "Works" row; it's a wrapping grid. It is also skipped entirely for types with
+no portfolio content, same restriction as mobile (Concept/Genre/Movement get no Works section). -->
+<!-- DEV 8: "Community Reviews & Takes" is REAL community data, not a mock rail — it's populated by
+`getDirectoryPosts(entry.databaseId)`, the same linked-community-post system used by `SubmitPost.tsx`'s
+DirectorySearch integration (Hidden Gem / Food Review / Book Review templates link a post to a
+directory entry via `linked_directory_id`). It only renders when `communitySummary.total_posts > 0`.
+Each card shows avatar, author name, a "Pro" badge only if `author.tier === "patron"`, relative date,
+an optional per-post star rating (only for templates that have one, e.g. Food/Book review), full post
+content as plain text (NOT truncated to 3 lines like mobile), and reaction emoji counts at the
+bottom — there is no "Write a review" CTA button on web (that's mobile-only; web reviews come from
+the regular community composer flow, not a dedicated review form on this page). -->
+<!-- DEV 9: "Upcoming Events" only shows events with `organiser_directory_id` pointing at this entry
+(`getDirectoryEvents(entry.databaseId)`) — a flat vertical list of cards (not mobile's horizontal
+date-block rows), each with a 72×72px thumbnail, a literal "Happening" pill (bg #eeedfe, text
+#3c3489 — these two hex values are inline JSX styles, not CSS classes, an inconsistency worth
+preserving as-is), formatted date range, title, and venue/city/admission line. There is no event
+type beyond "Happening" rendered here — this only surfaces editorial/community events that resolved
+an organiser link, not a generic "browse more events" CTA. -->
+<!-- DEV 10: Related entries (left sidebar) are NOT a simple taxonomy query — they're computed by
+fetching up to 200 directory entries and scoring each: +2 for matching type, +1 per shared interest
+tag, sorted descending, top 5 kept. Each related-entry row is a 36×36px thumbnail + title, no type
+emoji/icon at all (unlike mobile's emoji-prefixed related chips). The sidebar's "See all →" link
+points to `/discover?type={slug}`, NOT a `/directory?type=` listing — Discover (per CLAUDE.md) is
+the dedicated paginated browse surface, and this page deliberately routes there instead of the
+older `/directory` grid. -->
+<!-- DEV 11: The "Improve" CTA panel is visually distinct from every other card on the page — it
+uses the literal dark `--dir-dark-bg`/`--dir-dark-ink` pair (near-black bg, warm-white text),
+making it the one inverted-color block in an otherwise all-light page, and its body copy is
+rendered at low opacity (`rgba(245,240,232,.65)`). It links to `/directory/submit?improve={slug}`,
+the SAME submission form used to create new entries, just with a query param flag — there is no
+separate "edit" form. -->
+
+### PROMPT 20 — Directory Entry Detail Page (Desktop 1440px + Mobile Companion 390px)
+
+```
+You are a senior web UX/UI designer documenting the REAL `/directory/[slug]` page on Moveee
+Connect (web.themoveee.com) — a sticky three-column Wikipedia-style layout, NOT a card-stack
+app shell. Ground every measurement and color in the spec below; do not invent a hero image or
+per-type badge colors, neither exists on this page.
+
+═══════════════════════════════════
+COLOR TOKENS (page-local, exact hex)
+═══════════════════════════════════
+--dir-ink: #14110d          --dir-paper: #ffffff
+--dir-ochre: #b38238        --dir-muted: rgba(20,17,13,.55)
+--dir-border: rgba(20,17,13,.12)
+--dir-dark-bg: #14110d      --dir-dark-ink: #f5f0e8
+Sidebar/infobox card fill (literal, not a var): #faf7f2
+Infobox name-plate strip fill (literal): #f3ede0
+Fonts: Fraunces (serif, weight 300 for titles), DM Sans (body — implicit, inherited from
+app-wide sans stack), JetBrains Mono (all-caps eyebrow labels, 9–10px, letter-spacing .12–.16em).
+
+FRAME 1 — DESKTOP LAYOUT SHELL (1440px, entry type: "Person" — Fela Kuti example):
+Topbar (max-width 1360px, 28px top / 32px side padding): "← Discover" link, JetBrains Mono-ish
+plain text link, var(--dir-ink).
+Below it, a 3-column grid: 220px | 1fr | 260px, 36px gap, sticky side columns (top: 80px).
+
+LEFT COLUMN — Related sidebar card (bg #faf7f2, 1px border var(--dir-border), 18px/16px padding):
+  Heading "Related Persons" — JetBrains Mono 9px uppercase, letter-spacing .16em, color
+  var(--dir-ochre), 14px bottom margin, 10px bottom padding, border-bottom var(--dir-border).
+  5 related rows, each: 36×36px thumbnail (radius 2px) + title (12px, var(--dir-ink)), divided by
+  1px var(--dir-border) borders between rows, no border after the last.
+  Footer (12px top padding, border-top var(--dir-border)): "See all Persons →" JetBrains Mono 9px
+  uppercase ochre link.
+  Below the card, a SEPARATE inverted dark panel (bg var(--dir-dark-bg) #14110d, 16px padding):
+  eyebrow "★ Community Wiki" (JetBrains Mono 9px ochre), body "Know more? Help improve this
+  entry." (12px, rgba(245,240,232,.65), 12px bottom margin), CTA "Improve →" button.
+
+CENTER COLUMN — Article:
+  Eyebrow "PERSON" — JetBrains Mono 9px uppercase letter-spacing .16em ochre, 14px bottom margin.
+  Title "Fela Kuti" — Fraunces, clamp(28px,5vw,46px), weight 300, var(--dir-ink), line-height 1.05.
+  Lead paragraph (the entry excerpt, plain text, no markup) — 16-17px, line-height 1.7, var(--dir-muted).
+  Date line "Added to directory 12 March 2025" — JetBrains Mono 10px, rgba(20,17,13,.3) or .35.
+  1px divider, 24px vertical margin.
+  Body prose — 16px, line-height 1.75, var(--dir-ink), rendered HTML (h2 sub-headers at Fraunces
+  22px weight 400, paragraphs 20px bottom margin, lists with 20px left padding).
+  Topics block (28px vertical padding, border-top var(--dir-border)): "Topics" eyebrow label
+  (JetBrains Mono 9px uppercase var(--dir-muted)) + wrapping flex row of ghost-border interest tag
+  chips, 8px gap.
+  "Selected Works" section: Fraunces 20px weight 400 heading with bottom border, 40px top margin —
+  then a WRAPPING grid (repeat(auto-fill, minmax(160px,1fr)), 16px gap) of 4:3 image cards with a
+  12px title strip below each (not a horizontal rail).
+  "Community Reviews & Takes" section: heading + an inline star-rating summary on the same row
+  (gold ★★★★½ + bold rating number + muted "(N reviews)"), then a vertical stack of real community
+  post cards (avatar 32px, author name bold, optional "Pro" pill, relative date, optional per-post
+  star rating right-aligned, full untruncated post text, reaction-emoji-count row + "Read full
+  post →" link at the bottom of each card).
+  "Upcoming Events" section: heading, then a vertical stack of event rows (72×72px thumbnail, a
+  "Happening" pill bg #eeedfe text #3c3489, formatted date range, title, venue/city/admission line)
+  — each row links out to the event's own page.
+
+RIGHT COLUMN — Sticky infobox card (bg #faf7f2, 1px border var(--dir-border), overflow hidden):
+  4:3 featured image at the very top, no padding.
+  Name-plate strip below it (bg #f3ede0, centered, 12px/10px padding, border-bottom): entry title
+  repeated, Fraunces 15px weight 500.
+  Key–value rows (90px label column + flexible value column, 8px padding, border-bottom between
+  rows, baseline-aligned): "Type" → "Person", "Category" → comma-joined interest names, "Added" →
+  same date as the article. A 2px divider, then the per-type fields (for Person: Born, Died,
+  Nationality, Occupation, Known For, Origin, Active Years, Labels/Affiliations, Education,
+  Notable Awards — only populated ones render). A second 2px divider, then external links
+  (Website/Instagram/X — ochre link text, the @ links open to instagram.com/x.com).
+  All labels: JetBrains Mono 9px uppercase letter-spacing .12em var(--dir-muted). All values:
+  12-13px var(--dir-ink), or var(--dir-ochre) for link values.
+
+FRAME 2 — MOBILE COMPANION (390px width): single-column stack, CSS order-reversed from desktop —
+infobox card FIRST (image now 16:7 aspect ratio instead of 4:3), then the article column, then the
+related-entries sidebar card + dark Improve panel LAST at the very bottom of the page. Side columns
+lose their sticky positioning entirely on this breakpoint (`position: static`). Annotate this
+reordering explicitly — it's a deliberate `order` swap in CSS, not a simplification/omission.
+
+FRAME 3 — CONTENT-GATED STATE (desktop, entry type: "Book", access level patron-only, logged-in
+Citizen viewer): identical shell to Frame 1, but where the body prose would be, render the real
+ContentGate upsell block instead (a centered card describing the Pro requirement with an upgrade
+CTA) — everything else (infobox, related sidebar, community/events sections) renders unaffected.
+Annotate: "ContentGate replaces ONLY the body — not a blur overlay, not a full-page lock."
+
+FRAME 4 — EMPTY-CONTENT STATE (desktop, entry type: "Movement", no body content, no related
+entries, no community posts, no events): show the no-content italic fallback line "Full article
+coming soon. Know this subject? Help us build it." in place of the body, the sidebar showing
+"No related entries yet." in place of the related list, and the Selected Works / Community /
+Upcoming Events sections entirely absent (not shown as empty states — those sections render
+nothing at all when there's no data, per the real conditional logic).
+
+CONSTRAINTS:
+- No hero image bleed and no colored per-type badge pill anywhere on this page — that treatment
+  belongs only to the off-canvas drawer (a separate, already-documented component) and to mobile.
+- The eyebrow type label is plain mono text in ochre, not a pill/badge.
+- Selected Works is a wrapping grid, not a horizontal-scroll rail.
+- Community Reviews shows full, untruncated post text — do not truncate to 3 lines.
+- Upcoming Events is a vertical list of cards, not horizontal date-block rows.
+- Mobile reorders sections (infobox → article → related) — do not simply shrink the desktop
+  layout proportionally.
+```
+
+Output 4 frames: Frame 1 (Desktop layout shell, Person example), Frame 2 (Mobile companion,
+reordered stack), Frame 3 (Content-gated state), Frame 4 (Empty-content state).
+
+---
