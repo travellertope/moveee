@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, ShoppingBag } from "lucide-react";
-import Ticker from "./Ticker";
+import { Search, ShoppingBag, User } from "lucide-react";
 import SearchOverlay from "./SearchOverlay";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
@@ -20,157 +19,167 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const { itemCount, openDrawer } = useCart();
   const pathname = usePathname();
-  const active = (href: string) => pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
+  const active = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const today = new Date().toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   const tickerData = siteSettings?.mastheadTicker || {};
+  const issueText = tickerData.issueText || "";
+  const announcementText = tickerData.announcementText || "";
+  const announcementUrl = tickerData.announcementUrl || "";
+  const locations: string[] = tickerData.locations || [];
 
   return (
     <>
-      <div className="relative z-50">
-        <div className="relative group">
-          <Ticker
-            issueText={tickerData.issueText}
-            issueUrl={tickerData.issueUrl}
-            announcementText={tickerData.announcementText}
-            announcementUrl={tickerData.announcementUrl}
-            locations={tickerData.locations}
-            date={today}
-          />
-          {/* Language Toggle */}
-          <div className="absolute right-0 top-0 bottom-0 flex items-center bg-black px-6 border-l border-white/10 z-10 transition-colors">
-            <div className="flex items-center space-x-1.5 text-[10px] tracking-[0.2em] font-sans font-medium text-white">
-              <button
-                onClick={() => setLanguage("EN")}
-                className={`${language === "EN" ? "text-white" : "text-white/40 hover:text-white transition-colors underline-offset-4"}`}
-                style={{ textDecoration: language === "EN" ? "underline" : "none" }}
-              >
-                EN
-              </button>
-              <span className="text-white/20">|</span>
-              <button
-                onClick={() => setLanguage("FR")}
-                className={`${language === "FR" ? "text-white" : "text-white/40 hover:text-white transition-colors underline-offset-4"}`}
-                style={{ textDecoration: language === "FR" ? "underline" : "none" }}
-              >
-                FR
-              </button>
-            </div>
-          </div>
+      <header className="compact-header">
+        {/* Left zone: logo + divider + nav */}
+        <div className="compact-header-left">
+          <Link href="/" className="compact-logo">
+            Moveee
+          </Link>
+          <div className="compact-logo-divider" />
+          <nav className="compact-nav">
+            <a href={CONNECT_URL} className="compact-nav-link">Feed</a>
+            <a href={`${CONNECT_URL}/discover`} className="compact-nav-link">Discover</a>
+            <Link href="/magazine" className="compact-nav-link" data-active={active("/magazine")}>Editorials</Link>
+          </nav>
         </div>
 
-        <header className="masthead">
-          {/* Desktop left nav */}
-          <nav className="masthead-left">
-            <a    href={CONNECT_URL}>Feed</a>
-            <a    href={`${CONNECT_URL}/discover`}>Discover</a>
-            <Link href="/magazine"            data-active={active("/magazine")}>Editorials</Link>
-          </nav>
-
-          {/* Wordmark */}
-          <div className="wordmark">
-            <div className="kicker">Est. 2022 · Best in Culture</div>
-            <Link href="/" className="hover:opacity-80 transition-opacity flex justify-center">
-              <img
-                src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
-                alt="The Moveee Logo"
-                style={{ maxHeight: "48px", width: "auto" }}
-              />
-            </Link>
-          </div>
-
-          {/* Desktop right nav */}
-          <div className="masthead-right">
-            <button
-              className="masthead-icon-btn"
-              aria-label="Search"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search size={18} strokeWidth={1.5} />
-            </button>
-
-            <button
-              className="masthead-icon-btn cart-icon-btn"
-              aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
-              onClick={openDrawer}
-              style={{ position: "relative" }}
-            >
-              <ShoppingBag size={18} strokeWidth={1.5} />
-              {itemCount > 0 && (
-                <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
+        {/* Center zone: ticker info (desktop only, hidden ≤1100px) */}
+        {issueText && (
+          <div className="compact-ticker">
+            <div className="compact-ticker-dot" />
+            <div className="compact-ticker-info-wrap">
+              <span className="compact-ticker-text">{issueText}</span>
+              {(locations.length > 0 || announcementText) && (
+                <div className="compact-ticker-tooltip">
+                  {locations.length > 0 && (
+                    <>
+                      <span className="compact-ticker-tooltip-label">Touring</span>
+                      <span className="compact-ticker-tooltip-locs">{locations.join(" · ")}</span>
+                    </>
+                  )}
+                  {announcementText && (
+                    <>
+                      {locations.length > 0 && <div className="compact-ticker-tooltip-divider" />}
+                      {announcementUrl ? (
+                        <a href={announcementUrl} className="compact-ticker-tooltip-cta">
+                          {announcementText} →
+                        </a>
+                      ) : (
+                        <span className="compact-ticker-tooltip-cta">{announcementText}</span>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
-            </button>
-
-            <a href={`${CONNECT_URL}/login`} className="auth-icon-btn" title="Sign in" aria-label="Sign in">
-              <User size={18} strokeWidth={1.5} />
-              <span className="auth-icon-label">Sign in</span>
-            </a>
-
-            <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
-              Join →
-            </a>
+            </div>
           </div>
+        )}
 
-          {/* Mobile: search + cart + hamburger */}
-          <div className="masthead-mobile-actions">
+        {/* Right zone: lang pills + icons + join */}
+        <div className="compact-header-right">
+          {/* Language pills */}
+          <div className="lang-pills">
             <button
-              className="masthead-icon-btn"
-              aria-label="Search"
-              onClick={() => setSearchOpen(true)}
+              onClick={() => setLanguage("EN")}
+              className={`lang-pill${language === "EN" ? " lang-pill--active" : ""}`}
             >
-              <Search size={18} strokeWidth={1.5} />
+              EN
             </button>
             <button
-              className="masthead-icon-btn cart-icon-btn"
-              aria-label="Cart"
-              onClick={openDrawer}
-              style={{ position: "relative" }}
+              onClick={() => setLanguage("FR")}
+              className={`lang-pill${language === "FR" ? " lang-pill--active" : ""}`}
             >
-              <ShoppingBag size={18} strokeWidth={1.5} />
-              {itemCount > 0 && (
-                <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
-              )}
-            </button>
-            <button
-              className="masthead-hamburger"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              <span className={`hamburger-icon ${mobileMenuOpen ? "open" : ""}`}>
-                <span />
-                <span />
-                <span />
-              </span>
+              FR
             </button>
           </div>
-        </header>
 
-        {/* Mobile dropdown */}
-        <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
-          <div className="mobile-menu-links">
-            <a    href={CONNECT_URL}           onClick={() => setMobileMenuOpen(false)}>Feed</a>
-            <a    href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
-            <Link href="/magazine"            onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
-          </div>
+          <button
+            className="compact-icon-btn"
+            aria-label="Search"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search size={17} strokeWidth={1.5} />
+          </button>
 
-          <div className="mobile-menu-actions">
-            <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
-              Join Moveee →
+          <button
+            className="compact-icon-btn cart-icon-btn"
+            aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
+            onClick={openDrawer}
+            style={{ position: "relative" }}
+          >
+            <ShoppingBag size={17} strokeWidth={1.5} />
+            {itemCount > 0 && (
+              <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
+            )}
+          </button>
+
+          <div className="compact-divider" />
+
+          <div className="compact-sign-in-wrap">
+            <a href={`${CONNECT_URL}/login`} className="compact-icon-btn" aria-label="Sign in">
+              <User size={17} strokeWidth={1.5} />
             </a>
+            <div className="compact-sign-in-tooltip">Sign in</div>
           </div>
-        </nav>
-      </div>
 
-      {/* Search overlay */}
+          <a href={CONNECT_URL} className="compact-join-btn" style={{ textDecoration: "none" }}>
+            Join →
+          </a>
+        </div>
+
+        {/* Mobile: search + cart + hamburger */}
+        <div className="masthead-mobile-actions">
+          <button
+            className="masthead-icon-btn"
+            aria-label="Search"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search size={18} strokeWidth={1.5} />
+          </button>
+          <button
+            className="masthead-icon-btn cart-icon-btn"
+            aria-label="Cart"
+            onClick={openDrawer}
+            style={{ position: "relative" }}
+          >
+            <ShoppingBag size={18} strokeWidth={1.5} />
+            {itemCount > 0 && (
+              <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
+            )}
+          </button>
+          <button
+            className="masthead-hamburger"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className={`hamburger-icon ${mobileMenuOpen ? "open" : ""}`}>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile dropdown */}
+      <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
+        <div className="mobile-menu-links">
+          <a href={CONNECT_URL} onClick={() => setMobileMenuOpen(false)}>Feed</a>
+          <a href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
+          <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
+        </div>
+        <div className="mobile-menu-actions">
+          <a href={`${CONNECT_URL}/login`} className="mobile-menu-signin">Sign in</a>
+          <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
+            Join Moveee →
+          </a>
+        </div>
+      </nav>
+
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
