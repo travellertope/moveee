@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
@@ -303,18 +304,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 {showcaseLabel ? <h3>{showcaseLabel}</h3> : <h3>Selected <em>works</em></h3>}
                 <small>Preview · {event.showcase.length} items</small>
               </div>
-              <div className="works-grid">
-                {event.showcase.map((item: any, i: number) => (
-                  <div key={i} className="work-card">
-                    <div className="work-frame">
-                      {item.imageUrl && <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />}
-                    </div>
-                    <div className="work-num">N°0{i + 1}</div>
-                    <div className="work-title">{item.title}</div>
-                    <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
-                  </div>
-                ))}
-              </div>
+              <ShowcaseGallery items={event.showcase} />
             </div>
           )}
 
