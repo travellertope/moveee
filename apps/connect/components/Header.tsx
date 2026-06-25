@@ -25,8 +25,25 @@ export default function ConnectHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navTop, setNavTop] = useState(60);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const user = session?.user as any;
+
+  // Keep the mobile drawer pinned to the header's real bottom edge — the
+  // header isn't always at viewport y:0 (the app download banner can sit
+  // above it), so a hardcoded `top: 60px` overlaps the header whenever the
+  // banner is showing and the page hasn't scrolled past it yet.
+  useEffect(() => {
+    function measure() {
+      if (headerRef.current) {
+        setNavTop(headerRef.current.getBoundingClientRect().bottom);
+      }
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [mobileOpen]);
 
   // Close user dropdown on outside click
   useEffect(() => {
@@ -58,7 +75,7 @@ export default function ConnectHeader() {
 
   return (
     <>
-      <header className="ch-header">
+      <header className="ch-header" ref={headerRef}>
         <div className="ch-inner">
           {/* Logo */}
           <Link href={SITE_URL} className="ch-logo">
@@ -195,6 +212,7 @@ export default function ConnectHeader() {
         id="ch-mobile-nav"
         className={`ch-mobile-nav${mobileOpen ? " open" : ""}`}
         aria-label="Mobile navigation"
+        style={{ top: navTop }}
       >
         {NAV.map((item) => (
           <Link

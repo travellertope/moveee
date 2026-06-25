@@ -401,6 +401,41 @@
   background: var(--paper);
   border-color: var(--ar-ghost-light);
 }
+.ar-sidebar-card--newsletter input[type="email"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .2s;
+  margin-bottom: 10px;
+}
+.ar-sidebar-card--newsletter input[type="email"]::placeholder { color: var(--mute); }
+.ar-sidebar-card--newsletter input[type="email"]:focus { border-color: var(--ar-ochre); }
+.ar-sidebar-card--newsletter button {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  border-radius: 4px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.ar-sidebar-card--newsletter button:hover { background: var(--ar-ochre); }
+.ar-sidebar-card--newsletter button:disabled { opacity: .6; cursor: default; }
 .ar-sidebar-card--story .ar-sc-thumb {
   width: 100%;
   aspect-ratio: 16/9;

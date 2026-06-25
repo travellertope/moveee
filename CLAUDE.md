@@ -881,11 +881,11 @@ re-derived from scratch each session.
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
 | 12 | Member Directory & Public Profiles | Site B | Done — rebuilt from mockup 2026-06-25 (see "Member Directory & Public Profiles — visual rebuild" below) |
-| 13 | Notifications & Analytics | Site B | Not started |
+| 13 | Notifications & Analytics | Site B | Done — rebuilt from mockup 2026-06-25 (see "Notifications & Analytics — visual rebuild" below) |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
 | 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
 | 16 | Design System & Core UI Components | Site A + B | Not started |
-| 17 | Authentication Flow | Site B | Not started |
+| 17 | Authentication Flow | Site B | Done — rebuilt from mockup 2026-06-25 (see "Authentication Flow — visual rebuild" below) |
 | 18 | Overlays & Micro-interactions | Site B | Not started |
 
 ### Member Dashboard — visual rebuild (§9, June 2026)
@@ -1140,6 +1140,125 @@ profile.css}` (`prf-*` namespace).
   `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
   `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
   `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
+
+### Notifications & Analytics — visual rebuild (§13, June 2026)
+
+`mockups/web/notifications_analytics.html` diffed directly against the live components, not the
+prose spec. Touches `packages/shared/components/NotificationBell.tsx` (shared header dropdown),
+`apps/connect/app/member/notifications/NotificationsClient.tsx` (full-page list), and
+`apps/connect/app/member/analytics/AnalyticsClient.tsx` (stat cards, SVG bar/line charts, top
+posts). No CSS files were touched in this pass — all three components use inline `style={{...}}`
+objects exclusively, so there's nothing to brace-balance-check, only `tsc --noEmit`.
+
+- **Recurring color-family bug, found in two separate files**: both `NotificationBell.tsx`'s
+  dropdown rows and `NotificationsClient.tsx`'s full-page rows used a **gold**-family tint
+  (`rgba(179,130,56,...)` = `#b38238`) for the unread-row background — the mockup specifies an
+  **ochre/rust** tint (`#c5491f` at low opacity) instead. Fixed in both files (dropdown rows in
+  `NotificationBell.tsx` in an earlier pass this session; full-page rows in
+  `NotificationsClient.tsx` in this pass). The same gold-vs-ochre mixup recurred a third time in
+  `AnalyticsClient.tsx`'s Top Posts rank-#1 badge (see below) — **if a future surface shows an
+  unread/highlight/rank-1 accent that looks "off-brand," check whether it's using `--gold`
+  (`#b38238`, amber) where the mockup actually wants `--ochre` (`#c5491f`, rust)** — this is now a
+  3-for-3 pattern in this codebase, not a one-off.
+- `NotificationBell.tsx` (dropdown): badge border, dropdown shadow, mark-all-read color+weight,
+  the unread/read background fix above (+ matching hover handlers), timestamp color+font, and the
+  footer redesigned from a conditionally-shown link to an always-visible sticky bottom bar.
+- `NotificationsClient.tsx` (full page): header row rebuilt into a fixed-height (64px) banded bar
+  with its own background/border (was a plain flex row with `marginBottom`); row padding increased
+  to a uniform 20px with 16px gap (was 14px/14px); emoji size increased to 24px, title to 15px;
+  body/date text now conditionally colored brighter when unread vs. muted when read (previously
+  both were always `var(--mute)` regardless of read state); unread dot enlarged 7px→8px; added a
+  client-side "Load more" pagination affordance (`visibleCount` state, `PAGE_SIZE = 20`, slices the
+  already-fetched `items` array — the notifications API has no offset/pagination param wired up
+  server-side, so this is a pure client-side reveal rather than a new network request per page).
+- `AnalyticsClient.tsx`: the one confirmed functional/color bug was the Top Posts rank-#1 badge
+  using gold (`#b38238`) instead of ochre (`#c5491f`) — fixed. Remaining changes are pure visual
+  polish to match the mockup: chart gridlines in both `BarChart` and `LineChart` changed from a
+  solid `#e5ddd0` line to a dashed (`strokeDasharray="4 4"`) `#c8bfb0` line; axis/label text color
+  changed from `#9c8e7a` to the project's documented `var(--mute)`-equivalent literal `#7a6f5c`
+  throughout both charts; `StatCard` restyled from a flat tan card to a white card with 12px
+  radius, a subtle box-shadow, and a monospace uppercase label (was a plain sans label); the Top
+  Posts container restyled from the generic shared `.mem-card` class to its own white
+  card-with-shadow wrapper (the mockup gives this section a distinct rounded/shadowed treatment),
+  and each row's reaction/comment counts switched from a three-column plain-number layout to
+  emoji-prefixed (`❤️`/`💬`) counts on one line plus a bold "{N} Eng" total beneath.
+- **Confirmed already correct, no bug** — checked against the mockup and found matching, no
+  changes made: the 6-stat-card grid (Credit Balance, Points, Posts, Badges, Earned (30d), Spent
+  (30d)); `BarChart`'s earned/spent bar colors (`["#b38238", "#c5491f"]`, gold=earned/ochre=spent —
+  matches the mockup's `chart-earn`/`chart-spend` tokens exactly); `LineChart`'s call-site color
+  override (`color="#2a6496"`, a one-off blue distinct from both ochre and gold, matching the
+  mockup's dedicated `chart-line` token); the "← Back to Dashboard" link's `var(--ochre)` color.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
+  `apps/connect`. Re-check pixel fidelity against `mockups/web/notifications_analytics.html` in a
+  real environment before considering this fully closed.
+
+### Authentication Flow — visual rebuild (§17, June 2026)
+
+`mockups/web/authentication_flow.html` diffed directly against the 5 live auth pages in
+`apps/connect/app/` — `login/page.tsx`, `register/page.tsx`, `register/complete/page.tsx`,
+`forgot-password/page.tsx`, `reset-password/page.tsx`. All five already had the correct
+functionality (NextAuth credentials/passkey/Google sign-in, registration verification flow,
+forgot/reset password) — this was a targeted visual fidelity pass, not a rebuild, same as the
+§9–§15 passes before it. All five files use inline `style={{...}}` / a `Record<string,
+React.CSSProperties>` object at the bottom of the file (no CSS modules/files for this surface),
+so verification was `tsc --noEmit` only — no brace-balance check applicable.
+
+- **Systemic `.form-label` fix, all 5 pages**: every form label across the auth flow used a
+  bold, dark, 13px treatment (`fontSize:13, fontWeight:600, color:"#14110d"`) — the mockup's
+  `.form-label` token is light/muted/non-bold (`fontSize:11, fontWeight:400, color:"#7a6f5c"`),
+  matching the same label styling already used elsewhere in the codebase (e.g. Settings'
+  `.mem-field-label` per §10). Fixed in `login`, `register`, `register/complete`,
+  `forgot-password`, `reset-password` — this is now the 5-for-5 pattern across the whole flow,
+  not a one-off.
+- **`login/page.tsx`**: error-state inputs (`username`/`password`) get a visible red-tinted
+  border (`rgba(192,57,43,.5)`) when an error is present, instead of staying neutral; the
+  Google "G" icon button restyled to match the mockup's icon sizing/spacing; the
+  forgot-password/create-account footer links consolidated into a single flex-column container
+  (`gap: 12`) instead of two separately-margined `<p>` tags.
+- **`register/page.tsx`**: same footer-consolidation treatment as login (sign-in link +
+  "Upgrade after joining" link into one flex-column block).
+- **`reset-password/page.tsx`**: added a `successBlock` style (green-tinted card —
+  `background:"#f0fdf4"`, `border:"1px solid rgba(39,174,96,.15)"`, `color:"#27ae60"`) for the
+  post-submit success message, matching the mockup's `.success-block` pattern — previously this
+  state had no dedicated styling.
+- **`register/complete/page.tsx`** (Steps 2/3 — DOB/country/city/occupation, interests,
+  membership tier):
+  - Membership tier card: `tierLabel` changed from a prominent bold 17px dark heading to a
+    muted uppercase eyebrow-style label (`fontSize:11, fontWeight:400, textTransform:
+    "uppercase", color:"#7a6f5c"`); `tierPrice` changed from a bold brownish accent
+    (`color:"#8b6f47"`) to a large dark serif price (`Georgia, serif, fontWeight:300,
+    fontSize:28`) — matching the serif/weight-300 heading pattern used across the rest of the
+    auth flow (login/register/forgot-password/reset-password headings all follow this same
+    `Georgia, serif` + `fontWeight:300` convention).
+  - `savingsTag` color corrected from brand ochre/rust (`#c5491f`/`#fdf2f0`) to a distinct
+    semantic green (`#27ae60`/`#e6f4ea`) — "savings" is a positive/success indicator, not a
+    brand-accent callout, consistent with the green/success token already established
+    elsewhere (e.g. the Wallet/Perks/Coupons rebuild's `--success` token, §11).
+  - Billing-cycle toggle (Monthly/Annually) softened from a solid black/white active pill to a
+    white-background "chip" with a subtle shadow (`boxShadow: "0 1px 3px rgba(20,17,13,.12)"`)
+    when active, matching the mockup's lighter toggle treatment.
+  - Interest-grid pills' active state changed from a light background tint + ring box-shadow to
+    a solid black fill with white label text, matching the mockup's selected-state styling. No
+    changes to the underlying 18-slug `INTERESTS` data or 3-column grid layout — visual-only.
+  - The `ProgressBar` helper component's step-indicator sizing (32px circular nodes) was left
+    unchanged — a minor, deliberately accepted deviation, not revisited in this pass.
+- **Dead code removed**: `apps/connect/app/login/login/` (`page.tsx` + `layout.tsx`) — an
+  orphaned duplicate route under `/login/login` with zero genuine source references anywhere in
+  the codebase. Confirmed dead before removal (not a in-progress feature) and removed via
+  `git rm -r`. Its removal left stale references in the auto-generated Next.js route-validator
+  type files (`.next/types/validator.ts`, `.next/dev/types/validator.ts`) that only cleared
+  after `rm -rf .next` — if a future `tsc --noEmit` run reports errors pointing at a route you
+  just deleted, clear the `.next` cache before assuming the deletion is incomplete.
+- **`packages/shared/components/PasskeyBanner.tsx` deliberately out of scope** — it's a
+  dashboard-context component (rendered on `/member`, not any of the 5 auth pages above); the
+  mockup's passkey-prompt frame is illustrative of the concept, not a literal target for this
+  pass.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean, zero errors
+  after clearing the stale `.next` cache) across all 5 edited files. Re-check pixel fidelity
+  against `mockups/web/authentication_flow.html` in a real environment before considering this
+  fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):

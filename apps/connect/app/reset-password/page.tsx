@@ -68,7 +68,7 @@ function ResetForm() {
       <h1 style={s.heading}>Set a new password</h1>
 
       {status === "done" ? (
-        <p style={{ ...s.body, color: "#27ae60" }}>{message}</p>
+        <p style={s.successBlock}>{message}</p>
       ) : (
         <form onSubmit={handleSubmit} noValidate>
           <div style={s.field}>
@@ -160,9 +160,9 @@ const s: Record<string, React.CSSProperties> = {
   field: { marginBottom: 18 },
   label: {
     display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#14110d",
+    fontSize: 11,
+    fontWeight: 400,
+    color: "#7a6f5c",
     marginBottom: 6,
   },
   input: {
@@ -179,6 +179,14 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
   },
   hint: { display: "block", fontSize: 12, color: "#7a6f5c", marginTop: 4 },
+  successBlock: {
+    background: "#f0fdf4",
+    border: "1px solid rgba(39,174,96,.15)",
+    color: "#27ae60",
+    padding: 16,
+    borderRadius: 3,
+    textAlign: "center",
+  },
   error: {
     fontSize: 14,
     color: "#c0392b",

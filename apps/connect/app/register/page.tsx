@@ -179,19 +179,21 @@ function RegisterForm() {
           </button>
         </form>
 
-        <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: 20, marginBottom: 0, textAlign: "center" }}>
-          Already have an account?{" "}
-          <Link href="/login" style={styles.link}>Sign in</Link>
-        </p>
-        <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: 8, marginBottom: 0, textAlign: "center" }}>
-          Want Moveee Pro?{" "}
-          <Link
-            href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}
-            style={styles.link}
-          >
-            Upgrade after joining
-          </Link>
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20 }}>
+          <p style={{ fontSize: 13, color: "#7a6f5c", margin: 0, textAlign: "center" }}>
+            Already have an account?{" "}
+            <Link href="/login" style={styles.link}>Sign in</Link>
+          </p>
+          <p style={{ fontSize: 13, color: "#7a6f5c", margin: 0, textAlign: "center" }}>
+            Want Moveee Pro?{" "}
+            <Link
+              href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}
+              style={styles.link}
+            >
+              Upgrade after joining
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -234,7 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.2em",
     textTransform: "uppercase" as const,
     color: "#7a6f5c",
-    margin: "0 0 16px",
+    margin: "0 0 12px",
   },
   heading: {
     fontSize: 28,
@@ -248,9 +250,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   label: {
     display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#14110d",
+    fontSize: 11,
+    fontWeight: 400,
+    color: "#7a6f5c",
     marginBottom: 6,
     letterSpacing: "0.02em",
   },

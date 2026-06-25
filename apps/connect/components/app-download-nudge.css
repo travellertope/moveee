@@ -4,12 +4,19 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   background: var(--ink);
   color: var(--paper);
   padding: 8px 16px;
   font-size: 13px;
   text-align: center;
+}
+
+.adb-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .adb-text strong {
@@ -20,9 +27,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .adb-cta {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
   color: var(--ochre);
   font-weight: 600;
   text-decoration: none;
@@ -46,6 +59,18 @@
 
 .adb-dismiss:hover {
   opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .adb-banner {
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 11.5px;
+  }
+
+  .adb-actions {
+    gap: 8px;
+  }
 }
 
 /* ===== App download modal (occasional, never blocking) ===== */
