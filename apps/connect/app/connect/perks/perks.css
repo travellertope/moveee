@@ -160,6 +160,8 @@
   flex-direction: column;
   overflow: hidden;
   transition: border-color .15s, transform .15s;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 .perk-card:hover {
   border-color: rgba(42,36,28,.22);
@@ -211,6 +213,7 @@
   background: rgba(42,36,28,.04);
   border: 1px solid rgba(42,36,28,.1);
   padding: 3px 8px;
+  border-radius: var(--radius-full);
 }
 .perk-card-expiry {
   font-family: 'JetBrains Mono', monospace;
@@ -267,6 +270,7 @@
   transition: background .15s;
   white-space: nowrap;
   flex-shrink: 0;
+  border-radius: var(--radius-lg);
 }
 .perk-redeem-btn:hover:not(:disabled) { background: var(--ochre); }
 .perk-redeem-btn:disabled {
@@ -285,6 +289,7 @@
   text-transform: uppercase;
   padding: 9px 16px;
   white-space: nowrap;
+  border-radius: var(--radius-lg);
 }
 .perk-redeem-btn--signin:hover { background: rgba(42,36,28,.04); color: var(--ink); }
 
@@ -386,6 +391,7 @@
   cursor: pointer;
   transition: background .15s;
   flex: 1;
+  border-radius: var(--radius-lg);
 }
 .perk-modal-confirm-btn:hover:not(:disabled) { background: var(--ochre); }
 .perk-modal-confirm-btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -400,6 +406,7 @@
   padding: 12px 20px;
   cursor: pointer;
   transition: border-color .15s, color .15s;
+  border-radius: var(--radius-lg);
 }
 .perk-modal-cancel-btn:hover { border-color: rgba(42,36,28,.35); color: var(--ink); }
 .perk-modal-error {
@@ -409,6 +416,7 @@
   padding: 10px 14px;
   background: rgba(197,73,31,.06);
   border: 1px solid rgba(197,73,31,.18);
+  border-radius: var(--radius-md);
 }
 
 /* ── QR success ── */
@@ -430,6 +438,7 @@
   border: 1px solid rgba(42,36,28,.12);
   display: block;
   margin: 0 auto 16px;
+  border-radius: var(--radius-xl);
 }
 .perk-qr-token {
   font-family: 'JetBrains Mono', monospace;
@@ -470,7 +479,7 @@
   text-decoration: none;
   width: 100%;
   margin-top: auto;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-lg);
 }
 .perk-card-btn:hover:not(:disabled) { background: var(--ochre); border-color: var(--ochre); }
 .perk-card-btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -510,6 +519,7 @@
   border: 1px solid rgba(42,36,28,.1);
   padding: 8px;
   background: #fff;
+  border-radius: var(--radius-xl);
 }
 .perk-success-expiry {
   font-family: 'JetBrains Mono', monospace;

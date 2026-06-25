@@ -64,6 +64,7 @@
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .maker-card-vetted {
   position: absolute;
@@ -75,6 +76,7 @@
   letter-spacing: 0.1em;
   padding: 4px 8px;
   color: var(--ink);
+  border-radius: var(--radius-full);
 }
 .maker-card-body { padding: 20px 18px 22px; }
 .maker-card-name {
@@ -153,7 +155,7 @@
   position: relative;
   background: var(--paper-deep);
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 .maker-hero-info {
   padding: 64px 16px 64px 32px;
@@ -169,7 +171,7 @@
   text-transform: uppercase;
   color: var(--paper);
   background: var(--ochre);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   padding: 6px 12px;
   margin-bottom: 22px;
   width: fit-content;
@@ -247,7 +249,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 16px 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
   transition: background 0.2s;
   width: fit-content;
@@ -303,6 +305,7 @@
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .maker-product-body {
   padding: 10px;
@@ -344,7 +347,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 16px 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
   line-height: 1;
@@ -411,6 +414,7 @@
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .maker-editorial-body { padding: 18px 18px 22px; }
 .maker-editorial-cat {

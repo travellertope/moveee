@@ -73,6 +73,7 @@
   overflow: hidden;
   margin-bottom: 16px;
   position: relative;
+  border-radius: var(--radius-lg);
 }
 .sec-card-img img {
   width: 100%;
@@ -139,6 +140,7 @@
   aspect-ratio: 16/9;
   object-fit: cover;
   margin-bottom: 40px;
+  border-radius: var(--radius-xl);
 }
 .sec-single-title {
   font-family: 'Fraunces', serif;
@@ -271,6 +273,7 @@
   text-transform: uppercase;
   text-decoration: none;
   transition: background .2s;
+  border-radius: var(--radius-lg);
 }
 .con-btn-primary:hover { background: var(--ochre-deep, #a83d1a); }
 .con-btn-ghost {
@@ -309,6 +312,7 @@
   flex-direction: column;
   gap: 20px;
   background: var(--paper);
+  border-radius: var(--radius-xl);
 }
 .con-tier-card--patron {
   background: var(--ink);
@@ -378,6 +382,7 @@
   border: 1px solid rgba(42,36,28,.2);
   color: var(--ink);
   background: transparent;
+  border-radius: var(--radius-lg);
 }
 .con-tier-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .con-tier-card--patron .con-tier-btn {
@@ -399,6 +404,7 @@
   border: 1px dashed rgba(42,36,28,.2);
   align-self: flex-start;
   pointer-events: none;
+  border-radius: var(--radius-lg);
 }
 .con-tier-card--patron .con-tier-status {
   color: rgba(243,236,224,.4);
