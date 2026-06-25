@@ -50,7 +50,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(520px, 100vw)",
-          background: "var(--paper, #f3ece0)",
+          background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
@@ -61,13 +61,13 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "1.25rem",
-          borderBottom: "1px solid #e0dbd1",
+          borderBottom: "1px solid var(--rule)",
           position: "sticky", top: 0,
-          background: "#faf8f5", zIndex: 1,
+          background: "var(--paper-header)", zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
-              background: "#eeedfe", color: "#3c3489",
+              background: "var(--cat-happening-bg)", color: "var(--cat-happening-fg)",
               fontSize: "0.58rem", fontWeight: 700,
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
@@ -75,14 +75,14 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             {item.isLiterati && (
               <span style={{
                 fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
-                textTransform: "uppercase", color: "#b38238", background: "#f3ece0",
-                border: "1px solid #b38238", borderRadius: "999px", padding: "0.18rem 0.45rem",
+                textTransform: "uppercase", color: "var(--gold)", background: "var(--paper-warm)",
+                border: "1px solid var(--gold)", borderRadius: "999px", padding: "0.18rem 0.45rem",
               }}>
                 🪶 Literati Connect
               </span>
             )}
             {item.eventCategory && (
-              <span style={{ fontSize: "0.62rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.62rem", color: "var(--gold)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.eventCategory}
               </span>
             )}
@@ -91,7 +91,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             <Link
               href={item.href}
               style={{
-                color: "#c5491f", fontSize: "0.8rem", fontWeight: 400,
+                color: "var(--ochre)", fontSize: "0.8rem", fontWeight: 400,
                 textDecoration: "underline", textUnderlineOffset: "2px",
               }}
             >
@@ -99,7 +99,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             </Link>
             <button onClick={close} aria-label="Close" style={{
               background: "none", border: "none", cursor: "pointer",
-              color: "#14110d", lineHeight: 1, padding: "0.25rem", display: "flex",
+              color: "var(--ink)", lineHeight: 1, padding: "0.25rem", display: "flex",
             }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -110,8 +110,8 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
         <div style={{ padding: "1.25rem", flex: 1 }}>
           {/* Featured image — preserved aspect ratio */}
           {item.image && (
-            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
-              <img src={item.image} alt={item.title} style={{ width: "100%", maxHeight: "360px", display: "block", objectFit: "contain", background: "#f9f6f1" }} loading="lazy" />
+            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--rule)" }}>
+              <img src={item.image} alt={item.title} style={{ width: "100%", maxHeight: "360px", display: "block", objectFit: "contain", background: "var(--paper-deep)" }} loading="lazy" />
             </div>
           )}
 
@@ -119,50 +119,50 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           <h2 style={{
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "1.375rem", fontWeight: 700, lineHeight: 1.3,
-            color: "#14110d", marginBottom: "0.75rem",
+            color: "var(--ink)", marginBottom: "0.75rem",
           }}>
             {decodeHtml(item.title)}
           </h2>
 
           {/* Event details strip */}
           <div style={{
-            background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px",
+            background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "6px",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
             padding: "0.85rem 1rem", marginBottom: "1rem",
             display: "flex", flexDirection: "column", gap: "0.5rem",
           }}>
             {eventDateStr && (
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
-                <span style={{ color: "#3c3489", fontSize: "0.88rem", flexShrink: 0 }}>📅</span>
-                <div style={{ fontSize: "0.85rem", color: "#14110d", lineHeight: 1.45 }}>
+                <span style={{ color: "var(--cat-happening-fg)", fontSize: "0.88rem", flexShrink: 0 }}>📅</span>
+                <div style={{ fontSize: "0.85rem", color: "var(--ink)", lineHeight: 1.45 }}>
                   {eventDateStr}
                   {endDateStr && endDateStr !== eventDateStr && (
-                    <span style={{ color: "#7a6f5c" }}> — {endDateStr}</span>
+                    <span style={{ color: "var(--mute)" }}> — {endDateStr}</span>
                   )}
                   {item.openingHours && (
-                    <span style={{ color: "#7a6f5c" }}> · {item.openingHours}</span>
+                    <span style={{ color: "var(--mute)" }}> · {item.openingHours}</span>
                   )}
                 </div>
               </div>
             )}
             {(item.location || item.city) && (
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
-                <span style={{ color: "#3c3489", fontSize: "0.88rem", flexShrink: 0 }}>📍</span>
-                <div style={{ fontSize: "0.85rem", color: "#14110d", lineHeight: 1.45 }}>
+                <span style={{ color: "var(--cat-happening-fg)", fontSize: "0.88rem", flexShrink: 0 }}>📍</span>
+                <div style={{ fontSize: "0.85rem", color: "var(--ink)", lineHeight: 1.45 }}>
                   {item.location && <div>{item.location}</div>}
                   {item.venueAddress && (
-                    <div style={{ color: "#7a6f5c", fontSize: "0.8rem" }}>{item.venueAddress}</div>
+                    <div style={{ color: "var(--mute)", fontSize: "0.8rem" }}>{item.venueAddress}</div>
                   )}
                   {item.city && (
-                    <div style={{ color: "#7a6f5c", fontSize: "0.8rem" }}>{item.city}</div>
+                    <div style={{ color: "var(--mute)", fontSize: "0.8rem" }}>{item.city}</div>
                   )}
                 </div>
               </div>
             )}
             {item.admission && (
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span style={{ color: "#3c3489", fontSize: "0.88rem", flexShrink: 0 }}>🎟</span>
-                <span style={{ fontSize: "0.85rem", color: "#14110d", fontWeight: 600 }}>{item.admission}</span>
+                <span style={{ color: "var(--cat-happening-fg)", fontSize: "0.88rem", flexShrink: 0 }}>🎟</span>
+                <span style={{ fontSize: "0.85rem", color: "var(--ink)", fontWeight: 600 }}>{item.admission}</span>
               </div>
             )}
           </div>
@@ -170,12 +170,12 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           {/* Description */}
           {htmlBody ? (
             <>
-              <style>{`.happening-body p { margin: 0 0 0.9em; } .happening-body p:last-child { margin-bottom: 0; } .happening-body a { color: #3c3489; }`}</style>
+              <style>{`.happening-body p { margin: 0 0 0.9em; } .happening-body p:last-child { margin-bottom: 0; } .happening-body a { color: var(--cat-happening-fg); }`}</style>
               <div
                 className="happening-body"
                 style={{
                   fontFamily: "var(--font-fraunces), serif",
-                  fontSize: "0.95rem", lineHeight: 1.7, color: "#3a342b",
+                  fontSize: "0.95rem", lineHeight: 1.7, color: "var(--ink-soft)",
                   marginBottom: "1.25rem",
                 }}
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlBody!) }}
@@ -184,7 +184,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           ) : paragraphs.length > 0 ? (
             <div style={{
               fontFamily: "var(--font-fraunces), serif",
-              fontSize: "0.95rem", lineHeight: 1.7, color: "#3a342b",
+              fontSize: "0.95rem", lineHeight: 1.7, color: "var(--ink-soft)",
               marginBottom: "1.25rem",
             }}>
               {paragraphs.map((p, i) => (
@@ -196,14 +196,14 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           {/* Organiser */}
           {item.organiserName && (
             <div style={{ marginBottom: "1.25rem" }}>
-              <p style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7a6f5c", marginBottom: "0.4rem" }}>Organised by</p>
+              <p style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--mute)", marginBottom: "0.4rem" }}>Organised by</p>
               {item.organiserSlug ? (
-                <Link href={`/directory/${item.organiserSlug}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "4px", padding: "0.45rem 0.75rem", textDecoration: "none", color: "#14110d", fontSize: "0.85rem", fontWeight: 600 }}>
+                <Link href={`/directory/${item.organiserSlug}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "4px", padding: "0.45rem 0.75rem", textDecoration: "none", color: "var(--ink)", fontSize: "0.85rem", fontWeight: 600 }}>
                   {item.organiserName}
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#7a6f5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
                 </Link>
               ) : (
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#14110d" }}>{item.organiserName}</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)" }}>{item.organiserName}</span>
               )}
             </div>
           )}
@@ -214,7 +214,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               width: "100%", height: "52px",
-              background: "#3c3489", color: "#fff",
+              background: "var(--cat-happening-fg)", color: "#fff",
               fontSize: "0.85rem", fontWeight: 700,
               borderRadius: "999px",
               textDecoration: "none",

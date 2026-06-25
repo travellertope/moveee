@@ -49,6 +49,7 @@
   --paper: #ffffff;
   --paper-warm: #f3ece0;
   --paper-deep: #f2f2f2;
+  --paper-header: #faf8f5;
   --ink: #14110d;
   --ink-soft: #3a342b;
   --mute: #7a6f5c;
@@ -62,6 +63,26 @@
   --error: #c62828;
   --warning: #f59e0b;
   --warning-dark: #92400e;
+
+  /* Feed card type-badge accents (pulse/editorial/happening/directory/quote/community) */
+  --cat-pulse-bg: #fef3e2;
+  --cat-pulse-fg: #b38238;
+  --cat-editorial-bg: #fff0eb;
+  --cat-editorial-fg: #c5491f;
+  --cat-happening-bg: #eeedfe;
+  --cat-happening-fg: #3c3489;
+  --cat-directory-bg: #e8f5ee;
+  --cat-directory-fg: #085041;
+  --cat-quote-bg: #f3eef8;
+  --cat-quote-fg: #7a4da0;
+  --cat-community-bg: #edf7ed;
+  --cat-community-fg: #2e7d32;
+  --cat-blue-fg: #1976d2;
+  --cat-blue-bg: rgba(25, 118, 210, 0.08);
+  --cat-rust-fg: #a8351f;
+  --cat-rust-bg: rgba(168, 53, 31, 0.08);
+  --cat-purple-fg: #6b48a8;
+  --cat-purple-bg: rgba(107, 72, 168, 0.08);
 
   /* Radius scale — mirrors apps/mobile/src/theme.ts */
   --radius-sm: 2px;
@@ -85,6 +106,7 @@
   --paper: #242018;
   --paper-warm: #1a1612;
   --paper-deep: #2d2820;
+  --paper-header: #2d2820;
   --ink: #f3ece0;
   --ink-soft: #d4c9b8;
   --mute: #9e9288;
@@ -98,6 +120,25 @@
   --error: #e05d5d;
   --warning: #f5a623;
   --warning-dark: #d4a657;
+
+  --cat-pulse-bg: rgba(201, 150, 63, 0.18);
+  --cat-pulse-fg: #c9963f;
+  --cat-editorial-bg: rgba(212, 96, 58, 0.18);
+  --cat-editorial-fg: #d4603a;
+  --cat-happening-bg: rgba(139, 133, 214, 0.18);
+  --cat-happening-fg: #a39ee8;
+  --cat-directory-bg: rgba(79, 174, 143, 0.18);
+  --cat-directory-fg: #6fc4a8;
+  --cat-quote-bg: rgba(184, 155, 217, 0.18);
+  --cat-quote-fg: #c4a8e0;
+  --cat-community-bg: rgba(111, 207, 115, 0.18);
+  --cat-community-fg: #81d885;
+  --cat-blue-fg: #6ab0f0;
+  --cat-blue-bg: rgba(106, 176, 240, 0.14);
+  --cat-rust-fg: #e0775a;
+  --cat-rust-bg: rgba(224, 119, 90, 0.14);
+  --cat-purple-fg: #b89bd9;
+  --cat-purple-bg: rgba(184, 155, 217, 0.18);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.55);
@@ -881,15 +922,18 @@ h1, h2, h3, h4 {
   font-size: 12px;
   font-weight: 700;
   color: #3a342b;
+  opacity: 0.7;
   transition: all 0.15s;
 }
 .composer-template-pill:hover:not(.composer-template-pill--active):not(.composer-template-pill--locked) {
   background: #faf9f7;
+  opacity: 1;
 }
 .composer-template-pill--active {
   border-color: #c5491f;
   background: #c5491f;
   color: #fff;
+  opacity: 1;
 }
 .composer-template-pill--active.composer-template-pill--quote {
   border-color: #7a4da0;
@@ -1221,7 +1265,7 @@ h1, h2, h3, h4 {
 }
 
 /* Error */
-.composer-error { color: #c5491f; font-family: var(--font-dm-sans, "DM Sans", sans-serif); font-size: 0.78rem; margin: 0; }
+.composer-error { color: var(--error); font-weight: 700; font-family: var(--font-dm-sans, "DM Sans", sans-serif); font-size: 0.78rem; margin: 0; }
 
 /* Star rating */
 .composer-star-rating { display: flex; align-items: center; gap: 8px; }

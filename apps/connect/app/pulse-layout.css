@@ -191,8 +191,9 @@
   margin: 0;
 }
 .pulse-foryou-hint {
-  background: var(--paper-warm);
-  border-radius: 4px;
+  background: rgba(179,130,56,.06);
+  border: 1px solid rgba(179,130,56,.2);
+  border-radius: 12px;
   padding: 12px;
   margin-top: 16px;
 }

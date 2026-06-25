@@ -411,11 +411,12 @@
 .perk-modal-cancel-btn:hover { border-color: rgba(42,36,28,.35); color: var(--ink); }
 .perk-modal-error {
   font-size: 13px;
-  color: #c5491f;
+  color: var(--error);
+  font-weight: 700;
   margin: 12px 0 0;
   padding: 10px 14px;
-  background: rgba(197,73,31,.06);
-  border: 1px solid rgba(197,73,31,.18);
+  background: rgba(198,40,40,.06);
+  border: 1px solid rgba(198,40,40,.18);
   border-radius: var(--radius-md);
 }
 
@@ -505,7 +506,7 @@
   font-family: var(--font-fraunces), serif;
   font-size: 24px;
   font-weight: 300;
-  color: #2e7d32;
+  color: var(--success);
   margin: 0 0 8px;
 }
 .perk-success-desc {

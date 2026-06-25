@@ -60,7 +60,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(520px, 100vw)",
-          background: "var(--paper, #f3ece0)",
+          background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
@@ -73,16 +73,16 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           alignItems: "center",
           justifyContent: "space-between",
           padding: "1.25rem",
-          borderBottom: "1px solid #e0dbd1",
+          borderBottom: "1px solid var(--rule)",
           position: "sticky",
           top: 0,
-          background: "#faf8f5",
+          background: "var(--paper-header)",
           zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
-              background: "#eeedfe",
-              color: "#3c3489",
+              background: "var(--cat-happening-bg)",
+              color: "var(--cat-happening-fg)",
               fontSize: "0.58rem",
               fontWeight: 700,
               letterSpacing: "0.1em",
@@ -91,7 +91,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
               borderRadius: "999px",
             }}>Editorial</span>
             {item.region && (
-              <span style={{ fontSize: "0.62rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.62rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.region}
               </span>
             )}
@@ -101,7 +101,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
               <Link
                 href={`/pulse/${item.slug}`}
                 style={{
-                  color: "#c5491f",
+                  color: "var(--ochre)",
                   fontSize: "0.8rem",
                   fontWeight: 400,
                   textDecoration: "underline",
@@ -118,7 +118,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#14110d",
+                color: "var(--ink)",
                 lineHeight: 1,
                 padding: "0.25rem",
                 display: "flex",
@@ -137,7 +137,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
             fontSize: "1.25rem",
             fontWeight: 700,
             lineHeight: 1.3,
-            color: "#14110d",
+            color: "var(--ink)",
             marginBottom: "0.75rem",
           }}>
             {item.title}
@@ -145,16 +145,16 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
 
           {/* Date + curated label */}
           <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap" }}>
-            <span style={{ color: "#999", fontSize: "0.75rem" }}>
+            <span style={{ color: "var(--mute)", fontSize: "0.75rem" }}>
               {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
             </span>
             {item.source && (
-              <span style={{ color: "#7a6f5c", fontSize: "0.75rem" }}>
-                Via <span style={{ color: "#b38238", fontWeight: 600 }}>{item.source}</span>
+              <span style={{ color: "var(--mute)", fontSize: "0.75rem" }}>
+                Via <span style={{ color: "var(--gold)", fontWeight: 600 }}>{item.source}</span>
               </span>
             )}
             <span style={{
-              color: "#b38238",
+              color: "var(--gold)",
               fontSize: "0.6rem",
               fontWeight: 700,
               letterSpacing: "0.08em",
@@ -169,7 +169,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
 
           {/* Featured image */}
           {item.image && (
-            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--rule)" }}>
               <img src={item.image} alt={item.title} style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "220px" }} loading="lazy" />
             </div>
           )}
@@ -184,7 +184,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
                   fontFamily: "var(--font-fraunces), serif",
                   fontSize: "0.95rem",
                   lineHeight: 1.7,
-                  color: "#3a342b",
+                  color: "var(--ink-soft)",
                   marginBottom: "1rem",
                 }}
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body) }}
@@ -207,7 +207,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           {/* Comment thread */}
           <div style={{ marginTop: "1.75rem" }}>
             {loading ? (
-              <p style={{ color: "#999", fontSize: "0.8rem" }}>Loading comments…</p>
+              <p style={{ color: "var(--mute)", fontSize: "0.8rem" }}>Loading comments…</p>
             ) : item.wpId ? (
               <CommentThread postId={parseInt(item.wpId, 10)} initialComments={comments} />
             ) : null}
