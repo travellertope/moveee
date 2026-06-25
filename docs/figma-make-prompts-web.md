@@ -4871,3 +4871,284 @@ Output 4 frames: Frame 1 (Desktop layout shell, Person example), Frame 2 (Mobile
 reordered stack), Frame 3 (Content-gated state), Frame 4 (Empty-content state).
 
 ---
+
+## 21. MAKER/VENDOR STOREFRONT PAGE — WEB (Site A, themoveee.com/makers/[slug])
+
+### Brand architecture
+
+This is a **Moveee Magazine** (Site A) page — part of the Shop, not the community side. The
+brand is always "Moveee Magazine" in any header/kicker copy on this page; never "Connect" or
+bare "Moveee" (per the canonical naming table). The vetted-maker badge and "Moveee rating"
+metric should read as Moveee Magazine's own editorial endorsement, not a generic marketplace
+review score.
+
+### Why this section exists
+
+`apps/site/app/makers/[slug]/page.tsx` already exists and is already structured like a
+self-contained "mini website" for the maker — full-bleed hero banner, branded info block,
+stats bar, CTA row, social links, then a complete product catalogue underneath. Mobile's
+equivalent (PROMPT 16E, "Maker / Brand Profile Page", `docs/figma-make-prompts.md` lines
+4237–4294) covers the same idea for `MakerProfileScreen.tsx`. This section documents the real
+web layout so it can be rebuilt/iterated on in Figma Make, and flags — rather than silently
+fixes or invents around — several real backend gaps uncovered while grounding this prompt in
+the actual code:
+
+<!-- DEV: `fetchMaker()`/`fetchVendorProducts()` in page.tsx call `GET {CMS}/wp-json/moveee/v1/vendors/{slug}`
+and `.../vendors/{slug}/products` — this REST namespace (`moveee/v1`) is NOT registered anywhere
+in culture-community. Today this page always falls through to `notFound()` in production. The
+prompt below documents the INTENDED rendered state (as if the data existed) — building the
+actual `moveee/v1` vendor endpoints, backed by WCFM vendor accounts (`app/vendor/profile/page.tsx`)
+and/or `_maker_*` product postmeta, is a separate, real backend task and is out of scope for this
+visual prompt. -->
+<!-- DEV: `fetchEditorialCoverage()` is defined in page.tsx but its result is never rendered in the
+JSX — dead code. If "Editorial coverage" / "As seen in" is wanted on this page (mobile has no
+equivalent section either), it needs new JSX, not just data wiring. Not included as a frame below
+since there's no real design for it yet. -->
+<!-- DEV: there are three disconnected data sources for "what is a maker": WCFM vendor accounts
+(`app/vendor/profile/page.tsx`, store name/bio/banner/avatar), per-product `_maker_name`/`_maker_city`
+postmeta (read by the mobile shop endpoints), and whatever shape `moveee/v1/vendors/{slug}` is
+eventually built to return. There is no unifying taxonomy/CPT today. This prompt assumes the
+eventual endpoint normalizes all three into the field set the page already expects
+(storeName, bio, city, country, avatarUrl, bannerUrl, instagram, twitter, website, rating,
+yearsActive, directorySlug) — do not treat that normalization as already solved. -->
+<!-- DEV: `app/vendor/profile/page.tsx` (the WCFM-backed vendor dashboard) has no logo/banner upload
+UI today — a maker has no way to actually set `bannerUrl`/`avatarUrl` from the frontend yet. Frame 1
+below should still show a populated banner (design intent), but flag that the upload control is a
+prerequisite, not yet built. -->
+<!-- DEV: mobile's `MakerProfileScreen.tsx` has the identical problem on its own platform — it calls
+`${MOBILE_API}/shop/maker/${makerId}`, which also doesn't exist, and silently falls back to
+hardcoded placeholder data with no error state. Both platforms need the same real backend work;
+this is not a web-only gap. -->
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Vetted badge: **"★ Vetted Maker"**
+- Stat labels: **"Maker since"** / **"Product"** or **"Products"** / **"Moveee rating"**
+- Rating fallback (no reviews yet): **"★ New"**
+- Primary CTA: **"Shop all products →"**
+- Secondary CTA: **"View profile"**
+- Social links: **"Website ↗"** / **"Instagram ↗"** / **"X / Twitter ↗"**
+- Products header: **"Work by *{Maker Name}*"** (maker name in italic) + **"{N} piece(s)"** count
+- Empty products state: **"No products listed yet. Check back soon."**
+- Breadcrumb: **"Shop → Makers → {Maker Name}"**
+
+### DEV ANNOTATION REQUIREMENT
+
+Every frame below must carry inline `<!-- DEV: ... -->` notes wherever the design assumes data
+that the current backend cannot actually supply (see the four annotations above) — do not let the
+visual polish of the mockup imply the feature is wired end-to-end.
+
+### PROMPT 21 — Maker/Vendor Storefront (Desktop 1440px + Mobile 390px)
+
+```
+Real grounding: apps/site/app/makers/[slug]/page.tsx (222 lines) + apps/site/app/makers/makers.css
+(lines 128–347). Brand tokens (real, from apps/site/app/globals.css — NOT the CLAUDE.md mobile
+values): --ink:#14110d, --paper:#ffffff, --ochre:#c5491f, --rule, --mute. Fonts: var(--font-serif)
+"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono". NO border-radius
+anywhere on this page in the real CSS — every card/button/grid cell is flush-rectangular; this is
+a deliberate editorial-aesthetic departure from the rounded radius-xl cards mobile uses for the
+same page, and should be preserved exactly, not "improved" with rounded corners.
+
+FRAME 1 — DESKTOP STOREFRONT (1440px), populated/ideal state, maker "Bisi Ceramics":
+
+1. Breadcrumb (full-width, top): "Shop" / "→" / "Makers" / "→" / "Bisi Ceramics" — JetBrains Mono
+   11px, var(--mute), var(--ink) for the current page, "→" separators in var(--mute).
+
+2. Hero — `grid-template-columns: 1fr 1fr`, min-height 520px, no gap, no radius, divided by a
+   single var(--rule) vertical line:
+   - LEFT half: full-bleed banner/studio image (object-fit: cover) — <!-- DEV: bannerUrl, no
+     upload UI exists yet --> — falls back to a flush-rectangular placeholder block in
+     var(--paper-deep) with a single giant initial letter centered (Fraunces, ~120px, var(--mute))
+     when no image exists.
+   - RIGHT half (vertically centered, ~64px padding): "★ Vetted Maker" badge — small flush
+     rectangular pill, var(--ochre) background, var(--paper) text, JetBrains Mono 10px uppercase
+     letter-spacing .12em. Below it: maker name "Bisi Ceramics" — Fraunces serif, ~40px, var(--ink),
+     weight 500. Below that: location "Lagos, Nigeria" — DM Sans 14px, var(--mute). Below that: bio
+     paragraph (2–3 lines) — DM Sans 15px, var(--ink), line-height 1.6, max-width ~440px.
+   - Stats row (3 flush columns, hairline var(--rule) vertical dividers between them, no
+     background): each column = big number (Fraunces, 28px, var(--ink)) over a small label
+     (JetBrains Mono 9px uppercase letter-spacing .12em, var(--mute)) — "12" / "Maker since" (only
+     if yearsActive present), "24" / "Products", "★ 4.9" / "Moveee rating" (or "★ New" if no
+     rating yet).
+   - CTA row: "Shop all products →" — solid var(--ink) background, var(--paper) text, flush
+     rectangle, JetBrains Mono 11px uppercase, padding 16px 28px, hover → var(--ochre) background.
+     Beside it (only if `directorySlug` present): "View profile" — outline button, 1px var(--ink)
+     border, transparent background, same type treatment, links to `/directory/{directorySlug}`.
+   - Social row (only rendered if any of website/instagram/twitter present): "Website ↗" /
+     "Instagram ↗" / "X / Twitter ↗" — DM Sans 13px, var(--ochre) link color, each opens in a new
+     tab, separated by ~24px gaps, no underline by default, underline on hover.
+
+3. Products section (full-width, below hero, ~64px top padding):
+   - Header row: "Work by *Bisi Ceramics*" (maker name in italic) — Fraunces 28px — on the left;
+     "24 pieces" count — JetBrains Mono 11px uppercase, var(--mute) — on the right, baseline-aligned.
+   - 4-column grid (`repeat(4, 1fr)`, only 2px gap, no radius, hairline var(--rule) border per
+     card): each card = product image (aspect ~1:1, object-fit cover) over a body block (10px
+     padding) with product name (DM Sans 14px, var(--ink)) and price (DM Sans 13px, var(--ochre),
+     rendered from raw HTML via the existing `sanitizeHtml()` — keep the dangerouslySetInnerHTML
+     pattern, don't redesign price formatting away from it). Whole card is a single link to
+     `/shop/{product-slug}`, hover → subtle image zoom only (no card lift/shadow — matches the
+     flush, non-elevated aesthetic of the rest of the page).
+   <!-- DEV: real product data here depends on the broken moveee/v1 vendor-products endpoint — this
+   frame shows the intended populated state, not the current always-empty reality. -->
+
+FRAME 2 — DESKTOP EMPTY-PRODUCTS STATE: identical hero, but the products section shows only the
+header ("Work by *Bisi Ceramics*", no count badge) followed by a single centered flush-rectangular
+panel in var(--paper-deep): "No products listed yet. Check back soon." — DM Sans 15px, var(--mute),
+~80px vertical padding, no icon/illustration (matches the existing plain-text empty state, don't
+add decoration that isn't in the real code).
+
+FRAME 3 — MOBILE COMPANION (390px width): hero collapses to single column (image on top, full
+width, ~220px height fixed rather than the desktop's 1fr-1fr ratio; info block below it, same
+content order: badge → name → location → bio → stats row [now horizontally scrollable if it
+overflows, not wrapped] → CTA row [stacked full-width buttons] → social row [wraps to 2 lines if
+needed]). Products grid drops to 2 columns (matches the real `makers.css` responsive breakpoint
+behavior — collapse 4→3→2 col as viewport shrinks, confirmed in the stylesheet's media queries).
+Breadcrumb truncates to just "← Makers" back-link style on this width rather than the full
+three-step trail, to save header space.
+
+CONSTRAINTS:
+- No rounded corners anywhere — this page's entire visual identity is flush rectangles, hairline
+  rule dividers, and a 2-column hero grid. Do not import mobile's rounded-card language.
+- The "mini website" feel comes from the hero's banner+info richness and the full catalogue below
+  it, not from any tabs/sub-navigation — there is no internal nav within this page in the real
+  code (no "About / Products / Reviews" tab bar); don't invent one without flagging it as new.
+- Rating and "Maker since" stat are conditional — omit them from the stats row entirely (don't
+  show a placeholder dash) when the source data is absent, mirroring the real conditional JSX.
+- Keep all DEV annotations from the section preamble visible in the final deliverable — this page
+  is currently non-functional in production and the prompt must not visually imply otherwise.
+```
+
+Output 3 frames: Frame 1 (Desktop populated storefront), Frame 2 (Desktop empty-products state),
+Frame 3 (Mobile companion).
+
+---
+
+## 22. REDESIGNED COMPACT HEADER — WEB (Site A, themoveee.com)
+
+### Brand architecture
+
+Site A only — this is **Moveee Magazine**'s header, not Connect's. The redesign must keep the
+"Moveee Magazine" / "Est. 2022 · Best in Culture" identity intact; it is a chrome-economy
+redesign, not a rebrand.
+
+### Why this section exists — and an important framing note
+
+**Unlike every other section in this document (§1–§21), this is not a documentation prompt — it
+is an actual redesign proposal.** The current real header (`apps/site/components/Header.tsx` +
+`apps/site/app/homepage.css` `.masthead*`/`.mobile-menu*` rules) is two stacked, non-sticky rows:
+a JetBrains-Mono ticker/marquee strip (issue number, date, locations, announcement, plus a
+black language-toggle block bolted to its right edge) sitting on top of a 3-column masthead grid
+(`grid-template-columns: 1fr auto 1fr`, 32px vertical padding, left nav / centered wordmark+kicker
+/ right nav+icons+Join button). Neither row is `position: sticky` or `fixed` — the whole header
+scrolls away with the page. There's also a chunk of dead CSS this redesign should let go of
+cleanly: `--masthead-height` (referenced once, in `.hero`'s `calc(100vh - var(--masthead-height))`,
+but the variable itself is never actually defined/set anywhere — likely a stale leftover from an
+earlier sticky-header attempt) and a whole `.mobile-menu-member*` rule block (lines 378–410 of
+`homepage.css`) that is never referenced by anything `Header.tsx` actually renders.
+
+<!-- DEV: `--masthead-height` is read but never defined — confirm there is no hidden inline style
+or other stylesheet setting it before relying on its current (effectively `0px`/invalid) behavior;
+this redesign should either define it properly for the new compact height or remove the calc()
+that depends on it. -->
+<!-- DEV: `.mobile-menu-member*` (homepage.css lines 378–410) has no corresponding JSX in the
+current Header.tsx — dead CSS. Safe to delete when implementing this redesign rather than carry
+it forward unused. -->
+
+This section proposes a real compact redesign target: a single sticky row at a much smaller
+fixed height, taking some structural cues from Connect's own header
+(`apps/connect/components/Header.tsx` — a single 60px sticky row, no marquee, no search bar) as a
+useful comparison point for chrome economy, while preserving every piece of real Site A nav
+content (Feed / Discover / Editorials, Search, Cart-with-badge, Sign in, Join →) and the real
+ticker content (issue number, date, locations, announcement) — condensed rather than deleted,
+since that content is real editorial signal, not legacy cruft, and removing it outright would be
+a content decision beyond the scope of a "make it compact" request.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Kicker: **"Est. 2022 · Best in Culture"**
+- Nav labels: **"Feed"** / **"Discover"** / **"Editorials"**
+- Auth: **"Sign in"** / **"Join →"**
+- Mobile menu CTA: **"Join Moveee →"**
+- Language toggle: **"EN"** / **"FR"**
+
+### DEV ANNOTATION REQUIREMENT
+
+Frame 1 must annotate the current header's real structure (the baseline). Frame 2 must be clearly
+labeled as the proposed redesign, with `<!-- DEV: ... -->` notes on the two dead-CSS items above
+and on exactly what changed (sticky behavior added, row count reduced, ticker condensed) so a
+reviewer can tell baseline from proposal at a glance.
+
+### PROMPT 22 — Redesigned Compact Header (Desktop 1440px + Mobile 390px)
+
+```
+Real grounding: apps/site/components/Header.tsx (180 lines), apps/site/app/homepage.css
+masthead/mobile-menu rules (lines 121–412, 1416–1442). Comparison reference (structure only, not
+content): apps/connect/components/Header.tsx. Brand tokens (real, apps/site/app/globals.css):
+--ink:#14110d, --paper:#ffffff, --ochre:#c5491f, --rule, --mute. Fonts: var(--font-serif)
+"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono".
+
+FRAME 1 — CURRENT HEADER BASELINE (Desktop 1440px, annotated, NOT the redesign):
+Two stacked rows, `position: relative` (not sticky — scrolls away with page content):
+1. Ticker row (~36px tall, var(--ink) background): scrolling/marquee issue+date+locations text on
+   the left in JetBrains Mono 10px uppercase letter-spacing .15em white text with a pulsing ochre
+   dot, an announcement link on the right, and a separate solid-black EN/FR language toggle block
+   abutting the far right edge (border-left hairline white/10%, own 24px horizontal padding) —
+   visually a second, disconnected control bolted onto the ticker rather than integrated with it.
+2. Masthead row (~96px tall incl. 32px vertical padding, var(--paper) bg, 2px var(--rule) bottom
+   border): 3-column grid (`1fr auto 1fr`) — left nav (Feed/Discover/Editorials, DM Sans 13px,
+   ochre underline on hover/active) / centered wordmark (9px mono kicker above a 48px-tall logo
+   image) / right nav (search icon, cart icon w/ badge, "Sign in" w/ user icon, solid-ink "Join →"
+   button).
+<!-- DEV: this is the real current structure — annotate the non-sticky behavior, the two-row total
+height (~132px), and the disconnected language-toggle block as the specific pain points this
+redesign addresses. -->
+
+FRAME 2 — REDESIGNED COMPACT HEADER (Desktop 1440px, THE PROPOSAL):
+Single row, `position: sticky; top: 0`, fixed height **64px**, var(--paper) background, 1px
+var(--rule) bottom border (down from 2px — lighter chrome), z-index above page content. Layout —
+3 zones in one row, vertically centered:
+- LEFT zone: compact wordmark — logo image shrunk to 28px height (no separate kicker line at this
+  height; the "Est. 2022 · Best in Culture" kicker text moves into a `title` tooltip / is dropped
+  from the persistent chrome entirely, since there's no vertical room for a second text line at
+  64px) — immediately followed by the nav links (Feed / Discover / Editorials) inline at smaller
+  12px DM Sans, separated from the logo by a thin 1px var(--rule) vertical divider, ochre
+  underline-on-active retained.
+- CENTER zone: the condensed ticker content — issue number + date, JetBrains Mono 10px,
+  var(--mute) — now living inline in the header's center rather than as its own separate row above
+  it. The announcement link and locations list move into a small "i"-style info affordance (or are
+  dropped to a secondary surface like a thin sub-bar that only appears on the homepage, not
+  site-wide) <!-- DEV: this is the one real content trade-off in this redesign — decide whether
+  announcement/locations earn a still-visible compact treatment or move to a homepage-only
+  secondary surface; do not silently drop them without a decision recorded here. -->.
+- RIGHT zone: search icon, cart icon w/ badge, EN/FR toggle (now small text buttons inline, not a
+  separate black block), "Sign in" (icon-only at this height, label restored on hover via tooltip
+  or visible ≥1024px), solid-ink "Join →" button (smaller padding, 10px JetBrains Mono).
+<!-- DEV: total height drops from ~132px (two rows) to 64px (one row) — annotate this delta
+explicitly as the headline win of the redesign. Sticky positioning is a new behavior, not present
+today — call this out since it changes scroll interaction across every Site A page. -->
+
+FRAME 3 — MOBILE COMPANION (390px, REDESIGNED, compact): single sticky row, 56px height — logo
+(24px) + kicker fully dropped (no room), condensed date/issue text hidden entirely below this
+breakpoint (matches the real header's existing pattern of hiding `.masthead-left`/`.masthead-right`
+on mobile already), search icon + cart icon w/ badge + hamburger on the right. Hamburger opens the
+same dropdown content as today (Feed/Discover/Editorials + "Join Moveee →") but the dropdown panel
+itself should also gain the lighter 1px rule treatment to match the new compact chrome.
+
+CONSTRAINTS:
+- This is a redesign proposal, not documentation — Frame 1 is the only frame describing the
+  current real implementation; Frames 2–3 are the new target and must be clearly labeled as such.
+- Do not delete the ticker's issue/date/locations/announcement content outright — condense or
+  relocate it (see the Frame 2 DEV note) but record the decision rather than silently dropping it.
+- Keep real nav content unchanged: Feed / Discover / Editorials, Search, Cart w/ badge, Sign in,
+  Join → — this is a chrome-compaction exercise, not a navigation-IA change.
+- Sticky positioning is new — flag it as a behavior change, not a pre-existing trait being
+  documented.
+- Reference Connect's header only for structural economy (single row, sticky, ~60px) — do not pull
+  Connect's brand styling (it has none of Site A's ticker/kicker/serif-logo identity) into this
+  redesign.
+```
+
+Output 3 frames: Frame 1 (Current baseline, annotated), Frame 2 (Redesigned compact desktop),
+Frame 3 (Redesigned compact mobile).
+
+---
