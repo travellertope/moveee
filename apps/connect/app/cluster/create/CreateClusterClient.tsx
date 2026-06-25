@@ -80,6 +80,8 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [createdId, setCreatedId] = useState<number | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const isUK = country === "United Kingdom";
   const isNG = country === "Nigeria";
@@ -135,7 +137,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
         setSubmitting(false);
         return;
       }
-      router.push(`/cluster/${data.id}`);
+      setCreatedId(data.id);
     } catch {
       setError("Could not start a House Fellowship right now.");
       setSubmitting(false);
@@ -144,6 +146,61 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
 
   const venueLabel = VENUE_TYPES.find((v) => v.value === venueType)?.label ?? "";
   const addrLabel = ADDRESS_OPTIONS.find((a) => a.value === addressVisible)?.label ?? "";
+
+  if (createdId !== null) {
+    const inviteUrl = `https://web.themoveee.com/cluster/${createdId}/invite`;
+    const handleCopyLink = async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: `Join ${name.trim()}`,
+            text: `Join my House Fellowship "${name.trim()}" on Moveee!`,
+            url: inviteUrl,
+          });
+        } else {
+          await navigator.clipboard.writeText(inviteUrl);
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2500);
+        }
+      } catch {
+        window.prompt("Copy this invite link:", inviteUrl);
+      }
+    };
+
+    return (
+      <div className="hfc-page">
+        <div className="hfc-body">
+          <div className="hfc-step" style={{ textAlign: "center", paddingTop: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🏡</div>
+            <h1 className="hfc-heading" style={{ marginBottom: 12 }}>Fellowship created!</h1>
+            <p className="hfc-sub">
+              Now share the invite link with neighbours and friends.<br />
+              You need at least <strong>4 members</strong> to activate your fellowship.
+            </p>
+            <div className="clu-share-banner" style={{ marginTop: 28, textAlign: "left" }}>
+              <div className="clu-share-banner-body">
+                <p className="clu-share-banner-title">{name.trim()}</p>
+                <div className="clu-share-url-row">
+                  <span className="clu-share-url-text">{inviteUrl}</span>
+                </div>
+              </div>
+              <button type="button" className="clu-share-btn" onClick={handleCopyLink}>
+                {linkCopied ? "Link copied ✓" : "Share invite link →"}
+              </button>
+            </div>
+            <button
+              type="button"
+              className="hfc-nav-back"
+              style={{ marginTop: 20, width: "100%", textAlign: "center" }}
+              onClick={() => router.push(`/cluster/${createdId}`)}
+            >
+              Go to my fellowship →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="hfc-page">
