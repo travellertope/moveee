@@ -31,6 +31,13 @@ const TYPE_LABEL: Record<string, string> = {
   audio: "Audio", design: "Design", link: "Link",
 };
 
+const PINNED_BADGE: Record<string, { label: string; emoji: string; cls: string }> = {
+  "creative-showcase": { label: "Showcase", emoji: "🎨", cls: "prf-pinned-badge--showcase" },
+  "cultural-take": { label: "Cultural Take", emoji: "🔥", cls: "prf-pinned-badge--take" },
+  "hidden-gem": { label: "Hidden Gem", emoji: "💎", cls: "prf-pinned-badge--gem" },
+  "food-review": { label: "Food Review", emoji: "🍽️", cls: "prf-pinned-badge--food" },
+};
+
 interface Props {
   username: string;
   unlocked: boolean;
@@ -122,15 +129,15 @@ export default function PortfolioTab({ username, unlocked, reputationTier }: Pro
 }
 
 function PinnedPostCard({ post }: { post: PinnedPost }) {
+  const badge = PINNED_BADGE[post.template_type] ?? { label: post.tag || post.template_type, emoji: "📌", cls: "prf-pinned-badge--default" };
   return (
-    <a href={`/community/${post.slug}`} className="prf-portfolio-card">
-      {post.image_url ? (
+    <a href={`/community/${post.slug}`} className="prf-portfolio-card prf-pinned-card">
+      <span className="prf-pinned-pin">📌</span>
+      <span className={`prf-pinned-badge ${badge.cls}`}>{badge.emoji} {badge.label}</span>
+      {post.image_url && (
         <img src={post.image_url} alt={post.tag || "Community post"} className="prf-portfolio-thumb" />
-      ) : (
-        <div className="prf-portfolio-thumb-placeholder">📌</div>
       )}
       <div className="prf-portfolio-card-body">
-        <p className="prf-portfolio-card-type">{post.tag || post.template_type}</p>
         {post.text && <p className="prf-portfolio-card-desc">{post.text}</p>}
       </div>
     </a>

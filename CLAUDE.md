@@ -832,7 +832,7 @@ re-derived from scratch each session.
 | 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
-| 12 | Member Directory & Public Profiles | Site B | Not started |
+| 12 | Member Directory & Public Profiles | Site B | Done — rebuilt from mockup 2026-06-25 (see "Member Directory & Public Profiles — visual rebuild" below) |
 | 13 | Notifications & Analytics | Site B | Not started |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
 | 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
@@ -988,13 +988,15 @@ mobile companion frame). Confirmed via direct HTML read, not the prose spec.
   `.perks-filter-btn`'s underline-tab style (not a pill) was checked against
   the mockup's own Frame 2 tab markup (`border-b-[2px] border-ochre`, not a
   rounded pill) and confirmed already correct — no change needed.
-- **DEV note, preserved verbatim (do not "fix"):** `WalletClient.tsx` has
-  `feePercent = 30` (the live calculator, ~line 108) alongside static copy
-  reading "A flat 40% fee applies" (~line 228) — both numbers genuinely
-  coexist in the live code and were confirmed present before this pass.
-  Per the project's render-exactly-what-the-code-does rule, this mismatch
-  was intentionally left untouched rather than reconciled one way or the
-  other.
+- **Cashout fee confirmed at 40% (fixed June 2026):** `WalletClient.tsx`'s live
+  fee calculator (`feePercent`, ~line 108) previously read `30`, mismatching
+  both the static copy on the same page ("A flat 40% fee applies", ~line 228)
+  and the PHP backend (`Culture_Perks::cashout_fee_percent()` — already
+  hardcoded to `40`). The user confirmed 40% is the correct, intended fee —
+  `feePercent` is now `40`, matching the backend and the static copy. Grepped
+  the rest of the web app, mobile app, and `culture-community/` for any other
+  stray "30%"/cashout-fee literals — none found; this was the only place the
+  wrong number lived.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
   credentials gap as the Dashboard/Settings rebuilds above. Verified via CSS
   brace-balance checks (`perks.css`, `globals.css`) and a full `tsc --noEmit`
@@ -1039,6 +1041,57 @@ mismatches, all now fixed in `HappeningDetailModal.tsx`, `DirectoryDetailModal.t
   mockup's own dev-comment — any future RSVP/poll UI change must be applied to both files).
 - `ProBadge.tsx` (the "PRO" pill next to author names) was checked and already matched the
   mockup's `rounded-sm` style (`borderRadius: Math.max(3, size*0.3)`) — no change needed.
+
+### Member Directory & Public Profiles — visual rebuild (§12, June 2026)
+
+`mockups/web/moveee_directory.html` (4 frames: People Near Me Desktop, Public Profile Community
+Tab Desktop, Public Profile Portfolio Tab split gated/unlocked Desktop, Mobile Companion). Diffed
+directly against the mockup HTML, not the prose spec. Touches `packages/shared/components/connect/
+MemberDirectory.tsx` (shared — directory grid + member cards), `apps/connect/app/feed/feed.css`
+(`mco-*` namespace), and `apps/connect/app/connect/[username]/{CommunityTab,PortfolioTab,
+profile.css}` (`prf-*` namespace).
+
+- `.prf-tab--active::after` (the active Community/Portfolio tab underline) was `var(--ink)` —
+  mockup uses `border-ochre` for the underline while keeping the tab text itself `text-ink` (same
+  text-stays/underline-changes pattern already established for Settings tabs in §10 — don't change
+  the text color, only the underline).
+- `MemberDirectory.tsx` was missing the mockup's "{N} members near you" live count caption next to
+  the filter controls — added a `.mco-dir-count` span, monospace, muted, rendered only once loaded
+  and non-empty.
+- Member card footer links were plain underlined text labels ("Website", "LinkedIn", …) — mockup
+  renders a footer row (top border, gap) of circular 32px icon-glyph buttons (🌐 / `in` / `ig` / `𝕏`)
+  followed by a trailing ochre "View Profile →" link. Rebuilt `.mco-member-links`/`.mco-member-link`
+  in `feed.css` to match, and changed the `links` array in `MemberDirectory.tsx` to carry a `glyph`
+  per platform (rendered instead of the label) plus reordered to website/linkedin/instagram/twitter
+  per the mockup's icon order.
+- Portfolio tab's pinned community posts (`PinnedPostCard`) rendered identically to regular
+  portfolio items, with no visual distinction — mockup gives pinned cards an ochre border, a 📌 pin
+  glyph in the top-right corner, and a colored category badge (Showcase=blue, Cultural Take=purple,
+  Hidden Gem=green, Food Review=red, fallback=ochre) instead of the generic type label. Added a
+  `PINNED_BADGE` lookup map in `PortfolioTab.tsx` and matching `.prf-pinned-card`/`.prf-pinned-pin`/
+  `.prf-pinned-badge--*` rules in `profile.css`.
+- `.mco-dir-empty` (the "No one near you yet" empty state) had no icon and a flat background —
+  mockup shows a dashed border card with a large grayscale 👥 glyph above the title. Added both.
+- `CommunityTab`'s "Load more" button was a `.prf-filter-pill`-styled pill with an inline padding
+  override — mockup's is a plain full-width text link (ochre, bold, underline-on-hover, no
+  border/background). Replaced with a dedicated `.prf-load-more` class.
+- CSS tokens verified against the live `globals.css` before use (per the project's `--ochre`-vs-
+  `--gold` precedent): `--paper-deep` (`#f2f2f2` light) is close enough to the mockup's standalone
+  Tailwind `#F5F5F5` — no token fix needed; `.prf-badge-tooltip`'s new shadow uses
+  `var(--shadow-tooltip, <fallback>)`, the same already-established fallback pattern used elsewhere
+  in `globals.css` (no literal `--shadow-tooltip` variable exists anywhere in the codebase, by
+  design — see the existing precedent at the line that already does this).
+- **Deliberately left unchanged**: regular (non-pinned) `PortfolioCard` items still open a click-to-
+  modal lightbox rather than the mockup's hover-reveal "View project" overlay — a judgment call
+  favoring touch/accessibility-friendliness over literal mockup replication, since hover-reveal
+  controls don't work on touch devices (see the existing "hover-revealed elements need a mobile
+  always-visible override" lesson from the Lifestyle Shop mobile-responsive pass) and there was no
+  mockup-specified touch fallback for this interaction.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as the
+  Dashboard/Settings/Wallet rebuilds above. Verified via `tsc --noEmit` (clean) on
+  `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
+  `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
+  `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
@@ -2266,6 +2319,68 @@ convention.
   "New to Discover" card in the main feed; State B: a reference chip on
   community posts that link to a directory entry via `_linked_directory_id`)
   — flagged in the original mockup but not built in this pass.
+
+### Directory Entry Detail page — visual fidelity pass (June 2026)
+
+`mockups/web/directory_entry_detail.html` ("Moveee Connect - Directory Entry Detail", 4
+frames: Desktop Person, Mobile Reordered, Gated Book, Empty Movement). Targets
+`apps/connect/app/directory/[slug]/page.tsx` + `apps/connect/app/directory.css`
+(`dir-wiki-*` namespace) — **not** `apps/site/app/directory/[slug]/`, which is dead code:
+`apps/site/proxy.ts`'s `connectPrefixes` array already includes `/directory`, so that whole
+route tree 308-redirects to `web.themoveee.com` and is unreachable in production.
+
+This page was already structurally very close to the mockup going in (same `dir-wiki-*`
+classnames, same 220px/1fr/260px three-column grid, same `--dir-*` token values, same
+`/discover` back-link, same body-only `ContentGate` paywall pattern, same empty-content
+copy, same per-type infobox field definitions for all 11 `culture_directory` entry types)
+— this was a targeted fidelity pass, not a rebuild. Fixes applied:
+
+- **Non-cropping images (explicit user requirement):** the Selected Works thumbnail
+  (`page.tsx`'s `.dir-wiki-work-img`) and the infobox featured image
+  (`.dir-wiki-infobox-img`) both used `objectFit: "cover"` (crops to fill). Changed both to
+  `objectFit: "contain"` so the original aspect ratio is always fully visible — both
+  container divs already had a background color behind the image (`var(--dir-border)` /
+  `var(--dir-dark-bg)`), so `contain`'s letterboxing reads as an intentional fill rather
+  than empty space. **If a future image requirement says "don't crop," `contain` +
+  a background on the wrapping element is the established pattern here** — don't reach for
+  `cover` by default on directory/profile imagery going forward.
+- `.dir-improve-btn` was a square (`border-radius: 2px`), ochre-background, mono-font
+  button — mockup wants a pill (`rounded-full`), `bg-dir-dark-ink`/`text-dir-dark-bg`
+  (i.e. the light `--dir-dark-ink` token on dark `--dir-dark-bg`, since this button sits
+  inside the dark `.dir-improve-cta` section), sans-bold 13px. Rebuilt to match.
+  `--dir-dark-ink`/`--dir-dark-bg` are named from the *dark section's* perspective (ink =
+  the light foreground color used on a dark background, bg = the dark background itself)
+  — don't assume "dark-ink" means a dark color literal.
+  - `--dir-bg` (used by `.dir-wiki-page`'s background) was never defined in `:root` — only
+    `--dir-paper` exists. Dead/typo'd variable reference, silently resolving to nothing.
+  - Fixed to `var(--dir-paper)`.
+- Upcoming Events card badge (`Happening`) was `border-radius: 2px` — squared off, not a
+  pill — and the event card itself was `border-radius: 6px` vs the mockup's `8px`. Fixed
+  both (badge to `999px`, card to `8px`).
+- `.dir-community-card` (Community Reviews & Takes) used `var(--paper-deep)`/`var(--rule)`
+  (the page's tan/neutral globals.css tokens) at `border-radius: 4px` — mockup wants white
+  `bg-dir-paper`/`border-dir-border` at `8px`. Also, `.dir-community-stars`,
+  `.dir-community-pro-badge`, `.dir-community-star-rating`, and `.dir-community-read-more`
+  all used `var(--ochre)` (`#c5491f`, brand rust) where the mockup explicitly specifies
+  `#B38238` — that's `var(--dir-ochre)` (this page's own gold token, distinct from the
+  global ochre/gold pair, see the `--ochre`-vs-`--gold` precedent elsewhere in this file).
+  All four swapped to `var(--dir-ochre)`. **This page has its own `--dir-*` color
+  namespace, separate from `globals.css`'s `--ochre`/`--gold` — don't mix the two systems
+  when touching `directory.css`.**
+- `.dir-wiki-sidebar-empty` ("No related entries yet.") was unstyled inline text — mockup
+  wraps it in a centered, bottom-bordered row. Added `display: flex; align-items: center;
+  justify-content: center; padding: 12px 0; border-bottom: 1px solid var(--dir-border);`
+  plus `font-style: italic` to match.
+- `ContentGate` (`packages/shared/components/ContentGate.tsx`, the shared Pro-paywall used
+  here and on article pages) was checked against the mockup's Frame 3 gate design (bordered
+  box, lock icon, "★ Moveee Pro" label, "You're one step away." headline, pill CTA, price
+  footnote via `PatronPrice`) and already matches — it's a shared cross-surface component,
+  not specific to this page, so it was deliberately left untouched.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) and a
+  CSS brace-balance check on `directory.css` (180/180). Re-check pixel fidelity against
+  `mockups/web/directory_entry_detail.html` in a real environment before considering this
+  fully closed.
 
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
