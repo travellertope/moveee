@@ -2382,6 +2382,47 @@ copy, same per-type infobox field definitions for all 11 `culture_directory` ent
   `mockups/web/directory_entry_detail.html` in a real environment before considering this
   fully closed.
 
+### Directory Entry Detail page — follow-up bug-fix pass (double border, radius, lightbox; June 2026)
+
+User-reported, from a live screenshot of `web.themoveee.com/directory/{slug}`: a double border
+under the title area, inconsistent/no border-radius on boxes, and a request to make every image on
+the page open in a lightbox. All three fixed in `apps/connect/app/directory.css` and
+`apps/connect/app/directory/[slug]/page.tsx`.
+
+- **Double border root cause**: `.dir-wiki-divider` (rendered in JSX immediately above the entry
+  body) already draws the single intended rule (`border-top` + `margin: 24px 0`). `.dir-single-body`
+  — a "legacy" class name (no `wiki` infix) that looks like dead fallback CSS but is actually still
+  the live class used to render entry body HTML on this page — had its own independent
+  `border-top: 1px solid var(--dir-border); padding-top: 36px;`, producing two stacked rules.
+  Fixed by deleting both properties from `.dir-single-body`; `.dir-wiki-divider`'s own margin
+  already provides the spacing. **Lesson: a class name implying "legacy/unused" doesn't mean it's
+  dead — grep for actual JSX usage before assuming, especially in this file's "kept for fallback"
+  section.**
+- **Border-radius**: added/bumped radius on exactly the 5 `dir-wiki-*` box classes that belong to
+  this page (confirmed via Grep that every other unradiused `2px` box in `directory.css` belongs to
+  the separate directory listing/archive page or `/directory/submit`, out of scope) —
+  `.dir-wiki-sidebar-card` (8px, was 0), `.dir-wiki-related-thumb` (2px→6px, kept smaller since it's
+  only 36px), `.dir-wiki-improve` (8px, was 0), `.dir-wiki-work-card` (2px→8px),
+  `.dir-wiki-infobox` (8px, was 0 — already has `overflow:hidden` so its featured image/rows clip
+  cleanly to the new radius).
+- **Lightbox**: new generic client component `apps/connect/app/directory/[slug]/DirectoryLightboxImage.tsx`
+  — wraps any existing thumbnail markup (`className`/`style` passed through unchanged, so
+  `next/image fill` layouts are unaffected), manages its own open state, closes on Escape or
+  backdrop click, locks `document.body.style.overflow` while open, renders a fixed full-screen
+  `rgba(20,17,13,0.9)` backdrop with a plain `<img>` at `maxWidth/Height: 92vw/92vh` + a close
+  button. Wired onto all 5 images on the page: related-entries sidebar thumb, Selected Works card
+  thumb, community review avatar, Upcoming Events list thumb, and the right-sidebar infobox
+  featured image. **Three of these (related-entries thumb, Upcoming Events thumb) sit inside a
+  `<Link>`** — the component's trigger `onClick` calls `e.preventDefault()` +
+  `e.stopPropagation()` before opening, so clicking the image opens the lightbox instead of
+  navigating; this guard is built into the component itself, so any future image wrapped in it
+  is automatically Link-safe with no extra wiring. **If a future page needs an image lightbox,
+  reuse this exact component rather than building a per-page one** — it's already generic
+  (`src`/`alt`/optional `className`/`style`/`children`).
+- **Not visually verified in a browser** — same credentials gap as above. Verified via
+  `tsc --noEmit` (clean) on `apps/connect` and a CSS brace-balance check on `directory.css`
+  (180/180, confirmed unchanged after these edits).
+
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
 same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.

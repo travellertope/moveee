@@ -315,6 +315,7 @@
 .dir-wiki-sidebar-card {
   background: #faf7f2;
   border: 1px solid var(--dir-border);
+  border-radius: 8px;
   padding: 18px 16px;
   margin-bottom: 16px;
 }
@@ -369,7 +370,7 @@
   height: 36px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 6px;
   background: var(--dir-border);
 }
 
@@ -397,6 +398,7 @@
 
 .dir-wiki-improve {
   background: var(--dir-dark-bg);
+  border-radius: 8px;
   padding: 16px;
 }
 .dir-wiki-improve-label {
@@ -479,7 +481,7 @@
 .dir-wiki-work-card {
   border: 1px solid var(--dir-border);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .dir-wiki-work-img {
@@ -503,6 +505,7 @@
 
 .dir-wiki-infobox {
   border: 1px solid var(--dir-border);
+  border-radius: 8px;
   background: #faf7f2;
   font-size: 13px;
   overflow: hidden;
@@ -663,8 +666,6 @@
   font-size: 16px;
   line-height: 1.75;
   color: var(--dir-ink);
-  border-top: 1px solid var(--dir-border);
-  padding-top: 36px;
   margin-bottom: 40px;
 }
 
