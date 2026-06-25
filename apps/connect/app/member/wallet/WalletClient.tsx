@@ -105,7 +105,7 @@ export default function WalletClient({
   }
 
   const creditsNum  = parseInt(cashCredits) || 0;
-  const feePercent  = 30;
+  const feePercent  = 40;
   const feeCredits  = Math.round(creditsNum * feePercent / 100);
   const netCredits  = creditsNum - feeCredits;
   const symbol      = CURRENCY_SYMBOL[currency] ?? currency;

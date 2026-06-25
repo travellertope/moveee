@@ -310,7 +310,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                   <div key={i} className="dir-wiki-work-card">
                     {w.imageUrl && (
                       <div className="dir-wiki-work-img">
-                        <Image src={w.imageUrl} alt={w.title} fill style={{ objectFit: "cover" }} />
+                        <Image src={w.imageUrl} alt={w.title} fill style={{ objectFit: "contain" }} />
                       </div>
                     )}
                     {w.title && <div className="dir-wiki-work-title">{w.title}</div>}
@@ -400,13 +400,13 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                     ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                     : null;
                   return (
-                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
+                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
                       {ev.image && (
                         <img src={ev.image} alt={ev.title} style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "4px", flexShrink: 0 }} loading="lazy" />
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.3rem" }}>
-                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px" }}>Happening</span>
+                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "999px" }}>Happening</span>
                           {evDate && (
                             <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600 }}>
                               {evDate}{endDate && endDate !== evDate ? ` — ${endDate}` : ""}
@@ -435,7 +435,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             {/* Featured image */}
             {img && (
               <div className="dir-wiki-infobox-img">
-                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "cover" }} />
+                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "contain" }} />
               </div>
             )}
 
