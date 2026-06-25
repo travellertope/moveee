@@ -881,7 +881,7 @@ re-derived from scratch each session.
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
 | 12 | Member Directory & Public Profiles | Site B | Done — rebuilt from mockup 2026-06-25 (see "Member Directory & Public Profiles — visual rebuild" below) |
-| 13 | Notifications & Analytics | Site B | Not started |
+| 13 | Notifications & Analytics | Site B | Done — rebuilt from mockup 2026-06-25 (see "Notifications & Analytics — visual rebuild" below) |
 | 14 | Lifestyle Shop | Site A | Done — rebuilt from mockup (covered by §2/3 entry above) |
 | 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
 | 16 | Design System & Core UI Components | Site A + B | Not started |
@@ -1140,6 +1140,58 @@ profile.css}` (`prf-*` namespace).
   `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
   `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
   `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
+
+### Notifications & Analytics — visual rebuild (§13, June 2026)
+
+`mockups/web/notifications_analytics.html` diffed directly against the live components, not the
+prose spec. Touches `packages/shared/components/NotificationBell.tsx` (shared header dropdown),
+`apps/connect/app/member/notifications/NotificationsClient.tsx` (full-page list), and
+`apps/connect/app/member/analytics/AnalyticsClient.tsx` (stat cards, SVG bar/line charts, top
+posts). No CSS files were touched in this pass — all three components use inline `style={{...}}`
+objects exclusively, so there's nothing to brace-balance-check, only `tsc --noEmit`.
+
+- **Recurring color-family bug, found in two separate files**: both `NotificationBell.tsx`'s
+  dropdown rows and `NotificationsClient.tsx`'s full-page rows used a **gold**-family tint
+  (`rgba(179,130,56,...)` = `#b38238`) for the unread-row background — the mockup specifies an
+  **ochre/rust** tint (`#c5491f` at low opacity) instead. Fixed in both files (dropdown rows in
+  `NotificationBell.tsx` in an earlier pass this session; full-page rows in
+  `NotificationsClient.tsx` in this pass). The same gold-vs-ochre mixup recurred a third time in
+  `AnalyticsClient.tsx`'s Top Posts rank-#1 badge (see below) — **if a future surface shows an
+  unread/highlight/rank-1 accent that looks "off-brand," check whether it's using `--gold`
+  (`#b38238`, amber) where the mockup actually wants `--ochre` (`#c5491f`, rust)** — this is now a
+  3-for-3 pattern in this codebase, not a one-off.
+- `NotificationBell.tsx` (dropdown): badge border, dropdown shadow, mark-all-read color+weight,
+  the unread/read background fix above (+ matching hover handlers), timestamp color+font, and the
+  footer redesigned from a conditionally-shown link to an always-visible sticky bottom bar.
+- `NotificationsClient.tsx` (full page): header row rebuilt into a fixed-height (64px) banded bar
+  with its own background/border (was a plain flex row with `marginBottom`); row padding increased
+  to a uniform 20px with 16px gap (was 14px/14px); emoji size increased to 24px, title to 15px;
+  body/date text now conditionally colored brighter when unread vs. muted when read (previously
+  both were always `var(--mute)` regardless of read state); unread dot enlarged 7px→8px; added a
+  client-side "Load more" pagination affordance (`visibleCount` state, `PAGE_SIZE = 20`, slices the
+  already-fetched `items` array — the notifications API has no offset/pagination param wired up
+  server-side, so this is a pure client-side reveal rather than a new network request per page).
+- `AnalyticsClient.tsx`: the one confirmed functional/color bug was the Top Posts rank-#1 badge
+  using gold (`#b38238`) instead of ochre (`#c5491f`) — fixed. Remaining changes are pure visual
+  polish to match the mockup: chart gridlines in both `BarChart` and `LineChart` changed from a
+  solid `#e5ddd0` line to a dashed (`strokeDasharray="4 4"`) `#c8bfb0` line; axis/label text color
+  changed from `#9c8e7a` to the project's documented `var(--mute)`-equivalent literal `#7a6f5c`
+  throughout both charts; `StatCard` restyled from a flat tan card to a white card with 12px
+  radius, a subtle box-shadow, and a monospace uppercase label (was a plain sans label); the Top
+  Posts container restyled from the generic shared `.mem-card` class to its own white
+  card-with-shadow wrapper (the mockup gives this section a distinct rounded/shadowed treatment),
+  and each row's reaction/comment counts switched from a three-column plain-number layout to
+  emoji-prefixed (`❤️`/`💬`) counts on one line plus a bold "{N} Eng" total beneath.
+- **Confirmed already correct, no bug** — checked against the mockup and found matching, no
+  changes made: the 6-stat-card grid (Credit Balance, Points, Posts, Badges, Earned (30d), Spent
+  (30d)); `BarChart`'s earned/spent bar colors (`["#b38238", "#c5491f"]`, gold=earned/ochre=spent —
+  matches the mockup's `chart-earn`/`chart-spend` tokens exactly); `LineChart`'s call-site color
+  override (`color="#2a6496"`, a one-off blue distinct from both ochre and gold, matching the
+  mockup's dedicated `chart-line` token); the "← Back to Dashboard" link's `var(--ochre)` color.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
+  `apps/connect`. Re-check pixel fidelity against `mockups/web/notifications_analytics.html` in a
+  real environment before considering this fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
