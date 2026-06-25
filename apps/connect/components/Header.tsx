@@ -93,16 +93,7 @@ export default function ConnectHeader() {
             <Link
               href="/discover"
               aria-label="Discover"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px",
-                display: "flex",
-                alignItems: "center",
-                color: "var(--ink)",
-                lineHeight: 1,
-              }}
+              className="ch-icon-btn"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -113,16 +104,7 @@ export default function ConnectHeader() {
               type="button"
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px",
-                display: "flex",
-                alignItems: "center",
-                color: "var(--ink)",
-                lineHeight: 1,
-              }}
+              className="ch-icon-btn"
             >
               {theme === "dark" ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
