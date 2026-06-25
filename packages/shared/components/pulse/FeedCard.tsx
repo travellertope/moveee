@@ -12,6 +12,7 @@ import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
 import ProBadge from "@/components/ProBadge";
+import ImageLightbox from "./ImageLightbox";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -58,14 +59,14 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
             style={{
               position: "relative",
               overflow: "hidden",
-              background: "#fff",
-              border: isLeading ? "1.5px solid var(--ochre, #c5491f)" : "1px solid #e0d8ce",
+              background: "var(--paper)",
+              border: isLeading ? "1.5px solid var(--ochre)" : "1px solid var(--rule)",
               borderRadius: "8px",
               padding: "9px 12px",
               textAlign: "left",
               cursor: showResults ? "default" : "pointer",
               fontSize: "0.82rem",
-              color: "#14110d",
+              color: "var(--ink)",
               fontFamily: "var(--font-sans), sans-serif",
               display: "flex",
               justifyContent: "space-between",
@@ -99,7 +100,7 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
           </button>
         );
       })}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.68rem", color: "#c8bfb0", fontFamily: "var(--font-mono), monospace" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.68rem", color: "var(--mute)", fontFamily: "var(--font-mono), monospace" }}>
         <span>
           {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
           {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
@@ -171,9 +172,9 @@ function RsvpDisplay({
         onClick={toggle}
         disabled={loading || (!rsvped && isFull)}
         style={{
-          background: rsvped ? "#fff" : "var(--ochre, #b38238)",
-          color: rsvped ? "#b38238" : "#fff",
-          border: "1px solid #b38238",
+          background: rsvped ? "var(--paper)" : "var(--gold)",
+          color: rsvped ? "var(--gold)" : "#fff",
+          border: "1px solid var(--gold)",
           borderRadius: "999px",
           padding: "7px 14px",
           fontSize: "0.78rem",
@@ -184,7 +185,7 @@ function RsvpDisplay({
       >
         {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
       </button>
-      <span style={{ fontSize: "0.72rem", color: "#7a6f5c" }}>
+      <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
         {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
       </span>
     </div>
@@ -206,73 +207,18 @@ function stripTrailingUrl(text: string, sourceUrl?: string): string {
   return text.replace(new RegExp(`\\s*${escaped}\\s*$`), "").trimEnd();
 }
 
-function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(0,0,0,0.88)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "1rem",
-        cursor: "zoom-out",
-      }}
-    >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        aria-label="Close"
-        style={{
-          position: "absolute", top: "1rem", right: "1rem",
-          background: "rgba(255,255,255,0.12)", border: "none",
-          borderRadius: "50%", width: "36px", height: "36px",
-          color: "#fff", fontSize: "1rem", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        ✕
-      </button>
-
-      {/* Image — stop click propagating so clicking image itself doesn't close */}
-      <img
-        src={src}
-        alt={alt}
-        onClick={e => e.stopPropagation()}
-        style={{
-          maxWidth: "100%",
-          maxHeight: "90vh",
-          objectFit: "contain",
-          borderRadius: "4px",
-          cursor: "default",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
-        }}
-      />
-    </div>
-  );
-}
-
-function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
+function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: number) => void }) {
   const count = images.length;
 
   if (count === 0) return null;
 
   if (count === 1) {
     return (
-      <div style={{ marginBottom: "0.6rem", borderRadius: "8px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+      <div style={{ marginBottom: "0.6rem", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--rule)" }}>
         <img
           src={images[0]}
           alt=""
-          onClick={() => onTap(images[0])}
+          onClick={() => onTap(0)}
           style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block", cursor: "zoom-in" }}
           loading="lazy"
         />
@@ -282,6 +228,8 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
 
   // Multi-image strip — fixed-size square thumbnails, several visible at once
   // (mirrors apps/mobile's GalleryStrip rather than a one-slide-per-view carousel).
+  // Tapping any thumbnail opens the shared ImageLightbox, which then supports
+  // swipe/arrow-key/button navigation across the full `images` array.
   return (
     <div
       className="hide-scrollbar"
@@ -298,7 +246,7 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
           key={i}
           src={img}
           alt=""
-          onClick={() => onTap(img)}
+          onClick={() => onTap(i)}
           style={{
             height: "200px",
             width: "200px",
@@ -306,7 +254,7 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
             display: "block",
             flexShrink: 0,
             borderRadius: "8px",
-            border: "1px solid #e8e2d8",
+            border: "1px solid var(--rule)",
             cursor: "zoom-in",
           }}
           loading="lazy"
@@ -317,12 +265,12 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: str
 }
 
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  pulse:     { label: "Pulse",      bg: "#fef3e2", color: "#b38238" },
-  editorial: { label: "Editorial",  bg: "#fff0eb", color: "#c5491f" },
-  happening: { label: "Happening",  bg: "#eeedfe", color: "#3c3489" },
-  directory: { label: "Directory",  bg: "#e8f5ee", color: "#085041" },
-  quote:     { label: "Quote",      bg: "#f3eef8", color: "#7a4da0" },
-  community: { label: "Community",  bg: "#edf7ed", color: "#2e7d32" },
+  pulse:     { label: "Pulse",      bg: "var(--cat-pulse-bg)",     color: "var(--cat-pulse-fg)" },
+  editorial: { label: "Editorial",  bg: "var(--cat-editorial-bg)", color: "var(--cat-editorial-fg)" },
+  happening: { label: "Happening",  bg: "var(--cat-happening-bg)", color: "var(--cat-happening-fg)" },
+  directory: { label: "Directory",  bg: "var(--cat-directory-bg)", color: "var(--cat-directory-fg)" },
+  quote:     { label: "Quote",      bg: "var(--cat-quote-bg)",     color: "var(--cat-quote-fg)" },
+  community: { label: "Community",  bg: "var(--cat-community-bg)", color: "var(--cat-community-fg)" },
 };
 
 function formatDate(dateStr: string): string {
@@ -379,8 +327,8 @@ export default function FeedCard({
           onClick={() => setModalOpen(true)}
           style={{
             position: "relative",
-            background: "var(--paper-warm, #f3ece0)",
-            border: "1px solid rgba(232,226,216,0.5)",
+            background: "var(--paper-warm)",
+            border: "1px solid var(--rule)",
             borderRadius: "12px",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
             margin: "12px 16px",
@@ -395,7 +343,7 @@ export default function FeedCard({
               position: "absolute",
               top: "16px",
               left: "16px",
-              color: "#c8bfb0",
+              color: "var(--mute)",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "64px",
               lineHeight: 1,
@@ -406,7 +354,7 @@ export default function FeedCard({
           </span>
           <div style={{ paddingLeft: "32px" }}>
             <p style={{
-              color: "#14110d",
+              color: "var(--ink)",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "20px",
               fontWeight: 700,
@@ -417,12 +365,12 @@ export default function FeedCard({
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
               {item.quoteAuthor && (
-                <span style={{ color: "#14110d", fontSize: "0.8rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                <span style={{ color: "var(--ink)", fontSize: "0.8rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
                   — {item.quoteAuthor}
                 </span>
               )}
-              {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.74rem", fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
-              <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.74rem", fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
+              <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
             </div>
             <div onClick={(e) => e.stopPropagation()}>
               <ReactionBar
@@ -443,7 +391,7 @@ export default function FeedCard({
   // ── Community card (tweet-style) ──
   if (item.type === "community") {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [lightbox, setLightbox] = useState<string | null>(null);
+    const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeLightbox = useCallback(() => setLightbox(null), []);
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -474,8 +422,8 @@ export default function FeedCard({
           id={`community-${item.id.replace("community-", "")}`}
           style={{
             position: "relative",
-            background: "#fff",
-            border: "1px solid rgba(232,226,216,0.5)",
+            background: "var(--paper)",
+            border: "1px solid var(--rule)",
             borderRadius: "12px",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
             margin: "12px 16px",
@@ -491,7 +439,7 @@ export default function FeedCard({
               position: "absolute",
               top: "-10px",
               right: "20px",
-              background: "var(--ochre, #c5491f)",
+              background: "var(--ochre)",
               color: "#fff",
               fontFamily: "var(--font-sans), sans-serif",
               fontSize: "9px",
@@ -509,11 +457,11 @@ export default function FeedCard({
             <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
               <div style={{
                 width: "34px", height: "34px", borderRadius: "50%",
-                background: "#edf7ed", border: "1px solid #c8e6c9",
-                color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+                background: "var(--cat-community-bg)", border: "1px solid var(--cat-community-bg)",
+                color: "var(--cat-community-fg)", fontSize: "0.62rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 overflow: "hidden",
-                ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
+                ...(isPro ? { boxShadow: "var(--glow-gold)" } : {}),
               }}>
                 {item.communityAuthorAvatar ? (
                   <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -525,11 +473,11 @@ export default function FeedCard({
           ) : (
             <div style={{
               width: "34px", height: "34px", borderRadius: "50%",
-              background: "#edf7ed", border: "1px solid #c8e6c9",
-              color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+              background: "var(--cat-community-bg)", border: "1px solid var(--cat-community-bg)",
+              color: "var(--cat-community-fg)", fontSize: "0.62rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0, overflow: "hidden",
-              ...(isPro ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
+              ...(isPro ? { boxShadow: "var(--glow-gold)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -543,24 +491,24 @@ export default function FeedCard({
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
               {item.communityAuthorUsername ? (
-                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
                   {item.communityAuthor || "Community Member"}
                 </Link>
               ) : (
-                <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
+                <span style={{ color: "var(--ink)", fontSize: "0.82rem", fontWeight: 600 }}>
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
               {isPro && <ProBadge size={13} />}
-              <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
-              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
+              <span style={{ color: "var(--mute)", fontSize: "0.7rem" }}>·</span>
+              <span style={{ color: "var(--mute)", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
               {item.communityTag && (
                 <button
                   onClick={() => onTagClick?.(item.communityTag!)}
                   style={{
                     marginLeft: "auto",
-                    background: "#edf7ed",
-                    color: "#2e7d32",
+                    background: "var(--cat-community-bg)",
+                    color: "var(--cat-community-fg)",
                     fontSize: "0.58rem",
                     fontWeight: 700,
                     letterSpacing: "0.1em",
@@ -587,37 +535,37 @@ export default function FeedCard({
               {item.templateType && item.templateType !== "post" && (
                 <div style={{ marginBottom: "0.4rem" }}>
                   {item.templateType === "hidden-gem" && (
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold, #b38238)", background: "rgba(179,130,56,0.1)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold)", background: "var(--cat-pulse-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
                       💎 Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
                     </span>
                   )}
                   {item.templateType === "poll" && (
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.1)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cat-purple-fg)", background: "var(--cat-purple-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
                       📊 Poll
                     </span>
                   )}
                   {item.templateType === "cultural-take" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-purple-fg)", background: "var(--cat-purple-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Take{item.locationName ? ` · ${item.locationName}` : ""}
                     </span>
                   )}
                   {item.templateType === "food-review" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)", background: "var(--cat-editorial-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Food Review {item.foodDishName ? `· ${item.foodDishName}` : ""}
                     </span>
                   )}
                   {item.templateType === "creative-showcase" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Creative Showcase
                     </span>
                   )}
                   {item.templateType === "itinerary" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Weekend Route
                     </span>
                   )}
                   {item.templateType === "event" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-rust-fg)", background: "var(--cat-rust-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
                     </span>
                   )}
@@ -626,13 +574,13 @@ export default function FeedCard({
 
               {/* Location badge */}
               {item.locationName && (
-                <div style={{ fontSize: "0.72rem", color: "#7a6f5c", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "4px" }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "4px" }}>
                   <span>📍</span> {item.locationName}
                 </div>
               )}
 
               <div style={{
-                color: "#14110d",
+                color: "var(--ink)",
                 fontSize: "0.9rem",
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
@@ -643,7 +591,7 @@ export default function FeedCard({
 
             {/* Food review ratings */}
             {item.templateType === "food-review" && item.foodRatingTaste && (
-              <div style={{ display: "flex", gap: "16px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "#7a6f5c" }}>
+              <div style={{ display: "flex", gap: "16px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)" }}>
                 <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
                 {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
                 {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
@@ -657,7 +605,7 @@ export default function FeedCard({
 
             {/* Event details + RSVP */}
             {item.templateType === "event" && (
-              <div style={{ fontSize: "0.78rem", color: "#7a6f5c", marginBottom: "0.5rem", lineHeight: 1.5 }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--mute)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
                 {item.eventDate && (
                   <div>
                     📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
@@ -671,13 +619,13 @@ export default function FeedCard({
                 {item.organiserName && item.organiserSlug && (
                   <div>
                     Organised by{" "}
-                    <a href={`/directory/${item.organiserSlug}`} style={{ color: "#b38238" }}>
+                    <a href={`/directory/${item.organiserSlug}`} style={{ color: "var(--gold)" }}>
                       {item.organiserName}
                     </a>
                   </div>
                 )}
                 {item.ticketUrl && (
-                  <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", display: "inline-block", marginTop: "4px" }}>
+                  <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", display: "inline-block", marginTop: "4px" }}>
                     Get tickets →
                   </a>
                 )}
@@ -689,7 +637,7 @@ export default function FeedCard({
 
             {/* Gallery carousel — all image-capable templates */}
             {item.galleryImages && item.galleryImages.length >= 1 && (
-              <GalleryCarousel images={item.galleryImages} onTap={setLightbox} />
+              <GalleryCarousel images={item.galleryImages} onTap={(index) => setLightbox({ images: item.galleryImages!, index })} />
             )}
 
             {/* Video embed */}
@@ -703,7 +651,7 @@ export default function FeedCard({
                     allowFullScreen
                   />
                 ) : (
-                  <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.78rem" }}>
+                  <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.78rem" }}>
                     Watch video →
                   </a>
                 )}
@@ -717,7 +665,7 @@ export default function FeedCard({
                   <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                     <div style={{
                       width: "22px", height: "22px", borderRadius: "50%",
-                      background: "var(--ochre, #b38238)", color: "#fff",
+                      background: "var(--gold)", color: "#fff",
                       fontSize: "0.65rem", fontWeight: 700,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       flexShrink: 0, marginTop: "1px",
@@ -725,8 +673,8 @@ export default function FeedCard({
                       {i + 1}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "#14110d" }}>{stop.name}</div>
-                      {stop.note && <div style={{ fontSize: "0.75rem", color: "#7a6f5c", lineHeight: 1.4 }}>{stop.note}</div>}
+                      <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "var(--ink)" }}>{stop.name}</div>
+                      {stop.note && <div style={{ fontSize: "0.75rem", color: "var(--mute)", lineHeight: 1.4 }}>{stop.note}</div>}
                     </div>
                   </div>
                 ))}
@@ -736,13 +684,20 @@ export default function FeedCard({
             {/* Single image — only when no gallery */}
             {item.image && !item.galleryImages?.length && (
               <div
-                onClick={() => setLightbox(item.image!)}
-                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+                onClick={() => setLightbox({ images: [item.image!], index: 0 })}
+                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid var(--rule)", cursor: "zoom-in" }}
               >
                 <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
               </div>
             )}
-            {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
+            {lightbox && (
+              <ImageLightbox
+                images={lightbox.images}
+                initialIndex={lightbox.index}
+                alt={item.title}
+                onClose={closeLightbox}
+              />
+            )}
 
             {/* Link preview card (only if no image) */}
             {!item.image && item.sourceUrl && (
@@ -762,10 +717,10 @@ export default function FeedCard({
             <div style={{
               display: "flex", alignItems: "center", gap: "0.5rem",
               minWidth: 0, paddingTop: "0.5rem",
-              borderTop: "1px solid #e8e2d8", marginTop: "0.25rem",
+              borderTop: "1px solid var(--rule)", marginTop: "0.25rem",
             }}>
               {item.wpId && (
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, opacity: reportState === "idle" ? 1 : 0.5, transition: "opacity 0.15s" }}>
                   <ReactionBar
                     noBorder
                     itemId={item.wpId}
@@ -779,9 +734,10 @@ export default function FeedCard({
                 onClick={() => setModalOpen(true)}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.3rem",
-                  color: "#7a6f5c", background: "none", border: "none",
+                  color: "var(--mute)", background: "none", border: "none",
                   cursor: "pointer", fontSize: "0.75rem", flexShrink: 0,
                   padding: 0, fontFamily: "inherit",
+                  opacity: reportState === "idle" ? 1 : 0.5, transition: "opacity 0.15s",
                 }}
                 aria-label="View comments"
               >
@@ -796,31 +752,31 @@ export default function FeedCard({
                 <button
                   onClick={() => setReportState("confirm")}
                   title="Report this post"
-                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", flexShrink: 0, lineHeight: 1 }}
+                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "var(--mute)", flexShrink: 0, lineHeight: 1 }}
                 >
                   <Flag size={13} strokeWidth={1.8} />
                 </button>
               )}
               {reportState === "confirm" && (
                 <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
-                  <span style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>Report as:</span>
+                  <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>Report as:</span>
                   {(["spam", "harassment", "inappropriate"] as const).map((r) => (
                     <button
                       key={r}
                       onClick={() => submitReport(r)}
-                      style={{ background: "#fef2f2", border: "1px solid rgba(192,57,43,.2)", color: "#c0392b", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
+                      style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
                     >
                       {r}
                     </button>
                   ))}
-                  <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "#bbb", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
+                  <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
                 </div>
               )}
               {reportState === "sent" && (
-                <span style={{ fontSize: "0.68rem", color: "#7a6f5c", flexShrink: 0 }}>Reported — thank you.</span>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--mute)", flexShrink: 0 }}>Reported — thank you.</span>
               )}
               {reportState === "error" && (
-                <span style={{ fontSize: "0.68rem", color: "#c0392b", flexShrink: 0 }}>Couldn't send report.</span>
+                <span style={{ fontSize: "0.68rem", color: "var(--error)", flexShrink: 0 }}>Couldn't send report.</span>
               )}
             </div>
           </div>
@@ -856,8 +812,8 @@ export default function FeedCard({
         <article
           style={{
             position: "relative",
-            background: "#fff",
-            border: "1px solid rgba(232,226,216,0.5)",
+            background: "var(--paper)",
+            border: "1px solid var(--rule)",
             borderRadius: "12px",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
             margin: "12px 16px",
@@ -868,20 +824,20 @@ export default function FeedCard({
         >
           {/* Eyebrow row — plain mono text, no colored pill */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre, #c5491f)" }}>
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)" }}>
               Pulse Wire
             </span>
             {item.region && (
-              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 · {item.region}
               </span>
             )}
             {item.arm && (
-              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 · {item.arm}
               </span>
             )}
-            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+            <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
           </div>
 
           {/* Clickable body opens modal */}
@@ -890,7 +846,7 @@ export default function FeedCard({
             style={{ cursor: "pointer" }}
           >
             <h3 style={{
-              color: "#14110d",
+              color: "var(--ink)",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "0.97rem",
               fontWeight: 700,
@@ -901,7 +857,7 @@ export default function FeedCard({
             </h3>
 
             {item.image && (
-              <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
+              <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid var(--rule)" }}>
                 <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
               </div>
             )}
@@ -911,7 +867,7 @@ export default function FeedCard({
                 className="pulse-body"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body!) }}
                 style={{
-                  color: "#3a342b",
+                  color: "var(--ink-soft)",
                   fontSize: "0.88rem",
                   lineHeight: 1.6,
                   overflow: "hidden",
@@ -921,7 +877,7 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+              <p style={{ color: "var(--ink-soft)", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}
@@ -930,7 +886,7 @@ export default function FeedCard({
           {isLong && !expanded && (
             <button
               onClick={() => setModalOpen(true)}
-              style={{ background: "none", border: "none", color: "#b38238", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: "0.25rem 0", marginTop: "0.25rem" }}
+              style={{ background: "none", border: "none", color: "var(--gold)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: "0.25rem 0", marginTop: "0.25rem" }}
             >
               Read more
             </button>
@@ -950,7 +906,7 @@ export default function FeedCard({
 
           {/* Reactions + comment link */}
           {item.wpId && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.6rem", marginTop: "0.5rem", borderTop: "1px solid #e8e2d8" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.6rem", marginTop: "0.5rem", borderTop: "1px solid var(--rule)" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <ReactionBar
                   noBorder
@@ -966,7 +922,7 @@ export default function FeedCard({
                   display: "flex",
                   alignItems: "center",
                   gap: "0.3rem",
-                  color: "#7a6f5c",
+                  color: "var(--mute)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -1002,8 +958,8 @@ export default function FeedCard({
     return (
       <article style={{
         position: "relative",
-        background: "#fff",
-        border: "1px solid rgba(232,226,216,0.5)",
+        background: "var(--paper)",
+        border: "1px solid var(--rule)",
         borderRadius: "12px",
         boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
         margin: "12px 16px",
@@ -1016,7 +972,7 @@ export default function FeedCard({
             position: "absolute",
             top: 0,
             right: 0,
-            background: "var(--ochre, #c5491f)",
+            background: "var(--ochre)",
             color: "#fff",
             fontFamily: "var(--font-sans), sans-serif",
             fontSize: "9px",
@@ -1031,21 +987,21 @@ export default function FeedCard({
         )}
         {/* Eyebrow row — plain mono text */}
         <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre, #c5491f)" }}>
+          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)" }}>
             The Culture Brief
           </span>
           {item.category && (
-            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
               · {item.category}
             </span>
           )}
-          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
         </div>
 
         {/* Body — clicking navigates to the editorial page */}
         <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
           <h3 style={{
-            color: "#14110d",
+            color: "var(--ink)",
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "0.97rem",
             fontWeight: 700,
@@ -1055,12 +1011,12 @@ export default function FeedCard({
             {item.title}
           </h3>
           {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+            <p style={{ color: "var(--ink-soft)", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
               {displayText}
             </p>
           )}
           {isLong && (
-            <span style={{ color: "#c5491f", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+            <span style={{ color: "var(--ochre)", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
               Read more →
             </span>
           )}
@@ -1094,8 +1050,8 @@ export default function FeedCard({
       <>
         <article style={{
           position: "relative",
-          background: "#fff",
-          border: "1px solid rgba(232,226,216,0.5)",
+          background: "var(--paper)",
+          border: "1px solid var(--rule)",
           borderRadius: "12px",
           boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
           margin: "12px 16px",
@@ -1105,21 +1061,21 @@ export default function FeedCard({
         }}>
           {/* Eyebrow row — plain mono text */}
           <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#085041" }}>
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-directory-fg)" }}>
               Directory
             </span>
             {item.entryType && (
-              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 · {item.entryType}
               </span>
             )}
-            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+            <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
           </div>
 
           {/* Body — clicking opens modal */}
           <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
             <h3 style={{
-              color: "#14110d",
+              color: "var(--ink)",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "0.97rem",
               fontWeight: 700,
@@ -1129,12 +1085,12 @@ export default function FeedCard({
               {item.title}
             </h3>
             {displayText && (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+              <p style={{ color: "var(--ink-soft)", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {displayText}
               </p>
             )}
             {isLong && (
-              <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              <span style={{ color: "var(--cat-directory-fg)", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
                 Read more →
               </span>
             )}
@@ -1176,52 +1132,52 @@ export default function FeedCard({
 
     return (
       <>
-        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        <article style={{ background: "var(--paper)", borderBottom: "1px solid var(--rule)", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
           {/* Badges row */}
           <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
             <Badge {...typeMeta} />
             {item.isLiterati && (
               <span style={{
                 fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
-                textTransform: "uppercase", color: "#b38238", background: "#f3ece0",
-                border: "1px solid #b38238", borderRadius: 4, padding: "0.1rem 0.4rem",
+                textTransform: "uppercase", color: "var(--gold)", background: "var(--paper)",
+                border: "1px solid var(--gold)", borderRadius: 4, padding: "0.1rem 0.4rem",
               }}>
                 🪶 Literati Connect
               </span>
             )}
             {item.eventCategory && (
-              <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.58rem", color: "var(--gold)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.eventCategory}
               </span>
             )}
             {eventDateStr && (
-              <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
+              <span style={{ fontSize: "0.62rem", color: "var(--cat-happening-fg)", fontWeight: 600, letterSpacing: "0.03em" }}>
                 {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
               </span>
             )}
             {(item.location || item.city) && (
-              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
+              <span style={{ fontSize: "0.58rem", color: "var(--mute)", letterSpacing: "0.04em" }}>
                 · {[item.location, item.city].filter(Boolean).join(", ")}
               </span>
             )}
             {item.organiserName && (
               item.organiserSlug ? (
-                <Link href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none" }}>
+                <Link href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.58rem", color: "var(--cat-happening-fg)", fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none" }}>
                   · {item.organiserName}
                 </Link>
               ) : (
-                <span style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em" }}>
+                <span style={{ fontSize: "0.58rem", color: "var(--cat-happening-fg)", fontWeight: 600, letterSpacing: "0.04em" }}>
                   · {item.organiserName}
                 </span>
               )
             )}
-            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+            <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
           </div>
 
           {/* Body — clicking opens modal */}
           <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
             <h3 style={{
-              color: "#14110d",
+              color: "var(--ink)",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "0.97rem",
               fontWeight: 700,
@@ -1235,7 +1191,7 @@ export default function FeedCard({
                 className="happening-body"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body!) }}
                 style={{
-                  color: "#3a342b",
+                  color: "var(--ink-soft)",
                   fontSize: "0.88rem",
                   lineHeight: 1.6,
                   overflow: "hidden",
@@ -1245,17 +1201,17 @@ export default function FeedCard({
                 }}
               />
             ) : plainText ? (
-              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+              <p style={{ color: "var(--ink-soft)", fontSize: "0.88rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
                 {decodeHtml(plainText)}
               </p>
             ) : null}
             {isLong && (
-              <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              <span style={{ color: "var(--cat-happening-fg)", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
                 Read more →
               </span>
             )}
             {item.admission && (
-              <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>
+              <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--mute)", fontWeight: 600 }}>
                 {item.admission}
               </div>
             )}

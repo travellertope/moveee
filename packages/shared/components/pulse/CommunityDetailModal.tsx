@@ -10,6 +10,7 @@ import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
 import ProBadge from "@/components/ProBadge";
+import ImageLightbox from "./ImageLightbox";
 
 function AuthorFollowToggle({ username }: { username: string }) {
   const { data: session, status } = useSession();
@@ -50,9 +51,9 @@ function AuthorFollowToggle({ username }: { username: string }) {
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: "0.62rem", letterSpacing: "0.08em", textTransform: "uppercase",
         padding: "2px 9px", borderRadius: "999px", cursor: "pointer",
-        border: isFollowing ? "1px solid rgba(179,130,56,.4)" : "1px solid #d8d2c4",
+        border: isFollowing ? "1px solid rgba(179,130,56,.4)" : "1px solid var(--rule)",
         background: isFollowing ? "rgba(179,130,56,.08)" : "transparent",
-        color: isFollowing ? "#b38238" : "#14110d",
+        color: isFollowing ? "var(--gold)" : "var(--ink)",
       }}
     >
       {isFollowing ? "✓ Following" : "Follow"}
@@ -89,18 +90,18 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
         const pct = showResults && totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
         return (
           <button key={i} type="button" onClick={() => vote(i)} disabled={showResults || voting} style={{
-            position: "relative", background: showResults ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)` : "#fff",
-            border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`, borderRadius: "4px",
+            position: "relative", background: showResults ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)` : "var(--paper)",
+            border: `1px solid ${voted === i ? "var(--cat-community-fg)" : "var(--rule)"}`, borderRadius: "4px",
             padding: "8px 12px", textAlign: "left", cursor: showResults ? "default" : "pointer",
-            fontSize: "0.85rem", color: "#14110d", fontFamily: "inherit",
+            fontSize: "0.85rem", color: "var(--ink)", fontFamily: "inherit",
             display: "flex", justifyContent: "space-between",
           }}>
             <span>{opt.text}</span>
-            {showResults && <span style={{ fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>{pct}%</span>}
+            {showResults && <span style={{ fontSize: "0.75rem", color: "var(--mute)", fontWeight: 600 }}>{pct}%</span>}
           </button>
         );
       })}
-      <div style={{ fontSize: "0.72rem", color: "#7a6f5c" }}>
+      <div style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
         {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
         {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
         {expired && " · ended"}
@@ -165,9 +166,9 @@ function RsvpDisplay({
         onClick={toggle}
         disabled={loading || (!rsvped && isFull)}
         style={{
-          background: rsvped ? "#fff" : "var(--ochre, #b38238)",
-          color: rsvped ? "#b38238" : "#fff",
-          border: "1px solid #b38238",
+          background: rsvped ? "var(--paper)" : "var(--gold)",
+          color: rsvped ? "var(--gold)" : "#fff",
+          border: "1px solid var(--gold)",
           borderRadius: "999px",
           padding: "8px 16px",
           fontSize: "0.8rem",
@@ -178,7 +179,7 @@ function RsvpDisplay({
       >
         {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
       </button>
-      <span style={{ fontSize: "0.75rem", color: "#7a6f5c" }}>
+      <span style={{ fontSize: "0.75rem", color: "var(--mute)" }}>
         {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
       </span>
     </div>
@@ -200,6 +201,8 @@ interface CommunityDetailModalProps {
 export default function CommunityDetailModal({ item, onClose, onMentionClick }: CommunityDetailModalProps) {
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
 
   const close = useCallback(() => onClose(), [onClose]);
 
@@ -238,7 +241,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(520px, 100vw)",
-          background: "var(--paper, #f3ece0)",
+          background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
@@ -249,19 +252,19 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "1.25rem",
-          borderBottom: "1px solid #e0dbd1",
+          borderBottom: "1px solid var(--rule)",
           position: "sticky", top: 0,
-          background: "#faf8f5", zIndex: 1,
+          background: "var(--paper-header)", zIndex: 1,
         }}>
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
             <span style={{
-              background: "#edf7ed", color: "#2e7d32",
+              background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
               fontSize: "0.58rem", fontWeight: 700,
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Community</span>
             {item.communityTag && (
-              <span style={{ fontSize: "0.62rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.62rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.communityTag}
               </span>
             )}
@@ -271,7 +274,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               <Link
                 href={`/community/${item.slug}`}
                 style={{
-                  color: "#c5491f", fontSize: "0.8rem", fontWeight: 400,
+                  color: "var(--ochre)", fontSize: "0.8rem", fontWeight: 400,
                   textDecoration: "underline", textUnderlineOffset: "2px",
                 }}
               >
@@ -283,7 +286,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               aria-label="Close"
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                color: "#14110d", lineHeight: 1, padding: "0.25rem", display: "flex",
+                color: "var(--ink)", lineHeight: 1, padding: "0.25rem", display: "flex",
               }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
@@ -297,11 +300,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div style={{
               width: "38px", height: "38px", borderRadius: "50%",
-              background: "#edf7ed", border: "1px solid #c8e6c9",
-              color: "#2e7d32", fontSize: "0.65rem", fontWeight: 700,
+              background: "var(--cat-community-bg)", border: "1px solid rgba(46,125,50,0.3)",
+              color: "var(--cat-community-fg)", fontSize: "0.65rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               overflow: "hidden",
-              ...(item.communityTier === "patron" ? { boxShadow: "0 0 0 2.5px #b38238, 0 0 16px 4px rgba(179,130,56,.6)" } : {}),
+              ...(item.communityTier === "patron" ? { boxShadow: "var(--glow-gold)" } : {}),
             }}>
               {item.communityAuthorAvatar ? (
                 <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -309,12 +312,12 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             </div>
             <div>
               <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 600 }}>
+                <span style={{ color: "var(--ink)", fontSize: "0.88rem", fontWeight: 600 }}>
                   {item.communityAuthor || "Community Member"}
                 </span>
                 {item.communityTier === "patron" && <ProBadge size={13} />}
               </div>
-              <span style={{ color: "#999", fontSize: "0.72rem" }}>
+              <span style={{ color: "var(--mute)", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </span>
             </div>
@@ -329,32 +332,32 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {item.templateType && item.templateType !== "post" && (
             <div style={{ marginBottom: "0.5rem" }}>
               {item.templateType === "hidden-gem" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gold)", background: "rgba(179,130,56,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
                   Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
                 </span>
               )}
               {item.templateType === "cultural-take" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-purple-fg)", background: "var(--cat-purple-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Take{item.locationName ? ` · ${item.locationName}` : ""}
                 </span>
               )}
               {item.templateType === "food-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)", background: "rgba(197,73,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
                   Food Review{item.foodDishName ? ` · ${item.foodDishName}` : ""}
                 </span>
               )}
               {item.templateType === "creative-showcase" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Creative Showcase
                 </span>
               )}
               {item.templateType === "itinerary" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Weekend Route
                 </span>
               )}
               {item.templateType === "event" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-rust-fg)", background: "var(--cat-rust-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
                 </span>
               )}
@@ -363,7 +366,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Location badge */}
           {item.locationName && item.templateType !== "cultural-take" && (
-            <div style={{ fontSize: "0.78rem", color: "#7a6f5c", marginBottom: "0.4rem", display: "flex", alignItems: "center", gap: "4px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--mute)", marginBottom: "0.4rem", display: "flex", alignItems: "center", gap: "4px" }}>
               <span>📍</span> {item.locationName}
             </div>
           )}
@@ -373,7 +376,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "0.95rem",
             lineHeight: 1.7,
-            color: "#3a342b",
+            color: "var(--ink-soft)",
             marginBottom: "1rem",
             wordBreak: "break-word",
             overflowWrap: "break-word",
@@ -383,7 +386,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Food review ratings */}
           {item.templateType === "food-review" && item.foodRatingTaste && (
-            <div style={{ display: "flex", gap: "20px", marginBottom: "0.75rem", fontSize: "0.82rem", color: "#7a6f5c" }}>
+            <div style={{ display: "flex", gap: "20px", marginBottom: "0.75rem", fontSize: "0.82rem", color: "var(--mute)" }}>
               <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
               {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
               {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
@@ -398,10 +401,10 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {/* Event details + RSVP */}
           {item.templateType === "event" && (
             <div style={{
-              background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px",
+              background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "6px",
               boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
               padding: "0.85rem 1rem", marginBottom: "0.75rem",
-              fontSize: "0.82rem", color: "#7a6f5c", lineHeight: 1.6,
+              fontSize: "0.82rem", color: "var(--mute)", lineHeight: 1.6,
             }}>
               {item.eventDate && (
                 <div>
@@ -416,13 +419,13 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               {item.organiserName && item.organiserSlug && (
                 <div>
                   Organised by{" "}
-                  <Link href={`/directory/${item.organiserSlug}`} style={{ color: "#b38238" }}>
+                  <Link href={`/directory/${item.organiserSlug}`} style={{ color: "var(--gold)" }}>
                     {item.organiserName}
                   </Link>
                 </div>
               )}
               {item.ticketUrl && (
-                <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", display: "inline-block", marginTop: "4px" }}>
+                <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", display: "inline-block", marginTop: "4px" }}>
                   Get tickets →
                 </a>
               )}
@@ -434,9 +437,16 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Gallery */}
           {item.galleryImages && item.galleryImages.length >= 1 && (
-            <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+            <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid var(--rule)" }}>
               {item.galleryImages.map((img: string, i: number) => (
-                <img key={i} src={img} alt="" style={{ height: "220px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                <img
+                  key={i}
+                  src={img}
+                  alt=""
+                  onClick={() => setLightbox({ images: item.galleryImages!, index: i })}
+                  style={{ height: "220px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                  loading="lazy"
+                />
               ))}
             </div>
           )}
@@ -452,7 +462,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   allowFullScreen
                 />
               ) : (
-                <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.82rem" }}>Watch video →</a>
+                <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.82rem" }}>Watch video →</a>
               )}
             </div>
           )}
@@ -464,7 +474,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 <div key={i} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
                   <div style={{
                     width: "26px", height: "26px", borderRadius: "50%",
-                    background: "var(--ochre, #b38238)", color: "#fff",
+                    background: "var(--gold)", color: "#fff",
                     fontSize: "0.72rem", fontWeight: 700,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0, marginTop: "1px",
@@ -472,8 +482,8 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                     {i + 1}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#14110d" }}>{stop.name}</div>
-                    {stop.note && <div style={{ fontSize: "0.8rem", color: "#7a6f5c", lineHeight: 1.4 }}>{stop.note}</div>}
+                    <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--ink)" }}>{stop.name}</div>
+                    {stop.note && <div style={{ fontSize: "0.8rem", color: "var(--mute)", lineHeight: 1.4 }}>{stop.note}</div>}
                     {stop.image_url && (
                       <img src={stop.image_url} alt={stop.name} style={{ marginTop: "6px", width: "100%", maxHeight: "140px", objectFit: "cover", borderRadius: "4px" }} loading="lazy" />
                     )}
@@ -485,9 +495,20 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Single image (only when no gallery) */}
           {item.image && !item.galleryImages?.length && (
-            <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+            <div
+              onClick={() => setLightbox({ images: [item.image!], index: 0 })}
+              style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--rule)", cursor: "zoom-in" }}
+            >
               <img src={item.image} alt="" style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "320px" }} loading="lazy" />
             </div>
+          )}
+          {lightbox && (
+            <ImageLightbox
+              images={lightbox.images}
+              initialIndex={lightbox.index}
+              alt={item.title}
+              onClose={closeLightbox}
+            />
           )}
 
           {/* Link preview (only if no image) */}
@@ -506,7 +527,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Reactions */}
           {item.wpId && (
-            <div style={{ marginBottom: "1.25rem", paddingBottom: "1rem", borderBottom: "1px solid #e8e2d8" }}>
+            <div style={{ marginBottom: "1.25rem", paddingBottom: "1rem", borderBottom: "1px solid var(--rule)" }}>
               <ReactionBar
                 noBorder
                 itemId={item.wpId}
@@ -520,7 +541,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {/* Comment thread */}
           <div>
             {loading ? (
-              <p style={{ color: "#999", fontSize: "0.8rem" }}>Loading comments…</p>
+              <p style={{ color: "var(--mute)", fontSize: "0.8rem" }}>Loading comments…</p>
             ) : item.wpId ? (
               <CommentThread postId={parseInt(item.wpId, 10)} initialComments={comments} />
             ) : null}

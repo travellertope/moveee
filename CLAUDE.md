@@ -938,7 +938,7 @@ re-derived from scratch each session.
 | 15 | Feed Card Detail Drawers | Site B | Done — rebuilt from mockup 2026-06-24 (see "Feed Card Detail Drawers — visual rebuild" below). A prior pass on this date had wrongly marked this "Done" by comparing against the prose spec in this doc instead of the real mockup HTML; the user caught the discrepancy and the 5 drawers were corrected to match `mockups/web/moveee_connect_feed_drawers.html` |
 | 16 | Design System & Core UI Components | Site A + B | Not started |
 | 17 | Authentication Flow | Site B | Done — rebuilt from mockup 2026-06-25 (see "Authentication Flow — visual rebuild" below) |
-| 18 | Overlays & Micro-interactions | Site B | Not started |
+| 18 | Overlays & Micro-interactions | Site B | Done — rebuilt from mockup 2026-06-25 (see "Overlays & Micro-interactions — visual rebuild + dark-mode hex-color fix" below) |
 
 ### Member Dashboard — visual rebuild (§9, June 2026)
 
@@ -1311,6 +1311,79 @@ so verification was `tsc --noEmit` only — no brace-balance check applicable.
   after clearing the stale `.next` cache) across all 5 edited files. Re-check pixel fidelity
   against `mockups/web/authentication_flow.html` in a real environment before considering this
   fully closed.
+
+### Overlays & Micro-interactions — visual rebuild + dark-mode hex-color fix (§18, June 2026)
+
+Two related fixes landed in the same pass: a genuine dark-mode bug (several shared
+`pulse/` components hardcoded hex colors in inline styles instead of the theme-aware
+CSS variables already defined in `apps/connect/app/globals.css`, so they didn't adapt
+when dark mode was toggled), and the §18 Overlays & Micro-interactions build itself,
+diffed against `mockups/web/moveee_overlays.html` (8 frames) — not the prose spec.
+
+**Dark-mode hex-color bug** — `packages/shared/components/pulse/FeedCard.tsx`,
+`CommunityDetailModal.tsx`, `DirectoryDetailModal.tsx`, `HappeningDetailModal.tsx`,
+`PulseDetailModal.tsx`, `QuoteDetailModal.tsx` were audited for literal hex/rgba colors
+on text, borders, and backgrounds that should track theme state, and swapped to the
+existing `var(--ink)`, `var(--mute)`, `var(--rule-dark)`, `var(--paper-warm)`,
+`var(--error)`, `var(--success)` tokens (all already defined with both light and dark
+values in `globals.css`) wherever a literal would otherwise paint the wrong color in
+dark mode. No new CSS variables were introduced — every fix maps onto a token that
+already existed.
+
+**Overlays frames (`mockups/web/moveee_overlays.html`)**:
+- **Frame 1 (Locked Template Pill)** — already implemented correctly pre-pass
+  (`SubmitPost.tsx`'s `TEMPLATE_REP_GATE`/dimmed-pill/lock-tooltip, see the Composer
+  gating section above); no changes needed.
+- **Frame 2 (Report Post Inline States)** — `FeedCard.tsx`'s report flow already had
+  the spam/harassment/inappropriate radio expansion; this pass added dimming
+  (`opacity`) on the `ReactionBar` wrapper and comment-count button while
+  `reportState !== "idle"`, and bolded the post-submit "sent" confirmation text, to
+  match the mockup's de-emphasis of secondary actions during a report submission.
+- **Frame 3 (Destructive Confirm Modal)** — checked against
+  `packages/shared/components/ui/ConfirmDialog.tsx`-equivalent web pattern; already
+  matched, no changes.
+- **Frame 4 (Sign Out Dropdown)** — `apps/connect/components/header.css`'s
+  `.ch-user-item--danger`/`:hover` used `#c0392b`/`#fff5f5`; mockup specifies a
+  distinct orange (not the brand ochre/rust and not the `--error` red) for this
+  specific destructive action — changed to `#e65100`/`#fef2f2`.
+- **Frame 5 (Image Lightbox)** — already implemented (see
+  `DirectoryLightboxImage.tsx` precedent and existing pulse-modal lightbox usage); no
+  changes.
+- **Frame 6A (Composer Success Banner)** — already matched the mockup's purple
+  (`#7A4DA0`/`#F3EEF8`) tokens exactly; no change.
+- **Frame 6B (Composer Link-Blocked Error)** — `apps/connect/app/globals.css`'s
+  `.composer-error` used plain `#c5491f` (ochre) with no font-weight; mockup wants the
+  semantic error-red plus bold — changed to `var(--error); font-weight: 700;`. Same
+  ochre-vs-error mixup pattern documented elsewhere in this file (gold-vs-ochre,
+  ochre-vs-error) — this is now recurring across at least 3 separate features.
+- **Frame 6C (Perk Redeem Success)** — `apps/connect/app/connect/perks/perks.css`'s
+  `.perk-success-title` used a literal `#2e7d32` green; changed to `var(--success)`.
+  The existing success-state structure (full success section, not a modal) was kept
+  as-is — only the color token was a bug.
+- **Frame 6D (Perk Redeem Error)** — same `perks.css`'s `.perk-modal-error` had the
+  identical ochre-vs-error bug (`#c5491f`, no weight) as Frame 6B; fixed to
+  `var(--error); font-weight: 700;` with matching `rgba(198,40,40,...)`
+  background/border (was `rgba(197,73,31,...)`).
+- **Frame 7 (For You Nudge Cards)** — two fixes in
+  `packages/shared/components/pulse/PulseFeed.tsx` and `apps/connect/app/pulse-layout.css`:
+  the no-interests banner's inline styles were literal hex (`#fdf5e6`/`#e8d8b0`/
+  `#7a6f5c`/`#14110d`) — swapped to `var(--paper-warm)`/`var(--rule-dark)`/
+  `var(--mute)`/`var(--ink)` so the banner is dark-mode-safe; the "For You →" button
+  was a small inline pill (`borderRadius: 3`) instead of the mockup's full-width pill
+  (`borderRadius: 999, width: "100%"`); `.pulse-foryou-hint`'s background/border were
+  tightened to the mockup's exact `rgba(179,130,56,...)` gold tint at `12px` radius
+  (was a flat `var(--paper-warm)` at `4px`) — the rgba-overlay approach stays
+  dark-mode-safe since it tints whatever paper background shows through rather than
+  setting an opaque literal.
+- **Frame 8 (Split Context Actions)** — covered by the Frame 2 work above (dimming
+  secondary actions during an in-flight state); no separate changes needed.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+gap as every other Figma rebuild pass in this file. Verified via `tsc --noEmit`
+(clean) in both `apps/connect` and `apps/site`, and a CSS brace-balance check on all 4
+touched CSS files (`globals.css`, `header.css`, `perks.css`, `pulse-layout.css` — all
+balanced). Re-check pixel fidelity against `mockups/web/moveee_overlays.html` and
+dark-mode behavior in a real environment before considering this fully closed.
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):

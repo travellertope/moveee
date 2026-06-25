@@ -207,12 +207,12 @@
 }
 
 .ch-user-item--danger {
-  color: #c0392b;
+  color: #e65100;
 }
 
 .ch-user-item--danger:hover {
-  background: #fff5f5;
-  color: #c0392b;
+  background: #fef2f2;
+  color: #e65100;
 }
 
 /* ── Hamburger button ── */
