@@ -125,7 +125,6 @@ export default function MoveeeZone() {
       <section className="mz-section" id="what-is-moveee">
         <div className="mz-section-inner">
         <div className="mz-intro">
-          <p className="mz-eyebrow mz-eyebrow--centred">Moveee</p>
           <h2 className="mz-h2">Your taste, with receipts.</h2>
           <p className="mz-body mz-body--centred">
             Moveee is a community and discovery platform built for people who find the spot
@@ -134,7 +133,6 @@ export default function MoveeeZone() {
             contribution builds your standing — and earns Culture Credits (Cr) you can spend on
             real perks from brands that get it.
           </p>
-          <Link href="/feed" className="mz-link">See how it works →</Link>
         </div>
 
         {/*
@@ -161,7 +159,6 @@ export default function MoveeeZone() {
       <section className="mz-section mz-section--bordered">
         <div className="mz-section-inner">
         <div className="mz-intro">
-          <p className="mz-eyebrow mz-eyebrow--centred">Membership</p>
           <h2 className="mz-h2">Free to join. More for the obsessed.</h2>
         </div>
         <div className="mz-membership-cards">

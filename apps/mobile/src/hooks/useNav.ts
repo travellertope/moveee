@@ -31,7 +31,16 @@ export type AppParamList = {
   MyEvents: undefined;
   NewPortfolioItem: undefined;
   ClusterScreen: { id: number };
-  StartClusterScreen: undefined;
+  HostOnboardingScreen: undefined;
+  StartClusterScreen: {
+    country?: string;
+    venueType?: string;
+    hostNote?: string;
+    realisticCapacity?: number;
+    accessible?: boolean;
+    addressVisible?: string;
+    localityConfirmed?: boolean;
+  } | undefined;
   // Auth
   Onboarding: undefined;
   Login: undefined;

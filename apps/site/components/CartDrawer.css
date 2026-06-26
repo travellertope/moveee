@@ -103,6 +103,7 @@
   padding: 11px 22px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+  border-radius: var(--radius-lg);
 }
 .cart-empty-cta:hover { background: var(--ink, #14110d); color: var(--paper, #f3ece0); }
 
@@ -131,6 +132,7 @@
   overflow: hidden;
   background: var(--paper-deep, #ebe1d0);
   flex-shrink: 0;
+  border-radius: var(--radius-md);
 }
 .cart-item-img img {
   width: 100%;
@@ -174,6 +176,7 @@
   color: var(--ink, #14110d);
   transition: background 0.2s, border-color 0.2s;
   line-height: 1;
+  border-radius: var(--radius-md);
 }
 .qty-btn:hover:not(:disabled) {
   background: var(--ink, #14110d);
@@ -249,6 +252,7 @@
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.2s;
+  border-radius: var(--radius-lg);
 }
 .cart-checkout-btn:hover { background: var(--ochre, #c5491f); }
 .cart-continue-btn {

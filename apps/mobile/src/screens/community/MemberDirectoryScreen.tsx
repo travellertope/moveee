@@ -113,14 +113,14 @@ function HouseFellowshipSection({
               </TouchableOpacity>
             </View>
           ))}
-          <TouchableOpacity style={styles.hfStartBtn} onPress={() => nav.navigate("StartClusterScreen")}>
+          <TouchableOpacity style={styles.hfStartBtn} onPress={() => nav.navigate("HostOnboardingScreen")}>
             <Text style={styles.hfStartBtnText}>Start a House Fellowship →</Text>
           </TouchableOpacity>
         </>
       ) : (
         <View style={styles.hfEmpty}>
           <Text style={styles.hfEmptyText}>No House Fellowship near you yet. Be the first to start one on your street.</Text>
-          <TouchableOpacity style={styles.hfStartBtnPrimary} onPress={() => nav.navigate("StartClusterScreen")}>
+          <TouchableOpacity style={styles.hfStartBtnPrimary} onPress={() => nav.navigate("HostOnboardingScreen")}>
             <Text style={styles.hfStartBtnPrimaryText}>Start a House Fellowship →</Text>
           </TouchableOpacity>
         </View>

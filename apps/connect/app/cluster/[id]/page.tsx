@@ -5,6 +5,7 @@ import Link from "next/link";
 import ClusterActions from "./ClusterActions";
 import ClusterElection from "./ClusterElection";
 import ClusterCheckin from "./ClusterCheckin";
+import ClusterShareButton from "./ClusterShareButton";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -156,6 +157,16 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
           </section>
         )}
 
+        {cluster.status !== "active" && cluster.hostId === Number(session.user.id) && (
+          <section className="mem-card">
+            <ClusterShareButton
+              clusterId={cluster.id}
+              clusterName={cluster.name}
+              variant="banner"
+            />
+          </section>
+        )}
+
         <section className="mem-card">
           <div className="mem-card-label">Meeting</div>
           <p className="mem-card-desc" style={{ margin: 0 }}>
@@ -168,9 +179,14 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
               <strong>Location note:</strong> {cluster.locationNote}
             </p>
           )}
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: 16 }}>
-            {cluster.memberCount}{cluster.capacity > 0 ? ` / ${cluster.capacity}` : ""} members
-          </p>
+          <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>
+              {cluster.memberCount}{cluster.capacity > 0 ? ` / ${cluster.capacity}` : ""} members
+            </p>
+            {status.isMember && (
+              <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} />
+            )}
+          </div>
         </section>
 
         <section className="mem-card">

@@ -41,7 +41,7 @@ export default function MagazineSpotlight({ latestIssue }: Props) {
               src={latestIssue.meta.issue_cover_image_url}
               alt={latestIssue.name}
               fill
-              className="object-cover"
+              className="object-contain"
             />
           </Link>
         )}

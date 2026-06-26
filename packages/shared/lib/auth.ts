@@ -268,6 +268,13 @@ export const authOptions: NextAuthOptions = {
 
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      // Allow returning to themoveee.com after auth (cross-domain return-to-page).
+      if (url.startsWith("https://themoveee.com/")) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
     async session({ session, token }) {
       if (session.user) {
         const s = session.user as any;

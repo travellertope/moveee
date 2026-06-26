@@ -124,6 +124,22 @@ React Native can't use the DOM-dependent shared package — edit both when those
   feed reminder card) are all live. The feature is fully shipped. See the plan doc's
   own status line for the authoritative, up-to-date detail — keep this summary in sync
   with it rather than re-deriving phase status here.
+
+  **Host onboarding flow (added 2026-06-25):** a 5-step pre-creation journey runs
+  before the cluster creation form, collecting: (1) country (UK/Nigeria/Other — drives
+  context-aware copy in subsequent steps), (2) venue type (home/café/coworking/other)
+  + optional host note, (3) realistic gathering capacity (2–20) + step-free access
+  toggle, (4) locality commitment checkbox (`_cluster_host_locality_confirmed`),
+  (5) address visibility (members_only/on_request/area_only). New meta fields:
+  `_cluster_venue_type`, `_cluster_host_note`, `_cluster_realistic_capacity`,
+  `_cluster_accessible`, `_cluster_address_visible`, `_cluster_host_locality_confirmed`.
+  Mobile: `HostOnboardingScreen.tsx` (`screens/community/`) → `StartClusterScreen`
+  (accepts params, shows compact summary card, removed "How it works" block).
+  `MemberDirectoryScreen`'s "Start" buttons now route to `HostOnboardingScreen`.
+  Web: `/cluster/create` (`app/cluster/create/page.tsx` + `CreateClusterClient.tsx`
+  in `apps/connect`). `HouseFellowship.tsx`'s inline `StartClusterModal` removed —
+  "Start" buttons are now `<Link href="/cluster/create">`.
+  CSS namespace: `hfc-*` in `apps/connect/app/member.css`.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
   Citizen`/`Moveee Pro` everywhere in user-facing copy** (web, mobile, PHP-generated
   emails/admin labels) — this superseded the prior naming and is now fully applied
@@ -414,6 +430,42 @@ The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.
 Dark backgrounds are only acceptable for: buttons, hover states, and
 single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
+
+---
+
+## Border-radius convention (site-wide, June 2026 — supersedes the old flush/rectangular look)
+
+**Rounded corners are now the default everywhere it's feasible** — cards, buttons, badges,
+images, inputs, panels, pills. Several Site A surfaces (`apps/site/app/makers/makers.css`,
+`legal.css`, `not-found.css`, `pulse-layout.css`, `sections.css`,
+`components/CartDrawer.css`) previously had **zero** `border-radius` anywhere — a deliberate
+flush-rectangle editorial aesthetic. That aesthetic is retired; do not introduce new flush,
+hard-cornered components, and apply radius retroactively when touching any of the files above.
+
+Canonical radius scale — same values on both web apps and mirrors
+`apps/mobile/src/theme.ts`'s `radius` object exactly, so all three surfaces stay visually
+consistent:
+
+```css
+var(--radius-sm)    /* 2px  — hairline elements, small chips */
+var(--radius-md)    /* 4px  — inputs, small buttons, thumbnails */
+var(--radius-lg)    /* 6px  — standard cards, buttons */
+var(--radius-xl)    /* 12px — larger cards, modals, image frames */
+var(--radius-2xl)   /* 20px — hero panels, prominent CTAs */
+var(--radius-full)  /* 9999px — pills, avatars, dots */
+```
+
+Defined as CSS custom properties in both `apps/site/app/globals.css` and
+`apps/connect/app/globals.css` `:root`/`@theme` blocks — use `var(--radius-*)`, never a
+hardcoded px value, in new or edited CSS. `apps/mobile`'s `theme.ts` `radius` object
+(`sm`(2)/`md`(4)/`lg`(6)/`xl`(12)/`"2xl"`(20)/`full`(9999)) is the source of truth this scale
+mirrors — if the mobile scale ever changes, update both web `globals.css` files to match.
+
+When writing or updating a Figma Make prompt (`docs/figma-make-prompts.md` /
+`docs/figma-make-prompts-web.md`), do not describe any new surface as "flush" or
+"no border-radius" — use the scale above instead. Existing prompt sections that documented the
+old flush aesthetic (e.g. the Maker storefront and Shop sections) should be treated as
+superseded by this convention going forward.
 
 ---
 
@@ -1384,6 +1436,8 @@ pass.
 **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
 gap as every other pass in this file. Verified via `tsc --noEmit` (clean) in both
 `apps/connect` and `apps/site`.
+
+---
 
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):

@@ -739,6 +739,17 @@
   padding: 12px 16px;
   font-family: var(--font-sans);
   font-size: 13px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+}
+
+.vpf-success {
+  background: #dcfce7;
+  color: #166534;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  border-radius: var(--radius-md);
   margin-bottom: 24px;
 }
 
@@ -1824,6 +1835,44 @@
   max-width: 640px;
   margin: 0 0 32px;
 }
+
+.vship-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.vship-error-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #991b1b;
+  font-size: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* New zone form */
+.vship-new-zone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper-deep);
+  margin-bottom: 24px;
+}
+.vship-new-zone-actions { display: flex; gap: 10px; }
+
+/* Zone list */
 .vship-zones { display: flex; flex-direction: column; gap: 24px; }
 
 .vship-zone {
@@ -1835,10 +1884,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 14px 18px;
   background: var(--paper-deep);
   border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
 }
+.vship-zone-title-area { flex: 1; min-width: 0; }
+.vship-zone-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .vship-zone-name {
   font-family: var(--font-sans);
   font-size: 14px;
@@ -1851,6 +1910,52 @@
   color: var(--mute);
   margin-top: 2px;
 }
+
+/* Rename form */
+.vship-rename-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vship-rename-form .vpf-input { max-width: 240px; }
+
+/* Add method dropdown */
+.vship-add-method-wrap {}
+.vship-add-method-select {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  transition: border-color 0.15s;
+}
+.vship-add-method-select:focus { border-color: var(--ink); }
+.vship-add-method-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Zone action buttons (rename / delete) */
+.vship-zone-action-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  color: var(--mute);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.vship-zone-action-btn:hover { background: var(--paper-deep); color: var(--ink); }
+.vship-zone-action-btn--danger:hover { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+.vship-zone-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .vship-empty-methods {
   padding: 24px 20px;
   font-family: var(--font-sans);
@@ -1912,7 +2017,7 @@
   width: 28px;
   height: 28px;
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--paper);
   color: var(--mute);
   cursor: pointer;
@@ -1945,21 +2050,10 @@
   border-top: 1px dashed var(--rule);
 }
 
-.vship-advanced-note {
-  margin-top: 32px;
-  padding: 14px 18px;
-  background: var(--paper-deep);
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--mute);
-  line-height: 1.6;
-}
-.vship-advanced-note strong { color: var(--ink); }
-.vship-advanced-note a { color: var(--ochre); text-decoration: none; }
-.vship-advanced-note a:hover { text-decoration: underline; }
-
 @media (max-width: 600px) {
   .vship-settings { grid-template-columns: 1fr; }
-  .vship-zone-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .vship-zone-header { flex-direction: column; align-items: flex-start; }
+  .vship-zone-controls { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .vship-rename-form { flex-wrap: wrap; }
+  .vship-rename-form .vpf-input { max-width: 100%; flex: 1; }
 }

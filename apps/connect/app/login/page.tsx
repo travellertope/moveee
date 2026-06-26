@@ -44,8 +44,12 @@ function LoginForm() {
         redirect: false,
       });
       if (result?.error) throw new Error("Sign-in failed after passkey verification.");
-      router.push(callbackUrl);
-      router.refresh();
+      if (callbackUrl.startsWith("http")) {
+        window.location.href = callbackUrl;
+      } else {
+        router.push(callbackUrl);
+        router.refresh();
+      }
     } catch (err: any) {
       if (err?.name !== "NotAllowedError") {
         setError(err.message ?? "Passkey sign-in failed. Try password instead.");
@@ -70,6 +74,8 @@ function LoginForm() {
 
     if (result?.error) {
       setError("Invalid username or password. Please try again.");
+    } else if (callbackUrl.startsWith("http")) {
+      window.location.href = callbackUrl;
     } else {
       router.push(callbackUrl);
       router.refresh();

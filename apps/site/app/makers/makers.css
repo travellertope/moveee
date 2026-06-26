@@ -64,6 +64,7 @@
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .maker-card-vetted {
   position: absolute;
@@ -75,6 +76,7 @@
   letter-spacing: 0.1em;
   padding: 4px 8px;
   color: var(--ink);
+  border-radius: var(--radius-full);
 }
 .maker-card-body { padding: 20px 18px 22px; }
 .maker-card-name {
@@ -144,33 +146,36 @@
 .maker-hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 16px;
   min-height: 520px;
   margin-bottom: 80px;
+  padding-bottom: 32px;
 }
 .maker-hero-visual {
   position: relative;
   background: var(--paper-deep);
   overflow: hidden;
+  border-radius: var(--radius-xl);
 }
 .maker-hero-info {
-  padding: 56px 52px;
+  padding: 64px 16px 64px 32px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border: 1px solid var(--rule);
-  border-left: none;
 }
 .maker-vetted-badge {
   display: inline-block;
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--mute);
-  border: 1px solid var(--rule);
-  padding: 5px 10px;
+  color: var(--paper);
+  background: var(--ochre);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
   margin-bottom: 22px;
   width: fit-content;
+  line-height: 1;
 }
 .maker-hero-name {
   font-family: var(--font-serif);
@@ -200,24 +205,36 @@
 /* Stats row */
 .maker-stats {
   display: flex;
-  gap: 28px;
-  padding: 24px 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
+  align-items: stretch;
+  background: var(--paper-deep);
+  border-radius: 6px;
+  padding: 20px 24px;
   margin-bottom: 32px;
+  width: max-content;
+}
+.maker-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.maker-stat + .maker-stat {
+  border-left: 1px solid var(--rule);
+  padding-left: 24px;
+  margin-left: 24px;
 }
 .maker-stat-num {
   font-family: var(--font-serif);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 400;
   color: var(--ink);
   line-height: 1;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 .maker-stat-label {
-  font-family: var(--font-sans);
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--mute);
 }
@@ -227,26 +244,26 @@
   display: inline-block;
   background: var(--ink);
   color: var(--paper);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 13px 28px;
+  padding: 16px 28px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
   transition: background 0.2s;
   width: fit-content;
+  line-height: 1;
 }
 .maker-hero-cta:hover { background: var(--ochre); }
 
 /* Products section */
-.maker-products-section { margin-top: 8px; }
+.maker-products-section { margin-top: 8px; padding-top: 64px; }
 .maker-products-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: 2px;
+  margin-bottom: 32px;
 }
 .maker-products-title {
   font-family: var(--font-serif);
@@ -257,34 +274,49 @@
 }
 .maker-products-title em { font-style: italic; color: var(--ochre); }
 .maker-products-count {
-  font-family: var(--font-sans);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
   color: var(--mute);
 }
 
 .maker-products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2px;
+  gap: 16px;
 }
 .maker-product-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
   background: var(--paper);
-  transition: background 0.2s;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-.maker-product-card:hover { background: var(--paper-deep); }
+.maker-product-card:hover {
+  box-shadow: 0 4px 20px -2px rgba(20,17,13,0.08);
+  transform: translateY(-2px);
+}
 .maker-product-img {
   aspect-ratio: 1 / 1;
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
-.maker-product-body { padding: 12px 14px 16px; }
+.maker-product-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+}
 .maker-product-name {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink);
   margin-bottom: 4px;
   white-space: nowrap;
@@ -292,9 +324,10 @@
   text-overflow: ellipsis;
 }
 .maker-product-price {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ochre);
+  margin-top: 4px;
 }
 
 /* ── Hero actions row ────────────────────────────────────────────────────────*/
@@ -308,33 +341,33 @@
   display: inline-block;
   border: 1px solid var(--ink);
   color: var(--ink);
-  font-family: var(--font-sans);
+  background: transparent;
+  font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 12px 24px;
+  padding: 16px 28px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
+  line-height: 1;
 }
-.maker-hero-cta-outline:hover { background: var(--ink); color: var(--paper); }
+.maker-hero-cta-outline:hover { background: var(--paper-deep); }
 
 /* ── Social links ────────────────────────────────────────────────────────────*/
 .maker-socials {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
-  padding-top: 20px;
-  border-top: 1px solid var(--rule);
 }
 .maker-social-link {
   font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--mute);
+  font-size: 13px;
+  color: var(--ochre);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: text-decoration 0.1s;
 }
-.maker-social-link:hover { color: var(--ochre); }
+.maker-social-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── Editorial coverage ──────────────────────────────────────────────────────*/
 .maker-editorial-section {
@@ -381,6 +414,7 @@
   background: var(--paper-deep);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .maker-editorial-body { padding: 18px 18px 22px; }
 .maker-editorial-cat {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
@@ -138,6 +139,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const weekday      = dateValid.toLocaleDateString("en-GB", { weekday: "long" });
   const dayNum       = dateValid.toLocaleDateString("en-GB", { day: "numeric" });
   const monthShort   = dateValid.toLocaleDateString("en-GB", { month: "short" }).toUpperCase();
+  // The WP Admin "Event Date" field is a datetime-local input, so the time entered when
+  // creating the event lives in eventDate itself — only fall back to openingHours
+  // (a separate, unrelated "gallery hours" field) or "Time TBA" if eventDate has no time.
+  const hasTime      = /T\d{2}:\d{2}/.test(dateRaw) || /\d{1,2}:\d{2}/.test(dateRaw);
+  const timeFormatted = hasTime ? dateValid.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" }) : null;
 
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
@@ -213,7 +219,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
             <div>
               <p className="evt-meta-text-main">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-              <p className="evt-meta-text-sub">{event.openingHours || "Time TBA"}</p>
+              <p className="evt-meta-text-sub">{timeFormatted || event.openingHours || "Time TBA"}</p>
             </div>
           </div>
 
@@ -294,18 +300,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 {showcaseLabel ? <span>{showcaseLabel}</span> : <span>Selected <em>works</em></span>}
                 <small style={{ fontWeight: 400, textTransform: "none" }}>Preview · {event.showcase.length} items</small>
               </div>
-              <div className="evt-works-grid">
-                {event.showcase.map((item: any, i: number) => (
-                  <div key={i} className="evt-work-card">
-                    <div className="evt-work-frame">
-                      {item.imageUrl && <Image src={item.imageUrl} alt={item.title} fill style={{ objectFit: "cover" }} />}
-                    </div>
-                    <span className="evt-work-num">N°0{i + 1}</span>
-                    <div className="evt-work-title">{item.title}</div>
-                    <div className="evt-work-meta">{item.media} · {item.dimensions} · {item.year}</div>
-                  </div>
-                ))}
-              </div>
+              <ShowcaseGallery items={event.showcase} />
             </div>
           )}
 

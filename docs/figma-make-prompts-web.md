@@ -3876,13 +3876,16 @@ The following `<!-- DEV: ... -->` notes MUST appear in the prompt at the
 indicated insertion points:
 
 1. `<!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
-   identical token set. Site B has `--paper-warm` (#f3ece0), a full border-
-   radius scale, `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`,
-   `--rule-dark`, and full dark-mode tokens under `[data-theme="dark"]`. Site A
-   has none of these — its `--rule` is even a different type (`#2a241c` solid
-   color vs Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all.
-   Only `--paper`, `--paper-deep`, `--ink`, `--ink-soft`, `--mute`, `--ochre`,
-   `--ochre-deep`, `--moss`, `--gold` are truly shared. -->` — insert at the top
+   identical token set. Site B has `--paper-warm` (#f3ece0),
+   `--shadow-card/--shadow-modal/--shadow-fab`, `--glow-gold`, `--rule-dark`,
+   and full dark-mode tokens under `[data-theme="dark"]`. Site A has none of
+   these — its `--rule` is even a different type (`#2a241c` solid color vs
+   Site B's `rgba(20,17,13,0.10)`), and it has no dark mode at all. As of the
+   site-wide border-radius rollout (June 2026, see CLAUDE.md "Border-radius
+   convention"), BOTH apps now define the identical `--radius-*` scale — this
+   is no longer a Site-B-only token. Only `--paper`, `--paper-deep`, `--ink`,
+   `--ink-soft`, `--mute`, `--ochre`, `--ochre-deep`, `--moss`, `--gold`, and
+   now `--radius-*` are truly shared. -->` — insert at the top
    of the Color Tokens frame.
 2. `<!-- DEV: There is no shared web `<Button>`/`<Input>`/`<Avatar>` component
    — every button is a plain element styled by one of 16+ independent
@@ -3922,13 +3925,15 @@ both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
 web.themoveee.com). Desktop frame 1440px wide, scrollable.
 
 <!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
-identical token set. Site B has --paper-warm (#f3ece0), a full border-radius
-scale, --shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark,
-and full dark-mode tokens under [data-theme="dark"]. Site A has none of these
-— its --rule is even a different type (#2a241c solid color vs Site B's
-rgba(20,17,13,0.10)), and it has no dark mode at all. Only --paper,
---paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold
-are truly shared. -->
+identical token set. Site B has --paper-warm (#f3ece0),
+--shadow-card/--shadow-modal/--shadow-fab, --glow-gold, --rule-dark, and full
+dark-mode tokens under [data-theme="dark"]. Site A has none of these — its
+--rule is even a different type (#2a241c solid color vs Site B's
+rgba(20,17,13,0.10)), and it has no dark mode at all. Both apps now share an
+identical --radius-* scale (added site-wide June 2026, see CLAUDE.md
+"Border-radius convention") — radius is no longer Site-B-only. Only --paper,
+--paper-deep, --ink, --ink-soft, --mute, --ochre, --ochre-deep, --moss, --gold,
+and --radius-* are truly shared. -->
 
 ════════════════════════════════════════════
 FRAME 1 — COLOR TOKENS
@@ -3950,7 +3955,7 @@ DARK MODE swatches (Site B only, [data-theme="dark"], second labelled row):
   --ink #f3ece0 · --ink-soft #d4c9b8 · --mute #9e9288 · --ochre #d4603a ·
   --ochre-deep #a83f20 · --gold #c9963f.
 
-RADIUS SCALE (Site B only — Site A has no radius scale), 6 rounded rectangles
+RADIUS SCALE (shared by both apps since June 2026), 6 rounded rectangles
   labelled: sm 2px · md 4px · lg 6px · xl 12px · 2xl 20px · full 9999px (pill).
 
 SHADOWS (Site B only, 3 sample cards):
@@ -4512,5 +4517,652 @@ CONSTRAINTS:
 ```
 
 Output 8 frames, each containing its labeled sub-states as described above.
+
+---
+
+## 19. DARK MODE & LOADING STATES — WEB (Site B, web.themoveee.com)
+
+### Brand architecture
+Dark mode is Site B-only — `apps/site/app/globals.css` (Site A) has no `[data-theme="dark"]`
+block at all. Site A does have its own `app/loading.tsx`, but no dark-mode tokens to pair with
+it, so it's out of scope for the dark-mode half of this section.
+
+### Why this section exists
+Mobile §14A documents a fully bespoke, brighter-than-light-mode dark palette applied uniformly
+across 8 screens with explicit per-badge dark adjustments. Web's real dark mode is a genuine,
+working CSS-variable system (`[data-theme="dark"]` in `apps/connect/app/globals.css`, toggled via
+`ThemeContext.tsx`, persisted to `localStorage["moveee-theme"]`) — but it is **not** uniformly
+applied: `FeedCard.tsx`, the single highest-traffic component on the site, hardcodes hex colors
+for nearly all of its badge/card styling and simply does not adapt when the user switches themes.
+Mobile §14B documents 9 polished skeleton-loading frames with a named shimmer animation; web has
+**no shared skeleton component at all** — most routes show a plain "Loading…" text fallback via
+Next.js's `loading.tsx` convention, and only two routes (`/pulse`, `/community`) have hand-rolled,
+copy-pasted shimmer skeletons. This section documents both gaps as real, code-grounded findings
+rather than papering over them with an idealized design.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Feed loading fallback: `Loading feed…`
+- (No other user-facing loading copy exists beyond this single string — the shimmer skeletons on
+  `/pulse` and `/community` show no text at all, just animated bars.)
+
+<!-- DEV: Use the REAL dark-mode token table below — do not invent brighter mobile-style values.
+Light → Dark: --paper #ffffff → #242018; --paper-warm #f3ece0 → #1a1612; --paper-deep #f2f2f2 →
+#2d2820; --ink #14110d → #f3ece0; --ink-soft #3a342b → #d4c9b8; --mute #7a6f5c → #9e9288; --rule
+rgba(20,17,13,.10) → rgba(61,53,48,.6); --rule-dark rgba(20,17,13,.15) → #3d3530; --ochre
+#c5491f → #d4603a; --ochre-deep #8a2d10 → #a83f20; --gold #b38238 → #c9963f; --moss #3d4a2a
+(unchanged); --shadow-card 0 1px 3px rgba(20,17,13,.08) → 0 1px 3px rgba(0,0,0,.4); --shadow-modal
+0 20px 60px rgba(20,17,13,.18) → 0 20px 60px rgba(0,0,0,.55); --shadow-fab 0 4px 12px
+rgba(197,73,31,.35) → 0 4px 12px rgba(212,96,58,.4); --glow-gold ring color rgba(179,130,56,.55)
+→ rgba(201,150,63,.45). Radius tokens are unaffected by theme. -->
+
+<!-- DEV: The toggle is a plain binary light/dark switch — there is no in-app "system" option in
+the UI (system preference is only consulted ONCE, via an inline FOUC-prevention boot script in
+layout.tsx's <head>, on a visitor's very first visit with no stored localStorage value; every
+subsequent visit uses whatever the explicit toggle last set). The toggle button itself lives in
+Header.tsx — a plain <button> swapping sun/moon SVG icons, no separate ThemeToggle.tsx
+component, no cookie, localStorage key "moveee-theme". -->
+
+<!-- DEV: FeedCard.tsx does NOT adapt to dark mode — its TYPE_BADGE color map and card background
+are hardcoded hex (e.g. card bg "#fff", border "#e8e2d8", pulse badge bg "#fef3e2"/color
+"#b38238", happening badge bg "#eeedfe"/color "#3c3489", Pro glow boxShadow literal
+"#b38238") rather than var(--paper)/var(--ochre) etc. Any dark-mode mockup of a feed card must
+show this AS A BUG — i.e. draw the feed card still showing light-mode colors even while the rest
+of the page (header, background) is in dark mode — not as a polished, fully-adapted dark card
+the way mobile's CARD A–D look. Header.tsx and member/page.tsx, by contrast, do correctly use
+var(--ink)/var(--mute) for their own inline styles, so the header chrome and surrounding
+dashboard text adapt correctly even while feed cards don't. -->
+
+<!-- DEV: There is no shared Skeleton component anywhere in apps/connect, apps/site, or
+packages/shared (mobile has one, web doesn't). Most routes' loading.tsx is plain text, e.g.
+feed/loading.tsx renders only `<div className="mco-feed-loading">Loading feed…</div>` inside a
+`<section>` — no shimmer, no shaped placeholders at all. Only `/pulse` and `/community` have
+real shimmer skeletons, and even those are copy-pasted (each route locally redefines an
+identical `shimmer` style object and `@keyframes shimmer` rather than sharing one), use
+hardcoded hex (#ffffff, #e8e2d8 — not dark-mode aware either), and differ in content: pulse's
+skeleton is a 3-column grid (190px sidebar | 1fr feed | 220px sidebar) of fake bars + 8 fake post
+rows with occasional 90×90px thumbnail blocks; community's skeleton is just one fake post (avatar
+circle + header/body bars) plus 3 fake comment rows. Do not invent skeleton coverage for routes
+that don't have it (dashboard, events, shop, notifications, public profile, games — all either
+have no loading.tsx or a plain-text one not covered by this report; draw only what's confirmed). -->
+
+<!-- DEV: There is no root-level or full-app splash/initial-loading screen on Site B at all —
+apps/connect/app/loading.tsx does not exist, and apps/connect/app/layout.tsx has no Suspense
+fallback or splash UI beyond the dark-mode FOUC-prevention script (which only sets a data
+attribute, renders nothing visible). Do not draw a Moveee-branded splash/spinner screen for Site
+B — that pattern is mobile-only (Expo's native splash config). Site A does have its own root
+app/loading.tsx, but it carries no dark-mode pairing and is out of scope here. -->
+
+### PROMPT 19 — Dark Mode & Loading States (Desktop 1440px)
+
+```
+You are a senior web UX/UI designer documenting the REAL dark-mode and loading-state behavior of
+Moveee Connect (web.themoveee.com) — including its real gaps, not an idealized fully-polished
+version. Canvas: 1440px desktop frames.
+
+═══════════════════════════════════════
+DARK MODE TOKEN TABLE (use exact values)
+═══════════════════════════════════════
+--paper: #ffffff → #242018      --paper-warm: #f3ece0 → #1a1612
+--paper-deep: #f2f2f2 → #2d2820 --ink: #14110d → #f3ece0
+--ink-soft: #3a342b → #d4c9b8   --mute: #7a6f5c → #9e9288
+--rule: rgba(20,17,13,.10) → rgba(61,53,48,.6)
+--rule-dark: rgba(20,17,13,.15) → #3d3530
+--ochre: #c5491f → #d4603a      --ochre-deep: #8a2d10 → #a83f20
+--gold: #b38238 → #c9963f       --moss: #3d4a2a (unchanged)
+--shadow-card: 0 1px 3px rgba(20,17,13,.08) → 0 1px 3px rgba(0,0,0,.4)
+--shadow-modal: 0 20px 60px rgba(20,17,13,.18) → 0 20px 60px rgba(0,0,0,.55)
+--glow-gold ring: rgba(179,130,56,.55) → rgba(201,150,63,.45)
+
+FRAME 1 — THEME TOGGLE (3 sub-states): the Header.tsx sun/moon icon button in its light-mode
+state (sun icon, color var(--ink) resolving to #14110d), dark-mode state (moon icon, color
+var(--ink) resolving to #f3ece0), and an annotation box explaining the binary-only toggle (no
+in-app "system" option) plus the once-only FOUC boot-script behavior described above.
+
+FRAME 2 — CONNECT FEED, DARK MODE (the bug frame): full feed page in dark mode — header bar
+correctly dark (bg var(--paper-deep) → #2d2820, text var(--ink) → #f3ece0), page background
+correctly dark (var(--paper-warm) → #1a1612), sidebar nudge cards correctly dark — BUT the
+community/editorial feed cards themselves remain rendered in their LIGHT-mode hardcoded colors
+(white #fff card bg, light badge colors like #fef3e2/#eeedfe) sitting awkwardly inside the dark
+page. Add a callout arrow + label: "FeedCard.tsx hardcodes hex colors — does not adapt to dark
+mode (real bug, not a design choice)."
+
+FRAME 3 — MEMBER DASHBOARD / HEADER, DARK MODE (the correct frame, for contrast): show
+Header.tsx and member/page.tsx rendering correctly in dark mode — these two use var(--ink)/
+var(--mute) properly. Label: "Correctly dark-mode-aware, unlike Frame 2."
+
+FRAME 4 — LOADING STATES (4 sub-frames, real coverage only):
+(a) Feed loading (`/feed`) — plain text only: a bare line of text "Loading feed…" centered in an
+otherwise empty content area, no shapes, no shimmer.
+(b) Pulse loading (`/pulse`) — real shimmer skeleton: 3-column layout (190px sidebar bars | 1fr
+column of 8 fake post-row bars, some with 90×90px thumbnail blocks | 220px sidebar bars), all
+bars using the shimmer gradient `linear-gradient(90deg, #f0ece6 25%, #e8e2da 50%, #f0ece6 75%)`
+animating via `background-position` sweep, 1.4s ease-in-out infinite loop, radius 2px.
+(c) Community loading (`/community`) — same shimmer technique, much sparser: one fake post (avatar
+circle + 2 header bars + 3 body bars) plus 3 fake comment rows below.
+(d) Annotation panel: "No shared Skeleton component exists — each route copy-pastes its own
+shimmer style object. Hardcoded hex, not dark-mode aware. Most other routes (dashboard, events,
+shop, notifications, public profile, games) have either no loading.tsx or a plain-text-only one —
+do not assume skeleton coverage beyond pulse and community."
+
+FRAME 5 — NO SPLASH SCREEN (negative-space frame): show a blank/empty browser viewport with a
+dashed-border callout box reading "apps/connect has no root loading.tsx and no splash screen —
+this pattern does not exist on Site B. (Site A has its own app/loading.tsx, out of scope here.)"
+
+CONSTRAINTS:
+- Use the real, less-vivid token values above — do not brighten them to match mobile's
+  intentionally-bolder dark palette.
+- Frame 2 must show the FeedCard dark-mode bug explicitly, as a flaw to document, not fix.
+- Do not draw skeleton coverage for any route beyond /pulse and /feed and /community.
+- Do not draw a branded splash/spinner screen for Site B.
+```
+
+Output 5 frames: Frame 1 (Theme Toggle), Frame 2 (Feed dark mode — adaptation bug), Frame 3
+(Dashboard/Header dark mode — correct), Frame 4 (Loading States, 4 sub-frames), Frame 5 (No
+splash screen — negative-space callout).
+
+---
+
+## 20. DIRECTORY ENTRY DETAIL PAGE — WEB (Site B, web.themoveee.com/directory/[slug])
+
+### Brand architecture
+Site B (web.themoveee.com). Real route: `apps/connect/app/directory/[slug]/page.tsx`, styled by
+`apps/connect/app/directory.css` (shared with the `/directory` listing page and `/directory/submit`).
+
+### Why this section exists
+Mobile §11 has **PROMPT 11B — Directory Entry Detail Page (All 11 Entry Types)**: a single-screen
+app-card shell (nav header → 220px hero with type badge → entry header card → body card → infobox
+card → horizontal "Works" rail → horizontal community-reviews rail → horizontal upcoming-events
+rail → horizontal related-entries chips → improve CTA card) reused across all 11 entry types
+(person/place/food/book/film/genre/movement/artwork/concept/fashion/tv-series), each just swapping
+its per-type infobox fields and badge color. Web's real equivalent at `/directory/[slug]` is an
+entirely different page architecture — **not** a stack of cards, but a sticky three-column
+Wikipedia-style layout (220px related-entries sidebar | flexible-width article column | 260px
+sticky infobox sidebar) with a serif editorial title treatment, no hero image bleed (the photo
+lives inside the infobox card instead), and per-type infobox field tables defined directly in the
+page component (`INFOBOX_DEFS`) rather than as a generic key–value list. This is distinct from
+**web §15**'s `DirectoryDetailModal.tsx`, which is the off-canvas drawer shown when a directory
+card is clicked *from inside a feed* — that drawer is a lightweight preview; this page is the full
+standalone destination it links to ("View full entry →").
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+- Back link: **"← Discover"**
+- Sidebar heading pattern: **"Related {TypeLabel}s"** (e.g. "Related Persons", "Related Places")
+- Sidebar empty state: **"No related entries yet."**
+- Sidebar footer link: **"See all {TypeLabel}s →"**
+- Improve panel eyebrow: **"★ Community Wiki"**
+- Improve panel body: **"Know more? Help improve this entry."**
+- Improve panel CTA: **"Improve →"**
+- No-content fallback (gated-off or empty body): **"Full article coming soon. Know this subject? Help us build it."**
+- Date line: **"Added to directory {D Month YYYY}"**
+- Topics label: **"Topics"**
+- Selected works heading: **"Selected Works"**
+- Community section heading: **"Community Reviews & Takes"**
+- Community post "read more": **"Read full post →"**
+- Upcoming events section heading: **"Upcoming Events"**
+- Happening pill on linked events: **"Happening"**
+- Infobox name-plate, "Type", "Category", "Added" rows: as rendered, verbatim labels
+- External link infobox row labels: **"Website"**, **"Instagram"**, **"X / Twitter"**
+
+<!-- DEV 1: Three-column CSS grid (`.dir-wiki-layout`, `grid-template-columns: 220px 1fr 260px`,
+gap 36px, max-width 1360px). Both side columns are `position: sticky; top: 80px`. Below 860px the
+grid collapses to a single column and CSS `order` re-stacks it as infobox → article → related
+(`.dir-wiki-right { order: -1 }`, `.dir-wiki-main { order: 0 }`, `.dir-wiki-left { order: 1 }`) —
+i.e. on mobile the infobox card appears FIRST, above the title, not last. -->
+<!-- DEV 2: Color tokens are page-local CSS vars, NOT the shared `--ink`/`--paper`/etc. used
+elsewhere in apps/connect: `--dir-ink:#14110d`, `--dir-paper:#ffffff`, `--dir-ochre:#b38238`,
+`--dir-muted:rgba(20,17,13,.55)`, `--dir-border:rgba(20,17,13,.12)`, `--dir-dark-bg:#14110d`,
+`--dir-dark-ink:#f5f0e8`. Sidebar/infobox card fill is a literal `#faf7f2` (not a var), and the
+infobox name-plate strip is a literal `#f3ede0`. -->
+<!-- DEV 3: There is NO full-bleed hero image and no per-type badge color table on this page —
+that treatment exists only in the off-canvas drawer (web §15) and mobile's PROMPT 11B, not here.
+The only image is inside the infobox card, 4:3 aspect ratio, at the very top of the sticky right
+sidebar, above a centered serif name-plate row repeating the title. -->
+<!-- DEV 4: Title is NOT a fixed size — `clamp(28px, 5vw, 48px)` Fraunces weight 300 (`.dir-single-title`)
+for the real single-column legacy class, but the wiki layout's actual title class
+(`.dir-wiki-title`) clamps `28px–46px` at weight 300 — both are noticeably lighter-weight than
+mobile's bold 22px serif title. Eyebrow type label above the title (`.dir-single-type`) is
+JetBrains Mono 9px uppercase ochre — there is no colored pill/badge here, just plain mono text. -->
+<!-- DEV 5: Per-type infobox fields are a hardcoded `INFOBOX_DEFS` map keyed by the 11 type slugs
+— field sets differ meaningfully from mobile's per-type INFOBOX in PROMPT 11B (e.g. web's "person"
+fields are Born/Died/Nationality/Occupation/Known For/Origin/Active Years/Labels-Affiliations/
+Education/Notable Awards — there is no "Also known as" row on web). Only fields with a non-empty
+value in the `infobox` JSON actually render a row — never pad with empty/placeholder rows. A
+divider (`.dir-wiki-infobox-divider`, 2px border-top) separates the fixed Type/Category/Added rows
+from the per-type fields, and a second one separates per-type fields from the external-links block
+(Website/Instagram/X) — both dividers are conditional, only rendered when there's content on both
+sides. -->
+<!-- DEV 6: Content gating reuses the existing `ContentGate` component (`getAccessLevel`/
+`canViewContent` from `lib/access.ts`) — if the entry's access level is member-only or patron-only
+and the viewer doesn't qualify, the ENTIRE body — not just a blurred snippet — is replaced by
+ContentGate's own upsell UI; everything else on the page (infobox, related sidebar, community
+section, events) still renders normally regardless of gating. -->
+<!-- DEV 7: The "Selected Works" grid (`.dir-wiki-works-grid`, `repeat(auto-fill, minmax(160px,1fr))`,
+4:3 image cards) only renders if `entry.selectedWorks` is non-empty — there is no horizontal-scroll
+rail like mobile's "Works" row; it's a wrapping grid. It is also skipped entirely for types with
+no portfolio content, same restriction as mobile (Concept/Genre/Movement get no Works section). -->
+<!-- DEV 8: "Community Reviews & Takes" is REAL community data, not a mock rail — it's populated by
+`getDirectoryPosts(entry.databaseId)`, the same linked-community-post system used by `SubmitPost.tsx`'s
+DirectorySearch integration (Hidden Gem / Food Review / Book Review templates link a post to a
+directory entry via `linked_directory_id`). It only renders when `communitySummary.total_posts > 0`.
+Each card shows avatar, author name, a "Pro" badge only if `author.tier === "patron"`, relative date,
+an optional per-post star rating (only for templates that have one, e.g. Food/Book review), full post
+content as plain text (NOT truncated to 3 lines like mobile), and reaction emoji counts at the
+bottom — there is no "Write a review" CTA button on web (that's mobile-only; web reviews come from
+the regular community composer flow, not a dedicated review form on this page). -->
+<!-- DEV 9: "Upcoming Events" only shows events with `organiser_directory_id` pointing at this entry
+(`getDirectoryEvents(entry.databaseId)`) — a flat vertical list of cards (not mobile's horizontal
+date-block rows), each with a 72×72px thumbnail, a literal "Happening" pill (bg #eeedfe, text
+#3c3489 — these two hex values are inline JSX styles, not CSS classes, an inconsistency worth
+preserving as-is), formatted date range, title, and venue/city/admission line. There is no event
+type beyond "Happening" rendered here — this only surfaces editorial/community events that resolved
+an organiser link, not a generic "browse more events" CTA. -->
+<!-- DEV 10: Related entries (left sidebar) are NOT a simple taxonomy query — they're computed by
+fetching up to 200 directory entries and scoring each: +2 for matching type, +1 per shared interest
+tag, sorted descending, top 5 kept. Each related-entry row is a 36×36px thumbnail + title, no type
+emoji/icon at all (unlike mobile's emoji-prefixed related chips). The sidebar's "See all →" link
+points to `/discover?type={slug}`, NOT a `/directory?type=` listing — Discover (per CLAUDE.md) is
+the dedicated paginated browse surface, and this page deliberately routes there instead of the
+older `/directory` grid. -->
+<!-- DEV 11: The "Improve" CTA panel is visually distinct from every other card on the page — it
+uses the literal dark `--dir-dark-bg`/`--dir-dark-ink` pair (near-black bg, warm-white text),
+making it the one inverted-color block in an otherwise all-light page, and its body copy is
+rendered at low opacity (`rgba(245,240,232,.65)`). It links to `/directory/submit?improve={slug}`,
+the SAME submission form used to create new entries, just with a query param flag — there is no
+separate "edit" form. -->
+
+### PROMPT 20 — Directory Entry Detail Page (Desktop 1440px + Mobile Companion 390px)
+
+```
+You are a senior web UX/UI designer documenting the REAL `/directory/[slug]` page on Moveee
+Connect (web.themoveee.com) — a sticky three-column Wikipedia-style layout, NOT a card-stack
+app shell. Ground every measurement and color in the spec below; do not invent a hero image or
+per-type badge colors, neither exists on this page.
+
+═══════════════════════════════════
+COLOR TOKENS (page-local, exact hex)
+═══════════════════════════════════
+--dir-ink: #14110d          --dir-paper: #ffffff
+--dir-ochre: #b38238        --dir-muted: rgba(20,17,13,.55)
+--dir-border: rgba(20,17,13,.12)
+--dir-dark-bg: #14110d      --dir-dark-ink: #f5f0e8
+Sidebar/infobox card fill (literal, not a var): #faf7f2
+Infobox name-plate strip fill (literal): #f3ede0
+Fonts: Fraunces (serif, weight 300 for titles), DM Sans (body — implicit, inherited from
+app-wide sans stack), JetBrains Mono (all-caps eyebrow labels, 9–10px, letter-spacing .12–.16em).
+
+FRAME 1 — DESKTOP LAYOUT SHELL (1440px, entry type: "Person" — Fela Kuti example):
+Topbar (max-width 1360px, 28px top / 32px side padding): "← Discover" link, JetBrains Mono-ish
+plain text link, var(--dir-ink).
+Below it, a 3-column grid: 220px | 1fr | 260px, 36px gap, sticky side columns (top: 80px).
+
+LEFT COLUMN — Related sidebar card (bg #faf7f2, 1px border var(--dir-border), 18px/16px padding):
+  Heading "Related Persons" — JetBrains Mono 9px uppercase, letter-spacing .16em, color
+  var(--dir-ochre), 14px bottom margin, 10px bottom padding, border-bottom var(--dir-border).
+  5 related rows, each: 36×36px thumbnail (radius 2px) + title (12px, var(--dir-ink)), divided by
+  1px var(--dir-border) borders between rows, no border after the last.
+  Footer (12px top padding, border-top var(--dir-border)): "See all Persons →" JetBrains Mono 9px
+  uppercase ochre link.
+  Below the card, a SEPARATE inverted dark panel (bg var(--dir-dark-bg) #14110d, 16px padding):
+  eyebrow "★ Community Wiki" (JetBrains Mono 9px ochre), body "Know more? Help improve this
+  entry." (12px, rgba(245,240,232,.65), 12px bottom margin), CTA "Improve →" button.
+
+CENTER COLUMN — Article:
+  Eyebrow "PERSON" — JetBrains Mono 9px uppercase letter-spacing .16em ochre, 14px bottom margin.
+  Title "Fela Kuti" — Fraunces, clamp(28px,5vw,46px), weight 300, var(--dir-ink), line-height 1.05.
+  Lead paragraph (the entry excerpt, plain text, no markup) — 16-17px, line-height 1.7, var(--dir-muted).
+  Date line "Added to directory 12 March 2025" — JetBrains Mono 10px, rgba(20,17,13,.3) or .35.
+  1px divider, 24px vertical margin.
+  Body prose — 16px, line-height 1.75, var(--dir-ink), rendered HTML (h2 sub-headers at Fraunces
+  22px weight 400, paragraphs 20px bottom margin, lists with 20px left padding).
+  Topics block (28px vertical padding, border-top var(--dir-border)): "Topics" eyebrow label
+  (JetBrains Mono 9px uppercase var(--dir-muted)) + wrapping flex row of ghost-border interest tag
+  chips, 8px gap.
+  "Selected Works" section: Fraunces 20px weight 400 heading with bottom border, 40px top margin —
+  then a WRAPPING grid (repeat(auto-fill, minmax(160px,1fr)), 16px gap) of 4:3 image cards with a
+  12px title strip below each (not a horizontal rail).
+  "Community Reviews & Takes" section: heading + an inline star-rating summary on the same row
+  (gold ★★★★½ + bold rating number + muted "(N reviews)"), then a vertical stack of real community
+  post cards (avatar 32px, author name bold, optional "Pro" pill, relative date, optional per-post
+  star rating right-aligned, full untruncated post text, reaction-emoji-count row + "Read full
+  post →" link at the bottom of each card).
+  "Upcoming Events" section: heading, then a vertical stack of event rows (72×72px thumbnail, a
+  "Happening" pill bg #eeedfe text #3c3489, formatted date range, title, venue/city/admission line)
+  — each row links out to the event's own page.
+
+RIGHT COLUMN — Sticky infobox card (bg #faf7f2, 1px border var(--dir-border), overflow hidden):
+  4:3 featured image at the very top, no padding.
+  Name-plate strip below it (bg #f3ede0, centered, 12px/10px padding, border-bottom): entry title
+  repeated, Fraunces 15px weight 500.
+  Key–value rows (90px label column + flexible value column, 8px padding, border-bottom between
+  rows, baseline-aligned): "Type" → "Person", "Category" → comma-joined interest names, "Added" →
+  same date as the article. A 2px divider, then the per-type fields (for Person: Born, Died,
+  Nationality, Occupation, Known For, Origin, Active Years, Labels/Affiliations, Education,
+  Notable Awards — only populated ones render). A second 2px divider, then external links
+  (Website/Instagram/X — ochre link text, the @ links open to instagram.com/x.com).
+  All labels: JetBrains Mono 9px uppercase letter-spacing .12em var(--dir-muted). All values:
+  12-13px var(--dir-ink), or var(--dir-ochre) for link values.
+
+FRAME 2 — MOBILE COMPANION (390px width): single-column stack, CSS order-reversed from desktop —
+infobox card FIRST (image now 16:7 aspect ratio instead of 4:3), then the article column, then the
+related-entries sidebar card + dark Improve panel LAST at the very bottom of the page. Side columns
+lose their sticky positioning entirely on this breakpoint (`position: static`). Annotate this
+reordering explicitly — it's a deliberate `order` swap in CSS, not a simplification/omission.
+
+FRAME 3 — CONTENT-GATED STATE (desktop, entry type: "Book", access level patron-only, logged-in
+Citizen viewer): identical shell to Frame 1, but where the body prose would be, render the real
+ContentGate upsell block instead (a centered card describing the Pro requirement with an upgrade
+CTA) — everything else (infobox, related sidebar, community/events sections) renders unaffected.
+Annotate: "ContentGate replaces ONLY the body — not a blur overlay, not a full-page lock."
+
+FRAME 4 — EMPTY-CONTENT STATE (desktop, entry type: "Movement", no body content, no related
+entries, no community posts, no events): show the no-content italic fallback line "Full article
+coming soon. Know this subject? Help us build it." in place of the body, the sidebar showing
+"No related entries yet." in place of the related list, and the Selected Works / Community /
+Upcoming Events sections entirely absent (not shown as empty states — those sections render
+nothing at all when there's no data, per the real conditional logic).
+
+CONSTRAINTS:
+- No hero image bleed and no colored per-type badge pill anywhere on this page — that treatment
+  belongs only to the off-canvas drawer (a separate, already-documented component) and to mobile.
+- The eyebrow type label is plain mono text in ochre, not a pill/badge.
+- Selected Works is a wrapping grid, not a horizontal-scroll rail.
+- Community Reviews shows full, untruncated post text — do not truncate to 3 lines.
+- Upcoming Events is a vertical list of cards, not horizontal date-block rows.
+- Mobile reorders sections (infobox → article → related) — do not simply shrink the desktop
+  layout proportionally.
+```
+
+Output 4 frames: Frame 1 (Desktop layout shell, Person example), Frame 2 (Mobile companion,
+reordered stack), Frame 3 (Content-gated state), Frame 4 (Empty-content state).
+
+---
+
+## 21. MAKER/VENDOR STOREFRONT PAGE — WEB (Site A, themoveee.com/makers/[slug])
+
+### Brand architecture
+
+This is a **Moveee Magazine** (Site A) page — part of the Shop, not the community side. The
+brand is always "Moveee Magazine" in any header/kicker copy on this page; never "Connect" or
+bare "Moveee" (per the canonical naming table). The vetted-maker badge and "Moveee rating"
+metric should read as Moveee Magazine's own editorial endorsement, not a generic marketplace
+review score.
+
+### Why this section exists
+
+`apps/site/app/makers/[slug]/page.tsx` already exists and is already structured like a
+self-contained "mini website" for the maker — full-bleed hero banner, branded info block,
+stats bar, CTA row, social links, then a complete product catalogue underneath. Mobile's
+equivalent (PROMPT 16E, "Maker / Brand Profile Page", `docs/figma-make-prompts.md` lines
+4237–4294) covers the same idea for `MakerProfileScreen.tsx`. This section documents the real
+web layout so it can be rebuilt/iterated on in Figma Make, and flags — rather than silently
+fixes or invents around — several real backend gaps uncovered while grounding this prompt in
+the actual code:
+
+<!-- DEV: `fetchMaker()`/`fetchVendorProducts()` in page.tsx call `GET {CMS}/wp-json/moveee/v1/vendors/{slug}`
+and `.../vendors/{slug}/products` — this REST namespace (`moveee/v1`) is NOT registered anywhere
+in culture-community. Today this page always falls through to `notFound()` in production. The
+prompt below documents the INTENDED rendered state (as if the data existed) — building the
+actual `moveee/v1` vendor endpoints, backed by WCFM vendor accounts (`app/vendor/profile/page.tsx`)
+and/or `_maker_*` product postmeta, is a separate, real backend task and is out of scope for this
+visual prompt. -->
+<!-- DEV: `fetchEditorialCoverage()` is defined in page.tsx but its result is never rendered in the
+JSX — dead code. If "Editorial coverage" / "As seen in" is wanted on this page (mobile has no
+equivalent section either), it needs new JSX, not just data wiring. Not included as a frame below
+since there's no real design for it yet. -->
+<!-- DEV: there are three disconnected data sources for "what is a maker": WCFM vendor accounts
+(`app/vendor/profile/page.tsx`, store name/bio/banner/avatar), per-product `_maker_name`/`_maker_city`
+postmeta (read by the mobile shop endpoints), and whatever shape `moveee/v1/vendors/{slug}` is
+eventually built to return. There is no unifying taxonomy/CPT today. This prompt assumes the
+eventual endpoint normalizes all three into the field set the page already expects
+(storeName, bio, city, country, avatarUrl, bannerUrl, instagram, twitter, website, rating,
+yearsActive, directorySlug) — do not treat that normalization as already solved. -->
+<!-- DEV: `app/vendor/profile/page.tsx` (the WCFM-backed vendor dashboard) has no logo/banner upload
+UI today — a maker has no way to actually set `bannerUrl`/`avatarUrl` from the frontend yet. Frame 1
+below should still show a populated banner (design intent), but flag that the upload control is a
+prerequisite, not yet built. -->
+<!-- DEV: mobile's `MakerProfileScreen.tsx` has the identical problem on its own platform — it calls
+`${MOBILE_API}/shop/maker/${makerId}`, which also doesn't exist, and silently falls back to
+hardcoded placeholder data with no error state. Both platforms need the same real backend work;
+this is not a web-only gap. -->
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Vetted badge: **"★ Vetted Maker"**
+- Stat labels: **"Maker since"** / **"Product"** or **"Products"** / **"Moveee rating"**
+- Rating fallback (no reviews yet): **"★ New"**
+- Primary CTA: **"Shop all products →"**
+- Secondary CTA: **"View profile"**
+- Social links: **"Website ↗"** / **"Instagram ↗"** / **"X / Twitter ↗"**
+- Products header: **"Work by *{Maker Name}*"** (maker name in italic) + **"{N} piece(s)"** count
+- Empty products state: **"No products listed yet. Check back soon."**
+- Breadcrumb: **"Shop → Makers → {Maker Name}"**
+
+### DEV ANNOTATION REQUIREMENT
+
+Every frame below must carry inline `<!-- DEV: ... -->` notes wherever the design assumes data
+that the current backend cannot actually supply (see the four annotations above) — do not let the
+visual polish of the mockup imply the feature is wired end-to-end.
+
+### PROMPT 21 — Maker/Vendor Storefront (Desktop 1440px + Mobile 390px)
+
+```
+Real grounding: apps/site/app/makers/[slug]/page.tsx (222 lines) + apps/site/app/makers/makers.css
+(lines 128–347). Brand tokens (real, from apps/site/app/globals.css — NOT the CLAUDE.md mobile
+values): --ink:#14110d, --paper:#ffffff, --ochre:#c5491f, --rule, --mute. Fonts: var(--font-serif)
+"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono". Per the site-wide
+border-radius rollout (June 2026, see CLAUDE.md "Border-radius convention"), this page's previous
+flush-rectangle look is retired — apply the shared --radius-* scale (sm 2px / md 4px / lg 6px /
+xl 12px / 2xl 20px / full 9999px, identical on both web apps and mirroring mobile's radius scale)
+throughout: --radius-xl on the hero banner/visual, --radius-full on pill badges, --radius-lg on
+CTA buttons and product cards.
+
+FRAME 1 — DESKTOP STOREFRONT (1440px), populated/ideal state, maker "Bisi Ceramics":
+
+1. Breadcrumb (full-width, top): "Shop" / "→" / "Makers" / "→" / "Bisi Ceramics" — JetBrains Mono
+   11px, var(--mute), var(--ink) for the current page, "→" separators in var(--mute).
+
+2. Hero — `grid-template-columns: 1fr 1fr`, min-height 520px, 16px gap (gap added so each half
+   reads as its own rounded panel rather than a seamless split), divided visually by the gap
+   itself rather than a hard rule line:
+   - LEFT half: full-bleed banner/studio image (object-fit: cover, border-radius: var(--radius-xl)
+     on all 4 corners) — <!-- DEV: bannerUrl, no upload UI exists yet --> — falls back to a
+     placeholder block in var(--paper-deep), same var(--radius-xl) corners, with a single giant
+     initial letter centered (Fraunces, ~120px, var(--mute)) when no image exists.
+   - RIGHT half (vertically centered, ~64px padding): "★ Vetted Maker" badge — pill,
+     border-radius: var(--radius-full), var(--ochre) background, var(--paper) text, JetBrains Mono
+     10px uppercase letter-spacing .12em. Below it: maker name "Bisi Ceramics" — Fraunces serif,
+     ~40px, var(--ink), weight 500. Below that: location "Lagos, Nigeria" — DM Sans 14px,
+     var(--mute). Below that: bio paragraph (2–3 lines) — DM Sans 15px, var(--ink), line-height
+     1.6, max-width ~440px.
+   - Stats row (3 columns inside a single rounded panel, border-radius: var(--radius-lg),
+     var(--paper-deep) background, hairline var(--rule) vertical dividers between columns): each
+     column = big number (Fraunces, 28px, var(--ink)) over a small label (JetBrains Mono 9px
+     uppercase letter-spacing .12em, var(--mute)) — "12" / "Maker since" (only if yearsActive
+     present), "24" / "Products", "★ 4.9" / "Moveee rating" (or "★ New" if no rating yet).
+   - CTA row: "Shop all products →" — solid var(--ink) background, var(--paper) text,
+     border-radius: var(--radius-lg), JetBrains Mono 11px uppercase, padding 16px 28px, hover →
+     var(--ochre) background. Beside it (only if `directorySlug` present): "View profile" —
+     outline button, same var(--radius-lg) corners, 1px var(--ink) border, transparent background,
+     same type treatment, links to `/directory/{directorySlug}`.
+   - Social row (only rendered if any of website/instagram/twitter present): "Website ↗" /
+     "Instagram ↗" / "X / Twitter ↗" — DM Sans 13px, var(--ochre) link color, each opens in a new
+     tab, separated by ~24px gaps, no underline by default, underline on hover.
+
+3. Products section (full-width, below hero, ~64px top padding):
+   - Header row: "Work by *Bisi Ceramics*" (maker name in italic) — Fraunces 28px — on the left;
+     "24 pieces" count — JetBrains Mono 11px uppercase, var(--mute) — on the right, baseline-aligned.
+   - 4-column grid (`repeat(4, 1fr)`, 16px gap, each card border-radius: var(--radius-lg), 1px
+     var(--rule) border, overflow hidden so the product image respects the rounded corners): each
+     card = product image (aspect ~1:1, object-fit cover, rounded top corners only via the card's
+     own overflow:hidden) over a body block (10px padding) with product name (DM Sans 14px,
+     var(--ink)) and price (DM Sans 13px, var(--ochre), rendered from raw HTML via the existing
+     `sanitizeHtml()` — keep the dangerouslySetInnerHTML pattern, don't redesign price formatting
+     away from it). Whole card is a single link to `/shop/{product-slug}`, hover → subtle image
+     zoom + shadow-card lift.
+   <!-- DEV: real product data here depends on the broken moveee/v1 vendor-products endpoint — this
+   frame shows the intended populated state, not the current always-empty reality. -->
+
+FRAME 2 — DESKTOP EMPTY-PRODUCTS STATE: identical hero, but the products section shows only the
+header ("Work by *Bisi Ceramics*", no count badge) followed by a single centered panel,
+border-radius: var(--radius-lg), in var(--paper-deep): "No products listed yet. Check back soon."
+— DM Sans 15px, var(--mute), ~80px vertical padding, no icon/illustration (matches the existing
+plain-text empty state, don't add decoration that isn't in the real code).
+
+FRAME 3 — MOBILE COMPANION (390px width): hero collapses to single column (image on top, full
+width, ~220px height fixed rather than the desktop's 1fr-1fr ratio; info block below it, same
+content order: badge → name → location → bio → stats row [now horizontally scrollable if it
+overflows, not wrapped] → CTA row [stacked full-width buttons] → social row [wraps to 2 lines if
+needed]). Products grid drops to 2 columns (matches the real `makers.css` responsive breakpoint
+behavior — collapse 4→3→2 col as viewport shrinks, confirmed in the stylesheet's media queries).
+Breadcrumb truncates to just "← Makers" back-link style on this width rather than the full
+three-step trail, to save header space.
+
+CONSTRAINTS:
+- Apply the shared --radius-* scale consistently (xl for the hero banner, lg for buttons/cards/
+  stat panel, full for pills) — do not leave any of the boxed elements above flush/square-cornered.
+- The "mini website" feel comes from the hero's banner+info richness and the full catalogue below
+  it, not from any tabs/sub-navigation — there is no internal nav within this page in the real
+  code (no "About / Products / Reviews" tab bar); don't invent one without flagging it as new.
+- Rating and "Maker since" stat are conditional — omit them from the stats row entirely (don't
+  show a placeholder dash) when the source data is absent, mirroring the real conditional JSX.
+- Keep all DEV annotations from the section preamble visible in the final deliverable — this page
+  is currently non-functional in production and the prompt must not visually imply otherwise.
+```
+
+Output 3 frames: Frame 1 (Desktop populated storefront), Frame 2 (Desktop empty-products state),
+Frame 3 (Mobile companion).
+
+---
+
+## 22. REDESIGNED COMPACT HEADER — WEB (Site A, themoveee.com)
+
+### Brand architecture
+
+Site A only — this is **Moveee Magazine**'s header, not Connect's. The redesign must keep the
+"Moveee Magazine" / "Est. 2022 · Best in Culture" identity intact; it is a chrome-economy
+redesign, not a rebrand.
+
+### Why this section exists — and an important framing note
+
+**Unlike every other section in this document (§1–§21), this is not a documentation prompt — it
+is an actual redesign proposal.** The current real header (`apps/site/components/Header.tsx` +
+`apps/site/app/homepage.css` `.masthead*`/`.mobile-menu*` rules) is two stacked, non-sticky rows:
+a JetBrains-Mono ticker/marquee strip (issue number, date, locations, announcement, plus a
+black language-toggle block bolted to its right edge) sitting on top of a 3-column masthead grid
+(`grid-template-columns: 1fr auto 1fr`, 32px vertical padding, left nav / centered wordmark+kicker
+/ right nav+icons+Join button). Neither row is `position: sticky` or `fixed` — the whole header
+scrolls away with the page. There's also a chunk of dead CSS this redesign should let go of
+cleanly: `--masthead-height` (referenced once, in `.hero`'s `calc(100vh - var(--masthead-height))`,
+but the variable itself is never actually defined/set anywhere — likely a stale leftover from an
+earlier sticky-header attempt) and a whole `.mobile-menu-member*` rule block (lines 378–410 of
+`homepage.css`) that is never referenced by anything `Header.tsx` actually renders.
+
+<!-- DEV: `--masthead-height` is read but never defined — confirm there is no hidden inline style
+or other stylesheet setting it before relying on its current (effectively `0px`/invalid) behavior;
+this redesign should either define it properly for the new compact height or remove the calc()
+that depends on it. -->
+<!-- DEV: `.mobile-menu-member*` (homepage.css lines 378–410) has no corresponding JSX in the
+current Header.tsx — dead CSS. Safe to delete when implementing this redesign rather than carry
+it forward unused. -->
+
+This section proposes a real compact redesign target: a single sticky row at a much smaller
+fixed height, taking some structural cues from Connect's own header
+(`apps/connect/components/Header.tsx` — a single 60px sticky row, no marquee, no search bar) as a
+useful comparison point for chrome economy, while preserving every piece of real Site A nav
+content (Feed / Discover / Editorials, Search, Cart-with-badge, Sign in, Join →) and the real
+ticker content (issue number, date, locations, announcement) — condensed rather than deleted,
+since that content is real editorial signal, not legacy cruft, and removing it outright would be
+a content decision beyond the scope of a "make it compact" request.
+
+### Marketing copy (final — use verbatim, do not paraphrase)
+
+- Kicker: **"Est. 2022 · Best in Culture"**
+- Nav labels: **"Feed"** / **"Discover"** / **"Editorials"**
+- Auth: **"Sign in"** / **"Join →"**
+- Mobile menu CTA: **"Join Moveee →"**
+- Language toggle: **"EN"** / **"FR"**
+
+### DEV ANNOTATION REQUIREMENT
+
+Frame 1 must annotate the current header's real structure (the baseline). Frame 2 must be clearly
+labeled as the proposed redesign, with `<!-- DEV: ... -->` notes on the two dead-CSS items above
+and on exactly what changed (sticky behavior added, row count reduced, ticker condensed) so a
+reviewer can tell baseline from proposal at a glance.
+
+### PROMPT 22 — Redesigned Compact Header (Desktop 1440px + Mobile 390px)
+
+```
+Real grounding: apps/site/components/Header.tsx (180 lines), apps/site/app/homepage.css
+masthead/mobile-menu rules (lines 121–412, 1416–1442). Comparison reference (structure only, not
+content): apps/connect/components/Header.tsx. Brand tokens (real, apps/site/app/globals.css):
+--ink:#14110d, --paper:#ffffff, --ochre:#c5491f, --rule, --mute. Fonts: var(--font-serif)
+"Fraunces", var(--font-sans) "DM Sans", var(--font-mono) "JetBrains Mono".
+
+FRAME 1 — CURRENT HEADER BASELINE (Desktop 1440px, annotated, NOT the redesign):
+Two stacked rows, `position: relative` (not sticky — scrolls away with page content):
+1. Ticker row (~36px tall, var(--ink) background): scrolling/marquee issue+date+locations text on
+   the left in JetBrains Mono 10px uppercase letter-spacing .15em white text with a pulsing ochre
+   dot, an announcement link on the right, and a separate solid-black EN/FR language toggle block
+   abutting the far right edge (border-left hairline white/10%, own 24px horizontal padding) —
+   visually a second, disconnected control bolted onto the ticker rather than integrated with it.
+2. Masthead row (~96px tall incl. 32px vertical padding, var(--paper) bg, 2px var(--rule) bottom
+   border): 3-column grid (`1fr auto 1fr`) — left nav (Feed/Discover/Editorials, DM Sans 13px,
+   ochre underline on hover/active) / centered wordmark (9px mono kicker above a 48px-tall logo
+   image) / right nav (search icon, cart icon w/ badge, "Sign in" w/ user icon, solid-ink "Join →"
+   button).
+<!-- DEV: this is the real current structure — annotate the non-sticky behavior, the two-row total
+height (~132px), and the disconnected language-toggle block as the specific pain points this
+redesign addresses. -->
+
+FRAME 2 — REDESIGNED COMPACT HEADER (Desktop 1440px, THE PROPOSAL):
+Single row, `position: sticky; top: 0`, fixed height **64px**, var(--paper) background, 1px
+var(--rule) bottom border (down from 2px — lighter chrome), z-index above page content. Layout —
+3 zones in one row, vertically centered:
+- LEFT zone: compact wordmark — logo image shrunk to 28px height (no separate kicker line at this
+  height; the "Est. 2022 · Best in Culture" kicker text moves into a `title` tooltip / is dropped
+  from the persistent chrome entirely, since there's no vertical room for a second text line at
+  64px) — immediately followed by the nav links (Feed / Discover / Editorials) inline at smaller
+  12px DM Sans, separated from the logo by a thin 1px var(--rule) vertical divider, ochre
+  underline-on-active retained.
+- CENTER zone: the condensed ticker content — issue number + date, JetBrains Mono 10px,
+  var(--mute) — now living inline in the header's center rather than as its own separate row above
+  it. The announcement link and locations list move into a small "i"-style info affordance (or are
+  dropped to a secondary surface like a thin sub-bar that only appears on the homepage, not
+  site-wide) <!-- DEV: this is the one real content trade-off in this redesign — decide whether
+  announcement/locations earn a still-visible compact treatment or move to a homepage-only
+  secondary surface; do not silently drop them without a decision recorded here. -->.
+- RIGHT zone: search icon, cart icon w/ badge (badge itself border-radius: var(--radius-full)),
+  EN/FR toggle (now small rounded text-pill buttons inline, border-radius: var(--radius-full),
+  not a separate black block), "Sign in" (icon-only at this height, label restored on hover via
+  tooltip or visible ≥1024px), solid-ink "Join →" button (smaller padding, 10px JetBrains Mono,
+  border-radius: var(--radius-full) — per the site-wide border-radius rollout, June 2026, see
+  CLAUDE.md "Border-radius convention").
+<!-- DEV: total height drops from ~132px (two rows) to 64px (one row) — annotate this delta
+explicitly as the headline win of the redesign. Sticky positioning is a new behavior, not present
+today — call this out since it changes scroll interaction across every Site A page. -->
+
+FRAME 3 — MOBILE COMPANION (390px, REDESIGNED, compact): single sticky row, 56px height — logo
+(24px) + kicker fully dropped (no room), condensed date/issue text hidden entirely below this
+breakpoint (matches the real header's existing pattern of hiding `.masthead-left`/`.masthead-right`
+on mobile already), search icon + cart icon w/ badge + hamburger on the right. Hamburger opens the
+same dropdown content as today (Feed/Discover/Editorials + "Join Moveee →") but the dropdown panel
+itself should also gain the lighter 1px rule treatment to match the new compact chrome.
+
+CONSTRAINTS:
+- This is a redesign proposal, not documentation — Frame 1 is the only frame describing the
+  current real implementation; Frames 2–3 are the new target and must be clearly labeled as such.
+- Do not delete the ticker's issue/date/locations/announcement content outright — condense or
+  relocate it (see the Frame 2 DEV note) but record the decision rather than silently dropping it.
+- Keep real nav content unchanged: Feed / Discover / Editorials, Search, Cart w/ badge, Sign in,
+  Join → — this is a chrome-compaction exercise, not a navigation-IA change.
+- Sticky positioning is new — flag it as a behavior change, not a pre-existing trait being
+  documented.
+- Reference Connect's header only for structural economy (single row, sticky, ~60px) — do not pull
+  Connect's brand styling (it has none of Site A's ticker/kicker/serif-logo identity) into this
+  redesign.
+```
+
+Output 3 frames: Frame 1 (Current baseline, annotated), Frame 2 (Redesigned compact desktop),
+Frame 3 (Redesigned compact mobile).
 
 ---
