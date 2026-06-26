@@ -102,13 +102,13 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               <span
                 style={{
                   background: "transparent",
-                  color: "#6b6157",
+                  color: "var(--mute, #6b6157)",
                   fontSize: "0.65rem",
                   fontWeight: 500,
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   padding: "0.25rem 0.6rem",
-                  border: "1px solid #d4cfc6",
+                  border: "1px solid var(--rule, #d4cfc6)",
                   borderRadius: "2px",
                 }}
               >
@@ -140,14 +140,14 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               flexWrap: "wrap",
               marginBottom: "2rem",
               paddingBottom: "1.5rem",
-              borderBottom: "1px solid #e0dbd1",
+              borderBottom: "1px solid var(--rule, #e0dbd1)",
             }}
           >
-            <span style={{ color: "#888", fontSize: "0.78rem" }}>
+            <span style={{ color: "var(--mute, #888)", fontSize: "0.78rem" }}>
               {formatDate(story.date)}
             </span>
             {source && (
-              <span style={{ color: "#6b6157", fontSize: "0.78rem" }}>
+              <span style={{ color: "var(--mute, #6b6157)", fontSize: "0.78rem" }}>
                 Via{" "}
                 {sourceUrl ? (
                   <a
@@ -183,8 +183,8 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               style={{
                 marginLeft: "auto",
                 background: "transparent",
-                border: "1px solid #d4cfc6",
-                color: "#6b6157",
+                border: "1px solid var(--rule, #d4cfc6)",
+                color: "var(--mute, #6b6157)",
                 padding: "0.3rem 0.75rem",
                 fontSize: "0.68rem",
                 letterSpacing: "0.06em",
@@ -211,8 +211,8 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               rel="noopener noreferrer"
               style={{
                 background: "transparent",
-                border: "1px solid #d4cfc6",
-                color: "#6b6157",
+                border: "1px solid var(--rule, #d4cfc6)",
+                color: "var(--mute, #6b6157)",
                 padding: "0.3rem 0.75rem",
                 fontSize: "0.68rem",
                 letterSpacing: "0.06em",
@@ -238,8 +238,8 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               rel="noopener noreferrer"
               style={{
                 background: "transparent",
-                border: "1px solid #d4cfc6",
-                color: "#6b6157",
+                border: "1px solid var(--rule, #d4cfc6)",
+                color: "var(--mute, #6b6157)",
                 padding: "0.3rem 0.75rem",
                 fontSize: "0.68rem",
                 letterSpacing: "0.06em",
@@ -279,10 +279,10 @@ export default function PulseStory({ story, initialComments, relatedStories = []
                 fontWeight: 700,
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
-                color: "#999",
+                color: "var(--mute, #999)",
                 marginBottom: "1rem",
                 paddingBottom: "0.75rem",
-                borderBottom: "1px solid #e0dbd1",
+                borderBottom: "1px solid var(--rule, #e0dbd1)",
               }}
             >
               Related Stories
@@ -300,9 +300,9 @@ export default function PulseStory({ story, initialComments, relatedStories = []
                     <article
                       style={{
                         padding: "0.85rem",
-                        border: "1px solid #e0dbd1",
+                        border: "1px solid var(--rule, #e0dbd1)",
                         borderRadius: "2px",
-                        background: "#fff",
+                        background: "var(--paper, #fff)",
                         transition: "border-color 0.15s, box-shadow 0.15s",
                       }}
                       className="related-card"
@@ -340,7 +340,7 @@ export default function PulseStory({ story, initialComments, relatedStories = []
                       >
                         {decodeHtml(related.title?.rendered ?? "")}
                       </p>
-                      <p style={{ fontSize: "0.68rem", color: "#999", marginTop: "0.4rem" }}>
+                      <p style={{ fontSize: "0.68rem", color: "var(--mute, #999)", marginTop: "0.4rem" }}>
                         {new Date(related.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </p>
                     </article>
@@ -383,7 +383,7 @@ export default function PulseStory({ story, initialComments, relatedStories = []
           margin-bottom: 1.25em;
         }
         .related-card:hover {
-          border-color: #c4bdb3 !important;
+          border-color: var(--rule-dark, #c4bdb3) !important;
           box-shadow: 0 2px 6px rgba(20, 17, 13, 0.06);
         }
         @media (max-width: 1024px) {

@@ -1427,11 +1427,15 @@ border/background; the dropdown's nav link text/border-right; the empty-feed-sta
 (`#aaa` → `var(--mute, #aaa)`); the "Loading…" text (`#bbb` → `var(--mute, #bbb)`).
 
 **`PulseCard.tsx`, `PulseStory.tsx`, `CategoryPage.tsx` are confirmed dead code** (no
-imports anywhere in the codebase, verified via Grep) and were deliberately **not**
-fixed in this pass despite having the same class of hex-literal bugs — fixing dead code
-is wasted effort. If either file is ever wired back up (or confirmed truly dead enough
-to delete), audit/fix or delete it then; don't assume it's already been swept by this
-pass.
+imports anywhere in the codebase, verified via Grep) and were initially skipped in this
+pass despite having the same class of hex-literal bugs — fixing dead code is normally
+wasted effort. **Fixed anyway in a follow-up pass at explicit user request** (override of
+the deferral) — all three now use the same `var(--token, #fallback)` pattern as the rest
+of the audit (`--paper`/`--rule`/`--mute`/`--ink`/`--ink-soft`/`--ochre`), with their
+categorical badge maps (`ARM_STYLES` and its `armStyle`/`relatedArmStyle` fallbacks)
+deliberately left as plain literals, consistent with other untokenized category-badge
+maps elsewhere in the codebase (e.g. `PINNED_BADGE`). If either file is ever wired back
+up, no further dark-mode sweep should be needed for it on that basis alone.
 
 **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
 gap as every other pass in this file. Verified via `tsc --noEmit` (clean) in both
