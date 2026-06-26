@@ -323,12 +323,12 @@ const s: Record<string, React.CSSProperties> = {
     outline: "none", boxSizing: "border-box", fontFamily: "inherit",
   },
   error: {
-    fontSize: 13, color: "#c0392b", background: "#fef2f2", border: "1px solid rgba(192,57,43,.15)",
+    fontSize: 13, color: "var(--error, #c0392b)", background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.15)",
     borderRadius: 3, padding: "8px 12px", margin: "0 0 14px",
   },
   btn: {
     display: "block", width: "100%", padding: "11px 24px", background: "var(--ink)",
-    color: "#fff", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600,
+    color: "var(--paper, #fff)", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600,
     letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
     fontFamily: "inherit", marginTop: 4,
   },

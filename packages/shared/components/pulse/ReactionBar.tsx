@@ -163,7 +163,7 @@ export default function ReactionBar({
         display: "flex",
         alignItems: "center",
         gap: "0.25rem",
-        ...(noBorder ? {} : { paddingTop: "0.5rem", borderTop: "1px solid #e8e2d8", marginTop: "0.25rem" }),
+        ...(noBorder ? {} : { paddingTop: "0.5rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
         minWidth: 0,
         overflow: "hidden",
       }}
@@ -187,7 +187,7 @@ export default function ReactionBar({
               alignItems: "center",
               gap: "0.3rem",
               fontSize: "0.8rem",
-              color: active ? activeColor : "#7a6f5c",
+              color: active ? activeColor : "var(--mute, #7a6f5c)",
               transition: "all 0.15s",
               lineHeight: 1,
             }}
@@ -196,7 +196,7 @@ export default function ReactionBar({
               size={16}
               strokeWidth={1.8}
               fill={active ? activeColor : "none"}
-              color={active ? activeColor : "#7a6f5c"}
+              color={active ? activeColor : "var(--mute, #7a6f5c)"}
             />
             {count > 0 && (
               <span style={{ fontSize: "0.7rem", fontVariantNumeric: "tabular-nums" }}>
@@ -218,7 +218,7 @@ export default function ReactionBar({
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: copied ? "#2e7d32" : "#7a6f5c",
+          color: copied ? "var(--success, #2e7d32)" : "var(--mute, #7a6f5c)",
           display: "flex",
           alignItems: "center",
           gap: "0.3rem",

@@ -21,12 +21,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function categoryColor(category?: string): string {
-  if (!category) return "#7A6F5C";
+  if (!category) return "var(--mute, #7a6f5c)";
   const lower = category.toLowerCase();
   for (const key of Object.keys(CATEGORY_COLORS)) {
     if (lower.includes(key)) return CATEGORY_COLORS[key];
   }
-  return "#7A6F5C";
+  return "var(--mute, #7a6f5c)";
 }
 
 function formatEventDate(dateStr?: string): { date: string; time: string } {
@@ -49,7 +49,7 @@ function SpotlightCard({ item, onOpen }: { item: FeedItem; onOpen: () => void })
       onClick={onOpen}
       style={{
         width: 236,
-        background: "#fff",
+        background: "var(--paper, #ffffff)",
         borderRadius: 12,
         boxShadow: "0 4px 20px -2px rgba(20,17,13,0.08)",
         flexShrink: 0,
@@ -62,29 +62,29 @@ function SpotlightCard({ item, onOpen }: { item: FeedItem; onOpen: () => void })
       }}
     >
       {item.isFeatured && (
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: "#B38238", zIndex: 1 }} />
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: "var(--gold, #b38238)", zIndex: 1 }} />
       )}
       <div style={{ padding: "12px 12px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: categoryColor(item.eventCategory) }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "#7A6F5C", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--mute, #7a6f5c)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {item.eventCategory || "Event"}
           </span>
         </div>
-        {item.isFeatured && <span style={{ color: "#B38238", fontSize: 12 }}>★</span>}
+        {item.isFeatured && <span style={{ color: "var(--gold, #b38238)", fontSize: 12 }}>★</span>}
       </div>
       <div style={{ padding: "0 12px", display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}>
-        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, fontWeight: 700, color: "#C5491F", textTransform: "uppercase" }}>
+        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, fontWeight: 700, color: "var(--ochre, #c5491f)", textTransform: "uppercase" }}>
           {date}
         </span>
-        {time && <span style={{ fontSize: 11, color: "#7A6F5C" }}>{time}</span>}
+        {time && <span style={{ fontSize: 11, color: "var(--mute, #7a6f5c)" }}>{time}</span>}
       </div>
       <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", flex: 1, marginTop: 6 }}>
         <h3
           style={{
             fontSize: 15,
             fontWeight: 700,
-            color: "#14110D",
+            color: "var(--ink, #14110d)",
             lineHeight: 1.3,
             minHeight: 44,
             margin: 0,
@@ -97,26 +97,26 @@ function SpotlightCard({ item, onOpen }: { item: FeedItem; onOpen: () => void })
           {item.title}
         </h3>
         {venue && (
-          <span style={{ fontSize: 12, color: "#7A6F5C", marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontSize: 12, color: "var(--mute, #7a6f5c)", marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             📍 {venue}
           </span>
         )}
       </div>
-      <div style={{ margin: "10px 12px 12px", paddingTop: 8, borderTop: "1px solid #EEE8DF", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ margin: "10px 12px 12px", paddingTop: 8, borderTop: "1px solid var(--rule, #e8e2d8)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: isFree ? 400 : 700, color: isFree ? "#3A342B" : "#C5491F" }}>
+          <span style={{ fontSize: 12, fontWeight: isFree ? 400 : 700, color: isFree ? "var(--ink-soft, #3a342b)" : "var(--ochre, #c5491f)" }}>
             {isFree ? "Free" : item.admission}
           </span>
           {isCommunity && (
-            <span style={{ background: "#E6F4EA", padding: "2px 6px", borderRadius: 999, display: "inline-flex", alignItems: "center", height: 16 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: "#2D6A4F", textTransform: "uppercase", lineHeight: 1 }}>
+            <span style={{ background: "var(--cat-community-bg, #edf7ed)", padding: "2px 6px", borderRadius: 999, display: "inline-flex", alignItems: "center", height: 16 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "var(--cat-community-fg, #2e7d32)", textTransform: "uppercase", lineHeight: 1 }}>
                 🌱 Community
               </span>
             </span>
           )}
         </div>
         {Number(item.rsvpCount) > 0 && (
-          <span style={{ fontSize: 11, color: "#7A6F5C" }}>👥 {item.rsvpCount} going</span>
+          <span style={{ fontSize: 11, color: "var(--mute, #7a6f5c)" }}>👥 {item.rsvpCount} going</span>
         )}
       </div>
     </div>
@@ -129,12 +129,12 @@ export default function EventSpotlightCarousel({ events }: { events: FeedItem[] 
   if (events.length < 2) return null;
 
   return (
-    <div style={{ background: "#F5F0E6", padding: "16px 0", marginBottom: 24, borderTop: "1px solid rgba(200,191,176,0.4)", borderBottom: "1px solid rgba(200,191,176,0.4)" }}>
+    <div style={{ background: "var(--paper-warm, #f5f0e6)", padding: "16px 0", marginBottom: 24, borderTop: "1px solid rgba(200,191,176,0.4)", borderBottom: "1px solid rgba(200,191,176,0.4)" }}>
       <div style={{ padding: "0 16px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: "#14110D", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink, #14110d)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           📅 Upcoming Near You
         </h2>
-        <Link href="/events" style={{ fontSize: 12, fontWeight: 700, color: "#C5491F", textDecoration: "none" }}>
+        <Link href="/events" style={{ fontSize: 12, fontWeight: 700, color: "var(--ochre, #c5491f)", textDecoration: "none" }}>
           See all →
         </Link>
       </div>

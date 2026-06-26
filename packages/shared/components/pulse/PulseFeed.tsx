@@ -228,7 +228,7 @@ const handleType = (type: FeedItemType | "all") => {
 
 
   return (
-    <div style={{ background: "#ffffff" }}>
+    <div style={{ background: "var(--paper, #ffffff)" }}>
       <div className="pulse-layout">
 
         {/* ── Left Sidebar ── */}
@@ -299,9 +299,9 @@ const handleType = (type: FeedItemType | "all") => {
                 <button
                   onClick={handleForYou}
                   style={{
-                    background: forYou ? "#14110d" : "transparent",
-                    color: forYou ? "#fff" : "#3a342b",
-                    border: forYou ? "1px solid #14110d" : "1px solid #d8d0c6",
+                    background: forYou ? "var(--ink, #14110d)" : "transparent",
+                    color: forYou ? "var(--paper, #fff)" : "var(--ink-soft, #3a342b)",
+                    border: forYou ? "1px solid var(--ink, #14110d)" : "1px solid var(--rule, #d8d0c6)",
                     borderRadius: "2px",
                     padding: "0.25rem 0.7rem",
                     fontSize: "0.72rem",
@@ -319,9 +319,9 @@ const handleType = (type: FeedItemType | "all") => {
                   key={value}
                   onClick={() => handleType(value)}
                   style={{
-                    background: activeType === value ? "#c5491f" : "transparent",
-                    color: activeType === value ? "#fff" : "#3a342b",
-                    border: activeType === value ? "1px solid #c5491f" : "1px solid #d8d0c6",
+                    background: activeType === value ? "var(--ochre, #c5491f)" : "transparent",
+                    color: activeType === value ? "var(--paper, #fff)" : "var(--ink-soft, #3a342b)",
+                    border: activeType === value ? "1px solid var(--ochre, #c5491f)" : "1px solid var(--rule, #d8d0c6)",
                     borderRadius: "2px",
                     padding: "0.25rem 0.7rem",
                     fontSize: "0.72rem",
@@ -339,8 +339,8 @@ const handleType = (type: FeedItemType | "all") => {
                 style={{
                   position: "sticky",
                   right: 0,
-                  background: showSectionsMenu ? "#c5491f" : "#14110d",
-                  color: "#fff",
+                  background: showSectionsMenu ? "var(--ochre, #c5491f)" : "var(--ink, #14110d)",
+                  color: "var(--paper, #fff)",
                   border: "none",
                   padding: "0.25rem 0.9rem",
                   fontSize: "0.72rem",
@@ -349,7 +349,7 @@ const handleType = (type: FeedItemType | "all") => {
                   letterSpacing: "0.04em",
                   cursor: "pointer",
                   flexShrink: 0,
-                  boxShadow: "-8px 0 10px #f7f5f2",
+                  boxShadow: "-8px 0 10px var(--paper-warm, #f7f5f2)",
                 }}
               >
                 ⊞ Sections
@@ -359,9 +359,9 @@ const handleType = (type: FeedItemType | "all") => {
 
             {/* Sections + Categories dropdown panel */}
             {showSectionsMenu && (
-              <div style={{ borderTop: "1px solid #e8e2d8", background: "#fff" }}>
+              <div style={{ borderTop: "1px solid var(--rule, #e8e2d8)", background: "var(--paper, #fff)" }}>
                 {/* Connect sections row */}
-                <div style={{ display: "flex", borderBottom: "1px solid #e8e2d8" }}>
+                <div style={{ display: "flex", borderBottom: "1px solid var(--rule, #e8e2d8)" }}>
                   {[
                     { label: "People Near Me", href: "/connect/people" },
                     { label: "Membership",        href: "/connect/membership" },
@@ -378,9 +378,9 @@ const handleType = (type: FeedItemType | "all") => {
                         fontWeight: 600,
                         letterSpacing: "0.08em",
                         textTransform: "uppercase",
-                        color: "#3a342b",
+                        color: "var(--ink-soft, #3a342b)",
                         textDecoration: "none",
-                        borderRight: i < arr.length - 1 ? "1px solid #e8e2d8" : "none",
+                        borderRight: i < arr.length - 1 ? "1px solid var(--rule, #e8e2d8)" : "none",
                       }}
                     >
                       {label}
@@ -427,7 +427,7 @@ const handleType = (type: FeedItemType | "all") => {
           </div>
 
           {visible.length === 0 ? (
-            <div style={{ color: "#aaa", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
+            <div style={{ color: "var(--mute, #aaa)", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
               Nothing here yet — check back soon.
             </div>
           ) : (
@@ -455,7 +455,7 @@ const handleType = (type: FeedItemType | "all") => {
 
           <div ref={sentinelRef} style={{ height: "1px" }} />
           {hasMore && (
-            <div style={{ textAlign: "center", padding: "2rem", color: "#bbb", fontSize: "0.78rem" }}>Loading…</div>
+            <div style={{ textAlign: "center", padding: "2rem", color: "var(--mute, #bbb)", fontSize: "0.78rem" }}>Loading…</div>
           )}
         </main>
 

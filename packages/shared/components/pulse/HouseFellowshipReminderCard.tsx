@@ -56,7 +56,7 @@ export default function HouseFellowshipReminderCard() {
           flexShrink: 0,
           width: 48, height: 48,
           borderRadius: "50%",
-          background: "#ffffff",
+          background: "var(--paper, #ffffff)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "1.3rem",
         }}>

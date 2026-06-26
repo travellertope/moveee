@@ -23,10 +23,10 @@ interface CommentThreadProps {
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  background: "#fff",
-  border: "1px solid #d8d0c6",
+  background: "var(--paper, #fff)",
+  border: "1px solid var(--rule, #d8d0c6)",
   borderRadius: "4px",
-  color: "#14110d",
+  color: "var(--ink, #14110d)",
   fontSize: "0.85rem",
   padding: "0.6rem 0.75rem",
   outline: "none",
@@ -89,9 +89,9 @@ export default function CommentThread({ postId, initialComments }: CommentThread
   };
 
   return (
-    <section style={{ marginTop: "1.75rem", paddingTop: "1.5rem", borderTop: "1px solid #e8e2d8" }}>
+    <section style={{ marginTop: "1.75rem", paddingTop: "1.5rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
       <h2 style={{
-        color: "#14110d",
+        color: "var(--ink, #14110d)",
         fontFamily: "var(--font-fraunces), serif",
         fontSize: "1rem",
         fontWeight: 600,
@@ -106,16 +106,16 @@ export default function CommentThread({ postId, initialComments }: CommentThread
       {comments.length > 0 && (
         <div style={{ marginBottom: "1.75rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
           {comments.map((c) => (
-            <div key={c.id} style={{ borderLeft: "2px solid #e8e2d8", paddingLeft: "0.85rem" }}>
+            <div key={c.id} style={{ borderLeft: "2px solid var(--rule, #e8e2d8)", paddingLeft: "0.85rem" }}>
               <div style={{ display: "flex", gap: "0.6rem", alignItems: "baseline", marginBottom: "0.3rem" }}>
-                <span style={{ color: "#b38238", fontSize: "0.8rem", fontWeight: 600 }}>
+                <span style={{ color: "var(--gold, #b38238)", fontSize: "0.8rem", fontWeight: 600 }}>
                   {c.author_name}
                 </span>
-                <span style={{ color: "#bbb", fontSize: "0.7rem" }}>
+                <span style={{ color: "var(--mute, #bbb)", fontSize: "0.7rem" }}>
                   {formatCommentDate(c.date)}
                 </span>
               </div>
-              <p style={{ color: "#3a342b", fontSize: "0.84rem", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "var(--ink-soft, #3a342b)", fontSize: "0.84rem", lineHeight: 1.6, margin: 0 }}>
                 {stripHtml(c.content?.rendered ?? "")}
               </p>
             </div>
@@ -125,19 +125,19 @@ export default function CommentThread({ postId, initialComments }: CommentThread
 
       {/* Auth states */}
       {authStatus === "loading" && (
-        <p style={{ color: "#bbb", fontSize: "0.82rem" }}>Loading…</p>
+        <p style={{ color: "var(--mute, #bbb)", fontSize: "0.82rem" }}>Loading…</p>
       )}
 
       {authStatus === "unauthenticated" && (
-        <div style={{ background: "#faf8f4", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "1.25rem", textAlign: "center" }}>
-          <p style={{ color: "#7a6f5c", fontSize: "0.84rem", marginBottom: "0.85rem" }}>
+        <div style={{ background: "var(--paper-warm, #faf8f4)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "6px", padding: "1.25rem", textAlign: "center" }}>
+          <p style={{ color: "var(--mute, #7a6f5c)", fontSize: "0.84rem", marginBottom: "0.85rem" }}>
             Have something to say? Join the community — it's free.
           </p>
           <button
             onClick={() => signIn()}
             style={{
-              background: "#14110d",
-              color: "#f3ece0",
+              background: "var(--ink, #14110d)",
+              color: "var(--paper, #f3ece0)",
               border: "none",
               padding: "0.55rem 1.4rem",
               fontSize: "0.72rem",
@@ -156,9 +156,9 @@ export default function CommentThread({ postId, initialComments }: CommentThread
       {/* Comment form */}
       {authStatus === "authenticated" && (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>
+          <span style={{ color: "var(--mute, #7a6f5c)", fontSize: "0.72rem" }}>
             Commenting as{" "}
-            <span style={{ color: "#b38238", fontWeight: 600 }}>
+            <span style={{ color: "var(--gold, #b38238)", fontWeight: 600 }}>
               {session?.user?.name ?? session?.user?.email}
             </span>
           </span>
@@ -166,9 +166,9 @@ export default function CommentThread({ postId, initialComments }: CommentThread
           <div>
             <label
               htmlFor="pulse-comment"
-              style={{ display: "block", color: "#7a6f5c", fontSize: "0.72rem", marginBottom: "0.3rem" }}
+              style={{ display: "block", color: "var(--mute, #7a6f5c)", fontSize: "0.72rem", marginBottom: "0.3rem" }}
             >
-              Comment <span style={{ color: "#b38238" }}>*</span>
+              Comment <span style={{ color: "var(--gold, #b38238)" }}>*</span>
             </label>
             <textarea
               id="pulse-comment"
@@ -181,21 +181,21 @@ export default function CommentThread({ postId, initialComments }: CommentThread
               style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }}
               placeholder="Share your thoughts…"
             />
-            <p style={{ color: "#bbb", fontSize: "0.65rem", marginTop: "0.2rem", textAlign: "right" }}>
+            <p style={{ color: "var(--mute, #bbb)", fontSize: "0.65rem", marginTop: "0.2rem", textAlign: "right" }}>
               {content.length}/1000
             </p>
           </div>
 
           {status === "success" && (
-            <p style={{ color: "#2e7d32", fontSize: "0.82rem" }}>Comment posted. Thank you!</p>
+            <p style={{ color: "var(--success, #2e7d32)", fontSize: "0.82rem" }}>Comment posted. Thank you!</p>
           )}
           {status === "moderation" && (
-            <p style={{ color: "#b38238", fontSize: "0.82rem" }}>
+            <p style={{ color: "var(--gold, #b38238)", fontSize: "0.82rem" }}>
               Your comment is awaiting moderation.
             </p>
           )}
           {status === "error" && (
-            <p style={{ color: "#c0392b", fontSize: "0.82rem" }}>{errorMsg}</p>
+            <p style={{ color: "var(--error, #c0392b)", fontSize: "0.82rem" }}>{errorMsg}</p>
           )}
 
           <button
@@ -203,8 +203,8 @@ export default function CommentThread({ postId, initialComments }: CommentThread
             disabled={submitting}
             style={{
               alignSelf: "flex-start",
-              background: submitting ? "#e8e2d8" : "#14110d",
-              color: submitting ? "#999" : "#f3ece0",
+              background: submitting ? "var(--rule, #e8e2d8)" : "var(--ink, #14110d)",
+              color: submitting ? "var(--mute, #999)" : "var(--paper, #f3ece0)",
               border: "none",
               padding: "0.6rem 1.5rem",
               fontSize: "0.72rem",
