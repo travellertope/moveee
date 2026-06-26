@@ -31,7 +31,7 @@ function InlineTokens({ text, onMentionClick }: { text: string; onMentionClick?:
             <button
               key={i}
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); onMentionClick?.(username); }}
-              style={{ color: "#b38238", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", lineHeight: "inherit", fontWeight: 600 }}
+              style={{ color: "var(--gold, #b38238)", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", lineHeight: "inherit", fontWeight: 600 }}
             >
               {part}
             </button>

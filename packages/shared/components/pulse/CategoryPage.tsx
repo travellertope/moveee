@@ -84,30 +84,30 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
   }));
 
   return (
-    <div style={{ background: "#ffffff", minHeight: "100vh" }}>
+    <div style={{ background: "var(--paper, #ffffff)", minHeight: "100vh" }}>
       {/* Header */}
       <div style={{
-        background: "#fff",
-        borderBottom: "1px solid #e8e2d8",
+        background: "var(--paper, #fff)",
+        borderBottom: "1px solid var(--rule, #e8e2d8)",
         padding: "1.25rem 1.5rem",
       }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <p style={{
             fontFamily: "var(--font-mono), monospace",
             fontSize: "0.65rem",
-            color: "#7a6f5c",
+            color: "var(--mute, #7a6f5c)",
             margin: "0 0 0.6rem",
           }}>
-            <Link href="/feed" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Feed</Link>
+            <Link href="/feed" style={{ color: "var(--mute, #7a6f5c)", textDecoration: "none" }}>← Feed</Link>
             {" · "}
-            <Link href="/pulse/categories" style={{ color: "#7a6f5c", textDecoration: "none" }}>Categories</Link>
+            <Link href="/pulse/categories" style={{ color: "var(--mute, #7a6f5c)", textDecoration: "none" }}>Categories</Link>
           </p>
 
           {/* H1 */}
           <h1 style={{
             fontSize: "1.4rem",
             fontWeight: 400,
-            color: "#14110d",
+            color: "var(--ink, #14110d)",
             margin: "0.2rem 0",
             fontFamily: "var(--font-fraunces), serif",
           }}>
@@ -117,7 +117,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
           {/* Desc */}
           <p style={{
             fontSize: "0.85rem",
-            color: "#7a6f5c",
+            color: "var(--mute, #7a6f5c)",
             fontFamily: "var(--font-fraunces), serif",
             fontStyle: "italic",
             margin: 0,
@@ -137,7 +137,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
           className="category-layout"
         >
           {/* Main column */}
-          <div style={{ borderRight: "1px solid #e8e2d8", minHeight: "80vh" }}>
+          <div style={{ borderRight: "1px solid var(--rule, #e8e2d8)", minHeight: "80vh" }}>
             {/* Composer */}
             <SubmitPost lockedTag={label} />
 
@@ -150,14 +150,14 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                 {/* Divider between community and pulse */}
                 {pulseItems.length > 0 && (
                   <div style={{
-                    borderBottom: "1px solid #e8e2d8",
+                    borderBottom: "1px solid var(--rule, #e8e2d8)",
                     padding: "0.75rem 1.25rem",
-                    background: "#ffffff",
+                    background: "var(--paper, #ffffff)",
                   }}>
                     <p style={{
                       fontFamily: "var(--font-mono), monospace",
                       fontSize: "0.6rem",
-                      color: "#7a6f5c",
+                      color: "var(--mute, #7a6f5c)",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
                       margin: 0,
@@ -174,14 +174,14 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
               <>
                 {communityItems.length === 0 && (
                   <div style={{
-                    borderBottom: "1px solid #e8e2d8",
+                    borderBottom: "1px solid var(--rule, #e8e2d8)",
                     padding: "0.75rem 1.25rem",
-                    background: "#ffffff",
+                    background: "var(--paper, #ffffff)",
                   }}>
                     <p style={{
                       fontFamily: "var(--font-mono), monospace",
                       fontSize: "0.6rem",
-                      color: "#7a6f5c",
+                      color: "var(--mute, #7a6f5c)",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
                       margin: 0,
@@ -197,7 +197,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
             )}
 
             {communityItems.length === 0 && pulseItems.length === 0 && (
-              <div style={{ color: "#aaa", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
+              <div style={{ color: "var(--mute, #aaa)", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
                 No posts yet in {label}. Be the first to share something.
               </div>
             )}
@@ -212,15 +212,15 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
           }}>
             {/* About box */}
             <div style={{
-              background: "#fff",
-              border: "1px solid #e8e2d8",
+              background: "var(--paper, #fff)",
+              border: "1px solid var(--rule, #e8e2d8)",
               padding: "1rem",
               marginBottom: "1.25rem",
             }}>
               <p style={{
                 fontFamily: "var(--font-mono), monospace",
                 fontSize: "0.6rem",
-                color: "#7a6f5c",
+                color: "var(--mute, #7a6f5c)",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 margin: "0 0 0.5rem",
@@ -228,7 +228,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
               }}>
                 About {label}
               </p>
-              <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: 0 }}>
+              <p style={{ color: "var(--ink-soft, #3a342b)", fontSize: "0.78rem", lineHeight: 1.55, margin: 0 }}>
                 {desc}
               </p>
             </div>
@@ -238,7 +238,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
               <p style={{
                 fontFamily: "var(--font-mono), monospace",
                 fontSize: "0.6rem",
-                color: "#7a6f5c",
+                color: "var(--mute, #7a6f5c)",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 margin: "0 0 0.5rem",
@@ -256,9 +256,9 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                         padding: "0.3rem 0",
                         fontSize: "0.78rem",
                         fontFamily: "var(--font-mono), monospace",
-                        color: "#3a342b",
+                        color: "var(--ink-soft, #3a342b)",
                         textDecoration: "none",
-                        borderBottom: "1px solid #f0ebe3",
+                        borderBottom: "1px solid var(--rule, #f0ebe3)",
                       }}
                     >
                       {cat.label}
@@ -273,7 +273,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                       padding: "0.3rem 0",
                       fontSize: "0.72rem",
                       fontFamily: "var(--font-mono), monospace",
-                      color: "#c5491f",
+                      color: "var(--ochre, #c5491f)",
                       textDecoration: "none",
                       letterSpacing: "0.06em",
                     }}

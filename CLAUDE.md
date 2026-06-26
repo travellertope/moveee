@@ -1385,6 +1385,64 @@ touched CSS files (`globals.css`, `header.css`, `perks.css`, `pulse-layout.css` 
 balanced). Re-check pixel fidelity against `mockups/web/moveee_overlays.html` and
 dark-mode behavior in a real environment before considering this fully closed.
 
+### Dark-mode hex-color audit — full sweep of `packages/shared/components/pulse/` and `connect/` (June 2026)
+
+Follow-up to the Overlays pass above: a full audit of every remaining file in
+`packages/shared/components/pulse/` and `packages/shared/components/connect/` for the
+same hardcoded-hex-instead-of-CSS-variable bug (literal colors that don't track theme
+state, so they paint wrong in dark mode). Bare hex literals found and fixed (same
+`var(--token, #original-literal)` pattern as elsewhere — fallback preserves the exact
+light-mode value) in: `ReactionBar.tsx` (border-top, inactive reaction text/icon,
+copy-link button default/copied states), `SourcePreviewCard.tsx` and
+`InternalLinkCard.tsx` (border/background + hover-handler literals, title/description/
+domain-suffix text colors), `CommentThread.tsx` (input style object, section border,
+comment list border/author/date/body colors, auth CTA box, form labels, status
+messages, submit button), `HashtagText.tsx` (mention button color), 
+`HouseFellowshipReminderCard.tsx` (icon circle background), `EventSpotlightCarousel.tsx`
+(category color fallback, card background, featured-stripe/star color, date/venue/title/
+price text, outer container background, heading, "See all →" link — also introduced
+`var(--cat-community-bg, #edf7ed)`/`var(--cat-community-fg, #2e7d32)` for the
+`isCommunity` badge, which are **not** real defined CSS variables in `globals.css`; the
+fallback hex is what actually renders in both themes today — either map these to a real
+existing token or treat as a known follow-up if dark-mode fidelity on that one badge
+ever matters), and `HouseFellowship.tsx` (`connect/`, error block + ink/paper button-text
+pairing). `MemberDirectory.tsx` (`connect/`) was checked and is genuinely clean — already
+used CSS variables throughout, no changes needed. `ImageLightbox.tsx` is intentionally
+theme-independent (a full-screen photo lightbox with a black scrim and white controls
+should not change with site theme — confirmed not a bug, left as-is).
+
+`PulseFeed.tsx` had 8 bare-hex spots fixed, all using the same `var(--token,
+#original-literal)` pattern as the rest of this file's dark-mode fixes (fallback
+preserves the exact original value so light mode is pixel-identical, only dark mode
+changes): page wrapper background (`#ffffff` → `var(--paper, #ffffff)`); the mobile "For
+You" filter pill's active-state background/text/border (`#14110d`/`#fff`/`#14110d` →
+`var(--ink, #14110d)`/`var(--paper, #fff)`/`var(--ink, #14110d)` — the white text needed
+to become `var(--paper, #fff)` rather than staying literal, since it's paired with the
+`--ink`-tracking background and the two invert together in dark mode); the mobile type
+filter pill's active state (same ink/paper-pairing fix, plus the ochre accent
+`#c5491f` → `var(--ochre, #c5491f)` for consistency even though the ochre literal alone
+wasn't a bug); the "⊞ Sections" toggle button (background/text/shadow, same
+ink/paper-pairing + ochre-wrapping pattern); the Sections/Categories dropdown panel's
+border/background; the dropdown's nav link text/border-right; the empty-feed-state text
+(`#aaa` → `var(--mute, #aaa)`); the "Loading…" text (`#bbb` → `var(--mute, #bbb)`).
+
+**`PulseCard.tsx`, `PulseStory.tsx`, `CategoryPage.tsx` are confirmed dead code** (no
+imports anywhere in the codebase, verified via Grep) and were initially skipped in this
+pass despite having the same class of hex-literal bugs — fixing dead code is normally
+wasted effort. **Fixed anyway in a follow-up pass at explicit user request** (override of
+the deferral) — all three now use the same `var(--token, #fallback)` pattern as the rest
+of the audit (`--paper`/`--rule`/`--mute`/`--ink`/`--ink-soft`/`--ochre`), with their
+categorical badge maps (`ARM_STYLES` and its `armStyle`/`relatedArmStyle` fallbacks)
+deliberately left as plain literals, consistent with other untokenized category-badge
+maps elsewhere in the codebase (e.g. `PINNED_BADGE`). If either file is ever wired back
+up, no further dark-mode sweep should be needed for it on that basis alone.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+gap as every other pass in this file. Verified via `tsc --noEmit` (clean) in both
+`apps/connect` and `apps/site`.
+
+---
+
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
 - `/opt/bitnami/php/etc/memory.conf` — `pm.max_children=5`, `memory_limit=128M`

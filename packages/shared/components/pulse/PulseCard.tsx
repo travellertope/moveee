@@ -36,8 +36,8 @@ export default function PulseCard({ story }: PulseCardProps) {
   return (
     <article
       style={{
-        background: "#fff",
-        border: "1px solid #e0dbd1",
+        background: "var(--paper, #fff)",
+        border: "1px solid var(--rule, #e0dbd1)",
         borderRadius: "2px",
         display: "flex",
         flexDirection: "column",
@@ -73,13 +73,13 @@ export default function PulseCard({ story }: PulseCardProps) {
             <span
               style={{
                 background: "transparent",
-                color: "#6b6157",
+                color: "var(--mute, #6b6157)",
                 fontSize: "0.65rem",
                 fontWeight: 500,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 padding: "0.2rem 0.5rem",
-                border: "1px solid #d4cfc6",
+                border: "1px solid var(--rule, #d4cfc6)",
                 borderRadius: "2px",
               }}
             >
@@ -109,7 +109,7 @@ export default function PulseCard({ story }: PulseCardProps) {
         {/* Excerpt */}
         <p
           style={{
-            color: "#6b6157",
+            color: "var(--mute, #6b6157)",
             fontSize: "0.82rem",
             lineHeight: 1.55,
             flex: 1,
@@ -137,7 +137,7 @@ export default function PulseCard({ story }: PulseCardProps) {
               {source}
             </span>
           )}
-          <span style={{ color: "#999", fontSize: "0.7rem" }}>{formatDate(story.date)}</span>
+          <span style={{ color: "var(--mute, #999)", fontSize: "0.7rem" }}>{formatDate(story.date)}</span>
         </div>
       </Link>
 
@@ -151,7 +151,7 @@ export default function PulseCard({ story }: PulseCardProps) {
           display: "flex",
           alignItems: "center",
           gap: "0.3rem",
-          color: "#aaa",
+          color: "var(--mute, #aaa)",
           textDecoration: "none",
           fontSize: "0.72rem",
           zIndex: 1,
