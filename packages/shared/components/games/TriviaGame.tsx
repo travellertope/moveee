@@ -153,16 +153,20 @@ export default function TriviaGame() {
 
       {/* Progress pips — one per question, no repeats */}
       <div className="trivia-progress">
-        {questions.map((_, i) => (
-          <div
-            key={i}
-            className={[
-              "trivia-progress__pip",
-              i < current    ? "trivia-progress__pip--done"   : "",
-              i === current  ? "trivia-progress__pip--active" : "",
-            ].join(" ")}
-          />
-        ))}
+        {questions.map((_, i) => {
+          const done = i < current || (i === current && isAnswered);
+          const active = i === current && !isAnswered;
+          return (
+            <div
+              key={i}
+              className={[
+                "trivia-progress__pip",
+                done   ? "trivia-progress__pip--done"   : "",
+                active ? "trivia-progress__pip--active" : "",
+              ].join(" ")}
+            />
+          );
+        })}
       </div>
 
       {/* Category + number */}

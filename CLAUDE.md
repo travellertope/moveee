@@ -928,7 +928,7 @@ re-derived from scratch each session.
 | 5 | Post Composer | Site B | Done (built in a separate session, confirmed by user 2026-06-24) |
 | 6 | Magazine / Article Detail | Site A | Done — rebuilt from mockup (see "Magazine archive page" above) |
 | 7 | Events / Happenings | Site B | Done — rebuilt from mockup (see "Events/Happenings web surface" above) |
-| 8 | Culture Games | Site B | Not started |
+| 8 | Culture Games | Site B | Done — rebuilt from mockup 2026-06-26 (see "Culture Games — visual rebuild" below) |
 | 9 | Member Dashboard | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Dashboard — visual rebuild" below) |
 | 10 | Member Settings | Site B | Done — rebuilt from mockup 2026-06-24 (see "Member Settings — visual rebuild" below) |
 | 11 | Wallet, Perks & Coupons | Site B | Done — rebuilt from mockup 2026-06-24 (see "Wallet, Perks & Coupons — visual rebuild" below) |
@@ -939,6 +939,67 @@ re-derived from scratch each session.
 | 16 | Design System & Core UI Components | Site A + B | Not started |
 | 17 | Authentication Flow | Site B | Done — rebuilt from mockup 2026-06-25 (see "Authentication Flow — visual rebuild" below) |
 | 18 | Overlays & Micro-interactions | Site B | Done — rebuilt from mockup 2026-06-25 (see "Overlays & Micro-interactions — visual rebuild + dark-mode hex-color fix" below) |
+
+### Culture Games — visual rebuild (§8, June 2026)
+
+`mockups/web/moveee_culture_games.html` (5 frames: Games Hub, Trivia In Progress, Trivia
+Answer Revealed, Shared Game Done Screen for Quiz & Puzzle States, Mobile Companion)
+diffed directly against the live components — `packages/shared/components/games/`
+(`GameCard.tsx`, `GameDoneScreen.tsx`, `TriviaGame.tsx`, `WhoSaidItGame.tsx`) and
+`apps/connect/app/games.css`. Game logic/backend (Trivia, Who Said It?, Sudoku,
+Crossword) was already fully functional going in — this was a visual-only pass, same
+methodology as every other §-rebuild in this file.
+
+- **`GameCard.tsx`** (Games Hub cards): wrapped the meta row + CTA in a new
+  `.game-card__footer` div so they sit on one row per the mockup, and added
+  `borderColor: badgeColor` to the difficulty badge's inline style (was missing an
+  outline, just a filled pill).
+- **`GameDoneScreen.tsx`** (shared end screen for all 4 games, Frame 4): added a
+  `GAME_TAG_MODIFIER` lookup (`gds-game-tag--trivia/wsi/sudoku/crossword`) so each
+  game's header pill gets its own brand color instead of one flat style; the
+  dot-separator + "Already played today" badge in the meta row is now gated on
+  `!isPuzzle` (quiz games only) — the mockup's puzzle-state variant (Sudoku/Crossword)
+  shows date-only with no badge, since puzzles have no daily-replay-block concept; share
+  button + subscribe form + nav actions are now wrapped in one `.gds-actions-zone`
+  container (matching the mockup's single 32px-padded/24px-gap "Actions Zone" block,
+  previously three separately-spaced siblings); the share button now toggles a real
+  `gds-share-btn--copied` modifier class on copy-success (was text-only before, so the
+  mockup's green success-state pill styling was unreachable); removed the redundant
+  "✓ " text prefix from the subscribe-success message since `.gds-sub-success` now
+  renders the checkmark as a CSS `::before` pseudo-element circle instead.
+- **`games.css`**: split `.gds-game-tag` into a base class + 4 color modifiers
+  (Trivia → `var(--moss)`, Who Said It → `var(--ochre)`, Sudoku →
+  `var(--game-sudoku, #1a3a5c)`, Crossword → `var(--game-crossword, #5c3a1a)` — the last
+  two are fallback literals since no `--game-sudoku`/`--game-crossword` CSS variables
+  exist in `globals.css`, following the project's standard `var(--token, #fallback)`
+  convention). Also fixed a duplicate, non-adjacent `.gds-sub-success` selector
+  (layout/background props and typography props had been split across two separate rule
+  blocks with the `::before` pseudo-element sandwiched between them) by merging into one
+  consolidated rule. Rebuilt the games-hub layout, game-page nav, Trivia progress
+  pips/option states, and the full `.gds-*` Game Done Screen block to match the mockup's
+  spacing/radius/color values (`--radius-xl`/`--radius-full`, `--shadow-card`,
+  `--success`/`--error` for the subscribe success/error states — same semantic-color
+  convention used in the Wallet/Perks/Overlays passes elsewhere in this file).
+- **`TriviaGame.tsx`**: CSS-only — its JSX already matched the mockup's question/option/
+  explanation structure; only `games.css` rules needed updating.
+- **Deliberate deviation — Who Said It? reuses the Trivia design system.** The mockup has
+  no dedicated "Who Said It?" gameplay frame (Frames 2/3 are both Trivia). `WhoSaidItGame.tsx`
+  required no JSX changes; its quote-card/option/feedback states were mapped onto the same
+  CSS classes and visual language already built for Trivia's progress bar, option states, and
+  feedback callouts, rather than inventing a separate, unspecified design.
+- **Confirmed dead, left untouched**: `.game-result*` CSS block has zero references in any
+  `.tsx`/`.ts` file (grepped across the repo) — not part of this rebuild, not removed either,
+  consistent with this file's general practice of only removing dead code when it's
+  specifically in scope or flagged by the user.
+- **Deferred, no mockup ground truth**: light-touch rounding/hover polish on
+  `.sudoku-numpad-btn`/`.cw-btn` chrome and in-board cell-state coloring
+  (`.sudoku-cell--*`/`.cw-cell--*`) were not addressed in this pass — the mockup has no
+  Sudoku/Crossword gameplay frame, only the shared Game Done Screen's puzzle-state variant.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean, zero
+  errors) on `apps/connect` and a CSS brace-balance check on `games.css` (230/230, balanced).
+  Re-check pixel fidelity against `mockups/web/moveee_culture_games.html` in a real
+  environment before considering this fully closed.
 
 ### Member Dashboard — visual rebuild (§9, June 2026)
 

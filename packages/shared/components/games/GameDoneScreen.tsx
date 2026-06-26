@@ -18,6 +18,13 @@ const GAME_META: Record<Props["game"], { label: string; icon: string }> = {
   crossword: { label: "Daily Crossword",  icon: "✏️"  },
 };
 
+const GAME_TAG_MODIFIER: Record<Props["game"], string> = {
+  trivia:    "gds-game-tag--trivia",
+  wsi:       "gds-game-tag--wsi",
+  sudoku:    "gds-game-tag--sudoku",
+  crossword: "gds-game-tag--crossword",
+};
+
 const OTHER_GAME: Record<Props["game"], { href: string; label: string }> = {
   wsi:       { href: "/games/trivia",     label: "Culture Trivia" },
   trivia:    { href: "/games/who-said-it", label: "Who Said It?" },
@@ -99,7 +106,7 @@ export default function GameDoneScreen({ game, score, total, date, alreadyDone }
         {/* Header bar */}
         <div className="gds-header">
           <span className="gds-logo">THE MOVEEE</span>
-          <span className="gds-game-tag">{meta.icon} {meta.label}</span>
+          <span className={`gds-game-tag ${GAME_TAG_MODIFIER[game]}`}>{meta.icon} {meta.label}</span>
         </div>
 
         {/* Score / result zone */}
@@ -122,47 +129,57 @@ export default function GameDoneScreen({ game, score, total, date, alreadyDone }
         {/* Date + status */}
         <div className="gds-meta-row">
           <span className="gds-date">{formatDate(date)}</span>
-          {alreadyDone && <span className="gds-already">Already played today</span>}
-        </div>
-
-        {/* Share button */}
-        <button className="gds-share-btn" onClick={handleShare}>
-          {shared ? "✓ Copied to clipboard" : "Share your score →"}
-        </button>
-
-        {/* Games notify subscription */}
-        <div className="gds-sub-zone">
-          {subState === "done" ? (
-            <p className="gds-sub-success">✓ You're on the list — we'll ping you daily.</p>
-          ) : (
+          {!isPuzzle && alreadyDone && (
             <>
-              <p className="gds-sub-label">Get daily game reminders</p>
-              <form className="gds-sub-form" onSubmit={handleSubscribe}>
-                <input
-                  type="email"
-                  className="gds-sub-input"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <button type="submit" className="gds-sub-btn" disabled={subState === "loading"}>
-                  {subState === "loading" ? "…" : "Notify me"}
-                </button>
-              </form>
-              {subState === "error" && <p className="gds-sub-error">Try again in a moment.</p>}
+              <span className="gds-meta-dot" />
+              <span className="gds-already">Already played today</span>
             </>
           )}
         </div>
 
-        {/* Nav actions */}
-        <div className="gds-actions">
-          <Link href={otherGame.href} className="gds-btn gds-btn--primary">
-            Try {otherGame.label} →
-          </Link>
-          <Link href="/games" className="gds-btn gds-btn--ghost">
-            All Games
-          </Link>
+        <div className="gds-actions-zone">
+          {/* Share button */}
+          <button
+            className={`gds-share-btn${shared ? " gds-share-btn--copied" : ""}`}
+            onClick={handleShare}
+          >
+            {shared ? "✓ Copied to clipboard" : "Share your score →"}
+          </button>
+
+          {/* Games notify subscription */}
+          <div className="gds-sub-zone">
+            {subState === "done" ? (
+              <p className="gds-sub-success">You're on the list — we'll ping you daily.</p>
+            ) : (
+              <>
+                <p className="gds-sub-label">Get daily game reminders</p>
+                <form className="gds-sub-form" onSubmit={handleSubscribe}>
+                  <input
+                    type="email"
+                    className="gds-sub-input"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit" className="gds-sub-btn" disabled={subState === "loading"}>
+                    {subState === "loading" ? "…" : "Notify me"}
+                  </button>
+                </form>
+                {subState === "error" && <p className="gds-sub-error">Try again in a moment.</p>}
+              </>
+            )}
+          </div>
+
+          {/* Nav actions */}
+          <div className="gds-actions">
+            <Link href={otherGame.href} className="gds-btn gds-btn--primary">
+              Try {otherGame.label} →
+            </Link>
+            <Link href="/games" className="gds-btn gds-btn--ghost">
+              All Games
+            </Link>
+          </div>
         </div>
 
       </div>
