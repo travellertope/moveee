@@ -2670,6 +2670,75 @@ convention.
   community posts that link to a directory entry via `_linked_directory_id`)
   — flagged in the original mockup but not built in this pass.
 
+### Discover web — visual fidelity pass (June 2026)
+
+`mockups/web/moveee_discover.html` ("Moveee - Discover", 3 frames: Discover Home
+Desktop 1440px, Filter Panel Desktop Overlay, Mobile Companion 390px) diffed
+directly against `packages/shared/components/DiscoverBrowser.tsx` +
+`apps/connect/app/discover.css` — the feature itself (pagination, search, type
+filter, region filter, sort, rails, grid) was already fully built and correct
+going into this pass; only CSS/JSX visual fixes were needed, same methodology
+as every other Figma rebuild pass in this file.
+
+- `.disc-filter-apply` was `var(--ink)` — mockup's sticky filter-panel footer
+  button is `bg-ochre` (hover `#A93C15`). Fixed.
+- Desktop filter panel was a centered bottom-sheet-style modal — mockup's
+  Frame 2 is a **right-edge-anchored slide-in panel** (`width: 420px, height:
+  100%, border-radius: 16px 0 0 16px` — left-corner radius only). Fixed via a
+  `@media (min-width: 720px)` override on `.disc-filter-overlay`
+  (`align-items: stretch; justify-content: flex-end`) and `.disc-filter-panel`
+  (full height, no bottom-sheet radius). Mobile keeps the original bottom-sheet
+  treatment (`border-radius: 16px 16px 0 0`, `max-height: 85vh`) — matches
+  Frame 3.
+- `.disc-filter-close` was a bare "✕" text glyph — mockup uses a circular
+  32×32 `bg-paper-warm` button with an inline SVG stroke-X icon. Rebuilt to
+  match (`DiscoverBrowser.tsx`'s close button JSX + a new `.disc-filter-close`
+  class).
+- `.disc-empty` (no-results state) had no icon and a flat background — mockup
+  shows a dashed-border, rounded, tinted-background card with a grayscale icon
+  above the text. Added `.disc-empty-icon` (🔍, `filter: grayscale(1);
+  opacity: 0.5`) and restyled the container to match.
+- Added a "Reset" link (ochre, `.disc-filter-reset`) to the filter panel
+  header, shown only when a draft region/sort differs from default — mockup's
+  Frame 3 mobile filter sheet has this; desktop panel reuses the same header
+  component for consistency. Reset only clears the draft state (region/sort
+  inputs) — the user still presses the existing "Show N entries" apply button
+  to commit, consistent with the pre-existing draft/apply UX pattern (Reset
+  doesn't auto-apply).
+- "⚙ Filters" pill button now shows an active-filter count suffix (e.g.
+  "⚙ Filters (1)") via a new `activeFilterCount` computed value
+  (`region ? 1 : 0` + `sort !== "relevant" ? 1 : 0`), matching Frame 3's
+  "⚙ Filters (1)" mobile chip-row treatment.
+- Search bar radius split: mockup wants a pill (`999px`) on mobile (Frame 3)
+  but `rounded-lg` (8px) + centered `max-width: 480px` on desktop (Frame 1) —
+  previously a single radius was used at all widths. Added a `@media
+  (min-width: 720px)` override.
+- Star ratings now always render 5 characters total — hollow/ghost stars
+  (`var(--ghost, #d8cfc0)`) pad out the remainder (e.g. `★★★★☆ 4.4`), matching
+  the mockup's fixed 5-star display; previously only filled stars were
+  rendered with no padding.
+- **Deliberately left unchanged**: the mockup's desktop type-filter is a
+  dropdown-trigger + popover (collapsed by default, opens on click), while the
+  live implementation keeps the always-visible horizontally-scrollable
+  chip row at all breakpoints — the same UX already used on mobile and already
+  shipped/tested. Chose consistency across breakpoints over literal mockup
+  replication for this one control, the same kind of judgment call as the
+  Member Directory portfolio-card hover-vs-touch precedent elsewhere in this
+  file. Revisit only if a future pass specifically wants the popover pattern.
+- **Not yet implemented in this pass**: Frame 1's dashed-border icon-topped
+  "empty state" demo card in the Explore More grid area was a mockup
+  illustration of the same `.disc-empty` treatment described above, not a
+  separate component — no additional work needed beyond the `.disc-empty`
+  fix.
+- Verified via CSS brace-balance check on `discover.css` (51/51, balanced)
+  and `tsc --noEmit` on `apps/connect` (clean, zero errors, after restoring
+  `node_modules` which was missing from this session's sandbox at the start
+  of the pass). **Not visually verified in a browser** — same
+  `NEXTAUTH_SECRET`/WordPress credentials gap as every other Figma rebuild
+  pass in this file. Re-check pixel fidelity against
+  `mockups/web/moveee_discover.html` in a real environment before considering
+  this fully closed.
+
 ### Directory Entry Detail page — visual fidelity pass (June 2026)
 
 `mockups/web/directory_entry_detail.html` ("Moveee Connect - Directory Entry Detail", 4

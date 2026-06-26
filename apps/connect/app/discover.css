@@ -41,6 +41,14 @@
   background: var(--paper);
 }
 
+@media (min-width: 720px) {
+  .disc-search-bar {
+    border-radius: 8px;
+    max-width: 480px;
+    margin: 12px auto;
+  }
+}
+
 .disc-search-input {
   flex: 1;
   border: none;
@@ -211,11 +219,26 @@
   .disc-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-.disc-empty,
 .disc-loading {
   text-align: center;
   color: var(--mute);
   padding: 40px 0;
+}
+
+.disc-empty {
+  text-align: center;
+  color: var(--mute);
+  padding: 48px 24px;
+  border: 2px dashed var(--ghost, var(--rule));
+  border-radius: 12px;
+  background: rgba(243, 236, 224, 0.5);
+}
+
+.disc-empty-icon {
+  font-size: 32px;
+  filter: grayscale(1);
+  opacity: 0.5;
+  margin-bottom: 8px;
 }
 
 .disc-load-more {
@@ -249,7 +272,7 @@
 }
 
 @media (min-width: 720px) {
-  .disc-filter-overlay { align-items: center; }
+  .disc-filter-overlay { align-items: stretch; justify-content: flex-end; }
 }
 
 .disc-filter-panel {
@@ -263,7 +286,12 @@
 }
 
 @media (min-width: 720px) {
-  .disc-filter-panel { border-radius: 16px; }
+  .disc-filter-panel {
+    border-radius: 16px 0 0 16px;
+    max-width: 420px;
+    max-height: none;
+    height: 100%;
+  }
 }
 
 .disc-filter-section-label {
@@ -306,7 +334,7 @@
   display: block;
   width: 100%;
   margin-top: 20px;
-  background: var(--ink);
+  background: var(--ochre);
   color: #fff;
   border: none;
   border-radius: 999px;
@@ -315,11 +343,36 @@
   cursor: pointer;
 }
 
-.disc-filter-close {
+.disc-filter-apply:hover {
+  background: #a93c15;
+}
+
+.disc-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.disc-filter-reset {
   background: none;
   border: none;
   cursor: pointer;
-  float: right;
-  font-size: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ochre);
+}
+
+.disc-filter-close {
+  background: var(--paper-warm, #fdf5e6);
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--ink);
+  flex-shrink: 0;
 }
