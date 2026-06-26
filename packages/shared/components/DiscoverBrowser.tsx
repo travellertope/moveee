@@ -98,7 +98,11 @@ function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean })
             <div className="disc-card-footer">
               {entry.averageRating ? (
                 <span className="disc-card-rating" style={{ color: "#B38238" }}>
-                  {"★".repeat(Math.round(entry.averageRating))} {entry.averageRating.toFixed(1)}
+                  {"★".repeat(Math.round(entry.averageRating))}
+                  <span style={{ color: "var(--ghost, #d8cfc0)" }}>
+                    {"☆".repeat(5 - Math.round(entry.averageRating))}
+                  </span>{" "}
+                  {entry.averageRating.toFixed(1)}
                 </span>
               ) : <span />}
               {entry.subtype && <span className="disc-card-subtype">{entry.subtype}</span>}
@@ -265,7 +269,8 @@ export default function DiscoverBrowser({
     setFilterOpen(false);
   }
 
-  const hasActiveRefinement = !!region || sort !== "relevant";
+  const activeFilterCount = (region ? 1 : 0) + (sort !== "relevant" ? 1 : 0);
+  const hasActiveRefinement = activeFilterCount > 0;
 
   return (
     <div>
@@ -337,7 +342,7 @@ export default function DiscoverBrowser({
           className={`disc-filter-btn${hasActiveRefinement ? " disc-filter-btn--active" : ""}`}
           onClick={openFilter}
         >
-          ⚙ Filters
+          ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
         </button>
       </div>
 
@@ -379,7 +384,10 @@ export default function DiscoverBrowser({
       {loading ? (
         <div className="disc-loading">Loading…</div>
       ) : entries.length === 0 ? (
-        <div className="disc-empty">No entries match these filters.</div>
+        <div className="disc-empty">
+          <div className="disc-empty-icon">🔍</div>
+          No entries match these filters.
+        </div>
       ) : (
         <>
           <div className="disc-grid">
@@ -402,10 +410,28 @@ export default function DiscoverBrowser({
       {filterOpen && (
         <div className="disc-filter-overlay" onClick={() => setFilterOpen(false)}>
           <div className="disc-filter-panel" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="disc-filter-close" aria-label="Close" onClick={() => setFilterOpen(false)}>
-              ✕
-            </button>
-            <h2 style={{ fontSize: 16, fontWeight: 700 }}>Filter Discover</h2>
+            <div className="disc-filter-header">
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Filter Discover</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {(draftRegion || draftSort !== "relevant") && (
+                  <button
+                    type="button"
+                    className="disc-filter-reset"
+                    onClick={() => {
+                      setDraftRegion(null);
+                      setDraftSort("relevant");
+                    }}
+                  >
+                    Reset
+                  </button>
+                )}
+                <button type="button" className="disc-filter-close" aria-label="Close" onClick={() => setFilterOpen(false)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
             <div className="disc-filter-section-label">Region</div>
             <div className="disc-chip-row" style={{ paddingTop: 0 }}>
