@@ -5166,3 +5166,204 @@ Output 3 frames: Frame 1 (Current baseline, annotated), Frame 2 (Redesigned comp
 Frame 3 (Redesigned compact mobile).
 
 ---
+
+## 23. DISCOVER (DIRECTORY BROWSE) — WEB (Site B, web.themoveee.com/discover)
+
+### Note on scope
+
+Mobile's catalog (`docs/figma-make-prompts.md` §11C, "PROMPT 11C — 'Discover' Tab + Feed Reference
+Chips") frames Discover primarily as an IA change to the feed (removing Directory entries from
+the inline timeline) and only sketches the browse screen itself as Frame 2 of that prompt. This
+web section documents the real, already-shipped `DiscoverBrowser.tsx` browse surface in full —
+its own dedicated prompt rather than a sub-frame of a feed-IA prompt — and it has grown two
+features the mobile version doesn't have: a personalized "Picked for You" rail and a
+"Trending in Community" rail. There is no mockup HTML for this page yet (unlike most §9–§20
+sections, which are visual-fidelity passes against an existing `mockups/web/*.html` file) — this
+is a from-scratch design prompt, not a rebuild-to-match-mockup pass.
+
+### Brand architecture
+
+Site B (`apps/connect`). Public route — reachable by both authenticated and unauthenticated
+visitors (the underlying `culture_directory` content is public), unlike most of §9–§13 which are
+member-only. Entry point is a compass icon in `ConnectHeader.tsx` (`apps/connect/components/
+Header.tsx`), linking to `/discover` — sits alongside the existing nav, not a new top-level tab.
+
+### Why this section exists
+
+Grounded in `packages/shared/components/DiscoverBrowser.tsx`, `apps/connect/app/discover/
+page.tsx`, `apps/connect/app/discover.css` (`disc-*` namespace), `apps/connect/app/api/directory/
+browse/route.ts`. This is the web counterpart to mobile's `DiscoverScreen.tsx` — same backend
+(`GET /culture/v1/directory/browse`), same filter/sort vocabulary, but a few real implementation
+details diverge from the mobile catalog's framing (see DEV notes below) and have no mockup
+reference yet, so this prompt is the first visual design pass for the page.
+
+### Marketing copy (final — use verbatim where shown)
+
+**Header:** "Discover" (Fraunces, bold) + a search toggle icon, no subtitle/lede — this is a
+utility browse surface, not a marketing landing page, so it skips the hero-band treatment every
+other §9–§13 page gets.
+
+**Empty state (no results for current filters):** "No entries match these filters."
+
+**Filter panel:** "Filter Discover" + "Region" + "Sort by" section labels; footer button label
+is dynamic — `"Show entries"` before the debounced count resolves, then `"Show {N} entr{y|ies}"`.
+
+**Load-more / count line:** `"Load more"` button while more pages remain; once exhausted,
+`"Showing {N} of {total} entr{y|ies}"`.
+
+**Rail headings (only rendered when that rail has ≥1 result):** "Picked for You" · "Recently
+Added" · "Trending in Community". Grid heading (always shown): "Explore More".
+
+<!-- DEV 1 (revised — the original 12-pill always-visible chip row read as cluttered/"chips spread
+on the page" and has been replaced with a single compact dropdown trigger): Type filtering is NOT
+a separate filter-sheet section like mobile's catalog implies, but it's also no longer 12
+always-visible pills — it's a single "Type ▾" dropdown trigger (shows "All Types" or the active
+type's emoji+label) directly under the search bar/toggle, which opens a small 2-column popover
+menu listing "All Types" + the 11 entry types (each row: emoji + label, active row gets a subtle
+filled background, no per-type brand color in the trigger itself — color-coding is reserved for
+badges on the cards below, not the filter control). A trailing "⚙ Filters" pill sits next to the
+Type trigger and opens the overlay panel for Region + Sort only. Don't put a Type section inside
+the Region/Sort filter panel — it's its own adjacent dropdown — and don't revert to the old
+always-expanded pill row. -->
+
+<!-- DEV 1b: The Type dropdown closes on selecting an option or clicking outside (a transparent
+full-screen backdrop layer behind the popover, in front of the rest of the page) — same dismiss
+pattern as the existing Region/Sort filter overlay, just lighter-weight (no modal dimming, no
+slide-up animation — it's a small anchored popover, not a sheet). -->
+
+<!-- DEV 2: Three personalization/ranking rails sit above the "Explore More" grid, each
+independently fetched and each hidden entirely (no heading, no empty rail) when it has zero
+results — "Picked for You" (filtered client-side from a larger recent batch against the viewer's
+interest tags, hidden completely for logged-out visitors or anyone with no interests set —
+mobile's catalog has no equivalent of this rail at all), "Recently Added" (`sort=recent`), then
+"Trending in Community" (`sort=trending`, ranked by community-post reference count, also absent
+from the mobile catalog's Frame 2). Render all three as the same compact horizontal-scroll card
+style — text-forward, no image, since Directory entries have no consistent photo asset. -->
+
+<!-- DEV 3: The "Explore More" grid defaults to a per-visit random shuffle (`sort=random` with a
+client-generated seed, stable across "Load more" pagination within one visit but different next
+visit) whenever the visitor hasn't typed a search or chosen an explicit sort — this is invisible
+in the UI (the chip group still shows no sort actively selected) but matters for the prompt's
+"Explore More" framing: describe it as a fresh, shuffled mix on every page load, not a fixed
+"browse all" order. -->
+
+<!-- DEV 4: Card footer differs by context — rail cards (compact, 140px) show an "Added Nd ago" /
+"🆕 Added today" age line; grid cards (full size) instead show a star-rating line ("★★★★☆ 4.2",
+only when reviews exist) plus a single subtype tag chip — these are two distinct footer layouts
+on the same card component (`DiscoverCard`'s `rail` prop), not one universal footer. -->
+
+<!-- DEV 5: There is no live "1,204 entries" caption near the grid the way mobile's catalog
+Frame 2 shows one permanently — the count only appears once the grid is fully loaded with no more
+pages left ("Showing N of total entries"); while more pages remain, a "Load more" button renders
+in that same slot instead. The filter panel's own footer button has a separate, debounced live
+count specific to the draft filters being edited — don't conflate the two counts. -->
+
+### PROMPT 23 — Discover (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — DISCOVER HOME (Desktop, 1440px)
+
+HEADER (64px, paper-warm bg, ghost bottom border): "Discover" Fraunces 22px bold ink, left + 🔍
+  search-toggle icon button, right, 32px circular hit area, border-radius: var(--radius-full).
+
+SEARCH BAR (appears below header on toggle, shown active in this frame, 48px, white bg, ghost
+  border, border-radius: var(--radius-lg), max-width 480px): 🔍 icon + "Search people, places,
+  books…" DM Sans 14px ghost placeholder.
+
+FILTER ROW (per revised <!-- DEV 1 -->, 12px gap, 20px vertical padding — replaces the old
+  always-expanded 12-pill chip row): a "Type ▾" dropdown trigger (ghost-border pill,
+  border-radius: var(--radius-full), 6–12px padding, shows "All Types" by default or the active
+  type's emoji+label, e.g. "🍽 Food", and an ochre-tinted border + text when a type is active) —
+  clicking it opens a 280px, 2-column popover (white fill, border-radius: var(--radius-lg),
+  shadow-card, 12px padding, anchored just below the trigger) listing "✦ All Types" + the 11 entry
+  types as plain text rows (emoji + label, 12.5px, no per-type brand color — active row gets a
+  subtle filled background + bold weight only). Trailing "⚙ Filters" pill, same radius, gains an
+  ochre-tinted border when Region or Sort has a non-default value, opens the existing Region/Sort
+  overlay panel unchanged.
+
+PICKED FOR YOU RAIL (only if present, logged-in + interests set, per <!-- DEV 2 -->): "Picked for
+  You" DM Sans 12px bold mute uppercase, 12px bottom. Horizontal scroll, 12px gap, 4 compact cards
+  (180px wide, white fill, border-radius: var(--radius-lg), shadow-card, 14px padding, no image):
+  type emoji+label (10px bold uppercase, type color) → title (DM Sans 14px bold ink, 2 lines) →
+  city ("📍 Lagos, Nigeria", 11px mute) → age line ("Added 3d ago" / "🆕 Added today" in ochre when
+  same-day).
+
+RECENTLY ADDED RAIL — same compact card style as above, heading "Recently Added".
+
+TRENDING IN COMMUNITY RAIL — same compact card style, heading "Trending in Community" (absent
+  from the mobile catalog — flag this as web-only per <!-- DEV 2 -->).
+
+EXPLORE MORE GRID (heading "Explore More" DM Sans 13px bold ink, 16px top/bottom margin; 4-column
+  grid, 16px gap):
+  ENTRY CARD (white fill, border-radius: var(--radius-lg), shadow-card, 16px padding):
+    Type emoji + label, 10px bold uppercase, type color.
+    Title: DM Sans 15px bold ink, 2 lines.
+    Excerpt: DM Sans 12px ink-soft, 2 lines, 6px top (grid cards only — rail cards never show one).
+    City: "📍 Accra, Ghana" 11px mute, 8px top.
+    Footer row (ghost top border, 8px top padding, 8px top margin) per <!-- DEV 4 -->: star
+      rating "★★★★★ 4.8" JetBrains Mono 10px gold (left, only if reviews exist) + subtype chip
+      (ghost border, 9px, border-radius: var(--radius-full), right).
+  Show 8 cards mixing types: Fela Kuti (Person) · New Afrika Shrine (Place) · Jollof Rice (Food) ·
+  Things Fall Apart (Book) · Afrobeat (Genre) · Ankara Print (Fashion) · Half of a Yellow Sun
+  (Film) · Ori Olokun (Artwork).
+
+  Below the grid, right-aligned: either a "Load more" ghost-border button
+  (border-radius: var(--radius-full)) or, once exhausted, "Showing 8 of 142 entries" JetBrains
+  Mono 11px mute — per <!-- DEV 5 -->, never both at once.
+
+EMPTY STATE (replaces the grid when zero results, centred, dashed border card,
+  border-radius: var(--radius-xl), padding 48px): greyscale 🔍 glyph, 40px, then "No entries match
+  these filters." DM Sans 14px mute.
+
+---
+
+FRAME 2 — FILTER PANEL (overlay, Desktop 1440px)
+
+SCRIM: ink @ 40%, full viewport. PANEL (right-anchored slide-in, 420px wide, white bg,
+  border-radius: var(--radius-xl) on the left edge corners only, shadow-card, full height):
+  ✕ close button, top-right, 16px inset.
+  "Filter Discover" Fraunces 18px bold ink, 24px padding top.
+
+  SECTION — REGION (24px padding, 16px bottom, per <!-- DEV 1 -->, no Type section here — it's
+    already in the always-visible chip row): "Region" DM Sans 12px bold mute uppercase, 10px
+    bottom. Chip wrap, 8px gap: "All" (selected) · "Nigeria" · "Ghana" · "UK" · "USA" ·
+    "Pan-African" — ghost border inactive, ink fill/white text active,
+    border-radius: var(--radius-full).
+
+  SECTION — SORT (24px padding, ghost top border): "Sort by" DM Sans 12px bold mute uppercase,
+    10px bottom. 3 radio rows: "Most Relevant" (selected) · "Recently Added" · "Highest Rated" —
+    20px circular radio per row, ochre dot fill when active.
+
+  FOOTER (sticky bottom, white bg, shadow-card top, 24px padding): full-width ochre button,
+    border-radius: var(--radius-full), 52px height, DM Sans 15px bold white — label is the
+    dynamic count copy from the Marketing Copy section above (show the resolved-count state:
+    "Show 142 entries").
+
+---
+
+FRAME 3 — MOBILE COMPANION (390px, single column)
+
+- Header + search toggle unchanged, full width.
+- Type chip row becomes horizontally scrollable (no wrap), same chip styling.
+- Each rail (Picked for You / Recently Added / Trending) keeps its own horizontal scroll, cards
+  shrink to 150px wide.
+- Explore More grid collapses to 2 columns, 12px gap, card padding reduced to 12px.
+- Filter panel becomes a bottom sheet instead of a right-anchored panel — drag handle, 36×4px
+  ghost pill centred, border-radius: var(--radius-2xl) top corners only, ~70% screen height,
+  otherwise identical section content to Frame 2.
+
+CONSTRAINTS:
+- Apply the shared --radius-* scale throughout (see CLAUDE.md "Border-radius convention") — no
+  flush/hard-cornered elements anywhere on this page.
+- Type filtering lives in the always-visible chip row, never inside the filter panel — see
+  <!-- DEV 1 -->.
+- Picked for You and Trending in Community are real, already-shipped rails with no mobile-catalog
+  equivalent — do not drop them when cross-referencing mobile's §11C.
+- Never use "Connect" as the surface name in any heading or copy — this is just "Discover", part
+  of Moveee (Site B).
+```
+
+Output 3 frames: Frame 1 (Discover Home, Desktop), Frame 2 (Filter Panel overlay, Desktop),
+Frame 3 (Mobile Companion, full scroll).
+
+---

@@ -126,6 +126,7 @@ export default function DiscoverBrowser({
   const [region, setRegion] = useState<string | null>(initialRegion);
   const [sort, setSort] = useState<SortOption>("relevant");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
 
   const [draftRegion, setDraftRegion] = useState<string | null>(region);
   const [draftSort, setDraftSort] = useState<SortOption>(sort);
@@ -294,27 +295,43 @@ export default function DiscoverBrowser({
       )}
 
       <div className="disc-chip-row">
-        <button
-          type="button"
-          className={`disc-chip${!type ? " disc-chip--active" : ""}`}
-          onClick={() => setType(null)}
-        >
-          All
-        </button>
-        {Object.entries(TYPE_BADGE).map(([slug, badge]) => {
-          const active = type === slug;
-          return (
-            <button
-              key={slug}
-              type="button"
-              className={`disc-chip${active ? " disc-chip--active" : ""}`}
-              style={active ? { backgroundColor: badge.color, borderColor: badge.color } : undefined}
-              onClick={() => setType(active ? null : slug)}
-            >
-              {badge.emoji} {badge.label}
-            </button>
-          );
-        })}
+        <div className="disc-type-dd">
+          <button
+            type="button"
+            className={`disc-type-trigger${type ? " disc-type-trigger--active" : ""}${typeMenuOpen ? " disc-type-trigger--open" : ""}`}
+            onClick={() => setTypeMenuOpen((v) => !v)}
+          >
+            {type ? `${TYPE_BADGE[type]?.emoji ?? "✦"} ${TYPE_BADGE[type]?.label ?? type}` : "All Types"}
+            <span className="disc-type-trigger-caret">▾</span>
+          </button>
+          {typeMenuOpen && (
+            <>
+              <div className="disc-type-menu-backdrop" onClick={() => setTypeMenuOpen(false)} />
+              <div className="disc-type-menu">
+                <button
+                  type="button"
+                  className={`disc-type-menu-item${!type ? " disc-type-menu-item--active" : ""}`}
+                  onClick={() => { setType(null); setTypeMenuOpen(false); }}
+                >
+                  ✦ All Types
+                </button>
+                {Object.entries(TYPE_BADGE).map(([slug, badge]) => {
+                  const active = type === slug;
+                  return (
+                    <button
+                      key={slug}
+                      type="button"
+                      className={`disc-type-menu-item${active ? " disc-type-menu-item--active" : ""}`}
+                      onClick={() => { setType(active ? null : slug); setTypeMenuOpen(false); }}
+                    >
+                      {badge.emoji} {badge.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
         <button
           type="button"
           className={`disc-filter-btn${hasActiveRefinement ? " disc-filter-btn--active" : ""}`}
