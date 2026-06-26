@@ -34,12 +34,14 @@ export default async function DiscoverPage({
   const initialRegion = region ?? detectRegion(viewerCountry);
 
   return (
-    <div className="disc-wrap">
-      <DiscoverBrowser
-        initialType={type ?? null}
-        initialRegion={initialRegion}
-        viewerInterests={viewerInterests}
-      />
+    <div className="disc-page-bg">
+      <div className="disc-wrap">
+        <DiscoverBrowser
+          initialType={type ?? null}
+          initialRegion={initialRegion}
+          viewerInterests={viewerInterests}
+        />
+      </div>
     </div>
   );
 }
