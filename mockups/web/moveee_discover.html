@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee - Discover</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        'ink': '#14110D',
+                        'ink-soft': '#3A342B',
+                        'mute': '#7A6F5C',
+                        'ghost': '#C8BFB0',
+                        'ochre': '#C5491F',
+                        'gold': '#B38238',
+                        'rule': 'rgba(20,17,13,0.10)',
+                        
+                        // Badge specific
+                        'bdg-person': '#B38238', 'bdg-person-bg': 'rgba(179,130,56,0.10)',
+                        'bdg-place': '#2E7D32', 'bdg-place-bg': 'rgba(46,125,50,0.08)',
+                        'bdg-food': '#C5491F', 'bdg-food-bg': 'rgba(197,73,31,0.08)',
+                        'bdg-book': '#78350F', 'bdg-book-bg': 'rgba(120,53,15,0.08)',
+                        'bdg-film': '#1976D2', 'bdg-film-bg': 'rgba(25,118,210,0.08)',
+                        'bdg-genre': '#6B48A8', 'bdg-genre-bg': 'rgba(107,72,168,0.08)',
+                        'bdg-movement': '#6B48A8', 'bdg-movement-bg': 'rgba(107,72,168,0.08)',
+                        'bdg-artwork': '#1976D2', 'bdg-artwork-bg': 'rgba(25,118,210,0.08)',
+                        'bdg-concept': '#3A342B', 'bdg-concept-bg': 'rgba(20,17,13,0.06)',
+                        'bdg-fashion': '#7B1FA2', 'bdg-fashion-bg': 'rgba(156,39,176,0.08)',
+                        'bdg-tv': '#00695C', 'bdg-tv-bg': 'rgba(0,137,123,0.08)',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    borderRadius: {
+                        'sm': '2px',
+                        'md': '4px',
+                        'lg': '8px',
+                        'xl': '12px',
+                        '2xl': '24px',
+                        'full': '9999px',
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(20, 17, 13, 0.08), 0 1px 2px rgba(20, 17, 13, 0.04)',
+                        'popover': '0 12px 32px -4px rgba(20, 17, 13, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; min-width: 390px; min-height: 844px; flex-shrink: 0; }
+        .desktop-screen { width: 1440px; min-width: 1440px; flex-shrink: 0; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        input:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #C8BFB0; opacity: 1; }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 text-ink font-sans min-h-screen overflow-x-auto hide-scrollbar pb-20">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: DISCOVER HOME (Desktop 1440px)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 shrink-0">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">1. Discover Home (Desktop)</span>
+        
+        <div class="desktop-screen bg-paper-deep rounded-xl border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- HEADER -->
+            <header class="h-[64px] bg-paper-warm flex items-center justify-between px-[32px] border-b border-rule shrink-0">
+                <h1 class="font-serif text-[22px] font-bold text-ink">Discover</h1>
+                <button class="w-[32px] h-[32px] bg-white rounded-full flex items-center justify-center border border-rule hover:bg-paper-deep transition-colors shadow-sm">
+                    <svg class="w-[16px] h-[16px] text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </header>
+
+            <!-- SEARCH BAR (Shown active/expanded below header) -->
+            <div class="px-[32px] pt-[24px] pb-[16px] flex justify-center shrink-0">
+                <div class="w-full max-w-[480px] h-[48px] bg-white border border-ghost rounded-lg flex items-center px-[16px] shadow-sm relative focus-within:border-ochre transition-colors">
+                    <svg class="w-5 h-5 text-ghost shrink-0 mr-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" class="flex-1 h-full bg-transparent text-[14px] font-sans text-ink placeholder:text-ghost border-none outline-none" placeholder="Search people, places, books…">
+                </div>
+            </div>
+
+            <!-- FILTER ROW -->
+            <!-- DEV 1: Type filtering lives in the always-visible chip row, never inside the filter panel -->
+            <div class="py-[20px] px-[32px] flex items-center gap-[12px] relative z-40 shrink-0">
+                
+                <!-- Type Dropdown Trigger (Active State Demo) -->
+                <div class="relative">
+                    <button class="h-[36px] px-[12px] rounded-full border border-ochre/40 bg-ochre/5 font-sans text-[13px] font-bold text-ochre whitespace-nowrap flex items-center gap-1 shadow-sm transition-colors">
+                        🍽 Food <span class="text-[9px] text-ochre pt-0.5 ml-1">▼</span>
+                    </button>
+                    
+                    <!-- Popover -->
+                    <div class="absolute top-[44px] left-0 w-[280px] bg-white rounded-lg shadow-popover border border-rule p-[12px] grid grid-cols-2 gap-x-2 gap-y-1 z-50">
+                        <button class="col-span-2 text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors mb-1">✦ All Types</button>
+                        
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">👤 Person</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">🏛 Place</button>
+                        
+                        <!-- Active Item -->
+                        <button class="text-left font-sans text-[12.5px] text-ochre font-bold bg-ochre/5 py-[6px] px-[8px] rounded transition-colors">🍽 Food</button>
+                        
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">📚 Book</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">🎬 Film</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">🎵 Genre</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">🌊 Movement</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">🎨 Artwork</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">💡 Concept</button>
+                        <button class="text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">👗 Fashion</button>
+                        <button class="col-span-2 text-left font-sans text-[12.5px] text-ink-soft py-[6px] px-[8px] rounded hover:bg-paper-deep transition-colors">📺 TV Series</button>
+                    </div>
+                </div>
+
+                <button class="h-[36px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[13px] font-medium text-ink-soft whitespace-nowrap flex items-center gap-1 shadow-sm hover:bg-paper-warm transition-colors">
+                    ⚙ Filters
+                </button>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-0 pb-[80px]">
+                
+                <!-- DEV 2: Picked for You and Trending in Community are real, already-shipped rails with no mobile-catalog equivalent. Picked for You is only shown if logged-in + interests set. -->
+                
+                <!-- PICKED FOR YOU RAIL -->
+                <div class="mb-[32px]">
+                    <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider px-[32px] mb-[12px]">Picked for You</h3>
+                    <div class="flex gap-[12px] overflow-x-auto hide-scrollbar pl-[32px] pr-[32px] pb-[8px]">
+                        
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #1976D2">🎬 FILM</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Moolaadé</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Senegal</span>
+                                <span class="font-sans text-[11px] text-ochre mt-[4px] block">🆕 Added today</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #6B48A8">🎵 GENRE</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Highlife</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Ghana</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 2d ago</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #B38238">👤 PERSON</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Tony Allen</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Nigeria</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 3d ago</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #78350F">📚 BOOK</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">No Longer at Ease</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Nigeria</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 5d ago</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RECENTLY ADDED RAIL -->
+                <div class="mb-[32px]">
+                    <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider px-[32px] mb-[12px]">Recently Added</h3>
+                    <div class="flex gap-[12px] overflow-x-auto hide-scrollbar pl-[32px] pr-[32px] pb-[8px]">
+                        
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #7B1FA2">👗 FASHION</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Aso-oke</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Nigeria</span>
+                                <span class="font-sans text-[11px] text-ochre mt-[4px] block">🆕 Added today</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #3A342B">💡 CONCEPT</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Ubuntu</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Southern Africa</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 1d ago</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #00695C">📺 TV SERIES</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Blood & Water</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 South Africa</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 2d ago</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TRENDING IN COMMUNITY RAIL -->
+                <div class="mb-[32px]">
+                    <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider px-[32px] mb-[12px]">Trending in Community</h3>
+                    <div class="flex gap-[12px] overflow-x-auto hide-scrollbar pl-[32px] pr-[32px] pb-[8px]">
+                        
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #2E7D32">🏛 PLACE</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Nike Art Gallery</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 Lagos, Nigeria</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 5d ago</span>
+                            </div>
+                        </div>
+
+                        <div class="w-[180px] bg-white rounded-lg shadow-card p-[14px] flex flex-col justify-between shrink-0 border border-rule/5 cursor-pointer hover:shadow-popover transition-shadow min-h-[130px]">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #C5491F">🍽 FOOD</span>
+                                <h4 class="font-sans text-[14px] font-bold text-ink leading-tight line-clamp-2">Suya</h4>
+                            </div>
+                            <div>
+                                <span class="font-sans text-[11px] text-mute block mt-[4px]">📍 West Africa</span>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 1w ago</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- EXPLORE MORE GRID -->
+                <div class="px-[32px] flex flex-col">
+                    <h3 class="font-sans text-[13px] font-bold text-ink my-[16px]">Explore More</h3>
+                    
+                    <div class="grid grid-cols-4 gap-[16px]">
+                        
+                        <!-- Grid Card 1: Person -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #B38238">👤 PERSON</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Fela Kuti</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">Pioneer of Afrobeat, human rights activist, and celebrated Nigerian multi-instrumentalist.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Lagos, Nigeria</span>
+                            
+                            <!-- DEV 4: Footer row with star rating only if reviews exist + subtype chip. -->
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 4.9</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Musician</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 2: Place -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #2E7D32">🏛 PLACE</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">New Afrika Shrine</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">Open-air entertainment center located in Ikeja, Lagos State. The replacement of the original Shrine created by Fela Kuti.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Ikeja, Lagos</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 4.8</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Venue</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 3: Food -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #C5491F">🍽 FOOD</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Jollof Rice</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">A rice dish from West Africa. The dish is typically made with long-grain rice, tomatoes, onions, spices, and meat.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 West Africa</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 5.0</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Dish</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 4: Book -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #78350F">📚 BOOK</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Things Fall Apart</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">Chinua Achebe's debut novel, exploring pre-colonial life in the southeastern part of Nigeria and the arrival of Europeans.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Nigeria</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 4.9</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Fiction</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 5: Genre -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #6B48A8">🎵 GENRE</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Afrobeat</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">A music genre that involves the combination of elements of West African musical styles such as fuji music and highlife.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Nigeria</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 4.9</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Music</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 6: Fashion -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #7B1FA2">👗 FASHION</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Ankara Print</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">Colorful cotton cloth with batik-inspired motifs, widely used for traditional and contemporary clothing across West Africa.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 West Africa</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★<span class="text-ghost font-normal">☆</span> 4.4</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Textile</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 7: Film -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #1976D2">🎬 FILM</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Half of a Yellow Sun</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">A 2013 historical drama film directed by Biyi Bandele based on the novel of the same name by Chimamanda Ngozi Adichie.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Nigeria / UK</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★<span class="text-ghost font-normal">☆</span> 4.1</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Drama</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Card 8: Artwork -->
+                        <div class="bg-white rounded-lg shadow-card p-[16px] border border-rule/5 flex flex-col cursor-pointer hover:shadow-popover transition-shadow">
+                            <span class="text-[10px] font-bold uppercase mb-[4px] block" style="color: #1976D2">🎨 ARTWORK</span>
+                            <h4 class="font-sans text-[15px] font-bold text-ink leading-tight line-clamp-2">Ori Olokun</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.4]">A bronze head from Ile-Ife, representing the sea deity Olokun. Discovered in the early 20th century by Leo Frobenius.</p>
+                            <span class="font-sans text-[11px] text-mute block mt-[8px]">📍 Ife, Nigeria</span>
+                            
+                            <div class="flex items-center justify-between border-t border-ghost mt-[8px] pt-[8px]">
+                                <span class="font-mono text-[10px] font-bold text-gold">★★★★★ 4.9</span>
+                                <span class="border border-ghost px-[8px] py-[2px] rounded-full text-[9px] text-ink-soft bg-paper-deep">Sculpture</span>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- DEV 5: Show either a "Load more" button or "Showing N of N entries", never both at once. -->
+                    <div class="w-full flex justify-end mt-[24px]">
+                        <!-- Showing state 1: Load More button -->
+                        <button class="h-[36px] px-[20px] rounded-full border border-ghost bg-white font-sans text-[13px] font-medium text-ink-soft hover:bg-paper-deep transition-colors shadow-sm">
+                            Load more
+                        </button>
+                    </div>
+
+                </div>
+                
+                <!-- EMPTY STATE DEMO -->
+                <div class="px-[32px] mt-[48px] w-full">
+                    <span class="block font-mono text-[10px] text-mute uppercase tracking-widest text-center mb-4">Empty State Demo</span>
+                    <div class="w-full border-2 border-dashed border-ghost rounded-xl p-[48px] flex flex-col items-center justify-center bg-paper-warm/50">
+                        <span class="text-[40px] grayscale opacity-60">🔍</span>
+                        <p class="font-sans text-[14px] text-mute mt-[16px]">No entries match these filters.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: FILTER PANEL (Desktop Overlay)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 shrink-0 relative mt-[48px]">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">2. Filter Panel (Desktop Overlay)</span>
+        
+        <div class="desktop-screen h-[720px] bg-paper-deep rounded-xl border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            <!-- Simulated background content -->
+            <div class="p-8 grid grid-cols-4 gap-4 opacity-50">
+                <div class="h-32 bg-white rounded-lg shadow"></div>
+                <div class="h-32 bg-white rounded-lg shadow"></div>
+                <div class="h-32 bg-white rounded-lg shadow"></div>
+                <div class="h-32 bg-white rounded-lg shadow"></div>
+            </div>
+
+            <!-- SCRIM -->
+            <div class="absolute inset-0 bg-ink/40 z-40"></div>
+
+            <!-- FILTER PANEL -->
+            <div class="absolute right-0 top-0 bottom-0 w-[420px] bg-white rounded-l-xl shadow-card z-50 flex flex-col">
+                
+                <!-- Close Button -->
+                <button class="absolute top-[16px] right-[16px] w-[32px] h-[32px] bg-paper-warm rounded-full flex items-center justify-center text-ink hover:bg-gray-200 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <!-- Header -->
+                <div class="pt-[24px] px-[24px] pb-[16px]">
+                    <h2 class="font-serif text-[18px] font-bold text-ink">Filter Discover</h2>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar">
+                    
+                    <!-- SECTION: REGION -->
+                    <!-- DEV 1: no Type section here — it's already in the always-visible chip row -->
+                    <div class="px-[24px] pt-[24px] pb-[16px]">
+                        <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider mb-[10px]">Region</h3>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[13px] border border-ink text-left transition-colors">All</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left hover:bg-paper-deep transition-colors">Nigeria</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left hover:bg-paper-deep transition-colors">Ghana</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left hover:bg-paper-deep transition-colors">UK</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left hover:bg-paper-deep transition-colors">USA</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left hover:bg-paper-deep transition-colors">Pan-African</button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: SORT -->
+                    <div class="px-[24px] pt-[24px] border-t border-ghost/40">
+                        <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider mb-[10px]">Sort by</h3>
+                        <div class="flex flex-col">
+                            <label class="flex items-center h-[44px] cursor-pointer group">
+                                <div class="w-[20px] h-[20px] rounded-full border border-ochre flex items-center justify-center mr-[12px]">
+                                    <div class="w-[10px] h-[10px] bg-ochre rounded-full"></div>
+                                </div>
+                                <span class="font-sans text-[14px] text-ink group-hover:text-ochre transition-colors">Most Relevant</span>
+                            </label>
+                            <label class="flex items-center h-[44px] cursor-pointer group">
+                                <div class="w-[20px] h-[20px] rounded-full border border-ghost mr-[12px] group-hover:border-ink transition-colors"></div>
+                                <span class="font-sans text-[14px] text-ink group-hover:text-ochre transition-colors">Recently Added</span>
+                            </label>
+                            <label class="flex items-center h-[44px] cursor-pointer group">
+                                <div class="w-[20px] h-[20px] rounded-full border border-ghost mr-[12px] group-hover:border-ink transition-colors"></div>
+                                <span class="font-sans text-[14px] text-ink group-hover:text-ochre transition-colors">Highest Rated</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="p-[24px] bg-white border-t border-ghost/40 shadow-[0_-4px_12px_rgba(20,17,13,0.03)] shrink-0">
+                    <button class="w-full h-[52px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold shadow-sm hover:bg-[#A93C15] transition-colors">
+                        Show 142 entries
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: MOBILE COMPANION (390px)              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3 shrink-0 mt-[48px]">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">3. Mobile Companion</span>
+        
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <header class="bg-white z-40 shrink-0 shadow-card">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+                
+                <div class="h-[56px] flex items-center justify-between px-4 border-b border-ghost-light">
+                    <div class="flex items-center">
+                        <span class="font-serif text-[18px] font-bold text-ink tracking-tight leading-none mt-1">moveee</span>
+                        <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-widest ml-1 mt-1">connect</span>
+                    </div>
+                    <div class="flex items-center gap-[12px]">
+                        <button class="relative text-ochre p-1">
+                            <svg class="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M16.494 8.67l-2.071 8.528c-.146.6-.74.965-1.332.82l-8.528-2.071c-.6-.146-.965-.74-.82-1.332l2.071-8.528c.146-.6.74-.965 1.332-.82l8.528 2.071c.6.146.965.74.82 1.332zm-6.241 1.776a2.121 2.121 0 10-2.998-3 2.121 2.121 0 002.998 3z"></path></svg>
+                        </button>
+                        <div class="w-[1px] h-[20px] bg-ghost/40 mx-[4px]"></div>
+                        <button class="relative text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span class="absolute top-0 right-[2px] w-[8px] h-[8px] bg-ochre rounded-full border-[1.5px] border-white"></span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-hidden relative">
+                
+                <!-- Background Content (Dimmed by Bottom Sheet) -->
+                <div class="absolute inset-0 flex flex-col overflow-y-auto hide-scrollbar pb-[80px]">
+                    
+                    <div class="bg-white px-[16px] pb-[12px] pt-[12px] border-b border-ghost-light">
+                        <div class="w-full h-[40px] bg-paper-deep rounded-full flex items-center px-[16px] border border-transparent focus-within:border-ochre">
+                            <svg class="w-4 h-4 text-ghost shrink-0 mr-[8px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="flex-1 h-full bg-transparent text-[14px] font-sans text-ink placeholder:text-ghost border-none outline-none" placeholder="Search...">
+                        </div>
+                    </div>
+
+                    <!-- Horizontally Scrollable Type Chips (Mobile specific) -->
+                    <div class="h-[44px] bg-white border-b border-ghost-light flex items-center gap-[8px] px-[16px] overflow-x-auto hide-scrollbar shrink-0 sticky top-0 z-30">
+                        <button class="h-[28px] px-[12px] rounded-full border border-ochre bg-ochre/5 font-sans text-[12px] font-bold text-ochre whitespace-nowrap flex items-center gap-1 shadow-sm">
+                            🍽 Food
+                        </button>
+                        <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-medium text-ink-soft whitespace-nowrap flex items-center gap-1 hover:bg-paper-deep">
+                            👤 Person
+                        </button>
+                        <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-medium text-ink-soft whitespace-nowrap flex items-center gap-1 hover:bg-paper-deep">
+                            🏛 Place
+                        </button>
+                        <button class="h-[28px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-medium text-ink-soft whitespace-nowrap flex items-center gap-1 hover:bg-paper-deep">
+                            ⚙ Filters (1)
+                        </button>
+                    </div>
+
+                    <div class="pt-[16px] pb-[8px]">
+                        <h3 class="font-sans text-[12px] font-bold text-mute uppercase px-[16px] mb-[8px]">Recently Added</h3>
+                        <div class="flex gap-[12px] overflow-x-auto hide-scrollbar pl-[16px] pr-[16px] pb-[4px]">
+                            <!-- Cards shrink to 150px wide -->
+                            <div class="w-[150px] bg-white rounded-lg shadow-card p-[12px] shrink-0 border border-rule/5 h-[110px] flex flex-col justify-between">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase mb-[4px] block" style="color: #7B1FA2">👗 FASHION</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-2">Aso-oke</h4>
+                                </div>
+                                <span class="font-sans text-[11px] text-ochre mt-[4px] block font-medium">🆕 Added today</span>
+                            </div>
+                            <div class="w-[150px] bg-white rounded-lg shadow-card p-[12px] shrink-0 border border-rule/5 h-[110px] flex flex-col justify-between">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase mb-[4px] block" style="color: #3A342B">💡 CONCEPT</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-2">Ubuntu</h4>
+                                </div>
+                                <span class="font-sans text-[11px] text-mute mt-[4px] block">Added 1d ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] pt-[16px]">
+                        <h3 class="font-sans text-[13px] font-bold text-ink mb-[12px]">Explore More</h3>
+                        
+                        <!-- Grid collapses to 2 columns, 12px gap, 12px padding -->
+                        <div class="grid grid-cols-2 gap-[12px]">
+                            
+                            <div class="bg-white rounded-lg shadow-card p-[12px] border border-ghost/20 flex flex-col justify-between min-h-[120px]">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase mb-[4px] block" style="color: #C5491F">🍽 FOOD</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-2">Jollof Rice</h4>
+                                </div>
+                                <div>
+                                    <span class="font-sans text-[10px] text-mute block mt-[4px]">📍 West Africa</span>
+                                    <div class="flex items-center justify-between border-t border-ghost/40 mt-[8px] pt-[6px]">
+                                        <span class="font-mono text-[9px] font-bold text-gold">★ 5.0</span>
+                                        <span class="border border-ghost px-[6px] py-[1px] rounded-full text-[8px] text-ink-soft">Dish</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow-card p-[12px] border border-ghost/20 flex flex-col justify-between min-h-[120px]">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase mb-[4px] block" style="color: #B38238">👤 PERSON</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink leading-tight line-clamp-2">Fela Kuti</h4>
+                                </div>
+                                <div>
+                                    <span class="font-sans text-[10px] text-mute block mt-[4px]">📍 Lagos</span>
+                                    <div class="flex items-center justify-between border-t border-ghost/40 mt-[8px] pt-[6px]">
+                                        <span class="font-mono text-[9px] font-bold text-gold">★ 4.9</span>
+                                        <span class="border border-ghost px-[6px] py-[1px] rounded-full text-[8px] text-ink-soft">Musician</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM SHEET FILTER PANEL OVERLAY -->
+                <div class="absolute inset-0 bg-ink/40 z-40"></div>
+
+                <div class="absolute bottom-0 w-full h-[70%] bg-white rounded-t-2xl shadow-sheet z-50 flex flex-col">
+                    <!-- Drag handle -->
+                    <div class="h-[24px] w-full flex items-center justify-center shrink-0">
+                        <div class="w-[36px] h-[4px] bg-ghost rounded-full"></div>
+                    </div>
+
+                    <div class="px-[24px] pb-[16px] flex items-center justify-between">
+                        <h2 class="font-serif text-[18px] font-bold text-ink">Filter Discover</h2>
+                        <button class="font-sans text-[13px] text-ochre">Reset</button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto px-[24px] pb-[20px]">
+                        <!-- SECTION: REGION -->
+                        <div class="pt-[8px] pb-[20px]">
+                            <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider mb-[10px]">Region</h3>
+                            <div class="flex flex-wrap gap-[8px]">
+                                <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[13px] border border-ink text-left">All</button>
+                                <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left">Nigeria</button>
+                                <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left">Ghana</button>
+                                <button class="h-[32px] px-[16px] rounded-full bg-white text-ink-soft font-sans text-[13px] border border-ghost text-left">UK</button>
+                            </div>
+                        </div>
+
+                        <!-- SECTION: SORT -->
+                        <div class="pt-[20px] border-t border-ghost/40">
+                            <h3 class="font-sans text-[12px] font-bold text-mute uppercase tracking-wider mb-[10px]">Sort by</h3>
+                            <div class="flex flex-col">
+                                <label class="flex items-center h-[44px]">
+                                    <div class="w-[20px] h-[20px] rounded-full border border-ochre flex items-center justify-center mr-[12px]">
+                                        <div class="w-[10px] h-[10px] bg-ochre rounded-full"></div>
+                                    </div>
+                                    <span class="font-sans text-[14px] text-ink font-bold text-ochre">Most Relevant</span>
+                                </label>
+                                <label class="flex items-center h-[44px]">
+                                    <div class="w-[20px] h-[20px] rounded-full border border-ghost mr-[12px]"></div>
+                                    <span class="font-sans text-[14px] text-ink">Recently Added</span>
+                                </label>
+                                <label class="flex items-center h-[44px]">
+                                    <div class="w-[20px] h-[20px] rounded-full border border-ghost mr-[12px]"></div>
+                                    <span class="font-sans text-[14px] text-ink">Highest Rated</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-[20px] bg-white border-t border-ghost/40 shrink-0 pb-[34px]">
+                        <button class="w-full h-[52px] rounded-full bg-ochre text-white font-sans text-[15px] font-bold shadow-sm">
+                            Show 142 entries
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
