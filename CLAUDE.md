@@ -469,6 +469,48 @@ superseded by this convention going forward.
 
 ---
 
+## Vendor dashboard — shipping zones + analytics gotchas (fixed June 2026)
+
+Two separate bugs in `apps/connect`'s vendor dashboard (`/vendor/shipping`,
+`/vendor/analytics`):
+
+1. **Shipping method settings shape.** WooCommerce REST API v3's
+   `POST /wp-json/wc/v3/shipping/zones/{zone_id}/methods/{instance_id}` expects
+   `settings` as a **flat map of `setting_id => string value`**
+   (`{ "cost": "10.00" }`), not a nested object (`{ "cost": { "value": "10.00" } }`).
+   `apps/connect/app/vendor/shipping/page.tsx`'s `saveMethod()` was building the
+   nested shape, so every save silently no-opped against the real API (the proxy
+   route itself, `app/api/vendor/shipping/zones/[zoneId]/methods/[instanceId]/route.ts`,
+   was a correct pass-through — the bug was purely in the payload shape built
+   client-side). Fixed by building `Record<string, string>` instead.
+2. **Analytics pagination + cross-vendor misattribution**
+   (`app/api/vendor/analytics/route.ts`). Two compounding issues:
+   - Both order-fetch sources (WCFM `wcfmmp/v1/orders` and the WooCommerce v3
+     fallback `wc/v3/orders`) were hardcoded to a single page
+     (`per_page=100&page=1`) despite a comment claiming intent to paginate —
+     any vendor with >100 orders in the selected period silently lost data.
+     Fixed with a bounded pagination loop (`MAX_PAGES = 5`, up to 500 orders)
+     on both sources.
+   - The vendor-line-item match used `!meta || String(meta.value) === vendorId`
+     — i.e. "no vendor meta on this line item? count it as this vendor's."
+     Core WooCommerce's `/wc/v3/orders` endpoint has **no vendor scoping at
+     all** and returns every vendor's orders system-wide; only WCFM tags line
+     items with `_vendor_id`/`vendor_id` meta. So whenever the WCFM fetch came
+     back empty and the code fell back to the unscoped `/wc/v3/orders` source,
+     every other vendor's revenue/order data (all missing vendor meta) got
+     misattributed wholesale to whichever vendor was viewing the dashboard.
+     Fixed by tracking `usingWcfm` and deriving `strict = !usingWcfm`, threaded
+     through `groupByDay()`, `topProducts()`, the `vendorOrders` filter, and
+     the aggregation loop: `meta ? String(meta.value) === vendorId : !strict` —
+     when on the unscoped fallback, a missing meta key now excludes the line
+     item rather than including it.
+   - If a future vendor-analytics bug surfaces as "vendor sees other vendors'
+     orders" or "numbers don't match WCFM," check first whether the WCFM
+     orders fetch is failing/empty (triggering the unscoped fallback) before
+     assuming a deeper data issue.
+
+---
+
 ## Raw SQL REST endpoints
 
 Several REST handlers bypass `WP_Query` / `get_user_meta` / `get_option` and

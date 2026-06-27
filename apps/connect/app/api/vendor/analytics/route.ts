@@ -22,7 +22,7 @@ function dateFrom(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function groupByDay(orders: any[], vendorId: string, days: number) {
+function groupByDay(orders: any[], vendorId: string, days: number, strict: boolean) {
   // Build a map of date → revenue
   const map = new Map<string, number>();
   // Pre-fill every day in range with 0
@@ -41,7 +41,8 @@ function groupByDay(orders: any[], vendorId: string, days: number) {
       const meta = (li.meta_data ?? []).find(
         (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
       );
-      if (!meta || String(meta.value) === vendorId) {
+      const belongsToVendor = meta ? String(meta.value) === vendorId : !strict;
+      if (belongsToVendor) {
         total += parseFloat(li.total ?? "0");
       }
     }
@@ -51,14 +52,15 @@ function groupByDay(orders: any[], vendorId: string, days: number) {
   return [...map.entries()].map(([date, revenue]) => ({ date, revenue }));
 }
 
-function topProducts(orders: any[], vendorId: string, limit = 5) {
+function topProducts(orders: any[], vendorId: string, strict: boolean, limit = 5) {
   const map = new Map<number, { name: string; revenue: number; qty: number; image: string | null }>();
   for (const o of orders) {
     for (const li of o.line_items ?? []) {
       const meta = (li.meta_data ?? []).find(
         (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
       );
-      if (meta && String(meta.value) !== vendorId) continue;
+      const belongsToVendor = meta ? String(meta.value) === vendorId : !strict;
+      if (!belongsToVendor) continue;
       const pid = li.product_id as number;
       const existing = map.get(pid);
       if (existing) {
@@ -102,31 +104,47 @@ export async function GET(req: NextRequest) {
   const vendorId  = String(user.id);
   const currency  = req.nextUrl.searchParams.get("currency") ?? "£";
 
-  // Fetch all orders in period for this vendor — we'll paginate up to 200
+  // Fetch all orders in period for this vendor — paginate up to 5 pages (500 orders)
   let orders: any[] = [];
+  let usingWcfm = false;
+  const MAX_PAGES = 5;
 
   try {
     // Try WCFM vendor orders first
-    const wcfmRes = await fetch(
-      `${CMS}/wp-json/wcfmmp/v1/orders?vendor_id=${vendorId}&after=${afterDate}&per_page=100&${wcAuth()}`,
-      { cache: "no-store" }
-    );
-    if (wcfmRes.ok) {
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const wcfmRes = await fetch(
+        `${CMS}/wp-json/wcfmmp/v1/orders?vendor_id=${vendorId}&after=${afterDate}&per_page=100&page=${page}&${wcAuth()}`,
+        { cache: "no-store" }
+      );
+      if (!wcfmRes.ok) break;
       const raw = await wcfmRes.json();
-      orders = Array.isArray(raw) ? raw : raw.orders ?? [];
+      const pageOrders: any[] = Array.isArray(raw) ? raw : raw.orders ?? [];
+      orders = orders.concat(pageOrders);
+      if (pageOrders.length < 100) break;
     }
+    if (orders.length) usingWcfm = true;
   } catch { /* fall through */ }
 
   if (!orders.length) {
-    // Fallback: standard WC orders
+    // Fallback: standard WC orders (NOT vendor-scoped — returns every vendor's orders)
     try {
-      const p1 = await fetch(
-        `${CMS}/wp-json/wc/v3/orders?after=${afterDate}T00:00:00&per_page=100&page=1&${wcAuth()}`,
-        { cache: "no-store" }
-      );
-      if (p1.ok) orders = await p1.json();
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const pRes = await fetch(
+          `${CMS}/wp-json/wc/v3/orders?after=${afterDate}T00:00:00&per_page=100&page=${page}&${wcAuth()}`,
+          { cache: "no-store" }
+        );
+        if (!pRes.ok) break;
+        const pageOrders: any[] = await pRes.json();
+        orders = orders.concat(pageOrders);
+        if (pageOrders.length < 100) break;
+      }
     } catch { /* best-effort */ }
   }
+
+  // strict=true means "only count line items with an explicit matching vendor meta" —
+  // required when orders came from the unscoped WC v3 fallback, since every vendor's
+  // line items would otherwise satisfy the no-meta shortcut and get misattributed here.
+  const strict = !usingWcfm;
 
   // Filter to vendor's orders only
   const vendorOrders = orders.filter((o) =>
@@ -134,7 +152,7 @@ export async function GET(req: NextRequest) {
       const meta = (li.meta_data ?? []).find(
         (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
       );
-      return !meta || String(meta.value) === vendorId;
+      return meta ? String(meta.value) === vendorId : !strict;
     })
   );
 
@@ -146,7 +164,8 @@ export async function GET(req: NextRequest) {
       const meta = (li.meta_data ?? []).find(
         (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
       );
-      if (meta && String(meta.value) !== vendorId) continue;
+      const belongsToVendor = meta ? String(meta.value) === vendorId : !strict;
+      if (!belongsToVendor) continue;
       totalRevenue += parseFloat(li.total ?? "0");
       totalQty     += li.quantity ?? 1;
     }
@@ -203,8 +222,8 @@ export async function GET(req: NextRequest) {
       net:          parseFloat(netEarnings.toFixed(2)),
       pendingPayout: parseFloat(pendingPayout.toFixed(2)),
     },
-    chart:          groupByDay(vendorOrders, vendorId, days),
-    topProducts:    topProducts(vendorOrders, vendorId),
+    chart:          groupByDay(vendorOrders, vendorId, days, strict),
+    topProducts:    topProducts(vendorOrders, vendorId, strict),
     statusBreakdown: statusBreakdown(vendorOrders),
   });
 }

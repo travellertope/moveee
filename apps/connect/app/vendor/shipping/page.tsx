@@ -163,10 +163,10 @@ export default function VendorShippingPage() {
   async function saveMethod(zoneId: number, method: ShippingMethod) {
     const key = `${zoneId}:${method.instance_id}`;
     setSaving(key);
-    const settingsUpdate: Record<string, { value: string }> = {};
+    const settingsUpdate: Record<string, string> = {};
     for (const sid of Object.keys(method.settings)) {
       const k = editKey(zoneId, method.instance_id, sid);
-      if (editing[k] !== undefined) settingsUpdate[sid] = { value: editing[k] };
+      if (editing[k] !== undefined) settingsUpdate[sid] = editing[k];
     }
 
     try {
