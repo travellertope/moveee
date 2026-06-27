@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { assertVendorOwnsZone } from "@/lib/vendor-shipping";
 
 const CMS       = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WC_KEY    = process.env.WC_CONSUMER_KEY    ?? "";
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ zon
   if (!user?.isVendor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { zoneId } = await params;
+  if (!(await assertVendorOwnsZone(zoneId, user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let body: any;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });

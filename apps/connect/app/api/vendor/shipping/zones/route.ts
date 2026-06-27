@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getOwnedZoneIds, recordZoneOwner } from "@/lib/vendor-shipping";
 
 const CMS       = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WC_KEY    = process.env.WC_CONSUMER_KEY    ?? "";
@@ -19,7 +20,10 @@ export async function GET() {
   try {
     const zonesRes = await fetch(`${CMS}/wp-json/wc/v3/shipping/zones?${wcAuth()}`, { cache: "no-store" });
     if (!zonesRes.ok) return NextResponse.json({ error: "Could not load zones" }, { status: zonesRes.status });
-    const zones = await zonesRes.json();
+    const allZones = await zonesRes.json();
+
+    const ownedZoneIds = new Set(await getOwnedZoneIds(user.id));
+    const zones = allZones.filter((zone: any) => ownedZoneIds.has(Number(zone.id)));
 
     const zonesWithMethods = await Promise.all(
       zones.map(async (zone: any) => {
@@ -64,6 +68,7 @@ export async function POST(req: NextRequest) {
     );
     const data = await res.json();
     if (!res.ok) return NextResponse.json({ error: data.message ?? "Failed to create zone" }, { status: res.status });
+    await recordZoneOwner(data.id, user.id);
     return NextResponse.json({ ...data, methods: [] }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });

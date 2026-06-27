@@ -200,6 +200,20 @@ class Culture_Activator {
         // Community event RSVPs table.
         Culture_Community_RSVP::create_table();
 
+        // Vendor shipping-zone ownership table (each WooCommerce shipping
+        // zone is global by default; this maps a zone to the vendor who
+        // created it so vendor dashboard APIs can enforce ownership).
+        $vendor_shipping_zones_table = $wpdb->prefix . 'culture_vendor_shipping_zones';
+        dbDelta( "CREATE TABLE {$vendor_shipping_zones_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            zone_id bigint(20) NOT NULL,
+            vendor_id bigint(20) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY zone_id (zone_id),
+            KEY vendor_idx (vendor_id)
+        ) {$charset_collate};" );
+
         // House Fellowship cluster membership table (Literati Connect plan, Phase 1).
         Culture_Clusters::create_table();
 
