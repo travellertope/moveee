@@ -904,6 +904,30 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Vendor shipping-zone ownership — assign a vendor as the owner of a
+        // newly created WooCommerce shipping zone.
+        register_rest_route( 'culture/v1', '/vendor/shipping-zone-owner', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_assign_shipping_zone_owner' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'zone_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'vendor_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Vendor shipping-zone ownership — look up the owner of a zone, or
+        // list all zone IDs owned by a vendor.
+        register_rest_route( 'culture/v1', '/vendor/shipping-zone-owner', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_shipping_zone_owner' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'zone_id'   => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'vendor_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Initiate membership upgrade for an existing user.
         register_rest_route( 'culture/v1', '/user/upgrade-init', array(
             'methods'             => 'POST',
@@ -4541,6 +4565,37 @@ class Culture_REST_API {
         }, $users );
 
         return rest_ensure_response( $members );
+    }
+
+    /**
+     * Assign a vendor as the owner of a newly created shipping zone.
+     */
+    public static function handle_assign_shipping_zone_owner( $request ) {
+        $zone_id   = $request->get_param( 'zone_id' );
+        $vendor_id = $request->get_param( 'vendor_id' );
+
+        $assigned = Culture_Vendor_Shipping_Zones::assign_owner( $zone_id, $vendor_id );
+        if ( ! $assigned && Culture_Vendor_Shipping_Zones::get_owner( $zone_id ) !== 0 ) {
+            return new WP_Error( 'already_owned', 'This zone already has an owner.', array( 'status' => 409 ) );
+        }
+
+        return rest_ensure_response( array( 'success' => $assigned ) );
+    }
+
+    /**
+     * Look up shipping-zone ownership — by zone_id (owner) or vendor_id (owned zones).
+     */
+    public static function handle_get_shipping_zone_owner( $request ) {
+        $zone_id   = $request->get_param( 'zone_id' );
+        $vendor_id = $request->get_param( 'vendor_id' );
+
+        if ( $zone_id ) {
+            return rest_ensure_response( array( 'vendor_id' => Culture_Vendor_Shipping_Zones::get_owner( (int) $zone_id ) ) );
+        }
+        if ( $vendor_id ) {
+            return rest_ensure_response( array( 'zone_ids' => Culture_Vendor_Shipping_Zones::get_owned_zone_ids( (int) $vendor_id ) ) );
+        }
+        return new WP_Error( 'missing_param', 'Provide zone_id or vendor_id.', array( 'status' => 400 ) );
     }
 
     /**

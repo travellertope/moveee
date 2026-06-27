@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.6.0' );
+define( 'CULTURE_VERSION', '2.7.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -39,6 +39,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-vendor-shipping.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-clusters.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';

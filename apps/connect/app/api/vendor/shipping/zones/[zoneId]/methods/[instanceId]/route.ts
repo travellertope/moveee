@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { assertVendorOwnsZone } from "@/lib/vendor-shipping";
 
 const CMS       = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WC_KEY    = process.env.WC_CONSUMER_KEY    ?? "";
@@ -19,6 +20,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!user?.isVendor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { zoneId, instanceId } = await params;
+  if (!(await assertVendorOwnsZone(zoneId, user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let body: any;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
@@ -49,6 +54,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!user?.isVendor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { zoneId, instanceId } = await params;
+  if (!(await assertVendorOwnsZone(zoneId, user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const res = await fetch(

@@ -511,6 +511,58 @@ Two separate bugs in `apps/connect`'s vendor dashboard (`/vendor/shipping`,
 
 ---
 
+## Vendor shipping-zone ownership (June 2026)
+
+WooCommerce shipping zones (`wc/v3/shipping/zones...`) are a global, store-wide
+construct with **no native per-vendor scoping** — any vendor calling the existing
+`apps/connect` vendor shipping API could previously read/rename/delete/add methods
+to **any** zone in the store, not just their own (the routes only checked
+`session.user.isVendor`, never which zone belonged to which vendor). Fixed by adding
+an ownership-mapping layer entirely outside WooCommerce:
+
+- **DB table**: `wp_culture_vendor_shipping_zones` (`zone_id` UNIQUE, `vendor_id`,
+  `created_at`) — created in `Culture_Activator::create_tables()`,
+  `CULTURE_VERSION` bumped to `2.7.0` to trigger the table on next deploy (see
+  "Plugin DB table auto-upgrade" above).
+- **PHP class**: `Culture_Vendor_Shipping_Zones`
+  (`includes/core/class-culture-vendor-shipping.php`) — `assign_owner()` (no-op if
+  already owned, never overwrites), `get_owner()`, `is_owner()`,
+  `get_owned_zone_ids()`.
+- **REST endpoints** (`class-culture-rest-api.php`, API-key auth, same convention as
+  every other `culture/v1` endpoint): `POST /culture/v1/vendor/shipping-zone-owner`
+  (`handle_assign_shipping_zone_owner` — 409 `already_owned` if the zone has a
+  different owner) and `GET /culture/v1/vendor/shipping-zone-owner` (
+  `handle_get_shipping_zone_owner` — pass `zone_id` for `{vendor_id}`, or
+  `vendor_id` for `{zone_ids}`; 400 `missing_param` otherwise).
+- **Next.js helper**: `apps/connect/lib/vendor-shipping.ts` — `assertVendorOwnsZone()`,
+  `getOwnedZoneIds()`, `recordZoneOwner()`. Uses the `CULTURE_API_SECRET`
+  `Authorization: Bearer` convention (not the `wcAuth()` consumer-key query string
+  the shipping routes use to talk to WooCommerce itself — these are two separate
+  auth mechanisms in the same files, don't conflate them).
+- **Enforcement — all 5 vendor shipping operations now ownership-checked**:
+  - `app/api/vendor/shipping/zones/route.ts` — `GET` filters the zone list down to
+    `getOwnedZoneIds(user.id)` before returning; `POST` calls `recordZoneOwner()`
+    immediately after a new zone is created in WooCommerce.
+  - `app/api/vendor/shipping/zones/[zoneId]/route.ts` — `PATCH`/`DELETE` both call
+    `assertVendorOwnsZone(zoneId, user.id)` right after reading `zoneId` from
+    `params`, before doing anything else.
+  - `app/api/vendor/shipping/zones/[zoneId]/methods/route.ts` — `POST` (add method)
+    same guard.
+  - `app/api/vendor/shipping/zones/[zoneId]/methods/[instanceId]/route.ts` —
+    `PATCH`/`DELETE` same guard.
+- **Backfill decision for pre-existing zones**: deliberately **fail-closed, no
+  automatic backfill**. A zone created before this change has no ownership row, so
+  `getOwnedZoneIds()` won't include it and `assertVendorOwnsZone()` returns false for
+  everyone — such a zone simply won't appear in any vendor's dashboard until an admin
+  manually assigns it via `POST /culture/v1/vendor/shipping-zone-owner` (call once per
+  orphaned zone with the correct `vendor_id`, e.g. via `wp eval` or a one-off API
+  call). This was chosen over guessing an owner from zone name/locale heuristics —
+  silently mis-assigning a zone to the wrong vendor would be worse than it being
+  temporarily invisible. If a vendor reports a "missing" zone after this ships, that's
+  the fix: look up the zone ID and assign it manually.
+
+---
+
 ## Raw SQL REST endpoints
 
 Several REST handlers bypass `WP_Query` / `get_user_meta` / `get_option` and

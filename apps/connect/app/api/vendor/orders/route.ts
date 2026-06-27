@@ -25,9 +25,7 @@ function normaliseOrder(o: any, vendorId: string) {
     const meta = (li.meta_data ?? []).find(
       (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
     );
-    // If no vendor meta at all treat all items as belonging to this vendor
-    // (single-vendor store or items not yet stamped by WCFM)
-    return !meta || String(meta.value) === vendorId;
+    return !!meta && String(meta.value) === vendorId;
   });
 
   return {
@@ -150,7 +148,7 @@ export async function GET(req: NextRequest) {
         const meta = (li.meta_data ?? []).find(
           (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
         );
-        return !meta || String(meta.value) === vendorId;
+        return !!meta && String(meta.value) === vendorId;
       })
     );
 
