@@ -26,7 +26,7 @@ async function vendorOwnsOrder(order: any, vendorId: string): Promise<boolean> {
     const meta = (li.meta_data ?? []).find(
       (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
     );
-    return !meta || String(meta.value) === vendorId;
+    return !!meta && String(meta.value) === vendorId;
   });
 }
 
@@ -36,7 +36,7 @@ function normaliseOrder(o: any, vendorId: string) {
     const meta = (li.meta_data ?? []).find(
       (m: any) => m.key === "_vendor_id" || m.key === "vendor_id"
     );
-    return !meta || String(meta.value) === vendorId;
+    return !!meta && String(meta.value) === vendorId;
   });
 
   return {
