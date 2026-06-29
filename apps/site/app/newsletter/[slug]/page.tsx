@@ -18,7 +18,9 @@ export const dynamicParams = true;
 export async function generateStaticParams() {
   try {
     const issues = await getNewslettersWithFallback(100, { revalidate: 300 });
-    return issues.map((n: any) => ({ slug: n.slug }));
+    return issues
+      .filter((n: any) => !isNewsletterListId(n.slug))
+      .map((n: any) => ({ slug: n.slug }));
   } catch {
     return [];
   }
@@ -111,10 +113,11 @@ export default async function GmlIssuePage({
   // Access level — session check deferred to ArticleContentGate client component
   const accessLevel = getAccessLevel(issue);
 
-  // Fetch sibling issues for prev/next nav + issue numbering
+  // Fetch sibling issues for prev/next nav + issue numbering — scoped to this issue's own publication
   let allIssues: any[] = [];
   try {
-    allIssues = await getNewslettersWithFallback(50, { revalidate: 300 });
+    const fetchedIssues = await getNewslettersWithFallback(50, { revalidate: 300 });
+    allIssues = fetchedIssues.filter((n: any) => (n.nlList || "culture-drop") === listId);
   } catch {}
 
   const totalCount = allIssues.length;

@@ -229,7 +229,7 @@ export default async function NewsletterArchive({
         <section className="gml-recent">
           <div className="gml-recent-header">
             <h3>Recent <em>issues</em></h3>
-            <Link href="#archive">Full archive →</Link>
+            <Link href="/newsletter/culture-drop">Full archive →</Link>
           </div>
           <div className="gml-issues-grid">
             {recentIssues.map((issue: any, idx: number) => (
@@ -379,16 +379,14 @@ export default async function NewsletterArchive({
                 All <span className="nl-archive-tab-count">{allCount}</span>
               </Link>
               <Link
-                href="?list=culture-drop#archive"
-                className={`nl-archive-tab${activeFilter === "culture-drop" ? " nl-archive-tab--active" : ""}`}
-                scroll={false}
+                href="/newsletter/culture-drop"
+                className="nl-archive-tab"
               >
                 Culture Drop <span className="nl-archive-tab-count">{cdCount}</span>
               </Link>
               <Link
-                href="?list=getmelit#archive"
-                className={`nl-archive-tab${activeFilter === "getmelit" ? " nl-archive-tab--active" : ""}`}
-                scroll={false}
+                href="/newsletter/getmelit"
+                className="nl-archive-tab"
               >
                 GetMeLit <span className="nl-archive-tab-count">{gmlCount}</span>
               </Link>
