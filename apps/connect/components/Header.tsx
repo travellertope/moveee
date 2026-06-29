@@ -28,6 +28,15 @@ export default function ConnectHeader() {
   const [navTop, setNavTop] = useState(60);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/clear-cookies", { method: "POST" });
+    } catch {
+      // proceed with sign-out even if the cleanup call fails
+    }
+    signOut({ callbackUrl: "/login" });
+  };
   const user = session?.user as any;
 
   // Keep the mobile drawer pinned to the header's real bottom edge — the
@@ -169,7 +178,7 @@ export default function ConnectHeader() {
                       <button
                         className="ch-user-item ch-user-item--danger"
                         role="menuitem"
-                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        onClick={handleSignOut}
                       >
                         Sign out
                       </button>

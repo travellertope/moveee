@@ -28,6 +28,15 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/clear-cookies", { method: "POST" });
+    } catch {
+      // proceed with sign-out even if the cleanup call fails
+    }
+    signOut({ callbackUrl: "https://themoveee.com/" });
+  };
   const mobileUserMenuRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user as any;
@@ -174,7 +183,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                   <button
                     className="compact-user-item compact-user-item--danger"
                     role="menuitem"
-                    onClick={() => signOut({ callbackUrl: "https://themoveee.com/" })}
+                    onClick={handleSignOut}
                   >
                     Sign out
                   </button>
@@ -253,7 +262,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                   <button
                     className="compact-user-item compact-user-item--danger"
                     role="menuitem"
-                    onClick={() => { setMobileUserMenuOpen(false); signOut({ callbackUrl: "https://themoveee.com/" }); }}
+                    onClick={() => { setMobileUserMenuOpen(false); handleSignOut(); }}
                   >
                     Sign out
                   </button>
