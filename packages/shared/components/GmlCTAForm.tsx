@@ -27,7 +27,7 @@ export default function GmlCTAForm({
       <div className="nl-manage nl-manage--dark" style={{ padding: "8px 0 16px" }}>
         <p className="nl-manage-note">✓ Subscribed as a member</p>
         <Link href="/member/settings" className="nl-manage-btn" style={{ fontSize: "11px" }}>
-          Manage Newsletter Preferences →
+          Manage Preferences
         </Link>
       </div>
     );
