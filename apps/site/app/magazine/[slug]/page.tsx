@@ -120,31 +120,51 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const headings: { id: string; text: string }[] = [];
   const usedIds = new Set<string>();
 
-  const allHeadingRegex = /<h([23])[^>]*>(.*?)<\/h\1>/gi;
-  let match;
-  while ((match = allHeadingRegex.exec(rawContent)) !== null) {
-    const rawText = decodeHtml(match[2]);
-    if (!rawText) continue;
-    const existingId = /\bid="([^"]+)"/.exec(match[0])?.[1];
-    let id = existingId || toHeadingSlug(rawText);
-    if (!id) continue;
-    if (usedIds.has(id)) {
-      let n = 2;
-      while (usedIds.has(`${id}-${n}`)) n++;
-      id = `${id}-${n}`;
-    }
-    usedIds.add(id);
-    headings.push({ id, text: rawText });
-  }
-
-  let headingIdx = 0;
+  // Single pass that both builds the headings[] list and injects ids — avoids
+  // the bug of running two separately-written regexes and trying to keep a
+  // shared index in lockstep between them (any filtering done in one but not
+  // the other silently misaligns the ids). Matches real <h2>/<h3> tags, plus
+  // a common WP-editor fallback pattern where a section title is authored as
+  // a standalone paragraph wrapped entirely in <strong> (no surrounding
+  // text) rather than a real heading block — lots of editorial content uses
+  // this, and without detecting it the TOC always falls back to a single
+  // "Full article" link.
   const contentWithIds = rawContent.replace(
-    /<h([23])([^>]*)>(.*?)<\/h\1>/gi,
-    (full: string, level: string, attrs: string, inner: string) => {
-      if (headingIdx >= headings.length) return full;
-      const { id } = headings[headingIdx++];
-      if (/\bid=/.test(attrs)) return full;
-      return `<h${level}${attrs} id="${id}">${inner}</h${level}>`;
+    /<h([23])([^>]*)>([\s\S]*?)<\/h\1>|<p([^>]*)>(\s*<strong>([\s\S]*?)<\/strong>\s*)<\/p>/gi,
+    (
+      full: string,
+      level: string,
+      attrs: string,
+      inner: string,
+      pAttrs: string,
+      pInner: string,
+      pText: string
+    ) => {
+      const isHeading = !!level;
+      const innerHtml = isHeading ? inner : pText;
+      const rawText = decodeHtml(innerHtml.replace(/<[^>]*>/g, "")).trim();
+      if (!rawText) return full;
+      // Skip pseudo-heading paragraphs that are clearly just emphasis on a
+      // long sentence rather than a short section title.
+      if (!isHeading && (rawText.length > 80 || /[.!?]$/.test(rawText))) return full;
+
+      const attrsToCheck = isHeading ? attrs : pAttrs;
+      const existingId = /\bid="([^"]+)"/.exec(attrsToCheck)?.[1];
+      let id = existingId || toHeadingSlug(rawText);
+      if (!id) return full;
+      if (usedIds.has(id) && id !== existingId) {
+        let n = 2;
+        while (usedIds.has(`${id}-${n}`)) n++;
+        id = `${id}-${n}`;
+      }
+      usedIds.add(id);
+      headings.push({ id, text: rawText });
+
+      if (existingId) return full;
+      if (isHeading) {
+        return `<h${level}${attrs} id="${id}">${inner}</h${level}>`;
+      }
+      return `<p${pAttrs} id="${id}">${pInner}</p>`;
     }
   );
 
