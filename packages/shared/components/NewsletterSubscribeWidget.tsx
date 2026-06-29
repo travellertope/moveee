@@ -55,7 +55,7 @@ export default function NewsletterSubscribeWidget({
           {subscribed ? '✓ Subscribed as a member' : subscribing ? 'Subscribing…' : '✓ Subscribed as a member'}
         </p>
         <Link href="/member/settings" className="nl-manage-btn">
-          Manage Newsletter Preferences →
+          Manage Preferences
         </Link>
       </div>
     );

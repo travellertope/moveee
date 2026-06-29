@@ -305,16 +305,23 @@ h1, h2, h3, h4 {
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ochre);
+  color: var(--paper);
+  background: var(--ochre);
   text-decoration: none;
-  border-bottom: 1px solid rgba(197, 73, 31, 0.4);
-  padding-bottom: 2px;
-  transition: border-color 0.2s;
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
-.nl-manage-btn:hover { border-bottom-color: var(--ochre); }
+.nl-manage-btn:hover { background: var(--ochre-deep, #a83d18); border-color: var(--ochre-deep, #a83d18); }
 /* Dark-background variant */
 .nl-manage--dark .nl-manage-note { color: rgba(243, 236, 224, 0.38); }
-.nl-manage--dark .nl-manage-btn { color: var(--ochre); border-bottom-color: rgba(197, 73, 31, 0.45); }
+.nl-manage--dark .nl-manage-btn {
+  color: var(--ink);
+  background: var(--ochre);
+  border-color: var(--ochre);
+}
+.nl-manage--dark .nl-manage-btn:hover { background: var(--paper); color: var(--ochre); border-color: var(--paper); }
 
 /* ── Cookie Consent Bar ── */
 .cookie-bar {
