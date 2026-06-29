@@ -10,6 +10,7 @@ import ArticleContentGate from "@/components/ArticleContentGate";
 import { getAccessLevel } from "@/lib/access";
 import "../../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { NL_META, isNewsletterListId } from "@/lib/newsletter-lists";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -33,12 +34,15 @@ export async function generateMetadata({
   try {
     issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 300 });
   } catch {}
-  if (!issue) return { title: { absolute: "GetMeLit · The Moveee" } };
+  if (!issue) return { title: { absolute: "Moveee Magazine" } };
+
+  const listId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
+  const listLabel = NL_META[listId].label;
 
   const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
 
   return {
-    title: `${issue.title} · GetMeLit`,
+    title: `${issue.title} · ${listLabel}`,
     description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
     openGraph: {
       title: issue.title,
@@ -101,6 +105,9 @@ export default async function GmlIssuePage({
 
   if (!issue) notFound();
 
+  const listId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
+  const meta = NL_META[listId];
+
   // Access level — session check deferred to ArticleContentGate client component
   const accessLevel = getAccessLevel(issue);
 
@@ -152,7 +159,7 @@ export default async function GmlIssuePage({
         {hasFeaturedImage && <div className="gml-issue-hero-overlay" />}
         <div className="gml-issue-hero-inner">
           <div className="gml-issue-eyebrow">
-            GetMeLit · Issue N°{currentIssueNum}
+            {meta.label} · Issue N°{currentIssueNum}
           </div>
           <h1
             className="gml-issue-title"
@@ -200,15 +207,13 @@ export default async function GmlIssuePage({
         {/* Sidebar */}
         <aside className="gml-issue-sidebar">
           <div className="gml-sidebar-card">
-            <div className="gml-sidebar-label">★ GetMeLit · Biweekly</div>
-            <h4>Culture in your inbox, every other Friday.</h4>
-            <p>
-              Essays, picks, music, and events from across global
-              culture.
-            </p>
+            <div className="gml-sidebar-label">★ {meta.label} · {meta.cadence}</div>
+            <h4>{meta.tagline}</h4>
+            <p>{meta.standfirst}</p>
             <NewsletterSubscribeWidget
               placeholder="your@email.com"
               buttonLabel="Subscribe free →"
+              list={listId}
             />
           </div>
 
@@ -231,7 +236,7 @@ export default async function GmlIssuePage({
             <p>
               {totalCount} issue{totalCount !== 1 ? "s" : ""} and counting.
             </p>
-            <Link href="/newsletter" className="gml-sidebar-link">
+            <Link href={`/newsletter/${listId}`} className="gml-sidebar-link">
               Full archive →
             </Link>
           </div>
@@ -246,23 +251,18 @@ export default async function GmlIssuePage({
             <h3>
               Join the <em>culturally curious</em>.
             </h3>
-            <p>
-              GetMeLit lands in your inbox every two weeks — essays,
-              picks, music, and the events worth leaving the house for.
-              Free, always.
-            </p>
+            <p>{meta.standfirst}</p>
           </div>
           <div className="gml-signup-right">
-            <div className="gml-form-label">Subscribe to GetMeLit</div>
+            <div className="gml-form-label">Subscribe to {meta.label}</div>
             <NewsletterSubscribeWidget
               placeholder="your@email.com"
-              buttonLabel="Get Me Lit →"
+              buttonLabel="Subscribe →"
               buttonClassName="gml-signup-submit"
               variant="dark"
+              list={listId}
             />
-            <div className="gml-signup-note">
-              Free · Biweekly · Unsubscribe anytime
-            </div>
+            <div className="gml-signup-note">{meta.signupNote}</div>
           </div>
         </div>
       </section>
