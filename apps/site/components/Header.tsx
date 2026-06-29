@@ -27,6 +27,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user as any;
 
@@ -34,6 +36,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (mobileUserMenuRef.current && !mobileUserMenuRef.current.contains(e.target as Node)) {
+        setMobileUserMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -169,7 +174,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                   <button
                     className="compact-user-item compact-user-item--danger"
                     role="menuitem"
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={() => signOut({ callbackUrl: "https://themoveee.com/" })}
                   >
                     Sign out
                   </button>
@@ -217,6 +222,45 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-header-join">Join →</a>
             </>
           )}
+          {status === "authenticated" && user && (
+            <div className="mobile-avatar-wrap" ref={mobileUserMenuRef}>
+              <button
+                className="masthead-icon-btn mobile-avatar-btn"
+                onClick={() => setMobileUserMenuOpen((v) => !v)}
+                aria-label="User menu"
+                aria-expanded={mobileUserMenuOpen}
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="mobile-avatar-img" />
+                ) : (
+                  <span className="mobile-avatar-initial">
+                    {(user.name || user.username || "M").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </button>
+              {mobileUserMenuOpen && (
+                <div className="mobile-avatar-menu" role="menu">
+                  <div className="compact-user-name">{user.displayName || user.name}</div>
+                  <div className="compact-user-tier">
+                    {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
+                  </div>
+                  <div className="compact-user-divider" />
+                  <a href={`${CONNECT_URL}/member`} className="compact-user-item" role="menuitem">My Dashboard</a>
+                  <a href={`${CONNECT_URL}/feed`} className="compact-user-item" role="menuitem">Feed</a>
+                  <a href={`${CONNECT_URL}/member/wallet`} className="compact-user-item" role="menuitem">Wallet</a>
+                  <a href={`${CONNECT_URL}/member/settings`} className="compact-user-item" role="menuitem">Settings</a>
+                  <div className="compact-user-divider" />
+                  <button
+                    className="compact-user-item compact-user-item--danger"
+                    role="menuitem"
+                    onClick={() => { setMobileUserMenuOpen(false); signOut({ callbackUrl: "https://themoveee.com/" }); }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <button
             className="masthead-hamburger"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -239,23 +283,6 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <a href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
           <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
         </div>
-        {status === "authenticated" && user && (
-          <div className="mobile-menu-actions">
-            <a href={`${CONNECT_URL}/member`} className="mobile-menu-member-link">
-              {user.avatarUrl
-                ? <img src={user.avatarUrl} alt="" className="mobile-menu-avatar" />
-                : <span className="mobile-menu-avatar mobile-menu-avatar--initial">{(user.name || "M").charAt(0).toUpperCase()}</span>
-              }
-              <span>{user.displayName || user.name}</span>
-            </a>
-            <button
-              className="mobile-menu-signout"
-              onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
-            >
-              Sign out
-            </button>
-          </div>
-        )}
       </nav>
 
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
