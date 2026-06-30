@@ -1004,3 +1004,214 @@
   .mg-issues { padding: 40px 16px; }
   .mg-issues-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── SINGLE ISSUE DETAIL PAGE ── */
+.mag-issue-page {
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  padding: 64px 64px 96px;
+  box-sizing: border-box;
+}
+.mag-issue-page-header {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 48px;
+  margin-bottom: 64px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--rule);
+}
+.mag-issue-page-cover {
+  position: relative;
+  width: 220px;
+  height: 330px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--ink);
+  box-shadow: 0 4px 16px rgba(20,17,13,.16), 0 1px 3px rgba(20,17,13,.08);
+}
+.mag-issue-page-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3d4a2a 0%, #14110d 100%);
+}
+.mag-issue-page-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.mag-issue-page-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.mag-issue-page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 0;
+}
+.mag-issue-page-note {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink-soft, #3A342B);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 560px;
+}
+.mag-issue-page-stats {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.mag-issue-page-nav {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+.mag-issue-nav-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.mag-issue-nav-link:hover { text-decoration: underline; }
+
+.mag-issue-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+.mag-issue-section-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 12px;
+}
+.mag-issue-section-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+.mag-issue-section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  flex: 1;
+}
+.mag-issue-section-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--mute);
+  text-transform: uppercase;
+}
+.mag-issue-posts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+.mag-issue-post {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+.mag-issue-post-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: var(--paper-deep);
+}
+.mag-issue-post-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #d8cfc0 0%, var(--paper-deep) 100%);
+}
+.mag-issue-post-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mag-issue-post-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  margin: 0;
+}
+.mag-issue-post-excerpt {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0;
+}
+.mag-issue-post-cta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-top: 4px;
+}
+.mag-issue-empty {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--mute);
+  text-align: center;
+  padding: 80px 0;
+}
+.mag-issue-back {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+.mag-issue-back a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.mag-issue-back a:hover { text-decoration: underline; }
+
+@media (max-width: 1024px) {
+  .mag-issue-page { padding: 48px 32px 80px; }
+  .mag-issue-posts { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .mag-issue-page { padding: 32px 16px 64px; }
+  .mag-issue-page-header { grid-template-columns: 1fr; gap: 24px; }
+  .mag-issue-page-cover { width: 160px; height: 240px; }
+  .mag-issue-page-title { font-size: 28px; }
+  .mag-issue-posts { grid-template-columns: 1fr; }
+}

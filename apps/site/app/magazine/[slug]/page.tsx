@@ -10,6 +10,7 @@ import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
+import TocScrollSpy from "@/components/TocScrollSpy";
 import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -324,7 +325,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
           {/* LEFT — TOC */}
           <aside className="ar-toc">
-            <div className="ar-toc-heading">In this piece</div>
+            <TocScrollSpy />
             <details className="ar-toc-details" open>
               <summary className="ar-toc-summary">
                 <span className="ar-toc-toggle-label">Contents</span>

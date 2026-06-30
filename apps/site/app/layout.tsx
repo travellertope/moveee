@@ -17,6 +17,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
+import GlobalAuthModal from "@/components/GlobalAuthModal";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -162,6 +163,7 @@ export default async function RootLayout({
                   <Footer />
                   <CartDrawer />
                   <CookieConsent />
+                  <GlobalAuthModal />
                 </AdsProvider>
               </CartProvider>
             </LanguageProvider>
