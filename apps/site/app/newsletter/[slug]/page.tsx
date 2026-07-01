@@ -10,7 +10,7 @@ import ArticleContentGate from "@/components/ArticleContentGate";
 import { getAccessLevel } from "@/lib/access";
 import "../../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { NL_META, isNewsletterListId } from "@/lib/newsletter-lists";
+import { NL_META, isNewsletterListId, NewsletterListId } from "@/lib/newsletter-lists";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -38,7 +38,7 @@ export async function generateMetadata({
   } catch {}
   if (!issue) return { title: { absolute: "Moveee Magazine" } };
 
-  const listId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
+  const listId: NewsletterListId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
   const listLabel = NL_META[listId].label;
 
   const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
@@ -107,7 +107,7 @@ export default async function GmlIssuePage({
 
   if (!issue) notFound();
 
-  const listId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
+  const listId: NewsletterListId = isNewsletterListId(issue.nlList) ? issue.nlList : "culture-drop";
   const meta = NL_META[listId];
 
   // Access level — session check deferred to ArticleContentGate client component
