@@ -1651,6 +1651,30 @@
   height: 1px;
   background: var(--ochre);
 }
+.nl-masthead-rss {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--mute);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  transition: color .15s, border-color .15s;
+}
+.nl-masthead-rss:hover {
+  color: var(--ochre);
+  border-color: var(--ochre);
+}
+.nl-masthead-rss svg {
+  width: 12px;
+  height: 12px;
+}
 .nl-masthead-title {
   font-family: 'Fraunces', serif;
   font-size: clamp(32px, 4vw, 56px);
