@@ -5,6 +5,7 @@ import Image from "next/image";
 import CategoryNav from "@/components/CategoryNav";
 import EditorialSection from "@/components/EditorialSection";
 import MagazineFilterPills from "@/components/MagazineFilterPills";
+import SeriesLandingPage from "@/components/SeriesLandingPage";
 import "../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -123,7 +124,10 @@ export default async function MagazineArchiveWrapper({
         </nav>
       </section>
 
-      {isFiltered ? (
+      {series ? (
+        /* ── SERIES LANDING PAGE ── */
+        <SeriesLandingPage name={termName} description={termDescription} stories={stories} />
+      ) : isFiltered ? (
         /* ── FILTERED VIEW ── */
         <section className="mg-filtered">
           <div className="mg-sec-label">Filtered Results</div>
