@@ -3546,11 +3546,31 @@ class Culture_REST_API {
             return is_array( $val ) ? $val : array();
         };
 
+        $liked_articles      = $unpack( '_culture_like_article_ids' );
+        $bookmarked_articles = $unpack( '_culture_bookmark_article_ids' );
+        $liked_quotes        = $unpack( '_culture_like_quote_ids' );
+        $bookmarked_quotes   = $unpack( '_culture_bookmark_quote_ids' );
+
+        $like_counts    = array();
+        $liked_post_ids = array_unique( array_map( 'intval', array_merge( $liked_articles, $liked_quotes ) ) );
+        if ( ! empty( $liked_post_ids ) ) {
+            $id_placeholders = implode( ',', array_fill( 0, count( $liked_post_ids ), '%d' ) );
+            $count_rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT post_id, meta_value FROM {$wpdb->postmeta}
+                 WHERE meta_key = '_culture_like_count' AND post_id IN ({$id_placeholders})",
+                $liked_post_ids
+            ), ARRAY_A );
+            foreach ( $count_rows as $row ) {
+                $like_counts[ (string) $row['post_id'] ] = (int) $row['meta_value'];
+            }
+        }
+
         return rest_ensure_response( array(
-            'liked_articles'      => $unpack( '_culture_like_article_ids' ),
-            'bookmarked_articles' => $unpack( '_culture_bookmark_article_ids' ),
-            'liked_quotes'        => $unpack( '_culture_like_quote_ids' ),
-            'bookmarked_quotes'   => $unpack( '_culture_bookmark_quote_ids' ),
+            'liked_articles'      => $liked_articles,
+            'bookmarked_articles' => $bookmarked_articles,
+            'liked_quotes'        => $liked_quotes,
+            'bookmarked_quotes'   => $bookmarked_quotes,
+            'like_counts'         => $like_counts,
         ) );
     }
 

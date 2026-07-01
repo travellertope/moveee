@@ -11,6 +11,7 @@ import ConnectHeader from "@/components/Header";
 import Footer from "@/components/Footer";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
 import AppDownloadModal from "@/components/AppDownloadModal";
+import GlobalAuthModal from "@/components/GlobalAuthModal";
 import "@/components/app-download-nudge.css";
 
 const dmSans = DM_Sans({
@@ -90,6 +91,7 @@ export default function RootLayout({
                 <main>{children}</main>
                 <Footer />
                 <AppDownloadModal />
+                <GlobalAuthModal />
               </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>
