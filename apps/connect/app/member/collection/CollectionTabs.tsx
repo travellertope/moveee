@@ -6,13 +6,17 @@ import { Heart, Bookmark, ExternalLink } from "lucide-react";
 
 interface SavedPost {
   id: number;
-  type: "quote" | "article";
+  type: "quote" | "article" | "community";
   title: string;
   slug: string;
   url: string;
   excerpt: string;
   date: string;
   likes: number;
+  quoteAuthor?: string;
+  quoteSource?: string;
+  featuredImage?: string;
+  category?: string;
 }
 
 interface SavedData {
@@ -120,7 +124,7 @@ export default function CollectionTabs() {
 }
 
 function CollectionCard({ item }: { item: SavedPost }) {
-  const typeLabel = item.type === "quote" ? "Quote" : "Article";
+  const typeLabel = item.type === "quote" ? "Quote" : item.type === "community" ? "Post" : "Article";
   const dateStr = new Date(item.date).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -128,7 +132,7 @@ function CollectionCard({ item }: { item: SavedPost }) {
   });
 
   return (
-    <Link href={item.url} className="collection-card">
+    <Link href={item.url || "/"} className="collection-card">
       <div className="collection-card-type">{typeLabel}</div>
       <div className="collection-card-title">{item.title}</div>
       {item.excerpt && (

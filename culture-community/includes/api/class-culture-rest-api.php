@@ -4027,11 +4027,21 @@ class Culture_REST_API {
         $is_quote   = ( 'culture_quote' === $post->post_type );
         $is_community = ( 'culture_post' === $post->post_type );
 
+        $slug = $post->post_name;
+        if ( $is_quote ) {
+            $url = '/quotes/' . $slug;
+        } elseif ( $is_community ) {
+            $url = '/community/' . $slug;
+        } else {
+            $url = '/magazine/' . $slug;
+        }
+
         $base = array(
             'id'      => $post->ID,
             'type'    => $is_quote ? 'quote' : ( $is_community ? 'community' : 'article' ),
             'title'   => $post->post_title,
-            'slug'    => $post->post_name,
+            'slug'    => $slug,
+            'url'     => $url,
             'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 ),
             'date'    => get_the_date( 'Y-m-d', $post ),
             'likes'   => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
