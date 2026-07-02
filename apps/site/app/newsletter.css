@@ -1428,14 +1428,17 @@
   gap: 60px;
   align-items: start;
 }
-.gml-issue-prose {
+.gml-issue-prose,
+#issue-body .prose-content {
   font-family: 'Fraunces', serif;
   font-size: 16px;
   line-height: 1.65;
   color: var(--ink-soft);
 }
-.gml-issue-prose p { margin-bottom: 1.5em; }
-.gml-issue-prose h2 {
+.gml-issue-prose p,
+#issue-body .prose-content p { margin-bottom: 1.5em; }
+.gml-issue-prose h2,
+#issue-body .prose-content h2 {
   font-family: 'Fraunces', serif;
   font-size: 28px;
   font-weight: 300;
@@ -1443,14 +1446,24 @@
   color: var(--ink);
   margin: 2em 0 0.8em;
 }
-.gml-issue-prose h3 {
+.gml-issue-prose h3,
+#issue-body .prose-content h3 {
   font-family: 'Fraunces', serif;
   font-size: 22px;
   font-weight: 300;
   color: var(--ink);
   margin: 1.5em 0 0.6em;
 }
-.gml-issue-prose blockquote {
+.gml-issue-prose h4,
+#issue-body .prose-content h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 1.2em 0 0.5em;
+}
+.gml-issue-prose blockquote,
+#issue-body .prose-content blockquote {
   border-left: 3px solid var(--ochre);
   padding-left: 24px;
   margin: 2em 0;
@@ -1459,8 +1472,30 @@
   font-size: 20px;
   color: var(--ink);
 }
-.gml-issue-prose a { color: var(--ochre); text-decoration: underline; }
-.gml-issue-prose img { width: 100%; height: auto; margin: 2em 0; }
+.gml-issue-prose ul,
+#issue-body .prose-content ul {
+  list-style: disc;
+  padding-left: 1.6em;
+  margin-bottom: 1.5em;
+}
+.gml-issue-prose ol,
+#issue-body .prose-content ol {
+  list-style: decimal;
+  padding-left: 1.6em;
+  margin-bottom: 1.5em;
+}
+.gml-issue-prose li,
+#issue-body .prose-content li { margin-bottom: 0.5em; }
+.gml-issue-prose a,
+#issue-body .prose-content a { color: var(--ochre); text-decoration: underline; }
+.gml-issue-prose img,
+#issue-body .prose-content img { width: 100%; height: auto; border-radius: var(--radius-lg); margin: 2em 0; }
+.gml-issue-prose hr,
+#issue-body .prose-content hr { border: none; border-top: 1px solid var(--rule); margin: 2.5em 0; }
+.gml-issue-prose strong,
+#issue-body .prose-content strong { font-weight: 600; color: var(--ink); }
+.gml-issue-prose em,
+#issue-body .prose-content em { font-style: italic; }
 
 /* ── SINGLE ISSUE: SIDEBAR ── */
 .gml-issue-sidebar {
