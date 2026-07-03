@@ -12,12 +12,12 @@ export const revalidate = 3600;
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
   alternates: { canonical: "https://themoveee.com/newsletter" },
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
@@ -29,7 +29,7 @@ export const metadata = {
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
   },
 };
 
@@ -104,14 +104,14 @@ export default async function NewsletterArchive({
             <p className="nl-card-desc">
               The weekly dispatch on contemporary global
               culture. One deep essay, curated picks, a music dispatch, and
-              what&apos;s happening across Lagos, London, New York, and Accra.
+              what&apos;s happening across Lagos, London, New York, Accra, and Paris.
               Written to make you think, not just scroll.
             </p>
             <ul className="nl-card-features">
               <li>The Deep Dive — long-form cultural commentary</li>
               <li>The List — five picks worth your time</li>
               <li>What&apos;s Playing — music dispatch</li>
-              <li>The Calendar — Lagos, London, New York, Accra</li>
+              <li>The Calendar — Lagos, London, New York, Accra, Paris</li>
             </ul>
             <div className="nl-card-form">
               <small className="nl-card-form-label">Subscribe free</small>
@@ -202,7 +202,7 @@ export default async function NewsletterArchive({
             <div className="gml-pc-name">The <em>Calendar</em></div>
             <p className="gml-pc-desc">
               What&apos;s happening this week and next across Lagos, Accra,
-              London, and New York — openings, screenings, readings,
+              London, New York, and Paris — openings, screenings, readings,
               dinners. The events worth leaving the house for.
             </p>
           </div>

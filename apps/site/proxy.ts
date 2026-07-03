@@ -156,6 +156,21 @@ export async function proxy(request: NextRequest) {
     return setCountryCookie(res)
   }
 
+  // Geo-redirect /newsletter and /magazine to edition-specific paths
+  if (pathname === '/newsletter' || pathname === '/magazine') {
+    const saved = request.cookies.get(EDITION_COOKIE)?.value
+    if (saved && isValidRegionalSlug(saved)) {
+      return NextResponse.redirect(new URL(`${pathname}/${saved}`, request.url))
+    }
+    const geoCountry = request.headers.get('x-vercel-ip-country') ?? ''
+    const edition = editionFromCountry(geoCountry)
+    if (edition !== 'global') {
+      const res = NextResponse.redirect(new URL(`${pathname}/${edition}`, request.url))
+      res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+      return res
+    }
+  }
+
   // On the exact homepage, geo-redirect first-time visitors to their edition
   if (pathname === '/') {
     const saved = request.cookies.get(EDITION_COOKIE)?.value

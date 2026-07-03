@@ -2157,7 +2157,7 @@ class Culture_REST_API {
             $list = 'culture-drop';
         }
 
-        $allowed_segments = array( 'us', 'uk', 'ng', 'gh', 'ca', 'au', '' );
+        $allowed_segments = array( 'us', 'uk', 'ng', 'gh', 'ke', 'za', 'ca', 'au', '' );
         if ( ! in_array( $segment, $allowed_segments, true ) ) {
             $segment = '';
         }

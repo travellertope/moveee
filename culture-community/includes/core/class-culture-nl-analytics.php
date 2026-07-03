@@ -516,13 +516,16 @@ class Culture_NL_Analytics {
         'announcements'             => 'Announcements',
     );
     const SEGMENT_LABELS = array(
-        'us'  => 'The Moveee America (US)',
-        'uk'  => 'The British Moveee (UK)',
-        'ng'  => 'Nigeria',
-        'gh'  => 'Ghana',
-        'ca'  => 'Canada',
-        'au'  => 'Australia',
-        'pro' => 'Moveee Pro Members',
+        'africa' => 'Africa (All)',
+        'us'     => 'The Moveee America (US)',
+        'uk'     => 'The British Moveee (UK)',
+        'ng'     => 'Nigeria',
+        'gh'     => 'Ghana',
+        'ke'     => 'Kenya',
+        'za'     => 'South Africa',
+        'ca'     => 'Canada',
+        'au'     => 'Australia',
+        'pro'    => 'Moveee Pro Members',
     );
 
     /**
