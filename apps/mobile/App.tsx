@@ -26,7 +26,7 @@ import {
 
 import Navigation from "./src/navigation";
 import { useAuthStore } from "./src/auth/authStore";
-import { api, CULTURE_API } from "./src/api/client";
+import { api, MOBILE_API } from "./src/api/client";
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
   state = { error: null };
@@ -71,7 +71,7 @@ async function registerPushToken() {
     });
   }
 
-  await api.post(`${CULTURE_API}/user/push-token`, { token }).catch(() => null);
+  await api.post(`${MOBILE_API}/push-token`, { token }).catch(() => null);
 }
 
 export default function App() {
