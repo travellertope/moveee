@@ -2073,6 +2073,57 @@
   color: #065f46;
 }
 
+/* ── Edition banner ── */
+.nl-edition-banner {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 0;
+}
+.nl-edition-banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.nl-edition-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  opacity: .9;
+}
+.nl-edition-switch {
+  font-size: 12px;
+  opacity: .7;
+}
+.nl-edition-switch a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: .85;
+}
+.nl-edition-switch a:hover { opacity: 1; }
+
+/* ── Card detail link ── */
+.nl-card-detail-link {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .05em;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: .6;
+  transition: opacity .15s;
+}
+.nl-card-detail-link:hover { opacity: 1; }
+
 @media (max-width: 640px) {
   .nl-archive-header { flex-direction: column; align-items: flex-start; }
+  .nl-edition-banner-inner { justify-content: flex-start; }
 }
