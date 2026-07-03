@@ -25,6 +25,8 @@ class Culture_Subscribers {
         'uk'  => 'The British Moveee (UK)',
         'ng'  => 'Nigeria',
         'gh'  => 'Ghana',
+        'ke'  => 'Kenya',
+        'za'  => 'South Africa',
         'ca'  => 'Canada',
         'au'  => 'Australia',
         'pro' => 'Moveee Pro Members',

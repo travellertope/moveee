@@ -59,6 +59,12 @@ class Culture_Newsletter_Queue {
                 if ( 'pro' === $nl_segment ) {
                     $wp_user = get_user_by( 'email', $e );
                     if ( ! $wp_user || 'patron' !== get_user_meta( $wp_user->ID, '_culture_membership_tier', true ) ) continue;
+                } elseif ( 'africa' === $nl_segment ) {
+                    // 'africa' is a send-side aggregate — matches any subscriber
+                    // whose segment is a recognised African country code.
+                    $africa_segments = array( 'ng', 'gh', 'ke', 'za' );
+                    $sub_segment     = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+                    if ( ! in_array( $sub_segment, $africa_segments, true ) ) continue;
                 } else {
                     $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
                     if ( $sub_segment !== $nl_segment ) continue;

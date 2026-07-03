@@ -21,7 +21,7 @@ class Culture_Newsletter_Send {
     }
 
     const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
-    const ALLOWED_SEGMENTS = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au', 'pro' );
+    const ALLOWED_SEGMENTS = array( '', 'africa', 'us', 'uk', 'ng', 'gh', 'ke', 'za', 'ca', 'au', 'pro' );
 
     /**
      * Save _culture_nl_list and _culture_nl_segment post meta when the newsletter is saved.
@@ -143,14 +143,17 @@ class Culture_Newsletter_Send {
         );
 
         $segments_config = array(
-            ''    => 'All segments',
-            'us'  => 'The Moveee America (US)',
-            'uk'  => 'The British Moveee (UK)',
-            'ng'  => 'Nigeria',
-            'gh'  => 'Ghana',
-            'ca'  => 'Canada',
-            'au'  => 'Australia',
-            'pro' => 'Moveee Pro Members',
+            ''       => 'All segments',
+            'africa' => 'Africa (All — NG, GH, KE, ZA + more)',
+            'us'     => 'The Moveee America (US)',
+            'uk'     => 'The British Moveee (UK)',
+            'ng'     => 'Nigeria',
+            'gh'     => 'Ghana',
+            'ke'     => 'Kenya',
+            'za'     => 'South Africa',
+            'ca'     => 'Canada',
+            'au'     => 'Australia',
+            'pro'    => 'Moveee Pro Members',
         );
 
         // Build counts[list][segment] — empty string segment = whole list total.
