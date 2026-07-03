@@ -119,7 +119,12 @@ class Culture_Notifications {
             ),
             array( '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
         );
-        return (int) $wpdb->insert_id;
+        $id = (int) $wpdb->insert_id;
+
+        // Deliver a push notification to the user's registered mobile devices.
+        Culture_Push::send( $user_id, $title, $body, $action_url );
+
+        return $id;
     }
 
     /* ——————————————————————————————————————

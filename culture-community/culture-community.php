@@ -36,6 +36,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php'
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-push.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
