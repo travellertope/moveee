@@ -11,6 +11,19 @@ import IssueReaderClient, { ArchiveIssue } from "./IssueReaderClient";
 export const revalidate = 300;
 export const dynamicParams = true;
 
+function decodeEntities(str: string): string {
+  return str
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&([a-z]+);/gi, (m, name) => {
+      const map: Record<string, string> = {
+        amp: "&", lt: "<", gt: ">", quot: '"', apos: "'",
+        nbsp: " ", hellip: "…", mdash: "—", ndash: "–",
+        lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”",
+      };
+      return map[name.toLowerCase()] ?? m;
+    });
+}
+
 export async function generateStaticParams() {
   try {
     const issues = await getNewslettersWithFallback(100, { revalidate: 300 });
@@ -136,12 +149,12 @@ export default async function GmlIssuePage({
 
   const issues: ArchiveIssue[] = allIssues.map((n: any, idx: number) => ({
     slug: n.slug,
-    title: n.title || "",
+    title: decodeEntities((n.title || "").replace(/<[^>]*>/g, "")),
     issueNum: totalCount - idx,
   }));
 
   const heroPullQuote = issue.excerpt
-    ? issue.excerpt.replace(/<[^>]*>/g, "").trim().slice(0, 200)
+    ? decodeEntities(issue.excerpt.replace(/<[^>]*>/g, "")).trim().slice(0, 200)
     : undefined;
 
   const previewHtml = issue.excerpt
