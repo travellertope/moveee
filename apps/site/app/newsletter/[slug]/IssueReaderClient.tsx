@@ -9,10 +9,17 @@ import ArticleContentGate from "@/components/ArticleContentGate";
 import { NL_META, NewsletterListId } from "@/lib/newsletter-lists";
 import type { AccessLevel } from "@/lib/access";
 
+export interface IssueEdition {
+  slug: string;
+  segment: string;
+  label: string;
+}
+
 export interface ArchiveIssue {
   slug: string;
   title: string;
   issueNum: number;
+  editions?: IssueEdition[];
 }
 
 interface Props {
@@ -243,6 +250,7 @@ export default function IssueReaderClient({
             </button>
           </div>
         </div>
+
 
         {/* Hero */}
         <div className={`rd-hero${isGml ? " rd-hero--getmelit" : ""}`}>

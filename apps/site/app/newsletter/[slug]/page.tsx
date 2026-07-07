@@ -1,6 +1,7 @@
 import React from "react";
 import { getNewsletterBySlugWithFallback, getNewslettersWithFallback } from "@/lib/wp";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import ArticleComments from "@/components/ArticleComments";
 import { getAccessLevel } from "@/lib/access";
 import "../../newsletter.css";
@@ -8,7 +9,29 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META, isNewsletterListId, NewsletterListId } from "@/lib/newsletter-lists";
 import IssueReaderClient, { ArchiveIssue } from "./IssueReaderClient";
 
-export const revalidate = 300;
+// Map Vercel geo country codes to newsletter segment codes.
+const COUNTRY_TO_SEGMENT: Record<string, string> = {
+  GB: "uk",
+  US: "us",
+  NG: "ng",
+  GH: "gh",
+  CA: "ca",
+  AU: "au",
+};
+
+async function geoSegment(): Promise<string> {
+  try {
+    const h = await headers();
+    const country = h.get("x-vercel-ip-country") ?? "";
+    return COUNTRY_TO_SEGMENT[country.toUpperCase()] ?? "";
+  } catch {
+    return "";
+  }
+}
+
+// dynamic = "force-dynamic" because we read geo headers to redirect to the viewer's
+// regional edition. Each visitor gets the correct edition without a shared cached response.
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 function decodeEntities(str: string): string {
@@ -128,13 +151,6 @@ export default async function GmlIssuePage({
     allIssues = fetchedIssues.filter((n: any) => (n.nlList || "culture-drop") === listId);
   } catch {}
 
-  const totalCount = allIssues.length;
-  const currentIdx = allIssues.findIndex(
-    (n: any) => n.slug === resolvedParams.slug
-  );
-  const currentIssueNum =
-    currentIdx >= 0 ? totalCount - currentIdx : totalCount;
-
   const publishedDate = new Date(issue.date).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -147,11 +163,63 @@ export default async function GmlIssuePage({
   const readingTime = Math.max(1, Math.ceil(wordCount / 250));
   const hasFeaturedImage = !!issue.featuredImage?.node?.sourceUrl;
 
-  const issues: ArchiveIssue[] = allIssues.map((n: any, idx: number) => ({
-    slug: n.slug,
-    title: decodeEntities((n.title || "").replace(/<[^>]*>/g, "")),
-    issueNum: totalCount - idx,
-  }));
+  // Group regional editions (same title = same canonical issue).
+  // Build an ordered list of unique titles first, then attach all editions per title.
+  const SEGMENT_LABELS: Record<string, string> = {
+    uk: "UK", us: "US", ng: "Nigeria", gh: "Ghana", ca: "Canada", au: "Australia",
+  };
+  const seenTitles: string[] = [];
+  const editionsByTitle: Record<string, { slug: string; segment: string; label: string }[]> = {};
+  for (const n of allIssues) {
+    const t = decodeEntities((n.title || "").replace(/<[^>]*>/g, "")).trim();
+    if (!editionsByTitle[t]) {
+      seenTitles.push(t);
+      editionsByTitle[t] = [];
+    }
+    const seg: string = n.nlSegment || "";
+    editionsByTitle[t].push({
+      slug: n.slug,
+      segment: seg,
+      label: SEGMENT_LABELS[seg] || (seg ? seg.toUpperCase() : "Global"),
+    });
+  }
+  const uniqueCount = seenTitles.length;
+
+  // For the current issue, figure out its canonical title so we know which group to look in.
+  const currentTitle = decodeEntities((issue.title || "").replace(/<[^>]*>/g, "")).trim();
+
+  // Geo-based auto-redirect: if this issue has regional editions and the current slug isn't
+  // the right one for the viewer's location, send them to the matching edition silently.
+  const viewerSegment = await geoSegment();
+  const currentEditions = editionsByTitle[currentTitle] ?? [];
+  if (currentEditions.length > 1 && viewerSegment) {
+    const geoEdition =
+      currentEditions.find((e) => e.segment === viewerSegment) ||
+      currentEditions.find((e) => e.segment === "");
+    if (geoEdition && geoEdition.slug !== resolvedParams.slug) {
+      redirect(`/newsletter/${geoEdition.slug}`);
+    }
+  }
+
+  // Build the deduplicated ArchiveIssue list, picking the right slug per group:
+  // prefer the slug that matches the viewer's segment, then global, then first available.
+  const issues: ArchiveIssue[] = seenTitles.map((title, idx) => {
+    const editions = editionsByTitle[title];
+    const match =
+      editions.find((e) => e.segment === viewerSegment) ||
+      editions.find((e) => e.segment === "") ||
+      editions[0];
+    return {
+      slug: match.slug,
+      title,
+      issueNum: uniqueCount - idx,
+      editions: editions.length > 1 ? editions : undefined,
+    };
+  });
+
+  // Recalculate currentIssueNum based on unique title position.
+  const currentTitleIdx = seenTitles.indexOf(currentTitle);
+  const currentIssueNum = currentTitleIdx >= 0 ? uniqueCount - currentTitleIdx : uniqueCount;
 
   const heroPullQuote = issue.excerpt
     ? decodeEntities(issue.excerpt.replace(/<[^>]*>/g, "")).trim().slice(0, 200)

@@ -1,5 +1,6 @@
 import React from "react";
 import { getNewslettersWithFallback } from "@/lib/wp";
+import { headers } from "next/headers";
 import Link from "next/link";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import GmlCTAForm from "@/components/GmlCTAForm";
@@ -10,7 +11,54 @@ import "../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META } from "@/lib/newsletter-lists";
 
-export const revalidate = 3600;
+const COUNTRY_TO_SEGMENT: Record<string, string> = {
+  GB: "uk", US: "us", NG: "ng", GH: "gh", CA: "ca", AU: "au",
+};
+
+async function geoSegment(): Promise<string> {
+  try {
+    const h = await headers();
+    const country = h.get("x-vercel-ip-country") ?? "";
+    return COUNTRY_TO_SEGMENT[country.toUpperCase()] ?? "";
+  } catch {
+    return "";
+  }
+}
+
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+  hellip: "…", mdash: "—", ndash: "–", lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”",
+};
+
+function cleanTitle(raw: string): string {
+  return raw
+    .replace(/<[^>]*>/g, "")
+    .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(Number(c)))
+    .replace(/&([a-z]+);/gi, (m, n) => HTML_ENTITIES[n.toLowerCase()] ?? m)
+    .trim();
+}
+
+// Deduplicate regional editions: group by cleaned title, pick the geo-appropriate slug.
+function deduplicateEditions(issues: any[], segment: string): any[] {
+  const seen: string[] = [];
+  const groups: Record<string, any[]> = {};
+  for (const n of issues) {
+    const t = cleanTitle(n.title || "");
+    if (!groups[t]) { seen.push(t); groups[t] = []; }
+    groups[t].push(n);
+  }
+  return seen.map((t) => {
+    const group = groups[t];
+    return (
+      group.find((n) => (n.nlSegment || "") === segment) ||
+      group.find((n) => (n.nlSegment || "") === "") ||
+      group[0]
+    );
+  });
+}
+
+// dynamic = "force-dynamic" because we read geo headers to serve the viewer's regional edition.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
@@ -57,10 +105,12 @@ export default async function NewsletterArchive({
     // CMS unreachable
   }
 
-  // "announcements" is an internal/operational list (periodic notices) and must
-  // never appear on the public archive — exclude it before any counts/filters run,
-  // since the "all" tab renders this array unfiltered.
+  // "announcements" is an internal/operational list and must never appear on the archive.
   newsletters = newsletters.filter((n: any) => (n.nlList || "") !== "announcements");
+
+  // Deduplicate regional editions per-list before counting or displaying.
+  const segment = await geoSegment();
+  newsletters = deduplicateEditions(newsletters, segment);
 
   const activeFilter = searchParams?.list ?? "all";
   const allCount    = newsletters.length;
