@@ -228,6 +228,88 @@ List and segment labels defined as class constants `LIST_LABELS` and
 
 ---
 
+### Newsletter Hub page — rebuilt from mockup (July 2026)
+
+`mockups/web/newsletter_hub_2.html` (mobile 390px frame, "2. Newsletter Hub (Mobile 390px)")
+uploaded, and `apps/site/app/newsletter/page.tsx` was rebuilt section-by-section to match it
+rather than patched — several sections that existed on the old hub but aren't in the mockup
+were removed outright, not just supplemented:
+
+- **Masthead** — copy aligned to the mockup ("Two newsletters. One cultural obsession.") and a
+  new `.nl-masthead-pills` row (two cadence pills, "★ Culture Drop · Every Tuesday" /
+  "★ GetMeLit · Mon–Sat") added below the subhead. Stacks full-width at `max-width: 640px`.
+- **Subscribe cards** — the old inline `.nl-card-features` bullet list is **removed** from both
+  cards (that content moved into the new "Inside the programme" section below); GetMeLit's card
+  eyebrow/note corrected from stale "Weekly" copy to "Daily · Mon–Sat" (matches its real cadence
+  in `NL_META` and the mockup). Each card still ends with a `.nl-card-preview` mock (flat,
+  non-tilted variant of `NewsletterPublicationPage.tsx`'s `.np-preview-card`, rendered by a new
+  `NlCardPreview` component) sourced from `NL_META` rather than hardcoded copy.
+- **Testimonials** — new `.nl-testimonials`/`.nl-testimonial-card` section (stacked cards on
+  mobile, 3-up row at `min-width: 720px`), inserted right after the cards. Styled as its own
+  `paper-warm` rounded-card block rather than reusing `NewsletterPublicationPage.tsx`'s flat,
+  card-less `.np-testimonials` — the mockup wants the card treatment.
+- **"Inside the programme"** (new `.nl-inside-*` block) — **replaces** the old desktop-only
+  `.gml-whats-inside` pillars grid, the `.gml-pull-band` pull-quote, and the standalone
+  `.nl-culturedrop-feature` GetMeLit section entirely. One section, two columns ("Inside Culture
+  Drop" / "Inside GetMeLit"), each a list of 4 items with a colored left bar — sourced directly
+  from `NL_META[...].pillars`, no fabricated copy. GetMeLit's items get a Daily/Sat cadence tag
+  per item (`GETMELIT_ITEM_TAGS`, matching the mockup's per-row cadence badges); Culture Drop's
+  don't, since all four of its sections ship in the single weekly Tuesday issue.
+- **Recent issues** — rebuilt as `.nl-recent-*` (was `.gml-recent`/`.gml-issue-card`, Culture
+  Drop-only). Now shows the 3 most recent issues **across both lists** with a colored
+  `nl-list-badge` per card, matching the mockup's mixed grid; "See all →" links to `#archive` on
+  the same page instead of `/newsletter/culture-drop`.
+- **Coming Soon** — unchanged, already matched the mockup closely.
+- **Archive** — tabs get a `max-width: 640px` override into scrollable pills
+  (`.nl-archive-tab--active` → filled `var(--ink)` pill), and the date column
+  (`.digest-archive-date`) is hidden at that width to match the mockup's mobile row (number +
+  title + badge + arrow only, no date). Note: `.digest-archive-tags` (the badge) was already
+  being hidden below `1024px` by a **pre-existing, unrelated** rule higher up in the file (the
+  old "Cultural Digest" section) — that rule is overridden back to visible at `max-width: 640px`
+  specifically for this archive, since the mockup keeps the badge.
+- **`EditionNewsletterHub.tsx`** (the `/newsletter/uk`, `/us`, `/africa` pages) has since been
+  rebuilt to the same design in a follow-up pass — see below. The old `gml-whats-inside`/
+  `gml-pull-band`/`gml-recent`/`nl-culturedrop-feature` CSS blocks are still not deleted (kept in
+  case anything else ever needs them), just unused by both newsletter components now.
+- Not visually verified in a browser (no WordPress/env credentials in this pass) — verified via
+  `tsc --noEmit` (clean) and a CSS brace-balance check on `newsletter.css`.
+
+### Edition newsletter hubs (`/newsletter/uk`, `/us`, `/africa`) — rebuilt + region-scoped (July 2026)
+
+`EditionNewsletterHub.tsx` got the same section-by-section rebuild as the global hub above
+(masthead pills, no inline features list, `NlCardPreview`, testimonials, the unified "Inside the
+programme" block — with Culture Drop's Calendar item still overridden per edition via
+`EDITION_CONFIG[edition].calendarDesc` — mixed-list Recent Issues, Coming Soon, pill archive tabs).
+
+**Region-scoping (new, closes a real gap):** before this pass, every edition page fetched and
+displayed the exact same global newsletter archive — `_culture_nl_segment` (the post meta that
+already exists for the WP-Cron send queue to filter subscribers by region, see "Newsletter system
+architecture" above) was never exposed to the frontend at all, so there was no data to filter by.
+Fixed:
+- `culture-community/includes/core/class-culture-post-types.php` — `_culture_nl_segment` now
+  `register_post_meta`'d with `show_in_rest: true` (mirrors `_culture_nl_list` immediately above
+  it), plus a mirrored `nlSegment` GraphQL field on `CultureNewsletter` (same
+  `register_graphql_field` pattern as the existing `nlList` field, needed because WPGraphQL's
+  generic `metaValue()` resolver blocks underscore-prefixed meta keys).
+- `packages/shared/lib/wp.ts` — `nlSegment` added to `NEWSLETTER_FIELDS_FRAGMENT` (GraphQL path)
+  and to `mapRestNewsletterToFrontendShape()` (REST fallback path) — both newsletter data paths
+  needed the field added, same as every other newsletter field in this file.
+- `EditionNewsletterHub.tsx` — new `EDITION_SEGMENTS` map (`uk → ["uk"]`, `us → ["us","ca"]`,
+  `africa → ["ng","gh"]`, derived from `packages/utils/editions.ts`'s existing country groupings)
+  filters the fetched newsletters down to issues whose `nlSegment` is one of the edition's
+  segments **or empty** (empty segment = sent to everyone, per the existing segment convention) —
+  applied once, before `allCount`/`cdCount`/`gmlCount`/recent issues/the archive list are derived,
+  so the whole page (counts, tabs, cards, archive rows) is consistently region-scoped rather than
+  just the visible list.
+- No `CULTURE_VERSION` bump needed — this only registers meta/GraphQL field exposure, not a new
+  `dbDelta` table (see "Plugin DB table auto-upgrade" above for when a bump *is* required).
+- Existing newsletter issues almost certainly have no `_culture_nl_segment` value set today (no
+  UI previously surfaced it as a distinguishing factor beyond subscriber-list filtering at send
+  time) — so until editors start setting a segment on new issues, edition pages will show
+  effectively the same content as the global hub (every issue falls into the "empty segment = all
+  regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
+  content going forward.
+
 ## Process: adding a new newsletter
 
 Follow every step in order. Each step lists the exact file and what to change.
@@ -3055,6 +3137,38 @@ The session `user` object includes these fields beyond the basics:
 }
 ```
 All fields available as `session.user.X` in server components after `getServerSession(authOptions)`.
+
+### Sign-out cookie clearing gotcha (`__Secure-`/`__Host-` prefix rules, fixed July 2026)
+
+Both `apps/site/app/api/auth/clear-cookies/route.ts` and `apps/connect/app/api/auth/clear-cookies/route.ts`
+exist because `signOut()` only clears the cookie matching the exact name/Domain configured in
+`authOptions` (domain-scoped, `__Secure-`-prefixed in prod, see the `cookies.sessionToken` block
+in `packages/shared/lib/auth.ts`) — any legacy host-only cookie set before the `.themoveee.com`
+domain config existed survives `signOut()` untouched, so this route is a safety-net that expires
+every plausible name/Domain permutation via `res.cookies.set(name, "", { maxAge: 0, ... })`.
+
+**The safety-net itself had the same class of bug it was written to fix.** Cookie name prefixes
+carry hard requirements the browser enforces *silently* — a `Set-Cookie` that violates them isn't
+rejected with an error, it's just dropped, so nothing in the network tab looks wrong:
+- `__Secure-` requires the `Secure` attribute on **every** `Set-Cookie` using that name, including
+  clears.
+- `__Host-` additionally **forbids a `Domain` attribute** entirely (and also requires `Secure` +
+  `Path=/`).
+
+The route was clearing every cookie name the same generic way (no `secure` on either the
+host-only or domain-scoped write, and setting `domain: ".themoveee.com"` on the `__Host-` name
+too) — so the clear for `__Secure-next-auth.session-token` (the actual production session cookie
+name) and `__Host-next-auth.csrf-token` silently never took effect. Symptom: clicking Sign Out
+looked like it worked (redirect happened, no errors), but a browser holding one of those
+host-only legacy cookies stayed logged in — `signOut()`'s own domain-scoped clear can't touch a
+cookie set without a `Domain` attribute, and this safety-net's clear was the specific thing meant
+to catch that case.
+
+Fixed by branching per cookie name instead of one generic loop: `__Host-`-prefixed names get a
+single host-only clear with `secure: true` and no `domain`; every other name gets both a
+host-only and a domain-scoped clear, with `secure: true` added whenever the name starts with
+`__Secure-`. **If you ever add a new cookie name to either route's list, check its prefix first**
+— `__Secure-`/`__Host-` cookies need this exact treatment, plain-named ones don't.
 
 ---
 

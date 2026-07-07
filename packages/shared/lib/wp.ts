@@ -1270,6 +1270,7 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     date
     excerpt
     nlList
+    nlSegment
     featuredImage {
       node {
         sourceUrl

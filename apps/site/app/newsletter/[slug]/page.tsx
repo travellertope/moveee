@@ -19,9 +19,9 @@ const COUNTRY_TO_SEGMENT: Record<string, string> = {
   AU: "au",
 };
 
-function geoSegment(): string {
+async function geoSegment(): Promise<string> {
   try {
-    const h = headers();
+    const h = await headers();
     const country = h.get("x-vercel-ip-country") ?? "";
     return COUNTRY_TO_SEGMENT[country.toUpperCase()] ?? "";
   } catch {
@@ -190,7 +190,7 @@ export default async function GmlIssuePage({
 
   // Geo-based auto-redirect: if this issue has regional editions and the current slug isn't
   // the right one for the viewer's location, send them to the matching edition silently.
-  const viewerSegment = geoSegment();
+  const viewerSegment = await geoSegment();
   const currentEditions = editionsByTitle[currentTitle] ?? [];
   if (currentEditions.length > 1 && viewerSegment) {
     const geoEdition =
