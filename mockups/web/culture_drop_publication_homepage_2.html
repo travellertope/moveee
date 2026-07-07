@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Culture Drop</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'ink': '#14110D',
+                        'ink-soft': '#3A342B',
+                        'mute': '#7A6F5C',
+                        'ochre': '#C5491F',
+                        'rule': '#E8E2D8',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    borderRadius: {
+                        'md': '4px',
+                        'lg': '8px',
+                        'xl': '12px',
+                    },
+                    boxShadow: {
+                        'preview': '0 4px 24px rgba(0,0,0,0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; display: flex; justify-content: center;}
+        .desktop-screen { width: 1440px; flex-shrink: 0; background-color: #FFFFFF; }
+        .ios-screen { width: 390px; height: 844px; flex-shrink: 0; background-color: #FFFFFF; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Newsletter Preview Tilt */
+        .tilt-card {
+            transform: rotate(2deg);
+        }
+        
+        /* Specific input placeholder styling */
+        input::placeholder { color: #A0988A; }
+    </style>
+</head>
+<body class="font-sans text-ink flex-col gap-16 pb-20 items-center">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: CULTURE DROP PUBLICATION HOMEPAGE     -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 shrink-0 mx-auto">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">1. Culture Drop Publication Homepage (Desktop)</span>
+        
+        <div class="desktop-screen shadow-2xl rounded-xl border-4 border-gray-900 overflow-hidden relative flex flex-col">
+            
+            <!-- Global Nav Context (Simplified for frame reference) -->
+            <header class="h-[64px] flex items-center justify-between px-[32px] border-b border-rule shrink-0 bg-white">
+                <h1 class="font-serif text-[22px] font-bold text-ink">moveee <span class="italic text-ochre">newsletters</span></h1>
+                <nav class="flex gap-6 font-sans text-[13px] font-bold">
+                    <span class="text-ochre">Culture Drop</span>
+                    <span class="text-mute hover:text-ink cursor-pointer">GetMeLit</span>
+                </nav>
+            </header>
+
+            <!-- HERO SECTION -->
+            <section class="w-full bg-paper py-[80px] flex justify-center">
+                <div class="w-full max-w-[1100px] flex items-stretch">
+                    
+                    <!-- LEFT COLUMN -->
+                    <div class="w-[52%] flex flex-col justify-center pr-[40px]">
+                        <div class="flex items-center gap-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-mute uppercase tracking-[0.6px]">★ Culture Drop · Every Tuesday</span>
+                            <a href="#" class="text-mute hover:text-ochre transition-colors" title="RSS Feed">
+                                <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6-3v.01M5 19h.01"></path></svg>
+                            </a>
+                        </div>
+                        
+                        <h1 class="font-serif text-[42px] font-bold text-ink leading-[1.15] max-w-[420px] mt-[16px]">
+                            The weekly dispatch on contemporary global culture.
+                        </h1>
+                        
+                        <p class="font-sans text-[16px] text-ink-soft leading-[1.6] max-w-[400px] mt-[16px]">
+                            One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll.
+                        </p>
+
+                        <div class="mt-[24px] flex items-center gap-[8px] w-full max-w-[440px]">
+                            <input type="email" placeholder="your@email.com" class="flex-1 max-w-[260px] h-[48px] bg-paper border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink focus:border-ochre outline-none transition-colors">
+                            <button class="h-[48px] px-[20px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors whitespace-nowrap">
+                                Drop it in my inbox &rarr;
+                            </button>
+                        </div>
+                        
+                        <span class="font-sans text-[12px] text-mute mt-[10px] block">Free · Weekly · Unsubscribe any time</span>
+                    </div>
+
+                    <!-- RIGHT COLUMN: NEWSLETTER PREVIEW PANEL -->
+                    <div class="w-[48%] relative flex items-center justify-center pl-[20px]">
+                        <div class="absolute inset-y-0 right-0 left-[20px] bg-paper-warm rounded-l-2xl"></div>
+                        
+                        <!-- Simulated Email Card -->
+                        <div class="w-[380px] h-[260px] bg-white border border-rule rounded-xl shadow-preview tilt-card relative z-10 flex flex-col overflow-hidden">
+                            <div class="px-[16px] py-[12px] border-b border-rule flex items-center justify-between bg-white shrink-0">
+                                <span class="font-sans text-[11px] font-bold text-ochre uppercase tracking-wider">Culture Drop</span>
+                                <span class="font-mono text-[10px] text-mute">Tue, 7 Jul 2026</span>
+                            </div>
+                            <div class="p-[16px] flex flex-col flex-1 bg-white">
+                                <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">The Deep Dive: On the global afterlife of Afrobeat</h3>
+                                <p class="font-sans text-[12px] text-ink-soft leading-[1.5] line-clamp-2">
+                                    When Fela Kuti created the sound in the 1970s, it was a hyper-local weapon against military dictatorship. Half a century later...
+                                </p>
+                                
+                                <div class="w-full text-center my-[12px]">
+                                    <span class="font-mono text-[10px] text-mute tracking-widest">──── THE LIST ────</span>
+                                </div>
+                                
+                                <div class="flex flex-col gap-[8px]">
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Film</span> — A Tribe Called Judah hits international screens</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Art</span> — Nike Art Gallery's new contemporary wing</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Food</span> — Nok by Alara's pan-African menu updates</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Reads</span> — The return of the African print magazine</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TESTIMONIALS BAND -->
+            <section class="w-full bg-paper-warm py-[48px] border-y border-rule flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] grid grid-cols-3 gap-[40px]">
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"The first newsletter I've opened every week for a year. Essential."</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"Finally, a cultural dispatch that doesn't feel like a PR feed."</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"The music picks alone are worth it. Deep, thoughtful curation."</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WHAT YOU'RE IN FOR -->
+            <section class="w-full bg-paper py-[72px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[1100px] flex gap-[40px]">
+                    <div class="w-[45%] flex flex-col pr-[24px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">What you get</span>
+                        <h2 class="font-serif text-[32px] font-bold text-ink mt-[12px] leading-tight">Four things. Every week.</h2>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[16px]">
+                            Every issue of Culture Drop is built around four sections — so you always know what you're getting, but never know what you'll find.
+                        </p>
+                        
+                        <div class="flex items-center gap-[12px] mt-[28px]">
+                            <button class="h-[44px] px-[24px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors">
+                                Subscribe &rarr;
+                            </button>
+                            <a href="#archive" class="h-[44px] px-[24px] bg-transparent border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors flex items-center justify-center">
+                                Browse the archive &rarr;
+                            </a>
+                        </div>
+                    </div>
+                    <div class="w-[55%] grid grid-cols-2 gap-[24px]">
+                        <div class="flex flex-col border-l-[6px] border-ochre/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">The Deep Dive</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">A single, well-researched essay unpacking a major cultural shift or defining moment.</p>
+                        </div>
+                        <div class="flex flex-col border-l-[6px] border-ochre/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">The List</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Curated recommendations covering film, visual art, literature, and food across key cities.</p>
+                        </div>
+                        <div class="flex flex-col border-l-[6px] border-ochre/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">What's Playing</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">A short dispatch on the albums, sounds, and artists defining the week.</p>
+                        </div>
+                        <div class="flex flex-col border-l-[6px] border-ochre/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">The Calendar</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Upcoming vetted events, exhibitions, and parties you actually want to go to.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PULL QUOTE -->
+            <section class="w-full bg-paper py-[72px] flex flex-col items-center px-[32px]">
+                <div class="w-[40px] h-[2px] bg-ochre mb-[32px]"></div>
+                <h2 class="font-serif text-[26px] italic text-ink leading-[1.45] text-center max-w-[680px]">
+                    "We don't just tell you what's happening — we explore why it matters."
+                </h2>
+                <span class="font-sans text-[13px] text-mute mt-[12px] block text-center">
+                    — The editorial mission of Culture Drop
+                </span>
+            </section>
+
+            <!-- RECENT ISSUES -->
+            <section class="w-full bg-paper pt-[72px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] flex flex-col">
+                    <div class="flex items-center justify-between mb-[24px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Recent issues</span>
+                        <a href="#archive" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">Full archive &rarr;</a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-[24px]">
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°042</span>
+                                <span class="font-mono text-[11px] text-mute">30 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-ochre transition-colors">
+                                The Global Afterlife of Afrobeat
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                When Fela Kuti created the sound, it was a local weapon against dictatorship. Today, its children fill stadiums. What changed?
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°041</span>
+                                <span class="font-mono text-[11px] text-mute">23 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-ochre transition-colors">
+                                Architecture of the Return
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                How diaspora creatives are building physical spaces in West Africa, from boutique hotels to artist residencies.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°040</span>
+                                <span class="font-mono text-[11px] text-mute">16 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-ochre transition-colors">
+                                The Independent Film Wave
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                Moving beyond Nollywood blockbusters: the directors capturing quiet, intimate stories on a shoestring budget.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FULL ARCHIVE SECTION -->
+            <section id="archive" class="w-full bg-paper pt-[64px] pb-[64px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] flex flex-col">
+                    <div class="flex items-center justify-between mb-[16px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Full Archive</span>
+                        <span class="font-mono text-[11px] text-mute">42 issues</span>
+                    </div>
+                    <div class="w-full h-[1px] bg-rule mb-[16px]"></div>
+                    <div class="flex flex-col">
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">042</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">1 Jul 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">The Global Afterlife of Afrobeat</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">041</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">23 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">Architecture of the Return</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">040</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">16 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">The Independent Film Wave</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BOTTOM SUBSCRIBE CTA BAND -->
+            <section class="w-full bg-paper-warm py-[80px] border-t border-rule flex justify-center px-[32px]">
+                <div class="w-full max-w-[560px] flex flex-col items-center">
+                    <h2 class="font-serif text-[32px] font-bold text-ink text-center leading-tight">
+                        One cultural dispatch. Every week.
+                    </h2>
+                    <div class="mt-[24px] flex items-center gap-[8px] w-full">
+                        <input type="email" placeholder="your@email.com" class="flex-1 h-[48px] bg-white border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink focus:border-ochre outline-none transition-colors">
+                        <button class="h-[48px] px-[20px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors whitespace-nowrap">
+                            Drop it in my inbox &rarr;
+                        </button>
+                    </div>
+                    <span class="font-sans text-[12px] text-mute mt-[12px] text-center">
+                        No spam. No nonsense. Unsubscribe any time.
+                    </span>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: MOBILE COMPANION                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 mt-16">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 4: Mobile Companion (390px)</span>
+        
+        <div class="ios-screen shadow-2xl rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col bg-white mx-auto">
+            
+            <!-- Mobile Header Mock -->
+            <header class="h-[60px] flex items-center justify-between px-[24px] border-b border-rule shrink-0 bg-white">
+                <h1 class="font-serif text-[20px] font-bold text-ink">moveee <span class="italic text-ochre">newsletters</span></h1>
+                <button class="text-ink">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar">
+                
+                <!-- HERO SECTION -->
+                <section class="w-full bg-paper pt-[48px] pb-[40px] px-[24px] flex flex-col">
+                    
+                    <div class="flex items-center gap-[8px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[0.6px]">★ Culture Drop · Every Tuesday</span>
+                        <a href="#" class="text-mute hover:text-ochre transition-colors" title="RSS Feed">
+                            <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6-3v.01M5 19h.01"></path></svg>
+                        </a>
+                    </div>
+                    
+                    <h1 class="font-serif text-[32px] font-bold text-ink leading-[1.2] mt-[12px]">
+                        The weekly dispatch on contemporary global culture.
+                    </h1>
+                    
+                    <p class="font-sans text-[15px] text-ink-soft leading-[1.55] mt-[12px]">
+                        One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll.
+                    </p>
+
+                    <!-- Subscribe Form (Stacked) -->
+                    <div class="mt-[16px] flex flex-col gap-[8px] w-full">
+                        <input type="email" placeholder="your@email.com" class="w-full p-[12px] bg-paper border border-rule rounded-md font-sans text-[14px] text-ink focus:border-ochre outline-none transition-colors">
+                        <button class="w-full p-[14px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors">
+                            Drop it in my inbox &rarr;
+                        </button>
+                    </div>
+                    
+                    <span class="font-sans text-[11px] text-mute mt-[10px] text-center w-full block">Free · Weekly · Unsubscribe any time</span>
+                    
+                    <!-- Newsletter Preview Panel (Flat, no tilt) -->
+                    <div class="w-full mt-[24px] bg-white border border-rule rounded-xl shadow-preview flex flex-col overflow-hidden h-[220px]">
+                        <!-- Top strip -->
+                        <div class="px-[16px] py-[12px] border-b border-rule flex items-center justify-between bg-white shrink-0">
+                            <span class="font-sans text-[11px] font-bold text-ochre uppercase tracking-wider">Culture Drop</span>
+                            <span class="font-mono text-[10px] text-mute">Tue, 7 Jul 2026</span>
+                        </div>
+                        <!-- Content Block -->
+                        <div class="p-[16px] flex flex-col flex-1 bg-white">
+                            <h3 class="font-serif text-[16px] font-bold text-ink leading-tight mb-[6px]">The Deep Dive: On the global afterlife of Afrobeat</h3>
+                            <p class="font-sans text-[12px] text-ink-soft leading-[1.5] line-clamp-2">
+                                When Fela Kuti created the sound in the 1970s, it was a hyper-local weapon against military dictatorship. Half a century later...
+                            </p>
+                            
+                            <div class="w-full text-center my-[10px]">
+                                <span class="font-mono text-[10px] text-mute tracking-widest">──── THE LIST ────</span>
+                            </div>
+                            
+                            <div class="flex flex-col gap-[6px]">
+                                <span class="font-sans text-[11px] text-ink line-clamp-1">▸ <span class="font-bold">Film</span> — A Tribe Called Judah hits international screens</span>
+                                <span class="font-sans text-[11px] text-ink line-clamp-1">▸ <span class="font-bold">Art</span> — Nike Art Gallery's new contemporary wing</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- TESTIMONIALS BAND (Stacked) -->
+                <section class="w-full bg-paper py-[32px] px-[24px] border-y border-rule flex flex-col gap-[32px]">
+                    <div class="flex flex-col items-center text-center">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"The first newsletter I've opened every week for a year. Essential."</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"Finally, a cultural dispatch that doesn't feel like a PR feed."</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"The music picks alone are worth it. Deep, thoughtful curation."</p>
+                    </div>
+                </section>
+
+                <!-- WHAT YOU'RE IN FOR -->
+                <section class="w-full bg-paper py-[48px] px-[24px] flex flex-col border-b border-rule">
+                    <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">What you get</span>
+                    <h2 class="font-serif text-[28px] font-bold text-ink mt-[8px] leading-tight">Four things. Every week.</h2>
+                    <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[12px]">
+                        Every issue of Culture Drop is built around four sections — so you always know what you're getting, but never know what you'll find.
+                    </p>
+                    
+                    <div class="flex flex-col gap-[12px] mt-[24px]">
+                        <button class="w-full h-[48px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors">
+                            Subscribe &rarr;
+                        </button>
+                        <a href="#archive-mobile" class="w-full h-[48px] flex items-center justify-center bg-transparent border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors">
+                            Browse the archive &rarr;
+                        </a>
+                    </div>
+                    
+                    <div class="flex flex-col gap-[16px] mt-[40px]">
+                        <!-- Tile 1 -->
+                        <div class="border-l-[6px] border-ochre/60 pl-[12px] py-[2px] leading-[1.5]">
+                            <span class="font-sans text-[14px] font-bold text-ink mr-[6px]">The Deep Dive</span>
+                            <span class="font-sans text-[13px] text-ink-soft">A single, well-researched essay unpacking a major cultural shift or defining moment.</span>
+                        </div>
+                        <!-- Tile 2 -->
+                        <div class="border-l-[6px] border-ochre/60 pl-[12px] py-[2px] leading-[1.5]">
+                            <span class="font-sans text-[14px] font-bold text-ink mr-[6px]">The List</span>
+                            <span class="font-sans text-[13px] text-ink-soft">Curated recommendations covering film, visual art, literature, and food across key cities.</span>
+                        </div>
+                        <!-- Tile 3 -->
+                        <div class="border-l-[6px] border-ochre/60 pl-[12px] py-[2px] leading-[1.5]">
+                            <span class="font-sans text-[14px] font-bold text-ink mr-[6px]">What's Playing</span>
+                            <span class="font-sans text-[13px] text-ink-soft">A short dispatch on the albums, sounds, and artists defining the week.</span>
+                        </div>
+                        <!-- Tile 4 -->
+                        <div class="border-l-[6px] border-ochre/60 pl-[12px] py-[2px] leading-[1.5]">
+                            <span class="font-sans text-[14px] font-bold text-ink mr-[6px]">The Calendar</span>
+                            <span class="font-sans text-[13px] text-ink-soft">Upcoming vetted events, exhibitions, and parties you actually want to go to.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PULL QUOTE -->
+                <section class="w-full bg-paper py-[48px] px-[28px] flex flex-col items-center">
+                    <div class="w-[40px] h-[2px] bg-ochre mb-[24px]"></div>
+                    <h2 class="font-serif text-[22px] italic text-ink leading-[1.45] text-center">
+                        "We don't just tell you what's happening — we explore why it matters."
+                    </h2>
+                    <span class="font-sans text-[13px] text-mute mt-[16px] block text-center">
+                        — The editorial mission of Culture Drop
+                    </span>
+                </section>
+
+                <!-- RECENT ISSUES -->
+                <section class="w-full bg-paper py-[48px] px-[24px] flex flex-col border-y border-rule">
+                    <div class="flex items-center justify-between mb-[20px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Recent issues</span>
+                        <a href="#archive-mobile" class="font-sans text-[13px] font-bold text-ochre hover:underline underline-offset-4">Full archive &rarr;</a>
+                    </div>
+
+                    <div class="flex flex-col gap-[16px]">
+                        <!-- Issue Card 1 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col">
+                            <div class="flex items-center justify-between mb-[8px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°042</span>
+                                <span class="font-mono text-[11px] text-mute">30 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2">
+                                The Global Afterlife of Afrobeat
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                When Fela Kuti created the sound, it was a local weapon against dictatorship. Today, its children fill stadiums. What changed?
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+
+                        <!-- Issue Card 2 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col">
+                            <div class="flex items-center justify-between mb-[8px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°041</span>
+                                <span class="font-mono text-[11px] text-mute">23 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2">
+                                Architecture of the Return
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                How diaspora creatives are building physical spaces in West Africa, from boutique hotels to artist residencies.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+
+                        <!-- Issue Card 3 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col">
+                            <div class="flex items-center justify-between mb-[8px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°040</span>
+                                <span class="font-mono text-[11px] text-mute">16 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2">
+                                The Independent Film Wave
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                Moving beyond Nollywood blockbusters: the directors capturing quiet, intimate stories on a shoestring budget.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-ochre mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FULL ARCHIVE SECTION (Mobile - No Dates) -->
+                <section id="archive-mobile" class="w-full bg-paper py-[48px] px-[24px] flex flex-col border-b border-rule">
+                    <div class="flex items-center justify-between mb-[16px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Full Archive</span>
+                        <span class="font-mono text-[11px] text-mute">42 issues</span>
+                    </div>
+                    <div class="w-full h-[1px] bg-rule mb-[8px]"></div>
+
+                    <!-- Archive List (No dates on mobile) -->
+                    <div class="flex flex-col">
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">042</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">The Global Afterlife of Afrobeat</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">041</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">Architecture of the Return</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">040</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">The Independent Film Wave</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">039</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">Inside the Rise of Alternative R&B</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">038</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">A Conversation on Post-Colonial Literature</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-[12px] py-[16px] border-b border-rule">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">037</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 truncate">Lagos Culinary Scene: The New Guard</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0">&rarr;</span>
+                        </a>
+                    </div>
+                    
+                    <button class="mt-[24px] w-full h-[48px] border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors">
+                        Load more issues
+                    </button>
+                </section>
+
+                <!-- BOTTOM SUBSCRIBE CTA BAND (Stacked) -->
+                <section class="w-full bg-paper-warm py-[64px] px-[24px] flex flex-col items-center">
+                    <h2 class="font-serif text-[26px] font-bold text-ink text-center leading-tight">
+                        One cultural dispatch. Every week.
+                    </h2>
+                    
+                    <!-- Subscribe Form (Stacked) -->
+                    <div class="mt-[24px] flex flex-col gap-[8px] w-full">
+                        <input type="email" placeholder="your@email.com" class="w-full p-[12px] bg-white border border-rule rounded-md font-sans text-[14px] text-ink focus:border-ochre outline-none transition-colors">
+                        <button class="w-full p-[14px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors">
+                            Drop it in my inbox &rarr;
+                        </button>
+                    </div>
+
+                    <span class="font-sans text-[11px] text-mute mt-[16px] text-center">
+                        No spam. No nonsense. Unsubscribe any time.
+                    </span>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

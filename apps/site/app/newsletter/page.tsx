@@ -399,7 +399,7 @@ export default async function NewsletterArchive({
                 <Link
                   key={issue.id}
                   href={`/newsletter/${issue.slug}`}
-                  className="digest-archive-row"
+                  className={`digest-archive-row${list === "getmelit" ? " digest-archive-row--getmelit" : ""}`}
                 >
                   <span className="digest-archive-num">
                     {String(issueNum(idx)).padStart(2, "0")}
