@@ -228,24 +228,51 @@ List and segment labels defined as class constants `LIST_LABELS` and
 
 ---
 
-### Newsletter Hub page — mockup-driven additions (July 2026)
+### Newsletter Hub page — rebuilt from mockup (July 2026)
 
 `mockups/web/newsletter_hub_2.html` (mobile 390px frame, "2. Newsletter Hub (Mobile 390px)")
-uploaded and diffed against `apps/site/app/newsletter/page.tsx` — two sections present in the
-mockup were missing from the live hub page and have been added:
+uploaded, and `apps/site/app/newsletter/page.tsx` was rebuilt section-by-section to match it
+rather than patched — several sections that existed on the old hub but aren't in the mockup
+were removed outright, not just supplemented:
 
+- **Masthead** — copy aligned to the mockup ("Two newsletters. One cultural obsession.") and a
+  new `.nl-masthead-pills` row (two cadence pills, "★ Culture Drop · Every Tuesday" /
+  "★ GetMeLit · Mon–Sat") added below the subhead. Stacks full-width at `max-width: 640px`.
+- **Subscribe cards** — the old inline `.nl-card-features` bullet list is **removed** from both
+  cards (that content moved into the new "Inside the programme" section below); GetMeLit's card
+  eyebrow/note corrected from stale "Weekly" copy to "Daily · Mon–Sat" (matches its real cadence
+  in `NL_META` and the mockup). Each card still ends with a `.nl-card-preview` mock (flat,
+  non-tilted variant of `NewsletterPublicationPage.tsx`'s `.np-preview-card`, rendered by a new
+  `NlCardPreview` component) sourced from `NL_META` rather than hardcoded copy.
 - **Testimonials** — new `.nl-testimonials`/`.nl-testimonial-card` section (stacked cards on
-  mobile, 3-up row at `min-width: 720px`) inserted right after the two newsletter subscribe
-  cards, matching the mockup's section order. Deliberately styled as its own `nl-*` block
-  rather than reusing `NewsletterPublicationPage.tsx`'s `.np-testimonials` (flat 3-col grid,
-  no card background) — the hub mockup wants `paper-warm` rounded cards, closer to
-  `.np-preview-card`'s visual language than `.np-testimonial`'s.
-- **Per-card newsletter preview mock** — new `.nl-card-preview` block (flat, non-tilted variant
-  of the existing `.np-preview-card` used on the individual Culture Drop/GetMeLit publication
-  pages) rendered at the bottom of each subscribe card via a new `NlCardPreview` component in
-  `page.tsx`. Pulls its content from the existing `NL_META` (`lib/newsletter-lists.ts`) rather
-  than hardcoding new copy — same data source `NewsletterPublicationPage.tsx`'s hero preview
-  card already uses, so the two previews stay naturally in sync if `NL_META` copy changes.
+  mobile, 3-up row at `min-width: 720px`), inserted right after the cards. Styled as its own
+  `paper-warm` rounded-card block rather than reusing `NewsletterPublicationPage.tsx`'s flat,
+  card-less `.np-testimonials` — the mockup wants the card treatment.
+- **"Inside the programme"** (new `.nl-inside-*` block) — **replaces** the old desktop-only
+  `.gml-whats-inside` pillars grid, the `.gml-pull-band` pull-quote, and the standalone
+  `.nl-culturedrop-feature` GetMeLit section entirely. One section, two columns ("Inside Culture
+  Drop" / "Inside GetMeLit"), each a list of 4 items with a colored left bar — sourced directly
+  from `NL_META[...].pillars`, no fabricated copy. GetMeLit's items get a Daily/Sat cadence tag
+  per item (`GETMELIT_ITEM_TAGS`, matching the mockup's per-row cadence badges); Culture Drop's
+  don't, since all four of its sections ship in the single weekly Tuesday issue.
+- **Recent issues** — rebuilt as `.nl-recent-*` (was `.gml-recent`/`.gml-issue-card`, Culture
+  Drop-only). Now shows the 3 most recent issues **across both lists** with a colored
+  `nl-list-badge` per card, matching the mockup's mixed grid; "See all →" links to `#archive` on
+  the same page instead of `/newsletter/culture-drop`.
+- **Coming Soon** — unchanged, already matched the mockup closely.
+- **Archive** — tabs get a `max-width: 640px` override into scrollable pills
+  (`.nl-archive-tab--active` → filled `var(--ink)` pill), and the date column
+  (`.digest-archive-date`) is hidden at that width to match the mockup's mobile row (number +
+  title + badge + arrow only, no date). Note: `.digest-archive-tags` (the badge) was already
+  being hidden below `1024px` by a **pre-existing, unrelated** rule higher up in the file (the
+  old "Cultural Digest" section) — that rule is overridden back to visible at `max-width: 640px`
+  specifically for this archive, since the mockup keeps the badge.
+- **`EditionNewsletterHub.tsx`** (the `/newsletter/uk`, `/us`, `/africa` pages) still renders the
+  old layout and reuses the CSS classes this pass removed usage of from the hub
+  (`gml-whats-inside`, `gml-pull-band`, `gml-recent`, `nl-culturedrop-feature`, etc.) —
+  **deliberately left untouched and those CSS blocks were not deleted**, only the hub page
+  (`app/newsletter/page.tsx`) stopped using them. If a future pass wants the edition pages on
+  the new design too, treat it as a separate task.
 - Not visually verified in a browser (no WordPress/env credentials in this pass) — verified via
   `tsc --noEmit` (clean) and a CSS brace-balance check on `newsletter.css`.
 
