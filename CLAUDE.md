@@ -3138,6 +3138,38 @@ The session `user` object includes these fields beyond the basics:
 ```
 All fields available as `session.user.X` in server components after `getServerSession(authOptions)`.
 
+### Sign-out cookie clearing gotcha (`__Secure-`/`__Host-` prefix rules, fixed July 2026)
+
+Both `apps/site/app/api/auth/clear-cookies/route.ts` and `apps/connect/app/api/auth/clear-cookies/route.ts`
+exist because `signOut()` only clears the cookie matching the exact name/Domain configured in
+`authOptions` (domain-scoped, `__Secure-`-prefixed in prod, see the `cookies.sessionToken` block
+in `packages/shared/lib/auth.ts`) — any legacy host-only cookie set before the `.themoveee.com`
+domain config existed survives `signOut()` untouched, so this route is a safety-net that expires
+every plausible name/Domain permutation via `res.cookies.set(name, "", { maxAge: 0, ... })`.
+
+**The safety-net itself had the same class of bug it was written to fix.** Cookie name prefixes
+carry hard requirements the browser enforces *silently* — a `Set-Cookie` that violates them isn't
+rejected with an error, it's just dropped, so nothing in the network tab looks wrong:
+- `__Secure-` requires the `Secure` attribute on **every** `Set-Cookie` using that name, including
+  clears.
+- `__Host-` additionally **forbids a `Domain` attribute** entirely (and also requires `Secure` +
+  `Path=/`).
+
+The route was clearing every cookie name the same generic way (no `secure` on either the
+host-only or domain-scoped write, and setting `domain: ".themoveee.com"` on the `__Host-` name
+too) — so the clear for `__Secure-next-auth.session-token` (the actual production session cookie
+name) and `__Host-next-auth.csrf-token` silently never took effect. Symptom: clicking Sign Out
+looked like it worked (redirect happened, no errors), but a browser holding one of those
+host-only legacy cookies stayed logged in — `signOut()`'s own domain-scoped clear can't touch a
+cookie set without a `Domain` attribute, and this safety-net's clear was the specific thing meant
+to catch that case.
+
+Fixed by branching per cookie name instead of one generic loop: `__Host-`-prefixed names get a
+single host-only clear with `secure: true` and no `domain`; every other name gets both a
+host-only and a domain-scoped clear, with `secure: true` added whenever the name starts with
+`__Secure-`. **If you ever add a new cookie name to either route's list, check its prefix first**
+— `__Secure-`/`__Host-` cookies need this exact treatment, plain-named ones don't.
+
 ---
 
 ## Registration flow (redesigned)
