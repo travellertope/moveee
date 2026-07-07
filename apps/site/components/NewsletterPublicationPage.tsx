@@ -79,13 +79,9 @@ export default function NewsletterPublicationPage({
               </a>
             </div>
 
-            <h1 className="np-title">{meta.standfirst}</h1>
+            <h1 className="np-title">{meta.tagline}</h1>
 
-            <p className="np-standfirst">
-              {listId === "culture-drop"
-                ? "One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll."
-                : "Stories, books worth reading, creative opportunities, and spotlights on writers and readers shaping culture. For people who live for words."}
-            </p>
+            <p className="np-standfirst">{meta.standfirst}</p>
 
             <div className="np-form">
               {HeroForm}
