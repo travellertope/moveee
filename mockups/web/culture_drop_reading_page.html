@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Newsletter Reading Page</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'ink': '#14110D',
+                        'ink-soft': '#3A342B',
+                        'mute': '#7A6F5C',
+                        'ochre': '#C5491F',
+                        'gold': '#B38238',
+                        'rule': '#E8E2D8',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    borderRadius: {
+                        'sm': '4px',
+                        'md': '6px',
+                        'lg': '8px',
+                        'xl': '12px',
+                        'full': '9999px',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; display: flex; justify-content: center;}
+        .desktop-screen { width: 1440px; height: 860px; flex-shrink: 0; }
+        .ios-screen { width: 390px; height: 844px; flex-shrink: 0; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input:focus { outline: none; border-color: #C5491F; }
+        input::placeholder { color: #A0988A; }
+    </style>
+</head>
+<body class="font-sans text-ink flex-col gap-16 pb-20 items-center">
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: DESKTOP SPLIT-PANE READER             -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 shrink-0 mx-auto">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Frame 5: Newsletter Reading Page (Desktop, Split-Pane)</span>
+        
+        <!-- Desktop Container simulating 100vh viewport -->
+        <div class="desktop-screen bg-white rounded-xl border-[8px] border-gray-900 overflow-hidden relative flex shadow-2xl">
+            
+            <!-- ========================================== -->
+            <!-- LEFT SIDEBAR (Fixed 420px, 100vh)          -->
+            <!-- ========================================== -->
+            <div class="w-[420px] h-full flex flex-col border-r border-rule bg-white shrink-0">
+                
+                <!-- Sidebar Header -->
+                <div class="p-[24px] flex flex-col border-b border-rule shrink-0">
+                    <a href="/newsletter" class="font-serif text-[28px] font-bold text-ink hover:text-ochre transition-colors w-max">Culture Drop</a>
+                    <p class="mt-[16px] font-sans text-[14px] text-ink-soft leading-[1.5]">
+                        Browse all 42 issues of Culture Drop — the weekly dispatch on contemporary global culture. Written to make you think, not just scroll.
+                    </p>
+                    <button class="w-full mt-[16px] bg-ink text-white font-sans text-[14px] font-bold py-[14px] rounded-md hover:bg-ink-soft transition-colors">
+                        Subscribe free &rarr;
+                    </button>
+                </div>
+
+                <!-- Archive Panel (Flex 1) -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    
+                    <!-- Panel Header (Sticky) -->
+                    <div class="p-[16px] flex justify-between items-center border-b border-rule sticky top-0 bg-white z-10 shrink-0">
+                        <span class="font-sans text-[13px] font-bold text-ink flex-1">Browse Archive</span>
+                        
+                        <!-- Sort Toggle -->
+                        <div class="flex gap-[4px]">
+                            <!-- Active (Newest First) -->
+                            <button class="w-[32px] h-[32px] border border-rule rounded-sm flex items-center justify-center text-ink bg-gray-50">
+                                &darr;
+                            </button>
+                            <!-- Inactive (Oldest First) -->
+                            <button class="w-[32px] h-[32px] border border-rule rounded-sm flex items-center justify-center text-mute hover:bg-gray-50 transition-colors">
+                                &uarr;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Issue List (Scrollable) -->
+                    <!-- DEV: The sidebar's "Browse Archive" list is navigable without leaving the page — clicking an issue row performs client-side navigation (the right pane content changes, the sidebar stays). -->
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col bg-white">
+                        
+                        <!-- Row: ACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-ochre border-b border-ochre flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-white">Issue 042</span>
+                            <span class="font-sans text-[13px] text-white mt-[2px]">The Global Afterlife of Afrobeat</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 041</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">Architecture of the Return</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 040</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">The Independent Film Wave</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 039</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">Inside the Rise of Alternative R&B</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 038</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">A Conversation on Post-Colonial Literature</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 037</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">Lagos Culinary Scene: The New Guard</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 036</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">Beyond the Museum: Repatriation Debates</span>
+                        </a>
+                        
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 035</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">The Memoir Boom: Who Gets to Tell the Story?</span>
+                        </a>
+
+                        <!-- Row: INACTIVE -->
+                        <a href="#" class="px-[16px] py-[14px] bg-white hover:bg-paper-warm border-b border-rule flex flex-col cursor-pointer transition-colors duration-100">
+                            <span class="font-sans text-[13px] font-bold text-ink">Issue 034</span>
+                            <span class="font-sans text-[13px] text-ink-soft mt-[2px]">Visual Arts: The Generation Defining 2026</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="p-[12px_16px] border-t border-rule text-right bg-white shrink-0">
+                    <button class="font-sans text-[12px] text-mute hover:text-ink transition-colors font-bold tracking-widest">&lt;&lt;</button>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- RIGHT CONTENT PANE (Flex 1)                -->
+            <!-- ========================================== -->
+            <div class="flex-1 h-full relative overflow-y-auto hide-scrollbar bg-white">
+                
+                <!-- Progress Bar -->
+                <!-- DEV: ProgressBar tracks scroll position of the RIGHT pane's overflow-y, not the window. -->
+                <div class="sticky top-0 w-full h-[3px] z-[100] bg-transparent">
+                    <div class="h-full bg-ochre" style="width: 15%;"></div>
+                </div>
+
+                <!-- Issue Badge (Sticky to simulate Fixed within Pane) -->
+                <div class="sticky top-[20px] w-full h-0 z-50 pointer-events-none">
+                    <div class="absolute right-[20px] bg-white border border-rule rounded-full px-[16px] py-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] flex items-center gap-[8px] pointer-events-auto">
+                        <span class="font-sans text-[13px] font-bold text-ink leading-none pt-0.5">Issue N°042</span>
+                        <div class="w-[1px] h-[12px] bg-rule mx-[2px]"></div>
+                        <button class="text-mute hover:text-ochre transition-colors" title="Share issue">
+                            <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ISSUE HERO -->
+                <div class="w-full min-h-[480px] flex items-center justify-center px-[40px] py-[48px]" style="background-color: rgba(197, 73, 31, 0.1);"> <!-- Terracotta wash -->
+                    <div class="w-full max-w-[960px] flex items-center gap-[40px]">
+                        
+                        <!-- Left: Pull Quote -->
+                        <div class="w-[45%] flex flex-col">
+                            <p class="font-serif text-[26px] italic text-ink leading-[1.45]">
+                                "When Fela Kuti created the sound in the 1970s, it was a hyper-local weapon against military dictatorship. Half a century later, its children fill stadiums from London to Madison Square Garden."
+                            </p>
+                            <span class="font-sans text-[14px] text-mute mt-[16px]">— The Deep Dive</span>
+                        </div>
+
+                        <!-- Right: Featured Image -->
+                        <div class="w-[55%] flex flex-col items-center">
+                            <div class="w-full max-w-[420px] h-[320px] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.15)] ml-auto object-cover relative overflow-hidden">
+                                <!-- Abstract pattern for hero -->
+                                <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px), repeating-linear-gradient(-45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px); background-size: 12px 12px;"></div>
+                            </div>
+                            <span class="font-sans text-[11px] text-mute italic mt-[12px] self-end pr-[12px]">Artwork by Lakin Ogunbanwo</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- NEWSLETTER WORDMARK -->
+                <div class="mt-[40px] mb-[24px] w-full text-center">
+                    <h2 class="font-serif text-[64px] font-bold text-ink tracking-[-1px] leading-none">Culture Drop</h2>
+                </div>
+
+                <!-- ISSUE GREETING / BODY -->
+                <article class="w-full max-w-[680px] mx-auto px-[40px] pb-[80px]">
+                    
+                    <p class="font-sans text-[16px] text-ink-soft font-bold mb-[24px]">Hello readers!</p>
+                    
+                    <p class="font-sans text-[16px] text-ink leading-[1.7] mb-[24px]">
+                        Welcome to Issue 42. We're dedicating the entire Deep Dive this week to the evolution of Afrobeats. As the genre continues to dominate global charts, we wanted to look backwards to understand exactly how we got here—and what might be lost in translation as the music travels.
+                    </p>
+
+                    <p class="font-sans text-[16px] text-ink leading-[1.7] mb-[40px]">
+                        Plus, our usual curation of the week's best reads, exhibitions, and sounds. Let's get into it.
+                    </p>
+
+                    <h3 class="font-serif text-[22px] font-bold text-ink mb-[16px] pt-[24px] border-t border-rule">The Deep Dive</h3>
+                    
+                    <p class="font-sans text-[16px] text-ink leading-[1.7] mb-[24px]">
+                        There is a prevailing narrative in Western music journalism that treats Afrobeats as a spontaneous eruption—a sudden, joyful noise that inexplicably conquered Spotify playlists overnight. But the global afterlife of Afrobeat (the parent genre) and the explosion of Afrobeats (its pop descendant) is the result of decades of deliberate cross-pollination.
+                    </p>
+                    <p class="font-sans text-[16px] text-ink leading-[1.7] mb-[24px]">
+                        To understand the current moment, you have to look at the diaspora corridors: the Lagos-to-London flight paths, the <a href="#" class="text-ochre hover:underline underline-offset-4">early 2000s club promoters in Peckham</a>, and the digital infrastructure built by independent African distributors when major labels weren't paying attention.
+                    </p>
+
+                    <!-- Article Content Gate Demo -->
+                    <div class="mt-[32px] border-[1.5px] border-ochre bg-paper-warm rounded-xl p-[32px] flex flex-col items-center text-center shadow-sm">
+                        <svg class="w-[28px] h-[28px] text-ochre mb-[12px]" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                        
+                        <h3 class="font-serif text-[20px] font-bold text-ink">Moveee Pro</h3>
+                        <p class="font-sans text-[15px] text-ink-soft mt-[8px] max-w-[400px] leading-relaxed">
+                            This piece goes deeper — reserved for Moveee Pro members. Join a global community of culture-forward people, with exclusive editorials, a Pro badge, and long-form content worth your time.
+                        </p>
+                        
+                        <button class="h-[48px] px-[32px] bg-ink text-white font-sans font-bold text-[14px] rounded-full mt-[20px] shadow-sm hover:opacity-90">
+                            Explore Moveee Pro &rarr;
+                        </button>
+                        
+                        <button class="font-sans text-[13px] text-ochre mt-[12px] hover:underline">Already a member? Sign in</button>
+                        
+                        <span class="font-mono text-[10px] text-mute mt-[16px]">Moveee Pro · ₦4,500/mo · Cancel anytime · Free account always available</span>
+                    </div>
+
+                    <!-- Placeholder for ArticleComments component -->
+                    <div class="mt-[64px] border-t border-rule pt-[32px]">
+                        <h3 class="font-sans text-[16px] font-bold text-ink mb-[16px]">Comments (4)</h3>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-10 h-10 bg-paper-warm rounded-full border border-rule"></div>
+                            <input type="text" class="flex-1 border border-rule rounded-md h-10 px-3 font-sans text-sm bg-white" placeholder="Add a comment...">
+                        </div>
+                    </div>
+
+                </article>
+
+                <!-- SUBSCRIBE BAND -->
+                <div class="w-full bg-paper-warm py-[64px] border-t border-rule text-center px-[40px]">
+                    <h2 class="font-serif text-[28px] font-bold text-ink">Never miss an issue.</h2>
+                    
+                    <div class="mt-[24px] flex items-center justify-center gap-[8px] w-full max-w-[440px] mx-auto">
+                        <input type="email" placeholder="your@email.com" class="w-[260px] h-[48px] bg-white border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink focus:border-ochre outline-none transition-colors shadow-sm">
+                        <button class="h-[48px] px-[20px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#A93C15] transition-colors whitespace-nowrap shadow-sm">
+                            Drop it in my inbox &rarr;
+                        </button>
+                    </div>
+
+                    <span class="font-sans text-[12px] text-mute mt-[16px] block">Free · Weekly · Unsubscribe any time</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 6: MOBILE COMPANION (390px)              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 shrink-0 mx-auto mt-16">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Mobile Companion (Single Column)</span>
+        
+        <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Progress Bar -->
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-paper-warm z-[100]">
+                <div class="h-full bg-ochre w-[25%]"></div>
+            </div>
+
+            <!-- Mobile Top Bar -->
+            <header class="h-[60px] flex items-center justify-between px-[16px] bg-white border-b border-rule shrink-0 pt-2 z-50">
+                <a href="/newsletter" class="font-serif text-[20px] font-bold text-ink">Culture Drop</a>
+                <span class="border border-rule rounded-full px-[12px] py-[4px] font-sans text-[11px] font-bold text-ink">Issue N°042</span>
+            </header>
+
+            <!-- Browse Archive Strip (Horizontal Pills) -->
+            <div class="w-full bg-paper-warm border-b border-rule p-[12px] flex gap-[8px] overflow-x-auto hide-scrollbar sticky top-0 z-40 shrink-0">
+                <button class="px-[12px] py-[6px] rounded-full bg-ochre text-white font-sans text-[12px] font-bold shrink-0 whitespace-nowrap shadow-sm">
+                    Issue 042
+                </button>
+                <button class="px-[12px] py-[6px] rounded-full bg-transparent border border-rule text-ink hover:bg-white font-sans text-[12px] shrink-0 whitespace-nowrap transition-colors">
+                    Issue 041
+                </button>
+                <button class="px-[12px] py-[6px] rounded-full bg-transparent border border-rule text-ink hover:bg-white font-sans text-[12px] shrink-0 whitespace-nowrap transition-colors">
+                    Issue 040
+                </button>
+                <button class="px-[12px] py-[6px] rounded-full bg-transparent border border-rule text-ink hover:bg-white font-sans text-[12px] shrink-0 whitespace-nowrap transition-colors">
+                    Issue 039
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                
+                <!-- Hero (Stacked) -->
+                <div class="w-full bg-ochre/10 flex flex-col px-[16px] py-[32px] gap-[24px]">
+                    <div class="w-full aspect-[4/3] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] rounded-lg shadow-md object-cover relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px), repeating-linear-gradient(-45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px); background-size: 12px 12px;"></div>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <p class="font-serif text-[22px] italic text-ink leading-[1.4]">
+                            "When Fela Kuti created the sound in the 1970s, it was a hyper-local weapon against military dictatorship. Half a century later, its children fill stadiums."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Wordmark -->
+                <div class="w-full text-center py-[24px]">
+                    <h2 class="font-serif text-[36px] font-bold text-ink tracking-tight">Culture Drop</h2>
+                </div>
+
+                <!-- Body -->
+                <article class="px-[16px] pb-[40px]">
+                    <p class="font-sans text-[15px] text-ink-soft font-bold mb-[20px]">Hello readers!</p>
+                    
+                    <p class="font-sans text-[15px] text-ink leading-[1.7] mb-[20px]">
+                        Welcome to Issue 42. We're dedicating the entire Deep Dive this week to the evolution of Afrobeats. As the genre continues to dominate global charts, we wanted to look backwards to understand exactly how we got here...
+                    </p>
+
+                    <h3 class="font-serif text-[20px] font-bold text-ink mb-[12px] pt-[20px] border-t border-rule">The Deep Dive</h3>
+                    
+                    <p class="font-sans text-[15px] text-ink leading-[1.7] mb-[20px]">
+                        There is a prevailing narrative in Western music journalism that treats Afrobeats as a spontaneous eruption—a sudden, joyful noise that inexplicably conquered Spotify playlists overnight.
+                    </p>
+
+                    <!-- Article Content Gate Demo (Mobile) -->
+                    <div class="mt-[24px] border-[1.5px] border-ochre bg-paper-warm rounded-xl p-[24px] flex flex-col items-center text-center shadow-sm mx-[-4px]">
+                        <svg class="w-[24px] h-[24px] text-ochre mb-[12px]" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                        
+                        <h3 class="font-serif text-[18px] font-bold text-ink">Moveee Pro</h3>
+                        <p class="font-sans text-[14px] text-ink-soft mt-[8px] leading-relaxed">
+                            This piece goes deeper. Join a global community with exclusive editorials and long-form content worth your time.
+                        </p>
+                        
+                        <button class="w-full h-[48px] bg-ink text-white font-sans font-bold text-[14px] rounded-full mt-[20px] shadow-sm">
+                            Explore Moveee Pro
+                        </button>
+                        
+                        <button class="font-sans text-[12px] text-ochre mt-[12px] hover:underline">Already a member? Sign in</button>
+                    </div>
+                </article>
+
+                <!-- SUBSCRIBE BAND (Mobile) -->
+                <div class="w-full bg-paper-warm py-[40px] px-[16px] border-t border-rule text-center">
+                    <h2 class="font-serif text-[24px] font-bold text-ink leading-tight mb-[16px]">Never miss an issue.</h2>
+                    
+                    <div class="flex flex-col gap-[12px] w-full max-w-[320px] mx-auto">
+                        <input type="email" placeholder="your@email.com" class="w-full h-[48px] bg-white border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink outline-none shadow-sm">
+                        <button class="w-full h-[48px] bg-ochre text-white font-sans text-[14px] font-bold rounded-md shadow-sm">
+                            Drop it in my inbox
+                        </button>
+                    </div>
+
+                    <span class="font-sans text-[11px] text-mute mt-[16px] block">Free · Weekly · Unsubscribe any time</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

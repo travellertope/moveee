@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - GetMeLit</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'ink': '#14110D',
+                        'ink-soft': '#3A342B',
+                        'mute': '#7A6F5C',
+                        'ochre': '#C5491F',
+                        'gold': '#B38238',
+                        'rule': '#E8E2D8',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    borderRadius: {
+                        'md': '4px',
+                        'lg': '8px',
+                        'xl': '12px',
+                    },
+                    boxShadow: {
+                        'preview': '0 4px 24px rgba(0,0,0,0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; display: flex; justify-content: center;}
+        .desktop-screen { width: 1440px; flex-shrink: 0; background-color: #FFFFFF; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Newsletter Preview Tilt */
+        .tilt-card {
+            transform: rotate(2deg);
+        }
+        
+        /* Specific input placeholder styling */
+        input::placeholder { color: #A0988A; }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. GetMeLit Publication Homepage (Desktop)</span>
+        
+        <div class="desktop-screen shadow-2xl rounded-xl border-4 border-gray-900 overflow-hidden relative flex flex-col">
+            
+            <!-- Global Nav Context (Simplified for frame reference) -->
+            <header class="h-[64px] flex items-center justify-between px-[32px] border-b border-rule shrink-0 bg-white">
+                <h1 class="font-serif text-[22px] font-bold text-ink">moveee <span class="italic text-gold">newsletters</span></h1>
+                <nav class="flex gap-6 font-sans text-[13px] font-bold">
+                    <span class="text-mute hover:text-ink cursor-pointer">Culture Drop</span>
+                    <span class="text-gold">GetMeLit</span>
+                </nav>
+            </header>
+
+            <!-- ============================================== -->
+            <!-- HERO SECTION                                   -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper py-[80px] flex justify-center">
+                <div class="w-full max-w-[1100px] flex items-stretch">
+                    
+                    <!-- LEFT COLUMN -->
+                    <div class="w-[52%] flex flex-col justify-center pr-[40px]">
+                        
+                        <div class="flex items-center gap-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-mute uppercase tracking-[0.6px]">★ GetMeLit · For readers & writers</span>
+                            <a href="#" class="text-mute hover:text-gold transition-colors" title="RSS Feed">
+                                <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6-3v.01M5 19h.01"></path></svg>
+                            </a>
+                        </div>
+                        
+                        <h1 class="font-serif text-[42px] font-bold text-ink leading-[1.15] max-w-[420px] mt-[16px]">
+                            A weekly letter for the literary mind.
+                        </h1>
+                        
+                        <p class="font-sans text-[16px] text-ink-soft leading-[1.6] max-w-[400px] mt-[16px]">
+                            Stories, poems, essay excerpts, and opportunities for writers and authors from around the world — curated to keep you reading, writing, and discovering.
+                        </p>
+
+                        <!-- Subscribe Form (no card wrapper) -->
+                        <!-- DEV: Button uses var(--gold) per GetMeLit's accent -->
+                        <div class="mt-[24px] flex items-center gap-[8px] w-full max-w-[440px]">
+                            <input type="email" placeholder="your@email.com" class="flex-1 max-w-[260px] h-[48px] bg-paper border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink focus:border-gold outline-none transition-colors">
+                            <button class="h-[48px] px-[20px] bg-gold text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#9a6e2e] transition-colors whitespace-nowrap">
+                                Subscribe &rarr;
+                            </button>
+                        </div>
+                        
+                        <span class="font-sans text-[12px] text-mute mt-[10px] block">Free · Weekly · Unsubscribe any time</span>
+                    </div>
+
+                    <!-- RIGHT COLUMN: NEWSLETTER PREVIEW PANEL -->
+                    <!-- Simulated email card on tinted background -->
+                    <div class="w-[48%] relative flex items-center justify-center pl-[20px]">
+                        <!-- Tinted bg rectangle filling the right column -->
+                        <div class="absolute inset-y-0 right-0 left-[20px] bg-paper-warm rounded-l-2xl"></div>
+                        
+                        <!-- Simulated Email Card -->
+                        <div class="w-[380px] h-[260px] bg-white border border-rule rounded-xl shadow-preview tilt-card relative z-10 flex flex-col overflow-hidden">
+                            <!-- Top strip -->
+                            <div class="px-[16px] py-[12px] border-b border-rule flex items-center justify-between bg-white shrink-0">
+                                <span class="font-sans text-[11px] font-bold text-gold uppercase tracking-wider">GetMeLit</span>
+                                <span class="font-mono text-[10px] text-mute">Tue, 7 Jul 2026</span>
+                            </div>
+                            <!-- Content Block -->
+                            <div class="p-[16px] flex flex-col flex-1 bg-white">
+                                <h3 class="font-serif text-[18px] font-bold text-ink leading-tight mb-[8px]">Stories: The Invisible Woman by Ama Ata Aidoo — an excerpt</h3>
+                                <p class="font-sans text-[12px] text-ink-soft leading-[1.5] line-clamp-2">
+                                    "I am not invisible because I am dead. I am not invisible because I am a spirit. I am invisible simply because..."
+                                </p>
+                                
+                                <div class="w-full text-center my-[12px]">
+                                    <span class="font-mono text-[10px] text-mute tracking-widest">──── BOOKS ────</span>
+                                </div>
+                                
+                                <div class="flex flex-col gap-[8px]">
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Fiction</span> — Blackass by A. Igoni Barrett</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Poetry</span> — The Rinehart Frames</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Non-Fiction</span> — Of Africa by Wole Soyinka</span>
+                                    <span class="font-sans text-[12px] text-ink line-clamp-1">▸ <span class="font-bold">Opp</span> — Commonwealth Short Story Prize opens</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- TESTIMONIALS BAND                              -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper-warm py-[48px] border-y border-rule flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] grid grid-cols-3 gap-[40px]">
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"GetMeLit is the only place I find writing opportunities I actually apply for."</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"A treasure trove of African literature. Every issue introduces me to a new author."</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[#B38238] text-[14px] tracking-[2px] mb-[8px]">★★★★★</span>
+                        <p class="font-sans text-[14px] italic text-ink leading-[1.5]">"The perfect Sunday read. The essay excerpts always leave me wanting more."</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- WHAT YOU'RE IN FOR                             -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper py-[72px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[1100px] flex gap-[40px]">
+                    
+                    <!-- Left Column -->
+                    <div class="w-[45%] flex flex-col pr-[24px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">What you get</span>
+                        <h2 class="font-serif text-[32px] font-bold text-ink mt-[12px] leading-tight">Four things. Every week.</h2>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.6] mt-[16px]">
+                            Every issue of GetMeLit is built around four sections — so you always know what you're getting, but never know what you'll find.
+                        </p>
+                        
+                        <div class="flex items-center gap-[12px] mt-[28px]">
+                            <button class="h-[44px] px-[24px] bg-gold text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#9a6e2e] transition-colors">
+                                Subscribe &rarr;
+                            </button>
+                            <a href="#archive" class="h-[44px] px-[24px] bg-transparent border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors flex items-center justify-center">
+                                Browse the archive &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (2x2 Grid) -->
+                    <div class="w-[55%] grid grid-cols-2 gap-[24px]">
+                        <!-- Tile 1 -->
+                        <div class="flex flex-col border-l-[6px] border-gold/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">Stories</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Compelling short fiction, poems, and essay excerpts from established and emerging voices.</p>
+                        </div>
+                        <!-- Tile 2 -->
+                        <div class="flex flex-col border-l-[6px] border-gold/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">Books</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Curated reading lists, reviews, and new releases you should be adding to your shelf.</p>
+                        </div>
+                        <!-- Tile 3 -->
+                        <div class="flex flex-col border-l-[6px] border-gold/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">Opps</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Vetted fellowships, grants, residencies, and publishing opportunities for writers.</p>
+                        </div>
+                        <!-- Tile 4 -->
+                        <div class="flex flex-col border-l-[6px] border-gold/60 pl-[16px] py-[4px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">Author Spotlight</h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5]">Brief, insightful interviews exploring the craft and routine of contemporary authors.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- PULL QUOTE                                     -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper py-[72px] flex flex-col items-center px-[32px]">
+                <div class="w-[40px] h-[2px] bg-gold mb-[32px]"></div>
+                <h2 class="font-serif text-[26px] italic text-ink leading-[1.45] text-center max-w-[680px]">
+                    "Literature, curated weekly — the stories, poems, and reads that feed the literary mind, sent straight to your inbox."
+                </h2>
+                <span class="font-sans text-[13px] text-mute mt-[12px] block text-center">
+                    — The editorial mission of GetMeLit
+                </span>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- RECENT ISSUES                                  -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper pt-[72px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] flex flex-col">
+                    
+                    <div class="flex items-center justify-between mb-[24px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Recent issues</span>
+                        <a href="#archive" class="font-sans text-[13px] font-bold text-gold hover:underline underline-offset-4">Full archive &rarr;</a>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-[24px]">
+                        <!-- Issue Card 1 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°042</span>
+                                <span class="font-mono text-[11px] text-mute">30 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-gold transition-colors">
+                                The Short Story Special
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                Why the short story form remains the sharpest mirror for contemporary African life, featuring three essential new anthologies.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-gold mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+
+                        <!-- Issue Card 2 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°041</span>
+                                <span class="font-mono text-[11px] text-mute">23 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-gold transition-colors">
+                                Opportunities for Emerging Writers
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                Deadlines approaching for the AKO Caine Prize, plus three new continental residency programs opening this summer.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-gold mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+
+                        <!-- Issue Card 3 -->
+                        <div class="bg-white border border-rule rounded-lg p-[20px] flex flex-col hover:border-ghost transition-colors cursor-pointer group">
+                            <div class="flex items-center justify-between mb-[10px]">
+                                <span class="font-mono text-[11px] text-mute">Issue N°040</span>
+                                <span class="font-mono text-[11px] text-mute">16 Jun 2026</span>
+                            </div>
+                            <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.3] line-clamp-2 group-hover:text-gold transition-colors">
+                                The Contemporary African Poets
+                            </h3>
+                            <p class="font-sans text-[13px] text-ink-soft leading-[1.5] mt-[8px] line-clamp-3">
+                                Breaking away from colonial forms: how a new generation of poets is reshaping the cadence of spoken word and print.
+                            </p>
+                            <span class="font-sans text-[12px] font-bold text-gold mt-[16px] block">Read this issue &rarr;</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- FULL ARCHIVE SECTION                           -->
+            <!-- ============================================== -->
+            <section id="archive" class="w-full bg-paper pt-[64px] pb-[64px] flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] flex flex-col">
+                    
+                    <div class="flex items-center justify-between mb-[16px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px]">Full Archive</span>
+                        <span class="font-mono text-[11px] text-mute">42 issues</span>
+                    </div>
+                    <div class="w-full h-[1px] bg-rule mb-[16px]"></div>
+
+                    <!-- Archive List -->
+                    <div class="flex flex-col">
+                        
+                        <!-- Row 1 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">042</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">1 Jul 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Short Story Special</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 2 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">041</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">23 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">Opportunities for Emerging Writers</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 3 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">040</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">16 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Contemporary African Poets</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 4 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">039</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">9 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">On African Futurism in Fiction</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 5 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">038</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">2 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Memoir Boom: Who Gets to Tell the Story?</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 6 -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">037</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">26 May 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">A Conversation with Tsitsi Dangarembga</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+                    </div>
+                    
+                    <button class="mt-[24px] h-[44px] px-[24px] border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors w-max mx-auto">
+                        Load more issues
+                    </button>
+
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- BOTTOM SUBSCRIBE CTA BAND                      -->
+            <!-- ============================================== -->
+            <section class="w-full bg-paper-warm py-[80px] border-t border-rule flex justify-center px-[32px]">
+                <div class="w-full max-w-[560px] flex flex-col items-center">
+                    
+                    <h2 class="font-serif text-[32px] font-bold text-ink text-center leading-tight">
+                        One literary letter. Every week.
+                    </h2>
+                    
+                    <div class="mt-[24px] flex items-center gap-[8px] w-full">
+                        <input type="email" placeholder="your@email.com" class="flex-1 h-[48px] bg-white border border-rule rounded-md px-[12px] font-sans text-[14px] text-ink focus:border-gold outline-none transition-colors">
+                        <button class="h-[48px] px-[20px] bg-gold text-white font-sans text-[14px] font-bold rounded-md hover:bg-[#9a6e2e] transition-colors whitespace-nowrap">
+                            Subscribe &rarr;
+                        </button>
+                    </div>
+
+                    <span class="font-sans text-[12px] text-mute mt-[12px] text-center">
+                        No spam. No nonsense. Unsubscribe any time.
+                    </span>
+
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+</body>
+</html>
