@@ -5837,3 +5837,334 @@ Output 1 frame: split-pane reading page, Culture Drop issue active, sidebar open
   hero with artwork visible, partial body content below.
 ```
 
+
+---
+
+## §25 — Newsletter Hub Page (`/newsletter`)
+
+**Why this section exists:** The `/newsletter` hub is the programme's "front door" — it introduces
+both Culture Drop and GetMeLit side by side, previews recent issues from both, shows the coming-soon
+pipeline, and terminates in the combined archive with tab filtering. It is architecturally distinct
+from the individual publication pages (`/newsletter/culture-drop`, `/newsletter/getmelit`) which
+are single-newsletter mastheads built on `NewsletterPublicationPage.tsx` and covered in §24.
+
+The hub currently uses a two-card layout (`nl-card--culturedrop` / `nl-card--getmelit`) that
+predates the §24 design language — those cards have dark ink-background sections, wrapped form
+cards, and inconsistent accent usage. This prompt replaces the entire hub page with a design that
+is consistent with §24's pub-page language while serving the hub's specific job: making both
+newsletters feel distinct and inviting within a single shared editorial surface.
+
+**Verbatim marketing copy block (use as-is in all prompts below — do not paraphrase):**
+
+> The Moveee Newsletter Programme. Two letters. One cultural obsession.
+> Culture Drop is the weekly dispatch on contemporary global culture — one deep essay, curated
+> picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra.
+> GetMeLit is the weekly letter for the literary mind — stories, poems, essay excerpts, and
+> opportunities for writers and authors from around the world.
+> Both free. Both essential. Both arriving every Tuesday.
+
+> Culture Drop testimonials (verbatim, ★★★★★):
+> "The first newsletter I've opened every week for a year. Essential."
+> "Genuinely the most culturally aware newsletter in my inbox."
+> "It's like having a brilliant friend brief you on everything that matters."
+
+> GetMeLit testimonials (verbatim, ★★★★★):
+> "GetMeLit is the only place I find writing opportunities I actually apply for."
+> "I've discovered more good fiction through GetMeLit than any other source."
+> "Essential for anyone who wants to stay in the conversation about global literature."
+
+> Coming-soon dispatches (copy verbatim):
+> Culture Narratives Digest — Monthly · Starting Q3 2026 — A companion to our quarterly essay
+>   publication. One excerpt, one behind-the-scenes note from the editor, and a reading list
+>   extending each issue's themes.
+> The Vendor Letter — Monthly · Starting Q4 2026 — A newsletter for makers, artisans, and
+>   small-batch creators in the Moveee Lifestyle ecosystem. Sourcing, craft, pricing, and the
+>   business of culture-led commerce.
+> Origins Field Notes — Seasonal · Starting 2027 — Dispatches from resident editors on the
+>   ground. The cities, the food, the things you can't Google. Sent before and during each
+>   Origins journey season.
+
+<!-- DEV 1: Hub page is `apps/site/app/newsletter/page.tsx`. It fetches via
+`getNewslettersWithFallback(50, ...)`, filters out `announcements`, derives counts for the tab
+badges (`cdCount`, `gmlCount`, `allCount`), and also derives `recentIssues` (first 3 issues of
+Culture Drop only). The coming-soon cards use `GmlWaitlistForm` (takes `label` and `id` props).
+No GraphQL query change is needed for this redesign — all data already comes from the same fetch. -->
+
+<!-- DEV 2: The two-newsletter dual-showcase section (Frames 1/2 below) must NOT be two
+independent instances of `NewsletterPublicationPage` — that component is designed for the full
+single-newsletter pub page. The hub shows both newsletters in a shared layout, so this section
+is built inline in `page.tsx` (or a new `NewsletterHubShowcase` server component) using the
+`NL_META` data directly (`NL_META["culture-drop"]` and `NL_META["getmelit"]`). -->
+
+<!-- DEV 3: The "email preview mock" panels (same concept as §24's hero panel) are purely
+decorative `<div>` elements with static mocked copy — not real rendered email or iframes.
+Content inside each mock panel can be hardcoded representative copy since it's illustrative,
+not live data. Same visual treatment as §24 Frame 1: white card, 1px `var(--rule)` border,
+`0 4px 24px rgba(0,0,0,0.08)` shadow, `border-radius: var(--radius-xl)`. Culture Drop card
+has a 2° clockwise tilt; GetMeLit card has a 2° counter-clockwise tilt — mirrored,
+so together they look like a fanned pair of letters in an inbox. -->
+
+<!-- DEV 4: Coming-soon waitlist forms use `GmlWaitlistForm` from
+`apps/site/components/GmlWaitlistForm.tsx`. This component handles its own form state and
+submission — wrap it as-is, don't reimagine it. The only design choice is the visual container
+around it (ghost border, `var(--paper)` tint, border-radius: `var(--radius-lg)`). -->
+
+<!-- DEV 5: Archive section — all counts come from the same `newsletters` fetch (filtered by
+`nlList`). The filter tab links use Next.js `<Link>` with `scroll={false}`:
+- "All" → `/newsletter#archive`
+- "Culture Drop" → `/newsletter/culture-drop` (pub page, NOT a filtered tab — clicking it
+  navigates away to the pub page, per the existing behavior)
+- "GetMeLit" → `/newsletter/getmelit` (same)
+The "Culture Drop" and "GetMeLit" tabs are therefore navigation links to pub pages, not
+in-page filter tabs. Only "All" stays on `/newsletter`. The archive section currently shows
+the filtered `filtered` array from `searchParams?.list` — keep this, but redesign the rows
+and tab visual treatment. -->
+
+<!-- DEV 6: "Coming Soon" section — the three future newsletters are NOT registered lists yet
+(no `nlList` values, no archive rows). They are purely marketing cards with a waitlist form.
+Do not add them to the archive tabs or the filter. -->
+
+### PROMPT 25 — Newsletter Hub Page (`/newsletter`) (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — NEWSLETTER HUB: DESKTOP (1440px, white bg)
+
+SECTION 1 — HERO MASTHEAD (full-width, white bg, 80px vertical padding, border-bottom 1px
+  `var(--rule)`):
+
+  INNER (max-width 1100px, centered, flex column, align-items center, text-center):
+    EYEBROW: "★ The Moveee Newsletter Programme" — DM Sans 11px uppercase bold `var(--mute)`,
+      letter-spacing 1px, 0px bottom margin.
+    HEADLINE (16px top): "Two newsletters. One cultural obsession." — Fraunces 52px bold
+      `var(--ink)`, line-height 1.1, letter-spacing -0.5px. The word "obsession." in italic
+      (`<em>obsession.</em>`).
+    STANDFIRST (20px top): "Culture Drop for the weekly cultural deep dive. GetMeLit for the
+      stories, poems, and reads that feed the literary mind. Both free. Both essential." —
+      DM Sans 17px `var(--ink-soft)`, line-height 1.6, max-width 600px.
+    BADGE ROW (24px top): inline flex, 16px gap, justify-content center:
+      Two publication badge pills (border-radius: var(--radius-full), 10px 18px padding,
+      border 1px solid):
+        Culture Drop pill: `var(--ochre)` text (#c5491f), rgba(197,73,31,0.1) bg,
+          `var(--ochre)` border. Label: "★ Culture Drop · Every Tuesday"
+        GetMeLit pill: `var(--gold)` text (#b38238), rgba(179,130,56,0.1) bg,
+          `var(--gold)` border. Label: "★ GetMeLit · For readers & writers"
+      Both pills are DM Sans 12px, no underline, link to `/newsletter/culture-drop` and
+      `/newsletter/getmelit` respectively. On hover: filled bg (ochre or gold fill, white text).
+
+SECTION 2 — DUAL NEWSLETTER SHOWCASE (full-width, `var(--paper)` bg, 80px vertical padding,
+  border-bottom 1px `var(--rule)`):
+
+  INNER (max-width 1140px, centered):
+
+  TWO-COLUMN GRID (2 equal columns, 60px gap):
+
+    LEFT COLUMN — CULTURE DROP CARD:
+      (white bg, 1px `var(--rule)` border, border-radius: var(--radius-xl), 32px padding,
+       position: relative)
+      ACCENT BAR: 3px × 40px rect, `var(--ochre)`, at top-left before the heading (or as a
+        left border bar on the outer card — not a full left border, just a short decorative bar).
+      EYEBROW (above bar): "★ Culture Drop · Every Tuesday" — DM Sans 11px uppercase bold
+        `var(--ochre)`, letter-spacing 0.6px.
+      HEADLINE (12px top): "The weekly dispatch on contemporary global culture." —
+        Fraunces 26px bold `var(--ink)`, line-height 1.2, max-width 320px.
+      BODY (12px top): "One deep essay, curated picks, a music dispatch, and what's happening
+        across Lagos, London, New York, and Accra. Written to make you think, not just scroll."
+        — DM Sans 14px `var(--ink-soft)`, line-height 1.55.
+      SUBSCRIBE FORM (20px top): inline row (8px gap): email input (flex:1, 11px 14px padding,
+        DM Sans 14px, `var(--rule)` border, border-radius: var(--radius-md), white bg) + button
+        ("Drop it in my inbox →", `var(--ochre)` bg, white text, DM Sans 14px bold, 12px 18px
+        padding, border-radius: var(--radius-md), no border). Uses `GmlCTAForm` per DEV 2.
+      NOTE (8px top): "Free · Weekly · Unsubscribe any time" — DM Sans 11px `var(--mute)`.
+      EMAIL PREVIEW MOCK (24px top, 2° clockwise tilt via `transform: rotate(2deg)`):
+        White card, 1px `var(--rule)` border, border-radius: var(--radius-lg), 0 4px 24px
+        rgba(0,0,0,0.07) shadow. Height ~200px.
+        TOP STRIP (10px 14px, border-bottom 1px `var(--rule)`, flex row):
+          "CULTURE DROP" — DM Sans 10px uppercase bold `var(--ochre)`.
+          Date "Tue, 1 Jul 2026" — DM Mono 10px `var(--mute)` right-aligned.
+        CONTENT (14px 14px):
+          ISSUE HEADLINE: "The Deep Dive: On the global afterlife of Afrobeat" —
+            Fraunces 15px bold `var(--ink)`.
+          BODY PREVIEW (6px top): 2 lines of DM Sans 11px `var(--ink-soft)` truncated with "…",
+            max-width 100%.
+          SECTION DIVIDER (8px top): "──── The List ────" — DM Mono 9px `var(--mute)`, center.
+          PICKS (6px top): 3 short one-line picks DM Sans 11px `var(--ink)`, each starting
+            with a "▸" glyph: e.g. "▸ Film — Éléonore", "▸ Book — Freshwater", "▸ Music — Fela".
+
+    RIGHT COLUMN — GETMELIT CARD:
+      (identical card container, same border-radius, padding, border)
+      EYEBROW: "★ GetMeLit · For readers & writers" — `var(--gold)`.
+      HEADLINE: "A weekly letter for the literary mind." — same Fraunces 26px.
+      BODY: "Stories, poems, essay excerpts, and opportunities for writers and authors from
+        around the world — curated to keep you reading, writing, and discovering."
+        — same DM Sans 14px body style.
+      SUBSCRIBE FORM: input + "Subscribe →" button, `var(--gold)` bg fill. Uses
+        `NewsletterSubscribeWidget` with `list="getmelit"`.
+      NOTE: "Free · Weekly · Unsubscribe any time"
+      EMAIL PREVIEW MOCK (2° counter-clockwise tilt, `transform: rotate(-2deg)`):
+        Same card structure but "GETMELIT" label in `var(--gold)`, mock issue headline
+        "Stories: The Invisible Woman — an excerpt by Ama Ata Aidoo", section divider
+        "──── Books ────", picks: "▸ Novel — Demon Copperhead", "▸ Essay — Zadie Smith on
+        craft", "▸ Opportunity — Open submissions, Ploughshares".
+
+SECTION 3 — TESTIMONIALS BAND (full-width, white bg, 56px vertical padding, 1px border
+  top+bottom `var(--rule)`):
+  3-column grid (max-width 1000px centered, 40px gap):
+  Each testimonial: ★★★★★ (DM Sans 13px, `var(--gold)` #b38238, 8px bottom) then quote text
+    in DM Sans 14px italic `var(--ink)` line-height 1.5. No author name/avatar. From copy block:
+    Col 1: "The first newsletter I've opened every week for a year. Essential." (Culture Drop)
+    Col 2: "GetMeLit is the only place I find writing opportunities I actually apply for." (GML)
+    Col 3: "It's like having a brilliant friend brief you on everything that matters." (CD)
+
+SECTION 4 — WHAT'S INSIDE (full-width, `var(--paper)` bg, 72px vertical padding, border-bottom
+  1px `var(--rule)`):
+  INNER (max-width 1100px, centered):
+  SECTION LABEL (centered): "Inside the programme" — DM Sans 11px uppercase bold `var(--mute)`,
+    letter-spacing 1px, 0 auto 24px.
+
+  TWO-COLUMN LAYOUT (50%/50%, 60px gap):
+
+    LEFT — CULTURE DROP PILLARS:
+      HEADING: "Inside Culture Drop" — DM Sans 13px uppercase bold `var(--mute)`, letter-spacing
+        1px.
+      SUB (8px top): "Four sections, every issue. You always know what you're getting, but
+        never what you'll find." — DM Sans 14px `var(--ink-soft)`, 12px bottom.
+      PILLAR ROWS (4 rows, 0px gap, each 14px top+bottom padding, border-bottom 1px `var(--rule)`):
+        Each row: 4px wide × full-height left bar in rgba(197,73,31,0.5) + 12px left padding
+          then: TITLE — DM Sans 14px bold `var(--ink)` + DESC — DM Sans 13px `var(--ink-soft)`,
+          line-height 1.4, 2px top. Rows for "The Deep Dive", "The List", "What's Playing",
+          "The Calendar" — use NL_META["culture-drop"].pillars verbatim for name and desc.
+
+    RIGHT — GETMELIT PILLARS:
+      HEADING: "Inside GetMeLit" — same style.
+      SUB: same copy pattern.
+      PILLAR ROWS (4 rows, same structure, left bar rgba(179,130,56,0.5) — gold family).
+        Rows: "Stories", "Books", "Opps", "Spotlight" from NL_META["getmelit"].pillars.
+
+SECTION 5 — RECENT ISSUES (full-width, white bg, 72px vertical padding):
+  INNER (max-width 1100px, centered):
+  SECTION HEADER (flex row, space-between, border-bottom 1px `var(--rule)`, 0 0 24px):
+    "Recent issues" — DM Sans 11px uppercase bold `var(--mute)`.
+    "See full archive →" — DM Sans 13px `var(--ochre)`, underline on hover, href="#archive".
+  3-COLUMN GRID (24px gap) of issue preview cards (white fill, 1px `var(--rule)` border,
+    border-radius: var(--radius-lg), 20px padding):
+    LIST BADGE (top, `var(--ochre)` pill or `var(--gold)` pill per issue list — see §24
+      Frame 3 for badge style): e.g. "Culture Drop".
+    ISSUE NUM ROW (8px top): "Issue N°{N}" DM Mono 11px `var(--mute)` left, date right.
+    HEADLINE (10px top): Fraunces 17px bold `var(--ink)`, 2 lines max.
+    EXCERPT (8px top): DM Sans 13px `var(--ink-soft)`, 3 lines max.
+    CTA (16px top): "Read this issue →" DM Sans 12px `var(--ochre)` (for CD issues) or
+      `var(--gold)` (for GML issues).
+  Data: the 3 most recent issues from `recentIssues` (Culture Drop only currently — the
+    hub page's own `recentIssues` slice already provides these).
+
+SECTION 6 — COMING SOON (full-width, `var(--paper)` bg, 72px vertical padding, border-top
+  1px `var(--rule)`):
+  INNER (max-width 1100px, centered):
+  SECTION LABEL (centered): "The Moveee Newsletter Programme" — DM Sans 11px uppercase bold
+    `var(--mute)`, letter-spacing 1px, 0 auto 8px.
+  HEADING (centered, 8px top): "More dispatches, coming soon" — Fraunces 32px bold `var(--ink)`,
+    centered. "coming soon" in italic.
+  SUBHEAD (centered, 12px top, 48px bottom): "Culture Drop and GetMeLit are just the start. We're
+    building a family of newsletters for different appetites — each one as considered as the last."
+    — DM Sans 15px `var(--ink-soft)`, max-width 560px, centered.
+  3-COLUMN GRID (24px gap):
+    Each coming-soon card (white bg, 1px `var(--rule)` border, border-radius: var(--radius-lg),
+      24px padding):
+      CADENCE TAG (top): e.g. "Monthly · Starting Q3 2026" — DM Mono 11px `var(--mute)`.
+      TITLE (10px top): Fraunces 22px bold `var(--ink)`. Use exact names from the copy block:
+        "Culture Narratives Digest", "The Vendor Letter", "Origins Field Notes".
+      DESC (12px top): DM Sans 13px `var(--ink-soft)`, line-height 1.5. Use verbatim copy.
+      WAITLIST FORM (20px top): `GmlWaitlistForm` component rendered here (per DEV 4) — it
+        renders its own email input + "Join waitlist" button. Wrap in no additional card/div.
+
+SECTION 7 — FULL ARCHIVE (full-width, white bg, 64px top padding, id="archive"):
+  ARCHIVE HEADER (max-width 1100px, centered, border-bottom 1px `var(--rule)`, pb 16px, mb 24px):
+    FLEX ROW: "Full Archive" DM Sans 11px uppercase bold `var(--mute)` left, TAB GROUP right:
+      Three tab links — "All {allCount}" · "Culture Drop {cdCount}" · "GetMeLit {gmlCount}".
+      Each tab: DM Sans 13px, 8px 14px padding.
+      "All" tab is always the active tab on this page (the other two navigate away to pub pages).
+      ACTIVE TAB: border-bottom 2px `var(--ochre)`, `var(--ink)` text.
+      INACTIVE TABS: `var(--mute)` text, no border. On hover: `var(--ink)` text.
+      Count span: DM Mono 11px `var(--mute)`, 4px left margin.
+
+  ISSUE ROWS (max-width 1100px, centered):
+    Each `.digest-archive-row` (per DEV 5 — existing class, new visual treatment):
+      Full-width flex row, 16px top+bottom padding, border-bottom 1px `var(--rule)`, 12px gap:
+        ISSUE NUMBER: left-padded "001" — DM Mono 13px `var(--mute)`, flex-shrink 0, width 36px.
+        DATE: "1 Jul 2026" — DM Mono 12px `var(--mute)`, flex-shrink 0, width 90px.
+        TITLE: Fraunces 15px `var(--ink)`, flex:1.
+        LIST BADGE: pill (border-radius: var(--radius-full), 6px 10px, DM Sans 11px):
+          Culture Drop: `var(--ochre)` text, rgba(197,73,31,0.08) bg.
+          GetMeLit: `var(--gold)` text, rgba(179,130,56,0.08) bg.
+        TOPIC TAG (optional): existing `.digest-tag` pill for the first `cultureInterests` node.
+        ARROW: "→" DM Sans 13px `var(--mute)`, flex-shrink 0.
+      HOVER: row bg → `var(--paper)` (#f3ece0), title color → the issue's accent (`var(--ochre)`
+        or `var(--gold)` depending on nlList), transition 0.1s ease.
+
+CONSTRAINTS:
+  - Only `#ffffff` (white) and `var(--paper)` (#f3ece0) as section backgrounds. No `var(--ink)`.
+    Section alternation: Masthead=white, Dual Showcase=paper, Testimonials=white,
+    What's Inside=paper, Recent Issues=white, Coming Soon=paper, Archive=white.
+  - Accent colors: `var(--ochre)` (#c5491f) exclusively for Culture Drop; `var(--gold)` (#b38238)
+    exclusively for GetMeLit. On the hub, both appear side by side — do not mix them.
+  - The dual newsletter cards (Section 2) are the primary CTA surface. Section 1's hero has no
+    subscribe form — only the publication badge pills. The hero's job is to introduce the programme,
+    not capture emails; the dual showcase cards below that are where email capture happens.
+  - "Coming Soon" cards do NOT have accent color bars/dots — they are neutral (no newsletter
+    identity assigned yet). The `GmlWaitlistForm` button should use `var(--ink)` fill for these
+    cards, not ochre or gold.
+  - Apply `var(--radius-*)` scale throughout. No hardcoded pixel values for radii.
+  - The email preview mock panels use the exact content mock data specified — do not substitute
+    or abbreviate. Both panels must be visible on first load without scrolling on desktop.
+  - All copy from the verbatim marketing block above — do not paraphrase.
+
+Output 1 frame: hub page desktop, full scroll showing all 7 sections.
+```
+
+---
+
+```
+FRAME 2 — NEWSLETTER HUB: MOBILE (390px)
+
+SECTION 1 — HERO MASTHEAD (24px horizontal padding, 48px top, 40px bottom, border-bottom
+  1px `var(--rule)`):
+  EYEBROW: 11px uppercase DM Sans `var(--mute)` + "★ The Moveee Newsletter Programme".
+  HEADLINE (12px top): Fraunces 34px bold `var(--ink)`, line-height 1.1. "obsession." italic.
+  STANDFIRST (12px top): DM Sans 15px `var(--ink-soft)`, line-height 1.55.
+  BADGE ROW (20px top): stacked (flex-col, 8px gap) instead of inline — each badge pill
+    full-width, centered text. Same pill style as desktop but block-level.
+
+SECTION 2 — DUAL SHOWCASE (single column, `var(--paper)` bg, 40px vertical padding):
+  CARDS: Culture Drop card first, GetMeLit card below, full-width, 20px gap between.
+  Each card: 20px padding, same border-radius / border / bg as desktop.
+  EMAIL MOCK: below the subscribe form, full-width (no horizontal margins beyond card padding),
+    0° tilt on mobile (no rotation — flat). Height ~170px.
+
+SECTION 3 — TESTIMONIALS (single-column, white bg, 40px vertical padding):
+  3 testimonial cards stacked (full-width, 16px gap between), each with ★★★★★ + quote text.
+  Each has `var(--paper)` bg, 16px padding, border-radius: var(--radius-lg) — light card
+  treatment to distinguish from the plain stacked text of the desktop columns.
+
+SECTION 4 — WHAT'S INSIDE (single column, `var(--paper)` bg, 40px vertical padding):
+  SECTION LABEL centered.
+  CULTURE DROP BLOCK FIRST (full-width): heading + sub + 4 pillar rows.
+  16px vertical gap between blocks.
+  GETMELIT BLOCK SECOND: same pattern, gold accent bars.
+
+SECTION 5 — RECENT ISSUES (24px horizontal padding, white bg, 40px vertical padding):
+  HEADER: section label left + "See all →" right (same flex row, small).
+  ISSUE CARDS: single-column stack, full-width, 12px gap. Same card as desktop.
+
+SECTION 6 — COMING SOON (`var(--paper)` bg, 40px vertical padding):
+  HEADING centered (28px).
+  3 coming-soon cards stacked, full-width, 12px gap.
+
+SECTION 7 — ARCHIVE (24px horizontal padding, white bg, 40px vertical padding):
+  TAB ROW: 3 tabs in a scrollable overflow-x row (each tab a compact pill-style chip,
+    border-radius: var(--radius-full), 8px 14px, DM Sans 12px — same pattern as the
+    mobile filter chips in other pages), flush left, horizontal scroll.
+  ISSUE ROWS: same data but date column HIDDEN on mobile — just number + title + badge + arrow.
+    Number: 28px wide. Arrow: 16px. Badge inline-block next to title.
+
+Output 1 frame: hub page mobile, full scroll.
+```
