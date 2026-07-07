@@ -79,18 +79,14 @@ export default function NewsletterPublicationPage({
               </a>
             </div>
 
-            <h1 className="np-title">{meta.standfirst}</h1>
+            <h1 className="np-title">{meta.tagline}</h1>
 
-            <p className="np-standfirst">
-              {listId === "culture-drop"
-                ? "One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll."
-                : "Stories, books worth reading, creative opportunities, and spotlights on writers and readers shaping culture. For people who live for words."}
-            </p>
+            <p className="np-standfirst">{meta.standfirst}</p>
 
             <div className="np-form">
               {HeroForm}
             </div>
-            <span className="np-form-note">Free · {isGml ? "Fortnightly" : "Weekly"} · Unsubscribe any time</span>
+            <span className="np-form-note">Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time</span>
           </div>
 
           {/* Right column: preview card */}
@@ -138,10 +134,12 @@ export default function NewsletterPublicationPage({
           <div className="np-wyg-left">
             <span className="np-wyg-label">What you get</span>
             <h2 className="np-wyg-title">
-              {meta.pillars.length} things. Every {isGml ? "fortnight" : "week"}.
+              {isGml ? "A story a day. 4 things every Saturday." : `${meta.pillars.length} things. Every week.`}
             </h2>
             <p className="np-wyg-body">
-              Every issue of {meta.label} is built around {meta.pillars.length} sections — so you always know what you're getting, but never know what you'll find.
+              {isGml
+                ? "Every weekday, a new short story or poem. Every Saturday, a full literary issue built around 4 sections — so you always know what you're getting, but never know what you'll find."
+                : `Every issue of ${meta.label} is built around ${meta.pillars.length} sections — so you always know what you're getting, but never know what you'll find.`}
             </p>
             <div className="np-wyg-actions">
               <Link href="#archive" className="np-wyg-cta-secondary">
@@ -258,7 +256,7 @@ export default function NewsletterPublicationPage({
       <section className="np-cta-band">
         <div className="np-cta-inner">
           <h2 className="np-cta-title">
-            {isGml ? "One literary dispatch. Every fortnight." : "One cultural dispatch. Every week."}
+            {isGml ? "Stories in your inbox. Every day." : "One cultural dispatch. Every week."}
           </h2>
           <div className="np-cta-form">
             {isGml ? (

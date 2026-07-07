@@ -145,7 +145,7 @@ export default function IssueReaderClient({
                     Issue {String(issue.issueNum).padStart(3, "0")}
                   </span>
                   <span className="rd-archive-title">
-                    {issue.title.replace(/<[^>]*>/g, "")}
+                    {issue.title}
                   </span>
                 </Link>
               );
@@ -308,7 +308,7 @@ export default function IssueReaderClient({
             )}
           </div>
           <span className="rd-subscribe-note">
-            Free · {isGml ? "Fortnightly" : "Weekly"} · Unsubscribe any time
+            Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
           </span>
         </div>
 
