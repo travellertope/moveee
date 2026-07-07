@@ -1030,9 +1030,9 @@ class Culture_Post_Types {
             'default'      => '',
             'show_in_rest' => true,
         ) );
-
         // Expose _culture_nl_segment so edition pages (uk/us/africa) can show only
-        // issues targeted at their region (empty segment = all regions).
+        // issues targeted at their region (empty segment = all regions), and so the
+        // global hub/reader pages can group regional editions of the same issue.
         register_post_meta( 'culture_newsletter', '_culture_nl_segment', array(
             'type'         => 'string',
             'single'       => true,
