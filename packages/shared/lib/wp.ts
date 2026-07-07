@@ -638,6 +638,7 @@ function mapRestNewsletterToFrontendShape(item: any) {
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
     nlList: item?.meta?.["_culture_nl_list"] || item?.["_culture_nl_list"] || null,
+    nlSegment: item?.meta?.["_culture_nl_segment"] || item?.["_culture_nl_segment"] || "",
     featuredImage: embeddedMedia?.source_url
       ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
       : null,
@@ -1269,6 +1270,7 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     date
     excerpt
     nlList
+    nlSegment
     featuredImage {
       node {
         sourceUrl
