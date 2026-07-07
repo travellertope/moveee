@@ -1020,6 +1020,13 @@ class Culture_Post_Types {
             'default'      => '',
             'show_in_rest' => true,
         ) );
+        // Expose _culture_nl_segment so the frontend can group regional editions.
+        register_post_meta( 'culture_newsletter', '_culture_nl_segment', array(
+            'type'         => 'string',
+            'single'       => true,
+            'default'      => '',
+            'show_in_rest' => true,
+        ) );
 
         // Quote CPT – nested under Culture Community menu.
         register_post_type( 'culture_quote', array(
