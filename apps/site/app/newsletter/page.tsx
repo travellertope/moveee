@@ -12,12 +12,12 @@ export const revalidate = 3600;
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+    "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into Black culture across Lagos, London, New York, and Accra. GetMeLit — a new story or poem every weekday, plus a fuller literary dispatch every Saturday.",
   alternates: { canonical: "https://themoveee.com/newsletter" },
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into Black culture across Lagos, London, New York, and Accra. GetMeLit — a new story or poem every weekday, plus a fuller literary dispatch every Saturday.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
@@ -29,7 +29,7 @@ export const metadata = {
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into Black culture across Lagos, London, New York, and Accra. GetMeLit — a new story or poem every weekday, plus a fuller literary dispatch every Saturday.",
   },
 };
 
@@ -79,14 +79,13 @@ export default async function NewsletterArchive({
         <div className="nl-masthead-inner">
           <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
-            Two letters.
+            Two newsletters.
             <br />
-            <em>One obsession.</em>
+            <em>One cultural obsession.</em>
           </h1>
           <p className="nl-masthead-sub">
-            Culture Drop for the weekly cultural deep dive. GetMeLit for the
-            stories, poems, and reads that feed the literary mind. Both free.
-            Both essential.
+            Culture Drop for the weekly cultural deep dive. GetMeLit for a
+            new story or poem every day. Both free. Both essential.
           </p>
         </div>
       </section>
@@ -126,21 +125,20 @@ export default async function NewsletterArchive({
 
           {/* Card 2 — GetMeLit */}
           <div className="nl-card nl-card--getmelit">
-            <span className="nl-card-eyebrow">Weekly · For readers &amp; writers</span>
+            <span className="nl-card-eyebrow">Daily · Mon–Sat</span>
             <h2 className="nl-card-title">
               Get<em>Me</em>Lit
             </h2>
             <p className="nl-card-desc">
-              A weekly letter for the literary mind. Stories, poems, essay
-              excerpts, and opportunities for writers and authors from
-              around the world — curated to keep you reading, writing,
-              and discovering.
+              A new story or poem every weekday — and a fuller literary dispatch
+              every Saturday with new books, writing opportunities, and an
+              author in the spotlight.
             </p>
             <ul className="nl-card-features">
-              <li>A story or poem — fiction and poetry you&apos;ll want to share</li>
-              <li>The reading list — new books &amp; essays worth your time</li>
+              <li>Daily story or poem — Monday through Friday</li>
+              <li>The reading list — new books &amp; editor picks, every Saturday</li>
               <li>Opportunities — calls for submissions, residencies, grants</li>
-              <li>Author spotlight — voices shaping world literature</li>
+              <li>Author spotlight — one writer worth knowing, every Saturday</li>
             </ul>
             <div className="nl-card-form">
               <small className="nl-card-form-label">Subscribe free</small>
@@ -149,7 +147,7 @@ export default async function NewsletterArchive({
                 buttonLabel="Subscribe →"
                 list="getmelit"
               />
-              <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
+              <p className="nl-card-note">Free · Daily · Unsubscribe anytime</p>
             </div>
           </div>
 
@@ -273,30 +271,29 @@ export default async function NewsletterArchive({
       <section className="nl-culturedrop-feature">
         <div className="nl-cdf-inner">
           <div className="nl-cdf-left">
-            <div className="nl-cdf-eyebrow">★ GetMeLit · For readers &amp; writers</div>
+            <div className="nl-cdf-eyebrow">★ GetMeLit · Mon–Sat</div>
             <h3>
-              Literature, <em>curated weekly.</em>
+              One story, <em>every day.</em>
             </h3>
             <p>
-              GetMeLit is the weekly letter for everyone who loves to read
-              and write. Stories, poems, essay excerpts, calls for
-              submissions, grants, and residencies — everything the literary
-              mind needs, in one place, every week.
+              GetMeLit lands in your inbox every weekday with a single story
+              or poem — and every Saturday brings the full dispatch: new
+              books, writing opportunities, and an author in the spotlight.
             </p>
           </div>
           <div className="nl-cdf-right">
             <div className="nl-cdf-rows">
               <div className="nl-cdf-row">
-                <span className="nl-cdf-row-num">Stories</span>
-                <span className="nl-cdf-row-label">Fiction &amp; poetry from voices around the world</span>
+                <span className="nl-cdf-row-num">Daily</span>
+                <span className="nl-cdf-row-label">One story or poem, Monday through Friday</span>
               </div>
               <div className="nl-cdf-row">
                 <span className="nl-cdf-row-num">Books</span>
-                <span className="nl-cdf-row-label">New releases, essential reads, and editor picks</span>
+                <span className="nl-cdf-row-label">New releases, essential reads, and editor picks — every Saturday</span>
               </div>
               <div className="nl-cdf-row">
                 <span className="nl-cdf-row-num">Opps</span>
-                <span className="nl-cdf-row-label">Submissions, grants, residencies, and writing prizes</span>
+                <span className="nl-cdf-row-label">Submissions, grants, residencies, and writing prizes — every Saturday</span>
               </div>
             </div>
             <div className="nl-cdf-form-label">Subscribe to GetMeLit</div>
@@ -305,7 +302,7 @@ export default async function NewsletterArchive({
               buttonLabel="Subscribe →"
               list="getmelit"
             />
-            <p className="nl-cdf-note">Free · Weekly · Unsubscribe anytime</p>
+            <p className="nl-cdf-note">Free · Daily · Unsubscribe anytime</p>
           </div>
         </div>
       </section>

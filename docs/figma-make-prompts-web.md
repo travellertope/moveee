@@ -1003,8 +1003,8 @@ catalog:
   a For You view."` — `"Set interests →"`
 - Right sidebar nudge (interests set, For You off): `"Personalised feed ready"` —
   `"Switch to For You to see content ranked by your interests."` — `"For You →"`
-- Right sidebar About card: `"About Moveee"` — `"The community for Black and diaspora
-  creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and
+- Right sidebar About card: `"About Moveee"` — `"The community for Black creatives,
+  entrepreneurs, and culture lovers. Pulse is where members post, share, and
   stay in the conversation."`
 - Trending header: `"Hot this week 🔥"`
 - Spotlight carousel header: `"📅 Upcoming Near You"` / `"See all →"` (copy already
@@ -1118,7 +1118,7 @@ CONNECT HERO (full-width, paper-warm #F3ECE0 bg, 64px vertical padding):
       2px ochre left-border block, title DM Sans 12px bold ink (2 lines max, ellipsis),
       "{N} reactions" DM Sans 10px mute below.
     "About Moveee" card (white, 1px rule border, radius 4px, 14px padding): heading DM Sans
-      9px bold uppercase mute, body "The community for Black and diaspora creatives,
+      9px bold uppercase mute, body "The community for Black creatives,
       entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in
       the conversation." DM Sans 12px ink-soft.
 
@@ -1991,19 +1991,19 @@ reusable score/share/subscribe screen rather than four bespoke ones.
 >
 > Play. Learn. Connect.
 >
-> Test your knowledge of African and diaspora culture — music, film, literature,
+> Test your knowledge of Black culture — music, film, literature,
 > history, and everything in between.
 
 **Game cards (name / tagline / badge / difficulty / rounds):**
 1. Who Said It? — "A quote appears — you guess who said it. 10 rounds drawn live
    from our verified quote archive." · Quotes · Mixed difficulty · 10 rounds
 2. Culture Trivia — "10 daily questions spanning Afrobeats, Nollywood, literature,
-   history, and African art. Fresh questions every day." · Daily · Easy to Hard ·
+   history, and art. Fresh questions every day." · Daily · Easy to Hard ·
    10 questions
 3. Daily Sudoku — "One 9×9 grid a day — same puzzle for every player worldwide. No
    luck, pure logic." · Puzzle · Medium · 1 daily grid
-4. Daily Crossword — "A new African culture mini-crossword every day. Test your
-   knowledge of people, places, and traditions." · Culture · Mixed · 1 daily puzzle
+4. Daily Crossword — "A new culture mini-crossword every day. Test your knowledge
+   of people, places, and traditions." · Culture · Mixed · 1 daily puzzle
 
 **Trivia in-game copy:**
 - Header: "Culture Trivia" eyebrow + "Today's quiz · {date}"
@@ -5327,7 +5327,7 @@ SCRIM: ink @ 40%, full viewport. PANEL (right-anchored slide-in, 420px wide, whi
   SECTION — REGION (24px padding, 16px bottom, per <!-- DEV 1 -->, no Type section here — it's
     already in the always-visible chip row): "Region" DM Sans 12px bold mute uppercase, 10px
     bottom. Chip wrap, 8px gap: "All" (selected) · "Nigeria" · "Ghana" · "UK" · "USA" ·
-    "Pan-African" — ghost border inactive, ink fill/white text active,
+    "Africa" — ghost border inactive, ink fill/white text active,
     border-radius: var(--radius-full).
 
   SECTION — SORT (24px padding, ghost top border): "Sort by" DM Sans 12px bold mute uppercase,
@@ -5431,14 +5431,14 @@ no `var(--ink)` background on any section" — means the new design uses `#fff` 
 - Bottom sub-copy: `No spam. No nonsense. Unsubscribe any time.`
 
 **GetMeLit:**
-- Eyebrow: `★ GetMeLit · For readers & writers`
-- Headline: `A weekly letter for the literary mind.`
-- Standfirst: `Stories, poems, essay excerpts, and opportunities for writers and authors from around the world — curated to keep you reading, writing, and discovering.`
+- Eyebrow: `★ GetMeLit · Mon–Sat`
+- Headline: `A new story in your inbox, every day.`
+- Standfirst: `A story or poem every weekday — plus a fuller literary dispatch every Saturday, with new books, writing opportunities, and an author in the spotlight.`
 - Form CTA: `Subscribe →`
-- Social proof line: `Free · Weekly · Unsubscribe any time`
-- Section grid labels: `Stories` / `Books` / `Opps` / `Author Spotlight`
-- Pull quote: `Literature, curated weekly — the stories, poems, and reads that feed the literary mind, sent straight to your inbox.`
-- Bottom CTA band headline: `One literary letter. Every week.`
+- Social proof line: `Free · Daily · Unsubscribe any time`
+- Section grid labels: `Daily Stories` / `Books` / `Opps` / `Spotlight`
+- Pull quote: `A new story or poem in your inbox every weekday. And every Saturday, the full literary dispatch — books, opportunities, and a writer worth knowing.`
+- Bottom CTA band headline: `One story. Every day.`
 - Bottom sub-copy: `No spam. No nonsense. Unsubscribe any time.`
 
 **Subscriber testimonials (shared, 3 across both newsletters):**
@@ -5616,16 +5616,16 @@ ACCENT COLOR SWAP: `var(--gold)` (#b38238, warm amber) replaces `var(--ochre)` (
   title color, RSS icon. GetMeLit's identity is the amber/gold family, not rust.
 
 COPY SWAPS (from NL_META["getmelit"] and verbatim copy block):
-  - Eyebrow: "★ GetMeLit · For readers & writers"
-  - Headline: "A weekly letter for the literary mind."
+  - Eyebrow: "★ GetMeLit · Mon–Sat"
+  - Headline: "A new story in your inbox, every day."
   - Standfirst: "Stories, poems, essay excerpts, and opportunities for writers and authors from
     around the world — curated to keep you reading, writing, and discovering."
   - Subscribe button label: "Subscribe →"
   - Section grid heading: "Four things. Every week." (same heading — different tiles below)
   - Section tiles (from NL_META["getmelit"].pillars):
       "Stories" / "Books" / "Opps" / "Author Spotlight" — using `var(--gold)` bars at 60% opacity.
-  - Pull quote: "Literature, curated weekly — the stories, poems, and reads that feed the literary
-    mind, sent straight to your inbox."
+  - Pull quote: "A new story or poem in your inbox every weekday. And every Saturday, the full
+    literary dispatch — books, opportunities, and a writer worth knowing."
   - Pull cite: "— The editorial mission of GetMeLit"
   - Bottom CTA headline: "One literary letter. Every week."
   - Bottom button label: "Subscribe →"
@@ -5636,7 +5636,7 @@ NEWSLETTER PREVIEW PANEL (right-hero column) — same card structure, but mocked
   "──── Books ────", 4 short picks. Card sits on same `var(--paper)` bg rectangle.
 
 TESTIMONIAL swapped to the GetMeLit-specific quote:
-  "GetMeLit is the only place I find writing opportunities I actually apply for." — ★★★★★
+  "GetMeLit is the only newsletter I actually look forward to receiving six days a week." — ★★★★★
 
 ALL OTHER SPACING, TYPOGRAPHY, LAYOUT: identical to Frame 1.
 
@@ -5859,9 +5859,9 @@ newsletters feel distinct and inviting within a single shared editorial surface.
 > The Moveee Newsletter Programme. Two letters. One cultural obsession.
 > Culture Drop is the weekly dispatch on contemporary global culture — one deep essay, curated
 > picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra.
-> GetMeLit is the weekly letter for the literary mind — stories, poems, essay excerpts, and
-> opportunities for writers and authors from around the world.
-> Both free. Both essential. Both arriving every Tuesday.
+> GetMeLit delivers a new story or poem to your inbox every weekday — and a fuller literary
+> dispatch every Saturday, with new books, writing opportunities, and an author in the spotlight.
+> Both free. Both essential. Culture Drop arrives every Tuesday; GetMeLit arrives daily, Mon–Sat.
 
 > Culture Drop testimonials (verbatim, ★★★★★):
 > "The first newsletter I've opened every week for a year. Essential."
@@ -5869,7 +5869,7 @@ newsletters feel distinct and inviting within a single shared editorial surface.
 > "It's like having a brilliant friend brief you on everything that matters."
 
 > GetMeLit testimonials (verbatim, ★★★★★):
-> "GetMeLit is the only place I find writing opportunities I actually apply for."
+> "GetMeLit is the only newsletter I actually look forward to receiving six days a week."
 > "I've discovered more good fiction through GetMeLit than any other source."
 > "Essential for anyone who wants to stay in the conversation about global literature."
 
@@ -5938,8 +5938,8 @@ SECTION 1 — HERO MASTHEAD (full-width, white bg, 80px vertical padding, border
     HEADLINE (16px top): "Two newsletters. One cultural obsession." — Fraunces 52px bold
       `var(--ink)`, line-height 1.1, letter-spacing -0.5px. The word "obsession." in italic
       (`<em>obsession.</em>`).
-    STANDFIRST (20px top): "Culture Drop for the weekly cultural deep dive. GetMeLit for the
-      stories, poems, and reads that feed the literary mind. Both free. Both essential." —
+    STANDFIRST (20px top): "Culture Drop for the weekly cultural deep dive. GetMeLit for a
+      new story or poem every day. Both free. Both essential." —
       DM Sans 17px `var(--ink-soft)`, line-height 1.6, max-width 600px.
     BADGE ROW (24px top): inline flex, 16px gap, justify-content center:
       Two publication badge pills (border-radius: var(--radius-full), 10px 18px padding,
@@ -5947,7 +5947,7 @@ SECTION 1 — HERO MASTHEAD (full-width, white bg, 80px vertical padding, border
         Culture Drop pill: `var(--ochre)` text (#c5491f), rgba(197,73,31,0.1) bg,
           `var(--ochre)` border. Label: "★ Culture Drop · Every Tuesday"
         GetMeLit pill: `var(--gold)` text (#b38238), rgba(179,130,56,0.1) bg,
-          `var(--gold)` border. Label: "★ GetMeLit · For readers & writers"
+          `var(--gold)` border. Label: "★ GetMeLit · Mon–Sat"
       Both pills are DM Sans 12px, no underline, link to `/newsletter/culture-drop` and
       `/newsletter/getmelit` respectively. On hover: filled bg (ochre or gold fill, white text).
 
@@ -5992,19 +5992,22 @@ SECTION 2 — DUAL NEWSLETTER SHOWCASE (full-width, `var(--paper)` bg, 80px vert
 
     RIGHT COLUMN — GETMELIT CARD:
       (identical card container, same border-radius, padding, border)
-      EYEBROW: "★ GetMeLit · For readers & writers" — `var(--gold)`.
-      HEADLINE: "A weekly letter for the literary mind." — same Fraunces 26px.
-      BODY: "Stories, poems, essay excerpts, and opportunities for writers and authors from
-        around the world — curated to keep you reading, writing, and discovering."
+      EYEBROW: "★ GetMeLit · Mon–Sat" — `var(--gold)`.
+      HEADLINE: "A new story in your inbox, every day." — same Fraunces 26px.
+      BODY: "A story or poem every weekday — plus a fuller literary dispatch every Saturday,
+        with new books, writing opportunities, and an author in the spotlight."
         — same DM Sans 14px body style.
       SUBSCRIBE FORM: input + "Subscribe →" button, `var(--gold)` bg fill. Uses
         `NewsletterSubscribeWidget` with `list="getmelit"`.
-      NOTE: "Free · Weekly · Unsubscribe any time"
+      NOTE: "Free · Daily · Unsubscribe any time"
       EMAIL PREVIEW MOCK (2° counter-clockwise tilt, `transform: rotate(-2deg)`):
-        Same card structure but "GETMELIT" label in `var(--gold)`, mock issue headline
-        "Stories: The Invisible Woman — an excerpt by Ama Ata Aidoo", section divider
-        "──── Books ────", picks: "▸ Novel — Demon Copperhead", "▸ Essay — Zadie Smith on
-        craft", "▸ Opportunity — Open submissions, Ploughshares".
+        Top strip: "GETMELIT DAILY" in `var(--gold)`, date "Wed, 8 Jul 2026" right.
+        Body: mock daily issue — a short story title "SEA STORIES — Jide Salawu · Lolwe",
+        2 lines of body text in DM Sans 11px ("Excerpted from Salawu's debut collection…"),
+        then a muted divider "──── Read it here ────", then a full-URL read-link line in
+        DM Mono 9px `var(--mute)`. This mimics the Mon–Fri daily format (story + link only).
+        Below the mock, a small caption: "Saturday issues include Books, Opps & Spotlight."
+        — DM Sans 10px `var(--mute)` italic, centered.
 
 SECTION 3 — TESTIMONIALS BAND (full-width, white bg, 56px vertical padding, 1px border
   top+bottom `var(--rule)`):
@@ -6012,7 +6015,7 @@ SECTION 3 — TESTIMONIALS BAND (full-width, white bg, 56px vertical padding, 1p
   Each testimonial: ★★★★★ (DM Sans 13px, `var(--gold)` #b38238, 8px bottom) then quote text
     in DM Sans 14px italic `var(--ink)` line-height 1.5. No author name/avatar. From copy block:
     Col 1: "The first newsletter I've opened every week for a year. Essential." (Culture Drop)
-    Col 2: "GetMeLit is the only place I find writing opportunities I actually apply for." (GML)
+    Col 2: "GetMeLit is the only newsletter I actually look forward to receiving six days a week." (GML)
     Col 3: "It's like having a brilliant friend brief you on everything that matters." (CD)
 
 SECTION 4 — WHAT'S INSIDE (full-width, `var(--paper)` bg, 72px vertical padding, border-bottom
@@ -6038,7 +6041,9 @@ SECTION 4 — WHAT'S INSIDE (full-width, `var(--paper)` bg, 72px vertical paddin
       HEADING: "Inside GetMeLit" — same style.
       SUB: same copy pattern.
       PILLAR ROWS (4 rows, same structure, left bar rgba(179,130,56,0.5) — gold family).
-        Rows: "Stories", "Books", "Opps", "Spotlight" from NL_META["getmelit"].pillars.
+        Rows: "Daily Stories", "Books", "Opps", "Spotlight" from NL_META["getmelit"].pillars.
+        The first row ("Daily Stories") carries a "Daily" label not "Sat" — it is the Mon–Fri
+        delivery; the remaining 3 have "Sat" to signal the Saturday issue.
 
 SECTION 5 — RECENT ISSUES (full-width, white bg, 72px vertical padding):
   INNER (max-width 1100px, centered):
