@@ -924,6 +924,16 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Newsletter segment field — same exposure pattern as nlList above, for the
+        // uk/us/africa edition archive pages to filter down to region-targeted issues.
+        register_graphql_field( 'CultureNewsletter', 'nlSegment', array(
+            'type'        => 'String',
+            'description' => 'Regional segment this issue was targeted at (us, uk, ng, gh, ca, au), or empty for all regions.',
+            'resolve'     => function( $post ) {
+                return (string) ( get_post_meta( $post->databaseId, '_culture_nl_segment', true ) ?: '' );
+            },
+        ) );
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
@@ -1015,6 +1025,15 @@ class Culture_Post_Types {
 
         // Expose _culture_nl_list so the frontend knows which newsletter each post belongs to.
         register_post_meta( 'culture_newsletter', '_culture_nl_list', array(
+            'type'         => 'string',
+            'single'       => true,
+            'default'      => '',
+            'show_in_rest' => true,
+        ) );
+
+        // Expose _culture_nl_segment so edition pages (uk/us/africa) can show only
+        // issues targeted at their region (empty segment = all regions).
+        register_post_meta( 'culture_newsletter', '_culture_nl_segment', array(
             'type'         => 'string',
             'single'       => true,
             'default'      => '',
