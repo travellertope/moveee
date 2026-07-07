@@ -5367,3 +5367,473 @@ Output 3 frames: Frame 1 (Discover Home, Desktop), Frame 2 (Filter Panel overlay
 Frame 3 (Mobile Companion, full scroll).
 
 ---
+
+## 24. NEWSLETTER PUBLICATION PAGES & ARCHIVE — WEB (Site A, themoveee.com/newsletter/culture-drop · /newsletter/getmelit · /newsletter)
+
+### Note on scope
+
+Covers three overlapping surfaces, all sharing one design language:
+
+1. **`/newsletter/culture-drop`** and **`/newsletter/getmelit`** — the per-publication homepages,
+   both rendered by `apps/site/components/NewsletterPublicationPage.tsx` using per-list data from
+   `apps/site/lib/newsletter-lists.ts` (`NL_META`). This is the primary target.
+2. **The archive section** — the issue-list embedded at the bottom of every pub page (and on
+   the hub `/newsletter` page under `#archive`). Same design language, separate detailed frame.
+3. **`/newsletter`** — the hub page showing both newsletters. Not a rebuild target in this pass
+   (the hub's `newsletter/page.tsx` is more complex — 2-newsletter cards, Coming Soon grid,
+   etc.) but its archive tabs should visually match the archive frame here.
+
+**No "Who's Writing?" section.** Dense Discovery's author bio panel is explicitly excluded from
+this redesign — neither newsletter has a single named author and the editorial voice is collective.
+All other Dense Discovery structural patterns are fair game.
+
+**Design inspiration — Dense Discovery (`densediscovery.com`):**
+Clean, editorial, predominantly white/off-white background, serif display headline in the hero,
+a 2-column hero with a simulated email preview on the right, a 3-column subscriber testimonial
+band, a "What you're in for" section with a 2×4 grid of colored-dot section tiles, a values
+strip (4 columns), a recent issues preview, and a bottom subscribe CTA band. The overall register
+is **quiet, text-forward, lots of white space** — not the colorful card/band-heavy current design.
+
+### Brand architecture
+
+Site A (`apps/site`). No auth required. Both newsletters are free.
+- Culture Drop: `apps/site/app/newsletter/culture-drop/page.tsx` → `NewsletterPublicationPage`
+- GetMeLit: `apps/site/app/newsletter/getmelit/page.tsx` → `NewsletterPublicationPage`
+- Shared CSS: `apps/site/app/newsletter.css` (`nl-*`, `gml-*`, `digest-*` namespaces)
+- Subscribe widget: `GmlCTAForm` (Culture Drop) / `NewsletterSubscribeWidget` (GetMeLit)
+- Both have RSS feeds: `/newsletter/{list-id}/feed` — shown as an RSS icon+link in the eyebrow
+
+### Why this section exists
+
+The current layout is a dense arrangement of colored card bands, pillar grids, pull-band strips,
+and feature sections that compete with each other for attention. Dense Discovery achieves
+subscriber trust and conversion with far less visual noise — the hero does the heavy lifting
+(headline + preview + form), testimonials add social proof, and the section grid is the only
+real "feature" block. Every other element is editorial breathing room. This prompt asks for that
+register applied to Moveee's two newsletters.
+
+The existing CSS constraint from `CLAUDE.md` — "newsletter pages must use paper backgrounds only;
+no `var(--ink)` background on any section" — means the new design uses `#fff` (white) and
+`var(--paper)` (#f3ece0, the project's warm off-white) as the only two backgrounds, with
+`var(--ink)` reserved for text and the subscribe button, not section fills.
+
+### Marketing copy (final — use verbatim where shown)
+
+**Culture Drop:**
+- Eyebrow: `★ Culture Drop · Every Tuesday`
+- Headline: `The weekly dispatch on contemporary global culture.`
+- Standfirst: `One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll.`
+- Form CTA: `Drop it in my inbox →`
+- Social proof line: `Free · Weekly · Unsubscribe any time`
+- Section grid labels: `The Deep Dive` / `The List` / `What's Playing` / `The Calendar`
+- Pull quote: `We don't just tell you what's happening — we explore why it matters.`
+- Bottom CTA band headline: `One cultural dispatch. Every week.`
+- Bottom sub-copy: `No spam. No nonsense. Unsubscribe any time.`
+
+**GetMeLit:**
+- Eyebrow: `★ GetMeLit · For readers & writers`
+- Headline: `A weekly letter for the literary mind.`
+- Standfirst: `Stories, poems, essay excerpts, and opportunities for writers and authors from around the world — curated to keep you reading, writing, and discovering.`
+- Form CTA: `Subscribe →`
+- Social proof line: `Free · Weekly · Unsubscribe any time`
+- Section grid labels: `Stories` / `Books` / `Opps` / `Author Spotlight`
+- Pull quote: `Literature, curated weekly — the stories, poems, and reads that feed the literary mind, sent straight to your inbox.`
+- Bottom CTA band headline: `One literary letter. Every week.`
+- Bottom sub-copy: `No spam. No nonsense. Unsubscribe any time.`
+
+**Subscriber testimonials (shared, 3 across both newsletters):**
+- `"The first newsletter I've opened every week for a year. Essential."` — ★★★★★
+- `"Culture Drop changed how I think about what I read and what I watch."` — ★★★★★
+- `"GetMeLit is the only place I find writing opportunities I actually apply for."` — ★★★★★
+
+**Archive section:**
+- Section label: `Full Archive`
+- Tab labels: `All` · `Culture Drop` · `GetMeLit` (hub archive only — pub-page archives have no tabs)
+- Issue row format: issue number (left-padded `001`) · date · title · `→`
+
+<!-- DEV 1: Both pub pages use the same `NewsletterPublicationPage` component — only the `listId`
+prop changes. Design must scale gracefully to either list's copy and section count (both have 4
+pillars currently, see `NL_META`). Don't hardcode Culture Drop copy into GetMeLit frames — use
+the `NL_META` data keys exactly as documented in `apps/site/lib/newsletter-lists.ts`. -->
+
+<!-- DEV 2: The simulated "email preview" panel in the hero is a UI design element, not a rendered
+Next.js component — it's a static illustration of what the newsletter looks like in an inbox,
+showing the newsletter name/logo, a headline in the newsletter's own typographic style, and a
+short excerpt/preview of a real section. Think: a browser-less "email card" with a subtle drop
+shadow and a thin border, sitting on a light paper background. No real email client chrome needed.
+This panel is purely decorative/illustrative — implemented as a `<div>` with mocked content,
+not an `<iframe>` or embedded email renderer. -->
+
+<!-- DEV 3: The subscribe form is an existing client component — `GmlCTAForm` (Culture Drop,
+`apps/site/components/GmlCTAForm.tsx`) and `NewsletterSubscribeWidget` (GetMeLit,
+`packages/shared/components/NewsletterSubscribeWidget.tsx`). Both accept `placeholder`,
+`buttonLabel`, and `list` props. The design should treat the form as a 2-element inline row
+(text input + button at the same height, no wrapping label card around it) — the current design
+wraps it in a `.nl-card-form` div with extra padding/border; the new design drops that wrapper
+entirely and renders form inline in the hero and in the bottom CTA band. -->
+
+<!-- DEV 4: "Paper backgrounds only" constraint from CLAUDE.md. The two permitted backgrounds:
+`#ffffff` (pure white, for the hero and testimonials band) and `var(--paper)` / `#f3ece0`
+(warm off-white, for the section-grid, archive, and bottom CTA band). Never use `var(--ink)`
+(#14110d) as a section background fill — ink is for text and buttons only on this surface.
+The per-newsletter accent colors: Culture Drop → `var(--ochre)` (#c5491f, rust/terracotta) for
+section tile indicators and the subscribe button; GetMeLit → `var(--gold)` (#b38238, amber)
+for the same elements. These should be used sparingly — colored dots, button fills, one or two
+rule lines — not as background fills for whole sections. -->
+
+<!-- DEV 5: The archive issue list (`digest-archive-row`) already uses a row-based layout with
+issue number, date, title, badge, and arrow — these CSS classes exist in `newsletter.css`.
+The new archive design replaces the current flat-bordered rows with a slightly more editorial
+treatment: wider number column, date in monospace, title in the serif font, hover state is a
+subtle paper-warm tint rather than a hard border change. No pagination is implemented server-side
+(all issues fetched at once with `getNewslettersWithFallback(50, ...)`), so the archive is
+client-rendered scroll — don't design a pagination control unless the total is > 50. -->
+
+<!-- DEV 6: No "Who's Writing?" section anywhere in either newsletter page. This is an explicit
+product decision (no single named editor), not a gap to be filled later. Do not design a
+placeholder or "Coming soon" variant for it — just omit the section entirely. -->
+
+### PROMPT 24 — Newsletter Publication Pages & Archive (Desktop 1440px + Mobile 390px)
+
+```
+FRAME 1 — CULTURE DROP PUBLICATION HOMEPAGE (Desktop, 1440px, white bg)
+
+HERO (split 2-column, max-width 1100px centered, 80px vertical padding each side):
+  LEFT COLUMN (~52%, vertical stack, justified to center of column):
+    EYEBROW: "★ Culture Drop · Every Tuesday" — DM Sans 12px, `var(--mute)` color, letter-spacing
+      0.6px, uppercase. RSS icon link (16px, same muted color) to the right of the eyebrow text.
+    HEADLINE: "The weekly dispatch on contemporary global culture." — Fraunces 42px, weight 700,
+      `var(--ink)`, line-height 1.15, max-width 420px, 16px top margin.
+    STANDFIRST: "One deep essay, curated picks, a music dispatch, and what's happening across
+      Lagos, London, New York, and Accra. Written to make you think, not just scroll." —
+      DM Sans 16px, `var(--ink-soft)`, line-height 1.6, 16px top margin, max-width 400px.
+    SUBSCRIBE FORM (24px top margin, no card wrapper per DEV 3):
+      Inline row, 8px gap: text input ("your@email.com", DM Sans 14px, `var(--paper)` bg,
+      `var(--rule)` border, border-radius: var(--radius-md), 12px padding, flex:1, max-width
+      260px) + button ("Drop it in my inbox →", DM Sans 14px bold, `var(--ochre)` bg (#c5491f),
+      white text, border-radius: var(--radius-md), 12–20px padding, no border). The button uses
+      `var(--ochre)` (rust/terracotta, NOT `var(--gold)`) per Culture Drop's accent — DEV 4.
+    SOCIAL PROOF (10px top): "Free · Weekly · Unsubscribe any time" — DM Sans 12px,
+      `var(--mute)`, no star icons (these go in the testimonials band, not here).
+
+  RIGHT COLUMN (~48%): NEWSLETTER PREVIEW PANEL (per DEV 2).
+    A simulated "email card" illustration: white fill, 1px border (`var(--rule)`), subtle
+    drop-shadow (0 4px 24px rgba(0,0,0,0.08)), border-radius: var(--radius-xl) (12px). Inside:
+      - Top strip (12px padding, border-bottom): "Culture Drop" in the newsletter's own style —
+        DM Sans 11px uppercase bold `var(--ochre)`, and a small date ("Tue, 1 Jul 2026")
+        in 10px mono `var(--mute)`.
+      - Content block (16px padding, mocked): an issue headline at Fraunces 18px bold ink
+        (e.g. "The Deep Dive: On the global afterlife of Afrobeat"), 2 lines of body text in
+        DM Sans 12px `var(--ink-soft)` capped at 3 lines with "…", then a muted section divider
+        ("──── The List ────" in mono 10px `var(--mute)`), then 4 short one-line picks in DM
+        Sans 12px (e.g. "▸ Film — A Tribe Called Judah..."). Total card height ~260px, width
+        ~380px, slight 2° clockwise tilt on the card using CSS transform, placed on a
+        `var(--paper)` (#f3ece0) tinted bg rectangle that fills the right column.
+
+TESTIMONIALS BAND (full-width, `var(--paper)` bg, 48px vertical padding, 1px border top+bottom
+  `var(--rule)`):
+  3-column grid (max-width 960px centered, 40px gap), each testimonial:
+    ★★★★★ (five solid gold stars, `var(--gold)` #b38238, 14px, 8px bottom).
+    Quote text in DM Sans 14px italic `var(--ink)` line-height 1.5, e.g. "The first newsletter
+    I've opened every week for a year. Essential."
+  No author names, no avatar. Clean, minimal. From the 3 verbatim quotes in the copy block above.
+
+WHAT YOU'RE IN FOR (2-column, max-width 1100px centered, 72px vertical padding, white bg):
+  LEFT (~45%):
+    Section label: "What you get" — DM Sans 11px uppercase bold `var(--mute)`, letter-spacing 1px.
+    Heading: "Four things. Every week." — Fraunces 32px bold `var(--ink)`, 12px top.
+    Body: "Every issue of Culture Drop is built around four sections — so you always know what
+    you're getting, but never know what you'll find." — DM Sans 15px `var(--ink-soft)`, 16px top.
+    CTA row (28px top): "Subscribe →" button (`var(--ochre)` fill, white text, border-radius:
+    var(--radius-md)) + "Browse the archive →" ghost button (no fill, `var(--rule)` border,
+    `var(--ink)` text, border-radius: var(--radius-md)), 12px gap.
+  RIGHT (~55%): 2-column × 2-row grid of section tiles (24px gap):
+    Each tile: a 6×20px left border in the tile's accent color (Culture Drop uses a muted terracotta
+    #c5491f at 60% opacity for all 4) then title in DM Sans 14px bold `var(--ink)` and 1–2 lines
+    desc in DM Sans 13px `var(--ink-soft)`. No card background, no border-radius — tiles are flat
+    rows with only the left color bar distinguishing them. 4 tiles:
+      "The Deep Dive" / "The List" / "What's Playing" / "The Calendar"
+    Use the descriptions from NL_META["culture-drop"].pillars verbatim.
+
+PULL QUOTE (full-width, white bg, 72px padding, centered, max-width 680px):
+  A 2px horizontal rule (`var(--ochre)`, 40px wide, centered, 0 auto) above the quote.
+  Quote: "We don't just tell you what's happening — we explore why it matters." —
+    Fraunces 26px italic `var(--ink)`, centered, line-height 1.45.
+  Cite: "— The editorial mission of Culture Drop" — DM Sans 13px `var(--mute)`, centered, 12px top.
+
+RECENT ISSUES (max-width 960px centered, 72px top padding, white bg):
+  Section label + "Full archive →" link in the same row (flexbox, space-between).
+  "Recent issues" — DM Sans 11px uppercase bold `var(--mute)` + link "Full archive →" DM Sans 13px
+    `var(--ochre)` underline-on-hover.
+  3-column grid (24px gap) of issue preview cards (white fill, 1px `var(--rule)` border,
+    border-radius: var(--radius-lg), 20px padding, no shadow):
+    Issue number: "Issue N°{N}" DM Sans 11px mono `var(--mute)` + date right-aligned same row.
+    Headline: Fraunces 17px bold `var(--ink)`, 2 lines max, 10px top.
+    Excerpt: DM Sans 13px `var(--ink-soft)`, 3 lines max, 8px top.
+    CTA: "Read this issue →" DM Sans 12px `var(--ochre)`, 16px top. No arrow icon.
+
+BOTTOM SUBSCRIBE CTA BAND (full-width, `var(--paper)` bg, 80px vertical padding,
+  1px border-top `var(--rule)`, text + form centered, max-width 560px):
+  "One cultural dispatch. Every week." — Fraunces 32px bold `var(--ink)`, centered.
+  Subscribe form (24px top): same inline row as hero (input + "Drop it in my inbox →" button).
+  "No spam. No nonsense. Unsubscribe any time." — DM Sans 12px `var(--mute)`, centered, 12px top.
+
+ARCHIVE SECTION (id="archive", full-width, white bg, 64px top padding):
+  Section header row: "Full Archive" DM Sans 11px uppercase bold `var(--mute)` left, "{N} issues"
+    count DM Sans 11px mono `var(--mute)` right.
+  1px border-bottom `var(--rule)`, 16px bottom margin.
+  ISSUE ROWS (`.digest-archive-row` — existing class, new visual treatment):
+    Each row: full-width, 16px top+bottom padding, border-bottom 1px `var(--rule)`, flex row 16px gap:
+      ISSUE NUMBER — "001" — DM Mono 13px `var(--mute)`, flex-shrink 0, width 36px.
+      DATE — "1 Jul 2026" — DM Mono 12px `var(--mute)`, flex-shrink 0, width 90px.
+      TITLE — Fraunces 15px `var(--ink)`, flex:1.
+      → arrow — DM Sans 13px `var(--mute)`, flex-shrink 0.
+    On hover: row bg becomes `var(--paper)` (#f3ece0), title becomes `var(--ochre)`, transition 0.1s.
+    No badge/tag in archive rows on the pub page (they're single-list, no filtering needed).
+
+CONSTRAINTS:
+  - White (#ffffff) and `var(--paper)` (#f3ece0) are the only two section backgrounds — per DEV 4.
+  - `var(--ochre)` (#c5491f) is the Culture Drop accent (button fills, left rule bars, pull-quote
+    rule, hover color, RSS icon, archive hover title) — never use `var(--gold)` for Culture Drop.
+  - No dark (ink) background on any section — this applies to buttons too: only the subscribe
+    button uses `var(--ochre)`, not `var(--ink)`.
+  - Apply the shared `--radius-*` scale throughout.
+  - All copy is from the NL_META["culture-drop"] object and the verbatim copy block above —
+    do not paraphrase or invent new copy.
+
+Output 1 frame: Culture Drop publication homepage, full desktop scroll.
+```
+
+---
+
+```
+FRAME 2 — GETMELIT PUBLICATION HOMEPAGE (Desktop, 1440px, white bg)
+
+IDENTICAL STRUCTURE to Frame 1 (Culture Drop), with these per-newsletter substitutions:
+
+ACCENT COLOR SWAP: `var(--gold)` (#b38238, warm amber) replaces `var(--ochre)` (#c5491f) in
+  every instance — subscribe buttons, section tile left bars, pull-quote rule, archive hover
+  title color, RSS icon. GetMeLit's identity is the amber/gold family, not rust.
+
+COPY SWAPS (from NL_META["getmelit"] and verbatim copy block):
+  - Eyebrow: "★ GetMeLit · For readers & writers"
+  - Headline: "A weekly letter for the literary mind."
+  - Standfirst: "Stories, poems, essay excerpts, and opportunities for writers and authors from
+    around the world — curated to keep you reading, writing, and discovering."
+  - Subscribe button label: "Subscribe →"
+  - Section grid heading: "Four things. Every week." (same heading — different tiles below)
+  - Section tiles (from NL_META["getmelit"].pillars):
+      "Stories" / "Books" / "Opps" / "Author Spotlight" — using `var(--gold)` bars at 60% opacity.
+  - Pull quote: "Literature, curated weekly — the stories, poems, and reads that feed the literary
+    mind, sent straight to your inbox."
+  - Pull cite: "— The editorial mission of GetMeLit"
+  - Bottom CTA headline: "One literary letter. Every week."
+  - Bottom button label: "Subscribe →"
+
+NEWSLETTER PREVIEW PANEL (right-hero column) — same card structure, but mocked content from
+  GetMeLit: top strip label "GetMeLit" in `var(--gold)`, issue headline at Fraunces 18px bold
+  ink (e.g. "Stories: The Invisible Woman by Ama Ata Aidoo — an excerpt"), section divider
+  "──── Books ────", 4 short picks. Card sits on same `var(--paper)` bg rectangle.
+
+TESTIMONIAL swapped to the GetMeLit-specific quote:
+  "GetMeLit is the only place I find writing opportunities I actually apply for." — ★★★★★
+
+ALL OTHER SPACING, TYPOGRAPHY, LAYOUT: identical to Frame 1.
+
+Output 1 frame: GetMeLit publication homepage, full desktop scroll.
+```
+
+---
+
+```
+FRAME 3 — NEWSLETTER HUB ARCHIVE (Desktop, 1440px — the #archive section on /newsletter)
+
+This frame zooms into the archive section as it appears on the hub `/newsletter` page, where
+all issues from both lists are shown with filterable tabs. The hub's archive section has tabs
+("All", "Culture Drop", "GetMeLit") absent from the single-list pub pages.
+
+ARCHIVE TAB ROW (border-bottom 1px `var(--rule)`, pb 16px, mb 24px):
+  "Full Archive" DM Sans 11px uppercase bold `var(--mute)` left, tabs right:
+  Tab group (flex row, 4px gap, inline): "All {N}" · "Culture Drop {N}" · "GetMeLit {N}"
+  Each tab: DM Sans 13px `var(--ink)`, no fill, 8px horizontal padding, 4px vertical.
+  Active tab: border-bottom 2px `var(--ochre)`, `var(--ink)` text (underline, not fill).
+  Inactive: `var(--mute)` text, no border. The count is in a `<span>` at `var(--mute)` 11px.
+
+ISSUE ROWS (same as Frame 1 archive, but with a list badge on the right side):
+  Row: number · date · title · LIST BADGE · arrow.
+  LIST BADGE ("Culture Drop" or "GetMeLit") — a small rounded pill (border-radius: var(--radius-full),
+    6px horizontal padding, 3px vertical):
+    Culture Drop: `var(--ochre)` text, rgba(197,73,31,0.08) bg.
+    GetMeLit: `var(--gold)` text, rgba(179,130,56,0.08) bg.
+  Hover: same as Frame 1 (paper bg + title in respective accent color).
+
+Output 1 frame: archive section with tabs, "All" tab active, ~12 visible rows.
+```
+
+---
+
+```
+FRAME 4 — MOBILE COMPANION (390px, Culture Drop pub page)
+
+HERO (vertical stack, 24px horizontal padding, 48px top):
+  Eyebrow: 11px uppercase `var(--mute)` + RSS icon.
+  Headline: Fraunces 32px bold ink, line-height 1.2, 12px top.
+  Standfirst: DM Sans 15px `var(--ink-soft)`, line-height 1.55, 12px top.
+  Subscribe form (16px top): stacked (not inline) — input full-width (12px padding), then
+    button full-width below (same `var(--ochre)` fill, 14px bold, 14px padding), 8px gap.
+  Social proof: 11px `var(--mute)`, centered, 10px top.
+  NEWSLETTER PREVIEW PANEL: below the form, full-width minus 24px margins, 0° tilt (no tilt on
+    mobile — flat card, same inner mock content), height ~220px, 24px top margin.
+
+TESTIMONIALS: single-column stack, 3 cards (same as desktop tiles but stacked), 32px vertical
+  padding, `var(--paper)` bg.
+
+WHAT YOU'RE IN FOR: single-column — heading + body + CTAs stacked above; section tiles below
+  in 1-column list (left bar + title + desc on same row, 16px gap between tiles).
+
+PULL QUOTE: 28px horizontal inset, same centered treatment, 22px font size.
+
+RECENT ISSUES: single-column stack of issue cards (same card, full-width), 16px gap.
+
+BOTTOM CTA BAND: same centered layout, headline 26px, form stacked (not inline).
+
+ARCHIVE: same rows as desktop, but date is hidden on mobile (space constraint) — just issue
+  number + title + arrow per row.
+
+Output 1 frame: mobile Culture Drop pub page, full scroll.
+```
+
+
+---
+
+```
+FRAME 5 — NEWSLETTER READING / ARCHIVE PAGE (Split-Pane, Desktop 1440px)
+URL: /newsletter/[slug] — the single-issue reading page
+
+This is the most significant structural departure from the current design.
+Dense Discovery's archive/reading page is a SPLIT-PANE READER — a persistent left sidebar
+shows the full browseable issue list while the right panel displays the current issue's content,
+each scrolling independently. Replaces the current full-width hero + right-sidebar card layout.
+
+OVERALL LAYOUT:
+  Two-column split, full viewport height. Left sidebar: fixed width 420px, height 100vh, 
+  sticky (does not scroll with content). Right content: flex:1, its own scrollable overflow-y.
+  1px vertical divider between them (`var(--rule)`).
+
+LEFT SIDEBAR (420px, white bg, height 100vh, overflow-y hidden, flex-column):
+
+  SIDEBAR HEADER (24px padding, flex-column, border-bottom 1px `var(--rule)`):
+    Newsletter wordmark/logo: the newsletter name in Fraunces 28px bold `var(--ink)`.
+    Caption (16px top): "Browse all {N} issues of Culture Drop — the weekly dispatch on
+      contemporary global culture. Written to make you think, not just scroll." —
+      DM Sans 14px `var(--ink-soft)`, line-height 1.5.
+    SUBSCRIBE BUTTON (16px top): full-width, DM Sans 14px bold, `var(--ink)` bg, white text,
+      border-radius: var(--radius-md), 14px padding. Label: "Subscribe free →".
+
+  ARCHIVE PANEL (flex:1, overflow-y auto, flex-column):
+    PANEL HEADER (16px padding, flex row, border-bottom 1px `var(--rule)`, sticky top:0,
+      white bg, z-index 1):
+      "Browse Archive" — DM Sans 13px bold `var(--ink)`, flex:1.
+      Sort toggle: two small icon buttons (↓ newest-first active, ↑ oldest-first inactive),
+        each 32px square, border 1px `var(--rule)`, border-radius: var(--radius-sm),
+        `var(--ink)` icon when active, `var(--mute)` when inactive. 4px gap.
+
+    ISSUE LIST (scrollable, no extra padding):
+      Each issue row (full-width, border-bottom 1px `var(--rule)`, 0 horizontal margin):
+        Padding: 14px 16px.
+        Row top line: "Issue {N}" — DM Sans 13px bold `var(--ink)`.
+        Row bottom line: issue title — DM Sans 13px `var(--ink-soft)`, 2px top.
+        ACTIVE ROW (currently reading): background fill = `var(--ochre)` (#c5491f) for Culture
+          Drop / `var(--gold)` (#b38238) for GetMeLit; both text lines in white (#fff);
+          no border override — the colored bg replaces the white bg.
+        INACTIVE ROWS: white bg, default text colors. Hover: `var(--paper)` bg tint, 0.1s
+          transition.
+        Each row is a `<Link href="/newsletter/{slug}">` — clicking loads that issue in the
+          right pane (client-side navigation, no full page reload, sidebar stays fixed).
+
+    SIDEBAR FOOTER (border-top 1px `var(--rule)`, 12px 16px padding):
+      A `<<` collapse button: DM Sans 12px `var(--mute)`, floated right, no fill, no border.
+      Clicking collapses the left sidebar to 0px, the right pane takes full width. A `>>`
+      expand button (mirrored) re-opens it. This is a client-side `useState` toggle on the
+      split-pane layout wrapper — no URL change.
+
+RIGHT CONTENT PANE (flex:1, overflow-y auto, position relative):
+
+  ISSUE BADGE (position fixed, top 20px, right 20px, z-index 10):
+    "Issue N°{N}" pill — DM Sans 13px bold `var(--ink)`, white bg, 1px `var(--rule)` border,
+    border-radius: var(--radius-full), 10px 16px padding, box-shadow 0 2px 8px rgba(0,0,0,0.1).
+    A small 🔗 share/link icon at the right end of the pill (16px, `var(--mute)` color).
+
+  ISSUE HERO (full-width, height ~480px, colored bg = accent color at 40% opacity mixed with
+    white — a very light terracotta wash for Culture Drop, light amber wash for GetMeLit):
+    TWO-COLUMN INNER (max-width 960px centered, 48px vertical padding, 40px gap):
+      LEFT (~45%): Opening pull quote from the issue — Fraunces 26px italic `var(--ink)`,
+        line-height 1.45, max 4 lines. Attribution below: "— [Name]" DM Sans 14px `var(--mute)`.
+        (If no pull quote exists: issue title at Fraunces 28px bold `var(--ink)` + excerpt.)
+      RIGHT (~55%): Featured image from the issue (`issue.featuredImage`) — `<Image>` component,
+        `objectFit: "contain"`, max-height 420px, drop-shadow 0 8px 32px rgba(0,0,0,0.15),
+        border-radius: var(--radius-lg). Below image: "Artwork by [credit]" DM Sans 11px
+        `var(--mute)` italic (when a credit exists in post meta — optional).
+    If no featured image: hero is a simpler centered layout — just the pull quote/title on the
+      accent-washed bg, centered, no right column.
+
+  NEWSLETTER WORDMARK (centered, below hero, 40px top, 24px bottom):
+    Newsletter name as display logotype — Fraunces 64px bold `var(--ink)`, letter-spacing -1px,
+    centered. (Mirrors DD's large "DD" monogram that appears mid-issue — grounds the content in
+    the newsletter's identity before the body text begins.)
+
+  ISSUE GREETING / BODY:
+    "Hello readers!" or the issue's opening salutation — DM Sans 16px `var(--ink-soft)` bold.
+    Then the full `issue.content` HTML rendered in a comfortable reading column:
+      max-width 680px, margin 0 auto, padding 0 40px 80px.
+      Font: DM Sans 16px `var(--ink)`, line-height 1.7.
+      Headings within content: Fraunces 22px bold `var(--ink)`.
+      `<a>` links: `var(--ochre)` or `var(--gold)` (per newsletter), underline on hover.
+      Images within content: max-width 100%, border-radius: var(--radius-md).
+    ArticleContentGate renders inline here — if the issue is gated (Pro-only), content
+      truncates after a preview paragraph and shows the ContentGate paywall panel as currently
+      implemented (no redesign of that component in this pass — it's a shared cross-surface
+      component).
+
+  SUBSCRIBE BAND (below content, full-pane width, `var(--paper)` bg, 64px padding,
+    border-top 1px `var(--rule)`, centered):
+    "Never miss an issue." — Fraunces 28px bold `var(--ink)`.
+    Subscribe form (24px top): inline input + accent-colored button (same pattern as pub page hero).
+    Social proof: DM Sans 12px `var(--mute)`, "Free · Weekly · Unsubscribe any time".
+
+MOBILE (390px) — ARCHIVE/READING PAGE:
+  No split-pane — single column. Instead:
+    TOP BAR: Newsletter wordmark left + "Issue N°{N}" badge right.
+    BELOW TOP BAR: a horizontal "Browse Archive" strip (full-width, `var(--paper)` bg,
+      border-bottom 1px `var(--rule)`, 12px padding, overflow-x auto):
+      A scrollable row of issue pills — each pill is "Issue {N}" DM Sans 12px, ghost border,
+      border-radius: var(--radius-full), 6px 10px padding. Active pill: accent-color fill,
+      white text. Replaces the left sidebar completely on mobile.
+    HERO: collapses to a single-column stack (image full-width, quote below it).
+    BODY: full-width, 16px horizontal padding.
+    No sidebar collapse button needed (sidebar doesn't exist on mobile).
+
+CONSTRAINTS:
+  - The left sidebar is FIXED HEIGHT (100vh) and never scrolls with the right pane — each side
+    has its own scroll container. This is a fundamental structural change from the current
+    full-page layout of `/newsletter/[slug]/page.tsx`.
+  - The sidebar's "Browse Archive" list is navigable without leaving the page — clicking an
+    issue row performs client-side navigation (the right pane content changes, the sidebar
+    stays). This requires converting the reading page from a Server Component to a Client
+    Component (or a hybrid: server outer shell, client inner pane) — flag this in any
+    implementation plan. The existing `page.tsx` fetches all sibling issues server-side
+    (`allIssues` array) which is exactly what the sidebar list needs — no extra data fetch.
+  - ACTIVE ROW accent fill uses the issue's own newsletter's accent: Culture Drop issues → 
+    `var(--ochre)`, GetMeLit issues → `var(--gold)`. The sidebar color tells you which 
+    newsletter you're in without needing a badge.
+  - No `✳` premium-issue marker (DD uses this for Friends-only issues — we have no equivalent).
+  - The "Who's writing?" / author section DD shows mid-newsletter is NOT included — per the
+    standing product decision documented in §24's DEV 6.
+  - ProgressBar (`components/ProgressBar`) remains — it should track scroll position of the
+    RIGHT pane's overflow-y, not the window. Will need a ref passed to it.
+  - ArticleComments renders below the body content, above the Subscribe Band.
+
+Output 1 frame: split-pane reading page, Culture Drop issue active, sidebar open,
+  hero with artwork visible, partial body content below.
+```
+
