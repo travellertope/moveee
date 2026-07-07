@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Newsletter Hub Archive</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#FFFFFF',
+                        'paper-warm': '#F3ECE0',
+                        'ink': '#14110D',
+                        'ink-soft': '#3A342B',
+                        'mute': '#7A6F5C',
+                        'ochre': '#C5491F',
+                        'gold': '#B38238',
+                        'rule': '#E8E2D8',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    borderRadius: {
+                        'md': '4px',
+                        'lg': '8px',
+                        'xl': '12px',
+                        'full': '9999px',
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; display: flex; justify-content: center;}
+        .desktop-screen { width: 1440px; flex-shrink: 0; background-color: #FFFFFF; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Newsletter Hub Archive (Desktop)</span>
+        
+        <div class="desktop-screen shadow-2xl rounded-xl border-4 border-gray-900 overflow-hidden relative flex flex-col pt-12 pb-24">
+            
+            <section id="archive" class="w-full bg-paper flex justify-center px-[32px]">
+                <div class="w-full max-w-[960px] flex flex-col">
+                    
+                    <!-- Archive Tab Row -->
+                    <div class="flex items-end justify-between border-b border-rule pb-[16px] mb-[24px]">
+                        <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-[1px] mb-1">Full Archive</span>
+                        
+                        <div class="flex gap-[4px] items-center">
+                            <button class="font-sans text-[13px] text-ink px-[8px] py-[4px] border-b-[2px] border-ochre font-bold flex items-baseline gap-1">
+                                All <span class="text-[11px] text-mute font-normal">84</span>
+                            </button>
+                            <button class="font-sans text-[13px] text-mute px-[8px] py-[4px] border-b-[2px] border-transparent hover:text-ink transition-colors flex items-baseline gap-1">
+                                Culture Drop <span class="text-[11px] text-mute">42</span>
+                            </button>
+                            <button class="font-sans text-[13px] text-mute px-[8px] py-[4px] border-b-[2px] border-transparent hover:text-ink transition-colors flex items-baseline gap-1">
+                                GetMeLit <span class="text-[11px] text-mute">42</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Archive List -->
+                    <div class="flex flex-col">
+                        
+                        <!-- Row 1 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">084</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">30 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Short Story Special</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 2 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">083</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">30 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">The Global Afterlife of Afrobeat</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 3 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">082</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">23 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">Opportunities for Emerging Writers</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 4 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">081</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">23 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">Architecture of the Return</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 5 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">080</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">16 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Contemporary African Poets</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 6 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">079</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">16 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">The Independent Film Wave</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 7 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">078</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">9 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">On African Futurism in Fiction</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 8 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">077</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">9 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">Inside the Rise of Alternative R&B</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 9 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">076</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">2 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">The Memoir Boom: Who Gets to Tell the Story?</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 10 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">075</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">2 Jun 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">A Conversation on Post-Colonial Literature</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 11 (GetMeLit) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">074</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">26 May 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-gold transition-colors truncate">A Conversation with Tsitsi Dangarembga</span>
+                            <span class="bg-gold/[0.08] text-gold px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">GetMeLit</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+
+                        <!-- Row 12 (Culture Drop) -->
+                        <a href="#" class="digest-archive-row flex items-center gap-[16px] py-[16px] border-b border-rule hover:bg-paper-warm group transition-colors duration-100 px-[8px] -mx-[8px] rounded-md">
+                            <span class="font-mono text-[13px] text-mute shrink-0 w-[36px]">073</span>
+                            <span class="font-mono text-[12px] text-mute shrink-0 w-[90px]">26 May 2026</span>
+                            <span class="font-serif text-[15px] text-ink flex-1 group-hover:text-ochre transition-colors truncate">Lagos Culinary Scene: The New Guard</span>
+                            <span class="bg-ochre/[0.08] text-ochre px-[6px] py-[3px] rounded-full font-sans text-[10px] font-bold uppercase tracking-wider shrink-0">Culture Drop</span>
+                            <span class="font-sans text-[13px] text-mute shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                        </a>
+                        
+                    </div>
+                    
+                    <button class="mt-[32px] h-[44px] px-[24px] border border-rule text-ink font-sans text-[14px] font-bold rounded-md hover:bg-paper-warm transition-colors w-max mx-auto">
+                        Load more issues
+                    </button>
+
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+</body>
+</html>
