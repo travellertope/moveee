@@ -308,7 +308,7 @@ export default function IssueReaderClient({
             )}
           </div>
           <span className="rd-subscribe-note">
-            Free · {isGml ? "Fortnightly" : "Weekly"} · Unsubscribe any time
+            Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
           </span>
         </div>
 

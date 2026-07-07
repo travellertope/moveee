@@ -72,36 +72,36 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     titleEmphasis: "Me",
     titleSuffix: "Lit",
     titleInline: true,
-    cadence: "Weekly",
-    eyebrow: "★ GetMeLit · For readers & writers",
-    tagline: "A weekly letter for the literary mind.",
+    cadence: "Daily Mon–Fri + Saturdays",
+    eyebrow: "★ GetMeLit · A story a day, more every Saturday",
+    tagline: "A story a day. A full literary dispatch every Saturday.",
     standfirst:
-      "Stories, poems, essay excerpts, and opportunities for writers and authors from around the world — curated to keep you reading, writing, and discovering.",
-    signupNote: "Free · Weekly · Unsubscribe anytime",
+      "A new short story or poem in your inbox every weekday — plus books worth reading, opportunities for writers, and an in-depth author spotlight, every Saturday.",
+    signupNote: "Free · Daily · Unsubscribe anytime",
     pillars: [
       {
         num: "01",
         name: "Stories",
-        desc: "Fiction and poetry from voices around the world — the kind you'll want to share.",
+        desc: "The week's featured fiction or poetry — a story from PREE, Lolwe, Brittle Paper, or beyond. The kind you'll want to pass on.",
       },
       {
         num: "02",
         name: "Books",
-        desc: "New releases, essential reads, and editor picks for the literary mind.",
+        desc: "New releases, essential reads, and editor picks for the literary mind — debuts, prize winners, and the novels worth clearing your weekend for.",
       },
       {
         num: "03",
         name: "Opps",
-        desc: "Submissions, grants, residencies, and writing prizes worth your time.",
+        desc: "Submissions windows, grants, residencies, and writing prizes worth your time — for writers at every stage, from every corner of the world.",
       },
       {
         num: "04",
         name: "Spotlight",
-        desc: "Author spotlight — voices shaping world literature, in conversation and excerpt.",
+        desc: "One writer, in depth. Their work, their influences, what they're working on next — for the reader who wants more than a recommendation.",
       },
     ],
     pullQuote:
-      "Literature, curated weekly — the stories, poems, and reads that feed the literary mind, sent straight to your inbox.",
+      "A story lands in your inbox every morning. On Saturday, the full picture: books, opportunities, and a writer worth knowing. Literature, delivered daily.",
     pullCite: "— The editorial mission of GetMeLit",
   },
 };
