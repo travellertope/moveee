@@ -267,14 +267,48 @@ were removed outright, not just supplemented:
   being hidden below `1024px` by a **pre-existing, unrelated** rule higher up in the file (the
   old "Cultural Digest" section) — that rule is overridden back to visible at `max-width: 640px`
   specifically for this archive, since the mockup keeps the badge.
-- **`EditionNewsletterHub.tsx`** (the `/newsletter/uk`, `/us`, `/africa` pages) still renders the
-  old layout and reuses the CSS classes this pass removed usage of from the hub
-  (`gml-whats-inside`, `gml-pull-band`, `gml-recent`, `nl-culturedrop-feature`, etc.) —
-  **deliberately left untouched and those CSS blocks were not deleted**, only the hub page
-  (`app/newsletter/page.tsx`) stopped using them. If a future pass wants the edition pages on
-  the new design too, treat it as a separate task.
+- **`EditionNewsletterHub.tsx`** (the `/newsletter/uk`, `/us`, `/africa` pages) has since been
+  rebuilt to the same design in a follow-up pass — see below. The old `gml-whats-inside`/
+  `gml-pull-band`/`gml-recent`/`nl-culturedrop-feature` CSS blocks are still not deleted (kept in
+  case anything else ever needs them), just unused by both newsletter components now.
 - Not visually verified in a browser (no WordPress/env credentials in this pass) — verified via
   `tsc --noEmit` (clean) and a CSS brace-balance check on `newsletter.css`.
+
+### Edition newsletter hubs (`/newsletter/uk`, `/us`, `/africa`) — rebuilt + region-scoped (July 2026)
+
+`EditionNewsletterHub.tsx` got the same section-by-section rebuild as the global hub above
+(masthead pills, no inline features list, `NlCardPreview`, testimonials, the unified "Inside the
+programme" block — with Culture Drop's Calendar item still overridden per edition via
+`EDITION_CONFIG[edition].calendarDesc` — mixed-list Recent Issues, Coming Soon, pill archive tabs).
+
+**Region-scoping (new, closes a real gap):** before this pass, every edition page fetched and
+displayed the exact same global newsletter archive — `_culture_nl_segment` (the post meta that
+already exists for the WP-Cron send queue to filter subscribers by region, see "Newsletter system
+architecture" above) was never exposed to the frontend at all, so there was no data to filter by.
+Fixed:
+- `culture-community/includes/core/class-culture-post-types.php` — `_culture_nl_segment` now
+  `register_post_meta`'d with `show_in_rest: true` (mirrors `_culture_nl_list` immediately above
+  it), plus a mirrored `nlSegment` GraphQL field on `CultureNewsletter` (same
+  `register_graphql_field` pattern as the existing `nlList` field, needed because WPGraphQL's
+  generic `metaValue()` resolver blocks underscore-prefixed meta keys).
+- `packages/shared/lib/wp.ts` — `nlSegment` added to `NEWSLETTER_FIELDS_FRAGMENT` (GraphQL path)
+  and to `mapRestNewsletterToFrontendShape()` (REST fallback path) — both newsletter data paths
+  needed the field added, same as every other newsletter field in this file.
+- `EditionNewsletterHub.tsx` — new `EDITION_SEGMENTS` map (`uk → ["uk"]`, `us → ["us","ca"]`,
+  `africa → ["ng","gh"]`, derived from `packages/utils/editions.ts`'s existing country groupings)
+  filters the fetched newsletters down to issues whose `nlSegment` is one of the edition's
+  segments **or empty** (empty segment = sent to everyone, per the existing segment convention) —
+  applied once, before `allCount`/`cdCount`/`gmlCount`/recent issues/the archive list are derived,
+  so the whole page (counts, tabs, cards, archive rows) is consistently region-scoped rather than
+  just the visible list.
+- No `CULTURE_VERSION` bump needed — this only registers meta/GraphQL field exposure, not a new
+  `dbDelta` table (see "Plugin DB table auto-upgrade" above for when a bump *is* required).
+- Existing newsletter issues almost certainly have no `_culture_nl_segment` value set today (no
+  UI previously surfaced it as a distinguishing factor beyond subscriber-list filtering at send
+  time) — so until editors start setting a segment on new issues, edition pages will show
+  effectively the same content as the global hub (every issue falls into the "empty segment = all
+  regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
+  content going forward.
 
 ## Process: adding a new newsletter
 
