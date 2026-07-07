@@ -13,12 +13,12 @@ export const revalidate = 3600;
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   alternates: { canonical: "https://themoveee.com/newsletter" },
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
@@ -30,7 +30,7 @@ export const metadata = {
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   },
 };
 
@@ -38,6 +38,10 @@ const NL_LABELS: Record<string, string> = {
   "culture-drop": "Culture Drop",
   "getmelit": "GetMeLit",
 };
+
+// Only GetMeLit's four sections run on a fixed daily/Saturday cadence —
+// Culture Drop's four are all part of the single weekly Tuesday issue.
+const GETMELIT_ITEM_TAGS = ["Daily", "Sat", "Sat", "Sat"];
 
 function NlCardPreview({ listId }: { listId: "culture-drop" | "getmelit" }) {
   const meta = NL_META[listId];
@@ -92,10 +96,7 @@ export default async function NewsletterArchive({
     ? newsletters
     : newsletters.filter((n: any) => (n.nlList || "") === activeFilter);
 
-  const totalCount  = filtered.length;
-  const recentIssues = newsletters
-    .filter((n: any) => (n.nlList || "") === "culture-drop")
-    .slice(0, 3);
+  const recentIssues = newsletters.slice(0, 3);
 
   const issueNum = (index: number) =>
     allCount > 0 ? allCount - index : index + 1;
@@ -107,15 +108,22 @@ export default async function NewsletterArchive({
         <div className="nl-masthead-inner">
           <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
-            Two letters.
+            Two newsletters.
             <br />
-            <em>One obsession.</em>
+            <em>One cultural obsession.</em>
           </h1>
           <p className="nl-masthead-sub">
-            Culture Drop for the weekly cultural deep dive. GetMeLit for the
-            stories, poems, and reads that feed the literary mind. Both free.
-            Both essential.
+            Culture Drop for the weekly cultural deep dive. GetMeLit for a new
+            story or poem every day. Both free. Both essential.
           </p>
+          <div className="nl-masthead-pills">
+            <span className="nl-masthead-pill nl-masthead-pill--culturedrop">
+              ★ Culture Drop · Every Tuesday
+            </span>
+            <span className="nl-masthead-pill nl-masthead-pill--getmelit">
+              ★ GetMeLit · Mon–Sat
+            </span>
+          </div>
         </div>
       </section>
 
@@ -135,12 +143,6 @@ export default async function NewsletterArchive({
               what&apos;s happening across Lagos, London, New York, Accra, and Paris.
               Written to make you think, not just scroll.
             </p>
-            <ul className="nl-card-features">
-              <li>The Deep Dive — long-form cultural commentary</li>
-              <li>The List — five picks worth your time</li>
-              <li>What&apos;s Playing — music dispatch</li>
-              <li>The Calendar — Lagos, London, New York, Accra, Paris</li>
-            </ul>
             <div className="nl-card-form">
               <small className="nl-card-form-label">Subscribe free</small>
               <GmlCTAForm
@@ -148,29 +150,23 @@ export default async function NewsletterArchive({
                 buttonLabel="Drop it in my inbox →"
                 successLabel="✓ Welcome to Culture Drop"
               />
-              <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
+              <p className="nl-card-note">Free · Weekly · Unsubscribe any time</p>
             </div>
             <NlCardPreview listId="culture-drop" />
           </div>
 
           {/* Card 2 — GetMeLit */}
           <div className="nl-card nl-card--getmelit">
-            <span className="nl-card-eyebrow">Weekly · For readers &amp; writers</span>
+            <span className="nl-card-eyebrow">Daily · Mon–Sat</span>
             <h2 className="nl-card-title">
               Get<em>Me</em>Lit
             </h2>
             <p className="nl-card-desc">
-              A weekly letter for the literary mind. Stories, poems, essay
+              A new story or poem every day. Stories, poems, essay
               excerpts, and opportunities for writers and authors from
               around the world — curated to keep you reading, writing,
               and discovering.
             </p>
-            <ul className="nl-card-features">
-              <li>A story or poem — fiction and poetry you&apos;ll want to share</li>
-              <li>The reading list — new books &amp; essays worth your time</li>
-              <li>Opportunities — calls for submissions, residencies, grants</li>
-              <li>Author spotlight — voices shaping world literature</li>
-            </ul>
             <div className="nl-card-form">
               <small className="nl-card-form-label">Subscribe free</small>
               <NewsletterSubscribeWidget
@@ -178,9 +174,10 @@ export default async function NewsletterArchive({
                 buttonLabel="Subscribe →"
                 list="getmelit"
               />
-              <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
+              <p className="nl-card-note">Free · Daily · Unsubscribe any time</p>
             </div>
             <NlCardPreview listId="getmelit" />
+            <span className="nl-card-footnote">Saturday issues include Books, Opps &amp; Spotlight.</span>
           </div>
 
         </div>
@@ -198,7 +195,7 @@ export default async function NewsletterArchive({
           <div className="nl-testimonial-card">
             <span className="nl-testimonial-stars">★★★★★</span>
             <p className="nl-testimonial-quote">
-              &ldquo;GetMeLit is the only newsletter I actually look forward to receiving.&rdquo;
+              &ldquo;GetMeLit is the only newsletter I actually look forward to receiving six days a week.&rdquo;
             </p>
           </div>
           <div className="nl-testimonial-card">
@@ -210,159 +207,112 @@ export default async function NewsletterArchive({
         </div>
       </section>
 
-      {/* ══ CULTURE DROP IN DEPTH ══ */}
-      <section className="gml-whats-inside">
-        <div className="gml-section-header">
-          <div className="gml-section-title">
-            <h3>Inside <em>Culture Drop</em></h3>
-            <p>
-              Every issue is built around four sections — so you always know
-              what you&apos;re getting, but never know what you&apos;ll find.
-            </p>
-          </div>
-          <div className="gml-section-meta">4 sections · 8 min read</div>
-        </div>
+      {/* ══ INSIDE THE PROGRAMME ══ */}
+      <section className="nl-inside">
+        <div className="nl-inside-inner">
+          <span className="nl-inside-eyebrow">Inside the programme</span>
+          <div className="nl-inside-grid">
 
-        <div className="gml-pillars-grid">
-          <div className="gml-pillar-card">
-            <div className="gml-pc-num">01</div>
-            <div className="gml-pc-name">The <em>Deep Dive</em></div>
-            <p className="gml-pc-desc">
-              One long-form cultural essay or commentary — the thing
-              you&apos;ll forward to a friend. Art, identity, ambition, the
-              modern global cultural experience. Written to make you think.
-            </p>
-          </div>
-          <div className="gml-pillar-card">
-            <div className="gml-pc-num">02</div>
-            <div className="gml-pc-name">The <em>List</em></div>
-            <p className="gml-pc-desc">
-              A curated five-pick of what to read, watch, listen to, or
-              visit before the next issue. Books, films, albums,
-              exhibitions — things worth your time.
-            </p>
-          </div>
-          <div className="gml-pillar-card">
-            <div className="gml-pc-num">03</div>
-            <div className="gml-pc-name">What&apos;s <em>Playing</em></div>
-            <p className="gml-pc-desc">
-              A sound dispatch. New releases, overlooked gems, playlists,
-              and the occasional hot take on what&apos;s moving in global
-              music right now.
-            </p>
-          </div>
-          <div className="gml-pillar-card">
-            <div className="gml-pc-num">04</div>
-            <div className="gml-pc-name">The <em>Calendar</em></div>
-            <p className="gml-pc-desc">
-              What&apos;s happening this week and next across Lagos, Accra,
-              London, New York, and Paris — openings, screenings, readings,
-              dinners. The events worth leaving the house for.
-            </p>
+            <div className="nl-inside-block">
+              <h3 className="nl-inside-heading">Inside Culture Drop</h3>
+              <p className="nl-inside-intro">
+                Four sections, every issue. You always know what you&apos;re
+                getting, but never what you&apos;ll find.
+              </p>
+              <div className="nl-inside-list">
+                {NL_META["culture-drop"].pillars.map((p) => (
+                  <div className="nl-inside-item" key={p.num}>
+                    <div className="nl-inside-item-bar" />
+                    <div className="nl-inside-item-body">
+                      <div className="nl-inside-item-title-row">
+                        <span className="nl-inside-item-title">{p.name}</span>
+                      </div>
+                      <p className="nl-inside-item-desc">{p.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="nl-inside-block">
+              <h3 className="nl-inside-heading nl-inside-heading--gold">Inside GetMeLit</h3>
+              <p className="nl-inside-intro">
+                Four sections, every issue. You always know what you&apos;re
+                getting, but never what you&apos;ll find.
+              </p>
+              <div className="nl-inside-list">
+                {NL_META["getmelit"].pillars.map((p, i) => (
+                  <div className="nl-inside-item nl-inside-item--gold" key={p.num}>
+                    <div className="nl-inside-item-bar" />
+                    <div className="nl-inside-item-body">
+                      <div className="nl-inside-item-title-row">
+                        <span className="nl-inside-item-title">{p.name}</span>
+                        <span className="nl-inside-item-tag">{GETMELIT_ITEM_TAGS[i]}</span>
+                      </div>
+                      <p className="nl-inside-item-desc">{p.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
-
-      {/* ══ PULL QUOTE ══ */}
-      <div className="gml-pull-band">
-        <div className="gml-pull-bar" />
-        <div>
-          <blockquote className="gml-pull-quote">
-            We don&apos;t just tell you what&apos;s happening — we explore{" "}
-            <strong>why it matters</strong>. Sharp cultural commentary on the
-            modern global cultural experience, delivered every week.
-          </blockquote>
-          <cite className="gml-pull-cite">
-            — The editorial mission of Culture Drop
-          </cite>
-        </div>
-      </div>
 
       {/* ══ RECENT ISSUES ══ */}
       {recentIssues.length > 0 && (
-        <section className="gml-recent">
-          <div className="gml-recent-header">
-            <h3>Recent <em>issues</em></h3>
-            <Link href="/newsletter/culture-drop">Full archive →</Link>
-          </div>
-          <div className="gml-issues-grid">
-            {recentIssues.map((issue: any, idx: number) => (
-              <Link
-                key={issue.id}
-                href={`/newsletter/${issue.slug}`}
-                className="gml-issue-card"
-              >
-                <div className="gml-issue-num">
-                  <span>Issue N°{issueNum(idx)}</span>
-                  <span className="date">
-                    {new Date(issue.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <h4
-                  className="gml-issue-headline"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
-                />
-                {issue.excerpt && (
-                  <p
-                    className="gml-issue-sub"
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizeHtml(issue.excerpt)
-                        .replace(/<[^>]*>/g, "")
-                        .slice(0, 160),
-                    }}
-                  />
-                )}
-                <span className="gml-issue-cta">Read this issue →</span>
-              </Link>
-            ))}
+        <section className="nl-recent">
+          <div className="nl-recent-inner">
+            <div className="nl-recent-header">
+              <h3>Recent <em>issues</em></h3>
+              <a href="#archive">See all →</a>
+            </div>
+            <div className="nl-recent-grid">
+              {recentIssues.map((issue: any, idx: number) => {
+                const list = issue.nlList || null;
+                return (
+                  <Link
+                    key={issue.id}
+                    href={`/newsletter/${issue.slug}`}
+                    className={`nl-recent-card${list === "getmelit" ? " nl-recent-card--getmelit" : ""}`}
+                  >
+                    <div className="nl-recent-card-top">
+                      {list && (
+                        <span className={`nl-list-badge nl-list-badge--${list}`}>
+                          {NL_LABELS[list] ?? list}
+                        </span>
+                      )}
+                      <span className="nl-recent-card-date">
+                        Issue N°{String(issueNum(idx)).padStart(3, "0")} · {new Date(issue.date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <h4
+                      className="nl-recent-card-title"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
+                    />
+                    {issue.excerpt && (
+                      <p
+                        className="nl-recent-card-excerpt"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeHtml(issue.excerpt)
+                            .replace(/<[^>]*>/g, "")
+                            .slice(0, 160),
+                        }}
+                      />
+                    )}
+                    <span className="nl-recent-card-cta">Read this issue →</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </section>
       )}
-
-      {/* ══ GETMELIT FEATURE ══ */}
-      <section className="nl-culturedrop-feature">
-        <div className="nl-cdf-inner">
-          <div className="nl-cdf-left">
-            <div className="nl-cdf-eyebrow">★ GetMeLit · For readers &amp; writers</div>
-            <h3>
-              Literature, <em>curated weekly.</em>
-            </h3>
-            <p>
-              GetMeLit is the weekly letter for everyone who loves to read
-              and write. Stories, poems, essay excerpts, calls for
-              submissions, grants, and residencies — everything the literary
-              mind needs, in one place, every week.
-            </p>
-          </div>
-          <div className="nl-cdf-right">
-            <div className="nl-cdf-rows">
-              <div className="nl-cdf-row">
-                <span className="nl-cdf-row-num">Stories</span>
-                <span className="nl-cdf-row-label">Fiction &amp; poetry from voices around the world</span>
-              </div>
-              <div className="nl-cdf-row">
-                <span className="nl-cdf-row-num">Books</span>
-                <span className="nl-cdf-row-label">New releases, essential reads, and editor picks</span>
-              </div>
-              <div className="nl-cdf-row">
-                <span className="nl-cdf-row-num">Opps</span>
-                <span className="nl-cdf-row-label">Submissions, grants, residencies, and writing prizes</span>
-              </div>
-            </div>
-            <div className="nl-cdf-form-label">Subscribe to GetMeLit</div>
-            <NewsletterSubscribeWidget
-              placeholder="your@email.com"
-              buttonLabel="Subscribe →"
-              list="getmelit"
-            />
-            <p className="nl-cdf-note">Free · Weekly · Unsubscribe anytime</p>
-          </div>
-        </div>
-      </section>
 
       {/* ══ COMING SOON ══ */}
       <section className="gml-coming-soon">
