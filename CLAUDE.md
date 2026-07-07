@@ -228,6 +228,27 @@ List and segment labels defined as class constants `LIST_LABELS` and
 
 ---
 
+### Newsletter Hub page — mockup-driven additions (July 2026)
+
+`mockups/web/newsletter_hub_2.html` (mobile 390px frame, "2. Newsletter Hub (Mobile 390px)")
+uploaded and diffed against `apps/site/app/newsletter/page.tsx` — two sections present in the
+mockup were missing from the live hub page and have been added:
+
+- **Testimonials** — new `.nl-testimonials`/`.nl-testimonial-card` section (stacked cards on
+  mobile, 3-up row at `min-width: 720px`) inserted right after the two newsletter subscribe
+  cards, matching the mockup's section order. Deliberately styled as its own `nl-*` block
+  rather than reusing `NewsletterPublicationPage.tsx`'s `.np-testimonials` (flat 3-col grid,
+  no card background) — the hub mockup wants `paper-warm` rounded cards, closer to
+  `.np-preview-card`'s visual language than `.np-testimonial`'s.
+- **Per-card newsletter preview mock** — new `.nl-card-preview` block (flat, non-tilted variant
+  of the existing `.np-preview-card` used on the individual Culture Drop/GetMeLit publication
+  pages) rendered at the bottom of each subscribe card via a new `NlCardPreview` component in
+  `page.tsx`. Pulls its content from the existing `NL_META` (`lib/newsletter-lists.ts`) rather
+  than hardcoding new copy — same data source `NewsletterPublicationPage.tsx`'s hero preview
+  card already uses, so the two previews stay naturally in sync if `NL_META` copy changes.
+- Not visually verified in a browser (no WordPress/env credentials in this pass) — verified via
+  `tsc --noEmit` (clean) and a CSS brace-balance check on `newsletter.css`.
+
 ## Process: adding a new newsletter
 
 Follow every step in order. Each step lists the exact file and what to change.

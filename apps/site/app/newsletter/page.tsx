@@ -6,6 +6,7 @@ import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import "../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { NL_META } from "@/lib/newsletter-lists";
 
 export const revalidate = 3600;
 
@@ -37,6 +38,33 @@ const NL_LABELS: Record<string, string> = {
   "culture-drop": "Culture Drop",
   "getmelit": "GetMeLit",
 };
+
+function NlCardPreview({ listId }: { listId: "culture-drop" | "getmelit" }) {
+  const meta = NL_META[listId];
+  const [first, ...rest] = meta.pillars;
+  return (
+    <div className="nl-card-preview">
+      <div className="nl-card-preview-header">
+        <span className="nl-card-preview-badge">{meta.label}</span>
+        <span className="nl-card-preview-date">
+          {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+        </span>
+      </div>
+      <div className="nl-card-preview-body">
+        <h4 className="nl-card-preview-title">{first?.name}: {first?.desc?.slice(0, 60)}…</h4>
+        <p className="nl-card-preview-excerpt">{meta.standfirst}</p>
+        <div className="nl-card-preview-divider">──── {rest[0]?.name?.toUpperCase()} ────</div>
+        <div className="nl-card-preview-list">
+          {rest.map((p) => (
+            <span key={p.num} className="nl-card-preview-list-item">
+              ▸ <strong>{p.name}</strong> — {p.desc?.slice(0, 40)}…
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default async function NewsletterArchive({
   searchParams,
@@ -122,6 +150,7 @@ export default async function NewsletterArchive({
               />
               <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
             </div>
+            <NlCardPreview listId="culture-drop" />
           </div>
 
           {/* Card 2 — GetMeLit */}
@@ -151,8 +180,33 @@ export default async function NewsletterArchive({
               />
               <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
             </div>
+            <NlCardPreview listId="getmelit" />
           </div>
 
+        </div>
+      </section>
+
+      {/* ══ TESTIMONIALS ══ */}
+      <section className="nl-testimonials">
+        <div className="nl-testimonials-inner">
+          <div className="nl-testimonial-card">
+            <span className="nl-testimonial-stars">★★★★★</span>
+            <p className="nl-testimonial-quote">
+              &ldquo;The first newsletter I&apos;ve opened every week for a year. Essential.&rdquo;
+            </p>
+          </div>
+          <div className="nl-testimonial-card">
+            <span className="nl-testimonial-stars">★★★★★</span>
+            <p className="nl-testimonial-quote">
+              &ldquo;GetMeLit is the only newsletter I actually look forward to receiving.&rdquo;
+            </p>
+          </div>
+          <div className="nl-testimonial-card">
+            <span className="nl-testimonial-stars">★★★★★</span>
+            <p className="nl-testimonial-quote">
+              &ldquo;It&apos;s like having a brilliant friend brief you on everything that matters.&rdquo;
+            </p>
+          </div>
         </div>
       </section>
 
