@@ -273,6 +273,14 @@ export async function POST(req: NextRequest) {
   }
 
   const post = await createRes.json();
+
+  // Gamification award, rep-tier snapshot, @mention notifications,
+  // Follow-system "notify on new post", and Hub follower notifications all
+  // fire automatically server-side via the rest_after_insert_culture_post
+  // hook (class-culture-rest-api.php's handle_community_post_created) — it
+  // runs for every REST-created culture_post regardless of route, so no
+  // extra round-trip is needed here.
+
   return NextResponse.json({
     success: true,
     id: post.id,

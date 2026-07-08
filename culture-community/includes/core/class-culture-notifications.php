@@ -33,6 +33,7 @@ class Culture_Notifications {
         'hub_mod_appointed'  => 'Hub Mod Appointed',
         'hub_post_removed'   => 'Hub Post Removed',
         'hub_member_removed' => 'Removed From Hub',
+        'hub_new_post'       => 'New Post In A Hub You Follow',
     );
 
     /* ——————————————————————————————————————

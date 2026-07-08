@@ -17,9 +17,15 @@ class Culture_REST_API {
     }
 
     /**
-     * Fires after a culture_post is inserted/updated via the REST API.
-     * Awards reputation + credits to the community author on first publish only.
-     * Also extracts @mentions from the post content and sends mention notifications.
+     * Fires after a culture_post is inserted/updated via the REST API — this
+     * covers *every* REST-created culture_post regardless of which route
+     * created it (fires on post_type, not on REST base), including the web
+     * community composer, which calls native wp/v2/community-posts directly
+     * via HTTP Basic Auth and bypasses handle_submit_post() entirely. This is
+     * the one place web-created posts get the same side effects
+     * handle_submit_post() gives mobile-created posts: gamification award +
+     * rep-tier snapshot, @mention notifications, Follow-system "notify on new
+     * post", and Hub follower notifications.
      */
     public static function handle_community_post_created( $post, $request, $creating ) {
         if ( ! $creating ) return;
@@ -28,13 +34,21 @@ class Culture_REST_API {
         $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
         if ( ! $author_id ) return;
 
+        $hub_id = (int) get_post_meta( $post->ID, '_hub_id', true );
+
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_points( $author_id, 'community_post', 0 );
+            // Hub posts award the same tier as an ordinary post, just under a
+            // distinct action key so Hub-specific analytics can be pulled
+            // later — not a separate incentive tier (docs/hubs-plan.md §6.1).
+            Culture_Gamification::award_points( $author_id, $hub_id ? 'hub_post_published' : 'community_post' );
+            $rep      = Culture_Gamification::get_reputation( $author_id );
+            $rep_tier = Culture_Gamification::get_reputation_tier( $rep, $author_id );
+            update_post_meta( $post->ID, 'community_author_rep_tier', $rep_tier );
         }
 
         // Extract @mentions from post content and notify mentioned users.
+        $content = wp_strip_all_tags( $post->post_content );
         if ( class_exists( 'Culture_Notifications' ) ) {
-            $content = wp_strip_all_tags( $post->post_content );
             $mention_matches = array();
             preg_match_all( '/@(\w+)/', $content, $mention_matches );
             $mentioned_usernames = array_unique( $mention_matches[1] );
@@ -56,6 +70,16 @@ class Culture_REST_API {
                     }
                 }
             }
+        }
+
+        // Notify followers who opted in to be told when this author posts.
+        if ( class_exists( 'Culture_Follows' ) ) {
+            Culture_Follows::notify_followers_of_post( $author_id, $post->ID );
+        }
+
+        // Notify opted-in Hub followers of a new post (§6.3/§6.4).
+        if ( $hub_id && class_exists( 'Culture_Hubs' ) ) {
+            Culture_Hubs::notify_followers_of_hub_post( $hub_id, $post->ID, $author_id );
         }
     }
 
@@ -1641,6 +1665,7 @@ class Culture_REST_API {
             ),
         ) );
 
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -2374,6 +2399,7 @@ class Culture_REST_API {
 
         return rest_ensure_response( array( 'success' => true ) );
     }
+
 
     /* ——————————————————————————————————————
      *  Analytics handler

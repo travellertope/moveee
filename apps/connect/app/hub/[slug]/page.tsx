@@ -28,6 +28,7 @@ interface HubStatus {
   isMember: boolean;
   role: string | null;
   isFollowing: boolean;
+  notifyPosts: boolean;
 }
 
 async function fetchHub(slug: string): Promise<Hub | null> {
@@ -49,10 +50,10 @@ async function fetchStatus(hubId: number, userId: number): Promise<HubStatus> {
       `${WP_URL}/wp-json/culture/v1/hub/${hubId}/status?user_id=${userId}`,
       { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
     );
-    if (!res.ok) return { isMember: false, role: null, isFollowing: false };
+    if (!res.ok) return { isMember: false, role: null, isFollowing: false, notifyPosts: false };
     return await res.json();
   } catch {
-    return { isMember: false, role: null, isFollowing: false };
+    return { isMember: false, role: null, isFollowing: false, notifyPosts: false };
   }
 }
 
@@ -76,7 +77,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
   const status = loggedIn
     ? await fetchStatus(hub.id, Number(session.user.id))
-    : { isMember: false, role: null, isFollowing: false };
+    : { isMember: false, role: null, isFollowing: false, notifyPosts: false };
 
   return (
     <>
@@ -129,6 +130,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
             loggedIn={loggedIn}
             initialIsMember={status.isMember}
             initialIsFollowing={status.isFollowing}
+            initialNotifyPosts={status.notifyPosts}
             isOwner={status.role === "owner"}
           />
         </section>

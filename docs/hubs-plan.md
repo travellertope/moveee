@@ -741,9 +741,122 @@ are all live on both platforms.
   shows only its documented pre-existing JSX/type-mismatch noise) and
   `php -l` on all touched PHP files.
 
-**Phase 4 — Rewards & notifications.** `hub_created`/`hub_post_published`
-action keys, "Hub Founder" badge, the four new notification types (§6.3),
-notify-on-new-post opt-in wiring.
+**Phase 4 — Rewards & notifications. DONE.**
+
+- `hub_created` (20 pts / 5 credits) and `hub_post_published` (10 pts /
+  2 credits) added to `Culture_Gamification::POINTS`/`CREDIT_BONUSES` and
+  routed exclusively through `award_points()`, per §6.1 — no direct
+  `award_reputation()`/`award_credits()` calls. `hub_post_published` is
+  awarded at exactly the same tier as an ordinary `community_post` (not a
+  new incentive tier) — it exists purely so Hub-specific analytics can be
+  segmented later; `handle_submit_post()`'s single award call site now
+  branches on `$hub_id` to pick between the two keys instead of always
+  awarding `community_post`. No `hub_joined`/`hub_followed` reward was
+  added, per the plan's explicit anti-gaming note.
+- New "Hub Founder" badge (`hub_founder`, trigger `hub_max_members`,
+  threshold 10) — awarded when a Hub the user **owns** reaches 10 active
+  members. Implementation deviates slightly from a literal reading of
+  §6.2: `award_reputation()`'s automatic `evaluate_badges()` call only
+  evaluates the reputation-earner (the *joiner*, on a Hub join), not the
+  Hub *owner* — so `Culture_Hubs::join()` now calls
+  `Culture_Gamification::evaluate_badges( $creator_id )` explicitly right
+  after the member-count update, and a new
+  `Culture_Hubs::get_max_owned_hub_member_count( $user_id )` helper (not
+  named in the original plan) computes the trigger value as the max
+  member-count across every Hub the user owns, via a single raw-SQL
+  subquery — consistent with this codebase's raw-SQL-for-reads convention.
+- Fourth notification type `hub_new_post` added to
+  `Culture_Notifications::TYPES` (deferred from Phase 3 per that phase's
+  own note). `Culture_Hubs::notify_followers_of_hub_post()` /
+  `get_post_notify_follower_ids()` mirror the Follow system's
+  `notify_followers_of_post()` sync-batch-then-cron-offload pattern exactly
+  (`SYNC_NOTIFY_BATCH = 200`, remainder scheduled via
+  `wp_schedule_single_event()` on a new `culture_notify_hub_followers_batch`
+  cron hook) — only followers with `notify_posts = 1` on
+  `wp_culture_hub_follows` are notified, per §6.3/§6.4's opt-in requirement.
+  Mobile's `handle_submit_post()` calls this directly (it already runs
+  through PHP). The web submit route
+  (`apps/connect/app/api/community/submit/route.ts`) bypasses PHP entirely
+  for post creation (native `wp/v2/community-posts` + Basic Auth) — this was
+  first patched with a dedicated `POST /hub/{id}/notify-new-post` endpoint
+  called fire-and-forget after a successful create, but that approach was
+  replaced (see the "web gamification/notification gap" bullet below) with
+  a single fix at the actual architectural seam: `Culture_REST_API` already
+  registers a `rest_after_insert_culture_post` hook
+  (`handle_community_post_created`) that fires for **every** REST-created
+  `culture_post`, regardless of which route created it — since it hooks on
+  post type, not on REST base, it fires just the same for
+  `wp/v2/community-posts` (the web composer's create call) as for any other
+  REST path. That hook now also calls
+  `Culture_Hubs::notify_followers_of_hub_post()` when `_hub_id` postmeta is
+  present, so the dedicated notify-new-post endpoint became redundant and
+  was removed.
+  Icon-map entries for `hub_new_post` added to all three frontend files
+  (`NotificationBell.tsx`, web `NotificationsClient.tsx`, mobile
+  `NotificationsScreen.tsx`'s `getTypeMeta()` + a new `openNotification()`
+  switch case reusing the existing Hub-fetch-then-navigate branch) plus web
+  `NotificationPreferences.tsx`'s toggle list, and mobile's
+  `NotificationType` union in `types/index.ts` — same "no shared source of
+  truth across the PHP/TS boundary" rollout as every other notification
+  type in this codebase.
+- §6.4 opt-in UI: `Culture_Hubs::get_status()` now returns a `notifyPosts`
+  field (backed by a new `get_notify_posts()` helper reading the
+  `notify_posts` column) alongside `isMember`/`role`/`isFollowing` — the
+  single source both platforms hydrate their toggle from. Web:
+  `HubActions.tsx` gained a "Notify me when they post" checkbox (visible
+  only while following), calling the existing `follow` endpoint again with
+  an updated `notify_posts` value (the PHP `follow()` method already
+  upserts `notify_posts` on a repeat follow of an existing row, so no new
+  endpoint was needed) — unfollowing also resets local `notifyPosts` state
+  to false. Mobile: `HubDetailScreen.tsx` gained the identical checkbox row,
+  styled to match the pre-existing `MemberProfileScreen.tsx` Follow-system
+  "Notify me when they post" row (`Ionicons` checkbox/square-outline,
+  ochre-when-on) rather than inventing new visual language for the same
+  concept. Following a Hub still defaults `notify_posts` to off in both
+  UIs, matching the platform-wide Follow system's opt-in-by-default-off
+  posture.
+- **Web gamification/notification gap — found and fixed, corrected from an
+  earlier, wrong "confirmed but out of scope" note.** A first pass of this
+  phase claimed web-created posts never earn gamification points at all,
+  since `apps/connect/app/api/community/submit/route.ts` never calls PHP
+  gamification logic directly. That claim was wrong — closer investigation
+  found `Culture_REST_API::handle_community_post_created()`, hooked on
+  `rest_after_insert_culture_post` (unrelated in name only to this phase's
+  own `Culture_Hubs` work — it's an older, pre-existing hook), already
+  awards `community_post` reputation/credits and sends @mention
+  notifications for **any** REST-created `culture_post`, including
+  web-composer posts, since the hook fires on post type rather than on
+  which REST route/base handled the request. So gamification and mentions
+  were never actually broken for web. What genuinely *was* missing, and is
+  now fixed in that same hook:
+  - It always awarded the `community_post` key, even for Hub posts — now
+    branches on `_hub_id` postmeta to award `hub_post_published` instead,
+    matching mobile's behavior and unlocking the intended Hub-analytics
+    segmentation for web-created Hub posts too.
+  - It never wrote `community_author_rep_tier` postmeta — meaning
+    web-authored posts were silently invisible to the Phase 8b feed
+    ranking's reputation boost (`authorRepTier`-gated) since that field was
+    simply never set. Now written on every award, mirroring
+    `handle_submit_post()`.
+  - It never called `Culture_Follows::notify_followers_of_post()` — authors'
+    opted-in followers were never notified about web-created posts at all
+    (mobile-created posts always triggered this). Now called unconditionally
+    after the award.
+  - It never called `Culture_Hubs::notify_followers_of_hub_post()` — now
+    called when `_hub_id` is present, replacing the standalone
+    notify-new-post endpoint described above.
+  Net effect: web- and mobile-created posts now trigger byte-for-byte the
+  same downstream side effects, with zero extra network round-trips added
+  to the Next.js submit route (the fix lives entirely in the hook WordPress
+  already runs on every REST post-create) — the old fire-and-forget
+  `notify-new-post` fetch was removed from
+  `apps/connect/app/api/community/submit/route.ts` since it's now
+  redundant.
+- Verified via `tsc --noEmit` (clean on `apps/connect`; mobile's error count
+  is unchanged in kind from the pre-Phase-4 baseline — diffed line-number-
+  stripped output against a `git stash` baseline to confirm no new error
+  signatures were introduced, only the documented pre-existing JSX/type-
+  mismatch noise) and `php -l` on all touched PHP files.
 
 **Phase 5 — Polish.** Archive flow (§5.4/§7.3), Trending sort on Discovery
 (§4.2's recent-activity proxy), "My Hubs" screen refinements.

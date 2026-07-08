@@ -22,6 +22,7 @@ const NOTIFICATION_TYPES = [
   { id: "hub_mod_appointed",  name: "Hub Mod Appointed" },
   { id: "hub_post_removed",   name: "Hub Post Removed" },
   { id: "hub_member_removed", name: "Removed From Hub" },
+  { id: "hub_new_post",       name: "New Post In A Hub You Follow" },
 ];
 
 export default function NotificationPreferences() {
