@@ -202,80 +202,62 @@ export default async function NewsletterArchive({
       </section>
       </HideIfSubscribed>
 
-      {/* ══ TESTIMONIALS ══ */}
-      <section className="nl-testimonials">
-        <div className="nl-testimonials-inner">
-          <div className="nl-testimonial-card">
-            <span className="nl-testimonial-stars">★★★★★</span>
-            <p className="nl-testimonial-quote">
-              &ldquo;The first newsletter I&apos;ve opened every week for a year. Essential.&rdquo;
-            </p>
+      {/* ══ INSIDE CULTURE DROP ══ */}
+      <section className="nl-feature nl-feature--culturedrop">
+        <div className="nl-feature-image" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1541795083-a69f8e952d75?w=900&auto=format&fit=crop&q=80')" }} aria-hidden="true" />
+        <div className="nl-feature-content">
+          <span className="nl-feature-eyebrow">★ Culture Drop · Every Tuesday</span>
+          <h2 className="nl-feature-heading">Inside Culture Drop</h2>
+          <p className="nl-feature-intro">
+            Four sections, every issue. You always know what you&apos;re
+            getting, but never what you&apos;ll find.
+          </p>
+          <div className="nl-inside-list">
+            {NL_META["culture-drop"].pillars.map((p) => (
+              <div className="nl-inside-item" key={p.num}>
+                <div className="nl-inside-item-bar" />
+                <div className="nl-inside-item-body">
+                  <div className="nl-inside-item-title-row">
+                    <span className="nl-inside-item-title">{p.name}</span>
+                  </div>
+                  <p className="nl-inside-item-desc">{p.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="nl-testimonial-card">
-            <span className="nl-testimonial-stars">★★★★★</span>
-            <p className="nl-testimonial-quote">
-              &ldquo;GetMeLit is the only newsletter I actually look forward to receiving six days a week.&rdquo;
-            </p>
-          </div>
-          <div className="nl-testimonial-card">
-            <span className="nl-testimonial-stars">★★★★★</span>
-            <p className="nl-testimonial-quote">
-              &ldquo;It&apos;s like having a brilliant friend brief you on everything that matters.&rdquo;
-            </p>
-          </div>
+          <Link href="/newsletter/culture-drop" className="nl-feature-cta">
+            Explore Culture Drop →
+          </Link>
         </div>
       </section>
 
-      {/* ══ INSIDE THE PROGRAMME ══ */}
-      <section className="nl-inside">
-        <div className="nl-inside-inner">
-          <span className="nl-inside-eyebrow">Inside the programme</span>
-          <div className="nl-inside-grid">
-
-            <div className="nl-inside-block">
-              <h3 className="nl-inside-heading">Inside Culture Drop</h3>
-              <p className="nl-inside-intro">
-                Four sections, every issue. You always know what you&apos;re
-                getting, but never what you&apos;ll find.
-              </p>
-              <div className="nl-inside-list">
-                {NL_META["culture-drop"].pillars.map((p) => (
-                  <div className="nl-inside-item" key={p.num}>
-                    <div className="nl-inside-item-bar" />
-                    <div className="nl-inside-item-body">
-                      <div className="nl-inside-item-title-row">
-                        <span className="nl-inside-item-title">{p.name}</span>
-                      </div>
-                      <p className="nl-inside-item-desc">{p.desc}</p>
-                    </div>
+      {/* ══ INSIDE GETMELIT ══ */}
+      <section className="nl-feature nl-feature--getmelit nl-feature--flipped">
+        <div className="nl-feature-image" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80')" }} aria-hidden="true" />
+        <div className="nl-feature-content">
+          <span className="nl-feature-eyebrow nl-feature-eyebrow--gold">★ GetMeLit · Mon–Sat</span>
+          <h2 className="nl-feature-heading">Inside GetMeLit</h2>
+          <p className="nl-feature-intro">
+            A story or poem every weekday. A fuller literary Saturday
+            dispatch every week. Four sections, every issue.
+          </p>
+          <div className="nl-inside-list">
+            {NL_META["getmelit"].pillars.map((p, i) => (
+              <div className="nl-inside-item nl-inside-item--gold" key={p.num}>
+                <div className="nl-inside-item-bar" />
+                <div className="nl-inside-item-body">
+                  <div className="nl-inside-item-title-row">
+                    <span className="nl-inside-item-title">{p.name}</span>
+                    <span className="nl-inside-item-tag">{GETMELIT_ITEM_TAGS[i]}</span>
                   </div>
-                ))}
+                  <p className="nl-inside-item-desc">{p.desc}</p>
+                </div>
               </div>
-            </div>
-
-            <div className="nl-inside-block">
-              <h3 className="nl-inside-heading">Inside GetMeLit</h3>
-              <p className="nl-inside-intro">
-                Four sections, every issue. You always know what you&apos;re
-                getting, but never what you&apos;ll find.
-              </p>
-              <div className="nl-inside-list">
-                {NL_META["getmelit"].pillars.map((p, i) => (
-                  <div className="nl-inside-item nl-inside-item--gold" key={p.num}>
-                    <div className="nl-inside-item-bar" />
-                    <div className="nl-inside-item-body">
-                      <div className="nl-inside-item-title-row">
-                        <span className="nl-inside-item-title">{p.name}</span>
-                        <span className="nl-inside-item-tag">{GETMELIT_ITEM_TAGS[i]}</span>
-                      </div>
-                      <p className="nl-inside-item-desc">{p.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+            ))}
           </div>
+          <Link href="/newsletter/getmelit" className="nl-feature-cta nl-feature-cta--gold">
+            Explore GetMeLit →
+          </Link>
         </div>
       </section>
 
