@@ -125,6 +125,20 @@ React Native can't use the DOM-dependent shared package — edit both when those
   own status line for the authoritative, up-to-date detail — keep this summary in sync
   with it rather than re-deriving phase status here.
 
+  **Marketing landing page (added 2026-07-08):** `/connect` (`apps/connect/app/connect/page.tsx`)
+  is now a real page — a from-scratch landing page (no mockup, built to match the existing
+  `mco-*`/`con-btn-*` design system already used by `/connect/people` and
+  `/connect/membership`) introducing both offerings side by side, a 4-step "how House
+  Fellowship works" explainer, the two badges (Cluster Regular, City Convener), and CTAs
+  into `/connect/people` (House Fellowship) and `/events` (Literati Connect's rail). New
+  page-scoped CSS: `apps/connect/app/connect/connect-landing.css` (`lc-*` namespace).
+  This required removing the old `pathname === '/connect'` → `/feed` back-compat redirect
+  in `apps/connect/proxy.ts` (see "Connect app feed route" above) — `/connect` is no longer
+  just a legacy alias, it's a real destination now. A "Literati Connect" link was added to
+  the shared `mco-section-nav` row on `/connect/people`, `/connect/membership`, and the
+  logged-out `ConnectHero.tsx` (feed hero) so the page is reachable in-app, not just by
+  direct URL.
+
   **Host onboarding flow (added 2026-06-25):** a 5-step pre-creation journey runs
   before the cluster creation form, collecting: (1) country (UK/Nigeria/Other — drives
   context-aware copy in subsequent steps), (2) venue type (home/café/coworking/other)

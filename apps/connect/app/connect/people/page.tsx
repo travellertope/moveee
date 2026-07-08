@@ -46,6 +46,7 @@ export default async function PeoplePage() {
           <Link href="/feed" className="mco-nav-link">Pulse Feed</Link>
           <span className="mco-nav-link mco-nav-link--active">People Near Me</span>
           <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
+          <Link href="/connect" className="mco-nav-link">Literati Connect</Link>
         </nav>
       </section>
 

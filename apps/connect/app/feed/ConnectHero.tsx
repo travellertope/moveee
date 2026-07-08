@@ -29,6 +29,7 @@ export default function ConnectHero() {
         <a href="#feed" className="mco-nav-link mco-nav-link--active">Pulse Feed</a>
         <Link href="/connect/people" className="mco-nav-link">People Near Me</Link>
         <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
+        <Link href="/connect" className="mco-nav-link">Literati Connect</Link>
       </nav>
     </section>
   );
