@@ -7,7 +7,12 @@ export type AppParamList = {
   ConnectFeed: { justPosted?: number } | undefined;
   PostDetail: { item: FeedItem };
   PulseDetail: { item: FeedItem };
-  NewPost: undefined;
+  NewPost: {
+    template?: string;
+    hubId?: number;
+    hubSlug?: string;
+    hubAllowedTemplates?: string[];
+  } | undefined;
   DirectorySubmit: undefined;
   MemberProfile: { userId?: string; username?: string };
   MemberDirectory: undefined;

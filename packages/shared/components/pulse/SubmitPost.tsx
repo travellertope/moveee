@@ -124,11 +124,23 @@ interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
   lockedTag?: string;
   initialTemplate?: TemplateType;
+  /** Hub-scoped composer (docs/hubs-plan.md §3.1). When set, the template
+   * picker is filtered down to hubAllowedTemplates (absent entirely, not
+   * just dimmed) and every submission includes hub_id. */
+  hubId?: number;
+  hubAllowedTemplates?: string[];
 }
 
-export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: SubmitPostProps) {
+export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates }: SubmitPostProps) {
   const { data: session, status } = useSession();
-  const [template, setTemplate] = useState<TemplateType>(initialTemplate ?? "post");
+  const visibleTemplates = hubAllowedTemplates
+    ? TEMPLATES.filter(t => hubAllowedTemplates.includes(t.slug))
+    : TEMPLATES;
+  const [template, setTemplate] = useState<TemplateType>(
+    (initialTemplate && (!hubAllowedTemplates || hubAllowedTemplates.includes(initialTemplate)))
+      ? initialTemplate
+      : (visibleTemplates[0]?.slug ?? "post")
+  );
 
   // Shared state
   const [text, setText] = useState("");
@@ -415,6 +427,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         template_type: template,
         // Always include all gallery images (not just for creative-showcase)
         gallery_images: galleryUrls.length > 0 ? galleryUrls : undefined,
+        hub_id: hubId || undefined,
       };
 
       // Link preview (post only)
@@ -542,7 +555,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       {/* Template selector */}
       <div className="composer-template-bar">
         <div className="composer-template-scroll">
-          {TEMPLATES.map(t => {
+          {visibleTemplates.map(t => {
             const gate = TEMPLATE_REP_GATE[t.slug];
             const locked = gate ? !meetsTemplateGate(t.slug) : false;
             const isQuote = t.slug === "quote";
@@ -912,8 +925,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
             {/* Action bar */}
             <div className="composer-action-bar">
-              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories) */}
-              {template !== "quote" && template !== "food-review" && template !== "event" && (
+              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories,
+                  hub-scoped posts skip it — Hub membership already signals topic, see docs/hubs-plan.md §1.4) */}
+              {!hubId && template !== "quote" && template !== "food-review" && template !== "event" && (
                 lockedTag ? (
                   <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
                     {lockedTag}

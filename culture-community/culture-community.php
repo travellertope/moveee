@@ -154,6 +154,7 @@ function culture_community_init() {
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
     Culture_Follows::init();
+    Culture_Hubs::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

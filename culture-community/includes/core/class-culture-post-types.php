@@ -22,6 +22,7 @@ class Culture_Post_Types {
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
         add_filter( 'rest_culture_event_query', array( __CLASS__, 'exclude_expired_events' ), 10, 2 );
+        add_filter( 'rest_culture_post_query', array( __CLASS__, 'exclude_hub_posts' ), 10, 2 );
 
         // Issue taxonomy admin form fields
         add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
@@ -158,6 +159,8 @@ class Culture_Post_Types {
             '_culture_rsvp_enabled'    => 'boolean',
             '_culture_rsvp_capacity'   => 'integer',
             '_culture_is_featured'     => 'boolean',
+            // Hub linkage (docs/hubs-plan.md, Phase 2) — null/absent = ordinary community post
+            '_hub_id'                  => 'integer',
         );
         foreach ( $community_post_meta as $meta_key => $type ) {
             register_post_meta( 'culture_post', $meta_key, array(
@@ -1753,6 +1756,33 @@ class Culture_Post_Types {
         }
 
         $args['post__in'] = $ids;
+
+        return $args;
+    }
+
+    /**
+     * Hub posts (culture_post with _hub_id set) never appear in the default
+     * community feed listing (docs/hubs-plan.md §4.5) — they only ever
+     * surface via their own Hub's feed or a For You match. This only
+     * excludes them from the default *listing* query; a direct single-post
+     * lookup (permalink page via ?slug=, or a notification deep-link via
+     * ?include=) must still resolve normally, so those are left untouched.
+     */
+    public static function exclude_hub_posts( $args, $request ) {
+        if ( $request->get_param( 'slug' ) || $request->get_param( 'include' ) ) {
+            return $args;
+        }
+
+        global $wpdb;
+        $hub_post_ids = $wpdb->get_col(
+            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_id' AND meta_value != ''"
+        );
+        if ( empty( $hub_post_ids ) ) {
+            return $args;
+        }
+
+        $existing = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] ) ? $args['post__not_in'] : array();
+        $args['post__not_in'] = array_values( array_unique( array_merge( $existing, array_map( 'intval', $hub_post_ids ) ) ) );
 
         return $args;
     }

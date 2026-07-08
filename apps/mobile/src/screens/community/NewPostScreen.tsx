@@ -229,7 +229,15 @@ export default function NewPostScreen() {
   const { user } = useAuthStore();
   const userRegion = useMemo(() => detectRegion(user?.countryOfResidence) ?? undefined, [user?.countryOfResidence]);
 
-  const [template, setTemplate] = useState<TemplateId>(route.params?.template ?? "post");
+  const hubId: number | undefined = route.params?.hubId;
+  const hubSlug: string | undefined = route.params?.hubSlug;
+  const hubAllowedTemplates: TemplateId[] | undefined = route.params?.hubAllowedTemplates;
+
+  const [template, setTemplate] = useState<TemplateId>(
+    (route.params?.template && (!hubAllowedTemplates || hubAllowedTemplates.includes(route.params.template as TemplateId)))
+      ? (route.params.template as TemplateId)
+      : (hubAllowedTemplates?.[0] as TemplateId) ?? "post"
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [text, setText] = useState("");
   const [sectionTag, setSectionTag] = useState<string | null>(null);
@@ -507,7 +515,9 @@ const uploadImages = async (): Promise<string[]> => {
           book_fav_quote: bookFavQuote || undefined,
           book_recommend: bookRecommend,
           book_genres: bookGenres.length > 0 ? bookGenres : undefined,
+          hub_id: hubId || undefined,
         } as Record<string, unknown>);
+        if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
         nav.navigate("ConnectFeed", { justPosted: Date.now() });
         return;
       }
@@ -522,6 +532,7 @@ const uploadImages = async (): Promise<string[]> => {
         image_url:        uploadedUrls[0] ?? undefined,
         community_region: userRegion ?? undefined,
         city:             user?.city ?? undefined,
+        hub_id:           hubId || undefined,
       };
 
       if (template === "hidden-gem") {
@@ -581,7 +592,11 @@ const uploadImages = async (): Promise<string[]> => {
       }
 
       await api.post(`${MOBILE_API}/community/submit`, body);
-      nav.navigate("ConnectFeed", { justPosted: Date.now() });
+      if (hubId && hubSlug) {
+        nav.navigate("HubDetail", { slug: hubSlug });
+      } else {
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
+      }
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Could not submit post.");
     } finally {
@@ -1521,6 +1536,7 @@ const uploadImages = async (): Promise<string[]> => {
           visible={pickerOpen}
           onClose={() => setPickerOpen(false)}
           onSelect={(id) => { setPickerOpen(false); switchTemplate(id); }}
+          allowedIds={hubAllowedTemplates}
         />
 
         {/* ── Scrollable body ── */}

@@ -525,6 +525,20 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Paginated Hub-scoped post feed (Phase 2, docs/hubs-plan.md §4.4).
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/feed', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_feed' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // For You Hub candidate pool (docs/hubs-plan.md §4.5).
+        register_rest_route( 'culture/v1', '/mobile/hub/for-you-candidates', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_for_you_candidates' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -1404,6 +1418,26 @@ class Culture_Mobile_API {
             }
         }
 
+        // Hub-scoped post (docs/hubs-plan.md §3.2) — validated before the
+        // review-days check below since a rejected Hub post shouldn't ever
+        // reach the insert. Never trust the client-side template filter alone.
+        $hub_id = (int) $request->get_param( 'hub_id' );
+        if ( $hub_id ) {
+            $hub = Culture_Hubs::get_hub( $hub_id );
+            if ( ! $hub ) {
+                return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+            }
+            if ( 'active' !== $hub['status'] ) {
+                return new WP_Error( 'hub_archived', 'This Hub is archived and no longer accepting posts.', array( 'status' => 400 ) );
+            }
+            if ( ! Culture_Hubs::is_member( $hub_id, $user_id ) ) {
+                return new WP_Error( 'not_hub_member', 'You must join this Hub before posting.', array( 'status' => 403 ) );
+            }
+            if ( ! in_array( $template_check, $hub['allowedTemplates'], true ) ) {
+                return new WP_Error( 'template_not_allowed', 'This Hub does not allow that post type.', array( 'status' => 403 ) );
+            }
+        }
+
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
         $age_days    = (int) floor( ( time() - strtotime( $user->user_registered ) ) / DAY_IN_SECONDS );
@@ -1425,6 +1459,10 @@ class Culture_Mobile_API {
 
         if ( is_wp_error( $post_id ) ) {
             return new WP_Error( 'insert_failed', 'Could not create post.', array( 'status' => 500 ) );
+        }
+
+        if ( $hub_id ) {
+            update_post_meta( $post_id, '_hub_id', $hub_id );
         }
 
         if ( $image ) {
@@ -2247,6 +2285,22 @@ class Culture_Mobile_API {
         return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
     }
 
+    public static function handle_hub_feed( $request ) {
+        $hub_id   = (int) $request->get_param( 'id' );
+        $page     = max( 1, (int) ( $request->get_param( 'page' ) ?: 1 ) );
+        $per_page = min( 50, max( 1, (int) ( $request->get_param( 'per_page' ) ?: 20 ) ) );
+
+        return rest_ensure_response( self::get_hub_feed_items( $hub_id, $page, $per_page ) );
+    }
+
+    public static function handle_hub_for_you_candidates( $request ) {
+        $hub_ids_raw = (string) $request->get_param( 'hub_ids' );
+        $hub_ids     = array_filter( array_map( 'intval', explode( ',', $hub_ids_raw ) ) );
+        $limit       = min( 50, max( 1, (int) ( $request->get_param( 'limit' ) ?: 30 ) ) );
+
+        return rest_ensure_response( array( 'items' => self::get_hub_candidate_items( $hub_ids, $limit ) ) );
+    }
+
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
     const REACTION_TYPES = array( 'love', 'fire', 'clap' );
 
@@ -3016,17 +3070,138 @@ class Culture_Mobile_API {
         $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
         $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
-        $query = new WP_Query( array(
+        // Hub posts never appear in the default main feed (docs/hubs-plan.md
+        // §4.5) — same exclusion the web equivalent applies via the
+        // rest_culture_post_query filter (Culture_Post_Types::exclude_hub_posts()).
+        global $wpdb;
+        $hub_post_ids = $wpdb->get_col(
+            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_id' AND meta_value != ''"
+        );
+
+        $query_args = array(
             'post_type'      => 'culture_post',
             'post_status'    => 'publish',
             'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
             'no_found_rows'  => true,
-        ) );
+        );
+        if ( ! empty( $hub_post_ids ) ) {
+            $query_args['post__not_in'] = array_map( 'intval', $hub_post_ids );
+        }
+
+        $query = new WP_Query( $query_args );
 
         // Pre-warm organiser directory posts in one query to avoid N+1 lookups.
         $organiser_map = array(); // organiser_id => [name, slug]
+        $org_ids = array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) );
+        if ( ! empty( $org_ids ) ) {
+            $org_posts = get_posts( array(
+                'post__in'       => array_values( array_unique( $org_ids ) ),
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'posts_per_page' => count( $org_ids ),
+                'no_found_rows'  => true,
+            ) );
+            foreach ( $org_posts as $op ) {
+                $organiser_map[ $op->ID ] = array( 'name' => $op->post_title, 'slug' => $op->post_name );
+            }
+        }
+
+        return array_map( function( WP_Post $post ) use ( $liked_ids, $reactions_map, $organiser_map ) {
+            return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
+        }, $query->posts );
+    }
+
+    /**
+     * Paginated, Hub-scoped post feed (docs/hubs-plan.md §4.4/§5.1) — reuses
+     * the same field mapping as the main feed via format_community_feed_item()
+     * so a Hub post renders identically wherever it's shown. Called from both
+     * REST surfaces (mobile's own handler, and web's via a cross-class call —
+     * same pattern as Culture_Mobile_API::toggle_reaction() being called from
+     * class-culture-rest-api.php).
+     */
+    public static function get_hub_feed_items( int $hub_id, int $page, int $per_page, int $viewer_id = 0 ): array {
+        $viewer_id     = $viewer_id ?: get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'meta_key'       => '_hub_id',
+            'meta_value'     => $hub_id,
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        $organiser_map = array();
+        $org_ids = array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) );
+        if ( ! empty( $org_ids ) ) {
+            $org_posts = get_posts( array(
+                'post__in'       => array_values( array_unique( $org_ids ) ),
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'posts_per_page' => count( $org_ids ),
+                'no_found_rows'  => true,
+            ) );
+            foreach ( $org_posts as $op ) {
+                $organiser_map[ $op->ID ] = array( 'name' => $op->post_title, 'slug' => $op->post_name );
+            }
+        }
+
+        $items = array_map( function( WP_Post $post ) use ( $liked_ids, $reactions_map, $organiser_map ) {
+            return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
+        }, $query->posts );
+
+        return array(
+            'items'   => $items,
+            'total'   => $query->found_posts,
+            'page'    => $page,
+            'perPage' => $per_page,
+        );
+    }
+
+    /**
+     * For You candidate pool (docs/hubs-plan.md §4.5) — recent posts across
+     * a set of Hub ids (the viewer's joined + followed Hubs), for the client
+     * to merge into its For You ranking. Deliberately NOT part of the main
+     * feed query — Hub posts stay excluded from the default listing
+     * (get_community_feed_items() / rest_culture_post_query) and only ever
+     * enter For You through this dedicated path, matching the "opt-in
+     * visibility, not a lower score" rule in the plan.
+     */
+    public static function get_hub_candidate_items( array $hub_ids, int $limit = 30, int $viewer_id = 0 ): array {
+        $hub_ids = array_values( array_unique( array_map( 'intval', $hub_ids ) ) );
+        if ( empty( $hub_ids ) ) {
+            return array();
+        }
+
+        $viewer_id     = $viewer_id ?: get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                array( 'key' => '_hub_id', 'value' => $hub_ids, 'compare' => 'IN' ),
+            ),
+            'posts_per_page' => min( 50, max( 1, $limit ) ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => true,
+        ) );
+
+        $organiser_map = array();
         $org_ids = array_filter( array_map( function( $p ) {
             return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
         }, $query->posts ) );
@@ -3078,7 +3253,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'item' => self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map ) ) );
     }
 
-    private static function format_community_feed_item( WP_Post $post, array $liked_ids, array $reactions_map, array $organiser_map ): array {
+    public static function format_community_feed_item( WP_Post $post, array $liked_ids, array $reactions_map, array $organiser_map ): array {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
             $raw         = wpautop( $post->post_content );
@@ -3130,6 +3305,7 @@ class Culture_Mobile_API {
                 'liked'                   => in_array( $post->ID, $liked_ids, false ),
                 'userReaction'            => isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null,
                 'wpId'                    => (string) $post->ID,
+                'hubId'                   => (int) get_post_meta( $post->ID, '_hub_id', true ) ?: null,
                 // Template fields — all card variants
                 'templateType'            => $template,
                 'linkedDirectoryId'       => (int) get_post_meta( $post->ID, '_linked_directory_id', true ) ?: null,

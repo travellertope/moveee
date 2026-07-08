@@ -122,6 +122,33 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       .catch(() => {});
   }, [session?.user]);
 
+  // For You Hub inclusion (docs/hubs-plan.md §4.5) — only fetched once For
+  // You is actually toggled on, since it's otherwise unused.
+  const [followedOrJoinedHubIds, setFollowedOrJoinedHubIds] = useState<Set<number>>(new Set());
+  const [hubCandidateItems, setHubCandidateItems] = useState<FeedItem[]>([]);
+  useEffect(() => {
+    if (!session?.user || !forYou) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/hub/my-hubs");
+        if (!res.ok) return;
+        const data = await res.json();
+        const ids = new Set<number>([
+          ...(data?.joined ?? []).map((h: any) => h.id),
+          ...(data?.followed ?? []).map((h: any) => h.id),
+        ]);
+        setFollowedOrJoinedHubIds(ids);
+        if (ids.size === 0) { setHubCandidateItems([]); return; }
+        const candRes = await fetch(`/api/hub/for-you-candidates?hub_ids=${[...ids].join(",")}`);
+        const candData = candRes.ok ? await candRes.json() : null;
+        setHubCandidateItems(candData?.items ?? []);
+      } catch {
+        setFollowedOrJoinedHubIds(new Set());
+        setHubCandidateItems([]);
+      }
+    })();
+  }, [session?.user, forYou]);
+
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
@@ -143,11 +170,17 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
 
   // When "For You" is active, rank by relevance score; otherwise newest-first.
+  // Hub posts (docs/hubs-plan.md §4.5) only ever enter the ranking pool here,
+  // via hubCandidateItems — never through the default `items`/`filtered`
+  // fetch, which excludes them server-side.
   const sorted = useMemo(() => (
     forYou && hasInterests
-      ? rankFeed(filtered, interestTagSet, userCity, userRegion, followedUsernames)
+      ? rankFeed(
+          [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
+          interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
+        )
       : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames]);
+  ), [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds]);
 
   // Trending items (shown in sidebar and For You mode)
   const trending = useMemo(() => getTrending(items), [items]);

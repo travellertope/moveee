@@ -7,7 +7,6 @@ import Link from "next/link";
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
   { slug: "cultural-take", label: "Take", emoji: "💬" },
-  { slug: "quote", label: "Quote", emoji: "✦" },
   { slug: "hidden-gem", label: "Gem", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
@@ -17,7 +16,7 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: strin
   { slug: "itinerary", label: "Route", emoji: "🗺️", gated: "Taste Maker rep (or Pro)" },
 ];
 
-const DEFAULT_TEMPLATES = ["post", "cultural-take", "quote"];
+const DEFAULT_TEMPLATES = ["post", "cultural-take"];
 
 export default function CreateHubClient() {
   const router = useRouter();

@@ -297,6 +297,10 @@ export interface FeedItem {
   // hydrating ReactionBar's initial state instead of always assuming false.
   userReaction?: "love" | "fire" | "clap" | null;
   wpId?: string;
+  /** Hub linkage (docs/hubs-plan.md §4.5) — only set on posts fetched as For
+   * You Hub candidates; never present on the default main-feed fetch, which
+   * excludes Hub posts server-side. */
+  hubId?: number;
 }
 
 // ── Community post templates ─────────────────────────────────────────────────

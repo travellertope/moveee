@@ -4,7 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useNav } from "../../hooks/useNav";
@@ -12,13 +12,13 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
-import type { Hub, HubStatus } from "../../types";
+import type { Hub, HubStatus, FeedItem } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
+import FeedItemCard from "../../components/community/FeedItemCard";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
   { slug: "cultural-take", label: "Take", emoji: "💬" },
-  { slug: "quote", label: "Quote", emoji: "✦" },
   { slug: "hidden-gem", label: "Gem", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
@@ -120,6 +120,20 @@ export default function HubDetailScreen() {
   const [mArchiving, setMArchiving] = useState(false);
   const [mError, setMError] = useState("");
 
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
+  const loadFeed = React.useCallback(async (id: number) => {
+    setFeedLoading(true);
+    try {
+      const data = await api.get<{ items: FeedItem[] }>(`${MOBILE_API}/hub/${id}/feed?per_page=20`, false);
+      setFeedItems(data?.items ?? []);
+    } catch {
+      setFeedItems([]);
+    }
+    setFeedLoading(false);
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
@@ -130,6 +144,7 @@ export default function HubDetailScreen() {
           setMDescription(hubData.description);
           setMAllowed(hubData.allowedTemplates ?? []);
           setMCoverImageUrl(hubData.coverImageUrl ?? "");
+          loadFeed(hubData.id);
         }
         if (hubData && user) {
           const statusData = await api.get<HubStatus>(`${MOBILE_API}/hub/${hubData.id}/status`);
@@ -140,7 +155,14 @@ export default function HubDetailScreen() {
       }
       setLoading(false);
     })();
-  }, [slug, user]);
+  }, [slug, user, loadFeed]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (hub) loadFeed(hub.id);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hub?.id])
+  );
 
   const join = async () => {
     if (!hub) return;
@@ -405,14 +427,38 @@ export default function HubDetailScreen() {
             </View>
           )}
 
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Posts</Text>
-            <Text style={styles.cardBody}>
-              {status.isMember
-                ? "Posting into this Hub is coming soon."
-                : "Join this Hub to post and comment. Posts will appear here once posting is live."}
-            </Text>
-          </View>
+          {status.isMember && hub.status !== "archived" && (
+            <TouchableOpacity
+              style={styles.joinBtn}
+              onPress={() => nav.navigate("NewPost", {
+                hubId: hub.id,
+                hubSlug: hub.slug,
+                hubAllowedTemplates: hub.allowedTemplates,
+              })}
+            >
+              <Text style={styles.joinBtnText}>+ New post</Text>
+            </TouchableOpacity>
+          )}
+
+          {feedLoading ? (
+            <ActivityIndicator color={c.gold} />
+          ) : feedItems.length === 0 ? (
+            <View style={styles.card}>
+              <Text style={styles.cardBody}>
+                {status.isMember
+                  ? "No posts yet. Be the first to post in this Hub."
+                  : "Join this Hub to post and comment. Posts will appear here once posted."}
+              </Text>
+            </View>
+          ) : (
+            feedItems.map((item) => (
+              <FeedItemCard
+                key={item.id}
+                item={item}
+                onPress={() => nav.navigate("PostDetail", { item })}
+              />
+            ))
+          )}
         </ScrollView>
       )}
     </SafeAreaView>

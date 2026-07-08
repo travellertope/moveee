@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE = `${WP_URL}/wp-json/wp/v2`;
+const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
 
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
     event_title, event_date, event_end_date, event_venue, event_city, event_address,
     event_admission, ticket_url, event_category, organiser_directory_id,
-    rsvp_enabled, rsvp_capacity,
+    rsvp_enabled, rsvp_capacity, hub_id,
   } = body as {
     text?: string;
     imageUrl?: string;
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
     organiser_directory_id?: number;
     rsvp_enabled?: boolean;
     rsvp_capacity?: number;
+    hub_id?: number;
   };
 
   const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "creative-showcase", "poll", "itinerary", "event"];
@@ -94,6 +96,39 @@ export async function POST(req: NextRequest) {
       { error: "Poll and itinerary posts require Moveee Pro membership or Taste Maker status (2,500 points)." },
       { status: 403 }
     );
+  }
+
+  // Hub-scoped post (docs/hubs-plan.md §3.2). Never trust the client-side
+  // template filter alone — re-validate against the Hub's own record. This
+  // route bypasses the PHP handle_submit_post() gate entirely (calls native
+  // WP REST directly, per the pre-existing web-composer architecture), so
+  // this check has to be reimplemented here, same as the reputation gates above.
+  const hubIdNum = hub_id != null ? Number(hub_id) : 0;
+  if (hubIdNum) {
+    const [hubRes, statusRes] = await Promise.all([
+      fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubIdNum}`, {
+        headers: { Authorization: `Bearer ${API_SECRET}` },
+        cache: "no-store",
+      }),
+      fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubIdNum}/status?user_id=${userId}`, {
+        headers: { Authorization: `Bearer ${API_SECRET}` },
+        cache: "no-store",
+      }),
+    ]);
+    if (!hubRes.ok) {
+      return NextResponse.json({ error: "This Hub does not exist." }, { status: 400 });
+    }
+    const hub = await hubRes.json();
+    if (hub.status !== "active") {
+      return NextResponse.json({ error: "This Hub is archived and no longer accepting posts." }, { status: 400 });
+    }
+    const hubStatus = statusRes.ok ? await statusRes.json() : { isMember: false };
+    if (!hubStatus.isMember) {
+      return NextResponse.json({ error: "You must join this Hub before posting." }, { status: 403 });
+    }
+    if (!Array.isArray(hub.allowedTemplates) || !hub.allowedTemplates.includes(templateType)) {
+      return NextResponse.json({ error: "This Hub does not allow that post type." }, { status: 403 });
+    }
   }
 
   const content = (text ?? "").trim();
@@ -198,6 +233,7 @@ export async function POST(req: NextRequest) {
         community_og_description: ogDescription?.trim() || "",
         community_og_image:     ogImage?.trim() || "",
         _template_type:         templateType,
+        ...(hubIdNum && { _hub_id: hubIdNum }),
         _location_name:         location_name?.trim() || "",
         ...(linked_directory_id != null               && { _linked_directory_id: linked_directory_id }),
         _poll_options:          poll_options ? JSON.stringify(poll_options.map(o => ({ text: o.text, votes: 0 }))) : "",

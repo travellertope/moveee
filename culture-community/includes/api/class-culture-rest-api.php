@@ -1561,6 +1561,22 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Paginated Hub-scoped post feed (Phase 2, docs/hubs-plan.md §4.4).
+        // Public — viewer_id is optional, only used to personalise liked/reaction state.
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/feed', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_feed' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // For You Hub candidate pool (docs/hubs-plan.md §4.5). Public —
+        // user_id is optional, only used to personalise liked/reaction state.
+        register_rest_route( 'culture/v1', '/hub/for-you-candidates', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_for_you_candidates' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -2190,6 +2206,24 @@ class Culture_REST_API {
         Culture_Hubs::unfollow( $hub_id, $user_id );
 
         return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_feed( $request ) {
+        $hub_id    = (int) $request->get_param( 'id' );
+        $page      = max( 1, (int) ( $request->get_param( 'page' ) ?: 1 ) );
+        $per_page  = min( 50, max( 1, (int) ( $request->get_param( 'per_page' ) ?: 20 ) ) );
+        $viewer_id = (int) ( $request->get_param( 'user_id' ) ?: 0 );
+
+        return rest_ensure_response( Culture_Mobile_API::get_hub_feed_items( $hub_id, $page, $per_page, $viewer_id ) );
+    }
+
+    public static function handle_hub_for_you_candidates( $request ) {
+        $hub_ids_raw = (string) $request->get_param( 'hub_ids' );
+        $hub_ids     = array_filter( array_map( 'intval', explode( ',', $hub_ids_raw ) ) );
+        $limit       = min( 50, max( 1, (int) ( $request->get_param( 'limit' ) ?: 30 ) ) );
+        $viewer_id   = (int) ( $request->get_param( 'user_id' ) ?: 0 );
+
+        return rest_ensure_response( array( 'items' => Culture_Mobile_API::get_hub_candidate_items( $hub_ids, $limit, $viewer_id ) ) );
     }
 
     /* ——————————————————————————————————————

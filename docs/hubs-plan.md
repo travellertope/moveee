@@ -70,12 +70,12 @@ Fields (all `show_in_rest => true`, registered via `register_post_meta`):
 | `_hub_name` | string | Post title mirrors this. Editable by owner/mod. |
 | `_hub_slug` | string | URL-safe, unique, generated from name at creation (append `-2`, `-3`... on collision, same pattern as WP's own post-slug dedup) |
 | `_hub_description` | string | Short, required, shown in discovery cards |
-| `_hub_cover_image_id` | int | Optional WP attachment ID. Falls back to a generated placeholder (initials on a deterministic color, same idea as avatar fallbacks elsewhere) |
+| `_hub_cover_image_url` | string | **Revised from the original int/attachment-ID spec.** Directly-stored R2 URL, matching the codebase's actual convention for user-generated images (avatar, cover photo, community post images all store a URL, never a WP attachment ID). Falls back to a generated placeholder (initials on a deterministic color, same idea as avatar fallbacks elsewhere) when empty |
 | `_hub_creator_id` | int | WP user ID. Immutable |
 | `_hub_status` | string enum | `active` \| `archived` — no `forming` state (unlike Stoop, a Hub is public and joinable the instant it's created — there's no activation threshold to gate on) |
-| `_hub_allowed_templates` | JSON array | Subset of the 10 existing template types (`post`, `hidden-gem`, `cultural-take`, `food-review`, `book-review`, `creative-showcase`, `poll`, `itinerary`, `event`, `quote`). Default on creation: `["post", "cultural-take", "quote"]` — the three templates with no reputation/tier gate (see §3.2), so a brand-new Hub always has *something* postable regardless of what the creator later restricts. `event` in a Hub context has no RSVP-capacity/organiser semantics beyond what `culture_post`'s existing event template already does — do not build Hub-specific event handling. |
+| `_hub_allowed_templates` | JSON array | Subset of the 9 templates in `Culture_Hubs::ALLOWED_TEMPLATES` (**revised — `quote` is excluded**, see the Phase 2 status note in §9: quotes are a separate CPT that can't carry `_hub_id`). Default on creation: `["post", "cultural-take"]` — the two templates with no reputation/tier gate (see §3.2), so a brand-new Hub always has *something* postable regardless of what the creator later restricts. `event` in a Hub context has no RSVP-capacity/organiser semantics beyond what `culture_post`'s existing event template already does — do not build Hub-specific event handling. |
 | `_hub_member_count` | int | Denormalized counter, incremented/decremented on join/leave (same "avoid COUNT(*) on every read" rationale as any other denormalized count in this codebase — kept in sync inside `Culture_Hubs::join()`/`leave()`, not computed live) |
-| `_hub_post_count` | int | Denormalized counter, incremented on `handle_submit_post()` when `hub_id` is present |
+| `_hub_post_count` | int | Denormalized counter. **Implemented differently than originally planned**: rather than an explicit increment call inside each submit path, `Culture_Hubs::on_hub_id_meta_added()` hooks WordPress's own `added_post_meta` action for the `_hub_id` key — increments identically for both mobile's explicit `update_post_meta()` call and web's meta-on-insert via native REST, with no risk of either call site forgetting to increment. |
 | `_hub_created_at` | string (MySQL datetime) | Set on creation |
 
 Post title = `_hub_name`. Post content unused (empty), same convention as
@@ -209,11 +209,18 @@ source of truth across the PHP/TS boundary"):
    detection, keyword blocklist, new-member review queue).
 5. On success, increment `_hub_post_count`.
 
-### 3.3 Default templates, and why `post`/`cultural-take`/`quote` are always safe
+### 3.3 Default templates, and why `post`/`cultural-take` are always safe
 
-Those three templates have no reputation/tier gate today (only `poll`/
+**Revised during Phase 2 build** — the original version of this section
+included `quote` as a third always-safe default; it was dropped once
+implementation revealed quotes are a separate `culture_quote` CPT with their
+own submission endpoint, entirely outside `handle_submit_post()`/
+`community/submit`, so a quote can never carry `_hub_id`. See the Phase 2
+status note in §9 for the full explanation.
+
+`post`/`cultural-take` have no reputation/tier gate today (only `poll`/
 `itinerary` require Taste Maker-or-Pro, and `event` requires Culture
-Contributor-or-Pro). A new Hub defaults to allowing exactly those three so
+Contributor-or-Pro). A new Hub defaults to allowing exactly those two so
 that a brand-new member (who may have 0 reputation) can always post
 *something* the moment they join, regardless of what the owner later
 restricts the Hub to.
@@ -577,15 +584,110 @@ Stoop icons landed in the global `ConnectHeader` instead) and the new
 
 None of the above blocks Phase 2.
 
-**Phase 2 — Posting into a Hub.** `_hub_id` meta on `culture_post`, surfaced
-as `hubId` on `FeedItem` (§1.4). `SubmitPost.tsx`/`NewPostScreen.tsx` gain
-the Hub-scoped composer entry point (§3.1). Server-side enforcement in both
-submit paths (§3.2). `get_hub_feed()` + the actual Hub feed UI going live
-(comments already work for free via the existing `CommentSection`/
-`CommentThread`). **For You feed inclusion** (§4.5): `followedOrJoinedHubIds`
-threaded into `scoreItem()`/`rankFeed()` on both platforms, Hub posts
-filtered out of For You entirely unless the viewer follows/is a member of
-that Hub; default newest-first feed unaffected.
+**Phase 2 — Posting into a Hub. Core posting DONE; For You inclusion NOT
+done yet (see below).**
+
+- `_hub_id` registered on `culture_post` (`class-culture-post-types.php`),
+  surfaced as `hubId` on both platforms' feed-item mapping.
+- **Deliberate scope correction vs. the original §1.1/§3.3 spec: "quote" is
+  excluded from every Hub's postable templates.** Quotes are a separate
+  `culture_quote` CPT — both composers submit them through a wholly
+  different endpoint (`/api/quotes/create` web, `/mobile/community/quote`
+  mobile), never through `handle_submit_post()`/`community/submit`, so a
+  quote can never actually carry `_hub_id`. Offering "Quote" in a Hub's
+  template picker would have silently created quotes that never appeared in
+  that Hub's feed. `Culture_Hubs::ALLOWED_TEMPLATES` now has 9 entries (not
+  10) and `DEFAULT_ALLOWED_TEMPLATES` is `['post', 'cultural-take']` (not
+  three). Every "what can members post" picker (web ×2, mobile ×2) had its
+  Quote chip removed to match. Revisit only if `culture_quote` ever gets its
+  own Hub-linkage plumbing — out of scope for now.
+- **Server-side enforcement**, both submit paths, mirrored per the plan:
+  `handle_submit_post()` (mobile) validates Hub exists/active/member/
+  allowed-template *before* the insert, then sets `_hub_id` after.
+  `apps/connect/app/api/community/submit/route.ts` (web — bypasses PHP
+  entirely per its pre-existing architecture) re-implements the identical
+  check via the already-built `GET /hub/{id}` + `GET /hub/{id}/status`
+  endpoints, then includes `_hub_id` in the WP REST meta payload.
+- **`_hub_post_count` increment**: not called explicitly from either submit
+  path — instead `Culture_Hubs::on_hub_id_meta_added()` hooks WordPress's
+  own `added_post_meta` action for the `_hub_id` key, so both submit paths
+  (mobile's explicit `update_post_meta()` call and web's meta-on-insert via
+  native REST) increment it identically without either one needing to
+  remember to call a helper.
+- **Main-feed exclusion**: mobile's `get_community_feed_items()` excludes
+  `_hub_id`-tagged posts via `post__not_in` (raw-SQL resolved, same pattern
+  as the documented `meta_query` gotcha's fix). Web's equivalent is a new
+  `rest_culture_post_query` filter, `Culture_Post_Types::exclude_hub_posts()`
+  — applies only to the default *listing* query; a `?slug=`/`?include=`
+  lookup (the `/community/{slug}` permalink page, notification deep links)
+  is left untouched so a Hub post's own permalink still resolves, per §4.5's
+  original "no changes needed there" note.
+- **`get_hub_feed_items()`**: added as a `public static` method on
+  `Culture_Mobile_API` (was `format_community_feed_item()`, now also public)
+  rather than duplicated into `Culture_Hubs` — reuses the exact same
+  field-mapping function the main feed and single-post deep-link lookup
+  already use, so a Hub post renders identically everywhere. Web's
+  `GET /hub/{id}/feed` handler in `class-culture-rest-api.php` calls this
+  cross-class, same established pattern as `Culture_Mobile_API::toggle_reaction()`
+  being called from the web REST class today.
+- **Composer**: `SubmitPost.tsx` gained `hubId`/`hubAllowedTemplates` props —
+  filters the template bar to only allowed templates (absent, not dimmed),
+  hides the section-tag picker per §1.4's recommendation, includes `hub_id`
+  in every submission. Mobile's `TemplatePickerSheet` gained an `allowedIds`
+  filter prop; `NewPostScreen.tsx` reads `hubId`/`hubSlug`/
+  `hubAllowedTemplates` route params, defaults to the Hub's first allowed
+  template, includes `hub_id` in the submit body, and navigates back to the
+  Hub (not the main feed) on success.
+- **Hub feed UI**: web's `/hub/[slug]` page renders a real `HubFeed.tsx`
+  client component (fetch + `FeedCard.tsx` reuse — the PHP response's field
+  names already match the web `FeedItem` shape closely enough to be a
+  passthrough cast, not a real transform) with an inline composer toggle for
+  members. Mobile's `HubDetailScreen` fetches the same endpoint and renders
+  `FeedItemCard` directly, with a "+ New post" button for members and a
+  `useFocusEffect` refresh so returning from the composer shows the new
+  post. Comments work for free via the existing `CommentSection`/
+  `CommentThread` on both platforms, unchanged, confirmed during Phase 1
+  research.
+- **For You feed inclusion (§4.5) — DONE, follow-up pass.** Implemented as a
+  dedicated candidate-pool fetch rather than folding Hub posts into the
+  default feed query, to honor §4.5's "default newest-first feed unaffected"
+  rule without touching `get_community_feed_items()`/`getCommunityPosts()`:
+  - New `Culture_Mobile_API::get_hub_candidate_items( $hub_ids, $limit,
+    $viewer_id )` — a `WP_Query` with a single `meta_query` `IN` clause
+    against `_hub_id` (not the OR-branch/`NOT EXISTS` pattern the
+    `meta_query` gotcha warns about — a single `IN` condition is fine),
+    reusing `format_community_feed_item()` so results render identically to
+    every other feed item. Exposed as `GET /mobile/hub/for-you-candidates`
+    and `GET /hub/for-you-candidates` (mirrored, same convention as every
+    other Hub endpoint), plus a new `apps/connect/app/api/hub/for-you-candidates`
+    proxy route.
+  - `rankFeed()` (both `packages/utils/feed-recommendations.ts` and
+    `apps/mobile/src/features/community/useFeedRecommendations.ts`) gained a
+    `followedOrJoinedHubIds?: Set<number>` 6th param — filters candidates
+    *before* scoring (`item.hubId == null || followedOrJoinedHubIds.has(item.hubId)`),
+    matching the "opt-in visibility, not a lower score" rule exactly.
+    `scoreItem()` itself is unchanged — no extra boost for Hub posts, per
+    the plan.
+  - `PulseFeed.tsx` (web) and `ConnectFeedScreen.tsx` (mobile): both now
+    fetch `my-hubs` (joined + followed → `Set<number>`) and the candidate
+    pool *only when For You is toggled on* (not on every feed load, since
+    it's otherwise unused), merge the candidates into the ranking input
+    (filtered through `isEventItem()` first, same as every other feed
+    source — events stay Spotlight-carousel-only), and pass the hub-ids set
+    into `rankFeed()`. The non-For-You/newest-first path is completely
+    untouched — it never sees `hubCandidateItems` at all.
+  - `hubId` added to the web `FeedItem` type (`packages/shared/lib/unified-feed.ts`)
+    and mobile `FeedItem` type (`apps/mobile/src/types/index.ts`) — present
+    only on items returned by the new candidate-pool fetch, never on the
+    default main-feed fetch (which still excludes Hub posts server-side, per
+    Phase 2's existing exclusion).
+  - Verified via `tsc --noEmit` (clean on `apps/connect`/`apps/site`; mobile
+    shows only its documented pre-existing JSX/type-mismatch noise, cross-
+    checked via `git stash` diff same as every other pass in this doc) and
+    `php -l` on both touched REST classes.
+
+Phase 2 is now fully closed — posting, feed display, and For You inclusion
+are all live on both platforms.
 
 **Phase 3 — Moderation.** Mod appointment/removal, pin/unpin, remove
 post/member (§7.1). "Manage Hub" screen (owner) + lighter "Moderate"
