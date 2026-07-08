@@ -32,6 +32,20 @@ export const metadata = {
   },
 };
 
+function deduplicateByIssueNum(issues: any[]): any[] {
+  const seen = new Set<number>();
+  const result: any[] = [];
+  for (const issue of issues) {
+    const num = issue.nlIssueNum;
+    if (num && num > 0) {
+      if (seen.has(num)) continue;
+      seen.add(num);
+    }
+    result.push(issue);
+  }
+  return result;
+}
+
 export default async function GetMeLitPage() {
   let newsletters: any[] = [];
   try {
@@ -40,7 +54,9 @@ export default async function GetMeLitPage() {
     // CMS unreachable
   }
 
-  const issues = newsletters.filter((n: any) => (n.nlList || "") === "getmelit");
+  const issues = deduplicateByIssueNum(
+    newsletters.filter((n: any) => (n.nlList || "") === "getmelit")
+  );
 
   return <NewsletterPublicationPage listId="getmelit" issues={issues} />;
 }

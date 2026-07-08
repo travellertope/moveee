@@ -32,7 +32,7 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        self::persist_list_meta( $post_id, $_POST['culture_nl_list'] ?? 'getmelit', $_POST['culture_nl_segment'] ?? '' );
+        self::persist_list_meta( $post_id, $_POST['culture_nl_list'] ?? 'getmelit', $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
     }
 
     /**
@@ -41,7 +41,7 @@ class Culture_Newsletter_Send {
      * AJAX handlers (so a send always targets whatever is currently selected
      * in the dropdowns, even if the post hasn't been saved yet).
      */
-    private static function persist_list_meta( $post_id, $list, $segment ) {
+    private static function persist_list_meta( $post_id, $list, $segment, $issue_num = 0 ) {
         $list = sanitize_key( $list );
         if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
             update_post_meta( $post_id, '_culture_nl_list', $list );
@@ -55,6 +55,15 @@ class Culture_Newsletter_Send {
             } else {
                 delete_post_meta( $post_id, '_culture_nl_segment' );
             }
+        }
+
+        // Issue number — 0/empty means not set; positive integer means a canonical issue number
+        // shared across all regional editions of the same issue.
+        $issue_num = absint( $issue_num );
+        if ( $issue_num > 0 ) {
+            update_post_meta( $post_id, '_culture_nl_issue_num', $issue_num );
+        } else {
+            delete_post_meta( $post_id, '_culture_nl_issue_num' );
         }
     }
 
@@ -130,8 +139,9 @@ class Culture_Newsletter_Send {
         $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
         $current_user = wp_get_current_user();
 
-        $nl_list    = get_post_meta( $post->ID, '_culture_nl_list',    true ) ?: 'getmelit';
-        $nl_segment = get_post_meta( $post->ID, '_culture_nl_segment', true ) ?: '';
+        $nl_list      = get_post_meta( $post->ID, '_culture_nl_list',      true ) ?: 'getmelit';
+        $nl_segment   = get_post_meta( $post->ID, '_culture_nl_segment',   true ) ?: '';
+        $nl_issue_num = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
 
         $lists_config = array(
             'getmelit'                  => 'GetMeLit',
@@ -226,6 +236,23 @@ class Culture_Newsletter_Send {
                 </select>
                 <p style="font-size:11px;color:#666;margin:4px 0 0;">
                     <?php esc_html_e( 'Leave on "All segments" to send to everyone on this list.', 'culture-community' ); ?>
+                </p>
+            </div>
+
+            <?php /* ── ISSUE NUMBER ── */ ?>
+            <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
+                <label class="culture-nl-label"><?php esc_html_e( 'Issue Number', 'culture-community' ); ?></label>
+                <input
+                    type="number"
+                    name="culture_nl_issue_num"
+                    value="<?php echo esc_attr( $nl_issue_num ?: '' ); ?>"
+                    min="1"
+                    step="1"
+                    style="width:100%;margin-top:4px;"
+                    placeholder="e.g. 12"
+                />
+                <p style="font-size:11px;color:#666;margin:4px 0 0;">
+                    <?php esc_html_e( 'Set the same number on all regional editions of the same issue so the frontend shows only one.', 'culture-community' ); ?>
                 </p>
             </div>
 

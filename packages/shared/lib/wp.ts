@@ -639,6 +639,7 @@ function mapRestNewsletterToFrontendShape(item: any) {
     content: item?.content?.rendered ?? "",
     nlList: item?.meta?.["_culture_nl_list"] || item?.["_culture_nl_list"] || null,
     nlSegment: item?.meta?.["_culture_nl_segment"] || item?.["_culture_nl_segment"] || "",
+    nlIssueNum: parseInt(String(item?.meta?.["_culture_nl_issue_num"] || item?.["_culture_nl_issue_num"] || 0), 10) || null,
     featuredImage: embeddedMedia?.source_url
       ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
       : null,
@@ -1271,6 +1272,7 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     excerpt
     nlList
     nlSegment
+    nlIssueNum
     featuredImage {
       node {
         sourceUrl

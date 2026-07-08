@@ -6,7 +6,10 @@ import HideIfSubscribed from "@/components/HideIfSubscribed";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META, NewsletterListId } from "@/lib/newsletter-lists";
 
-function issueNum(totalCount: number, index: number) {
+function issueNum(issue: any, totalCount: number, index: number): number {
+  // Prefer the explicitly-set issue number (shared across regional editions).
+  if (issue?.nlIssueNum && issue.nlIssueNum > 0) return issue.nlIssueNum;
+  // Fall back to position-based numbering for legacy issues without a number.
   return totalCount > 0 ? totalCount - index : index + 1;
 }
 
@@ -155,7 +158,7 @@ export default function NewsletterPublicationPage({
                   className={`np-issue-card${isGml ? " np-issue-card--getmelit" : ""}`}
                 >
                   <div className="np-issue-card-meta">
-                    <span className="np-issue-num">Issue N°{String(issueNum(totalCount, idx)).padStart(3, "0")}</span>
+                    <span className="np-issue-num">Issue N°{String(issueNum(issue, totalCount, idx)).padStart(3, "0")}</span>
                     <span className="np-issue-date">
                       {new Date(issue.date).toLocaleDateString("en-GB", {
                         day: "numeric",
@@ -203,7 +206,7 @@ export default function NewsletterPublicationPage({
                   className={`digest-archive-row${isGml ? " digest-archive-row--getmelit" : ""}`}
                 >
                   <span className="digest-archive-num">
-                    {String(issueNum(totalCount, idx)).padStart(3, "0")}
+                    {String(issueNum(issue, totalCount, idx)).padStart(3, "0")}
                   </span>
                   <span className="digest-archive-date">
                     {new Date(issue.date).toLocaleDateString("en-GB", {
