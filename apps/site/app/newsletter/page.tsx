@@ -134,11 +134,12 @@ export default async function NewsletterArchive({
         <div className="nl-masthead-inner">
           <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
-            Two newsletters. One cultural <em>obsession.</em>
+            Your Daily Pulse on <em>Global Culture</em>
           </h1>
           <p className="nl-masthead-sub">
-            Culture Drop for the weekly cultural deep dive. GetMeLit for a new
-            story or poem every day. Both free. Both essential.
+            We curate the cultural narratives that matter most. Subscribe to
+            receive a curated daily story on GetMeLit and our comprehensive
+            weekly culture guide on Culture Drop.
           </p>
           <div className="nl-masthead-pills">
             <Link href="/newsletter/culture-drop" className="nl-masthead-pill nl-masthead-pill--culturedrop">
