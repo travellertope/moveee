@@ -319,8 +319,8 @@ export default function HostOnboardingScreen() {
             <>
               <Text style={styles.stepHeading}>Culture, close to home.</Text>
               <Text style={styles.stepSub}>
-                A House Fellowship is a small, weekly gathering of Moveee members
-                on your street or nearby — watching films together, listening to
+                A Stoop is a small, weekly gathering of Moveee members
+                in your area — watching films together, listening to
                 music, reading aloud, cooking, and engaging with culture in
                 the company of your neighbours.{"\n\n"}
                 Where are you hosting from?
@@ -350,7 +350,7 @@ export default function HostOnboardingScreen() {
             <>
               <Text style={styles.stepHeading}>Your hosting space.</Text>
               <Text style={styles.stepSub}>
-                House Fellowships happen in real spaces — a living room, a café
+                Stoops happen in real spaces — a living room, a café
                 back room, a coworking lounge. What kind of space are you hosting in?
               </Text>
 
@@ -464,8 +464,8 @@ export default function HostOnboardingScreen() {
             <>
               <Text style={styles.stepHeading}>Staying close.</Text>
               <Text style={styles.stepSub}>
-                House Fellowship is rooted in proximity — the whole point is
-                meeting the people on your street or nearby, regularly, not
+                Stoop is rooted in proximity — the whole point is
+                meeting the people in your area, regularly, not
                 pulling together a guest list from across the city.
               </Text>
 
@@ -473,7 +473,7 @@ export default function HostOnboardingScreen() {
                 <View style={styles.contextNote}>
                   <Text style={styles.contextNoteText}>
                     🚶{"  "}This works best when you can walk to the gathering,
-                    or it's a short bus or tube ride. If your Fellowship starts
+                    or it's a short bus or tube ride. If your Stoop starts
                     drawing people from two neighbourhoods away, it's drifted
                     from what it's meant to be.
                   </Text>
@@ -492,8 +492,8 @@ export default function HostOnboardingScreen() {
               {!isUK && !isNG && (
                 <View style={styles.contextNote}>
                   <Text style={styles.contextNoteText}>
-                    🗺️{"  "}Keep it walkable or a short ride. A House Fellowship
-                    that stays genuinely local — same few streets — tends to
+                    🗺️{"  "}Keep it walkable or a short ride. A Stoop
+                    that stays genuinely local — the same small area — tends to
                     build something real.
                   </Text>
                 </View>
@@ -523,7 +523,7 @@ export default function HostOnboardingScreen() {
               <Text style={styles.stepHeading}>Who sees your address?</Text>
               <Text style={styles.stepSub}>
                 Choose how much location detail is shared with people browsing
-                or joining your Fellowship.
+                or joining your Stoop.
               </Text>
 
               {ADDRESS_OPTIONS.map((opt) => (
@@ -546,7 +546,7 @@ export default function HostOnboardingScreen() {
               ))}
 
               <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Your Fellowship setup</Text>
+                <Text style={styles.summaryTitle}>Your Stoop setup</Text>
                 <View style={styles.summaryRow}>
                   <View style={styles.summaryDot} />
                   <Text style={styles.summaryText}>
@@ -593,7 +593,7 @@ export default function HostOnboardingScreen() {
           activeOpacity={0.85}
         >
           <Text style={styles.nextBtnText}>
-            {step === TOTAL_STEPS ? "Set up my Fellowship →" : "Next"}
+            {step === TOTAL_STEPS ? "Set up my Stoop →" : "Next"}
           </Text>
         </TouchableOpacity>
       </View>

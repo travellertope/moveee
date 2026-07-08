@@ -164,7 +164,7 @@ export default function ClusterScreen() {
     if (!cluster) return;
     const url = `https://web.themoveee.com/cluster/${clusterId}/invite`;
     await Share.share({
-      message: `Join my House Fellowship "${cluster.name}" on Moveee! ${url}`,
+      message: `Join my Stoop "${cluster.name}" on Moveee! ${url}`,
       url,
     });
   };
@@ -360,7 +360,7 @@ export default function ClusterScreen() {
         <TouchableOpacity onPress={() => nav.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={24} color={c.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>House Fellowship</Text>
+        <Text style={styles.headerTitle}>Stoop</Text>
         {cluster ? (
           <TouchableOpacity onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="share-outline" size={22} color={c.ink} />
@@ -379,7 +379,7 @@ export default function ClusterScreen() {
           <View style={styles.notFoundCard}>
             <Ionicons name="alert-circle-outline" size={28} color={c.ochre} />
             <Text style={styles.notFoundTitle}>Not found</Text>
-            <Text style={styles.notFoundText}>This House Fellowship doesn't exist or has been removed.</Text>
+            <Text style={styles.notFoundText}>This Stoop doesn't exist or has been removed.</Text>
             <TouchableOpacity onPress={() => nav.goBack()}>
               <Text style={styles.backLink}>← Back</Text>
             </TouchableOpacity>
@@ -388,7 +388,7 @@ export default function ClusterScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.nameBlock}>
-            <Text style={styles.eyebrow}>People Near Me › House Fellowship</Text>
+            <Text style={styles.eyebrow}>People Near Me › Stoop</Text>
             <Text style={styles.name}>{cluster.name}</Text>
             <Text style={styles.address}>
               {[cluster.street, cluster.city, cluster.country].filter(Boolean).join(", ")}
@@ -426,14 +426,14 @@ export default function ClusterScreen() {
             <View style={styles.card}>
               <Text style={styles.cardLabel}>Getting started</Text>
               <Text style={styles.cardBody}>
-                This fellowship needs at least 4 members to activate. Here's what to do next:
+                This Stoop needs at least 4 members to activate. Here's what to do next:
               </Text>
               <View style={{ gap: 8, marginTop: 8 }}>
                 <Text style={styles.cardBody}>
-                  1. Share the invite link below with neighbours, friends, and anyone on your street.
+                  1. Share the invite link below with neighbours, friends, and anyone in your area.
                 </Text>
                 <Text style={styles.cardBody}>
-                  2. When 4 people have joined, the fellowship activates automatically — unlocking weekly check-ins, host elections, and Culture Credits rewards.
+                  2. When 4 people have joined, the Stoop activates automatically — unlocking weekly check-ins, host elections, and Culture Credits rewards.
                 </Text>
                 <Text style={styles.cardBody}>
                   3. Once active, meet weekly on {cluster.meetingDay ? `${capitalize(cluster.meetingDay)}s` : "your chosen day"} at {cluster.meetingTime || "the time you set"}. The host shows a QR code and members scan it to check in.
@@ -454,7 +454,7 @@ export default function ClusterScreen() {
               <Ionicons name="link-outline" size={18} color={c.ochre} style={{ marginRight: 10 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.memberLabel}>Invite people</Text>
-                <Text style={[styles.memberCount, { marginTop: 2 }]}>Tap to share the invite link to this fellowship</Text>
+                <Text style={[styles.memberCount, { marginTop: 2 }]}>Tap to share the invite link to this Stoop</Text>
               </View>
               <Ionicons name="share-outline" size={18} color={c.mute} />
             </TouchableOpacity>
@@ -466,12 +466,12 @@ export default function ClusterScreen() {
               <>
                 <Text style={styles.memberLabel}>You're a member</Text>
                 <TouchableOpacity style={styles.leaveBtn} onPress={() => setConfirmLeave(true)} disabled={busy}>
-                  <Text style={styles.leaveBtnText}>{busy ? "Leaving…" : "Leave House Fellowship"}</Text>
+                  <Text style={styles.leaveBtnText}>{busy ? "Leaving…" : "Leave Stoop"}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.memberLabel}>Join this House Fellowship</Text>
+                <Text style={styles.memberLabel}>Join this Stoop</Text>
                 <TouchableOpacity style={styles.joinBtn} onPress={join} disabled={busy}>
                   <Text style={styles.joinBtnText}>{busy ? "Joining…" : "Join →"}</Text>
                 </TouchableOpacity>
@@ -633,7 +633,7 @@ export default function ClusterScreen() {
         visible={confirmLeave}
         onClose={() => setConfirmLeave(false)}
         onConfirm={leave}
-        title="Leave this House Fellowship?"
+        title="Leave this Stoop?"
         confirmLabel="Leave"
         destructive
       />

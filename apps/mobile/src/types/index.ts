@@ -80,7 +80,7 @@ export interface Member {
   isFollowing?: boolean;
 }
 
-// ── House Fellowship (street clusters) ──────────────────────────────────────
+// ── Stoop (area clusters) ──────────────────────────────────────
 export interface Cluster {
   id: number;
   name: string;
@@ -142,6 +142,28 @@ export interface ClusterAttendance {
   totalCheckins: number;
   streak: number;
   lastCheckedIn: string | null;
+}
+
+// ── Hubs (docs/hubs-plan.md, Phase 1) ───────────────────────────────────────
+export interface Hub {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  coverImageUrl: string;
+  creatorId: number;
+  status: 'active' | 'archived';
+  allowedTemplates: string[];
+  memberCount: number;
+  postCount: number;
+  createdAt: string;
+  role?: string | null;
+}
+
+export interface HubStatus {
+  isMember: boolean;
+  role: string | null;
+  isFollowing: boolean;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────

@@ -113,17 +113,42 @@ React Native can't use the DOM-dependent shared package — edit both when those
   and do not use "Connect" alone to refer to the app/platform — "Connect" as a bare noun
   now belongs to Literati Connect. **Full planning doc (read before any build work on
   this feature): `docs/literati-connect-plan.md`** — covers Literati Connect (monthly,
-  city-wide — reuses the existing editorial `culture_event` CPT) and House Fellowship
-  (weekly, street-cluster — new `culture_cluster` CPT, open to all tiers, three
+  city-wide — reuses the existing editorial `culture_event` CPT) and Stoop
+  (weekly, area-cluster — new `culture_cluster` CPT, open to all tiers, three
   host-selection mechanisms: appointed/self-nominated/elected, overflow joining when a
-  home-street cluster is full, QR-based weekly check-in mirroring the Perks redemption
-  pattern). Status as of 2026-06-21: Phases 1–5 complete end-to-end (backend + mobile +
-  web) — House Fellowship CPT/membership/host-election/QR check-in (1–3), rewards +
+  home-area cluster is full, QR-based weekly check-in mirroring the Perks redemption
+  pattern). **Renamed from "Stoop" to "Stoop" (2026-07-08)** — copy-only
+  rename, same pattern as the Culture Credits/Reputation Points rename below: the
+  `culture_cluster` CPT, `_cluster_*` meta keys, `Culture_Clusters` PHP class, DB table
+  names, badge trigger keys (`cluster_regular`, `city_convener`), action keys
+  (`cluster_founded`, `cluster_checked_in`, `cluster_host_served`), notification type
+  keys, and REST route paths (`/cluster/...`) are all unchanged — only user-facing copy
+  and file names literally named after the old brand (`Stoop.tsx`,
+  `StoopReminderCard.tsx`, formerly `Stoop.tsx`/`StoopReminderCard.tsx`)
+  were updated. "Street-level" framing was also changed to "area-level" throughout —
+  the underlying `_cluster_street` meta field and its form labels/state vars are
+  untouched (still literally collecting a street name), only the *scope* language
+  changed. Status as of 2026-06-21: Phases 1–5 complete end-to-end (backend + mobile +
+  web) — Stoop CPT/membership/host-election/QR check-in (1–3), rewards +
   badges + notifications + cron (4), and the Literati Connect integration + feed
-  surfacing (5 — attendance-sweep cron/reward, Discover/Events rail, House Fellowship
+  surfacing (5 — attendance-sweep cron/reward, Discover/Events rail, Stoop
   feed reminder card) are all live. The feature is fully shipped. See the plan doc's
   own status line for the authoritative, up-to-date detail — keep this summary in sync
   with it rather than re-deriving phase status here.
+
+  **Marketing landing page (added 2026-07-08):** `/connect` (`apps/connect/app/connect/page.tsx`)
+  is now a real page — a from-scratch landing page (no mockup, built to match the existing
+  `mco-*`/`con-btn-*` design system already used by `/connect/people` and
+  `/connect/membership`) introducing both offerings side by side, a 4-step "how Stoop
+  works" explainer, the two badges (Cluster Regular, City Convener), and CTAs
+  into `/connect/people` (Stoop) and `/events` (Literati Connect's rail). New
+  page-scoped CSS: `apps/connect/app/connect/connect-landing.css` (`lc-*` namespace).
+  This required removing the old `pathname === '/connect'` → `/feed` back-compat redirect
+  in `apps/connect/proxy.ts` (see "Connect app feed route" above) — `/connect` is no longer
+  just a legacy alias, it's a real destination now. A "Literati Connect" link was added to
+  the shared `mco-section-nav` row on `/connect/people`, `/connect/membership`, and the
+  logged-out `ConnectHero.tsx` (feed hero) so the page is reachable in-app, not just by
+  direct URL.
 
   **Host onboarding flow (added 2026-06-25):** a 5-step pre-creation journey runs
   before the cluster creation form, collecting: (1) country (UK/Nigeria/Other — drives
@@ -137,7 +162,7 @@ React Native can't use the DOM-dependent shared package — edit both when those
   (accepts params, shows compact summary card, removed "How it works" block).
   `MemberDirectoryScreen`'s "Start" buttons now route to `HostOnboardingScreen`.
   Web: `/cluster/create` (`app/cluster/create/page.tsx` + `CreateClusterClient.tsx`
-  in `apps/connect`). `HouseFellowship.tsx`'s inline `StartClusterModal` removed —
+  in `apps/connect`). `Stoop.tsx`'s inline `StartClusterModal` removed —
   "Start" buttons are now `<Link href="/cluster/create">`.
   CSS namespace: `hfc-*` in `apps/connect/app/member.css`.
 - **Tier names renamed (2026-06-21): `Connect Citizen`/`Connect Pro` → `Moveee
@@ -1635,14 +1660,14 @@ copy-link button default/copied states), `SourcePreviewCard.tsx` and
 domain-suffix text colors), `CommentThread.tsx` (input style object, section border,
 comment list border/author/date/body colors, auth CTA box, form labels, status
 messages, submit button), `HashtagText.tsx` (mention button color), 
-`HouseFellowshipReminderCard.tsx` (icon circle background), `EventSpotlightCarousel.tsx`
+`StoopReminderCard.tsx` (icon circle background), `EventSpotlightCarousel.tsx`
 (category color fallback, card background, featured-stripe/star color, date/venue/title/
 price text, outer container background, heading, "See all →" link — also introduced
 `var(--cat-community-bg, #edf7ed)`/`var(--cat-community-fg, #2e7d32)` for the
 `isCommunity` badge, which are **not** real defined CSS variables in `globals.css`; the
 fallback hex is what actually renders in both themes today — either map these to a real
 existing token or treat as a known follow-up if dark-mode fidelity on that one badge
-ever matters), and `HouseFellowship.tsx` (`connect/`, error block + ink/paper button-text
+ever matters), and `Stoop.tsx` (`connect/`, error block + ink/paper button-text
 pairing). `MemberDirectory.tsx` (`connect/`) was checked and is genuinely clean — already
 used CSS variables throughout, no changes needed. `ImageLightbox.tsx` is intentionally
 theme-independent (a full-screen photo lightbox with a black scrim and white controls
@@ -1845,7 +1870,7 @@ The entire "Chapter Leader" / `culture_chapter` system has been removed. Rationa
 codebase, no assignment UI ever existed for chapter membership (`primary_chapter`/
 `secondary_chapter` fields were posted by JS to an AJAX action, `culture_set_chapters`, that had
 no PHP handler), and the feature has been fully superseded by the now-functional Literati Connect /
-House Fellowship build (see `docs/literati-connect-plan.md`).
+Stoop build (see `docs/literati-connect-plan.md`).
 
 Removed: the `culture_chapter` CPT references, `_culture_chapter_leader_id`/`_culture_chapter_id`
 post meta, `_culture_primary_chapter_id`/`_culture_secondary_chapter_id` user meta, the
@@ -2378,9 +2403,9 @@ reads from the raw `items` array (not the already-filtered `visibleItems`), sinc
 the event items it needs have been stripped out of `visibleItems` by this exact
 filter.
 
-## Editorial event self-checkin (`culture_event` CPT — separate from Literati Connect / House Fellowship)
+## Editorial event self-checkin (`culture_event` CPT — separate from Literati Connect / Stoop)
 
-This is **unrelated** to the Literati Connect / House Fellowship check-in system (which uses
+This is **unrelated** to the Literati Connect / Stoop check-in system (which uses
 HMAC-signed QR on `culture_cluster` posts, see `docs/literati-connect-plan.md`). This one is a
 simple SHA-256-hash check-in token on editorial `culture_event` posts.
 

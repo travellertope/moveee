@@ -14,12 +14,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/feed', request.url))
   }
 
-  // Back-compat: old bare /connect feed URL → /feed.
-  // /connect/people, /connect/membership, /connect/perks, /connect/[username]
-  // are unaffected — only the feed itself moved.
-  if (pathname === '/connect') {
-    return NextResponse.redirect(new URL('/feed', request.url))
-  }
+  // Note: the bare /connect path used to redirect to /feed (back-compat for
+  // when the feed itself briefly lived there) — that redirect is gone now
+  // that /connect is a real page (the Literati Connect landing page, see
+  // app/connect/page.tsx). /connect/people, /connect/membership,
+  // /connect/perks, /connect/[username] are unaffected either way.
 
   if (SITE_A_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.redirect(`https://themoveee.com${pathname}`, 308)

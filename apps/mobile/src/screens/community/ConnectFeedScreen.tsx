@@ -34,7 +34,7 @@ import { api, MOBILE_API } from "../../api/client";
 import FeedCard, { ProGlowRing } from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import EventSpotlightCarousel from "../../components/community/EventSpotlightCarousel";
-import HouseFellowshipReminderCard from "../../components/community/HouseFellowshipReminderCard";
+import StoopReminderCard from "../../components/community/StoopReminderCard";
 import { getSpotlightEvents, isEventItem } from "../../features/community/eventSpotlight";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
@@ -44,7 +44,7 @@ import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
 
 const SPOTLIGHT_MARKER_ID = "__event-spotlight__";
-const FELLOWSHIP_REMINDER_MARKER_ID = "__house-fellowship-reminder__";
+const FELLOWSHIP_REMINDER_MARKER_ID = "__stoop-reminder__";
 
 function feedItemToPostId(item: FeedItem): string {
   return (item as any).wpId ?? item.id.replace(/^community-/, "");
@@ -289,7 +289,7 @@ export default function ConnectFeedScreen() {
       return <EventSpotlightCarousel events={spotlightEvents} onOpenCommunity={setSheetItem} />;
     }
     if (item.id === FELLOWSHIP_REMINDER_MARKER_ID) {
-      return <HouseFellowshipReminderCard />;
+      return <StoopReminderCard />;
     }
     const forYouBadge =
       forYou && hasInterests && matchesInterests(item, interestTagSet);
@@ -333,17 +333,22 @@ export default function ConnectFeedScreen() {
             />
           </View>
           <View style={styles.headerRight}>
-            {/* Ghost refresh */}
+            {/* Hub */}
             <TouchableOpacity
               style={styles.iconBtn}
-              onPress={refresh}
+              onPress={() => nav.navigate("HubsScreen")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons
-                name="refresh-outline"
-                size={20}
-                color={c.ghost}
-              />
+              <Ionicons name="planet-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
+            {/* Stoop */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("StoopHomeScreen")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="home-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
             {/* Member directory */}

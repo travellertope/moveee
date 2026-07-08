@@ -27,7 +27,7 @@ const COMPARE = [
   { feature: "Pulse Feed & community posts", citizen: true, pro: true },
   { feature: "Browse Discover & member directory", citizen: true, pro: true },
   { feature: "GetMeLit & Culture Drop newsletters", citizen: true, pro: true },
-  { feature: "Literati Connect & House Fellowship", citizen: true, pro: true },
+  { feature: "Literati Connect & Stoop", citizen: true, pro: true },
   { feature: "Culture Credits & Reputation Points", citizen: "50 Cr/day cap", pro: "100 Cr/day cap" },
   { feature: "Daily Games plays", citizen: "1/day", pro: "5/day" },
   { feature: "Post links in the feed", citizen: false, pro: true },

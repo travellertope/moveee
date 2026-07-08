@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 import FeatureCTA from "@/components/FeatureCTA";
 
 export const metadata: Metadata = {
-  title: "Literati Connect & House Fellowship — Culture, In Person | Moveee",
+  title: "Literati Connect & Stoop — Culture, In Person | Moveee",
   description:
-    "Literati Connect is Moveee's monthly city-wide meetup. House Fellowship is your weekly street-cluster gathering. Both are how Moveee turns an app into real friendships.",
+    "Literati Connect is Moveee's monthly city-wide meetup. Stoop is your weekly area-cluster gathering. Both are how Moveee turns an app into real friendships.",
   alternates: { canonical: "https://themoveee.com/features/literati-connect" },
   openGraph: {
-    title: "Literati Connect & House Fellowship — Culture, In Person | Moveee",
+    title: "Literati Connect & Stoop — Culture, In Person | Moveee",
     description:
-      "Monthly city-wide meetups and weekly House Fellowship clusters near you — Moveee, offline.",
+      "Monthly city-wide meetups and weekly Stoop clusters near you — Moveee, offline.",
     url: "https://themoveee.com/features/literati-connect",
     siteName: "Moveee",
     type: "website",
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Literati Connect & House Fellowship — Culture, In Person | Moveee",
+    title: "Literati Connect & Stoop — Culture, In Person | Moveee",
     description:
-      "Monthly city-wide meetups and weekly House Fellowship clusters near you — Moveee, offline.",
+      "Monthly city-wide meetups and weekly Stoop clusters near you — Moveee, offline.",
   },
 };
 
@@ -34,13 +34,13 @@ export default function LiteratiConnectPage() {
             <div className="fp-eyebrow-row">
               <Link href="/features" className="fp-back-link">← All features</Link>
             </div>
-            <p className="mz-eyebrow" style={{ marginTop: 16 }}>Literati Connect &amp; House Fellowship</p>
+            <p className="mz-eyebrow" style={{ marginTop: 16 }}>Literati Connect &amp; Stoop</p>
             <h1 className="fp-h1">
               Culture, <em>in person.</em>
             </h1>
             <p className="fp-subhead">
               Moveee doesn't stop at the feed. Literati Connect brings your whole city
-              together once a month. House Fellowship brings your street together every
+              together once a month. Stoop brings your area together every
               week. Same community, two rhythms.
             </p>
             <div className="fp-hero-cta">
@@ -55,7 +55,7 @@ export default function LiteratiConnectPage() {
               </div>
               <div className="fp-stat">
                 <span className="fp-stat-num">Weekly</span>
-                <span className="fp-stat-label">House Fellowship, your street</span>
+                <span className="fp-stat-label">Stoop, your area</span>
               </div>
               <div className="fp-stat">
                 <span className="fp-stat-num">QR</span>
@@ -94,8 +94,8 @@ export default function LiteratiConnectPage() {
             </div>
             <div className="fp-card fp-card--dark">
               <span className="fp-card-icon">🏠</span>
-              <div className="fp-card-title">House Fellowship</div>
-              <p className="fp-card-body" style={{ fontWeight: 700 }}>Weekly, your street</p>
+              <div className="fp-card-title">Stoop</div>
+              <p className="fp-card-body" style={{ fontWeight: 700 }}>Weekly, your area</p>
               <p className="fp-card-body">
                 A smaller, weekly gathering of members who live near you. Hosted by a fellow
                 member — appointed, self-nominated, or elected by the cluster — with a simple
@@ -117,16 +117,16 @@ export default function LiteratiConnectPage() {
               loading="lazy"
             />
             <div className="fp-row-text">
-              <p className="fp-row-eyebrow">House Fellowship</p>
+              <p className="fp-row-eyebrow">Stoop</p>
               <h3 className="fp-row-title">A cluster that picks its own host.</h3>
               <p className="fp-row-body">
-                Every House Fellowship cluster is built around your home street — and run by
+                Every Stoop cluster is built around your local area — and run by
                 someone from it. Hosts get there one of three ways: appointed by Moveee,
                 self-nominated, or elected by the cluster itself. If your home cluster is
                 full, you can join a nearby one as overflow.
               </p>
               <ul className="fp-row-list">
-                <li>Street-level clusters — find your people closest to home</li>
+                <li>Area-level clusters — find your people closest to home</li>
                 <li>Three host-selection paths: appointed, self-nominated, elected</li>
                 <li>Overflow joining when your home cluster reaches capacity</li>
                 <li>Weekly QR check-in, mirroring the Perks redemption flow you already know</li>
@@ -145,16 +145,16 @@ export default function LiteratiConnectPage() {
               <p className="fp-row-eyebrow">Rewards, badges &amp; the feed</p>
               <h3 className="fp-row-title">Showing up earns you something.</h3>
               <p className="fp-row-body">
-                Attending Literati Connect or checking into House Fellowship earns Culture
+                Attending Literati Connect or checking into Stoop earns Culture
                 Credits and Reputation Points, just like posting or reacting in the app. Hit
-                attendance milestones and unlock dedicated badges — and a House Fellowship
+                attendance milestones and unlock dedicated badges — and a Stoop
                 reminder card surfaces right in your Pulse Feed so you never miss the week's
                 gathering.
               </p>
               <ul className="fp-row-list">
                 <li>Culture Credits and Reputation Points for every check-in</li>
                 <li>Dedicated attendance badges and milestones</li>
-                <li>House Fellowship feed reminder card — never miss a week</li>
+                <li>Stoop feed reminder card — never miss a week</li>
                 <li>Literati Connect events surfaced in Discover and Events</li>
               </ul>
             </div>
@@ -165,7 +165,7 @@ export default function LiteratiConnectPage() {
       <FeatureCTA
         currentSlug="literati-connect"
         heading="Your community is closer than you think."
-        body="Download Moveee, find your House Fellowship cluster, and RSVP to the next Literati Connect in your city."
+        body="Download Moveee, find your Stoop cluster, and RSVP to the next Literati Connect in your city."
       />
     </>
   );

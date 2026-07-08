@@ -104,7 +104,7 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
       <div className="mem-body">
         <section className="mem-card">
           <div className="mem-card-label">Not found</div>
-          <p className="mem-card-desc">This House Fellowship doesn't exist or has been removed.</p>
+          <p className="mem-card-desc">This Stoop doesn't exist or has been removed.</p>
           <Link href="/connect/people" className="mem-settings-back-link">← Back to People Near Me</Link>
         </section>
       </div>
@@ -123,7 +123,7 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
           <div className="mem-hero-body">
             <div className="mem-eyebrow">
               <Link href="/connect/people" style={{ color: "inherit", textDecoration: "none" }}>People Near Me</Link>
-              {" "}&rsaquo;{" "}House Fellowship
+              {" "}&rsaquo;{" "}Stoop
             </div>
             <h1 className="mem-name">{cluster.name}</h1>
             <div className="mem-meta">

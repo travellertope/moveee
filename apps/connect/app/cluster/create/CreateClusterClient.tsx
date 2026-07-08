@@ -133,13 +133,13 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.message || "Could not start a House Fellowship right now.");
+        setError(data?.message || "Could not start a Stoop right now.");
         setSubmitting(false);
         return;
       }
       setCreatedId(data.id);
     } catch {
-      setError("Could not start a House Fellowship right now.");
+      setError("Could not start a Stoop right now.");
       setSubmitting(false);
     }
   };
@@ -154,7 +154,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
         if (navigator.share) {
           await navigator.share({
             title: `Join ${name.trim()}`,
-            text: `Join my House Fellowship "${name.trim()}" on Moveee!`,
+            text: `Join my Stoop "${name.trim()}" on Moveee!`,
             url: inviteUrl,
           });
         } else {
@@ -172,10 +172,10 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
         <div className="hfc-body">
           <div className="hfc-step" style={{ textAlign: "center", paddingTop: 40 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🏡</div>
-            <h1 className="hfc-heading" style={{ marginBottom: 12 }}>Fellowship created!</h1>
+            <h1 className="hfc-heading" style={{ marginBottom: 12 }}>Stoop created!</h1>
             <p className="hfc-sub">
               Now share the invite link with neighbours and friends.<br />
-              You need at least <strong>4 members</strong> to activate your fellowship.
+              You need at least <strong>4 members</strong> to activate your Stoop.
             </p>
             <div className="clu-share-banner" style={{ marginTop: 28, textAlign: "left" }}>
               <div className="clu-share-banner-body">
@@ -194,7 +194,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
               style={{ marginTop: 20, width: "100%", textAlign: "center" }}
               onClick={() => router.push(`/cluster/${createdId}`)}
             >
-              Go to my fellowship →
+              Go to my Stoop →
             </button>
           </div>
         </div>
@@ -222,8 +222,8 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           <div className="hfc-step">
             <h1 className="hfc-heading">Culture, close to home.</h1>
             <p className="hfc-sub">
-              A House Fellowship is a small, weekly gathering of Moveee members on your
-              street or nearby — watching films together, listening to music, reading
+              A Stoop is a small, weekly gathering of Moveee members in your
+              area — watching films together, listening to music, reading
               aloud, cooking, and engaging with culture in the company of your neighbours.
             </p>
             <p className="hfc-sub">Where are you hosting from?</p>
@@ -252,7 +252,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           <div className="hfc-step">
             <h1 className="hfc-heading">Your hosting space.</h1>
             <p className="hfc-sub">
-              House Fellowships happen in real spaces — a living room, a café
+              Stoops happen in real spaces — a living room, a café
               back room, a coworking lounge. What kind of space are you hosting in?
             </p>
 
@@ -348,15 +348,15 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           <div className="hfc-step">
             <h1 className="hfc-heading">Staying close.</h1>
             <p className="hfc-sub">
-              House Fellowship is rooted in proximity — the whole point is meeting the
-              people on your street or nearby, regularly, not pulling together a guest
+              Stoop is rooted in proximity — the whole point is meeting the
+              people in your area, regularly, not pulling together a guest
               list from across the city.
             </p>
 
             {isUK && (
               <div className="hfc-context-note">
                 🚶 This works best when you can walk to the gathering, or it's a short bus
-                or tube ride. If your Fellowship starts drawing people from two
+                or tube ride. If your Stoop starts drawing people from two
                 neighbourhoods away, it's drifted from what it's meant to be.
               </div>
             )}
@@ -369,8 +369,8 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
             )}
             {!isUK && !isNG && (
               <div className="hfc-context-note">
-                🗺️ Keep it walkable or a short ride. A House Fellowship that stays
-                genuinely local — same few streets — tends to build something real.
+                🗺️ Keep it walkable or a short ride. A Stoop that stays
+                genuinely local — the same small area — tends to build something real.
               </div>
             )}
 
@@ -396,7 +396,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
             <h1 className="hfc-heading">Who sees your address?</h1>
             <p className="hfc-sub">
               Choose how much location detail is shared with people browsing or
-              joining your Fellowship.
+              joining your Stoop.
             </p>
 
             <div className="hfc-addr-options">
@@ -420,7 +420,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
 
             {/* Summary */}
             <div className="hfc-summary">
-              <p className="hfc-summary-title">Your Fellowship setup</p>
+              <p className="hfc-summary-title">Your Stoop setup</p>
               <ul className="hfc-summary-list">
                 <li>Hosting from: {country}</li>
                 <li>Venue: {venueLabel}{accessible ? " · step-free access" : ""}</li>
@@ -435,7 +435,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
         {/* ── Step 6: Creation form ── */}
         {step === 6 && (
           <div className="hfc-step">
-            <h1 className="hfc-heading">Name your Fellowship.</h1>
+            <h1 className="hfc-heading">Name your Stoop.</h1>
             <p className="hfc-sub">
               Almost there — give it a name, set your street and schedule. Members
               near you will find it and be able to join.
@@ -453,13 +453,13 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
             </div>
 
             <form onSubmit={handleSubmit} noValidate>
-              <label className="hfc-label" htmlFor="hfc-name">Fellowship name</label>
+              <label className="hfc-label" htmlFor="hfc-name">Stoop name</label>
               <input
                 id="hfc-name"
                 type="text"
                 className="hfc-input"
                 required
-                placeholder="e.g. Allen Avenue House Fellowship"
+                placeholder="e.g. Allen Avenue Stoop"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={submitting}
@@ -552,7 +552,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
                 className="hfc-submit-btn"
                 disabled={submitting || !name.trim() || !street.trim() || !city.trim() || !formCountry.trim() || !meetingTime.trim()}
               >
-                {submitting ? "Starting…" : "Start House Fellowship →"}
+                {submitting ? "Starting…" : "Start Stoop →"}
               </button>
             </form>
           </div>
@@ -572,7 +572,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
               onClick={handleNext}
               disabled={!canAdvance}
             >
-              {step === TOTAL_STEPS - 1 ? "Set up my Fellowship →" : "Next"}
+              {step === TOTAL_STEPS - 1 ? "Set up my Stoop →" : "Next"}
             </button>
           </div>
         )}

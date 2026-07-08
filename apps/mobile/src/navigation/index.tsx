@@ -33,6 +33,10 @@ import DiscoverScreen from "../screens/community/DiscoverScreen";
 import ClusterScreen from "../screens/community/ClusterScreen";
 import StartClusterScreen from "../screens/community/StartClusterScreen";
 import HostOnboardingScreen from "../screens/community/HostOnboardingScreen";
+import StoopHomeScreen from "../screens/community/StoopHomeScreen";
+import HubsScreen from "../screens/community/HubsScreen";
+import HubCreateScreen from "../screens/community/HubCreateScreen";
+import HubDetailScreen from "../screens/community/HubDetailScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -95,6 +99,10 @@ type FeedStackParams = {
   Discover:          { type?: string; region?: string } | undefined;
   ClusterScreen:      { id: number };
   StartClusterScreen: undefined;
+  StoopHomeScreen:    undefined;
+  HubsScreen:         undefined;
+  HubCreateScreen:    undefined;
+  HubDetail:          { slug: string };
   // Editorial articles opened from the Connect feed stay in this stack
   // so the Magazine tab is never polluted by cross-tab navigation.
   Article:           { slug: string };
@@ -131,6 +139,10 @@ function ConnectStack() {
       <Stack.Screen name="ClusterScreen"         component={ClusterScreen} />
       <Stack.Screen name="HostOnboardingScreen" component={HostOnboardingScreen} />
       <Stack.Screen name="StartClusterScreen"   component={StartClusterScreen} />
+      <Stack.Screen name="StoopHomeScreen"      component={StoopHomeScreen} />
+      <Stack.Screen name="HubsScreen"           component={HubsScreen} />
+      <Stack.Screen name="HubCreateScreen"      component={HubCreateScreen} />
+      <Stack.Screen name="HubDetail"            component={HubDetailScreen} />
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />

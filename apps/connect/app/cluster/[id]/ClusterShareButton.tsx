@@ -20,7 +20,7 @@ export default function ClusterShareButton({ clusterId, clusterName, variant = "
       try {
         await navigator.share({
           title: `Join ${clusterName}`,
-          text: `Join my House Fellowship "${clusterName}" on Moveee!`,
+          text: `Join my Stoop "${clusterName}" on Moveee!`,
           url: inviteUrl,
         });
       } catch {
@@ -46,7 +46,7 @@ export default function ClusterShareButton({ clusterId, clusterName, variant = "
         <div className="clu-share-banner-body">
           <p className="clu-share-banner-title">Share your invite link</p>
           <p className="clu-share-banner-sub">
-            You need 4 members to activate. Invite neighbours and friends on your street.
+            You need 4 members to activate. Invite neighbours and friends in your area.
           </p>
           <div className="clu-share-url-row">
             <span className="clu-share-url-text">{inviteUrl}</span>

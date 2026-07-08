@@ -47,7 +47,7 @@ export default function CultureCreditsPage() {
               Get rewarded <em>for having taste.</em>
             </h1>
             <p className="fp-subhead">
-              Every contribution on Moveee — a post, a reaction, an RSVP, a House Fellowship
+              Every contribution on Moveee — a post, a reaction, an RSVP, a Stoop
               check-in — earns Culture Credits and Reputation Points. Credits spend. Reputation
               climbs.
             </p>
@@ -120,8 +120,8 @@ export default function CultureCreditsPage() {
               <h3 className="fp-row-title">Every action counts — literally.</h3>
               <p className="fp-row-body">
                 Posting, reacting, voting in a poll, finishing a daily game, reading an
-                article, attending a Literati Connect meetup, checking into House
-                Fellowship — every one of these earns both Culture Credits and Reputation
+                article, attending a Literati Connect meetup, checking into a
+                Stoop — every one of these earns both Culture Credits and Reputation
                 Points, with a daily cap to keep things fair.
               </p>
               <ul className="fp-row-list">

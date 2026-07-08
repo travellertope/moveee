@@ -218,7 +218,7 @@ class Culture_Post_Types {
             ) );
         }
 
-        // House Fellowship cluster meta (Literati Connect plan, Phase 1).
+        // Stoop cluster meta (Literati Connect plan, Phase 1).
         $cluster_meta = array(
             '_cluster_name'                 => 'string',
             '_cluster_city'                 => 'string',
@@ -248,6 +248,28 @@ class Culture_Post_Types {
         );
         foreach ( $cluster_meta as $meta_key => $type ) {
             register_post_meta( 'culture_cluster', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+            ) );
+        }
+
+        // Hub meta (docs/hubs-plan.md §1.1, Phase 1).
+        $hub_meta = array(
+            '_hub_name'              => 'string',
+            '_hub_slug'              => 'string',
+            '_hub_description'       => 'string',
+            '_hub_cover_image_url'   => 'string',
+            '_hub_creator_id'        => 'integer',
+            '_hub_status'            => 'string',
+            '_hub_allowed_templates' => 'string', // JSON array of template-type slugs
+            '_hub_member_count'      => 'integer',
+            '_hub_post_count'        => 'integer',
+            '_hub_created_at'        => 'string',
+        );
+        foreach ( $hub_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_hub', $meta_key, array(
                 'type'          => $type,
                 'single'        => true,
                 'show_in_rest'  => true,
@@ -1117,12 +1139,12 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureJourneys',
         ) );
 
-        // House Fellowship cluster CPT — structured entity, not a rendered page
+        // Stoop cluster CPT — structured entity, not a rendered page
         // (same rationale as culture_directory's earlier public=>false siblings:
         // it's surfaced only through dedicated screens/endpoints).
         register_post_type( 'culture_cluster', array(
             'labels' => array(
-                'name'               => __( 'House Fellowship Clusters', 'culture-community' ),
+                'name'               => __( 'Stoop Clusters', 'culture-community' ),
                 'singular_name'      => __( 'Cluster', 'culture-community' ),
                 'add_new'            => __( 'Add New', 'culture-community' ),
                 'add_new_item'       => __( 'Add New Cluster', 'culture-community' ),
@@ -1139,6 +1161,31 @@ class Culture_Post_Types {
             'supports'            => array( 'title' ),
             'show_in_rest'        => true,
             'rest_base'           => 'clusters',
+            'capability_type'     => 'post',
+        ) );
+
+        // Hub CPT — user-created topic community (docs/hubs-plan.md §1.1).
+        // Structured entity, not a rendered page — same rationale as
+        // culture_cluster above.
+        register_post_type( 'culture_hub', array(
+            'labels' => array(
+                'name'               => __( 'Hubs', 'culture-community' ),
+                'singular_name'      => __( 'Hub', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Hub', 'culture-community' ),
+                'edit_item'          => __( 'Edit Hub', 'culture-community' ),
+                'view_item'          => __( 'View Hub', 'culture-community' ),
+                'all_items'          => __( 'Hubs', 'culture-community' ),
+                'search_items'       => __( 'Search Hubs', 'culture-community' ),
+                'not_found'          => __( 'No hubs found', 'culture-community' ),
+            ),
+            'public'              => false,
+            'show_ui'             => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-groups',
+            'supports'            => array( 'title' ),
+            'show_in_rest'        => true,
+            'rest_base'           => 'hubs',
             'capability_type'     => 'post',
         ) );
     }

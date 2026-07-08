@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 const BLURBS: Record<string, { hook: string; body: string; icon: string }> = {
   "pulse-feed": { icon: "🌊", hook: "Ten ways to share", body: "Hidden gems, hot takes, polls, itineraries — posted in the format that actually fits." },
   "discover": { icon: "🧭", hook: "The map only the community could write", body: "People, places, dishes, films, movements — browsable by type and city." },
-  "literati-connect": { icon: "🤝", hook: "Culture, in person", body: "Monthly city-wide meetups and weekly House Fellowship clusters near you." },
+  "literati-connect": { icon: "🤝", hook: "Culture, in person", body: "Monthly city-wide meetups and weekly Stoop clusters near you." },
   "events": { icon: "📅", hook: "Know what's actually happening", body: "RSVP to shows, pop-ups and talks — curated by us, submitted by you." },
   "culture-credits": { icon: "🏆", hook: "Get rewarded for having taste", body: "Earn Culture Credits and Reputation Points for every contribution that lands." },
   "perks-wallet": { icon: "🎁", hook: "Spend it, or cash it out", body: "Redeem Culture Credits for real discounts, or convert them straight to cash." },

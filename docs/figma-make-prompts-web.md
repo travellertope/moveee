@@ -984,7 +984,7 @@ catalog:
 - **Event Spotlight Carousel** (`EventSpotlightCarousel.tsx`) is real, shipped code —
   inserted once after the 5th feed item exactly as the mobile §3B prompt specifies (same
   scoring formula, same category-dot colour table, same 236px card). A
-  `HouseFellowshipReminderCard` is inserted at the same position for logged-in viewers
+  `StoopReminderCard` is inserted at the same position for logged-in viewers
   only — this has no mobile-catalog equivalent yet and is new to this prompt.
 - **Logged-out visitors** see `ConnectHero` above the feed (headline "Where culture
   gathers.", Join/Sign-in CTAs, a section-nav strip) — there is no equivalent hero in the
@@ -1039,7 +1039,7 @@ relevant element — do not group them at the top of the file.
      position 5 in the already-rendered array is stable across re-renders. See
      `PulseFeed.tsx`'s render block. Full scoring/filtering spec already documented in the
      mobile §3B prompt — reuse, don't redefine here."
-  4. Above the HouseFellowshipReminderCard:
+  4. Above the StoopReminderCard:
      "DEV: Logged-in-only, rendered at the exact same array position as the Event
      Spotlight Carousel (`visible.length > 5 && session?.user`). No mobile-catalog
      equivalent yet — this card is new to the web feed only as of this prompt."
@@ -1146,8 +1146,8 @@ Same 3-column grid as Frame 1, but:
   RIGHT SIDEBAR: trending list same as Frame 1; below it, in place of the "Personalised
     feed ready" nudge (hidden because For You is already on), nothing — just the About
     Moveee card directly below trending.
-  After feed card 5: Event Spotlight Carousel, THEN a HouseFellowshipReminderCard directly
-    beneath it (paper-warm card, ochre left accent, House Fellowship icon + short reminder
+  After feed card 5: Event Spotlight Carousel, THEN a StoopReminderCard directly
+    beneath it (paper-warm card, ochre left accent, Stoop icon + short reminder
     copy + "View →" link — logged-in-only module, no mobile-catalog equivalent).
 
 FRAME 3 — MOBILE COMPANION (390×844px, logged-in, For You off):
@@ -2174,7 +2174,7 @@ Citizen" copy, has **5** stats (not 4 — Membership is its own stat alongside
 Credits/Points/Badges/Referrals), shows the **full 18-badge grid with locked
 states** rather than only-earned chips, and a much longer "How to Earn" table
 (12 rows, both Credits AND Points columns) and quick-links list (14 entries,
-including a House Fellowship link that's conditional on cluster membership) than
+including a Stoop link that's conditional on cluster membership) than
 mobile's. This prompt is grounded in the real page, `MemberDashboard.tsx`
 (stats), `MemberBadges.tsx` (badge grid), and `PasskeyBanner.tsx`.
 
@@ -2259,7 +2259,7 @@ unlock status."
 
 **Quick links (side column, flat list, no icons in real code — text links):**
 My Wallet · My Coupons · Notifications · My Analytics · My Events (Pro only) ·
-My House Fellowship (if clustered) / Find your House Fellowship (if not) · Refer
+My Stoop (if clustered) / Find your Stoop (if not) · Refer
 a Friend · Browse Perks · My Collection · Account Settings · Newsletters ·
 Upcoming Events · Magazine · Discover · Quotes Archive · Sign out
 
@@ -2292,9 +2292,8 @@ When generating, insert these as `<!-- DEV: ... -->` comments at the indicated f
    escrow pending passkey setup. Show both states as labelled variants, not just
    the generic one mobile shows. -->
 6. <!-- DEV: The quick-links list is 14-15 entries (vs. mobile's 8) and includes
-   one CONDITIONAL row — "My House Fellowship" (links to `/cluster/{id}`) if the
-   member already belongs to an active, non-archived cluster, or "Find your House
-   Fellowship" (links to `/connect/people`) if not. "My Events" is itself
+   one CONDITIONAL row — "My Stoop" (links to `/cluster/{id}`) if the
+   member already belongs to an active, non-archived cluster, or "Find your Stoop" (links to `/connect/people`) if not. "My Events" is itself
    conditional on Moveee Pro tier. Render the list with these conditions annotated,
    not as a fixed always-identical 8-item menu. -->
 7. <!-- DEV: The How to Earn table has 12 rows (not mobile's 5) and a leading
@@ -2368,7 +2367,7 @@ BEHAVIOUR:
 - Tooltip open/close is click-toggled, closes on outside click
 - Badge grid sorts earned-first but always shows all 18 entries, never hides
   locked ones
-- "My House Fellowship" vs "Find your House Fellowship" in Quick Links is
+- "My Stoop" vs "Find your Stoop" in Quick Links is
   conditional on cluster membership — annotate this branching in the frame
 
 CONSTRAINTS:
@@ -2751,7 +2750,7 @@ location search and explicit filter chips showing a member count. The real
 web page (`/connect/people`, `MemberDirectory.tsx`) is branded **"People Near
 Me"** and is deliberately location-scoped to the viewer — it queries the
 viewer's own city first, falling back to their country, with no way to browse
-globally and no visible "N members" count. It also renders a `HouseFellowship`
+globally and no visible "N members" count. It also renders a `Stoop`
 module above the directory grid for logged-in visitors, which has no mobile
 equivalent in this catalog section at all.
 
@@ -2800,8 +2799,8 @@ chips (not emoji-prefixed), a one-line bio if set, and clickable link
 buttons (text labels "Instagram"/"LinkedIn"/"Website"/"Twitter", not icon
 circles) — only rendered when the member has filled them in. -->
 
-<!-- DEV 3: A `HouseFellowship` module renders above the directory grid for
-logged-in visitors only — this is the House Fellowship / Literati Connect
+<!-- DEV 3: A `Stoop` module renders above the directory grid for
+logged-in visitors only — this is the Stoop / Literati Connect
 feature (see project docs), entirely unrelated to and absent from this
 mobile catalog section. Include it as a placeholder band, not a fully
 detailed component, since it belongs to a different feature area. -->
@@ -2836,7 +2835,7 @@ FRAME 1 — PEOPLE NEAR ME (Desktop, 1440px)
 - Hero band: eyebrow, headline ("Find each *other.*"), lede, CTA button
   (context-dependent), ghost "← Back to Feed" link, section-nav row (Pulse
   Feed / People Near Me active / Membership)
-- HouseFellowship band placeholder (logged-in only) per <!-- DEV 3 -->
+- Stoop band placeholder (logged-in only) per <!-- DEV 3 -->
 - Directory controls: search input + single industry select (no location
   chip) per <!-- DEV 1 -->
 - Member grid (responsive columns): cards per <!-- DEV 2 --> — initial-avatar
@@ -2973,7 +2972,7 @@ Add these as `<!-- DEV: ... -->` comments at the exact spots noted:
    `NotificationBell.tsx` and `NotificationsClient.tsx` — 5 of the 19 types
    (`cluster_activated`, `cluster_forming_expired`, `cluster_new_host`,
    `cluster_election_started`, `cluster_checkin_reminder`) belong to the
-   House Fellowship feature and have no mobile-catalog precedent in PROMPT
+   Stoop feature and have no mobile-catalog precedent in PROMPT
    12A's 5-example set — include at least one cluster-type row in the frame
    to demonstrate full coverage.
 4. Bar chart's two series use ochre `#b38238` (earned) and rust `#c5491f`

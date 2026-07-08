@@ -27,18 +27,20 @@ const GETMELIT_ITEM_TAGS = ["Daily", "Sat", "Sat", "Sat"];
 const EDITION_SEGMENTS: Record<RegionalSlug, string[]> = {
   uk: ["uk"],
   us: ["us", "ca"],
-  africa: ["ng", "gh"],
+  // "africa" itself is the umbrella segment editors pick for "send to all of
+  // Africa" in the Send Newsletter meta box (see ALLOWED_SEGMENTS in
+  // class-culture-newsletter-send.php) — must be included alongside the
+  // country-specific codes it can also be sent to individually.
+  africa: ["africa", "ng", "gh", "ke", "za"],
 };
 
 // Edition-specific overrides — only what changes per region
 const EDITION_CONFIG: Record<RegionalSlug, {
-  label: string;
   calendarCities: string;
   calendarDesc: string;
   cdDesc: string;
 }> = {
   africa: {
-    label: "Africa Edition",
     calendarCities: "Lagos, Accra, Nairobi, Johannesburg, and Cape Town",
     calendarDesc:
       "What's happening this week and next across Lagos, Accra, Nairobi, Johannesburg, and Cape Town — openings, screenings, readings, dinners. The events worth leaving the house for.",
@@ -46,7 +48,6 @@ const EDITION_CONFIG: Record<RegionalSlug, {
       "The weekly dispatch on contemporary global culture — viewed through an African and diasporic lens. One deep essay, curated picks, a music dispatch, and what's happening across Lagos, Accra, Nairobi, Johannesburg, and Cape Town.",
   },
   uk: {
-    label: "UK Edition",
     calendarCities: "London, Manchester, and Edinburgh",
     calendarDesc:
       "What's happening this week and next across London, Manchester, and Edinburgh — openings, screenings, readings, dinners. The events worth leaving the house for.",
@@ -54,31 +55,12 @@ const EDITION_CONFIG: Record<RegionalSlug, {
       "The weekly dispatch on contemporary global culture — rooted in Britain. One deep essay, curated picks, a music dispatch, and what's happening across London, Manchester, and Edinburgh.",
   },
   us: {
-    label: "US Edition",
     calendarCities: "New York, Atlanta, and Los Angeles",
     calendarDesc:
       "What's happening this week and next across New York, Atlanta, and Los Angeles — openings, screenings, readings, dinners. The events worth leaving the house for.",
     cdDesc:
       "The weekly dispatch on contemporary global culture — through an American lens. One deep essay, curated picks, a music dispatch, and what's happening across New York, Atlanta, and Los Angeles.",
   },
-};
-
-const OTHER_EDITIONS: Record<RegionalSlug, { label: string; href: string }[]> = {
-  africa: [
-    { label: "UK Edition", href: "/newsletter/uk" },
-    { label: "US Edition", href: "/newsletter/us" },
-    { label: "Global", href: "/newsletter" },
-  ],
-  uk: [
-    { label: "Africa Edition", href: "/newsletter/africa" },
-    { label: "US Edition", href: "/newsletter/us" },
-    { label: "Global", href: "/newsletter" },
-  ],
-  us: [
-    { label: "Africa Edition", href: "/newsletter/africa" },
-    { label: "UK Edition", href: "/newsletter/uk" },
-    { label: "Global", href: "/newsletter" },
-  ],
 };
 
 export default async function EditionNewsletterHub({ edition }: { edition: RegionalSlug }) {
@@ -113,26 +95,9 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
 
   return (
     <>
-      {/* ══ EDITION BANNER ══ */}
-      <div className="nl-edition-banner">
-        <div className="nl-edition-banner-inner">
-          <span className="nl-edition-badge">★ {cfg.label}</span>
-          <span className="nl-edition-switch">
-            Switch:{" "}
-            {OTHER_EDITIONS[edition].map((e, i) => (
-              <React.Fragment key={e.href}>
-                {i > 0 && " · "}
-                <Link href={e.href}>{e.label}</Link>
-              </React.Fragment>
-            ))}
-          </span>
-        </div>
-      </div>
-
       {/* ══ MASTHEAD ══ */}
       <section className="nl-masthead">
         <div className="nl-masthead-inner">
-          <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
             Two newsletters. One cultural <em>obsession.</em>
           </h1>

@@ -1,4 +1,4 @@
-# Literati Connect & House Fellowship — Full Planning & Implementation Spec
+# Literati Connect & Stoop — Full Planning & Implementation Spec
 
 Status: **Phases 1–5 complete end-to-end (backend + mobile + web).**
 Ground rules (§7) and conflict resolution (§8) are now fully specified
@@ -84,14 +84,14 @@ instead). Discover/Events rail: web `apps/connect/app/events/page.tsx`
 ("Literati Connect" rail, city-nearby-first with all-events fallback, capped
 at 10) and mobile `EventsScreen.tsx` (`LiteratiRail` component, same
 filtering logic, `mapEvent()` populates `isLiterati` from
-`cem.is_literati`/`_culture_event_is_literati`). House Fellowship
+`cem.is_literati`/`_culture_event_is_literati`). Stoop
 feed-injected reminder card (§4.5): web
-`packages/shared/components/pulse/HouseFellowshipReminderCard.tsx`, inserted
+`packages/shared/components/pulse/StoopReminderCard.tsx`, inserted
 into `PulseFeed.tsx` via the same stable array-slice-after-5th-item pattern
 already used by the Event Spotlight carousel; mobile
-`components/community/HouseFellowshipReminderCard.tsx`, spliced into
+`components/community/StoopReminderCard.tsx`, spliced into
 `ConnectFeedScreen.tsx`'s `FlatList` via a second marker id
-(`__house-fellowship-reminder__`) alongside the existing spotlight marker.
+(`__stoop-reminder__`) alongside the existing spotlight marker.
 Both reminder cards self-fetch `GET cluster/my-clusters` (mobile JWT, web via
 the existing `/api/cluster/my-clusters` proxy), filter client-side for a
 cluster whose `meetingDay` matches today, and render nothing if none match —
@@ -104,7 +104,7 @@ members (Citizen and Pro — no tier gating anywhere in this feature):
 | Offering | Cadence | Scope | Backed by |
 |---|---|---|---|
 | **Literati Connect** | Monthly | City-wide | Existing editorial `culture_event` CPT (reused, not duplicated) |
-| **House Fellowship** | Weekly | Street/neighbourhood cluster | New `culture_cluster` CPT + new tables (this doc's main subject) |
+| **Stoop** | Weekly | Street/neighbourhood cluster | New `culture_cluster` CPT + new tables (this doc's main subject) |
 
 ---
 
@@ -114,10 +114,10 @@ members (Citizen and Pro — no tier gating anywhere in this feature):
   initiative** (per existing CLAUDE.md naming table) *and* specifically the
   monthly city-wide event format. Do not invent a second name for the
   initiative as a whole — when in doubt, "Literati Connect" = the umbrella,
-  and "House Fellowship" = the weekly cluster format under that umbrella.
+  and "Stoop" = the weekly cluster format under that umbrella.
 - "Connect" as a bare noun belongs to Literati Connect, not to the Connect
   app. Never reintroduce "Connect" as a stand-alone UI label.
-- This doc covers House Fellowship's full build (new system) and Literati
+- This doc covers Stoop's full build (new system) and Literati
   Connect's *integration* work only (it reuses the existing editorial event
   system almost as-is — see §1).
 - Explicitly **out of scope** for the first build (do not build these unless
@@ -127,8 +127,7 @@ members (Citizen and Pro — no tier gating anywhere in this feature):
     as the existing editorial RSVP system already supports).
   - Cross-city cluster directory/search beyond what's specified in §4.
   - Any moderation tooling beyond the existing report/blocklist system
-    already in place for community content — **superseded for House
-    Fellowship specifically by §8 (Conflict resolution)**, which defines a
+    already in place for community content — **superseded for Stoop specifically by §8 (Conflict resolution)**, which defines a
     dedicated cluster-dispute mechanism; the general community report/
     blocklist system is unaffected and still governs ordinary content
     moderation everywhere else.
@@ -164,7 +163,7 @@ piece of metadata:
   `_culture_event_is_literati = 1` and the user's city/region (existing
   region-matching utilities — see §3.4).
 - Reward: attending (RSVP'd + event date has passed, no explicit check-in
-  required for this cadence — see §6.1 for why House Fellowship needs
+  required for this cadence — see §6.1 for why Stoop needs
   check-in but Literati Connect doesn't) awards credits/reputation via the
   `award_points()` bridge under a new action key `literati_connect_attended`
   (see §6 for the full points table). This requires one new cron-driven
@@ -172,11 +171,11 @@ piece of metadata:
   the distinction.
 
 That's the entirety of Literati Connect's build. Everything else in this
-document is House Fellowship.
+document is Stoop.
 
 ---
 
-## 2. House Fellowship — data model
+## 2. Stoop — data model
 
 ### 2.1 New CPT: `culture_cluster`
 
@@ -265,7 +264,7 @@ active ──(host leaves with no successor and no members remain after 14-day g
   and flips them to `archived`, notifying the founder (new notification
   type `cluster_forming_expired`, see §6.4) with a CTA to merge into a
   nearby active cluster instead (links to the people/members-near-me
-  House Fellowship section, pre-filtered by city).
+  Stoop section, pre-filtered by city).
 
 ### 2.4 Host-selection mechanisms (all three, coherently sequenced)
 
@@ -320,7 +319,7 @@ cluster.
 
 ### 2.5 Admin configuration
 
-New "Literati Connect / House Fellowship" section in WP Admin → Culture
+New "Literati Connect / Stoop" section in WP Admin → Culture
 Community → General tab (`class-culture-settings.php`), same pattern as the
 existing "Cloudflare R2 Storage" / "Lifestyle Shop" sections:
 - `culture_cluster_min_activation_members` (default 4)
@@ -344,7 +343,7 @@ or no cluster exists yet for their street:
   is optional and many users won't have it set) and may join any of them
   directly, no approval step.
 - If the user is at capacity *and* no other city cluster has room either,
-  they're shown the "Start a House Fellowship" CTA (§2.7) instead.
+  they're shown the "Start a Stoop" CTA (§2.7) instead.
 - Joining a cluster outside one's home street has no different treatment
   in the data model — `wp_culture_cluster_members` doesn't care why someone
   joined. There is no "home cluster" flag stored anywhere; "home cluster"
@@ -356,8 +355,7 @@ or no cluster exists yet for their street:
 This is the mechanism for how a cluster comes to exist before anyone has
 joined it:
 
-1. Any member (Citizen or Pro — no gating) taps **"Start a House
-   Fellowship"** from the people/members-near-me screen or from the
+1. Any member (Citizen or Pro — no gating) taps **"Start a Stoop"** from the people/members-near-me screen or from the
    empty-state shown when their street has no cluster (see §4.1/§4.2 for
    exact entry points).
 2. A short form: cluster name (pre-filled from their profile
@@ -476,7 +474,7 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
 
 ### 4.1 Entry points
 
-- New **"House Fellowship"** section inside the existing people/members-near-me
+- New **"Stoop"** section inside the existing people/members-near-me
   surface — `MemberDirectoryScreen.tsx` on mobile, `app/connect/people/page.tsx`
   on web. Not Discover: Discover's mental model is content browsing (places,
   books, films, the `culture_directory` entry types), whereas a cluster is
@@ -484,12 +482,11 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
   directory already represents. Placed as a dedicated section/tab at the top
   of that screen (e.g. a "Your Street" segment above the regular member grid),
   not a separate nav item.
-- A **dashboard quick link** ("My House Fellowship" or "Find your House
-  Fellowship" depending on membership state) on `MemberDashboardScreen.tsx`
+- A **dashboard quick link** ("My Stoop" or "Find your Stoop" depending on membership state) on `MemberDashboardScreen.tsx`
   / `app/member/page.tsx`'s quick links — same slot pattern as the
   existing Wallet/Perks/Events links.
 - If the user has no cluster and their street has none either, an
-  empty-state card with the "Start a House Fellowship" CTA (§2.7) appears
+  empty-state card with the "Start a Stoop" CTA (§2.7) appears
   in both of the above locations.
 - Unlike Discover (which already has a reusable paginated search/filter
   shell), the people/members-near-me screens have less existing
@@ -514,7 +511,7 @@ for Discover, Follow, and feed-recommendations elsewhere in this repo.
 ### 4.3 Literati Connect rail
 
 A horizontal rail of upcoming `_culture_event_is_literati = 1` events. Since
-House Fellowship discovery now lives on the people/members-near-me screen
+Stoop discovery now lives on the people/members-near-me screen
 (§4.1) rather than Discover, this rail is placed directly in the Events
 tab/screen instead (it's a city-wide *event*, not a people-near-you concept,
 so Events is the better fit regardless of where clusters live) — reuses
@@ -545,11 +542,11 @@ ClusterScreen.tsx` on mobile, `app/cluster/[id]/page.tsx` on web):
 
 ### 4.5 Feed surfacing
 
-A House Fellowship reminder appears as a feed-injected card (same
+A Stoop reminder appears as a feed-injected card (same
 injection mechanism as the Event Spotlight carousel — a fixed-position
 slice at a stable index, not a re-sorted item) on the user's *own* cluster
-meeting day, e.g. "Your House Fellowship meets tonight at 7pm — tap to see
-who's going." This is the only place House Fellowship appears inside the
+meeting day, e.g. "Your Stoop meets tonight at 7pm — tap to see
+who's going." This is the only place Stoop appears inside the
 main community feed; everything else lives in Discover/dashboard/cluster
 screen.
 
@@ -557,11 +554,11 @@ screen.
 
 ## 5. Check-in & attendance tracking
 
-### 5.1 Why House Fellowship needs check-in (unlike Literati Connect)
+### 5.1 Why Stoop needs check-in (unlike Literati Connect)
 
 Literati Connect events are RSVP-only because they're large, public,
 city-wide, low-frequency — RSVP-then-attendance-sweep (§1) is good enough
-signal. House Fellowship is small, weekly, recurring, and its entire reward
+signal. Stoop is small, weekly, recurring, and its entire reward
 value (streaks, host trust signals, "Cluster Regular" badge) depends on
 *actually showing up*, not just intending to — so it needs a real per-week
 attendance record, hence the `wp_culture_cluster_checkins` table.
@@ -673,12 +670,11 @@ type added without a routing case.
 
 ### 7.1 City-wide baseline rules (admin-owned, immutable to hosts/members)
 
-A single global Code of Conduct for House Fellowship, not per-city or
+A single global Code of Conduct for Stoop, not per-city or
 per-cluster — same "one canonical instance" posture as other static
 policy-style content in this codebase. Stored as a new WP option,
-`culture_house_fellowship_ground_rules` (rich text), edited in WP Admin →
-Culture Community → General → the existing "Literati Connect / House
-Fellowship" section introduced in §2.5 (one more field in the same
+`culture_stoop_ground_rules` (rich text), edited in WP Admin →
+Culture Community → General → the existing "Literati Connect / Stoop" section introduced in §2.5 (one more field in the same
 section, not a new admin screen). Covers safety, mutual respect, and
 expected conduct at meetings — actual wording is an editorial/legal
 decision outside this doc's scope; this doc only specifies the storage and
@@ -716,7 +712,7 @@ global rules wherever they appear, never replaces them.
 
 ### 7.4 Where the rules are shown (read-only, no gating)
 
-- Cluster discovery preview (§4.2) — a read-only "House Fellowship ground
+- Cluster discovery preview (§4.2) — a read-only "Stoop ground
   rules" expander, visible even to non-members, so people know what
   they're agreeing to before tapping Join.
 - Cluster home screen (§4.4) — the same content always visible (e.g. a
@@ -731,7 +727,7 @@ global rules wherever they appear, never replaces them.
 
 The existing community report system targets *content* — a reporter flags
 a specific post, and a report-count threshold on that post triggers
-auto-pending. A House Fellowship dispute is about a **member's conduct**
+auto-pending. A Stoop dispute is about a **member's conduct**
 within an ongoing small group, not a single piece of content, and needs a
 real workflow (open → host review → possibly escalate → resolved), not a
 count threshold. That's a deliberate, justified exception to this
@@ -872,7 +868,7 @@ requirement as §6.4's notification types.
    five notification types incl. icon-map and deep-link updates.
 5. **Phase 5 — Literati Connect integration + feed surfacing.** §1's
    editorial-CPT meta flag and badge, the attendance-sweep cron and its
-   reward, the Discover/Events rail, and the House Fellowship feed-injected
+   reward, the Discover/Events rail, and the Stoop feed-injected
    reminder card (§4.5).
 6. **Phase 6 — Ground rules & conflict resolution.** §7's global rules
    option, the optional per-cluster note field, the join-time acceptance
@@ -882,7 +878,7 @@ requirement as §6.4's notification types.
    sweep, the City Convener admin mapping + admin reports panel, and the
    three new notification types incl. icon-map and deep-link updates. Can
    ship independently of Phase 4/5 (no dependency either direction) but
-   should land before House Fellowship is opened to the general public at
+   should land before Stoop is opened to the general public at
    scale — ground rules and a dispute path are expected to exist from a
    cluster's very first real-world meeting, not bolted on after growth.
 
