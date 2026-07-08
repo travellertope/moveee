@@ -220,6 +220,10 @@ class Culture_Activator {
         // Stoop check-in/attendance table (Literati Connect plan, Phase 3).
         Culture_Clusters::create_checkins_table();
 
+        // Hub membership + follow tables (docs/hubs-plan.md, Phase 1).
+        Culture_Hubs::create_members_table();
+        Culture_Hubs::create_follows_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

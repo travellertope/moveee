@@ -144,6 +144,28 @@ export interface ClusterAttendance {
   lastCheckedIn: string | null;
 }
 
+// ── Hubs (docs/hubs-plan.md, Phase 1) ───────────────────────────────────────
+export interface Hub {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  coverImageUrl: string;
+  creatorId: number;
+  status: 'active' | 'archived';
+  allowedTemplates: string[];
+  memberCount: number;
+  postCount: number;
+  createdAt: string;
+  role?: string | null;
+}
+
+export interface HubStatus {
+  isMember: boolean;
+  role: string | null;
+  isFollowing: boolean;
+}
+
 // ── Unified feed ────────────────────────────────────────────────────────────
 export type FeedItemType =
   | 'pulse' | 'editorial' | 'happening'

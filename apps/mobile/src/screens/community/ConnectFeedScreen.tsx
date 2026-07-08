@@ -333,17 +333,22 @@ export default function ConnectFeedScreen() {
             />
           </View>
           <View style={styles.headerRight}>
-            {/* Ghost refresh */}
+            {/* Hub */}
             <TouchableOpacity
               style={styles.iconBtn}
-              onPress={refresh}
+              onPress={() => nav.navigate("HubsScreen")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons
-                name="refresh-outline"
-                size={20}
-                color={c.ghost}
-              />
+              <Ionicons name="planet-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
+            {/* Stoop */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("StoopHomeScreen")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="home-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
             {/* Member directory */}

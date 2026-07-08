@@ -1455,6 +1455,92 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Hubs (web — API key, explicit user_id param).
+        // Mirrors /mobile/hub/* in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/hub/create', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_create' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'     => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'name'        => array( 'required' => true, 'type' => 'string' ),
+                'description' => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/discover', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_discover' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/my-hubs', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_my_hubs' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/slug/(?P<slug>[a-zA-Z0-9-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_get_by_slug' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_get' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/join', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_join' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/leave', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_leave' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_follow' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'type' => 'boolean' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_unfollow' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -1940,6 +2026,113 @@ class Culture_REST_API {
         $cluster_id = (int) $request->get_param( 'id' );
 
         return rest_ensure_response( Culture_Clusters::get_attendance_history( $cluster_id, $user_id ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Hubs (web — API key, explicit user_id)
+     * —————————————————————————————————————— */
+
+    public static function handle_hub_create( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $data    = array(
+            'name'              => (string) $request->get_param( 'name' ),
+            'description'       => (string) $request->get_param( 'description' ),
+            'coverImageId'      => (int) ( $request->get_param( 'cover_image_id' ) ?: 0 ),
+            'allowedTemplates'  => $request->get_param( 'allowed_templates' ),
+        );
+
+        $result = Culture_Hubs::create( $user_id, $data );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $result ) );
+    }
+
+    public static function handle_hub_discover( $request ) {
+        $params = array(
+            'q'        => (string) $request->get_param( 'q' ),
+            'sort'     => (string) $request->get_param( 'sort' ),
+            'page'     => (int) ( $request->get_param( 'page' ) ?: 1 ),
+            'per_page' => (int) ( $request->get_param( 'per_page' ) ?: 20 ),
+        );
+
+        return rest_ensure_response( Culture_Hubs::discover( $params ) );
+    }
+
+    public static function handle_hub_my_hubs( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( Culture_Hubs::get_for_user( $user_id ) );
+    }
+
+    public static function handle_hub_get( $request ) {
+        $hub_id = (int) $request->get_param( 'id' );
+        $hub    = Culture_Hubs::get_hub( $hub_id );
+        if ( ! $hub ) {
+            return new WP_Error( 'not_found', 'Hub not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( $hub );
+    }
+
+    public static function handle_hub_get_by_slug( $request ) {
+        $slug = (string) $request->get_param( 'slug' );
+        $hub  = Culture_Hubs::get_hub_by_slug( $slug );
+        if ( ! $hub ) {
+            return new WP_Error( 'not_found', 'Hub not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( $hub );
+    }
+
+    public static function handle_hub_status( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $hub_id  = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_join( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::join( $hub_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_leave( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::leave( $hub_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_follow( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $notify_posts = (bool) $request->get_param( 'notify_posts' );
+
+        $result = Culture_Hubs::follow( $hub_id, $user_id, $notify_posts );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_unfollow( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        Culture_Hubs::unfollow( $hub_id, $user_id );
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
     }
 
     /* ——————————————————————————————————————

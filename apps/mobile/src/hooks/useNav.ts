@@ -31,6 +31,10 @@ export type AppParamList = {
   MyEvents: undefined;
   NewPortfolioItem: undefined;
   ClusterScreen: { id: number };
+  StoopHomeScreen: undefined;
+  HubsScreen: undefined;
+  HubCreateScreen: undefined;
+  HubDetail: { slug: string };
   HostOnboardingScreen: undefined;
   StartClusterScreen: {
     country?: string;

@@ -441,6 +441,76 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Hubs (culture_hub CPT). Phase 1 — create/discover/join/leave/
+        // follow/unfollow/status only, no posting/moderation yet. Mirrors
+        // /hub/* (web, API key) — see class-culture-rest-api.php.
+        register_rest_route( 'culture/v1', '/mobile/hub/create', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_create' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'name'        => array( 'required' => true, 'type' => 'string' ),
+                'description' => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/discover', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_discover' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/my-hubs', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_my_hubs' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/slug/(?P<slug>[a-zA-Z0-9-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_get_by_slug' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_get' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/join', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_join' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/leave', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_leave' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_follow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'notify_posts' => array( 'type' => 'boolean' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_unfollow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -2017,6 +2087,113 @@ class Culture_Mobile_API {
         $cluster_id = (int) $request->get_param( 'id' );
 
         return rest_ensure_response( Culture_Clusters::get_attendance_history( $cluster_id, $user_id ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Hubs (mobile, JWT)
+     * —————————————————————————————————————— */
+
+    public static function handle_hub_create( $request ) {
+        $user_id = get_current_user_id();
+        $data    = array(
+            'name'             => (string) $request->get_param( 'name' ),
+            'description'      => (string) $request->get_param( 'description' ),
+            'coverImageId'     => (int) ( $request->get_param( 'cover_image_id' ) ?: 0 ),
+            'allowedTemplates' => $request->get_param( 'allowed_templates' ),
+        );
+
+        $result = Culture_Hubs::create( $user_id, $data );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $result ) );
+    }
+
+    public static function handle_hub_discover( $request ) {
+        $params = array(
+            'q'        => (string) $request->get_param( 'q' ),
+            'sort'     => (string) $request->get_param( 'sort' ),
+            'page'     => (int) ( $request->get_param( 'page' ) ?: 1 ),
+            'per_page' => (int) ( $request->get_param( 'per_page' ) ?: 20 ),
+        );
+
+        return rest_ensure_response( Culture_Hubs::discover( $params ) );
+    }
+
+    public static function handle_hub_my_hubs( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( Culture_Hubs::get_for_user( $user_id ) );
+    }
+
+    public static function handle_hub_get( $request ) {
+        $hub_id = (int) $request->get_param( 'id' );
+        $hub    = Culture_Hubs::get_hub( $hub_id );
+        if ( ! $hub ) {
+            return new WP_Error( 'not_found', 'Hub not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( $hub );
+    }
+
+    public static function handle_hub_get_by_slug( $request ) {
+        $slug = (string) $request->get_param( 'slug' );
+        $hub  = Culture_Hubs::get_hub_by_slug( $slug );
+        if ( ! $hub ) {
+            return new WP_Error( 'not_found', 'Hub not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( $hub );
+    }
+
+    public static function handle_hub_status( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_join( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::join( $hub_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_leave( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::leave( $hub_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_follow( $request ) {
+        $user_id      = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $notify_posts = (bool) $request->get_param( 'notify_posts' );
+
+        $result = Culture_Hubs::follow( $hub_id, $user_id, $notify_posts );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
+    }
+
+    public static function handle_hub_unfollow( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        Culture_Hubs::unfollow( $hub_id, $user_id );
+
+        return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );

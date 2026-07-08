@@ -1,13 +1,10 @@
 # Hubs — Full Planning & Implementation Spec
 
-Status: **Not yet built. This document is the single source of truth for
-building this feature.** Do not begin implementation on any phase until this
-document is read in full — it exists specifically to prevent scope creep and
-to avoid omitting load-bearing pieces (gamification wiring, notification
-wiring, mobile/web parity, moderation) that are easy to forget mid-build in
-this codebase. Modeled directly on `docs/literati-connect-plan.md` (Stoop) —
-read that doc's own structure for precedent on tone/rigor if anything here is
-ambiguous.
+Status: **Phase 1 built (see §9's Phase 1 line for the full checklist).**
+This document is the single source of truth for building this feature — do
+not begin Phase 2 until it's read in full. Modeled directly on
+`docs/literati-connect-plan.md` (Stoop) — read that doc's own structure for
+precedent on tone/rigor if anything here is ambiguous.
 
 **Decisions already made (do not re-litigate without the user):**
 - Feature name: **Hubs** (not "Communities" — avoids further overloading the
@@ -242,33 +239,42 @@ restricts the Hub to.
 
 ### 4.2 Entry points
 
-- **Feed header icon swap (the primary entry point).** The Reload icon
-  currently in the feed screen's header (mobile: `ConnectFeedScreen.tsx`;
-  web: `PulseFeed.tsx`'s feed header) is removed. In its place, two new
-  icons are added: **Hub** (→ the Hubs browse/discover screen, §4.2 below)
-  and **Stoop** (→ `/connect` on web / the existing Stoop entry screen on
-  mobile — whatever the user's current Stoop membership state resolves to,
-  same routing `Stoop.tsx`/`packages/shared/components/connect/Stoop.tsx`
-  already does today from its own entry points).
-  - **Done ahead of Phase 1**: the old People-screen Stoop entry point has
+- **Feed header icon swap (the primary entry point) — done.**
+  - **Mobile**: `ConnectFeedScreen.tsx`'s header had a "Ghost refresh"
+    `refresh-outline` icon — confirmed the screen's `FlatList` already has a
+    `RefreshControl` wired to the same `refresh()` function (pull-to-refresh
+    parity confirmed per the verification note below), so the icon was safe
+    to remove. Replaced with two icons: **Hub** (`planet-outline` →
+    `HubsScreen`) and **Stoop** (`home-outline` → `StoopHomeScreen`, a new
+    screen — see below).
+  - **Web has no equivalent Reload icon** — `PulseFeed.tsx`'s feed header
+    never had one (the original assumption that it mirrored mobile's Reload
+    icon was wrong). Instead, Hub and Stoop icons were added to the
+    persistent global site header, `apps/connect/components/Header.tsx`,
+    next to the existing Discover compass icon (same `ch-icon-btn` pattern,
+    visible on every Connect page including the feed) — Hub links to `/hub`,
+    Stoop links to a new `/connect/stoop` page.
+  - **`/connect/stoop` (new)**: renders `Stoop.tsx` (the join/discover
+    widget) with its own hero, mirroring the page structure the old
+    People-screen render used before removal. This is what actually revives
+    `Stoop.tsx` from the "unused, pending" state noted below.
+  - **`StoopHomeScreen` (new, mobile)**: recreates the removed
+    `HouseFellowshipSection` inline logic as its own screen (fetch
+    `my-clusters`, show the active cluster or nearby clusters + a "Start a
+    Stoop" CTA) — necessary because removing it from `MemberDirectoryScreen`
+    left no other mobile screen doing this resolve.
+  - **Done ahead of Phase 1**: the old People-screen Stoop entry point had
     already been removed (web: `Stoop` import/render deleted from
     `apps/connect/app/connect/people/page.tsx`; mobile: the
     `HouseFellowshipSection` inline component and its `hf*` styles deleted
-    from `MemberDirectoryScreen.tsx`'s `ListHeaderComponent`) so there's no
-    longer a competing entry point to reconcile once the feed icons ship.
-    `packages/shared/components/connect/Stoop.tsx` itself (the
-    join/discover widget component) is intentionally left in place —
-    currently unused on web pending the Hub/Stoop feed-icon build, which
-    will wire it back up (or reuse its logic) from the new entry point.
-  - Manual refresh (the Reload icon's prior function) needs a replacement
-    interaction — pull-to-refresh already exists on both platforms'
-    `FlatList`/scroll containers per existing code, so removing the icon is
-    safe only if pull-to-refresh already covers this gesture on both
-    surfaces. **Verify this before removing the icon** — if web's `PulseFeed.tsx`
-    has no pull-to-refresh equivalent (desktop browsers don't have a
-    pull gesture), keep a lower-emphasis refresh affordance on web (e.g. a
-    small icon in a corner, or refresh-on-tab-focus) rather than removing
-    the only way to refresh the feed on desktop.
+    from `MemberDirectoryScreen.tsx`'s `ListHeaderComponent`) so there was no
+    competing entry point to reconcile once the feed icons shipped.
+    `packages/shared/components/connect/Stoop.tsx` is no longer unused — see
+    `/connect/stoop` above.
+  - Manual refresh on mobile is preserved via the pre-existing
+    `RefreshControl`/pull-to-refresh on the feed `FlatList` — confirmed
+    before removing the Reload icon, per the verification note this
+    replaces.
 - No dedicated Hubs tab in the main tab bar, and Hubs are **not** placed
   inside Discover — the feed-header icon above is the only nav entry point.
   A **Hubs browse screen** (name search, sort, "My Hubs", "Start a Hub" —
@@ -515,16 +521,30 @@ New posts/comments are rejected server-side once `_hub_status = archived`
 
 ## 9. Implementation order (phases — build strictly in this order)
 
-**Phase 1 — Data model & core membership.** `culture_hub` CPT + meta.
-`wp_culture_hub_members` + `wp_culture_hub_follows` tables (bump
-`CULTURE_VERSION`). `Culture_Hubs` core class: `create`, `get`, `get_by_slug`,
-`join`, `leave`, `follow`, `unfollow`, `is_member`, `is_following`,
-`get_role`, `discover`, `get_for_user`. Mirrored REST endpoints (mobile +
-web) for all of the above. Web: Hubs browse screen + Hub creation form +
-Hub home screen (feed read-only at this phase, no posting yet). Mobile:
-equivalent screens. **Feed header icon swap** (§4.2): remove the Reload
-icon, add Hub + Stoop icons — confirm pull-to-refresh parity on both
-platforms before removing Reload (see §4.2's verification note).
+**Phase 1 — Data model & core membership. DONE.** `culture_hub` CPT + meta
+(`class-culture-post-types.php`). `wp_culture_hub_members` +
+`wp_culture_hub_follows` tables (`CULTURE_VERSION` bumped to `2.8.0`,
+`class-culture-hubs.php`, wired into `Culture_Activator::create_tables()`).
+`Culture_Hubs` core class: `create`, `get_hub`, `get_hub_by_slug`, `join`,
+`leave`, `follow`, `unfollow`, `is_member`, `is_following`, `get_role`,
+`get_status`, `discover`, `get_for_user`. Mirrored REST endpoints (mobile
+`/mobile/hub/*` in `class-culture-mobile-api.php` + web `/hub/*` in
+`class-culture-rest-api.php`) for all of the above, plus matching Next.js
+proxy routes (`apps/connect/app/api/hub/**`). Web: `/hub` browse screen
+(`HubDiscoverClient.tsx` — search/sort/My Hubs), `/hub/create`
+(`CreateHubClient.tsx` — single-step form with allowed-template picker),
+`/hub/[slug]` (`HubActions.tsx` — join/leave/follow/unfollow; feed section is
+a placeholder, posting is Phase 2). Mobile: `HubsScreen`, `HubCreateScreen`,
+`HubDetailScreen` (same shape, registered in `ConnectStack` +
+`AppParamList`). **Feed header icon swap** (§4.2) also done — see that
+section for the corrected mobile/web split (web has no Reload icon; Hub +
+Stoop icons landed in the global `ConnectHeader` instead) and the new
+`/connect/stoop` + `StoopHomeScreen` entry points this required.
+Not yet done, deliberately deferred to a later pass within Phase 1: mod/owner
+management UI, cover-image upload in the creation form (`coverImageId` is
+wired server-side but no upload control exists yet), and Trending sort's
+real-usage validation (logic is in `Culture_Hubs::discover()` but untested
+against real data). None of these block Phase 2.
 
 **Phase 2 — Posting into a Hub.** `_hub_id` meta on `culture_post`, surfaced
 as `hubId` on `FeedItem` (§1.4). `SubmitPost.tsx`/`NewPostScreen.tsx` gain
