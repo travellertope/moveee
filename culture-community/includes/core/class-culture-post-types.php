@@ -961,6 +961,17 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Issue number field — allows regional editions of the same issue to share
+        // a number so the frontend can deduplicate them and show one canonical entry.
+        register_graphql_field( 'CultureNewsletter', 'nlIssueNum', array(
+            'type'        => 'Int',
+            'description' => 'Canonical issue number, shared across all regional editions of the same issue.',
+            'resolve'     => function( $post ) {
+                $val = get_post_meta( $post->databaseId, '_culture_nl_issue_num', true );
+                return $val ? (int) $val : null;
+            },
+        ) );
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
@@ -1064,6 +1075,14 @@ class Culture_Post_Types {
             'type'         => 'string',
             'single'       => true,
             'default'      => '',
+            'show_in_rest' => true,
+        ) );
+        // Expose _culture_nl_issue_num so regional editions of the same issue can
+        // be deduplicated on the frontend (UK/US/Africa editions share one issue number).
+        register_post_meta( 'culture_newsletter', '_culture_nl_issue_num', array(
+            'type'         => 'integer',
+            'single'       => true,
+            'default'      => 0,
             'show_in_rest' => true,
         ) );
 
