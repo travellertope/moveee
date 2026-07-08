@@ -6,6 +6,7 @@ import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import NlArchiveList, { NlArchiveRow } from "@/components/NlArchiveList";
 import { CultureDropPreview, GetMeLitPreview } from "@/components/NlCardPreviews";
+import HideIfSubscribed from "@/components/HideIfSubscribed";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META } from "@/lib/newsletter-lists";
 import type { RegionalSlug } from "@/lib/editions";
@@ -151,6 +152,7 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
       </section>
 
       {/* ══ TWO NEWSLETTER CARDS ══ */}
+      <HideIfSubscribed>
       <section className="nl-cards-section">
         <div className="nl-cards-inner">
           {/* Culture Drop card */}
@@ -199,6 +201,7 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
           </div>
         </div>
       </section>
+      </HideIfSubscribed>
 
       {/* ══ TESTIMONIALS ══ */}
       <section className="nl-testimonials">

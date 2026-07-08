@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 
 interface Props {
   list?: string;
@@ -22,16 +21,10 @@ export default function GmlCTAForm({
   const [email, setEmail] = useState("");
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  if (status === "authenticated") {
-    return (
-      <div className="nl-manage nl-manage--dark" style={{ padding: "8px 0 16px" }}>
-        <p className="nl-manage-note">✓ Subscribed as a member</p>
-        <Link href="/member/settings" className="nl-manage-btn" style={{ fontSize: "11px" }}>
-          Manage Preferences
-        </Link>
-      </div>
-    );
-  }
+  // Logged-in members are already subscribed (see NewsletterSubscribeWidget's
+  // auto-subscribe effect) — hide the box rather than showing a manage link.
+  // Preference management lives at /member/settings/newsletters.
+  if (status === "authenticated") return null;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

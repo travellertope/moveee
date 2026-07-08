@@ -7,6 +7,7 @@ import ProgressBar from "@/components/ProgressBar";
 import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
+import HideIfSubscribed from "@/components/HideIfSubscribed";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -458,12 +459,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               </div>
             )}
 
-            <div className="ar-sidebar-card ar-sidebar-card--newsletter">
-              <span className="ar-sidebar-label">★ Culture Drop</span>
-              <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Culture in your inbox, every Tuesday.</h4>
-              <p style={{ fontSize: 13, color: "var(--mute)", marginBottom: 14, lineHeight: 1.5 }}>Film picks, exhibition openings, music worth your time. No noise.</p>
-              <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
-            </div>
+            <HideIfSubscribed>
+              <div className="ar-sidebar-card ar-sidebar-card--newsletter">
+                <span className="ar-sidebar-label">★ Culture Drop</span>
+                <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Culture in your inbox, every Tuesday.</h4>
+                <p style={{ fontSize: 13, color: "var(--mute)", marginBottom: 14, lineHeight: 1.5 }}>Film picks, exhibition openings, music worth your time. No noise.</p>
+                <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
+              </div>
+            </HideIfSubscribed>
 
             {relatedStories.slice(0, 2).map((story: any) => (
               <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: "none" }}>

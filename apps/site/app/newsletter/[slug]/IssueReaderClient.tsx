@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
+import HideIfSubscribed from "@/components/HideIfSubscribed";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import { NL_META, NewsletterListId } from "@/lib/newsletter-lists";
 import type { AccessLevel } from "@/lib/access";
@@ -298,27 +299,29 @@ export default function IssueReaderClient({
         </article>
 
         {/* Subscribe band */}
-        <div className="rd-subscribe-band" id="rd-subscribe">
-          <h2 className="rd-subscribe-title">Never miss an issue.</h2>
-          <div className="rd-subscribe-form">
-            {isGml ? (
-              <NewsletterSubscribeWidget
-                placeholder="your@email.com"
-                buttonLabel="Get it in my inbox →"
-                list="getmelit"
-              />
-            ) : (
-              <GmlCTAForm
-                list="culture-drop"
-                buttonLabel="Drop it in my inbox →"
-                successLabel="✓ You're in"
-              />
-            )}
+        <HideIfSubscribed>
+          <div className="rd-subscribe-band" id="rd-subscribe">
+            <h2 className="rd-subscribe-title">Never miss an issue.</h2>
+            <div className="rd-subscribe-form">
+              {isGml ? (
+                <NewsletterSubscribeWidget
+                  placeholder="your@email.com"
+                  buttonLabel="Get it in my inbox →"
+                  list="getmelit"
+                />
+              ) : (
+                <GmlCTAForm
+                  list="culture-drop"
+                  buttonLabel="Drop it in my inbox →"
+                  successLabel="✓ You're in"
+                />
+              )}
+            </div>
+            <span className="rd-subscribe-note">
+              Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
+            </span>
           </div>
-          <span className="rd-subscribe-note">
-            Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
-          </span>
-        </div>
+        </HideIfSubscribed>
 
       </div>
     </div>
