@@ -1,8 +1,9 @@
 <?php
 /**
- * Hubs — user-created topic communities (docs/hubs-plan.md). Phase 1 scope
- * only: core CPT/membership/follow (create/join/leave/follow/discover), no
- * post-linking, moderation, or rewards yet (those are Phases 2-4).
+ * Hubs — user-created topic communities (docs/hubs-plan.md). Phase 1: core
+ * CPT/membership/follow (create/join/leave/follow/discover). Phase 2 adds
+ * post-linking (_hub_id on culture_post) — see ALLOWED_TEMPLATES and the
+ * added_post_meta hook below. Moderation/rewards are still Phases 3-4.
  *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same discipline as Culture_Clusters / Culture_Follows / Culture_Community_RSVP.
@@ -12,9 +13,43 @@ class Culture_Hubs {
     const STATUS_ACTIVE   = 'active';
     const STATUS_ARCHIVED = 'archived';
 
-    /** Templates a brand-new Hub allows by default — the three templates
-     * with no reputation/tier gate (docs/hubs-plan.md §3.3). */
-    const DEFAULT_ALLOWED_TEMPLATES = array( 'post', 'cultural-take', 'quote' );
+    /**
+     * Template types a Hub's _hub_allowed_templates can contain. Deliberately
+     * excludes 'quote' — quotes are a separate culture_quote CPT (submitted
+     * via /api/quotes/create, not handle_submit_post()/community/submit), so
+     * they can never carry a _hub_id the way every other template's
+     * culture_post can. Offering "Quote" in a Hub's template picker would
+     * silently create quotes that never appear in that Hub's feed — worse
+     * than not offering it. Revisit only if culture_quote ever gets its own
+     * Hub-linkage plumbing.
+     */
+    const ALLOWED_TEMPLATES = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event' );
+
+    /** Templates a brand-new Hub allows by default — the two templates with
+     * no reputation/tier gate (docs/hubs-plan.md §3.3, revised to drop quote
+     * per the note above). */
+    const DEFAULT_ALLOWED_TEMPLATES = array( 'post', 'cultural-take' );
+
+    /**
+     * Increments _hub_post_count the first time _hub_id is set on a
+     * culture_post — fires for both submit paths (mobile's explicit
+     * update_post_meta() call and web's REST-API meta-on-insert), since
+     * both ultimately go through add_post_meta() under the hood.
+     */
+    public static function init() {
+        add_action( 'added_post_meta', array( __CLASS__, 'on_hub_id_meta_added' ), 10, 4 );
+    }
+
+    public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
+        if ( '_hub_id' !== $meta_key ) {
+            return;
+        }
+        $hub_id = (int) $meta_value;
+        if ( ! $hub_id || 'culture_post' !== get_post_type( $object_id ) ) {
+            return;
+        }
+        update_post_meta( $hub_id, '_hub_post_count', (int) get_post_meta( $hub_id, '_hub_post_count', true ) + 1 );
+    }
 
     /* ——————————————————————————————————————
      *  Tables
@@ -306,7 +341,7 @@ class Culture_Hubs {
         $allowed = isset( $data['allowedTemplates'] ) && is_array( $data['allowedTemplates'] ) && $data['allowedTemplates']
             ? array_values( array_intersect(
                 array_map( 'sanitize_key', $data['allowedTemplates'] ),
-                array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' )
+                self::ALLOWED_TEMPLATES
             ) )
             : self::DEFAULT_ALLOWED_TEMPLATES;
         if ( ! $allowed ) {
@@ -374,7 +409,7 @@ class Culture_Hubs {
         if ( isset( $data['allowedTemplates'] ) && is_array( $data['allowedTemplates'] ) ) {
             $allowed = array_values( array_intersect(
                 array_map( 'sanitize_key', $data['allowedTemplates'] ),
-                array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' )
+                self::ALLOWED_TEMPLATES
             ) );
             update_post_meta( $hub_id, '_hub_allowed_templates', wp_json_encode( $allowed ?: self::DEFAULT_ALLOWED_TEMPLATES ) );
         }

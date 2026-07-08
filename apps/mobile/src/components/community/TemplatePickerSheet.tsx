@@ -36,11 +36,15 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSelect: (id: TemplateId) => void;
+  /** Hub-scoped composer (docs/hubs-plan.md §3.1) — when set, only these
+   * template ids are shown, not just dimmed. */
+  allowedIds?: TemplateId[];
 }
 
-export default function TemplatePickerSheet({ visible, onClose, onSelect }: Props) {
+export default function TemplatePickerSheet({ visible, onClose, onSelect, allowedIds }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const defs = allowedIds ? TEMPLATE_DEFS.filter((t) => allowedIds.includes(t.id)) : TEMPLATE_DEFS;
 
   const handleSelect = useCallback((id: TemplateId) => {
     onClose();
@@ -82,7 +86,7 @@ export default function TemplatePickerSheet({ visible, onClose, onSelect }: Prop
           contentContainerStyle={styles.grid}
           showsVerticalScrollIndicator={false}
         >
-          {TEMPLATE_DEFS.map((t) => (
+          {defs.map((t) => (
             <TouchableOpacity
               key={t.id}
               style={styles.card}

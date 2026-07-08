@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import HubActions from "./HubActions";
 import HubManage from "./HubManage";
+import HubFeed from "./HubFeed";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -147,11 +148,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
         <section className="mem-card">
           <div className="mem-card-label">Posts</div>
-          <p className="mem-card-desc" style={{ margin: 0 }}>
-            {status.isMember
-              ? "Posting into this Hub is coming soon."
-              : "Join this Hub to post and comment. Posts will appear here once posting is live."}
-          </p>
+          <HubFeed hubId={hub.id} isMember={status.isMember} allowedTemplates={hub.allowedTemplates} />
         </section>
       </div>
     </>
