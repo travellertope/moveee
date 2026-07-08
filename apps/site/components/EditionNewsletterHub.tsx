@@ -27,7 +27,11 @@ const GETMELIT_ITEM_TAGS = ["Daily", "Sat", "Sat", "Sat"];
 const EDITION_SEGMENTS: Record<RegionalSlug, string[]> = {
   uk: ["uk"],
   us: ["us", "ca"],
-  africa: ["ng", "gh"],
+  // "africa" itself is the umbrella segment editors pick for "send to all of
+  // Africa" in the Send Newsletter meta box (see ALLOWED_SEGMENTS in
+  // class-culture-newsletter-send.php) — must be included alongside the
+  // country-specific codes it can also be sent to individually.
+  africa: ["africa", "ng", "gh", "ke", "za"],
 };
 
 // Edition-specific overrides — only what changes per region
