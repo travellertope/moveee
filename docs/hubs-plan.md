@@ -13,11 +13,19 @@ ambiguous.
 - Feature name: **Hubs** (not "Communities" — avoids further overloading the
   word "community", already used generically everywhere for the community
   feed/posts/`culture_post` CPT).
-- Hub posts are **hub-only** — they do not appear in the main global feed
-  (`getUnifiedFeed()`/`PulseFeed.tsx`), even for members/followers. A Hub has
-  its own dedicated feed screen. This is a deliberate product choice to avoid
-  diluting the main feed as more Hubs are created (mirrors Reddit's model:
-  r/ posts don't leak into a global feed by default).
+- Hub posts do **not** appear in the default (newest-first) main feed. They
+  **do** appear in a user's **For You** ranked feed if that user follows
+  (or is a member of) the Hub the post belongs to — see §4.5, revised. A Hub
+  also has its own dedicated feed screen showing all of its posts regardless
+  of the viewer's follow status. This is a deliberate middle ground: it keeps
+  the plain chronological main feed from being diluted as more Hubs are
+  created, while still surfacing relevant Hub activity to people who've
+  opted in, the same way Followed-author posts already get a scoring boost
+  in For You today.
+- **Entry points**: no dedicated "Hubs" tab/nav item and no placement inside
+  Discover. Instead, the feed screen's header Reload icon is removed and
+  replaced with two icons — **Hub** and **Stoop** — linking to the Hubs
+  browse screen and the user's Stoop respectively. See §4.2, revised.
 
 ---
 
@@ -140,6 +148,11 @@ at implementation time whether the composer hides the section-tag picker
 when posting into a Hub (recommended: hide it — Hub membership already
 signals topic, asking for both is redundant).
 
+`_hub_id` must be surfaced as `hubId` on the `FeedItem` shape on both
+platforms (`packages/shared/lib/unified-feed.ts` web,
+`class-culture-mobile-api.php`'s feed mapper for mobile) — this is required
+by §4.5's For You filtering logic, not optional/deferrable.
+
 ---
 
 ## 2. Lifecycle
@@ -229,15 +242,33 @@ restricts the Hub to.
 
 ### 4.2 Entry points
 
-- New **"Hubs"** top-level nav item (mobile: 7th tab, or folded into the
-  existing Discover surface as a segment — decide at implementation time
-  based on current tab-bar real estate; web: a nav link alongside Feed/
-  Discover/Editorials). Do not bury this inside People/Directory the way
-  Stoop's entry point lives inside the People screen — Hubs are topic-based,
-  not people-proximity-based, so Discover's existing "content browsing"
-  mental model (per `docs/literati-connect-plan.md` §4.1's own reasoning for
-  *why* Stoop doesn't live in Discover) is actually the right fit here,
-  unlike Stoop.
+- **Feed header icon swap (the primary entry point).** The Reload icon
+  currently in the feed screen's header (mobile: `ConnectFeedScreen.tsx`;
+  web: `PulseFeed.tsx`'s feed header) is removed. In its place, two new
+  icons are added: **Hub** (→ the Hubs browse/discover screen, §4.2 below)
+  and **Stoop** (→ `/connect` on web / the existing Stoop entry screen on
+  mobile — whatever the user's current Stoop membership state resolves to,
+  same routing `Stoop.tsx`/`packages/shared/components/connect/Stoop.tsx`
+  already does today from its own entry points). This replaces Stoop's
+  previous primary entry point living inside the People screen (see
+  `docs/literati-connect-plan.md` §4.1) — **once this ships, the People-screen
+  Stoop entry point should be evaluated for removal/demotion to avoid two
+  competing entry points to the same feature; not a hard requirement for
+  Phase 1, but flag it during Phase 1 review.**
+  - Manual refresh (the Reload icon's prior function) needs a replacement
+    interaction — pull-to-refresh already exists on both platforms'
+    `FlatList`/scroll containers per existing code, so removing the icon is
+    safe only if pull-to-refresh already covers this gesture on both
+    surfaces. **Verify this before removing the icon** — if web's `PulseFeed.tsx`
+    has no pull-to-refresh equivalent (desktop browsers don't have a
+    pull gesture), keep a lower-emphasis refresh affordance on web (e.g. a
+    small icon in a corner, or refresh-on-tab-focus) rather than removing
+    the only way to refresh the feed on desktop.
+- No dedicated Hubs tab in the main tab bar, and Hubs are **not** placed
+  inside Discover — the feed-header icon above is the only nav entry point.
+  A **Hubs browse screen** (name search, sort, "My Hubs", "Start a Hub" —
+  same content as originally scoped) is what the Hub icon opens; it just
+  isn't reached via Discover or a 7th tab.
 - A **"My Hubs"** section (joined + followed, two tabs) at the top of the
   Hubs screen for a logged-in user with at least one membership/follow.
 - Hub search/browse: name search, sorted by `_hub_member_count` (default,
@@ -287,17 +318,52 @@ redirect straight to the new Hub's feed.
   post (one pinned post max, shown first regardless of sort), remove a
   post, remove a member (cannot touch other mods or the owner).
 
-### 4.5 Feed surfacing (deliberately minimal, per the "Hub posts don't leak into the main feed" decision)
+### 4.5 Feed surfacing — For You inclusion for followed/joined Hubs
 
-The **only** place a Hub post appears outside its own Hub feed is: (a) the
-post author's own public profile (Portfolio/Community tab, same as any
-other community post today — no special-casing needed, that surface already
-shows all of a user's posts regardless of source), and (b) a Hub-post
-permalink page (`/community/{slug}` web, existing route — already generic
-enough to render any `culture_post` regardless of `_hub_id`, no changes
-needed there either). There is **no** feed-injected "new post in a Hub you
-follow" card (contrast Stoop's meeting-day reminder card, §4.5 of that doc)
-— that's covered by the notification bell instead (§6.4).
+Revised from the original "hub-only, never in main feed" decision. A Hub
+post now appears in three places:
+
+1. **The Hub's own feed** (§4.4) — always, regardless of viewer.
+2. **The viewer's For You feed** (`rankFeed()`, `feed-recommendations.ts` on
+   web, `useFeedRecommendations.ts` on mobile) — **only** if the viewer
+   follows or is a member of that post's Hub. Implementation: both
+   `scoreItem()`/`rankFeed()` functions already take a `followedUsernames`
+   set as an optional parameter for the existing Follow-system feed boost
+   (see CLAUDE.md's "Feed-ranking boost" section under the Follow system) —
+   add a second, analogous optional parameter, `followedOrJoinedHubIds?:
+   Set<number>`, checked against `item.hubId` (a new optional field on
+   `FeedItem`, populated only when `_hub_id` is present). A Hub post whose
+   `hubId` is **not** in that set is filtered out of the For You candidate
+   list entirely (not merely down-ranked) — this is what "hub-only unless
+   followed" means in practice: For You is opt-in visibility, not a lower
+   score. A Hub post whose `hubId` **is** in the set is scored normally (no
+   special extra boost beyond the existing scoring factors) and can appear
+   anywhere in the ranked results a regular post could.
+   - The **default, newest-first (non-For-You) main feed stays exactly as
+     originally scoped**: Hub posts are always excluded from it, regardless
+     of follow status. Only For You changes. This keeps the plain
+     chronological feed's behavior unchanged for users who never touch the
+     For You toggle.
+   - Fetching `followedOrJoinedHubIds` requires a small new endpoint, `GET
+     .../hub/my-hub-ids` (or reuse `GET my-hubs` from §5.2 and derive the ID
+     set client-side) — call it alongside the existing `follow/following`
+     fetch already made when For You is active (`PulseFeed.tsx` /
+     `ConnectFeedScreen.tsx`), same fetch-once-per-session pattern.
+   - **Keep both platform copies in sync** — this is the same duplication
+     caveat that already applies to every other `feed-recommendations.ts` /
+     `useFeedRecommendations.ts` change (see CLAUDE.md's Phase 8b and Follow
+     system sections).
+3. The post author's own public profile (Portfolio/Community tab — no
+   special-casing needed, already shows all of a user's posts regardless of
+   source) and the Hub-post permalink page (`/community/{slug}` web,
+   existing route — already generic enough to render any `culture_post`
+   regardless of `_hub_id`).
+
+There is still **no** feed-injected "new post in a Hub you follow" reminder
+card (contrast Stoop's meeting-day reminder card) — For You inclusion above
+is the mechanism for feed visibility; a separate reminder card would be
+redundant. New-post awareness beyond For You is still covered by the
+notification bell (§6.4).
 
 ---
 
@@ -449,15 +515,21 @@ New posts/comments are rejected server-side once `_hub_status = archived`
 `CULTURE_VERSION`). `Culture_Hubs` core class: `create`, `get`, `get_by_slug`,
 `join`, `leave`, `follow`, `unfollow`, `is_member`, `is_following`,
 `get_role`, `discover`, `get_for_user`. Mirrored REST endpoints (mobile +
-web) for all of the above. Web: Hubs discovery screen + Hub creation form +
+web) for all of the above. Web: Hubs browse screen + Hub creation form +
 Hub home screen (feed read-only at this phase, no posting yet). Mobile:
-equivalent screens.
+equivalent screens. **Feed header icon swap** (§4.2): remove the Reload
+icon, add Hub + Stoop icons — confirm pull-to-refresh parity on both
+platforms before removing Reload (see §4.2's verification note).
 
-**Phase 2 — Posting into a Hub.** `_hub_id` meta on `culture_post`.
-`SubmitPost.tsx`/`NewPostScreen.tsx` gain the Hub-scoped composer entry
-point (§3.1). Server-side enforcement in both submit paths (§3.2).
-`get_hub_feed()` + the actual Hub feed UI going live (comments already work
-for free via the existing `CommentSection`/`CommentThread`).
+**Phase 2 — Posting into a Hub.** `_hub_id` meta on `culture_post`, surfaced
+as `hubId` on `FeedItem` (§1.4). `SubmitPost.tsx`/`NewPostScreen.tsx` gain
+the Hub-scoped composer entry point (§3.1). Server-side enforcement in both
+submit paths (§3.2). `get_hub_feed()` + the actual Hub feed UI going live
+(comments already work for free via the existing `CommentSection`/
+`CommentThread`). **For You feed inclusion** (§4.5): `followedOrJoinedHubIds`
+threaded into `scoreItem()`/`rankFeed()` on both platforms, Hub posts
+filtered out of For You entirely unless the viewer follows/is a member of
+that Hub; default newest-first feed unaffected.
 
 **Phase 3 — Moderation.** Mod appointment/removal, pin/unpin, remove
 post/member (§7.1). "Manage Hub" screen (owner) + lighter "Moderate"
