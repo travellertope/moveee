@@ -303,14 +303,14 @@ class Culture_Gamification {
         ),
         'cluster_regular' => array(
             'name'        => 'Cluster Regular',
-            'description' => 'Checked in 8 weeks in a row at your House Fellowship.',
+            'description' => 'Checked in 8 weeks in a row at your Stoop.',
             'icon'        => 'dashicons-groups',
             'trigger'     => 'cluster_checkin_streak',
             'threshold'   => 8,
         ),
         'city_convener' => array(
             'name'        => 'City Convener',
-            'description' => 'Served as a House Fellowship host for 3 consecutive months.',
+            'description' => 'Served as a Stoop host for 3 consecutive months.',
             'icon'        => 'dashicons-businessman',
             'trigger'     => 'cluster_host_consecutive_months',
             'threshold'   => 3,

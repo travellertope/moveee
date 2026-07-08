@@ -15,11 +15,11 @@
  *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
  *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
  *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
- *  - House Fellowship cluster forming-expiry sweep (daily) — pure WP-side
+ *  - Stoop cluster forming-expiry sweep (daily) — pure WP-side
  *    logic, archives 'forming' clusters past their window (no Next.js call).
- *  - House Fellowship host service award (monthly) — Phase 4 — awards
+ *  - Stoop host service award (monthly) — Phase 4 — awards
  *    'cluster_host_served' once per active cluster's host per month.
- *  - House Fellowship check-in reminder (daily) — Phase 4 — notifies all
+ *  - Stoop check-in reminder (daily) — Phase 4 — notifies all
  *    active members of clusters meeting today.
  *  - Literati Connect attendance sweep (daily) — Phase 5 — awards
  *    'literati_connect_attended' once per event per confirmed RSVP attendee,
@@ -283,7 +283,7 @@ class Culture_Cron {
     }
 
     /**
-     * Archive House Fellowship clusters still 'forming' past their window
+     * Archive Stoop clusters still 'forming' past their window
      * (default 30 days — see Culture_Clusters::forming_window_days()),
      * notifying the founder with a CTA to merge into a nearby active
      * cluster instead. Runs daily.
@@ -323,8 +323,8 @@ class Culture_Cron {
                 Culture_Notifications::add(
                     $founder_id,
                     'cluster_forming_expired',
-                    'Your House Fellowship didn\'t reach activation',
-                    get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby House Fellowship instead.',
+                    'Your Stoop didn\'t reach activation',
+                    get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby Stoop instead.',
                     '/connect/people',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );
@@ -333,7 +333,7 @@ class Culture_Cron {
     }
 
     /**
-     * Tally any House Fellowship host election whose voting window has
+     * Tally any Stoop host election whose voting window has
      * closed. Runs daily. Pure WP-side logic, no Next.js call.
      */
     public static function tally_cluster_elections() {
@@ -364,7 +364,7 @@ class Culture_Cron {
     }
 
     /**
-     * Archive 'active' House Fellowships that have had zero members for
+     * Archive 'active' Stoops that have had zero members for
      * longer than the 14-day grace period. The grace-period start is read
      * from the departed host's own (now 'left') membership row's joined_at
      * column, repurposed as a vacancy marker by
@@ -415,7 +415,7 @@ class Culture_Cron {
                 Culture_Notifications::add(
                     $last_user_id,
                     'cluster_forming_expired',
-                    'Your House Fellowship has been archived',
+                    'Your Stoop has been archived',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' had no remaining members for 14 days and has been archived.',
                     '/connect/people',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
@@ -426,7 +426,7 @@ class Culture_Cron {
 
     /**
      * Award the recurring 'cluster_host_served' reward to every current host
-     * of an 'active' House Fellowship, once per calendar month per cluster.
+     * of an 'active' Stoop, once per calendar month per cluster.
      * Idempotency is checked against the credit ledger directly (source_id =
      * cluster_id, scoped to the current month) rather than
      * Culture_Gamification::ledger_has_entry() — that helper matches on
@@ -475,7 +475,7 @@ class Culture_Cron {
     }
 
     /**
-     * Same-day morning reminder to all active members of a House Fellowship
+     * Same-day morning reminder to all active members of a Stoop
      * whose meeting day is today, per §6.4/§6.3 — `cluster_checkin_reminder`.
      * Runs daily; the day-of-week match against `_cluster_meeting_day`
      * (lowercase day name, e.g. "monday") keeps this a single sweep rather
@@ -511,7 +511,7 @@ class Culture_Cron {
                 Culture_Notifications::add(
                     (int) $member['id'],
                     'cluster_checkin_reminder',
-                    'House Fellowship meets today',
+                    'Stoop meets today',
                     $name . ' meets today — don\'t forget to check in.',
                     '/cluster/' . $cluster_id,
                     array( 'cluster_id' => $cluster_id )

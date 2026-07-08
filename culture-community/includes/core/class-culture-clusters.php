@@ -1,6 +1,6 @@
 <?php
 /**
- * House Fellowship clusters — weekly street/neighbourhood meetup groups.
+ * Stoop clusters — weekly street/neighbourhood meetup groups.
  * Phase 1 scope only (see docs/literati-connect-plan.md §7): core
  * membership (create/join/leave/discover), no election or check-in yet.
  *
@@ -523,7 +523,7 @@ class Culture_Clusters {
             Culture_Notifications::add(
                 $founder_id,
                 'cluster_activated',
-                'Your House Fellowship is active!',
+                'Your Stoop is active!',
                 get_post_meta( $cluster_id, '_cluster_name', true ) . ' has reached enough members and is now open to the neighbourhood.',
                 '/cluster/' . $cluster_id,
                 array( 'cluster_id' => $cluster_id )
@@ -547,7 +547,7 @@ class Culture_Clusters {
         }
 
         if ( self::STATUS_ACTIVE !== get_post_meta( $cluster_id, '_cluster_status', true ) ) {
-            return new WP_Error( 'cluster_not_active', 'Elections are only available for active House Fellowships.', array( 'status' => 400 ) );
+            return new WP_Error( 'cluster_not_active', 'Elections are only available for active Stoops.', array( 'status' => 400 ) );
         }
 
         $open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
@@ -556,7 +556,7 @@ class Culture_Clusters {
         }
 
         if ( ! $auto && ! in_array( $user_id, self::get_active_member_ids( $cluster_id ), true ) ) {
-            return new WP_Error( 'not_a_member', 'Only members of this House Fellowship can start an election.', array( 'status' => 403 ) );
+            return new WP_Error( 'not_a_member', 'Only members of this Stoop can start an election.', array( 'status' => 403 ) );
         }
 
         $closes_at = gmdate( 'Y-m-d H:i:s', time() + ( self::election_window_days() * DAY_IN_SECONDS ) );
@@ -588,12 +588,12 @@ class Culture_Clusters {
     public static function cast_vote( int $cluster_id, int $voter_id, int $candidate_id ) {
         $open_until = get_post_meta( $cluster_id, '_cluster_election_open_until', true );
         if ( ! $open_until || strtotime( $open_until ) <= time() ) {
-            return new WP_Error( 'no_election', 'There is no open election for this House Fellowship.', array( 'status' => 400 ) );
+            return new WP_Error( 'no_election', 'There is no open election for this Stoop.', array( 'status' => 400 ) );
         }
 
         $active_ids = self::get_active_member_ids( $cluster_id );
         if ( ! in_array( $voter_id, $active_ids, true ) ) {
-            return new WP_Error( 'not_a_member', 'Only members of this House Fellowship can vote.', array( 'status' => 403 ) );
+            return new WP_Error( 'not_a_member', 'Only members of this Stoop can vote.', array( 'status' => 403 ) );
         }
         if ( ! in_array( $candidate_id, $active_ids, true ) ) {
             return new WP_Error( 'invalid_candidate', 'That member is not eligible to be host.', array( 'status' => 400 ) );
@@ -721,7 +721,7 @@ class Culture_Clusters {
         }
 
         if ( ! in_array( $new_host_id, self::get_active_member_ids( $cluster_id ), true ) ) {
-            return new WP_Error( 'not_a_member', 'That user is not an active member of this House Fellowship.', array( 'status' => 400 ) );
+            return new WP_Error( 'not_a_member', 'That user is not an active member of this Stoop.', array( 'status' => 400 ) );
         }
 
         update_post_meta( $cluster_id, '_cluster_host_id', $new_host_id );
@@ -815,7 +815,7 @@ class Culture_Clusters {
     public static function generate_host_qr( int $cluster_id, int $host_id ) {
         $cluster = self::get_cluster( $cluster_id );
         if ( ! $cluster ) {
-            return new WP_Error( 'not_found', __( 'House Fellowship not found.', 'culture-community' ), array( 'status' => 404 ) );
+            return new WP_Error( 'not_found', __( 'Stoop not found.', 'culture-community' ), array( 'status' => 404 ) );
         }
         if ( (int) $cluster['hostId'] !== $host_id ) {
             return new WP_Error( 'forbidden', __( 'Only the current host can generate a check-in code.', 'culture-community' ), array( 'status' => 403 ) );
@@ -858,7 +858,7 @@ class Culture_Clusters {
 
         $status = self::get_member_status( $cluster_id, $user_id );
         if ( ! $status['isMember'] ) {
-            return new WP_Error( 'not_member', __( 'You are not a member of this House Fellowship.', 'culture-community' ), array( 'status' => 403 ) );
+            return new WP_Error( 'not_member', __( 'You are not a member of this Stoop.', 'culture-community' ), array( 'status' => 403 ) );
         }
 
         $meeting_date = $meeting_date ?: current_time( 'Y-m-d' );

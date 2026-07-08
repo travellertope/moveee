@@ -7,7 +7,7 @@ import "./connect-landing.css";
 export const metadata: Metadata = {
   title: "Literati Connect — Moveee",
   description:
-    "Two ways to meet the people who live for culture the way you do — Literati Connect, a monthly city-wide gathering, and House Fellowship, a weekly circle on your own street.",
+    "Two ways to meet the people who live for culture the way you do — Literati Connect, a monthly city-wide gathering, and Stoop, a weekly circle in your own area.",
 };
 
 export default function LiteratiConnectPage() {
@@ -24,11 +24,11 @@ export default function LiteratiConnectPage() {
             <p className="mco-lede">
               Two ways to meet the people who live for culture the way you do —
               a monthly gathering across the whole city, and a weekly circle
-              on your own street. Free for every member, Citizen and Pro.
+              in your own area. Free for every member, Citizen and Pro.
             </p>
           </div>
           <div className="mco-hero-cta">
-            <Link href="/connect/people" className="con-btn-primary">Find your House Fellowship →</Link>
+            <Link href="/connect/people" className="con-btn-primary">Find your Stoop →</Link>
             <Link href="/events" className="con-btn-ghost">See Literati Connect events →</Link>
           </div>
         </div>
@@ -57,25 +57,25 @@ export default function LiteratiConnectPage() {
 
         <div className="lc-offer-card lc-offer-card--fellowship">
           <span className="lc-offer-emoji">🏠</span>
-          <span className="lc-offer-eyebrow">Weekly · Your street</span>
-          <h2 className="lc-offer-title">House Fellowship</h2>
+          <span className="lc-offer-eyebrow">Weekly · Your area</span>
+          <h2 className="lc-offer-title">Stoop</h2>
           <p className="lc-offer-desc">
             A small circle of members near you, meeting every week. Founded by
             a neighbour, hosted by the community — never more than a short
             walk from home.
           </p>
-          <Link href="/connect/people" className="lc-offer-cta">Find your House Fellowship →</Link>
+          <Link href="/connect/people" className="lc-offer-cta">Find your Stoop →</Link>
         </div>
       </section>
 
-      {/* ── HOW HOUSE FELLOWSHIP WORKS ── */}
+      {/* ── HOW STOOP WORKS ── */}
       <section className="lc-steps">
         <div className="lc-steps-head">
           <p className="mco-section-eyebrow">How it works</p>
           <h2 className="mco-section-title">Starting one is as easy as showing up.</h2>
           <p className="mco-section-desc">
             No approval process, no admin gatekeeping — any member can start a
-            House Fellowship on their own street.
+            Stoop in their own area.
           </p>
         </div>
         <div className="lc-steps-grid">
@@ -83,7 +83,7 @@ export default function LiteratiConnectPage() {
             <p className="lc-step-num">01</p>
             <h3 className="lc-step-title">Start it</h3>
             <p className="lc-step-desc">
-              Any member can start a House Fellowship on their street —
+              Any member can start a Stoop in their area —
               no approval needed.
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function LiteratiConnectPage() {
 
       {/* ── TRUST ── */}
       <section className="lc-trust">
-        <h2 className="lc-trust-title">Every House Fellowship plays by the same rules.</h2>
+        <h2 className="lc-trust-title">Every Stoop plays by the same rules.</h2>
         <p className="lc-trust-desc">
           Ground rules on safety and mutual respect apply to every cluster,
           city-wide — visible before you join, and always one tap away once
@@ -155,7 +155,7 @@ export default function LiteratiConnectPage() {
       <section className="lc-cta-band">
         <h2 className="lc-cta-title">Ready to meet <em>your people?</em></h2>
         <div className="lc-cta-row">
-          <Link href="/connect/people" className="lc-cta-btn lc-cta-btn--primary">Find your House Fellowship →</Link>
+          <Link href="/connect/people" className="lc-cta-btn lc-cta-btn--primary">Find your Stoop →</Link>
           <Link href="/events" className="lc-cta-btn lc-cta-btn--ghost">See Literati Connect events →</Link>
         </div>
       </section>

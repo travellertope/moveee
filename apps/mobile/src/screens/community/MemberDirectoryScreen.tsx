@@ -68,8 +68,8 @@ function HouseFellowshipSection({
 
   return (
     <View style={styles.hfSection}>
-      <Text style={styles.hfTitle}>House Fellowship</Text>
-      <Text style={styles.hfSub}>Weekly, street-level gatherings of Moveee members near you.</Text>
+      <Text style={styles.hfTitle}>Stoop</Text>
+      <Text style={styles.hfSub}>Weekly, area-level gatherings of Moveee members near you.</Text>
 
       {myCluster ? (
         <TouchableOpacity
@@ -77,7 +77,7 @@ function HouseFellowshipSection({
           onPress={() => nav.navigate("ClusterScreen", { id: myCluster.id })}
         >
           <View style={{ flex: 1 }}>
-            <Text style={styles.hfCardLabel}>Your House Fellowship</Text>
+            <Text style={styles.hfCardLabel}>Your Stoop</Text>
             <Text style={styles.hfCardName}>{myCluster.name}</Text>
             <Text style={styles.hfCardMeta}>
               {[myCluster.street, myCluster.city].filter(Boolean).join(", ")}
@@ -114,14 +114,14 @@ function HouseFellowshipSection({
             </View>
           ))}
           <TouchableOpacity style={styles.hfStartBtn} onPress={() => nav.navigate("HostOnboardingScreen")}>
-            <Text style={styles.hfStartBtnText}>Start a House Fellowship →</Text>
+            <Text style={styles.hfStartBtnText}>Start a Stoop →</Text>
           </TouchableOpacity>
         </>
       ) : (
         <View style={styles.hfEmpty}>
-          <Text style={styles.hfEmptyText}>No House Fellowship near you yet. Be the first to start one on your street.</Text>
+          <Text style={styles.hfEmptyText}>No Stoop near you yet. Be the first to start one in your area.</Text>
           <TouchableOpacity style={styles.hfStartBtnPrimary} onPress={() => nav.navigate("HostOnboardingScreen")}>
-            <Text style={styles.hfStartBtnPrimaryText}>Start a House Fellowship →</Text>
+            <Text style={styles.hfStartBtnPrimaryText}>Start a Stoop →</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -218,7 +218,7 @@ class Culture_Post_Types {
             ) );
         }
 
-        // House Fellowship cluster meta (Literati Connect plan, Phase 1).
+        // Stoop cluster meta (Literati Connect plan, Phase 1).
         $cluster_meta = array(
             '_cluster_name'                 => 'string',
             '_cluster_city'                 => 'string',
@@ -1117,12 +1117,12 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureJourneys',
         ) );
 
-        // House Fellowship cluster CPT — structured entity, not a rendered page
+        // Stoop cluster CPT — structured entity, not a rendered page
         // (same rationale as culture_directory's earlier public=>false siblings:
         // it's surfaced only through dedicated screens/endpoints).
         register_post_type( 'culture_cluster', array(
             'labels' => array(
-                'name'               => __( 'House Fellowship Clusters', 'culture-community' ),
+                'name'               => __( 'Stoop Clusters', 'culture-community' ),
                 'singular_name'      => __( 'Cluster', 'culture-community' ),
                 'add_new'            => __( 'Add New', 'culture-community' ),
                 'add_new_item'       => __( 'Add New Cluster', 'culture-community' ),

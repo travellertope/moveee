@@ -180,7 +180,7 @@ export default function StartClusterScreen() {
       if (res?.id) {
         const url = `https://web.themoveee.com/cluster/${res.id}/invite`;
         Alert.alert(
-          "Fellowship created!",
+          "Stoop created!",
           "Now share the invite link with neighbours and friends. You need at least 4 members to activate.",
           [
             {
@@ -188,7 +188,7 @@ export default function StartClusterScreen() {
               onPress: async () => {
                 try {
                   await Share.share({
-                    message: `Join my House Fellowship "${name.trim()}" on Moveee! ${url}`,
+                    message: `Join my Stoop "${name.trim()}" on Moveee! ${url}`,
                     url,
                   });
                 } catch {}
@@ -203,10 +203,10 @@ export default function StartClusterScreen() {
           ],
         );
       } else {
-        setError("Could not create this House Fellowship right now.");
+        setError("Could not create this Stoop right now.");
       }
     } catch {
-      setError("Could not create this House Fellowship right now.");
+      setError("Could not create this Stoop right now.");
     } finally {
       setSubmitting(false);
     }
@@ -234,7 +234,7 @@ export default function StartClusterScreen() {
         <TouchableOpacity style={styles.headerSideBtn} onPress={close}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Start a House Fellowship</Text>
+        <Text style={styles.headerTitle}>Start a Stoop</Text>
         <TouchableOpacity
           style={styles.headerSideBtn}
           onPress={handleSubmit}
@@ -252,8 +252,8 @@ export default function StartClusterScreen() {
       >
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <Text style={styles.intro}>
-            Name your Fellowship and set your meeting schedule. Members on
-            your street can join and you'll unlock check-ins and rewards once
+            Name your Stoop and set your meeting schedule. Members in
+            your area can join and you'll unlock check-ins and rewards once
             four people have joined.
           </Text>
 
@@ -295,7 +295,7 @@ export default function StartClusterScreen() {
           <Text style={styles.sectionLabel}>Name</Text>
           <TextInput
             style={styles.fieldInput}
-            placeholder="e.g. Allen Avenue House Fellowship"
+            placeholder="e.g. Allen Avenue Stoop"
             placeholderTextColor={c.ghost}
             value={name}
             onChangeText={setName}

@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin page for viewing House Fellowship clusters and appointing hosts
+ * Admin page for viewing Stoop clusters and appointing hosts
  * (§2.4.2 — admin-only operator tool, no member-facing trigger).
  */
 
@@ -17,7 +17,7 @@ class Culture_Clusters_Admin {
     public static function register_menu(): void {
         add_submenu_page(
             'culture-community',
-            __( 'House Fellowship Clusters', 'culture-community' ),
+            __( 'Stoop Clusters', 'culture-community' ),
             __( 'Clusters', 'culture-community' ),
             'manage_options',
             'culture-clusters-manager',
@@ -68,7 +68,7 @@ class Culture_Clusters_Admin {
 
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e( 'House Fellowship Clusters', 'culture-community' ); ?></h1>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Stoop Clusters', 'culture-community' ); ?></h1>
             <span style="margin-left:12px;color:#666;"><?php echo esc_html( number_format( $query->found_posts ) ); ?> total</span>
             <hr class="wp-header-end">
 
@@ -89,7 +89,7 @@ class Culture_Clusters_Admin {
             </form>
 
             <?php if ( empty( $clusters ) ) : ?>
-                <p><?php esc_html_e( 'No House Fellowships found.', 'culture-community' ); ?></p>
+                <p><?php esc_html_e( 'No Stoops found.', 'culture-community' ); ?></p>
             <?php else : ?>
                 <table class="wp-list-table widefat fixed striped" style="margin-top:8px;">
                     <thead>

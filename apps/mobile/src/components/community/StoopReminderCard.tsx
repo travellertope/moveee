@@ -14,7 +14,7 @@ interface MyCluster {
 
 const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-export default function HouseFellowshipReminderCard() {
+export default function StoopReminderCard() {
   const c = useColors();
   const styles = createStyles(c);
   const nav = useNav();
@@ -47,7 +47,7 @@ export default function HouseFellowshipReminderCard() {
       onPress={() => nav.navigate("ClusterScreen", { id: cluster.id })}
     >
       <View style={{ flex: 1 }}>
-        <Text style={styles.eyebrow}>House Fellowship · Today</Text>
+        <Text style={styles.eyebrow}>Stoop · Today</Text>
         <Text style={styles.body}>
           {cluster.name} meets today{cluster.meetingTime ? ` at ${cluster.meetingTime}` : ""} — check in when you arrive.
         </Text>

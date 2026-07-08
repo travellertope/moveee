@@ -197,8 +197,8 @@ export default async function MemberPage() {
               { label: "My Analytics",     href: "/member/analytics" },
               ...(isPatron ? [{ label: "My Events", href: "/member/events" }] : []),
               myCluster
-                ? { label: "My House Fellowship", href: `/cluster/${myCluster.id}` }
-                : { label: "Find your House Fellowship", href: "/connect/people" },
+                ? { label: "My Stoop", href: `/cluster/${myCluster.id}` }
+                : { label: "Find your Stoop", href: "/connect/people" },
               { label: "Refer a Friend",   href: "/member/referrals" },
               { label: "Browse Perks",     href: "/connect/perks" },
               { label: "My Collection",    href: "/member/collection" },

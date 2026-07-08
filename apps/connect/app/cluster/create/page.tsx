@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import CreateClusterClient from "./CreateClusterClient";
 
-export const metadata = { title: "Start a House Fellowship · Moveee" };
+export const metadata = { title: "Start a Stoop · Moveee" };
 
 export default async function CreateClusterPage() {
   const session = (await getServerSession(authOptions as any)) as any;

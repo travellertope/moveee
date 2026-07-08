@@ -80,7 +80,7 @@ export interface Member {
   isFollowing?: boolean;
 }
 
-// ── House Fellowship (street clusters) ──────────────────────────────────────
+// ── Stoop (area clusters) ──────────────────────────────────────
 export interface Cluster {
   id: number;
   name: string;

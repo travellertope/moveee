@@ -315,7 +315,7 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_r2_bucket_name', $text );
         register_setting( 'culture_settings_general', 'culture_r2_public_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
-        // Literati Connect / House Fellowship (culture_cluster CPT).
+        // Literati Connect / Stoop (culture_cluster CPT).
         register_setting( 'culture_settings_general', 'culture_cluster_min_activation_members', $int );
         register_setting( 'culture_settings_general', 'culture_cluster_forming_window_days', $int );
         register_setting( 'culture_settings_general', 'culture_cluster_default_capacity', $int );
@@ -1047,8 +1047,8 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Literati Connect / House Fellowship', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Controls the culture_cluster CPT lifecycle — street-level House Fellowship clusters that form, activate, and (if they never reach enough members) auto-archive.', 'culture-community' ); ?></p>
+        <h2><?php esc_html_e( 'Literati Connect / Stoop', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Controls the culture_cluster CPT lifecycle — area-level Stoop clusters that form, activate, and (if they never reach enough members) auto-archive.', 'culture-community' ); ?></p>
         <table class="form-table">
             <tr>
                 <th scope="row"><label for="culture_cluster_min_activation_members"><?php esc_html_e( 'Min. Members to Activate', 'culture-community' ); ?></label></th>

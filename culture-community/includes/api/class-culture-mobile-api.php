@@ -324,7 +324,7 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        // House Fellowship clusters (culture_cluster CPT). Phase 1 — create/discover/
+        // Stoop clusters (culture_cluster CPT). Phase 1 — create/discover/
         // join/leave/status only, no election/check-in. Mirrors /cluster/* (web, API key).
         register_rest_route( 'culture/v1', '/mobile/cluster/create', array(
             'methods'             => 'POST',
@@ -1836,7 +1836,7 @@ class Culture_Mobile_API {
     }
 
     /* ——————————————————————————————————————
-     *  House Fellowship clusters (mobile, JWT)
+     *  Stoop clusters (mobile, JWT)
      * —————————————————————————————————————— */
 
     public static function handle_cluster_create( $request ) {
@@ -1998,7 +1998,7 @@ class Culture_Mobile_API {
 
         $cluster = Culture_Clusters::get_cluster( $cluster_id );
         if ( ! $cluster ) {
-            return new WP_Error( 'not_found', 'House Fellowship not found.', array( 'status' => 404 ) );
+            return new WP_Error( 'not_found', 'Stoop not found.', array( 'status' => 404 ) );
         }
         if ( (int) $cluster['hostId'] !== $host_id ) {
             return new WP_Error( 'forbidden', 'Only the current host can record manual check-ins.', array( 'status' => 403 ) );

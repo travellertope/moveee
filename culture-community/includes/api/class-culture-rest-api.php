@@ -1317,7 +1317,7 @@ class Culture_REST_API {
             ),
         ) );
 
-        // House Fellowship clusters (web — API key, explicit user_id param).
+        // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
             'methods'             => 'POST',
@@ -1759,7 +1759,7 @@ class Culture_REST_API {
     }
 
     /* ——————————————————————————————————————
-     *  House Fellowship clusters (web — API key, explicit user_id)
+     *  Stoop clusters (web — API key, explicit user_id)
      * —————————————————————————————————————— */
 
     public static function handle_cluster_create( $request ) {
@@ -1921,7 +1921,7 @@ class Culture_REST_API {
 
         $cluster = Culture_Clusters::get_cluster( $cluster_id );
         if ( ! $cluster ) {
-            return new WP_Error( 'not_found', 'House Fellowship not found.', array( 'status' => 404 ) );
+            return new WP_Error( 'not_found', 'Stoop not found.', array( 'status' => 404 ) );
         }
         if ( (int) $cluster['hostId'] !== $host_id ) {
             return new WP_Error( 'forbidden', 'Only the current host can record manual check-ins.', array( 'status' => 403 ) );

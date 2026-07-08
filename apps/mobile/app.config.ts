@@ -52,7 +52,7 @@ export default {
         "expo-camera",
         {
           cameraPermission:
-            "Allow Moveee to access your camera to scan House Fellowship check-in codes.",
+            "Allow Moveee to access your camera to scan Stoop check-in codes.",
         },
       ],
       "@react-native-community/datetimepicker",

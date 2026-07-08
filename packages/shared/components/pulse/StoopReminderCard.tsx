@@ -13,7 +13,7 @@ interface MyCluster {
 
 const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-export default function HouseFellowshipReminderCard() {
+export default function StoopReminderCard() {
   const [cluster, setCluster] = useState<MyCluster | null>(null);
 
   useEffect(() => {

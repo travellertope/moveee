@@ -10,7 +10,7 @@ import { rankFeed, getTrending, matchesInterests } from "@/lib/feed-recommendati
 import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
-import HouseFellowshipReminderCard from "./HouseFellowshipReminderCard";
+import StoopReminderCard from "./StoopReminderCard";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
 
@@ -441,7 +441,7 @@ const handleType = (type: FeedItemType | "all") => {
                 />
               ))}
               {visible.length > 5 && <EventSpotlightCarousel events={spotlightEvents} />}
-              {visible.length > 5 && session?.user && <HouseFellowshipReminderCard />}
+              {visible.length > 5 && session?.user && <StoopReminderCard />}
               {visible.slice(5).map(item => (
                 <FeedCard
                   key={item.id}

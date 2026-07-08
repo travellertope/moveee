@@ -22,7 +22,7 @@ interface Props {
   viewerCountry?: string;
 }
 
-export default function HouseFellowship({ viewerCity = "", viewerCountry = "" }: Props) {
+export default function Stoop({ viewerCity = "", viewerCountry = "" }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [myCluster, setMyCluster] = useState<Cluster | null>(null);
@@ -59,16 +59,16 @@ export default function HouseFellowship({ viewerCity = "", viewerCountry = "" }:
   return (
     <div className="mco-fellowship">
       <div className="mco-fellowship-header">
-        <h2 className="mco-fellowship-title">House Fellowship</h2>
+        <h2 className="mco-fellowship-title">Stoop</h2>
         <p className="mco-fellowship-sub">
-          Weekly, street-level gatherings of Moveee members near you.
+          Weekly, area-level gatherings of Moveee members near you.
         </p>
       </div>
 
       {myCluster ? (
         <Link href={`/cluster/${myCluster.id}`} className="mco-fellowship-card mco-fellowship-card--active">
           <div>
-            <p className="mco-fellowship-card-label">Your House Fellowship</p>
+            <p className="mco-fellowship-card-label">Your Stoop</p>
             <h3 className="mco-fellowship-card-name">{myCluster.name}</h3>
             <p className="mco-fellowship-card-meta">
               {[myCluster.street, myCluster.city].filter(Boolean).join(", ")}
@@ -87,14 +87,14 @@ export default function HouseFellowship({ viewerCity = "", viewerCountry = "" }:
             ))}
           </div>
           <Link href="/cluster/create" className="con-btn-ghost mco-fellowship-start-btn">
-            Start a House Fellowship →
+            Start a Stoop →
           </Link>
         </>
       ) : (
         <div className="mco-fellowship-empty">
-          <p>No House Fellowship near you yet. Be the first to start one on your street.</p>
+          <p>No Stoop near you yet. Be the first to start one in your area.</p>
           <Link href="/cluster/create" className="con-btn-primary">
-            Start a House Fellowship →
+            Start a Stoop →
           </Link>
         </div>
       )}

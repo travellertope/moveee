@@ -31,7 +31,7 @@ export default function ClusterActions({
   };
 
   const leave = async () => {
-    if (!confirm("Leave this House Fellowship?")) return;
+    if (!confirm("Leave this Stoop?")) return;
     setBusy(true);
     setError("");
     try {
@@ -52,7 +52,7 @@ export default function ClusterActions({
 
   return (
     <div>
-      <div className="mem-card-label">{isMember ? "You're a member" : "Join this House Fellowship"}</div>
+      <div className="mem-card-label">{isMember ? "You're a member" : "Join this Stoop"}</div>
       {error && <p style={{ fontSize: "0.78rem", color: "#c0392b", margin: "0 0 12px" }}>{error}</p>}
       {isMember ? (
         <button
@@ -62,7 +62,7 @@ export default function ClusterActions({
           className="mem-settings-back-link"
           style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#c0392b" }}
         >
-          {busy ? "Leaving…" : "Leave House Fellowship"}
+          {busy ? "Leaving…" : "Leave Stoop"}
         </button>
       ) : (
         <button

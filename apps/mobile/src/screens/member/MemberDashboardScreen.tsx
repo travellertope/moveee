@@ -188,8 +188,8 @@ export default function MemberDashboardScreen() {
 
   const quickLinks = useMemo(() => {
     const houseFellowshipItem = myCluster
-      ? { emoji: "🏠", label: "My House Fellowship", screen: "ClusterScreen", params: { id: myCluster.id } }
-      : { emoji: "🏠", label: "Find your House Fellowship", screen: "MemberDirectory" };
+      ? { emoji: "🏠", label: "My Stoop", screen: "ClusterScreen", params: { id: myCluster.id } }
+      : { emoji: "🏠", label: "Find your Stoop", screen: "MemberDirectory" };
     return [houseFellowshipItem, ...QUICK_LINKS];
   }, [myCluster]);
 
