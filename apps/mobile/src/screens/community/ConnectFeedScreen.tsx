@@ -197,6 +197,32 @@ export default function ConnectFeedScreen() {
       .catch(() => {});
   }, [user?.id]);
 
+  // For You Hub inclusion (docs/hubs-plan.md §4.5) — only fetched once For
+  // You is actually toggled on, since it's otherwise unused.
+  const [followedOrJoinedHubIds, setFollowedOrJoinedHubIds] = useState<Set<number>>(new Set());
+  const [hubCandidateItems, setHubCandidateItems] = useState<FeedItem[]>([]);
+  useEffect(() => {
+    if (!user || !forYou) return;
+    (async () => {
+      try {
+        const data = await api.get<{ joined: { id: number }[]; followed: { id: number }[] }>(`${MOBILE_API}/hub/my-hubs`);
+        const ids = new Set<number>([
+          ...(data?.joined ?? []).map((h) => h.id),
+          ...(data?.followed ?? []).map((h) => h.id),
+        ]);
+        setFollowedOrJoinedHubIds(ids);
+        if (ids.size === 0) { setHubCandidateItems([]); return; }
+        const candData = await api.get<{ items: FeedItem[] }>(
+          `${MOBILE_API}/hub/for-you-candidates?hub_ids=${[...ids].join(",")}`
+        );
+        setHubCandidateItems(candData?.items ?? []);
+      } catch {
+        setFollowedOrJoinedHubIds(new Set());
+        setHubCandidateItems([]);
+      }
+    })();
+  }, [user?.id, forYou]);
+
   const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
 
   const visibleItems = useMemo(() => {
@@ -216,11 +242,15 @@ export default function ConnectFeedScreen() {
     }
 
     if (forYou) {
-      filtered = rankFeed(filtered, interestTagSet, userCity, userRegion, followedUsernames);
+      // Hub posts only ever enter the ranking pool here, via
+      // hubCandidateItems — never through the main `items` fetch, which
+      // excludes them server-side (docs/hubs-plan.md §4.5).
+      const withHubCandidates = [...filtered, ...hubCandidateItems.filter((i) => !isEventItem(i))];
+      filtered = rankFeed(withHubCandidates, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds);
     }
 
     return filtered;
-  }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion, followedUsernames]);
+  }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion, followedUsernames, hubCandidateItems, followedOrJoinedHubIds]);
 
   const [trendingExpanded, setTrendingExpanded] = useState(false);
   const trending = useMemo(

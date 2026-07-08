@@ -85,8 +85,15 @@ export function rankFeed(
   userCity?: string,
   userRegion?: string,
   followedUsernames?: Set<string>,
+  followedOrJoinedHubIds?: Set<number>,
 ): FeedItem[] {
-  const scored = items.map(item => ({ item, score: scoreItem(item, interestTagSet, userCity, userRegion, followedUsernames) }));
+  // Hub posts are opt-in visibility in For You, not a lower score — a post
+  // whose hubId isn't in the viewer's followed/joined set is dropped from
+  // the candidate pool entirely before scoring (docs/hubs-plan.md §4.5).
+  const candidates = items.filter(item =>
+    item.hubId == null || (followedOrJoinedHubIds?.has(item.hubId) ?? false)
+  );
+  const scored = candidates.map(item => ({ item, score: scoreItem(item, interestTagSet, userCity, userRegion, followedUsernames) }));
   return scored
     .sort((a, b) => b.score !== a.score ? b.score - a.score : new Date(b.item.date).getTime() - new Date(a.item.date).getTime())
     .map(({ item }) => item);

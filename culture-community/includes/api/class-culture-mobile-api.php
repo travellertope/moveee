@@ -532,6 +532,13 @@ class Culture_Mobile_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // For You Hub candidate pool (docs/hubs-plan.md §4.5).
+        register_rest_route( 'culture/v1', '/mobile/hub/for-you-candidates', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_for_you_candidates' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -2286,6 +2293,14 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::get_hub_feed_items( $hub_id, $page, $per_page ) );
     }
 
+    public static function handle_hub_for_you_candidates( $request ) {
+        $hub_ids_raw = (string) $request->get_param( 'hub_ids' );
+        $hub_ids     = array_filter( array_map( 'intval', explode( ',', $hub_ids_raw ) ) );
+        $limit       = min( 50, max( 1, (int) ( $request->get_param( 'limit' ) ?: 30 ) ) );
+
+        return rest_ensure_response( array( 'items' => self::get_hub_candidate_items( $hub_ids, $limit ) ) );
+    }
+
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
     const REACTION_TYPES = array( 'love', 'fire', 'clap' );
 
@@ -3152,6 +3167,60 @@ class Culture_Mobile_API {
             'page'    => $page,
             'perPage' => $per_page,
         );
+    }
+
+    /**
+     * For You candidate pool (docs/hubs-plan.md §4.5) — recent posts across
+     * a set of Hub ids (the viewer's joined + followed Hubs), for the client
+     * to merge into its For You ranking. Deliberately NOT part of the main
+     * feed query — Hub posts stay excluded from the default listing
+     * (get_community_feed_items() / rest_culture_post_query) and only ever
+     * enter For You through this dedicated path, matching the "opt-in
+     * visibility, not a lower score" rule in the plan.
+     */
+    public static function get_hub_candidate_items( array $hub_ids, int $limit = 30, int $viewer_id = 0 ): array {
+        $hub_ids = array_values( array_unique( array_map( 'intval', $hub_ids ) ) );
+        if ( empty( $hub_ids ) ) {
+            return array();
+        }
+
+        $viewer_id     = $viewer_id ?: get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                array( 'key' => '_hub_id', 'value' => $hub_ids, 'compare' => 'IN' ),
+            ),
+            'posts_per_page' => min( 50, max( 1, $limit ) ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => true,
+        ) );
+
+        $organiser_map = array();
+        $org_ids = array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) );
+        if ( ! empty( $org_ids ) ) {
+            $org_posts = get_posts( array(
+                'post__in'       => array_values( array_unique( $org_ids ) ),
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'posts_per_page' => count( $org_ids ),
+                'no_found_rows'  => true,
+            ) );
+            foreach ( $org_posts as $op ) {
+                $organiser_map[ $op->ID ] = array( 'name' => $op->post_title, 'slug' => $op->post_name );
+            }
+        }
+
+        return array_map( function( WP_Post $post ) use ( $liked_ids, $reactions_map, $organiser_map ) {
+            return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
+        }, $query->posts );
     }
 
     /**

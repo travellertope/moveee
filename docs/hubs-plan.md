@@ -648,13 +648,46 @@ done yet (see below).**
   post. Comments work for free via the existing `CommentSection`/
   `CommentThread` on both platforms, unchanged, confirmed during Phase 1
   research.
-- **Not done in this pass — still open**: §4.5's For You feed inclusion
-  (`followedOrJoinedHubIds` threaded into `scoreItem()`/`rankFeed()` on both
-  platforms) was not implemented. A Hub post today is visible **only**
-  inside its own Hub's feed — it does not yet appear in For You even for
-  followers/members. This is a real gap against the revised §0/§4.5 decision
-  and should be picked up as the next increment before calling Phase 2 fully
-  closed.
+- **For You feed inclusion (§4.5) — DONE, follow-up pass.** Implemented as a
+  dedicated candidate-pool fetch rather than folding Hub posts into the
+  default feed query, to honor §4.5's "default newest-first feed unaffected"
+  rule without touching `get_community_feed_items()`/`getCommunityPosts()`:
+  - New `Culture_Mobile_API::get_hub_candidate_items( $hub_ids, $limit,
+    $viewer_id )` — a `WP_Query` with a single `meta_query` `IN` clause
+    against `_hub_id` (not the OR-branch/`NOT EXISTS` pattern the
+    `meta_query` gotcha warns about — a single `IN` condition is fine),
+    reusing `format_community_feed_item()` so results render identically to
+    every other feed item. Exposed as `GET /mobile/hub/for-you-candidates`
+    and `GET /hub/for-you-candidates` (mirrored, same convention as every
+    other Hub endpoint), plus a new `apps/connect/app/api/hub/for-you-candidates`
+    proxy route.
+  - `rankFeed()` (both `packages/utils/feed-recommendations.ts` and
+    `apps/mobile/src/features/community/useFeedRecommendations.ts`) gained a
+    `followedOrJoinedHubIds?: Set<number>` 6th param — filters candidates
+    *before* scoring (`item.hubId == null || followedOrJoinedHubIds.has(item.hubId)`),
+    matching the "opt-in visibility, not a lower score" rule exactly.
+    `scoreItem()` itself is unchanged — no extra boost for Hub posts, per
+    the plan.
+  - `PulseFeed.tsx` (web) and `ConnectFeedScreen.tsx` (mobile): both now
+    fetch `my-hubs` (joined + followed → `Set<number>`) and the candidate
+    pool *only when For You is toggled on* (not on every feed load, since
+    it's otherwise unused), merge the candidates into the ranking input
+    (filtered through `isEventItem()` first, same as every other feed
+    source — events stay Spotlight-carousel-only), and pass the hub-ids set
+    into `rankFeed()`. The non-For-You/newest-first path is completely
+    untouched — it never sees `hubCandidateItems` at all.
+  - `hubId` added to the web `FeedItem` type (`packages/shared/lib/unified-feed.ts`)
+    and mobile `FeedItem` type (`apps/mobile/src/types/index.ts`) — present
+    only on items returned by the new candidate-pool fetch, never on the
+    default main-feed fetch (which still excludes Hub posts server-side, per
+    Phase 2's existing exclusion).
+  - Verified via `tsc --noEmit` (clean on `apps/connect`/`apps/site`; mobile
+    shows only its documented pre-existing JSX/type-mismatch noise, cross-
+    checked via `git stash` diff same as every other pass in this doc) and
+    `php -l` on both touched REST classes.
+
+Phase 2 is now fully closed — posting, feed display, and For You inclusion
+are all live on both platforms.
 
 **Phase 3 — Moderation.** Mod appointment/removal, pin/unpin, remove
 post/member (§7.1). "Manage Hub" screen (owner) + lighter "Moderate"

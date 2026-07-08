@@ -58,6 +58,11 @@ export interface FeedItem {
   communityTag?: string;
   communityTier?: string;
   commentCount?: number;
+  /** Hub linkage (docs/hubs-plan.md §4.5) — set only for posts fetched as
+   * For You Hub candidates via getHubCandidatePosts(), never present on the
+   * default getCommunityPosts() feed (Hub posts are excluded from that query
+   * server-side). */
+  hubId?: number;
   // template fields (community posts)
   templateType?: string;
   linkedDirectoryId?: number;
