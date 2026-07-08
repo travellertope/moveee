@@ -50,6 +50,8 @@ export default function NewsletterPublicationPage({
       placeholder="your@email.com"
       buttonLabel="Get it in my inbox →"
       list="getmelit"
+      inputClassName="np-form-input"
+      buttonClassName="np-form-btn"
     />
   ) : (
     <GmlCTAForm
@@ -268,6 +270,8 @@ export default function NewsletterPublicationPage({
                   placeholder="your@email.com"
                   buttonLabel="Get it in my inbox →"
                   list="getmelit"
+                  inputClassName="np-cta-input"
+                  buttonClassName={`np-cta-btn${isGml ? " np-cta-btn--getmelit" : ""}`}
                 />
               ) : (
                 <GmlCTAForm

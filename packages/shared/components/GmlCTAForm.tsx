@@ -64,7 +64,7 @@ export default function GmlCTAForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate className="gml-cta-form">
       <input
         type="text"
         placeholder="First name"
