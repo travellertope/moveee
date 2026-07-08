@@ -308,6 +308,8 @@ export default function IssueReaderClient({
                   placeholder="your@email.com"
                   buttonLabel="Get it in my inbox →"
                   list="getmelit"
+                  inputClassName="rd-subscribe-input rd-subscribe-input--getmelit"
+                  buttonClassName="rd-subscribe-btn rd-subscribe-btn--getmelit"
                 />
               ) : (
                 <GmlCTAForm
