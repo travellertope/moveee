@@ -274,21 +274,12 @@ export async function POST(req: NextRequest) {
 
   const post = await createRes.json();
 
-  // Notify opted-in Hub followers (docs/hubs-plan.md §6.3/§6.4). This route
-  // bypasses PHP entirely for post creation, so there's no other point this
-  // can fire from — fire-and-forget, a delivery failure here shouldn't fail
-  // the post that was already successfully created.
-  if (hubIdNum) {
-    fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubIdNum}/notify-new-post`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${API_SECRET}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ post_id: post.id, user_id: userId }),
-      cache: "no-store",
-    }).catch(() => {});
-  }
+  // Gamification award, rep-tier snapshot, @mention notifications,
+  // Follow-system "notify on new post", and Hub follower notifications all
+  // fire automatically server-side via the rest_after_insert_culture_post
+  // hook (class-culture-rest-api.php's handle_community_post_created) — it
+  // runs for every REST-created culture_post regardless of route, so no
+  // extra round-trip is needed here.
 
   return NextResponse.json({
     success: true,

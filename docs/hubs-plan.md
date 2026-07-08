@@ -775,15 +775,22 @@ are all live on both platforms.
   cron hook) — only followers with `notify_posts = 1` on
   `wp_culture_hub_follows` are notified, per §6.3/§6.4's opt-in requirement.
   Mobile's `handle_submit_post()` calls this directly (it already runs
-  through PHP); the web submit route
+  through PHP). The web submit route
   (`apps/connect/app/api/community/submit/route.ts`) bypasses PHP entirely
-  for post creation (native `wp/v2/community-posts` + Basic Auth, same gap
-  documented throughout this file for every other Hub feature), so a new
-  web-only endpoint, `POST /hub/{id}/notify-new-post`
-  (`handle_hub_notify_new_post`, API-key auth), was added purely for this
-  route to call fire-and-forget after a successful post create — mirrors
-  the same "extra PHP round-trip" pattern already used for Phase 2's
-  pre-creation validation calls.
+  for post creation (native `wp/v2/community-posts` + Basic Auth) — this was
+  first patched with a dedicated `POST /hub/{id}/notify-new-post` endpoint
+  called fire-and-forget after a successful create, but that approach was
+  replaced (see the "web gamification/notification gap" bullet below) with
+  a single fix at the actual architectural seam: `Culture_REST_API` already
+  registers a `rest_after_insert_culture_post` hook
+  (`handle_community_post_created`) that fires for **every** REST-created
+  `culture_post`, regardless of which route created it — since it hooks on
+  post type, not on REST base, it fires just the same for
+  `wp/v2/community-posts` (the web composer's create call) as for any other
+  REST path. That hook now also calls
+  `Culture_Hubs::notify_followers_of_hub_post()` when `_hub_id` postmeta is
+  present, so the dedicated notify-new-post endpoint became redundant and
+  was removed.
   Icon-map entries for `hub_new_post` added to all three frontend files
   (`NotificationBell.tsx`, web `NotificationsClient.tsx`, mobile
   `NotificationsScreen.tsx`'s `getTypeMeta()` + a new `openNotification()`
@@ -808,12 +815,43 @@ are all live on both platforms.
   concept. Following a Hub still defaults `notify_posts` to off in both
   UIs, matching the platform-wide Follow system's opt-in-by-default-off
   posture.
-- Confirmed (not fixed, explicitly out of scope): web-created community
-  posts — Hub or not — never earn gamification points today, since
-  `apps/connect/app/api/community/submit/route.ts` never calls any PHP
-  gamification logic on the creation path (only Hub validation/notify calls
-  were ever added to it). This is a pre-existing gap that predates and is
-  independent of the Hubs feature; Phase 4 did not attempt to fix it.
+- **Web gamification/notification gap — found and fixed, corrected from an
+  earlier, wrong "confirmed but out of scope" note.** A first pass of this
+  phase claimed web-created posts never earn gamification points at all,
+  since `apps/connect/app/api/community/submit/route.ts` never calls PHP
+  gamification logic directly. That claim was wrong — closer investigation
+  found `Culture_REST_API::handle_community_post_created()`, hooked on
+  `rest_after_insert_culture_post` (unrelated in name only to this phase's
+  own `Culture_Hubs` work — it's an older, pre-existing hook), already
+  awards `community_post` reputation/credits and sends @mention
+  notifications for **any** REST-created `culture_post`, including
+  web-composer posts, since the hook fires on post type rather than on
+  which REST route/base handled the request. So gamification and mentions
+  were never actually broken for web. What genuinely *was* missing, and is
+  now fixed in that same hook:
+  - It always awarded the `community_post` key, even for Hub posts — now
+    branches on `_hub_id` postmeta to award `hub_post_published` instead,
+    matching mobile's behavior and unlocking the intended Hub-analytics
+    segmentation for web-created Hub posts too.
+  - It never wrote `community_author_rep_tier` postmeta — meaning
+    web-authored posts were silently invisible to the Phase 8b feed
+    ranking's reputation boost (`authorRepTier`-gated) since that field was
+    simply never set. Now written on every award, mirroring
+    `handle_submit_post()`.
+  - It never called `Culture_Follows::notify_followers_of_post()` — authors'
+    opted-in followers were never notified about web-created posts at all
+    (mobile-created posts always triggered this). Now called unconditionally
+    after the award.
+  - It never called `Culture_Hubs::notify_followers_of_hub_post()` — now
+    called when `_hub_id` is present, replacing the standalone
+    notify-new-post endpoint described above.
+  Net effect: web- and mobile-created posts now trigger byte-for-byte the
+  same downstream side effects, with zero extra network round-trips added
+  to the Next.js submit route (the fix lives entirely in the hook WordPress
+  already runs on every REST post-create) — the old fire-and-forget
+  `notify-new-post` fetch was removed from
+  `apps/connect/app/api/community/submit/route.ts` since it's now
+  redundant.
 - Verified via `tsc --noEmit` (clean on `apps/connect`; mobile's error count
   is unchanged in kind from the pre-Phase-4 baseline — diffed line-number-
   stripped output against a `git stash` baseline to confirm no new error
