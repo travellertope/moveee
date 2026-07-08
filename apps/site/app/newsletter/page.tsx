@@ -132,7 +132,6 @@ export default async function NewsletterArchive({
       {/* ══ MASTHEAD ══ */}
       <section className="nl-masthead">
         <div className="nl-masthead-inner">
-          <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
             Two newsletters. One cultural <em>obsession.</em>
           </h1>
