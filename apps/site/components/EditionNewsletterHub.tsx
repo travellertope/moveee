@@ -4,6 +4,9 @@ import Link from "next/link";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
+import NlArchiveList, { NlArchiveRow } from "@/components/NlArchiveList";
+import { CultureDropPreview, GetMeLitPreview } from "@/components/NlCardPreviews";
+import HideIfSubscribed from "@/components/HideIfSubscribed";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META } from "@/lib/newsletter-lists";
 import type { RegionalSlug } from "@/lib/editions";
@@ -78,33 +81,6 @@ const OTHER_EDITIONS: Record<RegionalSlug, { label: string; href: string }[]> = 
   ],
 };
 
-function NlCardPreview({ listId }: { listId: "culture-drop" | "getmelit" }) {
-  const meta = NL_META[listId];
-  const [first, ...rest] = meta.pillars;
-  return (
-    <div className="nl-card-preview">
-      <div className="nl-card-preview-header">
-        <span className="nl-card-preview-badge">{meta.label}</span>
-        <span className="nl-card-preview-date">
-          {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-        </span>
-      </div>
-      <div className="nl-card-preview-body">
-        <h4 className="nl-card-preview-title">{first?.name}: {first?.desc?.slice(0, 60)}…</h4>
-        <p className="nl-card-preview-excerpt">{meta.standfirst}</p>
-        <div className="nl-card-preview-divider">──── {rest[0]?.name?.toUpperCase()} ────</div>
-        <div className="nl-card-preview-list">
-          {rest.map((p) => (
-            <span key={p.num} className="nl-card-preview-list-item">
-              ▸ <strong>{p.name}</strong> — {p.desc?.slice(0, 40)}…
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default async function EditionNewsletterHub({ edition }: { edition: RegionalSlug }) {
   const cfg = EDITION_CONFIG[edition];
   const allowedSegments = EDITION_SEGMENTS[edition];
@@ -158,45 +134,42 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
         <div className="nl-masthead-inner">
           <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
           <h1 className="nl-masthead-title">
-            Two newsletters.
-            <br />
-            <em>One cultural obsession.</em>
+            Two newsletters. One cultural <em>obsession.</em>
           </h1>
           <p className="nl-masthead-sub">
             Culture Drop for the weekly cultural deep dive. GetMeLit for a new
             story or poem every day. Both free. Both essential.
           </p>
           <div className="nl-masthead-pills">
-            <span className="nl-masthead-pill nl-masthead-pill--culturedrop">
+            <Link href="/newsletter/culture-drop" className="nl-masthead-pill nl-masthead-pill--culturedrop">
               ★ Culture Drop · Every Tuesday
-            </span>
-            <span className="nl-masthead-pill nl-masthead-pill--getmelit">
+            </Link>
+            <Link href="/newsletter/getmelit" className="nl-masthead-pill nl-masthead-pill--getmelit">
               ★ GetMeLit · Mon–Sat
-            </span>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ══ TWO NEWSLETTER CARDS ══ */}
+      <HideIfSubscribed>
       <section className="nl-cards-section">
         <div className="nl-cards-inner">
           {/* Culture Drop card */}
           <div className="nl-card nl-card--culturedrop">
-            <span className="nl-card-eyebrow">Weekly · Every Tuesday</span>
-            <h2 className="nl-card-title">
-              Culture <em>Drop</em>
-            </h2>
+            <div className="nl-card-bar" />
+            <span className="nl-card-eyebrow">★ Culture Drop · Every Tuesday</span>
+            <h2 className="nl-card-title">The weekly dispatch on contemporary global culture.</h2>
             <p className="nl-card-desc">{cfg.cdDesc}</p>
             <div className="nl-card-form">
-              <small className="nl-card-form-label">Subscribe free</small>
               <GmlCTAForm
                 list="culture-drop"
                 buttonLabel="Drop it in my inbox →"
                 successLabel="✓ Welcome to Culture Drop"
               />
-              <p className="nl-card-note">Free · Weekly · Unsubscribe any time</p>
             </div>
-            <NlCardPreview listId="culture-drop" />
+            <p className="nl-card-note">Free · Weekly · Unsubscribe any time</p>
+            <CultureDropPreview />
             <Link href="/newsletter/culture-drop" className="nl-card-detail-link">
               Full Culture Drop page →
             </Link>
@@ -204,26 +177,23 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
 
           {/* GetMeLit card */}
           <div className="nl-card nl-card--getmelit">
-            <span className="nl-card-eyebrow">Daily · Mon–Sat</span>
-            <h2 className="nl-card-title">
-              Get<em>Me</em>Lit
-            </h2>
+            <div className="nl-card-bar" />
+            <span className="nl-card-eyebrow">★ GetMeLit · Mon–Sat</span>
+            <h2 className="nl-card-title">A new story in your inbox, every day.</h2>
             <p className="nl-card-desc">
-              A new story or poem every day. Stories, poems, essay
-              excerpts, and opportunities for writers and authors from around
-              the world — curated to keep you reading, writing, and
-              discovering.
+              A story or poem every weekday — plus a fuller literary dispatch
+              every Saturday, with new books, writing opportunities, and an
+              author in the spotlight.
             </p>
             <div className="nl-card-form">
-              <small className="nl-card-form-label">Subscribe free</small>
               <NewsletterSubscribeWidget
                 placeholder="your@email.com"
                 buttonLabel="Subscribe →"
                 list="getmelit"
               />
-              <p className="nl-card-note">Free · Daily · Unsubscribe any time</p>
             </div>
-            <NlCardPreview listId="getmelit" />
+            <p className="nl-card-note">Free · Daily · Unsubscribe any time</p>
+            <GetMeLitPreview />
             <span className="nl-card-footnote">Saturday issues include Books, Opps &amp; Spotlight.</span>
             <Link href="/newsletter/getmelit" className="nl-card-detail-link">
               Full GetMeLit page →
@@ -231,6 +201,7 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
           </div>
         </div>
       </section>
+      </HideIfSubscribed>
 
       {/* ══ TESTIMONIALS ══ */}
       <section className="nl-testimonials">
@@ -284,7 +255,7 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
             </div>
 
             <div className="nl-inside-block">
-              <h3 className="nl-inside-heading nl-inside-heading--gold">Inside GetMeLit</h3>
+              <h3 className="nl-inside-heading">Inside GetMeLit</h3>
               <p className="nl-inside-intro">
                 Four sections, every issue. You always know what you&apos;re
                 getting, but never what you&apos;ll find.
@@ -314,8 +285,8 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
         <section className="nl-recent">
           <div className="nl-recent-inner">
             <div className="nl-recent-header">
-              <h3>Recent <em>issues</em></h3>
-              <a href="#archive">See all →</a>
+              <span>Recent issues</span>
+              <a href="#archive">See full archive →</a>
             </div>
             <div className="nl-recent-grid">
               {recentIssues.map((issue: any, idx: number) => {
@@ -326,14 +297,17 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
                     href={`/newsletter/${issue.slug}`}
                     className={`nl-recent-card${list === "getmelit" ? " nl-recent-card--getmelit" : ""}`}
                   >
-                    <div className="nl-recent-card-top">
-                      {list && (
+                    {list && (
+                      <div className="nl-recent-card-badge-row">
                         <span className={`nl-list-badge nl-list-badge--${list}`}>
                           {NL_LABELS[list] ?? list}
                         </span>
-                      )}
+                      </div>
+                    )}
+                    <div className="nl-recent-card-meta">
+                      <span className="nl-recent-card-num">Issue N°{String(issueNum(idx)).padStart(3, "0")}</span>
                       <span className="nl-recent-card-date">
-                        Issue N°{String(issueNum(idx)).padStart(3, "0")} · {new Date(issue.date).toLocaleDateString("en-GB", {
+                        {new Date(issue.date).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -450,41 +424,25 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
               </Link>
             </nav>
           </div>
-          <div className="digest-archive-list">
-            {newsletters.map((issue: any, idx: number) => {
+          <NlArchiveList
+            rows={newsletters.map((issue: any, idx: number): NlArchiveRow => {
               const list = issue.nlList || null;
-              return (
-                <Link
-                  key={issue.id}
-                  href={`/newsletter/${issue.slug}`}
-                  className={`digest-archive-row${list === "getmelit" ? " digest-archive-row--getmelit" : ""}`}
-                >
-                  <span className="digest-archive-num">
-                    {String(issueNum(idx)).padStart(2, "0")}
-                  </span>
-                  <span className="digest-archive-date">
-                    {new Date(issue.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <span
-                    className="digest-archive-title"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
-                  />
-                  <div className="digest-archive-tags">
-                    {list && (
-                      <span className={`nl-list-badge nl-list-badge--${list}`}>
-                        {NL_LABELS[list] ?? list}
-                      </span>
-                    )}
-                  </div>
-                  <span className="digest-archive-arrow">→</span>
-                </Link>
-              );
+              return {
+                id: issue.id,
+                slug: issue.slug,
+                num: String(issueNum(idx)).padStart(2, "0"),
+                date: new Date(issue.date).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+                titleHtml: sanitizeHtml(issue.title),
+                list,
+                badgeLabel: list ? (NL_LABELS[list] ?? list) : null,
+                tagName: null,
+              };
             })}
-          </div>
+          />
         </section>
       )}
     </>

@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
+import HideIfSubscribed from "@/components/HideIfSubscribed";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META, NewsletterListId } from "@/lib/newsletter-lists";
 
@@ -83,10 +84,12 @@ export default function NewsletterPublicationPage({
 
             <p className="np-standfirst">{meta.standfirst}</p>
 
-            <div className="np-form">
-              {HeroForm}
-            </div>
-            <span className="np-form-note">Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time</span>
+            <HideIfSubscribed>
+              <div className="np-form">
+                {HeroForm}
+              </div>
+              <span className="np-form-note">Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time</span>
+            </HideIfSubscribed>
           </div>
 
           {/* Right column: preview card */}
@@ -253,29 +256,31 @@ export default function NewsletterPublicationPage({
       )}
 
       {/* ── BOTTOM CTA ── */}
-      <section className="np-cta-band">
-        <div className="np-cta-inner">
-          <h2 className="np-cta-title">
-            {isGml ? "Stories in your inbox. Every day." : "One cultural dispatch. Every week."}
-          </h2>
-          <div className="np-cta-form">
-            {isGml ? (
-              <NewsletterSubscribeWidget
-                placeholder="your@email.com"
-                buttonLabel="Get it in my inbox →"
-                list="getmelit"
-              />
-            ) : (
-              <GmlCTAForm
-                list="culture-drop"
-                buttonLabel="Drop it in my inbox →"
-                successLabel="✓ You're in"
-              />
-            )}
+      <HideIfSubscribed>
+        <section className="np-cta-band">
+          <div className="np-cta-inner">
+            <h2 className="np-cta-title">
+              {isGml ? "Stories in your inbox. Every day." : "One cultural dispatch. Every week."}
+            </h2>
+            <div className="np-cta-form">
+              {isGml ? (
+                <NewsletterSubscribeWidget
+                  placeholder="your@email.com"
+                  buttonLabel="Get it in my inbox →"
+                  list="getmelit"
+                />
+              ) : (
+                <GmlCTAForm
+                  list="culture-drop"
+                  buttonLabel="Drop it in my inbox →"
+                  successLabel="✓ You're in"
+                />
+              )}
+            </div>
+            <span className="np-cta-note">No spam. No nonsense. Unsubscribe any time.</span>
           </div>
-          <span className="np-cta-note">No spam. No nonsense. Unsubscribe any time.</span>
-        </div>
-      </section>
+        </section>
+      </HideIfSubscribed>
     </>
   );
 }

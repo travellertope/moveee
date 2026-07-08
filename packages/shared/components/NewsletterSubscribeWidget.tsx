@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import SubscribeForm from './SubscribeForm';
 import { deriveSegment } from '../lib/segments';
 
@@ -48,18 +47,10 @@ export default function NewsletterSubscribeWidget({
       .finally(() => setSubscribing(false));
   }, [status, session, subscribed, subscribing, list, segment]);
 
-  if (status === 'authenticated') {
-    return (
-      <div className={`nl-manage${variant === 'dark' ? ' nl-manage--dark' : ''}`}>
-        <p className="nl-manage-note">
-          {subscribed ? '✓ Subscribed as a member' : subscribing ? 'Subscribing…' : '✓ Subscribed as a member'}
-        </p>
-        <Link href="/member/settings" className="nl-manage-btn">
-          Manage Preferences
-        </Link>
-      </div>
-    );
-  }
+  // Logged-in members are already subscribed (the effect above fires the
+  // subscribe call on mount) — hide the box rather than showing a manage
+  // link. Preference management lives at /member/settings/newsletters.
+  if (status === 'authenticated') return null;
 
   // 'loading' falls through to the form — avoids layout shift on hydration
   return <SubscribeForm list={list} segment={segment} {...formProps} />;
