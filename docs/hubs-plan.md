@@ -540,11 +540,42 @@ a placeholder, posting is Phase 2). Mobile: `HubsScreen`, `HubCreateScreen`,
 section for the corrected mobile/web split (web has no Reload icon; Hub +
 Stoop icons landed in the global `ConnectHeader` instead) and the new
 `/connect/stoop` + `StoopHomeScreen` entry points this required.
-Not yet done, deliberately deferred to a later pass within Phase 1: mod/owner
-management UI, cover-image upload in the creation form (`coverImageId` is
-wired server-side but no upload control exists yet), and Trending sort's
-real-usage validation (logic is in `Culture_Hubs::discover()` but untested
-against real data). None of these block Phase 2.
+**Follow-up pass (also done) — closed all three previously-deferred items:**
+- **Cover image upload** — the field was switched from a WP-attachment-ID
+  concept (`_hub_cover_image_id`, int) to a directly-stored R2 URL
+  (`_hub_cover_image_url`, string), matching the codebase's actual
+  established convention for user-generated images (avatar, cover photo,
+  community post images all store a URL, never a WP attachment ID — see
+  "Mobile image uploads → Cloudflare R2" elsewhere in this file). Both the
+  web creation form (`CreateHubClient.tsx`) and mobile
+  (`HubCreateScreen.tsx`) now have a real image picker that uploads through
+  the existing generic `/api/community/upload-image` (web) /
+  `/mobile/community/upload-image` (mobile) R2 endpoints and submits the
+  returned URL as `cover_image_url`. Cover images now render on the browse
+  grid (`HubDiscoverClient.tsx`) and the Hub detail hero on both platforms.
+- **Owner management UI** — added `Culture_Hubs::update()` (name/
+  description/cover/allowed-templates, owner-only) and `::archive()`
+  (owner-only, flips `_hub_status` to `archived`, never hard-deletes) to the
+  core class, plus mirrored `PATCH /hub/{id}` / `DELETE /hub/{id}` routes on
+  both REST surfaces. Web: `HubManage.tsx`, a collapsible "Manage Hub →"
+  panel on `/hub/[slug]`, visible only when `status.role === "owner"`. Mobile:
+  the same panel built inline into `HubDetailScreen.tsx` (no separate screen
+  — kept the file count down since the form is small). Both disable editing
+  and hide the archive action once a Hub is already archived; both surfaces
+  also now show an "This Hub is archived" banner when `status === "archived"`.
+- **Trending sort — reviewed, no bug found.** `Culture_Hubs::discover()`'s
+  `trending` branch counts `culture_post` rows with a matching `_hub_id` in
+  the last 7 days — correct, and intentionally returns `0` for every Hub
+  until Phase 2 adds `_hub_id` to `culture_post` (expected, not a bug). The
+  sort re-ranks only *within* the already-paginated `$hubs` slice (same for
+  `popular`) — this is a real page-boundary limitation (page 2's "most
+  popular" isn't guaranteed to rank below page 1's), but it's not a
+  regression: `Culture_Clusters::discover()`'s `nearest_capacity` sort has
+  the exact same limitation today, unfixed. Matching existing precedent
+  rather than fixing only this one call site was the deliberate call here;
+  revisit both together if it ever becomes a real problem.
+
+None of the above blocks Phase 2.
 
 **Phase 2 — Posting into a Hub.** `_hub_id` meta on `culture_post`, surfaced
 as `hubId` on `FeedItem` (§1.4). `SubmitPost.tsx`/`NewPostScreen.tsx` gain

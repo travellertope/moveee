@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useRef, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -24,13 +24,37 @@ export default function CreateHubClient() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [allowed, setAllowed] = useState<string[]>(DEFAULT_TEMPLATES);
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggle = (slug: string) => {
     setAllowed((cur) =>
       cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug]
     );
+  };
+
+  const handleCoverPick = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/community/upload-image", { method: "POST", body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.url) {
+        setError(data?.error || "Could not upload that image.");
+      } else {
+        setCoverImageUrl(data.url);
+      }
+    } catch {
+      setError("Could not upload that image.");
+    }
+    setUploadingCover(false);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -46,6 +70,7 @@ export default function CreateHubClient() {
           name: name.trim(),
           description: description.trim(),
           allowed_templates: allowed.length ? allowed : DEFAULT_TEMPLATES,
+          cover_image_url: coverImageUrl,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -103,6 +128,25 @@ export default function CreateHubClient() {
               onChange={(e) => setDescription(e.target.value)}
               disabled={submitting}
             />
+
+            <label className="hfc-label" htmlFor="hub-cover">Cover image (optional)</label>
+            <input
+              id="hub-cover"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleCoverPick}
+              disabled={submitting || uploadingCover}
+              style={{ marginBottom: 12 }}
+            />
+            {uploadingCover && <p className="hfc-capacity-hint">Uploading…</p>}
+            {coverImageUrl && !uploadingCover && (
+              <img
+                src={coverImageUrl}
+                alt=""
+                style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: "var(--radius-lg, 6px)", marginBottom: 12 }}
+              />
+            )}
 
             <p className="hfc-label" style={{ marginTop: 20 }}>What can members post?</p>
             <div className="hfc-venue-grid">

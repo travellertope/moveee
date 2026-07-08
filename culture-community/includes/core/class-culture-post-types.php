@@ -260,7 +260,7 @@ class Culture_Post_Types {
             '_hub_name'              => 'string',
             '_hub_slug'              => 'string',
             '_hub_description'       => 'string',
-            '_hub_cover_image_id'    => 'integer',
+            '_hub_cover_image_url'   => 'string',
             '_hub_creator_id'        => 'integer',
             '_hub_status'            => 'string',
             '_hub_allowed_templates' => 'string', // JSON array of template-type slugs

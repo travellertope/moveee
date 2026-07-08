@@ -24,6 +24,13 @@ function HubCard({ hub }: { hub: Hub }) {
         textDecoration: "none", color: "inherit",
       }}
     >
+      {hub.coverImageUrl && (
+        <img
+          src={hub.coverImageUrl}
+          alt=""
+          style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: "var(--radius-lg, 6px)" }}
+        />
+      )}
       <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 17, color: "var(--ink)" }}>
         {hub.name}
       </span>

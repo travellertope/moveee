@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import HubActions from "./HubActions";
+import HubManage from "./HubManage";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -100,6 +101,22 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
           <Link href="/hub" className="mem-settings-back-link">← Back to Hubs</Link>
         </div>
 
+        {hub.status === "archived" && (
+          <section className="mem-card" style={{ background: "var(--paper-warm, #f7f5f2)" }}>
+            <p className="mem-card-desc" style={{ margin: 0, fontWeight: 600 }}>
+              This Hub is archived — read-only, no new posts or members.
+            </p>
+          </section>
+        )}
+
+        {hub.coverImageUrl && (
+          <img
+            src={hub.coverImageUrl}
+            alt=""
+            style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: "var(--radius-xl, 12px)" }}
+          />
+        )}
+
         <section className="mem-card">
           <div className="mem-card-label">About</div>
           <p className="mem-card-desc" style={{ margin: 0 }}>{hub.description}</p>
@@ -114,6 +131,19 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
             isOwner={status.role === "owner"}
           />
         </section>
+
+        {status.role === "owner" && (
+          <section className="mem-card">
+            <HubManage
+              hubId={hub.id}
+              initialName={hub.name}
+              initialDescription={hub.description}
+              initialAllowedTemplates={hub.allowedTemplates}
+              initialCoverImageUrl={hub.coverImageUrl}
+              isArchived={hub.status === "archived"}
+            />
+          </section>
+        )}
 
         <section className="mem-card">
           <div className="mem-card-label">Posts</div>

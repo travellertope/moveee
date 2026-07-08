@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView,
+  View, Text, StyleSheet, ScrollView, TextInput, Image,
   TouchableOpacity, ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -13,6 +14,19 @@ import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
 import type { Hub, HubStatus } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
+
+const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
+  { slug: "post", label: "Update", emoji: "📝" },
+  { slug: "cultural-take", label: "Take", emoji: "💬" },
+  { slug: "quote", label: "Quote", emoji: "✦" },
+  { slug: "hidden-gem", label: "Gem", emoji: "💎" },
+  { slug: "food-review", label: "Food", emoji: "🍽️" },
+  { slug: "book-review", label: "Book", emoji: "📚" },
+  { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
+  { slug: "event", label: "Event", emoji: "📅" },
+  { slug: "poll", label: "Poll", emoji: "📊" },
+  { slug: "itinerary", label: "Route", emoji: "🗺️" },
+];
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
@@ -47,6 +61,38 @@ function createStyles(c: ColorPalette) {
     leaveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
     ownerText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
     errorText: { fontFamily: fonts.sans, fontSize: 12, color: "#C62828" },
+    manageLink: { paddingVertical: 4 },
+    manageLinkText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
+    label: { fontFamily: fonts.monoBold, fontSize: 10, color: c.mute, textTransform: "uppercase", letterSpacing: 1, marginTop: 10 },
+    input: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg,
+      paddingHorizontal: 12, height: 40, fontFamily: fonts.sans, fontSize: 14, color: c.ink, marginTop: 4,
+    },
+    textarea: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg,
+      padding: 12, fontFamily: fonts.sans, fontSize: 14, color: c.ink, minHeight: 70, textAlignVertical: "top", marginTop: 4,
+    },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+    chip: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.full,
+      paddingHorizontal: 10, paddingVertical: 6,
+    },
+    chipActive: { borderColor: c.ochre, backgroundColor: c.paper },
+    chipText: { fontFamily: fonts.sans, fontSize: 12, color: c.ink },
+    coverPicker: {
+      height: 100, borderRadius: radius.lg, borderWidth: 1, borderColor: c.rule,
+      borderStyle: "dashed", alignItems: "center", justifyContent: "center", overflow: "hidden", marginTop: 4,
+    },
+    coverPickerText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
+    coverImage: { width: "100%", height: "100%" },
+    saveBtn: {
+      backgroundColor: c.ochre, borderRadius: radius.full, height: 40,
+      alignItems: "center", justifyContent: "center", marginTop: 12,
+    },
+    saveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    archiveBtn: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.rule },
+    archiveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
   });
 }
 
@@ -64,11 +110,27 @@ export default function HubDetailScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const [manageOpen, setManageOpen] = useState(false);
+  const [mName, setMName] = useState("");
+  const [mDescription, setMDescription] = useState("");
+  const [mAllowed, setMAllowed] = useState<string[]>([]);
+  const [mCoverImageUrl, setMCoverImageUrl] = useState("");
+  const [mUploadingCover, setMUploadingCover] = useState(false);
+  const [mSaving, setMSaving] = useState(false);
+  const [mArchiving, setMArchiving] = useState(false);
+  const [mError, setMError] = useState("");
+
   useEffect(() => {
     (async () => {
       try {
         const hubData = await api.get<Hub>(`${MOBILE_API}/hub/slug/${slug}`, false);
         setHub(hubData);
+        if (hubData) {
+          setMName(hubData.name);
+          setMDescription(hubData.description);
+          setMAllowed(hubData.allowedTemplates ?? []);
+          setMCoverImageUrl(hubData.coverImageUrl ?? "");
+        }
         if (hubData && user) {
           const statusData = await api.get<HubStatus>(`${MOBILE_API}/hub/${hubData.id}/status`);
           setStatus(statusData);
@@ -125,6 +187,73 @@ export default function HubDetailScreen() {
     setBusy(false);
   };
 
+  const toggleTemplate = (slug: string) => {
+    setMAllowed((cur) => (cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug]));
+  };
+
+  const pickManageCover = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    });
+    if (result.canceled) return;
+    const uri = result.assets[0].uri;
+    setMUploadingCover(true);
+    setMError("");
+    try {
+      const fileName = uri.split("/").pop() ?? "cover.jpg";
+      const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
+      const res = await api.upload<{ url: string }>(`${MOBILE_API}/community/upload-image`, uri, fileName, fileType);
+      setMCoverImageUrl(res.url);
+    } catch {
+      setMError("Could not upload that image.");
+    }
+    setMUploadingCover(false);
+  };
+
+  const saveManage = async () => {
+    if (!hub) return;
+    setMSaving(true);
+    setMError("");
+    try {
+      const updated = await api.patch<Hub>(`${MOBILE_API}/hub/${hub.id}`, {
+        name: mName.trim(),
+        description: mDescription.trim(),
+        allowed_templates: mAllowed,
+        cover_image_url: mCoverImageUrl,
+      });
+      setHub(updated);
+    } catch (e: any) {
+      setMError(e?.message || "Could not save changes.");
+    }
+    setMSaving(false);
+  };
+
+  const archiveHub = async () => {
+    if (!hub) return;
+    Alert.alert(
+      "Archive Hub",
+      "Archive this Hub? It becomes read-only — no new posts, joins, or edits. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Archive", style: "destructive", onPress: async () => {
+            setMArchiving(true);
+            setMError("");
+            try {
+              const updated = await api.delete<Hub>(`${MOBILE_API}/hub/${hub.id}`);
+              setHub(updated);
+            } catch (e: any) {
+              setMError(e?.message || "Could not archive this Hub.");
+            }
+            setMArchiving(false);
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
       <View style={styles.header}>
@@ -143,6 +272,18 @@ export default function HubDetailScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
+          {hub.status === "archived" && (
+            <View style={styles.card}>
+              <Text style={[styles.cardBody, { fontWeight: "700" }]}>
+                This Hub is archived — read-only, no new posts or members.
+              </Text>
+            </View>
+          )}
+
+          {hub.coverImageUrl ? (
+            <Image source={{ uri: hub.coverImageUrl }} style={{ width: "100%", height: 160, borderRadius: radius.xl }} />
+          ) : null}
+
           <View>
             <Text style={styles.name}>{hub.name}</Text>
             <Text style={styles.meta}>
@@ -180,6 +321,89 @@ export default function HubDetailScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {status.role === "owner" && (
+            <View style={styles.card}>
+              {!manageOpen ? (
+                <TouchableOpacity style={styles.manageLink} onPress={() => setManageOpen(true)}>
+                  <Text style={styles.manageLinkText}>Manage Hub →</Text>
+                </TouchableOpacity>
+              ) : (
+                <View>
+                  <Text style={styles.cardLabel}>Manage Hub</Text>
+                  {mError ? <Text style={styles.errorText}>{mError}</Text> : null}
+
+                  <Text style={styles.label}>Hub name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={mName}
+                    onChangeText={setMName}
+                    editable={!mSaving && hub.status !== "archived"}
+                  />
+
+                  <Text style={styles.label}>Description</Text>
+                  <TextInput
+                    style={styles.textarea}
+                    value={mDescription}
+                    onChangeText={setMDescription}
+                    editable={!mSaving && hub.status !== "archived"}
+                    multiline
+                  />
+
+                  <Text style={styles.label}>Cover image</Text>
+                  <TouchableOpacity
+                    style={styles.coverPicker}
+                    onPress={pickManageCover}
+                    disabled={mSaving || mUploadingCover || hub.status === "archived"}
+                  >
+                    {mUploadingCover ? (
+                      <ActivityIndicator color={c.gold} />
+                    ) : mCoverImageUrl ? (
+                      <Image source={{ uri: mCoverImageUrl }} style={styles.coverImage} />
+                    ) : (
+                      <Text style={styles.coverPickerText}>Choose an image</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <Text style={styles.label}>What can members post?</Text>
+                  <View style={styles.grid}>
+                    {ALL_TEMPLATES.map((t) => {
+                      const active = mAllowed.includes(t.slug);
+                      return (
+                        <TouchableOpacity
+                          key={t.slug}
+                          style={[styles.chip, active && styles.chipActive]}
+                          onPress={() => toggleTemplate(t.slug)}
+                          disabled={hub.status === "archived"}
+                        >
+                          <Text style={styles.chipText}>{t.emoji} {t.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                    <TouchableOpacity
+                      style={[styles.saveBtn, { flex: 1 }, (mSaving || hub.status === "archived") && { opacity: 0.5 }]}
+                      onPress={saveManage}
+                      disabled={mSaving || hub.status === "archived" || !mName.trim() || !mDescription.trim()}
+                    >
+                      {mSaving ? <ActivityIndicator color={c.paper} /> : <Text style={styles.saveBtnText}>Save changes</Text>}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setManageOpen(false)}>
+                      <Text style={styles.manageLinkText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {hub.status !== "archived" && (
+                    <TouchableOpacity style={styles.archiveBtn} onPress={archiveHub} disabled={mArchiving}>
+                      <Text style={styles.archiveBtnText}>{mArchiving ? "Archiving…" : "Archive this Hub"}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Posts</Text>

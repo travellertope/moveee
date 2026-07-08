@@ -93,11 +93,7 @@ class Culture_Hubs {
             'name'              => get_post_meta( $hub_id, '_hub_name', true ) ?: $post->post_title,
             'slug'              => get_post_meta( $hub_id, '_hub_slug', true ) ?: $post->post_name,
             'description'       => get_post_meta( $hub_id, '_hub_description', true ),
-            'coverImageId'      => (int) get_post_meta( $hub_id, '_hub_cover_image_id', true ) ?: null,
-            'coverImageUrl'     => ( function() use ( $hub_id ) {
-                $image_id = (int) get_post_meta( $hub_id, '_hub_cover_image_id', true );
-                return $image_id ? wp_get_attachment_url( $image_id ) : '';
-            } )(),
+            'coverImageUrl'     => get_post_meta( $hub_id, '_hub_cover_image_url', true ) ?: '',
             'creatorId'         => (int) get_post_meta( $hub_id, '_hub_creator_id', true ),
             'status'            => get_post_meta( $hub_id, '_hub_status', true ) ?: self::STATUS_ACTIVE,
             'allowedTemplates'  => array_values( $templates ),
@@ -320,7 +316,7 @@ class Culture_Hubs {
         update_post_meta( $post_id, '_hub_name', $name );
         update_post_meta( $post_id, '_hub_slug', $slug );
         update_post_meta( $post_id, '_hub_description', $description );
-        update_post_meta( $post_id, '_hub_cover_image_id', (int) ( $data['coverImageId'] ?? 0 ) );
+        update_post_meta( $post_id, '_hub_cover_image_url', esc_url_raw( (string) ( $data['coverImageUrl'] ?? '' ) ) );
         update_post_meta( $post_id, '_hub_creator_id', $user_id );
         update_post_meta( $post_id, '_hub_status', self::STATUS_ACTIVE );
         update_post_meta( $post_id, '_hub_allowed_templates', wp_json_encode( $allowed ) );
@@ -338,6 +334,72 @@ class Culture_Hubs {
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
         return $post_id;
+    }
+
+    /**
+     * Owner-only. Updates name/description/cover/allowed-templates. Any
+     * field omitted from $data is left unchanged.
+     * @return array|WP_Error Updated hub on success.
+     */
+    public static function update( int $hub_id, int $user_id, array $data ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+        if ( 'owner' !== self::get_role( $hub_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the Hub owner can edit this Hub.', array( 'status' => 403 ) );
+        }
+
+        if ( isset( $data['name'] ) ) {
+            $name = sanitize_text_field( $data['name'] );
+            if ( '' === $name ) {
+                return new WP_Error( 'missing_name', 'A Hub name is required.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_name', $name );
+            wp_update_post( array( 'ID' => $hub_id, 'post_title' => $name ) );
+        }
+
+        if ( isset( $data['description'] ) ) {
+            $description = sanitize_textarea_field( $data['description'] );
+            if ( '' === $description ) {
+                return new WP_Error( 'missing_description', 'A short description is required.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_description', $description );
+        }
+
+        if ( isset( $data['coverImageUrl'] ) ) {
+            update_post_meta( $hub_id, '_hub_cover_image_url', esc_url_raw( (string) $data['coverImageUrl'] ) );
+        }
+
+        if ( isset( $data['allowedTemplates'] ) && is_array( $data['allowedTemplates'] ) ) {
+            $allowed = array_values( array_intersect(
+                array_map( 'sanitize_key', $data['allowedTemplates'] ),
+                array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' )
+            ) );
+            update_post_meta( $hub_id, '_hub_allowed_templates', wp_json_encode( $allowed ?: self::DEFAULT_ALLOWED_TEMPLATES ) );
+        }
+
+        return self::get_hub( $hub_id );
+    }
+
+    /**
+     * Owner-only. Archives the Hub — read-only history, no new posts/joins.
+     * Never hard-deleted, same posture as every other user-created group in
+     * this codebase.
+     * @return true|WP_Error
+     */
+    public static function archive( int $hub_id, int $user_id ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+        if ( 'owner' !== self::get_role( $hub_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the Hub owner can archive this Hub.', array( 'status' => 403 ) );
+        }
+
+        update_post_meta( $hub_id, '_hub_status', self::STATUS_ARCHIVED );
+
+        return true;
     }
 
     /**

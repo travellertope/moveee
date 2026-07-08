@@ -478,6 +478,20 @@ class Culture_Mobile_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Owner-only update (name/description/cover/allowed-templates).
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)', array(
+            'methods'             => 'PATCH',
+            'callback'            => array( __CLASS__, 'handle_hub_update' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Owner-only archive.
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_archive' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/status', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_hub_status' ),
@@ -2098,7 +2112,7 @@ class Culture_Mobile_API {
         $data    = array(
             'name'             => (string) $request->get_param( 'name' ),
             'description'      => (string) $request->get_param( 'description' ),
-            'coverImageId'     => (int) ( $request->get_param( 'cover_image_id' ) ?: 0 ),
+            'coverImageUrl'    => (string) $request->get_param( 'cover_image_url' ),
             'allowedTemplates' => $request->get_param( 'allowed_templates' ),
         );
 
@@ -2108,6 +2122,43 @@ class Culture_Mobile_API {
         }
 
         return rest_ensure_response( Culture_Hubs::get_hub( $result ) );
+    }
+
+    public static function handle_hub_update( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+        $data    = array();
+        if ( null !== $request->get_param( 'name' ) ) {
+            $data['name'] = (string) $request->get_param( 'name' );
+        }
+        if ( null !== $request->get_param( 'description' ) ) {
+            $data['description'] = (string) $request->get_param( 'description' );
+        }
+        if ( null !== $request->get_param( 'cover_image_url' ) ) {
+            $data['coverImageUrl'] = (string) $request->get_param( 'cover_image_url' );
+        }
+        if ( null !== $request->get_param( 'allowed_templates' ) ) {
+            $data['allowedTemplates'] = $request->get_param( 'allowed_templates' );
+        }
+
+        $result = Culture_Hubs::update( $hub_id, $user_id, $data );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_hub_archive( $request ) {
+        $user_id = get_current_user_id();
+        $hub_id  = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::archive( $hub_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $hub_id ) );
     }
 
     public static function handle_hub_discover( $request ) {
