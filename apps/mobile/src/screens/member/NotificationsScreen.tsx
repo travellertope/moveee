@@ -76,6 +76,19 @@ async function openNotification(item: Notification, nav: AppNavProp): Promise<Fe
       if (clusterId) nav.navigate("ClusterScreen", { id: Number(clusterId) });
       break;
     }
+    case "hub_mod_appointed":
+    case "hub_post_removed":
+    case "hub_member_removed": {
+      const hubId = meta.hub_id;
+      if (!hubId) { nav.navigate("HubsScreen"); break; }
+      try {
+        const hub = await api.get<{ slug: string }>(`${MOBILE_API}/hub/${hubId}`, false);
+        nav.navigate("HubDetail", { slug: hub.slug });
+      } catch {
+        nav.navigate("HubsScreen");
+      }
+      break;
+    }
     case "system":
     default:
       break;
@@ -106,6 +119,9 @@ function getTypeMeta(c: ColorPalette) {
     cluster_new_host:         { emoji: "🗳️", accent: c.gold,    border: false },
     cluster_election_started: { emoji: "🏛️", accent: c.ochre,   border: false },
     cluster_checkin_reminder: { emoji: "📅", accent: c.gold,    border: false },
+    hub_mod_appointed:  { emoji: "🛡️", accent: c.gold,    border: false },
+    hub_post_removed:   { emoji: "🗑️", accent: c.error,   border: true  },
+    hub_member_removed: { emoji: "🚪", accent: c.error,   border: true  },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

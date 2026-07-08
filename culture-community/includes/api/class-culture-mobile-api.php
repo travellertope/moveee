@@ -539,6 +539,58 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Moderation (Phase 3, docs/hubs-plan.md §7.1).
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_members' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/mods', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_appoint_mod' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'target_user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/mods/(?P<userId>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_mod' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/members/(?P<userId>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_member' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/pin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_pin_post' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/pin', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_unpin_post' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/remove-post', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_post' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -2301,6 +2353,91 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'items' => self::get_hub_candidate_items( $hub_ids, $limit ) ) );
     }
 
+    public static function handle_hub_members( $request ) {
+        $hub_id   = (int) $request->get_param( 'id' );
+        $page     = max( 1, (int) ( $request->get_param( 'page' ) ?: 1 ) );
+        $per_page = min( 100, max( 1, (int) ( $request->get_param( 'per_page' ) ?: 50 ) ) );
+
+        return rest_ensure_response( Culture_Hubs::list_members( $hub_id, $page, $per_page ) );
+    }
+
+    public static function handle_hub_appoint_mod( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'target_user_id' );
+
+        $result = Culture_Hubs::appoint_mod( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_remove_mod( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'userId' );
+
+        $result = Culture_Hubs::remove_mod( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_remove_member( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'userId' );
+
+        $result = Culture_Hubs::remove_member( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_pin_post( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $post_id      = (int) $request->get_param( 'post_id' );
+
+        $result = Culture_Hubs::pin_post( $hub_id, $requester_id, $post_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $hub_id ) );
+    }
+
+    public static function handle_hub_unpin_post( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::unpin_post( $hub_id, $requester_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $hub_id ) );
+    }
+
+    public static function handle_hub_remove_post( $request ) {
+        $requester_id = get_current_user_id();
+        $hub_id       = (int) $request->get_param( 'id' );
+        $post_id      = (int) $request->get_param( 'post_id' );
+
+        $result = Culture_Hubs::remove_post( $hub_id, $requester_id, $post_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
     const REACTION_TYPES = array( 'love', 'fire', 'clap' );
 
@@ -3129,7 +3266,12 @@ class Culture_Mobile_API {
         $reactions_map = get_user_meta( $viewer_id, '_culture_post_reactions', true );
         $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
 
-        $query = new WP_Query( array(
+        // Pinned post (docs/hubs-plan.md §4.4) is only ever prepended to page
+        // 1, and excluded from the main query so it doesn't also appear in
+        // its natural date-order position.
+        $pinned_id = 1 === $page ? (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) : 0;
+
+        $query_args = array(
             'post_type'      => 'culture_post',
             'post_status'    => 'publish',
             'meta_key'       => '_hub_id',
@@ -3138,12 +3280,22 @@ class Culture_Mobile_API {
             'paged'          => $page,
             'orderby'        => 'date',
             'order'          => 'DESC',
-        ) );
+        );
+        if ( $pinned_id ) {
+            $query_args['post__not_in'] = array( $pinned_id );
+        }
+        $query = new WP_Query( $query_args );
 
         $organiser_map = array();
         $org_ids = array_filter( array_map( function( $p ) {
             return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
         }, $query->posts ) );
+        if ( $pinned_id ) {
+            $pinned_org_id = (int) get_post_meta( $pinned_id, '_culture_event_organiser_id', true );
+            if ( $pinned_org_id ) {
+                $org_ids[] = $pinned_org_id;
+            }
+        }
         if ( ! empty( $org_ids ) ) {
             $org_posts = get_posts( array(
                 'post__in'       => array_values( array_unique( $org_ids ) ),
@@ -3161,9 +3313,18 @@ class Culture_Mobile_API {
             return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
         }, $query->posts );
 
+        if ( $pinned_id ) {
+            $pinned_post = get_post( $pinned_id );
+            if ( $pinned_post && 'publish' === $pinned_post->post_status ) {
+                $pinned_item              = self::format_community_feed_item( $pinned_post, $liked_ids, $reactions_map, $organiser_map );
+                $pinned_item['isPinned']  = true;
+                array_unshift( $items, $pinned_item );
+            }
+        }
+
         return array(
             'items'   => $items,
-            'total'   => $query->found_posts,
+            'total'   => $query->found_posts + ( $pinned_id ? 1 : 0 ),
             'page'    => $page,
             'perPage' => $per_page,
         );

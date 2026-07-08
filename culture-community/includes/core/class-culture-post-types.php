@@ -270,6 +270,8 @@ class Culture_Post_Types {
             '_hub_member_count'      => 'integer',
             '_hub_post_count'        => 'integer',
             '_hub_created_at'        => 'string',
+            // Moderation (Phase 3) — one pinned post max, see Culture_Hubs::pin_post()
+            '_hub_pinned_post_id'    => 'integer',
         );
         foreach ( $hub_meta as $meta_key => $type ) {
             register_post_meta( 'culture_hub', $meta_key, array(

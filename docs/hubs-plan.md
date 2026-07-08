@@ -689,9 +689,57 @@ done yet (see below).**
 Phase 2 is now fully closed — posting, feed display, and For You inclusion
 are all live on both platforms.
 
-**Phase 3 — Moderation.** Mod appointment/removal, pin/unpin, remove
-post/member (§7.1). "Manage Hub" screen (owner) + lighter "Moderate"
-affordance (mod).
+**Phase 3 — Moderation. DONE.**
+
+- `Culture_Hubs` gained `list_members()`, `appoint_mod()`, `remove_mod()`,
+  `remove_member()`, `pin_post()`, `unpin_post()`, and `remove_post()` (this
+  last one wasn't in §5.1's original method list but is required by §7.1's
+  own "remove post" tool — added during implementation). All enforce
+  role hierarchy in PHP, not just the UI: owner-only for appoint/remove-mod
+  and archive; mod-or-owner for pin/unpin/remove-post/remove-member; a mod
+  can never remove another mod or the owner (owner-only escalation).
+- `_hub_pinned_post_id` added to the CPT meta (one pinned post max, per
+  §4.4) — `Culture_Mobile_API::get_hub_feed_items()` fetches and prepends it
+  on page 1 only (excluded from the main paginated query via `post__not_in`
+  so it doesn't also show up twice in date order), tagging it `isPinned:
+  true` in the response.
+- Mirrored REST endpoints on both surfaces: `GET {id}/members`, `POST
+  {id}/mods`, `DELETE {id}/mods/{userId}`, `DELETE {id}/members/{userId}`,
+  `POST`/`DELETE {id}/pin`, and `POST {id}/remove-post` (the one endpoint
+  not in the original §5.2 table, added alongside the method above) — plus
+  matching Next.js proxy routes.
+- Three new notification types — `hub_mod_appointed`, `hub_post_removed`,
+  `hub_member_removed` — added to `Culture_Notifications::TYPES` and wired
+  through `appoint_mod()`/`remove_member()`/`remove_post()` directly (no
+  intermediate hook, same direct-mutation pattern as `perk_redeemed`).
+  Icon-map entries added to all three frontend files
+  (`NotificationBell.tsx`, web `NotificationsClient.tsx`, mobile
+  `NotificationsScreen.tsx`) plus web's `NotificationPreferences.tsx` toggle
+  list — per the existing "no shared source of truth across the PHP/TS
+  boundary" caveat, confirmed once again to also apply to the pre-existing
+  `cluster_*` types, which turned out to already be missing from several of
+  these same lists (a pre-existing gap, not something this pass introduced,
+  left alone except where fixing it was free — e.g. mobile's
+  `NotificationType` union needed the `cluster_*` variants added anyway to
+  stop a real type error, so they were included at that point).
+  `hub_new_post` (the fourth type from §6.3) is deliberately deferred to
+  Phase 4, since it's a rewards/notify-on-post feature, not a moderation
+  action.
+- Web: `HubManage.tsx` now takes a `role: "owner" | "mod"` prop — owners get
+  the full name/description/cover/allowed-templates/archive tools (Phase
+  1/1.5's build) plus a members list with appoint/remove-mod and remove-
+  member; mods get only the members list with remove-member (no appoint/
+  remove-mod, no archive, no hub-info editing). `HubFeed.tsx` renders a
+  Pin/Unpin + Remove control under each post for mods/owners, and a "📌
+  Pinned" label above the pinned post.
+- Mobile: `HubDetailScreen.tsx`'s inline manage panel follows the identical
+  owner-vs-mod gating, plus the same pin/remove-post controls on each
+  `FeedItemCard` in the Hub feed. Notification taps for the three new types
+  fetch the Hub by id (for its slug) and navigate to `HubDetail` — added to
+  `openNotification()`'s switch, mirroring the existing `cluster_*` case.
+- Verified via `tsc --noEmit` (clean on `apps/connect`/`apps/site`; mobile
+  shows only its documented pre-existing JSX/type-mismatch noise) and
+  `php -l` on all touched PHP files.
 
 **Phase 4 — Rewards & notifications.** `hub_created`/`hub_post_published`
 action keys, "Hub Founder" badge, the four new notification types (§6.3),

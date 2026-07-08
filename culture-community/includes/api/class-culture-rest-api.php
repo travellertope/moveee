@@ -1577,6 +1577,70 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Moderation (Phase 3, docs/hubs-plan.md §7.1).
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_members' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/mods', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_appoint_mod' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'        => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/mods/(?P<userId>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_mod' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/members/(?P<userId>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_member' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/pin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_pin_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/pin', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_hub_unpin_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/remove-post', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_remove_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -2224,6 +2288,91 @@ class Culture_REST_API {
         $viewer_id   = (int) ( $request->get_param( 'user_id' ) ?: 0 );
 
         return rest_ensure_response( array( 'items' => Culture_Mobile_API::get_hub_candidate_items( $hub_ids, $limit, $viewer_id ) ) );
+    }
+
+    public static function handle_hub_members( $request ) {
+        $hub_id   = (int) $request->get_param( 'id' );
+        $page     = max( 1, (int) ( $request->get_param( 'page' ) ?: 1 ) );
+        $per_page = min( 100, max( 1, (int) ( $request->get_param( 'per_page' ) ?: 50 ) ) );
+
+        return rest_ensure_response( Culture_Hubs::list_members( $hub_id, $page, $per_page ) );
+    }
+
+    public static function handle_hub_appoint_mod( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'target_user_id' );
+
+        $result = Culture_Hubs::appoint_mod( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_remove_mod( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'userId' );
+
+        $result = Culture_Hubs::remove_mod( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_remove_member( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $target_id    = (int) $request->get_param( 'userId' );
+
+        $result = Culture_Hubs::remove_member( $hub_id, $requester_id, $target_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_pin_post( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $post_id      = (int) $request->get_param( 'post_id' );
+
+        $result = Culture_Hubs::pin_post( $hub_id, $requester_id, $post_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $hub_id ) );
+    }
+
+    public static function handle_hub_unpin_post( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+
+        $result = Culture_Hubs::unpin_post( $hub_id, $requester_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( Culture_Hubs::get_hub( $hub_id ) );
+    }
+
+    public static function handle_hub_remove_post( $request ) {
+        $requester_id = (int) $request->get_param( 'user_id' );
+        $hub_id       = (int) $request->get_param( 'id' );
+        $post_id      = (int) $request->get_param( 'post_id' );
+
+        $result = Culture_Hubs::remove_post( $hub_id, $requester_id, $post_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     /* ——————————————————————————————————————

@@ -135,6 +135,7 @@ class Culture_Hubs {
             'memberCount'       => (int) get_post_meta( $hub_id, '_hub_member_count', true ),
             'postCount'         => (int) get_post_meta( $hub_id, '_hub_post_count', true ),
             'createdAt'         => get_post_meta( $hub_id, '_hub_created_at', true ),
+            'pinnedPostId'      => (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) ?: null,
         );
     }
 
@@ -538,5 +539,230 @@ class Culture_Hubs {
             array( 'hub_id' => $hub_id, 'user_id' => $user_id ),
             array( '%d', '%d' )
         );
+    }
+
+    /* ——————————————————————————————————————
+     *  Moderation (docs/hubs-plan.md §7.1, Phase 3)
+     * —————————————————————————————————————— */
+
+    /**
+     * Paginated member list with name/avatar/role, host sorted first —
+     * mirrors Culture_Clusters::get_members()'s shape/ordering.
+     */
+    public static function list_members( int $hub_id, int $page = 1, int $per_page = 50 ) : array {
+        global $wpdb;
+        $table  = self::members_table();
+        $offset = ( max( 1, $page ) - 1 ) * $per_page;
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT m.user_id, m.role, m.joined_at, u.display_name
+             FROM {$table} m
+             INNER JOIN {$wpdb->users} u ON u.ID = m.user_id
+             WHERE m.hub_id = %d AND m.status = 'active'
+             ORDER BY (m.role = 'owner') DESC, (m.role = 'mod') DESC, m.joined_at ASC
+             LIMIT %d OFFSET %d",
+            $hub_id, $per_page, $offset
+        ), ARRAY_A );
+
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE hub_id = %d AND status = 'active'",
+            $hub_id
+        ) );
+
+        $members = array();
+        foreach ( $rows ?: array() as $row ) {
+            $user_id   = (int) $row['user_id'];
+            $members[] = array(
+                'id'        => $user_id,
+                'name'      => $row['display_name'],
+                'avatarUrl' => get_user_meta( $user_id, '_culture_avatar_url', true ) ?: '',
+                'role'      => $row['role'],
+                'joinedAt'  => $row['joined_at'],
+            );
+        }
+
+        return array( 'members' => $members, 'total' => $total, 'page' => $page, 'perPage' => $per_page );
+    }
+
+    /**
+     * Owner-only. Promotes an active member to mod.
+     * @return true|WP_Error
+     */
+    public static function appoint_mod( int $hub_id, int $requester_id, int $target_user_id ) {
+        if ( 'owner' !== self::get_role( $hub_id, $requester_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the Hub owner can appoint mods.', array( 'status' => 403 ) );
+        }
+        $target_role = self::get_role( $hub_id, $target_user_id );
+        if ( null === $target_role ) {
+            return new WP_Error( 'not_a_member', 'That user is not a member of this Hub.', array( 'status' => 400 ) );
+        }
+        if ( 'owner' === $target_role ) {
+            return new WP_Error( 'already_owner', 'That user already owns this Hub.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $wpdb->update(
+            self::members_table(),
+            array( 'role' => 'mod' ),
+            array( 'hub_id' => $hub_id, 'user_id' => $target_user_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
+
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            Culture_Notifications::add(
+                $target_user_id,
+                'hub_mod_appointed',
+                'You are now a Hub mod',
+                'You were appointed a moderator of ' . get_post_meta( $hub_id, '_hub_name', true ) . '.',
+                '/hub/' . ( get_post_meta( $hub_id, '_hub_slug', true ) ?: $hub_id ),
+                array( 'hub_id' => $hub_id )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Owner-only. Demotes a mod back to a regular member.
+     * @return true|WP_Error
+     */
+    public static function remove_mod( int $hub_id, int $requester_id, int $target_user_id ) {
+        if ( 'owner' !== self::get_role( $hub_id, $requester_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the Hub owner can remove mods.', array( 'status' => 403 ) );
+        }
+        if ( 'mod' !== self::get_role( $hub_id, $target_user_id ) ) {
+            return new WP_Error( 'not_a_mod', 'That user is not a mod of this Hub.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $wpdb->update(
+            self::members_table(),
+            array( 'role' => 'member' ),
+            array( 'hub_id' => $hub_id, 'user_id' => $target_user_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
+
+        return true;
+    }
+
+    /**
+     * Mod/owner. Removes a member from the Hub — a mod cannot remove another
+     * mod or the owner (owner-only escalation, mirrors appoint/remove mod).
+     * @return true|WP_Error
+     */
+    public static function remove_member( int $hub_id, int $requester_id, int $target_user_id ) {
+        $requester_role = self::get_role( $hub_id, $requester_id );
+        if ( ! in_array( $requester_role, array( 'owner', 'mod' ), true ) ) {
+            return new WP_Error( 'forbidden', 'Only Hub mods and the owner can remove members.', array( 'status' => 403 ) );
+        }
+        $target_role = self::get_role( $hub_id, $target_user_id );
+        if ( null === $target_role ) {
+            return new WP_Error( 'not_a_member', 'That user is not a member of this Hub.', array( 'status' => 400 ) );
+        }
+        if ( 'owner' === $target_role ) {
+            return new WP_Error( 'cannot_remove_owner', 'The Hub owner cannot be removed.', array( 'status' => 400 ) );
+        }
+        if ( 'mod' === $target_role && 'owner' !== $requester_role ) {
+            return new WP_Error( 'forbidden', 'Only the Hub owner can remove a mod.', array( 'status' => 403 ) );
+        }
+
+        global $wpdb;
+        $updated = $wpdb->update(
+            self::members_table(),
+            array( 'status' => 'left' ),
+            array( 'hub_id' => $hub_id, 'user_id' => $target_user_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
+
+        if ( false !== $updated ) {
+            update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+            if ( class_exists( 'Culture_Notifications' ) ) {
+                Culture_Notifications::add(
+                    $target_user_id,
+                    'hub_member_removed',
+                    'You were removed from a Hub',
+                    'You were removed from ' . get_post_meta( $hub_id, '_hub_name', true ) . '.',
+                    '/hub',
+                    array( 'hub_id' => $hub_id )
+                );
+            }
+        }
+
+        return false !== $updated;
+    }
+
+    /**
+     * Mod/owner. Pins a post that belongs to this Hub — one pinned post max
+     * (docs/hubs-plan.md §4.4), pinning a new one replaces the old.
+     * @return true|WP_Error
+     */
+    public static function pin_post( int $hub_id, int $requester_id, int $post_id ) {
+        $role = self::get_role( $hub_id, $requester_id );
+        if ( ! in_array( $role, array( 'owner', 'mod' ), true ) ) {
+            return new WP_Error( 'forbidden', 'Only Hub mods and the owner can pin posts.', array( 'status' => 403 ) );
+        }
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type || (int) get_post_meta( $post_id, '_hub_id', true ) !== $hub_id ) {
+            return new WP_Error( 'invalid_post', 'That post does not belong to this Hub.', array( 'status' => 400 ) );
+        }
+
+        update_post_meta( $hub_id, '_hub_pinned_post_id', $post_id );
+
+        return true;
+    }
+
+    /**
+     * Mod/owner. Clears the Hub's pinned post, if any.
+     * @return true|WP_Error
+     */
+    public static function unpin_post( int $hub_id, int $requester_id ) {
+        $role = self::get_role( $hub_id, $requester_id );
+        if ( ! in_array( $role, array( 'owner', 'mod' ), true ) ) {
+            return new WP_Error( 'forbidden', 'Only Hub mods and the owner can unpin posts.', array( 'status' => 403 ) );
+        }
+
+        delete_post_meta( $hub_id, '_hub_pinned_post_id' );
+
+        return true;
+    }
+
+    /**
+     * Mod/owner. Removes a post from the Hub — platform-level moderation
+     * (report/blocklist, §7.2) stays separate and unchanged; this is the
+     * Hub-scoped equivalent, moving the post to 'pending' rather than
+     * hard-deleting it (same no-hard-delete posture as everything else in
+     * this codebase) and notifying the author for transparency.
+     * @return true|WP_Error
+     */
+    public static function remove_post( int $hub_id, int $requester_id, int $post_id ) {
+        $role = self::get_role( $hub_id, $requester_id );
+        if ( ! in_array( $role, array( 'owner', 'mod' ), true ) ) {
+            return new WP_Error( 'forbidden', 'Only Hub mods and the owner can remove posts.', array( 'status' => 403 ) );
+        }
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type || (int) get_post_meta( $post_id, '_hub_id', true ) !== $hub_id ) {
+            return new WP_Error( 'invalid_post', 'That post does not belong to this Hub.', array( 'status' => 400 ) );
+        }
+
+        if ( (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) === $post_id ) {
+            delete_post_meta( $hub_id, '_hub_pinned_post_id' );
+        }
+
+        wp_update_post( array( 'ID' => $post_id, 'post_status' => 'pending' ) );
+
+        $author_id = (int) $post->post_author;
+        if ( $author_id && class_exists( 'Culture_Notifications' ) ) {
+            Culture_Notifications::add(
+                $author_id,
+                'hub_post_removed',
+                'Your Hub post was removed',
+                'A moderator removed your post from ' . get_post_meta( $hub_id, '_hub_name', true ) . '.',
+                '/hub/' . ( get_post_meta( $hub_id, '_hub_slug', true ) ?: $hub_id ),
+                array( 'hub_id' => $hub_id, 'post_id' => $post_id )
+            );
+        }
+
+        return true;
     }
 }
