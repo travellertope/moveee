@@ -24,27 +24,6 @@ export default function NewsletterPublicationPage({
   const accentMod = isGml ? " np-hero--getmelit" : "";
   const accentAllMod = isGml ? "--getmelit" : "";
 
-  const TESTIMONIALS = [
-    {
-      quote: isGml
-        ? "The best literary newsletter I've found. Every recommendation has been golden."
-        : "The first newsletter I've opened every week for a year. Essential.",
-    },
-    {
-      quote: isGml
-        ? "Finally, a newsletter that treats African writing with the seriousness it deserves."
-        : "Finally, a cultural dispatch that doesn't feel like a PR feed.",
-    },
-    {
-      quote: isGml
-        ? "The reading lists have transformed my bookshelf. Genuinely transformative curation."
-        : "The music picks alone are worth it. Deep, thoughtful curation.",
-    },
-  ];
-
-  const ctaBtnClass = isGml ? "np-cta-btn np-cta-btn--getmelit" : "np-cta-btn";
-  const formBtnClass = isGml ? "np-form-btn np-form-btn--getmelit" : "np-form-btn";
-
   const HeroForm = isGml ? (
     <NewsletterSubscribeWidget
       placeholder="your@email.com"
@@ -118,18 +97,6 @@ export default function NewsletterPublicationPage({
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ── */}
-      <section className="np-testimonials">
-        <div className="np-testimonials-inner">
-          {TESTIMONIALS.map((t, i) => (
-            <div key={i} className="np-testimonial">
-              <span className="np-stars">★★★★★</span>
-              <p className="np-testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
-            </div>
-          ))}
         </div>
       </section>
 

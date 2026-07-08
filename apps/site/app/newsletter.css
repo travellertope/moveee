@@ -2064,6 +2064,90 @@
   .nl-inside-grid { grid-template-columns: 1fr; gap: 40px; }
 }
 
+/* ── NEWSLETTER HUB: FEATURE SECTIONS (per-newsletter image+content split) ── */
+.nl-feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 480px;
+  border-bottom: 1px solid var(--rule);
+}
+.nl-feature--flipped {
+  direction: rtl;
+}
+.nl-feature--flipped > * {
+  direction: ltr;
+}
+.nl-feature-image {
+  background-size: cover;
+  background-position: center;
+  min-height: 340px;
+}
+.nl-feature--culturedrop .nl-feature-image {
+  filter: brightness(0.9) saturate(0.95);
+}
+.nl-feature--getmelit .nl-feature-image {
+  filter: brightness(0.88) saturate(0.85);
+}
+.nl-feature-content {
+  background: var(--paper-warm);
+  padding: 60px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.nl-feature-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ochre);
+  margin-bottom: 14px;
+}
+.nl-feature-eyebrow--gold {
+  color: var(--gold);
+}
+.nl-feature-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 12px;
+  line-height: 1.15;
+}
+.nl-feature-intro {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+.nl-feature-cta {
+  display: inline-block;
+  margin-top: 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-decoration: none;
+  letter-spacing: .02em;
+}
+.nl-feature-cta:hover { text-decoration: underline; }
+.nl-feature-cta--gold {
+  color: var(--gold);
+}
+@media (max-width: 900px) {
+  .nl-feature {
+    grid-template-columns: 1fr;
+    direction: ltr;
+  }
+  .nl-feature--flipped > * { direction: ltr; }
+  .nl-feature-image { min-height: 220px; order: -1; }
+  .nl-feature--flipped .nl-feature-image { order: -1; }
+  .nl-feature-content { padding: 36px 24px; }
+  .nl-feature-heading { font-size: 26px; }
+}
+
 /* ── NEWSLETTER HUB: RECENT ISSUES (mixed lists) ── */
 .nl-recent {
   background: var(--paper);
