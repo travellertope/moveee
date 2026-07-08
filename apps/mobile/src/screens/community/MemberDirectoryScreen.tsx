@@ -9,125 +9,8 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
-import type { Member, Cluster } from "../../types";
+import type { Member } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
-
-function capitalize(s: string) {
-  return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-function HouseFellowshipSection({
-  styles, c,
-}: { styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
-  const nav = useNav();
-  const { user } = useAuthStore() as any;
-  const [loading, setLoading] = useState(true);
-  const [myCluster, setMyCluster] = useState<Cluster | null>(null);
-  const [nearby, setNearby] = useState<Cluster[]>([]);
-  const [joiningId, setJoiningId] = useState<number | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await api.get<{ clusters: Cluster[] }>(`${MOBILE_API}/cluster/my-clusters`);
-        const clusters = data?.clusters ?? [];
-        const active = clusters.find((cl) => cl.status !== "archived") ?? null;
-        setMyCluster(active);
-
-        if (!active) {
-          const params = new URLSearchParams();
-          const city = (user?.city ?? "").trim();
-          const country = (user?.countryOfResidence ?? "").trim();
-          if (city) params.set("city", city);
-          else if (country) params.set("country", country);
-          const dData = await api.get<{ clusters: Cluster[] }>(`${MOBILE_API}/cluster/discover?${params}`);
-          setNearby((dData?.clusters ?? []).slice(0, 3));
-        }
-      } catch {
-        setMyCluster(null);
-        setNearby([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [user?.city, user?.countryOfResidence]);
-
-  const join = async (clusterId: number) => {
-    setJoiningId(clusterId);
-    try {
-      await api.post(`${MOBILE_API}/cluster/${clusterId}/join`, {});
-      nav.navigate("ClusterScreen", { id: clusterId });
-    } catch {
-      // no-op, leave card as-is
-    } finally {
-      setJoiningId(null);
-    }
-  };
-
-  if (loading) return null;
-
-  return (
-    <View style={styles.hfSection}>
-      <Text style={styles.hfTitle}>Stoop</Text>
-      <Text style={styles.hfSub}>Weekly, area-level gatherings of Moveee members near you.</Text>
-
-      {myCluster ? (
-        <TouchableOpacity
-          style={styles.hfCardActive}
-          onPress={() => nav.navigate("ClusterScreen", { id: myCluster.id })}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hfCardLabel}>Your Stoop</Text>
-            <Text style={styles.hfCardName}>{myCluster.name}</Text>
-            <Text style={styles.hfCardMeta}>
-              {[myCluster.street, myCluster.city].filter(Boolean).join(", ")}
-              {myCluster.meetingDay && myCluster.meetingTime
-                ? ` · ${capitalize(myCluster.meetingDay)}s, ${myCluster.meetingTime}`
-                : ""}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={c.mute} />
-        </TouchableOpacity>
-      ) : nearby.length > 0 ? (
-        <>
-          {nearby.map((cl) => (
-            <View key={cl.id} style={styles.hfCard}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.hfCardName}>{cl.name}</Text>
-                <Text style={styles.hfCardMeta}>
-                  {[cl.street, cl.city].filter(Boolean).join(", ")}
-                  {cl.meetingDay && cl.meetingTime
-                    ? ` · ${capitalize(cl.meetingDay)}s, ${cl.meetingTime}`
-                    : ""}
-                </Text>
-                <Text style={styles.hfCardCount}>
-                  {cl.memberCount}{cl.capacity > 0 ? ` / ${cl.capacity}` : ""} members
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.hfJoinBtn}
-                onPress={() => join(cl.id)}
-                disabled={joiningId === cl.id}
-              >
-                <Text style={styles.hfJoinBtnText}>{joiningId === cl.id ? "Joining…" : "Join →"}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.hfStartBtn} onPress={() => nav.navigate("HostOnboardingScreen")}>
-            <Text style={styles.hfStartBtnText}>Start a Stoop →</Text>
-          </TouchableOpacity>
-        </>
-      ) : (
-        <View style={styles.hfEmpty}>
-          <Text style={styles.hfEmptyText}>No Stoop near you yet. Be the first to start one in your area.</Text>
-          <TouchableOpacity style={styles.hfStartBtnPrimary} onPress={() => nav.navigate("HostOnboardingScreen")}>
-            <Text style={styles.hfStartBtnPrimaryText}>Start a Stoop →</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
 
 const DISCIPLINES = [
   "All", "Photography", "Visual Art", "Music Production", "Fashion",
@@ -325,7 +208,6 @@ export default function MemberDirectoryScreen() {
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
-          ListHeaderComponent={<HouseFellowshipSection styles={styles} c={c} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>No one near you yet.</Text>
@@ -456,32 +338,5 @@ function createStyles(c: ColorPalette) {
     empty:     { alignItems: "center", paddingTop: 40, gap: 8 },
     emptyTitle:{ fontFamily: fonts.serifBold, fontSize: 18, color: c.ink },
     emptyDesc: { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
-
-    hfSection: { paddingTop: 16, paddingBottom: 8, gap: 10 },
-    hfTitle: { fontFamily: fonts.serifBold, fontSize: 17, color: c.ink },
-    hfSub: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: -4, marginBottom: 4 },
-    hfCard: {
-      flexDirection: "row", alignItems: "center", backgroundColor: c.paper,
-      borderRadius: radius.xl, padding: 14, gap: 10, ...shadows.card,
-    },
-    hfCardActive: {
-      flexDirection: "row", alignItems: "center", backgroundColor: c.paper,
-      borderRadius: radius.xl, padding: 14, gap: 10, borderWidth: 1.5, borderColor: c.gold, ...shadows.card,
-    },
-    hfCardLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 },
-    hfCardName: { fontFamily: fonts.serifBold, fontSize: 15, color: c.ink },
-    hfCardMeta: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 2 },
-    hfCardCount: { fontFamily: fonts.mono, fontSize: 11, color: c.mute, marginTop: 4 },
-    hfJoinBtn: { backgroundColor: c.ochre, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 8 },
-    hfJoinBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
-    hfStartBtn: { alignItems: "center", paddingVertical: 8 },
-    hfStartBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
-    hfEmpty: {
-      backgroundColor: c.paper, borderRadius: radius.xl, padding: 16, gap: 10,
-      alignItems: "center", ...shadows.card,
-    },
-    hfEmptyText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, textAlign: "center", lineHeight: 19 },
-    hfStartBtnPrimary: { backgroundColor: c.ochre, borderRadius: radius.full, paddingHorizontal: 18, paddingVertical: 10 },
-    hfStartBtnPrimaryText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
   });
 }

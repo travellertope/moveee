@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import MemberDirectory from "@/components/connect/MemberDirectory";
-import Stoop from "@/components/connect/Stoop";
 import Link from "next/link";
 import "../../sections.css";
 import "../../feed/feed.css";
@@ -49,10 +48,6 @@ export default async function PeoplePage() {
           <Link href="/connect" className="mco-nav-link">Literati Connect</Link>
         </nav>
       </section>
-
-      {loggedIn && (
-        <Stoop viewerCity={viewerCity} viewerCountry={viewerCountry} />
-      )}
 
       <section className="mco-directory-section" style={{ borderTop: "none" }}>
         <MemberDirectory viewerCity={viewerCity} viewerCountry={viewerCountry} />

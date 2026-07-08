@@ -249,12 +249,17 @@ restricts the Hub to.
   and **Stoop** (→ `/connect` on web / the existing Stoop entry screen on
   mobile — whatever the user's current Stoop membership state resolves to,
   same routing `Stoop.tsx`/`packages/shared/components/connect/Stoop.tsx`
-  already does today from its own entry points). This replaces Stoop's
-  previous primary entry point living inside the People screen (see
-  `docs/literati-connect-plan.md` §4.1) — **once this ships, the People-screen
-  Stoop entry point should be evaluated for removal/demotion to avoid two
-  competing entry points to the same feature; not a hard requirement for
-  Phase 1, but flag it during Phase 1 review.**
+  already does today from its own entry points).
+  - **Done ahead of Phase 1**: the old People-screen Stoop entry point has
+    already been removed (web: `Stoop` import/render deleted from
+    `apps/connect/app/connect/people/page.tsx`; mobile: the
+    `HouseFellowshipSection` inline component and its `hf*` styles deleted
+    from `MemberDirectoryScreen.tsx`'s `ListHeaderComponent`) so there's no
+    longer a competing entry point to reconcile once the feed icons ship.
+    `packages/shared/components/connect/Stoop.tsx` itself (the
+    join/discover widget component) is intentionally left in place —
+    currently unused on web pending the Hub/Stoop feed-icon build, which
+    will wire it back up (or reuse its logic) from the new entry point.
   - Manual refresh (the Reload icon's prior function) needs a replacement
     interaction — pull-to-refresh already exists on both platforms'
     `FlatList`/scroll containers per existing code, so removing the icon is
