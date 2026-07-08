@@ -5,17 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function HubActions({
-  hubId, loggedIn, initialIsMember, initialIsFollowing, isOwner,
+  hubId, loggedIn, initialIsMember, initialIsFollowing, initialNotifyPosts, isOwner,
 }: {
   hubId: number;
   loggedIn: boolean;
   initialIsMember: boolean;
   initialIsFollowing: boolean;
+  initialNotifyPosts: boolean;
   isOwner: boolean;
 }) {
   const router = useRouter();
   const [isMember, setIsMember] = useState(initialIsMember);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [notifyPosts, setNotifyPosts] = useState(initialNotifyPosts);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,11 +29,14 @@ export default function HubActions({
     );
   }
 
-  const call = async (path: string) => {
+  const call = async (path: string, body?: Record<string, unknown>) => {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`/api/hub/${hubId}/${path}`, { method: "POST" });
+      const res = await fetch(`/api/hub/${hubId}/${path}`, {
+        method: "POST",
+        ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.message || "Something went wrong. Please try again.");
@@ -67,14 +72,24 @@ export default function HubActions({
   };
 
   const follow = async () => {
-    const data = await call("follow");
+    const data = await call("follow", { notify_posts: notifyPosts });
     if (data) setIsFollowing(true);
     setBusy(false);
   };
 
   const unfollow = async () => {
     const data = await call("unfollow");
-    if (data) setIsFollowing(false);
+    if (data) {
+      setIsFollowing(false);
+      setNotifyPosts(false);
+    }
+    setBusy(false);
+  };
+
+  const toggleNotify = async () => {
+    const next = !notifyPosts;
+    const data = await call("follow", { notify_posts: next });
+    if (data) setNotifyPosts(next);
     setBusy(false);
   };
 
@@ -112,6 +127,18 @@ export default function HubActions({
           {isFollowing ? "Following ✓" : "Follow"}
         </button>
       </div>
+
+      {isFollowing && (
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "var(--mute)", cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={notifyPosts}
+            disabled={busy}
+            onChange={toggleNotify}
+          />
+          Notify me when they post
+        </label>
+      )}
     </div>
   );
 }

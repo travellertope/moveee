@@ -1641,6 +1641,21 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Notify opted-in Hub followers of a new post (Phase 4, docs/hubs-plan.md
+        // §6.3/§6.4). Web-only call site — the mobile submit path calls
+        // Culture_Hubs::notify_followers_of_hub_post() directly from PHP since it
+        // already runs through handle_submit_post(); the web submit route bypasses
+        // PHP entirely (native REST + Basic Auth) and has no other way to trigger this.
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/notify-new-post', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_hub_notify_new_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -2371,6 +2386,16 @@ class Culture_REST_API {
         if ( is_wp_error( $result ) ) {
             return $result;
         }
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_hub_notify_new_post( $request ) {
+        $hub_id    = (int) $request->get_param( 'id' );
+        $post_id   = (int) $request->get_param( 'post_id' );
+        $poster_id = (int) $request->get_param( 'user_id' );
+
+        Culture_Hubs::notify_followers_of_hub_post( $hub_id, $post_id, $poster_id );
 
         return rest_ensure_response( array( 'success' => true ) );
     }

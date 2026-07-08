@@ -164,6 +164,7 @@ export interface HubStatus {
   isMember: boolean;
   role: string | null;
   isFollowing: boolean;
+  notifyPosts: boolean;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────
@@ -435,7 +436,7 @@ export type NotificationType =
   | 'new_follower' | 'new_follower_post' | 'event_rsvp'
   | 'cluster_activated' | 'cluster_forming_expired' | 'cluster_new_host'
   | 'cluster_election_started' | 'cluster_checkin_reminder'
-  | 'hub_mod_appointed' | 'hub_post_removed' | 'hub_member_removed';
+  | 'hub_mod_appointed' | 'hub_post_removed' | 'hub_member_removed' | 'hub_new_post';
 
 export interface Notification {
   id: number;

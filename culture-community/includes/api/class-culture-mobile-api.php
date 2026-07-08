@@ -1724,7 +1724,10 @@ class Culture_Mobile_API {
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_points( $user_id, 'community_post' );
+            // Hub posts award the same tier as an ordinary post, just under a
+            // distinct action key so Hub-specific analytics can be pulled
+            // later — not a separate incentive tier (docs/hubs-plan.md §6.1).
+            Culture_Gamification::award_points( $user_id, $hub_id ? 'hub_post_published' : 'community_post' );
             $rep      = Culture_Gamification::get_reputation( $user_id );
             $rep_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
             update_post_meta( $post_id, 'community_author_rep_tier', $rep_tier );
@@ -1764,6 +1767,11 @@ class Culture_Mobile_API {
         // Notify followers who opted in to be told when this author posts.
         if ( class_exists( 'Culture_Follows' ) ) {
             Culture_Follows::notify_followers_of_post( $user_id, $post_id );
+        }
+
+        // Notify Hub followers who opted in to be told about new Hub posts.
+        if ( $hub_id && class_exists( 'Culture_Hubs' ) ) {
+            Culture_Hubs::notify_followers_of_hub_post( $hub_id, $post_id, $user_id );
         }
 
         $post = get_post( $post_id );

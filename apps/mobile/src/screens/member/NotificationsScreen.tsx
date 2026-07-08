@@ -78,7 +78,8 @@ async function openNotification(item: Notification, nav: AppNavProp): Promise<Fe
     }
     case "hub_mod_appointed":
     case "hub_post_removed":
-    case "hub_member_removed": {
+    case "hub_member_removed":
+    case "hub_new_post": {
       const hubId = meta.hub_id;
       if (!hubId) { nav.navigate("HubsScreen"); break; }
       try {
@@ -122,6 +123,7 @@ function getTypeMeta(c: ColorPalette) {
     hub_mod_appointed:  { emoji: "🛡️", accent: c.gold,    border: false },
     hub_post_removed:   { emoji: "🗑️", accent: c.error,   border: true  },
     hub_member_removed: { emoji: "🚪", accent: c.error,   border: true  },
+    hub_new_post:       { emoji: "📰", accent: c.gold,    border: false },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

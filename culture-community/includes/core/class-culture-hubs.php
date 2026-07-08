@@ -36,8 +36,12 @@ class Culture_Hubs {
      * update_post_meta() call and web's REST-API meta-on-insert), since
      * both ultimately go through add_post_meta() under the hood.
      */
+    /** Same batching cap as Culture_Follows::SYNC_NOTIFY_BATCH. */
+    const SYNC_NOTIFY_BATCH = 200;
+
     public static function init() {
         add_action( 'added_post_meta', array( __CLASS__, 'on_hub_id_meta_added' ), 10, 4 );
+        add_action( 'culture_notify_hub_followers_batch', array( __CLASS__, 'process_notify_hub_post_batch' ), 10, 3 );
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -170,12 +174,22 @@ class Culture_Hubs {
         return (bool) $row;
     }
 
+    public static function get_notify_posts( int $hub_id, int $user_id ) : bool {
+        global $wpdb;
+        $val = $wpdb->get_var( $wpdb->prepare(
+            "SELECT notify_posts FROM " . self::follows_table() . " WHERE hub_id = %d AND user_id = %d",
+            $hub_id, $user_id
+        ) );
+        return (bool) $val;
+    }
+
     public static function get_status( int $hub_id, int $user_id ) : array {
         $role = self::get_role( $hub_id, $user_id );
         return array(
             'isMember'    => null !== $role,
             'role'        => $role,
             'isFollowing' => self::is_following( $hub_id, $user_id ),
+            'notifyPosts' => self::get_notify_posts( $hub_id, $user_id ),
         );
     }
 
@@ -369,6 +383,10 @@ class Culture_Hubs {
             'status'    => 'active',
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'hub_created' );
+        }
+
         return $post_id;
     }
 
@@ -475,7 +493,42 @@ class Culture_Hubs {
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
 
+        // Hub Founder badge (docs/hubs-plan.md §6.2) — re-evaluated against
+        // the owner, not the joining member, since crossing the 10-member
+        // threshold is the owner's achievement. award_points()/award_reputation()
+        // only auto-evaluates badges for whoever's own reputation just
+        // changed, which on a join is the joiner, not the owner — so this
+        // has to be triggered explicitly here rather than relying on that.
+        $creator_id = (int) get_post_meta( $hub_id, '_hub_creator_id', true );
+        if ( $creator_id && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::evaluate_badges( $creator_id );
+        }
+
         return true;
+    }
+
+    /**
+     * Largest active member count among Hubs this user owns — backs the
+     * "Hub Founder" badge trigger (evaluate_badges()'s 'hub_max_members'
+     * case), since a user can own multiple Hubs and the badge should fire
+     * once any of them crosses the threshold.
+     */
+    public static function get_max_owned_hub_member_count( int $user_id ) : int {
+        global $wpdb;
+        $table = self::members_table();
+        $max   = $wpdb->get_var( $wpdb->prepare(
+            "SELECT MAX(hc.member_count) FROM (
+                SELECT m.hub_id, COUNT(*) AS member_count
+                FROM {$table} m
+                WHERE m.status = 'active'
+                  AND m.hub_id IN (
+                      SELECT hub_id FROM {$table} WHERE user_id = %d AND role = 'owner' AND status = 'active'
+                  )
+                GROUP BY m.hub_id
+            ) hc",
+            $user_id
+        ) );
+        return (int) $max;
     }
 
     /**
@@ -539,6 +592,67 @@ class Culture_Hubs {
             array( 'hub_id' => $hub_id, 'user_id' => $user_id ),
             array( '%d', '%d' )
         );
+    }
+
+    /**
+     * User ids opted into per-post notifications for this Hub, excluding the
+     * poster themself. Single source of opt-in truth is the follows table's
+     * notify_posts column — same as the platform-wide Follow system's
+     * notify_posts (docs/hubs-plan.md §6.3/§6.4); a member who also wants
+     * notifications must separately follow with notify_posts on, since
+     * Follow and Join are deliberately independent actions (§4.1).
+     */
+    public static function get_post_notify_follower_ids( int $hub_id, int $exclude_user_id ) : array {
+        global $wpdb;
+        $rows = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM " . self::follows_table() . "
+             WHERE hub_id = %d AND notify_posts = 1 AND user_id != %d",
+            $hub_id, $exclude_user_id
+        ) );
+        return array_map( 'intval', $rows ?: array() );
+    }
+
+    /**
+     * Notify opted-in followers that a new post landed in this Hub — same
+     * sync-batch-then-cron-offload shape as Culture_Follows::notify_followers_of_post()
+     * so a Hub with a large follower count can't turn post submission into an
+     * unbounded synchronous insert loop.
+     */
+    public static function notify_followers_of_hub_post( int $hub_id, int $post_id, int $poster_id ) : void {
+        $follower_ids = self::get_post_notify_follower_ids( $hub_id, $poster_id );
+        if ( empty( $follower_ids ) ) {
+            return;
+        }
+
+        $sync_ids = array_slice( $follower_ids, 0, self::SYNC_NOTIFY_BATCH );
+        self::process_notify_hub_post_batch( $hub_id, $post_id, $sync_ids );
+
+        $remaining = array_slice( $follower_ids, self::SYNC_NOTIFY_BATCH );
+        if ( ! empty( $remaining ) ) {
+            wp_schedule_single_event( time(), 'culture_notify_hub_followers_batch', array( $hub_id, $post_id, $remaining ) );
+        }
+    }
+
+    public static function process_notify_hub_post_batch( int $hub_id, int $post_id, array $follower_ids ) : void {
+        if ( empty( $follower_ids ) ) {
+            return;
+        }
+
+        $hub_name = get_post_meta( $hub_id, '_hub_name', true );
+        $hub_slug = get_post_meta( $hub_id, '_hub_slug', true ) ?: $hub_id;
+        $post     = get_post( $post_id );
+        $excerpt  = $post ? wp_trim_words( $post->post_title ?: $post->post_content, 8, '…' ) : '';
+
+        foreach ( $follower_ids as $follower_id ) {
+            Culture_Notifications::add(
+                $follower_id,
+                'hub_new_post',
+                "New post in {$hub_name}",
+                $excerpt ? "\"{$excerpt}\"" : 'Check out the latest post.',
+                '/hub/' . $hub_slug,
+                array( 'hub_id' => $hub_id, 'post_id' => $post_id )
+            );
+        }
     }
 
     /* ——————————————————————————————————————

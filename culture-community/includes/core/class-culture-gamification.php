@@ -315,6 +315,13 @@ class Culture_Gamification {
             'trigger'     => 'cluster_host_consecutive_months',
             'threshold'   => 3,
         ),
+        'hub_founder' => array(
+            'name'        => 'Hub Founder',
+            'description' => 'Created a Hub that reached 10 members.',
+            'icon'        => 'dashicons-networking',
+            'trigger'     => 'hub_max_members',
+            'threshold'   => 10,
+        ),
     );
 
     /**
@@ -349,6 +356,8 @@ class Culture_Gamification {
         'cluster_checked_in'     => 5,
         'cluster_host_served'    => 25,
         'literati_connect_attended' => 20,
+        'hub_created'            => 20,
+        'hub_post_published'     => 10,
     );
 
     /**
@@ -382,6 +391,8 @@ class Culture_Gamification {
         'cluster_checked_in'    => 2,
         'cluster_host_served'   => 8,
         'literati_connect_attended' => 3,
+        'hub_created'           => 5,
+        'hub_post_published'    => 2,
     );
 
     const DAILY_CREDIT_CAP = 50;
@@ -1017,6 +1028,11 @@ class Culture_Gamification {
             case 'cluster_host_consecutive_months':
                 return class_exists( 'Culture_Clusters' )
                     ? Culture_Clusters::get_host_consecutive_months( $user_id )
+                    : 0;
+
+            case 'hub_max_members':
+                return class_exists( 'Culture_Hubs' )
+                    ? Culture_Hubs::get_max_owned_hub_member_count( $user_id )
                     : 0;
 
             // Account age in full days since registration

@@ -57,6 +57,8 @@ function createStyles(c: ColorPalette) {
     },
     followBtnActive: { borderColor: c.ochre },
     followBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+    notifyToggleText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
     leaveBtn: { paddingVertical: 8 },
     leaveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
     ownerText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
@@ -115,7 +117,7 @@ export default function HubDetailScreen() {
 
   const [loading, setLoading] = useState(true);
   const [hub, setHub] = useState<Hub | null>(null);
-  const [status, setStatus] = useState<HubStatus>({ isMember: false, role: null, isFollowing: false });
+  const [status, setStatus] = useState<HubStatus>({ isMember: false, role: null, isFollowing: false, notifyPosts: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -221,6 +223,20 @@ export default function HubDetailScreen() {
     try {
       const path = status.isFollowing ? "unfollow" : "follow";
       const s = await api.post<HubStatus>(`${MOBILE_API}/hub/${hub.id}/${path}`, {});
+      setStatus(s);
+    } catch (e: any) {
+      setError(e?.message || "Something went wrong.");
+    }
+    setBusy(false);
+  };
+
+  const toggleNotifyPosts = async () => {
+    if (!hub) return;
+    setBusy(true);
+    try {
+      const s = await api.post<HubStatus>(`${MOBILE_API}/hub/${hub.id}/follow`, {
+        notify_posts: !status.notifyPosts,
+      });
       setStatus(s);
     } catch (e: any) {
       setError(e?.message || "Something went wrong.");
@@ -459,6 +475,16 @@ export default function HubDetailScreen() {
                 <Text style={styles.followBtnText}>{status.isFollowing ? "Following ✓" : "Follow"}</Text>
               </TouchableOpacity>
             </View>
+            {status.isFollowing && (
+              <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotifyPosts} disabled={busy}>
+                <Ionicons
+                  name={status.notifyPosts ? "checkbox" : "square-outline"}
+                  size={16}
+                  color={status.notifyPosts ? c.ochre : c.ghost}
+                />
+                <Text style={styles.notifyToggleText}>Notify me when they post</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {isModerator && (
