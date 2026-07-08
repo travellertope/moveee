@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+
+interface HubMember {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  role: string;
+  joinedAt: string;
+}
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
@@ -16,7 +24,7 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: strin
 ];
 
 export default function HubManage({
-  hubId, initialName, initialDescription, initialAllowedTemplates, initialCoverImageUrl, isArchived,
+  hubId, initialName, initialDescription, initialAllowedTemplates, initialCoverImageUrl, isArchived, role,
 }: {
   hubId: number;
   initialName: string;
@@ -24,7 +32,12 @@ export default function HubManage({
   initialAllowedTemplates: string[];
   initialCoverImageUrl: string;
   isArchived: boolean;
+  /** Owners get full edit/appoint-mod/archive tools; mods get a lighter
+   * "Moderate" panel — members list + remove-member only (docs/hubs-plan.md
+   * §4.4/§7.1). */
+  role: "owner" | "mod";
 }) {
+  const isOwner = role === "owner";
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialName);
@@ -37,6 +50,77 @@ export default function HubManage({
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [members, setMembers] = useState<HubMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [memberBusyId, setMemberBusyId] = useState<number | null>(null);
+  const [memberError, setMemberError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setMembersLoading(true);
+    fetch(`/api/hub/${hubId}/members?per_page=100`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setMembers(data?.members ?? []))
+      .catch(() => setMembers([]))
+      .finally(() => setMembersLoading(false));
+  }, [open, hubId]);
+
+  const appointMod = async (userId: number) => {
+    setMemberBusyId(userId);
+    setMemberError("");
+    try {
+      const res = await fetch(`/api/hub/${hubId}/mods`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_user_id: userId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMemberError(data?.message || "Could not appoint mod.");
+      } else {
+        setMembers((cur) => cur.map((m) => (m.id === userId ? { ...m, role: "mod" } : m)));
+      }
+    } catch {
+      setMemberError("Could not appoint mod.");
+    }
+    setMemberBusyId(null);
+  };
+
+  const removeMod = async (userId: number) => {
+    setMemberBusyId(userId);
+    setMemberError("");
+    try {
+      const res = await fetch(`/api/hub/${hubId}/mods/${userId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMemberError(data?.message || "Could not remove mod.");
+      } else {
+        setMembers((cur) => cur.map((m) => (m.id === userId ? { ...m, role: "member" } : m)));
+      }
+    } catch {
+      setMemberError("Could not remove mod.");
+    }
+    setMemberBusyId(null);
+  };
+
+  const removeMember = async (userId: number) => {
+    if (!confirm("Remove this member from the Hub?")) return;
+    setMemberBusyId(userId);
+    setMemberError("");
+    try {
+      const res = await fetch(`/api/hub/${hubId}/members/${userId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMemberError(data?.message || "Could not remove member.");
+      } else {
+        setMembers((cur) => cur.filter((m) => m.id !== userId));
+      }
+    } catch {
+      setMemberError("Could not remove member.");
+    }
+    setMemberBusyId(null);
+  };
 
   const toggle = (slug: string) => {
     setAllowed((cur) => (cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug]));
@@ -119,15 +203,17 @@ export default function HubManage({
         className="mem-settings-back-link"
         style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
-        Manage Hub →
+        {isOwner ? "Manage Hub →" : "Moderate →"}
       </button>
     );
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div className="mem-card-label">Manage Hub</div>
+      <div className="mem-card-label">{isOwner ? "Manage Hub" : "Moderate"}</div>
       {error && <p style={{ fontSize: "0.78rem", color: "#c0392b", margin: 0 }}>{error}</p>}
+      {isOwner && (
+      <>
 
       <label className="hfc-label" htmlFor="hub-manage-name">Hub name</label>
       <input
@@ -202,8 +288,68 @@ export default function HubManage({
           Close
         </button>
       </div>
+      </>
+      )}
 
-      {!isArchived && (
+      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--rule)" }}>
+        <p className="hfc-label" style={{ marginBottom: 8 }}>Members</p>
+        {memberError && <p style={{ fontSize: "0.78rem", color: "#c0392b", margin: "0 0 8px" }}>{memberError}</p>}
+        {membersLoading ? (
+          <p className="mem-card-desc" style={{ margin: 0 }}>Loading…</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {members.map((m) => (
+              <div
+                key={m.id}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
+              >
+                <span style={{ fontSize: 13 }}>
+                  {m.name}{" "}
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--mute)", textTransform: "uppercase" }}>
+                    {m.role}
+                  </span>
+                </span>
+                {m.role !== "owner" && (!(m.role === "mod") || isOwner) && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {isOwner && m.role === "mod" ? (
+                      <button
+                        type="button"
+                        onClick={() => removeMod(m.id)}
+                        disabled={memberBusyId === m.id || isArchived}
+                        className="mem-settings-back-link"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 12 }}
+                      >
+                        Remove mod
+                      </button>
+                    ) : isOwner ? (
+                      <button
+                        type="button"
+                        onClick={() => appointMod(m.id)}
+                        disabled={memberBusyId === m.id || isArchived}
+                        className="mem-settings-back-link"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 12 }}
+                      >
+                        Make mod
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => removeMember(m.id)}
+                      disabled={memberBusyId === m.id || isArchived}
+                      className="mem-settings-back-link"
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 12, color: "#c0392b" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {isOwner && !isArchived && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--rule)" }}>
           <button
             type="button"

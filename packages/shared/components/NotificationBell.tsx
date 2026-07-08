@@ -36,6 +36,9 @@ const TYPE_EMOJI: Record<string, string> = {
   cluster_new_host:         "🗳️",
   cluster_election_started: "🏛️",
   cluster_checkin_reminder: "📅",
+  hub_mod_appointed:  "🛡️",
+  hub_post_removed:   "🗑️",
+  hub_member_removed: "🚪",
 };
 
 function timeAgo(iso: string): string {

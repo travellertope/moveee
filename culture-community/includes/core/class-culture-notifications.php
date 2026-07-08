@@ -30,6 +30,9 @@ class Culture_Notifications {
         'cluster_new_host'         => 'New Host',
         'cluster_election_started' => 'Host Election Started',
         'cluster_checkin_reminder' => 'Stoop Meeting Today',
+        'hub_mod_appointed'  => 'Hub Mod Appointed',
+        'hub_post_removed'   => 'Hub Post Removed',
+        'hub_member_removed' => 'Removed From Hub',
     );
 
     /* ——————————————————————————————————————

@@ -93,6 +93,15 @@ function createStyles(c: ColorPalette) {
     saveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
     archiveBtn: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.rule },
     archiveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
+    membersSection: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.rule, gap: 8 },
+    memberRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+    memberName: { fontFamily: fonts.sans, fontSize: 13, color: c.ink },
+    memberRole: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, textTransform: "uppercase" },
+    memberActions: { flexDirection: "row", gap: 12 },
+    memberActionText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre },
+    memberActionDanger: { fontFamily: fonts.sansBold, fontSize: 12, color: "#C62828" },
+    pinnedLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", marginBottom: 2 },
+    modRow: { flexDirection: "row", gap: 16, marginTop: 4, marginBottom: 8 },
   });
 }
 
@@ -119,6 +128,16 @@ export default function HubDetailScreen() {
   const [mSaving, setMSaving] = useState(false);
   const [mArchiving, setMArchiving] = useState(false);
   const [mError, setMError] = useState("");
+
+  const isOwner = status.role === "owner";
+  const isModerator = status.role === "owner" || status.role === "mod";
+
+  const [hubMembers, setHubMembers] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [memberBusyId, setMemberBusyId] = useState<number | null>(null);
+  const [memberError, setMemberError] = useState("");
+
+  const [busyWpId, setBusyWpId] = useState<string | null>(null);
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
@@ -276,6 +295,104 @@ export default function HubDetailScreen() {
     );
   };
 
+  const loadMembers = React.useCallback(async (id: number) => {
+    setMembersLoading(true);
+    try {
+      const data = await api.get<{ members: { id: number; name: string; role: string }[] }>(
+        `${MOBILE_API}/hub/${id}/members?per_page=100`, false
+      );
+      setHubMembers(data?.members ?? []);
+    } catch {
+      setHubMembers([]);
+    }
+    setMembersLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (manageOpen && hub) loadMembers(hub.id);
+  }, [manageOpen, hub?.id, loadMembers]);
+
+  const appointMod = async (userId: number) => {
+    if (!hub) return;
+    setMemberBusyId(userId);
+    setMemberError("");
+    try {
+      await api.post(`${MOBILE_API}/hub/${hub.id}/mods`, { target_user_id: userId });
+      setHubMembers((cur) => cur.map((m) => (m.id === userId ? { ...m, role: "mod" } : m)));
+    } catch (e: any) {
+      setMemberError(e?.message || "Could not appoint mod.");
+    }
+    setMemberBusyId(null);
+  };
+
+  const removeMod = async (userId: number) => {
+    if (!hub) return;
+    setMemberBusyId(userId);
+    setMemberError("");
+    try {
+      await api.delete(`${MOBILE_API}/hub/${hub.id}/mods/${userId}`);
+      setHubMembers((cur) => cur.map((m) => (m.id === userId ? { ...m, role: "member" } : m)));
+    } catch (e: any) {
+      setMemberError(e?.message || "Could not remove mod.");
+    }
+    setMemberBusyId(null);
+  };
+
+  const removeHubMember = (userId: number) => {
+    if (!hub) return;
+    Alert.alert("Remove member", "Remove this member from the Hub?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove", style: "destructive", onPress: async () => {
+          setMemberBusyId(userId);
+          setMemberError("");
+          try {
+            await api.delete(`${MOBILE_API}/hub/${hub.id}/members/${userId}`);
+            setHubMembers((cur) => cur.filter((m) => m.id !== userId));
+          } catch (e: any) {
+            setMemberError(e?.message || "Could not remove member.");
+          }
+          setMemberBusyId(null);
+        },
+      },
+    ]);
+  };
+
+  const togglePin = async (item: FeedItem & { isPinned?: boolean; wpId?: string }) => {
+    if (!hub || !item.wpId) return;
+    setBusyWpId(item.wpId);
+    try {
+      if (item.isPinned) {
+        await api.delete(`${MOBILE_API}/hub/${hub.id}/pin`);
+      } else {
+        await api.post(`${MOBILE_API}/hub/${hub.id}/pin`, { post_id: Number(item.wpId) });
+      }
+      loadFeed(hub.id);
+    } catch {
+      // no-op — leave the list as-is, user can retry
+    }
+    setBusyWpId(null);
+  };
+
+  const removePost = (item: FeedItem & { wpId?: string }) => {
+    if (!hub || !item.wpId) return;
+    Alert.alert("Remove post", "Remove this post from the Hub? The author will be notified.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove", style: "destructive", onPress: async () => {
+          setBusyWpId(item.wpId!);
+          try {
+            await api.post(`${MOBILE_API}/hub/${hub.id}/remove-post`, { post_id: Number(item.wpId) });
+            loadFeed(hub.id);
+          } catch {
+            // no-op
+          }
+          setBusyWpId(null);
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
       <View style={styles.header}>
@@ -344,80 +461,120 @@ export default function HubDetailScreen() {
             </View>
           </View>
 
-          {status.role === "owner" && (
+          {isModerator && (
             <View style={styles.card}>
               {!manageOpen ? (
                 <TouchableOpacity style={styles.manageLink} onPress={() => setManageOpen(true)}>
-                  <Text style={styles.manageLinkText}>Manage Hub →</Text>
+                  <Text style={styles.manageLinkText}>{isOwner ? "Manage Hub →" : "Moderate →"}</Text>
                 </TouchableOpacity>
               ) : (
                 <View>
-                  <Text style={styles.cardLabel}>Manage Hub</Text>
+                  <Text style={styles.cardLabel}>{isOwner ? "Manage Hub" : "Moderate"}</Text>
                   {mError ? <Text style={styles.errorText}>{mError}</Text> : null}
 
-                  <Text style={styles.label}>Hub name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={mName}
-                    onChangeText={setMName}
-                    editable={!mSaving && hub.status !== "archived"}
-                  />
+                  {isOwner && (
+                    <>
+                      <Text style={styles.label}>Hub name</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={mName}
+                        onChangeText={setMName}
+                        editable={!mSaving && hub.status !== "archived"}
+                      />
 
-                  <Text style={styles.label}>Description</Text>
-                  <TextInput
-                    style={styles.textarea}
-                    value={mDescription}
-                    onChangeText={setMDescription}
-                    editable={!mSaving && hub.status !== "archived"}
-                    multiline
-                  />
+                      <Text style={styles.label}>Description</Text>
+                      <TextInput
+                        style={styles.textarea}
+                        value={mDescription}
+                        onChangeText={setMDescription}
+                        editable={!mSaving && hub.status !== "archived"}
+                        multiline
+                      />
 
-                  <Text style={styles.label}>Cover image</Text>
-                  <TouchableOpacity
-                    style={styles.coverPicker}
-                    onPress={pickManageCover}
-                    disabled={mSaving || mUploadingCover || hub.status === "archived"}
-                  >
-                    {mUploadingCover ? (
-                      <ActivityIndicator color={c.gold} />
-                    ) : mCoverImageUrl ? (
-                      <Image source={{ uri: mCoverImageUrl }} style={styles.coverImage} />
-                    ) : (
-                      <Text style={styles.coverPickerText}>Choose an image</Text>
-                    )}
-                  </TouchableOpacity>
+                      <Text style={styles.label}>Cover image</Text>
+                      <TouchableOpacity
+                        style={styles.coverPicker}
+                        onPress={pickManageCover}
+                        disabled={mSaving || mUploadingCover || hub.status === "archived"}
+                      >
+                        {mUploadingCover ? (
+                          <ActivityIndicator color={c.gold} />
+                        ) : mCoverImageUrl ? (
+                          <Image source={{ uri: mCoverImageUrl }} style={styles.coverImage} />
+                        ) : (
+                          <Text style={styles.coverPickerText}>Choose an image</Text>
+                        )}
+                      </TouchableOpacity>
 
-                  <Text style={styles.label}>What can members post?</Text>
-                  <View style={styles.grid}>
-                    {ALL_TEMPLATES.map((t) => {
-                      const active = mAllowed.includes(t.slug);
-                      return (
+                      <Text style={styles.label}>What can members post?</Text>
+                      <View style={styles.grid}>
+                        {ALL_TEMPLATES.map((t) => {
+                          const active = mAllowed.includes(t.slug);
+                          return (
+                            <TouchableOpacity
+                              key={t.slug}
+                              style={[styles.chip, active && styles.chipActive]}
+                              onPress={() => toggleTemplate(t.slug)}
+                              disabled={hub.status === "archived"}
+                            >
+                              <Text style={styles.chipText}>{t.emoji} {t.label}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+
+                      <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                         <TouchableOpacity
-                          key={t.slug}
-                          style={[styles.chip, active && styles.chipActive]}
-                          onPress={() => toggleTemplate(t.slug)}
-                          disabled={hub.status === "archived"}
+                          style={[styles.saveBtn, { flex: 1 }, (mSaving || hub.status === "archived") && { opacity: 0.5 }]}
+                          onPress={saveManage}
+                          disabled={mSaving || hub.status === "archived" || !mName.trim() || !mDescription.trim()}
                         >
-                          <Text style={styles.chipText}>{t.emoji} {t.label}</Text>
+                          {mSaving ? <ActivityIndicator color={c.paper} /> : <Text style={styles.saveBtnText}>Save changes</Text>}
                         </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                        <TouchableOpacity onPress={() => setManageOpen(false)}>
+                          <Text style={styles.manageLinkText}>Close</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
 
-                  <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-                    <TouchableOpacity
-                      style={[styles.saveBtn, { flex: 1 }, (mSaving || hub.status === "archived") && { opacity: 0.5 }]}
-                      onPress={saveManage}
-                      disabled={mSaving || hub.status === "archived" || !mName.trim() || !mDescription.trim()}
-                    >
-                      {mSaving ? <ActivityIndicator color={c.paper} /> : <Text style={styles.saveBtnText}>Save changes</Text>}
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setManageOpen(false)}>
+                  {!isOwner && (
+                    <TouchableOpacity onPress={() => setManageOpen(false)} style={{ marginTop: 8 }}>
                       <Text style={styles.manageLinkText}>Close</Text>
                     </TouchableOpacity>
+                  )}
+
+                  <View style={styles.membersSection}>
+                    <Text style={styles.label}>Members</Text>
+                    {memberError ? <Text style={styles.errorText}>{memberError}</Text> : null}
+                    {membersLoading ? (
+                      <ActivityIndicator color={c.gold} />
+                    ) : (
+                      hubMembers.map((m) => (
+                        <View key={m.id} style={styles.memberRow}>
+                          <Text style={styles.memberName}>{m.name} <Text style={styles.memberRole}>{m.role}</Text></Text>
+                          {m.role !== "owner" && (isOwner || m.role !== "mod") && (
+                            <View style={styles.memberActions}>
+                              {isOwner && m.role === "mod" ? (
+                                <TouchableOpacity onPress={() => removeMod(m.id)} disabled={memberBusyId === m.id}>
+                                  <Text style={styles.memberActionText}>Remove mod</Text>
+                                </TouchableOpacity>
+                              ) : isOwner ? (
+                                <TouchableOpacity onPress={() => appointMod(m.id)} disabled={memberBusyId === m.id}>
+                                  <Text style={styles.memberActionText}>Make mod</Text>
+                                </TouchableOpacity>
+                              ) : null}
+                              <TouchableOpacity onPress={() => removeHubMember(m.id)} disabled={memberBusyId === m.id}>
+                                <Text style={styles.memberActionDanger}>Remove</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      ))
+                    )}
                   </View>
 
-                  {hub.status !== "archived" && (
+                  {isOwner && hub.status !== "archived" && (
                     <TouchableOpacity style={styles.archiveBtn} onPress={archiveHub} disabled={mArchiving}>
                       <Text style={styles.archiveBtnText}>{mArchiving ? "Archiving…" : "Archive this Hub"}</Text>
                     </TouchableOpacity>
@@ -451,12 +608,24 @@ export default function HubDetailScreen() {
               </Text>
             </View>
           ) : (
-            feedItems.map((item) => (
-              <FeedItemCard
-                key={item.id}
-                item={item}
-                onPress={() => nav.navigate("PostDetail", { item })}
-              />
+            feedItems.map((item: any) => (
+              <View key={item.id}>
+                {item.isPinned && <Text style={styles.pinnedLabel}>📌 Pinned</Text>}
+                <FeedItemCard
+                  item={item}
+                  onPress={() => nav.navigate("PostDetail", { item })}
+                />
+                {isModerator && (
+                  <View style={styles.modRow}>
+                    <TouchableOpacity onPress={() => togglePin(item)} disabled={busyWpId === item.wpId}>
+                      <Text style={styles.memberActionText}>{item.isPinned ? "Unpin" : "Pin"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => removePost(item)} disabled={busyWpId === item.wpId}>
+                      <Text style={styles.memberActionDanger}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             ))
           )}
         </ScrollView>

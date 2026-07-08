@@ -133,7 +133,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
           />
         </section>
 
-        {status.role === "owner" && (
+        {(status.role === "owner" || status.role === "mod") && (
           <section className="mem-card">
             <HubManage
               hubId={hub.id}
@@ -142,13 +142,19 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
               initialAllowedTemplates={hub.allowedTemplates}
               initialCoverImageUrl={hub.coverImageUrl}
               isArchived={hub.status === "archived"}
+              role={status.role === "owner" ? "owner" : "mod"}
             />
           </section>
         )}
 
         <section className="mem-card">
           <div className="mem-card-label">Posts</div>
-          <HubFeed hubId={hub.id} isMember={status.isMember} allowedTemplates={hub.allowedTemplates} />
+          <HubFeed
+            hubId={hub.id}
+            isMember={status.isMember}
+            isModerator={status.role === "owner" || status.role === "mod"}
+            allowedTemplates={hub.allowedTemplates}
+          />
         </section>
       </div>
     </>

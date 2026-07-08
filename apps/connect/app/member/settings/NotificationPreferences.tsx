@@ -19,6 +19,9 @@ const NOTIFICATION_TYPES = [
   { id: "new_follower",      name: "New Follower" },
   { id: "new_follower_post", name: "New Post From Someone You Follow" },
   { id: "event_rsvp",        name: "Event RSVP" },
+  { id: "hub_mod_appointed",  name: "Hub Mod Appointed" },
+  { id: "hub_post_removed",   name: "Hub Post Removed" },
+  { id: "hub_member_removed", name: "Removed From Hub" },
 ];
 
 export default function NotificationPreferences() {

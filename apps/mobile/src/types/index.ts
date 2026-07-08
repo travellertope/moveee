@@ -432,7 +432,10 @@ export type NotificationType =
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
   | 'comment_received' | 'post_validated' | 'system'
   | 'referral_received' | 'mention'
-  | 'new_follower' | 'new_follower_post' | 'event_rsvp';
+  | 'new_follower' | 'new_follower_post' | 'event_rsvp'
+  | 'cluster_activated' | 'cluster_forming_expired' | 'cluster_new_host'
+  | 'cluster_election_started' | 'cluster_checkin_reminder'
+  | 'hub_mod_appointed' | 'hub_post_removed' | 'hub_member_removed';
 
 export interface Notification {
   id: number;
