@@ -11,8 +11,10 @@
 .pulse-sidebar-left {
   border-right: 1px solid var(--rule, #e8e2d8);
   position: sticky;
-  top: 0;
-  max-height: 100vh;
+  /* clears the sticky site header (.ch-header, 60px tall, z-index 200) —
+     top:0 here would let the header cover the sidebar's top 60px on scroll */
+  top: 60px;
+  max-height: calc(100vh - 60px);
   overflow-y: auto;
   background: #ffffff;
   padding: 24px 0;
@@ -27,8 +29,8 @@
 }
 .pulse-sidebar-right {
   position: sticky;
-  top: 0;
-  max-height: 100vh;
+  top: 60px; /* clears the sticky site header, same as .pulse-sidebar-left */
+  max-height: calc(100vh - 60px);
   overflow-y: auto;
   background: #ffffff;
   padding: 24px 16px;

@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import { interestsToTagSet } from "@/lib/interest-mappings";
-import { rankFeed, getTrending, matchesInterests } from "@/lib/feed-recommendations";
+import { rankFeed, matchesInterests } from "@/lib/feed-recommendations";
 import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
@@ -30,6 +30,23 @@ const CATEGORY_FILTERS = [
 ];
 
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
+
+// Mirrors apps/mobile/src/components/community/DiscoverCard.tsx's TYPE_BADGE —
+// kept as a small local map here since this is just a compact rail glyph,
+// not the full Discover card treatment.
+const DIR_TYPE_EMOJI: Record<string, string> = {
+  person: "👤", place: "🏛", food: "🍽", book: "📚", film: "🎬",
+  genre: "🎵", movement: "🌊", artwork: "🎨", concept: "💡",
+  fashion: "👗", "tv-series": "📺",
+};
+
+interface TrendingDirectoryEntry {
+  id: number;
+  title: string;
+  slug: string;
+  type: string;
+  reviewCount: number;
+}
 
 interface PulseFeedProps {
   initialItems: FeedItem[];
@@ -182,8 +199,21 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   ), [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds]);
 
-  // Trending items (shown in sidebar and For You mode)
-  const trending = useMemo(() => getTrending(items), [items]);
+  // Trending directory entries for the right rail — reuses the Discover
+  // feature's existing sort=trending (ranked by _community_review_count,
+  // i.e. how often community posts link to the entry), rather than a
+  // separate "trending posts" concept.
+  const [trendingDirectory, setTrendingDirectory] = useState<TrendingDirectoryEntry[]>([]);
+  useEffect(() => {
+    fetch("/api/directory/browse?sort=trending&per_page=3")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setTrendingDirectory(data?.entries ?? []))
+      .catch(() => {});
+  }, []);
+
+  // Composer starts collapsed as a compact pill; expands into the full
+  // SubmitPost wizard on click.
+  const [composerOpen, setComposerOpen] = useState(false);
 
   // Spotlight events carousel — inserted after the 5th feed item.
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
@@ -305,20 +335,6 @@ const handleType = (type: FeedItemType | "all") => {
                 ))}
               </ul>
             </div>
-
-            <div className="pulse-sidebar-group">
-              <SidebarHeading>Category</SidebarHeading>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {CATEGORY_FILTERS.map(cat => (
-                  <SidebarLink
-                    key={cat}
-                    label={cat}
-                    active={activeCategory === cat}
-                    onClick={() => handleCategory(cat)}
-                  />
-                ))}
-              </ul>
-            </div>
           </nav>
         </aside>
 
@@ -436,7 +452,37 @@ const handleType = (type: FeedItemType | "all") => {
             </div>
           )}
 
-          {session?.user && <SubmitPost onPosted={handlePosted} />}
+          {session?.user && (
+            composerOpen ? (
+              <div className="composer-collapsible-open">
+                <div className="composer-collapse-bar">
+                  <button
+                    type="button"
+                    className="composer-collapse-btn"
+                    onClick={() => setComposerOpen(false)}
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+                <SubmitPost
+                  onPosted={(post) => { handlePosted(post); setComposerOpen(false); }}
+                />
+              </div>
+            ) : (
+              <button type="button" className="composer-pill" onClick={() => setComposerOpen(true)}>
+                <span className="composer-pill-avatar">
+                  {(session.user as any)?.avatarUrl ? (
+                    <img src={(session.user as any).avatarUrl} alt="" />
+                  ) : (
+                    (session.user?.name ?? (session.user as any)?.displayName ?? "?")
+                      .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+                  )}
+                </span>
+                <span className="composer-pill-input">Share something with the community…</span>
+                <span className="composer-pill-post">Post</span>
+              </button>
+            )
+          )}
 
           {/* Category filter strip */}
           <div className="feed-category-strip">
@@ -494,27 +540,25 @@ const handleType = (type: FeedItemType | "all") => {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
-          {/* Most engaged posts this week */}
-          {trending.length > 0 && (
+          {/* Trending directory entries — the ones community posts are
+              referencing/linking to most, via the Discover feature's
+              existing sort=trending (ranked by _community_review_count). */}
+          {trendingDirectory.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <p className="pulse-trending-heading">Hot this week 🔥</p>
+              <p className="pulse-trending-heading">Trending in the Directory</p>
               <div>
-                {trending.map(item => {
-                  const totalEng = (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0)
-                                 + (item.reactions?.clap ?? 0) + (item.commentCount ?? 0);
-                  return (
-                    <div key={item.id} className="pulse-trending-item">
-                      <p className="pulse-trending-title">
-                        {item.title.length > 60 ? item.title.slice(0, 57) + "…" : item.title}
+                {trendingDirectory.map(entry => (
+                  <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
+                    <p className="pulse-trending-title">
+                      {DIR_TYPE_EMOJI[entry.type] ?? "✦"} {entry.title}
+                    </p>
+                    {entry.reviewCount > 0 && (
+                      <p className="pulse-trending-count">
+                        {entry.reviewCount} community post{entry.reviewCount !== 1 ? "s" : ""}
                       </p>
-                      {totalEng > 0 && (
-                        <p className="pulse-trending-count">
-                          {totalEng} reaction{totalEng !== 1 ? "s" : ""}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+                    )}
+                  </Link>
+                ))}
               </div>
             </div>
           )}
