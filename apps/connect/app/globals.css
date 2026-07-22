@@ -1261,11 +1261,11 @@ h1, h2, h3, h4 {
 /* Collapsed composer pill — starts as this compact bar; expands into the
    full .composer-card wizard on click (packages/shared/components/pulse/PulseFeed.tsx) */
 .composer-pill {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
+  margin: 0 16px 20px;
   background: #fff;
   border: 1px solid #e0d8ce;
   border-radius: 6px;
@@ -1274,6 +1274,10 @@ h1, h2, h3, h4 {
   text-align: left;
   font-family: inherit;
 }
+/* Wraps the expanded SubmitPost wizard + its close bar — same left/right
+   inset as .composer-pill so the composer never touches the timeline's
+   divider borders in either state. */
+.composer-collapsible-open { margin: 0 16px 20px; }
 .composer-pill-avatar {
   width: 34px;
   height: 34px;
