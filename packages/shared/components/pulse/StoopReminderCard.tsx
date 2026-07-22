@@ -42,7 +42,7 @@ export default function StoopReminderCard() {
         alignItems: "center",
         justifyContent: "space-between",
         gap: "1rem",
-        background: "var(--paper-warm, #f3ece0)",
+        background: "var(--paper-deep, #f2f2f2)",
         borderRadius: 12,
         boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
         borderLeft: "4px solid var(--ochre, #c5491f)",

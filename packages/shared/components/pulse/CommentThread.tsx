@@ -129,7 +129,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
       )}
 
       {authStatus === "unauthenticated" && (
-        <div style={{ background: "var(--paper-warm, #faf8f4)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "6px", padding: "1.25rem", textAlign: "center" }}>
+        <div style={{ background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "6px", padding: "1.25rem", textAlign: "center" }}>
           <p style={{ color: "var(--mute, #7a6f5c)", fontSize: "0.84rem", marginBottom: "0.85rem" }}>
             Have something to say? Join the community — it's free.
           </p>

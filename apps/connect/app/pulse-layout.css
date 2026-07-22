@@ -1,8 +1,13 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
 .pulse-layout {
   display: grid;
-  grid-template-columns: 190px 1fr 220px;
-  max-width: 1080px;
+  /* center column capped for readability, not left to grow edge-to-edge —
+     the container itself now spans much closer to the full viewport
+     (1400px vs. the old 1080px box) instead of sitting boxed in with big
+     dead margins on wide screens */
+  grid-template-columns: 200px minmax(0, 640px) 300px;
+  justify-content: center;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   align-items: start;
@@ -55,16 +60,16 @@
   .pulse-mobile-filters      { display: block; }
 }
 
-/* ── Left rail: section groups ───────────────────────────────── */
+/* ── Left rail: section groups (matches the approved three-column mockup) ── */
 .pulse-sidebar-heading {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 9px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--mute);
-  letter-spacing: .15em;
-  margin: 0 0 12px;
-  padding-left: 12px;
+  letter-spacing: .13em;
+  margin: 0 0 10px;
+  padding-left: 10px;
 }
 .pulse-sidebar-group + .pulse-sidebar-group { margin-top: 28px; }
 .pulse-sidebar-link {
@@ -72,24 +77,28 @@
   width: 100%;
   text-align: left;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--ink-soft);
   background: transparent;
   border: none;
-  border-left: 2px solid transparent;
-  padding: 6px 12px 6px 10px;
+  border-radius: var(--radius-md, 4px);
+  padding: 6px 10px;
   cursor: pointer;
-  transition: color .12s, background-color .12s, border-color .12s;
+  transition: color .12s, background-color .12s;
 }
 .pulse-sidebar-link:hover {
   color: var(--ink);
-  background: rgba(20,17,13,.03);
+  background: var(--paper-deep, #f2f2f2);
 }
 .pulse-sidebar-link--active {
-  font-weight: 700;
-  color: var(--ochre);
-  border-left-color: var(--ochre);
-  background: rgba(197,73,31,.05);
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+}
+.pulse-sidebar-link--accent-active {
+  font-weight: 600;
+  color: #fff;
+  background: var(--ochre);
 }
 
 /* ── Category filter strip (in-feed pill row) ───────────────────────────────── */
