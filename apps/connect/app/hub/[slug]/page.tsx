@@ -59,7 +59,7 @@ async function fetchStatus(hubId: number, userId: number): Promise<HubStatus> {
 
 export default async function HubPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const session = (await getServerSession(authOptions as any)) as any;
+  const session = (await getServerSession(authOptions as any).catch(() => null)) as any;
   const loggedIn = !!session?.user;
 
   const hub = await fetchHub(slug);
