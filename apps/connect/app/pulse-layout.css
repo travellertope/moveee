@@ -2,12 +2,11 @@
 .pulse-layout {
   display: grid;
   /* center column capped for readability, not left to grow edge-to-edge —
-     the container itself now spans much closer to the full viewport
-     (1400px vs. the old 1080px box) instead of sitting boxed in with big
-     dead margins on wide screens */
-  grid-template-columns: 200px minmax(0, 640px) 300px;
+     widened again (was 200/640/300 @ 1400px cap) since that still left
+     large dead margins at common desktop widths */
+  grid-template-columns: 240px minmax(0, 760px) 340px;
   justify-content: center;
-  max-width: 1400px;
+  max-width: 1680px;
   width: 100%;
   margin: 0 auto;
   align-items: start;
@@ -22,7 +21,7 @@
   max-height: calc(100vh - 60px);
   overflow-y: auto;
   background: #ffffff;
-  padding: 24px 0;
+  padding: 24px 16px;
 }
 .pulse-sidebar-left::-webkit-scrollbar { width: 3px; }
 .pulse-sidebar-left::-webkit-scrollbar-thumb { background: #e0d8ce; }
