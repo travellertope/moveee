@@ -45,16 +45,19 @@ type Tag = (typeof TAGS)[number];
 
 type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
+// Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
+// lock — Quote was never gated but sat after Poll/Route/Event, so it read
+// as locked-away even though it wasn't.
 const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
+  { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
   { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
   { slug: "event",             label: "Event",     emoji: "📅" },
-  { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
 // Templates gated by reputation tier (Moveee Pro always bypasses) — mirrors the

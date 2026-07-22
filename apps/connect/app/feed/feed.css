@@ -395,67 +395,6 @@
 }
 .mco-dir-empty-cta:hover { background: var(--ochre); }
 
-/* ── Directory teaser (on /connect feed page) ── */
-.mco-directory-teaser {
-  background: var(--paper-deep);
-}
-.mco-directory-teaser-inner {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 80px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-}
-.mco-directory-teaser .mco-section-eyebrow { color: var(--ochre); }
-.mco-directory-teaser .mco-section-title   { color: var(--ink); }
-.mco-directory-teaser .mco-section-desc    { color: var(--ink-soft); max-width: 500px; font-style: normal; }
-.mco-directory-teaser-cta {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ochre);
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity .15s;
-}
-.mco-directory-teaser-cta:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* ── Membership teaser (on /connect) ── */
-.mco-membership-teaser {
-  background: var(--paper);
-  border-top: 1px solid var(--rule);
-}
-.mco-membership-teaser-inner {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 80px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-}
-.mco-membership-teaser .mco-section-desc { font-style: normal; }
-.mco-membership-teaser-cta {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ochre);
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity .15s;
-}
-.mco-membership-teaser-cta:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 /* ── Membership full page ── */
 .mco-membership-full {
   background: var(--paper);
@@ -605,8 +544,6 @@
 @media (max-width: 1024px) {
   .mco-hero-inner              { padding: 48px 24px 36px; }
   .mco-directory-head          { padding: 56px 32px 36px; }
-  .mco-directory-teaser-inner  { padding: 48px 32px; }
-  .mco-membership-teaser-inner { padding: 48px 32px; }
   .mco-membership-inner        { padding: 56px 32px 0; }
   .mco-compare                 { padding: 56px 32px 72px; }
   .mco-dir                     { padding: 0 32px 60px; }
@@ -616,10 +553,6 @@
   .mco-headline                { font-size: 32px; }
   .mco-section-nav             { gap: 16px; flex-wrap: wrap; padding: 0 12px; }
   .mco-directory-head          { flex-direction: column; align-items: flex-start; padding: 40px 22px 32px; gap: 24px; }
-  .mco-directory-teaser-inner  { flex-direction: column; align-items: flex-start; padding: 40px 22px; gap: 24px; }
-  .mco-directory-teaser-cta    { align-self: stretch; text-align: center; }
-  .mco-membership-teaser-inner { flex-direction: column; align-items: flex-start; padding: 40px 22px; gap: 24px; }
-  .mco-membership-teaser-cta  { align-self: stretch; text-align: center; }
   .mco-membership-inner        { grid-template-columns: 1fr; padding: 40px 22px 0; }
   .mco-compare                 { padding: 40px 22px 56px; }
   .mco-compare-table thead th:nth-child(2),

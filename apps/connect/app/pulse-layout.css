@@ -1,8 +1,13 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
 .pulse-layout {
   display: grid;
-  grid-template-columns: 190px 1fr 220px;
-  max-width: 1080px;
+  /* center column capped for readability, not left to grow edge-to-edge —
+     the container itself now spans much closer to the full viewport
+     (1400px vs. the old 1080px box) instead of sitting boxed in with big
+     dead margins on wide screens */
+  grid-template-columns: 200px minmax(0, 640px) 300px;
+  justify-content: center;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   align-items: start;
