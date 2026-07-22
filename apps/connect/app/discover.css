@@ -4,9 +4,9 @@
 }
 
 .disc-wrap {
-  max-width: 1000px;
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 0 16px 40px;
+  padding: 0 24px 40px;
 }
 
 .disc-header {
@@ -298,7 +298,9 @@
 }
 
 @media (min-width: 720px) {
-  .disc-grid { grid-template-columns: repeat(4, 1fr); }
+  /* auto-fill instead of a fixed 4 columns — so the wider wrapper adds more
+     columns at large viewports instead of just stretching 4 cards very wide */
+  .disc-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 
 .disc-loading {
