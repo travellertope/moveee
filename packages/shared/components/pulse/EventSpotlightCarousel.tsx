@@ -129,8 +129,8 @@ export default function EventSpotlightCarousel({ events }: { events: FeedItem[] 
   if (events.length < 2) return null;
 
   return (
-    <div style={{ background: "var(--paper-warm, #f5f0e6)", padding: "16px 0", marginBottom: 24, borderTop: "1px solid rgba(200,191,176,0.4)", borderBottom: "1px solid rgba(200,191,176,0.4)" }}>
-      <div style={{ padding: "0 16px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ background: "var(--paper-deep, #f2f2f2)", padding: "16px 0", marginBottom: 24, borderTop: "1px solid var(--rule, #e8e2d8)", borderBottom: "1px solid var(--rule, #e8e2d8)" }}>
+      <div style={{ padding: "0 24px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink, #14110d)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           📅 Upcoming Near You
         </h2>
@@ -138,7 +138,7 @@ export default function EventSpotlightCarousel({ events }: { events: FeedItem[] 
           See all →
         </Link>
       </div>
-      <div className="hide-scrollbar" style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px 4px", scrollSnapType: "x mandatory" }}>
+      <div className="hide-scrollbar" style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 24px 4px", scrollSnapType: "x mandatory" }}>
         {events.map(item => (
           <SpotlightCard key={item.id} item={item} onOpen={() => setActiveItem(item)} />
         ))}

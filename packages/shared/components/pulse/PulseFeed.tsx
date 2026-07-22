@@ -57,13 +57,13 @@ function SidebarHeading({ children }: { children: React.ReactNode }) {
 }
 
 function SidebarLink({
-  label, active, onClick,
-}: { label: string; active: boolean; onClick: () => void }) {
+  label, active, onClick, accent,
+}: { label: string; active: boolean; onClick: () => void; accent?: boolean }) {
   return (
     <li style={{ listStyle: "none" }}>
       <button
         onClick={onClick}
-        className={`pulse-sidebar-link${active ? " pulse-sidebar-link--active" : ""}`}
+        className={`pulse-sidebar-link${active ? (accent ? " pulse-sidebar-link--accent-active" : " pulse-sidebar-link--active") : ""}`}
       >
         {label}
       </button>
@@ -202,12 +202,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   // Trending directory entries for the right rail — reuses the Discover
   // feature's existing sort=trending (ranked by _community_review_count,
   // i.e. how often community posts link to the entry), rather than a
-  // separate "trending posts" concept.
+  // separate "trending posts" concept. Falls back to sort=recent when
+  // nothing has accumulated a review count yet (young directory), so the
+  // rail isn't permanently empty while that data builds up organically.
   const [trendingDirectory, setTrendingDirectory] = useState<TrendingDirectoryEntry[]>([]);
+  const [trendingDirectoryLabel, setTrendingDirectoryLabel] = useState("Trending in the Directory");
   useEffect(() => {
     fetch("/api/directory/browse?sort=trending&per_page=3")
       .then(res => res.ok ? res.json() : null)
-      .then(data => setTrendingDirectory(data?.entries ?? []))
+      .then(data => {
+        const entries = data?.entries ?? [];
+        if (entries.length > 0) {
+          setTrendingDirectory(entries);
+          return;
+        }
+        return fetch("/api/directory/browse?sort=recent&per_page=3")
+          .then(res => res.ok ? res.json() : null)
+          .then(recentData => {
+            setTrendingDirectory(recentData?.entries ?? []);
+            setTrendingDirectoryLabel("New in the Directory");
+          });
+      })
       .catch(() => {});
   }, []);
 
@@ -297,11 +312,19 @@ const handleType = (type: FeedItemType | "all") => {
         {/* ── Left Sidebar ── */}
         <aside className="pulse-sidebar-left">
           <nav>
+            <div className="pulse-sidebar-group">
+              <div className="pulse-about-card" style={{ marginTop: 0 }}>
+                <p className="pulse-about-desc">
+                  The community for creatives, entrepreneurs, and culture lovers. Post, share, and stay in important culture conversations.
+                </p>
+              </div>
+            </div>
+
             {hasInterests && (
               <div className="pulse-sidebar-group">
                 <SidebarHeading>Personalised</SidebarHeading>
                 <ul style={{ margin: 0, padding: 0 }}>
-                  <SidebarLink label="For You" active={forYou} onClick={handleForYou} />
+                  <SidebarLink label="For You" active={forYou} onClick={handleForYou} accent />
                 </ul>
               </div>
             )}
@@ -398,7 +421,7 @@ const handleType = (type: FeedItemType | "all") => {
                   letterSpacing: "0.04em",
                   cursor: "pointer",
                   flexShrink: 0,
-                  boxShadow: "-8px 0 10px var(--paper-warm, #f7f5f2)",
+                  boxShadow: "-8px 0 10px var(--paper, #ffffff)",
                 }}
               >
                 ⊞ Sections
@@ -442,7 +465,7 @@ const handleType = (type: FeedItemType | "all") => {
 
           {/* Interests nudge for logged-in users with no interests set */}
           {session && !hasInterests && (
-            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-warm)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.5 }}>
                 <strong style={{ color: "var(--ink)" }}>Personalise your feed</strong> — pick your interests for a For You view.
               </p>
@@ -545,7 +568,7 @@ const handleType = (type: FeedItemType | "all") => {
               existing sort=trending (ranked by _community_review_count). */}
           {trendingDirectory.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <p className="pulse-trending-heading">Trending in the Directory</p>
+              <p className="pulse-trending-heading">{trendingDirectoryLabel}</p>
               <div>
                 {trendingDirectory.map(entry => (
                   <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
@@ -592,13 +615,6 @@ const handleType = (type: FeedItemType | "all") => {
               </button>
             </div>
           )}
-
-          <div className="pulse-about-card">
-            <p className="pulse-trending-heading" style={{ marginBottom: 8 }}>About Moveee</p>
-            <p className="pulse-about-desc">
-              The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
-            </p>
-          </div>
         </aside>
       </div>
 

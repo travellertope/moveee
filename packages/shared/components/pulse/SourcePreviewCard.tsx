@@ -39,7 +39,7 @@ export default function SourcePreviewCard({
         borderRadius: "8px",
         overflow: "hidden",
         marginTop: "0.65rem",
-        background: "var(--paper-warm, #faf8f4)",
+        background: "var(--paper, #ffffff)",
         transition: "border-color 0.15s",
         minHeight: "72px",
       }}

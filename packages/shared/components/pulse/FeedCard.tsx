@@ -327,7 +327,7 @@ export default function FeedCard({
           onClick={() => setModalOpen(true)}
           style={{
             position: "relative",
-            background: "var(--paper-warm)",
+            background: "var(--paper-deep, #f2f2f2)",
             border: "1px solid var(--rule)",
             borderRadius: "12px",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
@@ -345,7 +345,7 @@ export default function FeedCard({
               left: "16px",
               color: "var(--mute)",
               fontFamily: "var(--font-fraunces), serif",
-              fontSize: "64px",
+              fontSize: "34px",
               lineHeight: 1,
               userSelect: "none",
             }}
@@ -356,8 +356,8 @@ export default function FeedCard({
             <p style={{
               color: "var(--ink)",
               fontFamily: "var(--font-fraunces), serif",
-              fontSize: "20px",
-              fontWeight: 700,
+              fontSize: "18px",
+              fontStyle: "italic",
               lineHeight: 1.4,
               margin: "0 0 12px",
             }}>
@@ -365,11 +365,11 @@ export default function FeedCard({
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
               {item.quoteAuthor && (
-                <span style={{ color: "var(--ink)", fontSize: "0.8rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                <span style={{ color: "var(--ink)", fontSize: "0.83rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
                   — {item.quoteAuthor}
                 </span>
               )}
-              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.74rem", fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
+              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontWeight: 400, fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
               <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
             </div>
             <div onClick={(e) => e.stopPropagation()}>
@@ -491,17 +491,17 @@ export default function FeedCard({
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
               {item.communityAuthorUsername ? (
-                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
                   {item.communityAuthor || "Community Member"}
                 </Link>
               ) : (
-                <span style={{ color: "var(--ink)", fontSize: "0.82rem", fontWeight: 600 }}>
+                <span style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700 }}>
                   {item.communityAuthor || "Community Member"}
                 </span>
               )}
               {isPro && <ProBadge size={13} />}
-              <span style={{ color: "var(--mute)", fontSize: "0.7rem" }}>·</span>
-              <span style={{ color: "var(--mute)", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
+              <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>·</span>
+              <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>{formatDate(item.date)}</span>
               {item.communityTag && (
                 <button
                   onClick={() => onTagClick?.(item.communityTag!)}
@@ -581,7 +581,7 @@ export default function FeedCard({
 
               <div style={{
                 color: "var(--ink)",
-                fontSize: "0.9rem",
+                fontSize: "0.97rem",
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
@@ -1003,9 +1003,9 @@ export default function FeedCard({
           <h3 style={{
             color: "var(--ink)",
             fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.97rem",
-            fontWeight: 700,
-            lineHeight: 1.35,
+            fontSize: "17px",
+            fontWeight: 600,
+            lineHeight: 1.2,
             marginBottom: "0.5rem",
           }}>
             {item.title}

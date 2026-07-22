@@ -75,7 +75,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             {item.isLiterati && (
               <span style={{
                 fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.04em",
-                textTransform: "uppercase", color: "var(--gold)", background: "var(--paper-warm)",
+                textTransform: "uppercase", color: "var(--gold)", background: "var(--paper-deep, #f2f2f2)",
                 border: "1px solid var(--gold)", borderRadius: "999px", padding: "0.18rem 0.45rem",
               }}>
                 🪶 Literati Connect
