@@ -318,6 +318,37 @@
   transition: background 0.12s, color 0.12s;
 }
 
+/* Icon+label rows (Discover Culture, People Near Me, Stoop IRL, Interest
+   Hubs, theme toggle) — mirrors .ch-rail-icon-btn's treatment so the mobile
+   drawer visually matches the desktop rail's bottom block instead of
+   falling back to a plain text list. */
+.ch-mobile-nav-link--icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Search entry point at the top of the mobile drawer — mirrors
+   .ch-rail-search-btn's rounded pill treatment, since the top bar itself
+   only has room for a small icon button. */
+.ch-mobile-search-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(42, 36, 28, 0.15);
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-size: 14px;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.ch-mobile-search-btn svg { flex-shrink: 0; }
+
 .ch-mobile-nav-link:hover,
 .ch-mobile-nav-link.active {
   background: var(--paper-deep);
