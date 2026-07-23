@@ -13,7 +13,9 @@ export interface DirectoryEntry {
   title: string;
   type: string;
   city?: string;
-  author?: string;
+  /** Generic labelled bio field — Author for books, Artist for music,
+   * Director for film, … whatever aboutFieldLabel was set to. */
+  about?: string;
 }
 
 interface Props {
@@ -23,13 +25,14 @@ interface Props {
   /** Optional slug to pass as ?type= to the backend search endpoint, and as
    * entry_type when quick-creating a new entry (defaults to "place"). */
   typeFilter?: string;
-  /** Show an Author field instead of City on the quick-create form (books). */
-  showAuthorField?: boolean;
+  /** Show a labelled field ("Author", "Artist", "Director", …) instead of
+   * City on the quick-create form. */
+  aboutFieldLabel?: string;
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 
-export default function DirectorySearch({ onSelect, selected, label, typeFilter, showAuthorField }: Props) {
+export default function DirectorySearch({ onSelect, selected, label, typeFilter, aboutFieldLabel }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCity, setNewCity] = useState("");
-  const [newAuthor, setNewAuthor] = useState("");
+  const [newAbout, setNewAbout] = useState("");
 
   const search = useCallback((q: string) => {
     clearTimeout(debounceTimer);
@@ -83,14 +86,15 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: newName.trim(),
         entry_type: typeFilter || "place",
-        city: showAuthorField ? undefined : newCity.trim() || undefined,
-        author: showAuthorField ? newAuthor.trim() || undefined : undefined,
+        city: aboutFieldLabel ? undefined : newCity.trim() || undefined,
+        about_label: aboutFieldLabel || undefined,
+        about_value: aboutFieldLabel ? newAbout.trim() || undefined : undefined,
       });
       onSelect(entry);
       setCreating(false);
       setNewName("");
       setNewCity("");
-      setNewAuthor("");
+      setNewAbout("");
     } catch {
       // silent
     } finally {
@@ -103,7 +107,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
       <View style={styles.selectedRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.selectedName}>{selected.title}</Text>
-          {selected.author ? <Text style={styles.selectedCity}>{selected.author}</Text> : selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
+          {selected.about ? <Text style={styles.selectedCity}>{selected.about}</Text> : selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
         </View>
         <TouchableOpacity onPress={() => onSelect(null as any)} style={styles.clearBtn}>
           <Ionicons name="close" size={16} color={colors.mute} />
@@ -120,16 +124,16 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
           style={styles.input}
           value={newName}
           onChangeText={setNewName}
-          placeholder={showAuthorField ? "Book title *" : "Place name *"}
+          placeholder={aboutFieldLabel ? "Title *" : "Place name *"}
           placeholderTextColor={colors.ghost}
           autoFocus
         />
-        {showAuthorField ? (
+        {aboutFieldLabel ? (
           <TextInput
             style={styles.input}
-            value={newAuthor}
-            onChangeText={setNewAuthor}
-            placeholder="Author (optional)"
+            value={newAbout}
+            onChangeText={setNewAbout}
+            placeholder={`${aboutFieldLabel} (optional)`}
             placeholderTextColor={colors.ghost}
           />
         ) : (
@@ -182,7 +186,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
               {results.slice(0, 8).map((r) => (
                 <TouchableOpacity key={r.id} style={styles.resultRow} onPress={() => handleSelect(r)}>
                   <Text style={styles.resultTitle}>{r.title}</Text>
-                  {r.author ? <Text style={styles.resultCity}>{r.author}</Text> : r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
+                  {r.about ? <Text style={styles.resultCity}>{r.about}</Text> : r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
                 </TouchableOpacity>
               ))}
               <TouchableOpacity style={styles.addNewRow} onPress={() => setCreating(true)}>

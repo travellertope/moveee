@@ -9,6 +9,9 @@ interface DirectoryResult {
   type: string;
   thumbnail: string | null;
   city?: string;
+  /** Generic labelled bio field — Author for books, Artist for music,
+   * Director for film, … whatever aboutFieldLabel was set to. */
+  about?: string;
 }
 
 interface Props {
@@ -16,17 +19,21 @@ interface Props {
   onChange: (entry: DirectoryResult | null) => void;
   typeFilter?: string;
   placeholder?: string;
+  /** Show a labelled field ("Author", "Artist", "Director", …) instead of
+   * City on the quick-create form. */
+  aboutFieldLabel?: string;
 }
 
-export default function DirectorySearch({ value, onChange, typeFilter, placeholder }: Props) {
+export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
-  // quick-create city step
+  // quick-create city/about step
   const [showCityInput, setShowCityInput] = useState(false);
   const [cityInput, setCityInput] = useState("");
+  const [aboutInput, setAboutInput] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -51,6 +58,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     setOpen(false);
     setShowCityInput(false);
     setCityInput("");
+    setAboutInput("");
   }
 
   async function quickCreate() {
@@ -63,7 +71,9 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
         body: JSON.stringify({
           title: query.trim(),
           entry_type: typeFilter || "place",
-          city: cityInput.trim() || undefined,
+          city: aboutFieldLabel ? undefined : cityInput.trim() || undefined,
+          about_label: aboutFieldLabel || undefined,
+          about_value: aboutFieldLabel ? aboutInput.trim() || undefined : undefined,
         }),
       });
       if (res.ok) {
@@ -74,7 +84,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           slug: data.slug,
           type: typeFilter || "place",
           thumbnail: null,
-          city: cityInput.trim() || undefined,
+          city: aboutFieldLabel ? undefined : cityInput.trim() || undefined,
+          about: aboutFieldLabel ? aboutInput.trim() || undefined : undefined,
         });
         // Fire AI enrichment in the background — do not await
         fetch("/api/directory/enrich-stub", {
@@ -92,7 +103,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       <div className="composer-dir-selected">
         <span className="composer-dir-selected-name">
           {value.title}
-          {value.city && <span className="composer-dir-selected-city">, {value.city}</span>}
+          {value.about && <span className="composer-dir-selected-city">, {value.about}</span>}
+          {!value.about && value.city && <span className="composer-dir-selected-city">, {value.city}</span>}
         </span>
         <button type="button" className="composer-dir-clear" onClick={() => onChange(null)}>×</button>
       </div>
@@ -104,7 +116,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); setAboutInput(""); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder ?? "Search the directory..."}
         className="composer-dir-input"
@@ -127,16 +139,33 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
                 </>
               ) : (
                 <div className="composer-dir-city-form">
-                  <label className="composer-dir-city-label">City or neighbourhood <span>(optional)</span></label>
-                  <input
-                    type="text"
-                    value={cityInput}
-                    onChange={e => setCityInput(e.target.value)}
-                    placeholder="e.g. London, Lagos, Brixton"
-                    className="composer-dir-city-input"
-                    autoFocus
-                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
-                  />
+                  {aboutFieldLabel ? (
+                    <>
+                      <label className="composer-dir-city-label">{aboutFieldLabel} <span>(optional)</span></label>
+                      <input
+                        type="text"
+                        value={aboutInput}
+                        onChange={e => setAboutInput(e.target.value)}
+                        placeholder={aboutFieldLabel}
+                        className="composer-dir-city-input"
+                        autoFocus
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label className="composer-dir-city-label">City or neighbourhood <span>(optional)</span></label>
+                      <input
+                        type="text"
+                        value={cityInput}
+                        onChange={e => setCityInput(e.target.value)}
+                        placeholder="e.g. London, Lagos, Brixton"
+                        className="composer-dir-city-input"
+                        autoFocus
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
+                      />
+                    </>
+                  )}
                   <div className="composer-dir-city-actions">
                     <button
                       type="button"
@@ -148,7 +177,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setShowCityInput(false); setCityInput(""); }}
+                      onClick={() => { setShowCityInput(false); setCityInput(""); setAboutInput(""); }}
                       className="composer-dir-cancel-btn"
                     >
                       Cancel
@@ -163,7 +192,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
               {r.thumbnail && <img src={r.thumbnail} alt="" className="composer-dir-thumb" />}
               <span className="composer-dir-result-text">
                 <span className="composer-dir-result-title">{r.title}</span>
-                {r.city && <span className="composer-dir-result-city">{r.city}</span>}
+                {r.about ? <span className="composer-dir-result-city">{r.about}</span> : r.city && <span className="composer-dir-result-city">{r.city}</span>}
               </span>
               {r.type && <span className="composer-dir-result-type">{r.type}</span>}
             </button>

@@ -453,6 +453,44 @@ class Culture_Directory {
         return '';
     }
 
+    /**
+     * First labelled value in the generic _about_fields blob, regardless of
+     * label — an entry only ever has one bio-like field set (Author for
+     * books, Artist for music, Director for film, …), so "first" is
+     * equivalent to "the one that matters" without the caller needing to
+     * know which label a given directory type uses.
+     */
+    private static function get_first_about_field( $post_id ) {
+        $raw = get_post_meta( $post_id, '_about_fields', true );
+        if ( ! $raw ) {
+            return '';
+        }
+        $fields = json_decode( $raw, true );
+        if ( ! is_array( $fields ) || empty( $fields[0]['value'] ) ) {
+            return '';
+        }
+        return $fields[0]['value'];
+    }
+
+    /**
+     * A directory entry already linked to this external catalog ID, if any —
+     * dedup check for API-assisted quick-create (Google Books/Spotify/TMDB),
+     * so multiple reviewers picking "the same" work always share one entry
+     * instead of each spawning a duplicate.
+     */
+    private static function find_by_external_id( $source, $external_id ) {
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_directory',
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array( 'key' => '_external_source', 'value' => $source ),
+                array( 'key' => '_external_id',     'value' => $external_id ),
+            ),
+        ) );
+        return $query->posts ? $query->posts[0] : null;
+    }
+
     public static function handle_search( WP_REST_Request $request ) {
         $q    = sanitize_text_field( $request->get_param( 'q' ) );
         $type = sanitize_key( $request->get_param( 'type' ) );
@@ -499,6 +537,9 @@ class Culture_Directory {
                 'type'      => $type_slug,
                 'thumbnail' => $thumb ?: null,
                 'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                // 'about' is the generic field (Author/Artist/Director/…);
+                // 'author' is kept alongside it as a back-compat alias.
+                'about'     => self::get_first_about_field( $post->ID ),
                 'author'    => self::get_about_field( $post->ID, 'Author' ),
             );
         }
@@ -706,10 +747,37 @@ class Culture_Directory {
         $lat          = (float) $request->get_param( 'location_lat' );
         $lng          = (float) $request->get_param( 'location_lng' );
         $city         = sanitize_text_field( $request->get_param( 'city' ) );
+        // Generic labelled "about" field (Author/Artist/Director/…) — `author`
+        // is kept as a back-compat alias for existing Book Review callers,
+        // always labelled "Author" when used that way.
+        $about_label  = sanitize_text_field( $request->get_param( 'about_label' ) );
+        $about_value  = sanitize_text_field( $request->get_param( 'about_value' ) );
         $author       = sanitize_text_field( $request->get_param( 'author' ) );
+        if ( $author && ! $about_value ) {
+            $about_label = 'Author';
+            $about_value = $author;
+        }
+        // External catalog dedup (Google Books/Spotify/TMDB quick-create).
+        $external_source = sanitize_key( $request->get_param( 'external_source' ) );
+        $external_id     = sanitize_text_field( $request->get_param( 'external_id' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        // Find-or-create: an entry already linked to this external ID
+        // short-circuits creation entirely.
+        if ( $external_source && $external_id ) {
+            $existing = self::find_by_external_id( $external_source, $external_id );
+            if ( $existing ) {
+                return rest_ensure_response( array(
+                    'id'    => $existing->ID,
+                    'slug'  => $existing->post_name,
+                    'title' => $existing->post_title,
+                    'city'  => get_post_meta( $existing->ID, '_entry_city', true ) ?: '',
+                    'about' => self::get_first_about_field( $existing->ID ),
+                ) );
+            }
         }
 
         $post_id = wp_insert_post( array(
@@ -737,8 +805,12 @@ class Culture_Directory {
         if ( $city ) {
             update_post_meta( $post_id, '_entry_city', $city );
         }
-        if ( $author ) {
-            update_post_meta( $post_id, '_about_fields', wp_json_encode( array( array( 'label' => 'Author', 'value' => $author ) ) ) );
+        if ( $about_label && $about_value ) {
+            update_post_meta( $post_id, '_about_fields', wp_json_encode( array( array( 'label' => $about_label, 'value' => $about_value ) ) ) );
+        }
+        if ( $external_source && $external_id ) {
+            update_post_meta( $post_id, '_external_source', $external_source );
+            update_post_meta( $post_id, '_external_id', $external_id );
         }
 
         // Award reputation for creating a directory entry.
@@ -752,7 +824,8 @@ class Culture_Directory {
             'slug'   => get_post_field( 'post_name', $post_id ),
             'title'  => $title,
             'city'   => $city,
-            'author' => $author,
+            'about'  => $about_value,
+            'author' => $about_value, // back-compat alias, see get_first_about_field()
         ) );
     }
 
