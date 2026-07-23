@@ -126,6 +126,16 @@ function detectTagFromContent(text: string): Tag | null {
   return bestScore >= 1 ? best : null;
 }
 
+/** Rounded average of a breakdown ratings object's rated (>0) values, 0 if
+ * none are rated yet — powers Book/Music/Film Review's auto-calculated
+ * Overall rating (see the bookOverallManual/musicOverallManual/
+ * filmOverallManual effects below). */
+function averageRating(ratings: Record<string, number>): number {
+  const rated = Object.values(ratings).filter(v => v > 0);
+  if (rated.length === 0) return 0;
+  return Math.round(rated.reduce((a, b) => a + b, 0) / rated.length);
+}
+
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
@@ -222,6 +232,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [bookEntry, setBookEntry] = useState<any>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
+  const [bookOverallManual, setBookOverallManual] = useState(false);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
@@ -232,6 +243,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   // Music review specific
   const [musicEntry, setMusicEntry] = useState<any>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicOverallManual, setMusicOverallManual] = useState(false);
   const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
   const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
@@ -242,12 +254,31 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   // Film review specific
   const [filmEntry, setFilmEntry] = useState<any>(null);
   const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmOverallManual, setFilmOverallManual] = useState(false);
   const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
   const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
   const [filmGenres, setFilmGenres] = useState<string[]>([]);
   const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
   const [filmGenreInput, setFilmGenreInput] = useState("");
+
+  // Overall rating auto-calculates as the rounded average of the breakdown
+  // ratings (Letterboxd/Goodreads-style) until the user taps a star on
+  // Overall themselves, at which point it's manually controlled for the
+  // rest of the draft — same "auto until manually overridden" shape as the
+  // Section picker's tagLocked, just for this field instead.
+  useEffect(() => {
+    if (bookOverallManual) return;
+    setBookOverallRating(averageRating(bookRatings));
+  }, [bookRatings, bookOverallManual]);
+  useEffect(() => {
+    if (musicOverallManual) return;
+    setMusicOverallRating(averageRating(musicRatings));
+  }, [musicRatings, musicOverallManual]);
+  useEffect(() => {
+    if (filmOverallManual) return;
+    setFilmOverallRating(averageRating(filmRatings));
+  }, [filmRatings, filmOverallManual]);
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -1086,7 +1117,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Pacing", value: bookRatings.pacing },
                   ]}
                   onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: bookOverallRating, onChange: setBookOverallRating }}
+                  overall={{ value: bookOverallRating, onChange: (v) => { setBookOverallManual(true); setBookOverallRating(v); } }}
                 />
                 <textarea
                   value={bookFavQuote}
@@ -1188,7 +1219,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Vibe", value: musicRatings.vibe },
                   ]}
                   onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: musicOverallRating, onChange: setMusicOverallRating }}
+                  overall={{ value: musicOverallRating, onChange: (v) => { setMusicOverallManual(true); setMusicOverallRating(v); } }}
                 />
                 <textarea
                   value={musicFavLyric}
@@ -1290,7 +1321,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Pacing", value: filmRatings.pacing },
                   ]}
                   onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: filmOverallRating, onChange: setFilmOverallRating }}
+                  overall={{ value: filmOverallRating, onChange: (v) => { setFilmOverallManual(true); setFilmOverallRating(v); } }}
                 />
                 <textarea
                   value={filmFavLine}

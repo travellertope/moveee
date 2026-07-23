@@ -2618,7 +2618,25 @@ label-then-stars) now applies inside the box too. Music Review's "Replay" breakd
 now **"Replay Value"** — `MultiRating`'s `ratings` items gained an optional `key` field so the
 display label and the state key it writes to (`replay`, unchanged) can differ; without it the
 key is still derived from `label.toLowerCase()` as before (Book/Film's labels are single words,
-so they're unaffected).
+so they're unaffected). Ratings box background is white (`#fff`), not the grey `#f5f5f5` it
+originally shipped with in this pass — same "no more warm/grey tints where the mockup wants
+white" direction as the sitewide paper-background removal. Mobile's `bookRatingsContainer`
+(`NewPostScreen.tsx`) got the matching explicit `backgroundColor: c.paper` — it had no background
+set before (relying on whatever sat behind it), now made explicit for the same reason.
+
+**Overall rating auto-calculates (July 2026, both web and mobile).** `bookOverallRating`/
+`musicOverallRating`/`filmOverallRating` are no longer purely independent fields — each is now
+the rounded average of that template's breakdown ratings (`averageRating()`, a small local helper
+— duplicated between `SubmitPost.tsx` and `NewPostScreen.tsx`, keep in sync), recalculated on
+every breakdown change via a `useEffect`. The moment the user taps a star on **Overall** itself,
+a `bookOverallManual`/`musicOverallManual`/`filmOverallManual` flag flips true and that effect
+stops overwriting it for the rest of the draft — same "auto until manually overridden" shape as
+the Section picker's `tagLocked`. `averageRating()` ignores unrated (`0`) breakdown fields and
+returns `0` itself until at least one is rated, so Overall stays empty rather than showing a
+misleading `0`/`NaN` average before the user has entered anything. Mobile got the same auto-calc
+logic (`NewPostScreen.tsx`) but **not** the box-merge/white-background visual changes above —
+its Overall `StarRating` stays in its own row, unchanged layout, per the existing "mobile rating
+UI visual changes are out of scope, web-mockup-only" boundary noted below.
 
 ### Save Draft
 `SubmitPost` gained `initialDraft?: { text?: string; tag?: string }` (hydrates on mount only,

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -165,6 +165,16 @@ const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", s
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
+/** Rounded average of a breakdown ratings object's rated (>0) values, 0 if
+ * none are rated yet — powers Book/Music/Film Review's auto-calculated
+ * Overall rating. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
+ * averageRating() — keep both in sync. */
+function averageRating(ratings: Record<string, number>): number {
+  const rated = Object.values(ratings).filter((v) => v > 0);
+  if (rated.length === 0) return 0;
+  return Math.round(rated.reduce((a, b) => a + b, 0) / rated.length);
+}
+
 interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; previewUrl?: string | null }
 
 const fmtDate = (d: Date) =>
@@ -285,6 +295,7 @@ export default function NewPostScreen() {
   const [bookEntry, setBookEntry] = useState<DirectoryEntry | null>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
+  const [bookOverallManual, setBookOverallManual] = useState(false);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
@@ -295,6 +306,7 @@ export default function NewPostScreen() {
   // Music Review state
   const [musicEntry, setMusicEntry] = useState<DirectoryEntry | null>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicOverallManual, setMusicOverallManual] = useState(false);
   const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
   const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
@@ -305,12 +317,30 @@ export default function NewPostScreen() {
   // Film Review state
   const [filmEntry, setFilmEntry] = useState<DirectoryEntry | null>(null);
   const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmOverallManual, setFilmOverallManual] = useState(false);
   const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
   const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
   const [filmGenres, setFilmGenres] = useState<string[]>([]);
   const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
   const [filmGenreInput, setFilmGenreInput] = useState("");
+
+  // Overall rating auto-calculates as the rounded average of the breakdown
+  // ratings until the user taps a star on Overall themselves, at which
+  // point it's manually controlled for the rest of the draft — mirrors
+  // SubmitPost.tsx's web behavior, keep both in sync.
+  useEffect(() => {
+    if (bookOverallManual) return;
+    setBookOverallRating(averageRating(bookRatings));
+  }, [bookRatings, bookOverallManual]);
+  useEffect(() => {
+    if (musicOverallManual) return;
+    setMusicOverallRating(averageRating(musicRatings));
+  }, [musicRatings, musicOverallManual]);
+  useEffect(() => {
+    if (filmOverallManual) return;
+    setFilmOverallRating(averageRating(filmRatings));
+  }, [filmRatings, filmOverallManual]);
 
   // Itinerary extras
   const [itineraryTitle, setItineraryTitle] = useState("");
@@ -1109,7 +1139,7 @@ const uploadImages = async (): Promise<string[]> => {
       {/* Overall rating */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={bookOverallRating} onChange={setBookOverallRating} />
+        <StarRating value={bookOverallRating} onChange={(v) => { setBookOverallManual(true); setBookOverallRating(v); }} />
       </View>
 
       {/* Ratings breakdown */}
@@ -1250,7 +1280,7 @@ const uploadImages = async (): Promise<string[]> => {
       {/* Overall rating */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={musicOverallRating} onChange={setMusicOverallRating} />
+        <StarRating value={musicOverallRating} onChange={(v) => { setMusicOverallManual(true); setMusicOverallRating(v); }} />
       </View>
 
       {/* Ratings breakdown */}
@@ -1391,7 +1421,7 @@ const uploadImages = async (): Promise<string[]> => {
       {/* Overall rating */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={filmOverallRating} onChange={setFilmOverallRating} />
+        <StarRating value={filmOverallRating} onChange={(v) => { setFilmOverallManual(true); setFilmOverallRating(v); }} />
       </View>
 
       {/* Ratings breakdown */}
@@ -2075,6 +2105,7 @@ function createStyles(c: ColorPalette) {
 
     // Book
     bookRatingsContainer: {
+      backgroundColor: c.paper,
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md, overflow: "hidden",
     },
     bookRatingsRow: {
