@@ -224,6 +224,10 @@
   border-left: 2px solid var(--evt-ghost-light);
   margin-left: 4px;
   padding-left: 20px;
+  /* Mirrors the left rail's total inset (4px margin + 2px border + 20px
+     padding = 26px) so rows don't sit flush against the column's right
+     edge while indented on the left — was asymmetric before this. */
+  padding-right: 26px;
   display: flex;
   flex-direction: column;
   gap: 16px;
