@@ -43,12 +43,12 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+export type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Route/Event, so it read
 // as locked-away even though it wasn't.
-const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
+export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
@@ -65,7 +65,7 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
 
 // Templates gated by reputation tier (Moveee Pro always bypasses) — mirrors the
 // server-side gate in handle_submit_post() / apps/connect/app/api/community/submit/route.ts
-const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
+export const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
   poll:      { minRep: 2500, tierLabel: "Taste Maker" },
   itinerary: { minRep: 2500, tierLabel: "Taste Maker" },
   event:     { minRep: 500,  tierLabel: "Culture Contributor" },
@@ -149,9 +149,24 @@ interface SubmitPostProps {
    * just dimmed) and every submission includes hub_id. */
   hubId?: number;
   hubAllowedTemplates?: string[];
+  /** Dedicated-page mode (composer redesign, July 2026): when provided, the
+   * full horizontal template-pill row is replaced with a slim "emoji + label
+   * + Change Type" bar that calls this instead — the page hosting SubmitPost
+   * owns the type-picker modal. Omitted entirely for inline usages
+   * (CategoryPage.tsx's locked-Section composer) which keep the original
+   * always-visible chip row. */
+  onChangeType?: () => void;
+  /** Restores the main text + Section on mount — the rest of a draft
+   * (ratings, attached directory entry, images) is deliberately not
+   * restored, since it can't be serialized meaningfully to localStorage
+   * (File objects, blob preview URLs) — see "Save Draft" in CLAUDE.md. */
+  initialDraft?: { text?: string; tag?: string };
+  /** Renders a "Save draft" button in the action bar when provided — the
+   * host page owns persistence (localStorage today). */
+  onSaveDraft?: (draft: { template: TemplateType; text: string; tag: string }) => void;
 }
 
-export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates }: SubmitPostProps) {
+export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates, onChangeType, initialDraft, onSaveDraft }: SubmitPostProps) {
   const { data: session, status } = useSession();
   const visibleTemplates = hubAllowedTemplates
     ? TEMPLATES.filter(t => hubAllowedTemplates.includes(t.slug))
@@ -163,11 +178,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   );
 
   // Shared state
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialDraft?.text ?? "");
   const [tag, setTag] = useState<Tag | "">(
-    (lockedTag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
+    (lockedTag as Tag) ?? (initialDraft?.tag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
   );
-  const [tagLocked, setTagLocked] = useState(false);
+  // A restored draft's Section counts as a manual pick (stop auto-detect
+  // from immediately overwriting it) unless the template fixes it anyway.
+  const [tagLocked, setTagLocked] = useState(!!initialDraft?.tag && !TEMPLATE_TAGS[initialTemplate ?? "post"]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -254,6 +271,32 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [lockedTip, setLockedTip] = useState<TemplateType | null>(null);
   const lockedTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current); }, []);
+
+  const [draftSaved, setDraftSaved] = useState(false);
+  const draftSavedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (draftSavedTimer.current) clearTimeout(draftSavedTimer.current); }, []);
+  function handleSaveDraft() {
+    onSaveDraft?.({ template, text, tag });
+    setDraftSaved(true);
+    if (draftSavedTimer.current) clearTimeout(draftSavedTimer.current);
+    draftSavedTimer.current = setTimeout(() => setDraftSaved(false), 2000);
+  }
+
+  // "Posting to" Section picker (composer redesign, July 2026) — same
+  // tag/tagLocked state and detectTagFromContent() auto-detect as before,
+  // just a custom pill + popover instead of a plain <select>.
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const sectionMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!sectionMenuOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (sectionMenuRef.current && !sectionMenuRef.current.contains(e.target as Node)) {
+        setSectionMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [sectionMenuOpen]);
 
   const user = session?.user as any;
   const isPro = user?.tier === "patron";
@@ -651,34 +694,53 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
+  const activeTemplateMeta = TEMPLATES.find(t => t.slug === template);
+  const sectionHidden = template === "quote" || template === "food-review" || template === "event";
+  const sectionFixed = lockedTag || TEMPLATE_TAGS[template];
+  const showAutoHint = !sectionHidden && !sectionFixed && !!tag && !tagLocked;
+
   return (
     <div className="composer-card">
-      {/* Template selector */}
-      <div className="composer-template-bar">
-        <div className="composer-template-scroll">
-          {visibleTemplates.map(t => {
-            const gate = TEMPLATE_REP_GATE[t.slug];
-            const locked = gate ? !meetsTemplateGate(t.slug) : false;
-            const isQuote = t.slug === "quote";
-            return (
-              <span key={t.slug} className="composer-template-pill-wrap">
-                <button
-                  type="button"
-                  className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
-                  onClick={() => handleTemplateChange(t.slug)}
-                >
-                  <span className="composer-template-emoji">{t.emoji}</span>
-                  <span className="composer-template-label">{t.label}</span>
-                  {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
-                </button>
-                {locked && gate && (
-                  <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
-                )}
-              </span>
-            );
-          })}
+      {/* Template selector — full chip row for inline usages (CategoryPage's
+          locked-Section composer); a slim emoji+label+Change-Type bar for the
+          dedicated-page composer, which owns its own type-picker modal. */}
+      {onChangeType ? (
+        <div className="composer-slim-bar">
+          <span className="composer-slim-bar-left">
+            <span className="composer-slim-bar-emoji">{activeTemplateMeta?.emoji}</span>
+            <span className="composer-slim-bar-label">{activeTemplateMeta?.label}</span>
+          </span>
+          <button type="button" className="composer-slim-bar-change" onClick={onChangeType}>
+            Change Type
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="composer-template-bar">
+          <div className="composer-template-scroll">
+            {visibleTemplates.map(t => {
+              const gate = TEMPLATE_REP_GATE[t.slug];
+              const locked = gate ? !meetsTemplateGate(t.slug) : false;
+              const isQuote = t.slug === "quote";
+              return (
+                <span key={t.slug} className="composer-template-pill-wrap">
+                  <button
+                    type="button"
+                    className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
+                    onClick={() => handleTemplateChange(t.slug)}
+                  >
+                    <span className="composer-template-emoji">{t.emoji}</span>
+                    <span className="composer-template-label">{t.label}</span>
+                    {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
+                  </button>
+                  {locked && gate && (
+                    <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {lockedTip && TEMPLATE_REP_GATE[lockedTip] && (
         <p className="composer-template-lock-tip">
           {TEMPLATE_REP_GATE[lockedTip]!.tierLabel} ({TEMPLATE_REP_GATE[lockedTip]!.minRep.toLocaleString()} rep) or Moveee Pro required to use the {TEMPLATES.find(t => t.slug === lockedTip)?.label} template.
@@ -696,6 +758,57 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
           </div>
 
           <div className="composer-fields">
+            {/* Posting to — Section picker. Hidden for quote/food-review/event
+                (food-review still auto-sets Food server-side, it just isn't
+                user-editable here), locked to the template's fixed Section
+                for Book/Music/Film Review, hub-scoped posts skip it entirely
+                (Hub membership already signals topic, see docs/hubs-plan.md
+                §1.4). Otherwise it's the same tag/tagLocked/detectTagFromContent
+                state as before, just a pill + popover instead of a <select>. */}
+            {!hubId && !sectionHidden && (
+              sectionFixed ? (
+                <span className="composer-posting-to composer-posting-to--locked">
+                  <span className="composer-posting-to-dot" aria-hidden />
+                  Posting to: {lockedTag || TEMPLATE_TAGS[template]}
+                  <span className="composer-posting-to-lock" aria-hidden>🔒</span>
+                </span>
+              ) : (
+                <div className="composer-posting-to-wrap" ref={sectionMenuRef}>
+                  <button
+                    type="button"
+                    className="composer-posting-to"
+                    onClick={() => setSectionMenuOpen(o => !o)}
+                  >
+                    <span className="composer-posting-to-dot" aria-hidden />
+                    Posting to: {tag || "Main Feed"}
+                    {showAutoHint && <span className="composer-posting-to-auto">auto</span>}
+                    <span className="composer-posting-to-caret" aria-hidden>▾</span>
+                  </button>
+                  {sectionMenuOpen && (
+                    <div className="composer-section-menu">
+                      <button
+                        type="button"
+                        className="composer-section-menu-item"
+                        onClick={() => { handleTagChange(""); setSectionMenuOpen(false); }}
+                      >
+                        Main Feed <span className="composer-section-menu-hint">— no section</span>
+                      </button>
+                      {TAGS.map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          className="composer-section-menu-item"
+                          onClick={() => { handleTagChange(t); setSectionMenuOpen(false); }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+
             {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
             {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
               <DirectorySearch
@@ -965,7 +1078,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Book review — overall + breakdown ratings, favourite quote, recommend, genres */}
             {template === "book-review" && (
               <>
-                <StarRating value={bookOverallRating} onChange={setBookOverallRating} label="Overall rating" />
                 <MultiRating
                   ratings={[
                     { label: "Writing", value: bookRatings.writing },
@@ -974,6 +1086,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Pacing", value: bookRatings.pacing },
                   ]}
                   onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: bookOverallRating, onChange: setBookOverallRating }}
                 />
                 <textarea
                   value={bookFavQuote}
@@ -1067,7 +1180,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Music review — overall + breakdown ratings, favourite lyric, recommend, genres */}
             {template === "music-review" && (
               <>
-                <StarRating value={musicOverallRating} onChange={setMusicOverallRating} label="Overall rating" />
                 <MultiRating
                   ratings={[
                     { label: "Production", value: musicRatings.production },
@@ -1076,6 +1188,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Vibe", value: musicRatings.vibe },
                   ]}
                   onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: musicOverallRating, onChange: setMusicOverallRating }}
                 />
                 <textarea
                   value={musicFavLyric}
@@ -1169,7 +1282,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Film review — overall + breakdown ratings, favourite line, recommend, genres */}
             {template === "film-review" && (
               <>
-                <StarRating value={filmOverallRating} onChange={setFilmOverallRating} label="Overall rating" />
                 <MultiRating
                   ratings={[
                     { label: "Story", value: filmRatings.story },
@@ -1178,6 +1290,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Pacing", value: filmRatings.pacing },
                   ]}
                   onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: filmOverallRating, onChange: setFilmOverallRating }}
                 />
                 <textarea
                   value={filmFavLine}
@@ -1371,25 +1484,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
 
             {/* Action bar */}
             <div className="composer-action-bar">
-              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories,
-                  hub-scoped posts skip it — Hub membership already signals topic, see docs/hubs-plan.md §1.4) */}
-              {!hubId && template !== "quote" && template !== "food-review" && template !== "event" && (
-                lockedTag ? (
-                  <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
-                    {lockedTag}
-                  </span>
-                ) : (
-                  <select
-                    value={tag}
-                    onChange={e => handleTagChange(e.target.value as Tag | "")}
-                    className={`composer-tag-select${tag ? " composer-tag-select--selected" : ""}`}
-                  >
-                    <option value="">Section</option>
-                    {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                )
-              )}
-
               {/* Image button — only for event (other image templates use the inline add-tile in the photo row) */}
               {template === "event" && (
                 <button
@@ -1408,6 +1502,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )}
 
               <div className="composer-spacer" />
+              {onSaveDraft && (
+                <button type="button" className="composer-draft-btn" onClick={handleSaveDraft}>
+                  {draftSaved ? "Saved ✓" : "Save draft"}
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={!canSubmit()}

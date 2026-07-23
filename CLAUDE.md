@@ -2561,6 +2561,89 @@ only find out it was rejected after pressing Post.
 
 ---
 
+## Composer redesign — modal-first flow + dedicated page (web, July 2026)
+
+Reworked how the `/feed` composer opens, based on an approved mockup (Reddit's post-creation
+pattern adapted to Moveee's own template system) — this replaced the old "pill expands into
+an inline wizard on the same page" behavior. **Mobile app is unaffected** — it already had a
+modal-first flow (`TemplatePickerSheet` → `NewPostScreen`); this brings web to the same shape
+rather than inventing a third pattern. Only `apps/connect`/`apps/site`'s shared `SubmitPost.tsx`
+and its two real consumers (`PulseFeed.tsx`'s feed composer, `CategoryPage.tsx`'s locked-Section
+composer) are affected.
+
+### New flow (`/feed`)
+1. Clicking `.composer-pill` opens `TypePickerModal.tsx` (`packages/shared/components/pulse/`)
+   — a 2-column grid of template tiles (emoji + full label + one-line description from a local
+   `MODAL_META` map, reputation-gated tiles dimmed with 🔒 exactly like the old inline pill row
+   was), plus a leading "Continue Draft" tile when a saved draft exists.
+2. Picking a tile navigates to `apps/connect/app/post/new/page.tsx?template={slug}` (a real
+   session-gated route, `redirect("/login?callbackUrl=/post/new")` if logged out) — `SubmitPost`
+   now renders full-page instead of inline.
+3. The dedicated page's `PostNewClient.tsx` renders `<SubmitPost key={template} initialTemplate=
+   {template} onChangeType={...} onSaveDraft={...} onPosted={...} />` — the `key={template}`
+   forces a clean remount (fresh state) whenever the template changes, rather than trying to
+   reset ~30 pieces of per-template state by hand.
+4. `SubmitPost`'s **`onChangeType` prop** is the switch between the two composer shapes: when
+   provided, the old always-visible horizontal `.composer-template-bar` chip row is replaced
+   with a slim `.composer-slim-bar` (emoji + label + a **Change Type** link that reopens
+   `TypePickerModal`) — mirrors mobile's real `templateBar`/"Change format" pattern exactly.
+   When `onChangeType` is *not* passed (`CategoryPage.tsx`'s inline, always-open, locked-Section
+   composer), the original full chip row still renders unchanged — this was a deliberate
+   backward-compat branch, not a full replacement of every `SubmitPost` usage.
+
+### "Posting to" Section picker (replaces the old `<select>`)
+The Section/tag control moved from a plain `<select>` buried in the bottom action bar to a
+`Posting to: {Section} ▾` pill near the top of the fields column (`.composer-posting-to`/
+`.composer-posting-to-wrap`/`.composer-section-menu`) — custom popover, not a native select, so
+it can show an **`AUTO`** badge (`.composer-posting-to-auto`) when the Section was set by
+`detectTagFromContent()` rather than a manual pick. **No new detection logic was written** —
+`tag`/`tagLocked`/`handleTagChange`/`detectTagFromContent()` are the exact same state/functions
+that powered the old `<select>`; only the rendering changed. Behavior unchanged from before:
+hidden entirely for quote/food-review/event, shown locked (🔒, non-interactive) when `lockedTag`
+prop is set (CategoryPage) or `TEMPLATE_TAGS[template]` has a fixed value (Book/Music/Film
+Review → Literature/Music/Film, Itinerary → Travel, Creative Showcase → Art), otherwise an
+open pill+popover listing the 11 `TAGS` plus a "Main Feed" reset option identical to the old
+empty-string option.
+
+### Ratings — Overall folded into the breakdown box, label before stars
+Book/Music/Film Review's separate "Overall rating" field above the Production/Lyrics/etc.
+breakdown box is gone — `MultiRating` (`packages/shared/components/composer/MultiRating.tsx`)
+now takes an optional `overall={{ value, onChange, label? }}` prop and renders it as the box's
+last row, set off by a dashed divider (`.composer-multi-rating-overall`) with bigger stars.
+`StarRating.tsx` gained a passthrough `className` prop to make this possible without a new
+component. Every row (breakdown and Overall) is label-then-stars on one line — the old
+`.composer-multi-rating .composer-star-rating` CSS override that stacked label above stars
+(`flex-direction: column`) was removed; the base `.composer-star-rating` row layout (already
+label-then-stars) now applies inside the box too. Music Review's "Replay" breakdown label is
+now **"Replay Value"** — `MultiRating`'s `ratings` items gained an optional `key` field so the
+display label and the state key it writes to (`replay`, unchanged) can differ; without it the
+key is still derived from `label.toLowerCase()` as before (Book/Film's labels are single words,
+so they're unaffected).
+
+### Save Draft
+`SubmitPost` gained `initialDraft?: { text?: string; tag?: string }` (hydrates on mount only,
+same pattern as the pre-existing `initialTemplate`) and `onSaveDraft?: (draft: { template, text,
+tag }) => void` (renders a "Save draft" button in the action bar when passed). **Deliberately
+partial scope**: only `text` and `tag` are persisted — ratings, the attached `DirectorySearch`
+entry, and images are not, since `File` objects/blob preview URLs can't survive a
+`localStorage` round-trip meaningfully. A restored draft brings back the words and the Section;
+the user re-attaches images/re-picks the book/album/film if needed. `PostNewClient.tsx` owns
+the actual persistence — plain `localStorage`, key `moveee_post_draft_{userId}`, no backend
+table. `TypePickerModal`'s "Continue Draft" tile only shows when that key exists for the
+logged-in user; selecting it (or the modal itself, from either `PulseFeed.tsx` or
+`PostNewClient.tsx`) navigates to `/post/new?draft=1`, which the page reads back on mount. The
+draft is cleared on successful post (`onPosted` → `localStorage.removeItem` before redirecting
+to `/feed`), never on navigating away without saving — an unsaved draft is just lost, same as
+leaving any form.
+
+### Not yet done
+Mobile app's own Book/Music/Film Review rating UI (`NewPostScreen.tsx`'s `BookRatingsRow`
+breakdown) was **not** given the same Overall-folded-into-box treatment — this pass was scoped
+to web only, per the mockup it was built from. Revisit only if the mobile app's rating UI is
+explicitly brought into scope later.
+
+---
+
 ## Community event RSVP (free, capacity-limited — June 2026)
 
 Targets community-organiser events: `culture_post` CPT, `_template_type = 'event'`.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
@@ -11,8 +11,13 @@ import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import StoopReminderCard from "./StoopReminderCard";
-import SubmitPost from "./SubmitPost";
+import TypePickerModal from "./TypePickerModal";
+import type { TemplateType } from "./SubmitPost";
 import "@/app/pulse-layout.css";
+
+function draftKey(userId: string | number): string {
+  return `moveee_post_draft_${userId}`;
+}
 
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
 
@@ -191,9 +196,25 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       .catch(() => {});
   }, []);
 
-  // Composer starts collapsed as a compact pill; expands into the full
-  // SubmitPost wizard on click.
-  const [composerOpen, setComposerOpen] = useState(false);
+  // Composer pill opens a type-picker modal (composer redesign, July 2026);
+  // picking a type navigates to the dedicated /post/new page instead of
+  // expanding SubmitPost inline.
+  const router = useRouter();
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const userId = (session?.user as any)?.id as string | number | undefined;
+  useEffect(() => {
+    if (!userId) return;
+    setHasDraft(!!localStorage.getItem(draftKey(userId)));
+  }, [userId]);
+  const selectTemplate = useCallback((t: TemplateType) => {
+    setTypeModalOpen(false);
+    router.push(`/post/new?template=${t}`);
+  }, [router]);
+  const selectDraftTile = useCallback(() => {
+    setTypeModalOpen(false);
+    router.push("/post/new?draft=1");
+  }, [router]);
 
   // Spotlight events carousel — inserted after the 5th feed item.
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
@@ -211,31 +232,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     io.observe(el);
     return () => io.disconnect();
   }, [hasMore, filtered.length]);
-
-  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => {
-    const sessionUser = session?.user as any;
-    const newItem: FeedItem = {
-      id: `community-${post.id}`,
-      type: "community",
-      title: post.text,
-      slug: String(post.id),
-      date: new Date().toISOString(),
-      image: post.imageUrl ?? undefined,
-      href: `/community/${post.id}`,
-      communityAuthor: post.authorName,
-      communityTag: post.tag ?? "",
-      communityTier: sessionUser?.tier ?? undefined,
-      region: post.region ?? undefined,
-      reactions: { love: 0, fire: 0, clap: 0 },
-      wpId: post.id,
-      galleryImages: post.galleryImages,
-      templateType: post.templateType,
-    };
-    setItems(prev => [newItem, ...prev]);
-    setActiveType("community");
-    setActiveTag(post.tag ?? "");
-    setVisibleCount(20);
-  }, [session]);
 
   const handleTagClick = useCallback((tag: string) => {
     setActiveType("community");
@@ -275,36 +271,26 @@ const handleForYou = () => {
           )}
 
           {session?.user && (
-            composerOpen ? (
-              <div className="composer-collapsible-open">
-                <div className="composer-collapse-bar">
-                  <button
-                    type="button"
-                    className="composer-collapse-btn"
-                    onClick={() => setComposerOpen(false)}
-                  >
-                    ✕ Close
-                  </button>
-                </div>
-                <SubmitPost
-                  onPosted={(post) => { handlePosted(post); setComposerOpen(false); }}
-                />
-              </div>
-            ) : (
-              <button type="button" className="composer-pill" onClick={() => setComposerOpen(true)}>
-                <span className="composer-pill-avatar">
-                  {(session.user as any)?.avatarUrl ? (
-                    <img src={(session.user as any).avatarUrl} alt="" />
-                  ) : (
-                    (session.user?.name ?? (session.user as any)?.displayName ?? "?")
-                      .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
-                  )}
-                </span>
-                <span className="composer-pill-input">Share something with the community…</span>
-                <span className="composer-pill-post">Post</span>
-              </button>
-            )
+            <button type="button" className="composer-pill" onClick={() => setTypeModalOpen(true)}>
+              <span className="composer-pill-avatar">
+                {(session.user as any)?.avatarUrl ? (
+                  <img src={(session.user as any).avatarUrl} alt="" />
+                ) : (
+                  (session.user?.name ?? (session.user as any)?.displayName ?? "?")
+                    .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+                )}
+              </span>
+              <span className="composer-pill-input">Share something with the community…</span>
+              <span className="composer-pill-post">Post</span>
+            </button>
           )}
+          <TypePickerModal
+            open={typeModalOpen}
+            onClose={() => setTypeModalOpen(false)}
+            onSelect={selectTemplate}
+            hasDraft={hasDraft}
+            onSelectDraft={selectDraftTile}
+          />
 
           {/* For You / Latest — content-type and category filtering moved into
               the global search modal; this pair is the one remaining feed-level

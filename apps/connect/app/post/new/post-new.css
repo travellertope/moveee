@@ -1,0 +1,6 @@
+.post-new-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  min-height: calc(100vh - 60px);
+}
