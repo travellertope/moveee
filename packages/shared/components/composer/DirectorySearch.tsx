@@ -12,6 +12,8 @@ interface DirectoryResult {
   /** Generic labelled bio field — Author for books, Artist for music,
    * Director for film, … whatever aboutFieldLabel was set to. */
   about?: string;
+  /** Spotify 30s track preview (Music Review only). */
+  previewUrl?: string | null;
 }
 
 /** Normalized shape every /api/external/{source}/search proxy returns,
@@ -137,6 +139,15 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     if (!externalSource) return;
     setCreatingExternalId(r.externalId);
     try {
+      // Spotify only — album search results carry no track data, so the
+      // 30s preview clip is resolved lazily here, just for the picked
+      // album, rather than fanning out one extra call per search result.
+      let previewUrl: string | null = null;
+      if (externalSource === "spotify") {
+        const previewRes = await fetch(`/api/external/spotify/preview?albumId=${encodeURIComponent(r.externalId)}`).catch(() => null);
+        if (previewRes?.ok) previewUrl = (await previewRes.json())?.previewUrl ?? null;
+      }
+
       const res = await fetch("/api/directory/quick-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,6 +159,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           external_source: externalSource,
           external_id: r.externalId,
           cover_image_url: r.coverUrl || undefined,
+          preview_url: previewUrl || undefined,
         }),
       });
       if (res.ok) {
@@ -159,6 +171,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           type: typeFilter || "place",
           thumbnail: r.coverUrl || null,
           about: data.about || r.about || undefined,
+          previewUrl: data.previewUrl ?? previewUrl ?? null,
         });
       }
     } catch {}

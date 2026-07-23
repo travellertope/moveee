@@ -17,6 +17,8 @@ export interface DirectoryEntry {
    * Director for film, … whatever aboutFieldLabel was set to. */
   about?: string;
   thumbnail?: string | null;
+  /** Spotify 30s track preview (Music Review only). */
+  previewUrl?: string | null;
 }
 
 /** Normalized shape every /directory/{source}/search proxy returns. */
@@ -147,6 +149,20 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
     if (!externalSource) return;
     setCreatingExternalId(r.externalId);
     try {
+      // Spotify only — album search results carry no track data, so the
+      // 30s preview clip is resolved lazily here, just for the picked
+      // album, rather than fanning out one extra call per search result.
+      let previewUrl: string | null = null;
+      if (externalSource === "spotify") {
+        try {
+          const preview = await api.get<{ previewUrl: string | null }>(
+            `${PROXY}/external/spotify/preview?albumId=${encodeURIComponent(r.externalId)}`,
+            false
+          );
+          previewUrl = preview?.previewUrl ?? null;
+        } catch { /* preview is optional */ }
+      }
+
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: r.title,
         entry_type: typeFilter || "place",
@@ -155,8 +171,9 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
         external_source: externalSource,
         external_id: r.externalId,
         cover_image_url: r.coverUrl || undefined,
+        preview_url: previewUrl || undefined,
       });
-      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null });
+      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null });
     } catch {
       // silent
     } finally {
