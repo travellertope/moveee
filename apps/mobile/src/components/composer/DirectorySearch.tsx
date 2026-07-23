@@ -4,6 +4,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, CULTURE_API } from "../../api/client";
+import AudioPreviewButton from "../ui/AudioPreviewButton";
 
 const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -189,6 +190,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
           <Text style={styles.selectedName}>{selected.title}</Text>
           {selected.about ? <Text style={styles.selectedCity}>{selected.about}</Text> : selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
         </View>
+        {selected.previewUrl ? <AudioPreviewButton uri={selected.previewUrl} /> : null}
         <TouchableOpacity onPress={() => onSelect(null as any)} style={styles.clearBtn}>
           <Ionicons name="close" size={16} color={colors.mute} />
         </TouchableOpacity>

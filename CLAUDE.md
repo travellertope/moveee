@@ -3190,6 +3190,69 @@ a "View in Directory →" chip when `item.linkedDirectoryId` is set, mirroring
 feed-rendering at all, so this fix is mobile-only — no `packages/shared` or
 `apps/connect` changes needed.
 
+### External catalog search (Google Books / Spotify / TMDB) — Book Review web parity + Music Review (July 2026)
+
+Book Review reached full web parity (it was previously mobile-only) and a new **Music Review**
+template was built on both platforms, both backed by a reusable external-catalog-search layer.
+**Film Review (TMDB) is planned but not yet built** — follow the exact same pattern documented
+here (`typeFilter="film"`, `externalSource="tmdb"`, `aboutFieldLabel="Director"`) when it is.
+
+- **Normalized external result shape**: every `/api/external/{source}/search` proxy route
+  (`google_books` | `spotify` | `tmdb`) returns `{externalId, title, about?, year?, coverUrl?}`
+  regardless of the upstream API's own shape — duplicated in both `apps/connect` and `apps/site`
+  (mobile hits `apps/site` via `PROXY`, web hits `apps/connect` via a relative fetch). Google
+  Books needs an optional `GOOGLE_BOOKS_API_KEY` env var (works keyless at low volume). Spotify
+  needs `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` (client-credentials OAuth via
+  `packages/shared/lib/spotify.ts`'s `getSpotifyToken()`, module-level cached). Both degrade to
+  empty results (not an error) when credentials are absent — the manual "add anyway" fallback
+  always still works.
+- **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
+  `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
+  `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the
+  external catalog in parallel with the local directory search and shows results in a "From
+  {Source}" group; selecting one calls `/api/directory/quick-create` with
+  `external_source`/`external_id`/`cover_image_url` (Spotify only, also `preview_url`, resolved
+  via a separate lazy `/api/external/spotify/preview?albumId=` call made only on selection, not
+  per search result — album search results carry no track/preview data). The manual "add
+  anyway" fallback is **always** available alongside external results, not just when there are
+  zero local matches, on both platforms.
+- **Dedup**: `Culture_Directory::find_by_external_id($source, $external_id)` is checked first in
+  `handle_quick_create()` — if a matching entry already exists, it's returned immediately
+  instead of creating a duplicate, so every reviewer picking "the same" book/album lands on one
+  shared directory entry.
+- **Generic about-field mechanism**: the old book-only "Author" write was generalized into a
+  `_about_fields` JSON blob (`[{label, value}]`) via `about_label`/`about_value` params (an
+  `author` param is kept as a back-compat alias that auto-sets `about_label='Author'`). The
+  client-side prop is `aboutFieldLabel` (was a boolean `showAuthorField`) — "Author" for books,
+  "Artist" for music, "Director" for film.
+- **Cover art / preview URLs are stored as plain URL strings, not sideloaded into WP media**
+  (deliberate v1 scope): `_external_cover_url` (directory-entry level, all 3 sources) and
+  `_external_preview_url` (directory-entry level, Spotify only). Community posts additionally
+  get their own denormalized copies at submit time (`_music_title`/`_music_artist`/etc.,
+  `_music_preview_url`) to avoid a join at feed-render time — same pattern as `_book_title`/etc.
+
+**Music Review template** — directory type `album` (pre-seeded, no new taxonomy needed), rating
+breakdown is Production/Lyrics/Replay/Vibe (state key `replay`, not `replayValue` — kept
+consistent as `_music_rating_replay`/`music_rating_replay`/`musicRatingReplay` everywhere). No
+status field (no equivalent to Book's Finished/Reading/Want-to-Read) and uses "favourite lyric"
+instead of "favourite quote". Deliberately ungated (no reputation/Pro requirement), same as Book
+Review. Badge color teal `#0D7377` everywhere (web literal + mobile `templateMusicBg`/
+`templateMusicText`, light `#E6FFFA`/`#0D7377`, dark `#042F2E`/`#5EEAD4`) — Book Review is purple
+`#6B48A8`. **If a Music Review surface ever shows the wrong purple**, it's this exact mixup —
+happened once already in the web `AudioPreviewButton`, fixed.
+
+**Audio preview playback (30s Spotify clip)**: `AudioPreviewButton` exists on both platforms —
+`packages/shared/components/pulse/AudioPreviewButton.tsx` (web, plain `<audio>` element) and
+`apps/mobile/src/components/ui/AudioPreviewButton.tsx` (mobile, `expo-av`'s `Audio.Sound`,
+added as a dependency `expo-av: ~15.0.1` matching the SDK 52 pin — regenerated via the
+documented out-of-tree lockfile process, see "Expo SDK version" below). Rendered wherever
+`previewUrl`/`musicPreviewUrl` is present: both `DirectorySearch`'s selected-entry chip, the
+feed card (`FeedCard.tsx` / `FeedItemCard.tsx`'s `MusicReviewCard`), and the detail view
+(`CommunityDetailModal.tsx` / `PostDetailSheet.tsx`'s `TemplateMusicReview`). Both button
+implementations self-manage their own play/pause state and unload/pause on unmount; neither
+enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
+`<audio>` behavior — not treated as a bug).
+
 ---
 
 ## Interest taxonomy (canonical slugs)

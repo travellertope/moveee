@@ -27,8 +27,8 @@ export default function AudioPreviewButton({ src }: { src: string }) {
       onClick={toggle}
       style={{
         display: "inline-flex", alignItems: "center", gap: "5px",
-        fontSize: "0.68rem", fontWeight: 700, color: "#6B48A8",
-        background: "rgba(107,72,168,0.1)", border: "none",
+        fontSize: "0.68rem", fontWeight: 700, color: "#0D7377",
+        background: "rgba(13,115,119,0.1)", border: "none",
         borderRadius: "999px", padding: "3px 10px", cursor: "pointer",
       }}
     >

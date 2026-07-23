@@ -21,6 +21,7 @@ import { useAuthStore } from "../../auth/authStore";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import ImageLightbox from "../ui/ImageLightbox";
+import AudioPreviewButton from "../ui/AudioPreviewButton";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
@@ -1762,9 +1763,10 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
                 <Ionicons name="musical-notes-outline" size={22} color={c.mute} />
               </View>
             )}
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle}</Text>
               {item.musicArtist ? <Text style={styles.bookMeta}>{item.musicArtist}</Text> : null}
+              {item.musicPreviewUrl ? <AudioPreviewButton uri={item.musicPreviewUrl} /> : null}
             </View>
             {item.musicOverallRating != null ? (
               <View style={styles.bookOverallWrap}>

@@ -13,6 +13,7 @@ import BottomSheet, { type BottomSheetHandle } from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
+import AudioPreviewButton from "../ui/AudioPreviewButton";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import CommentSection, { type CommentSectionHandle } from "./CommentSection";
@@ -937,6 +938,11 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
               <StarRow rating={overall} c={c} />
               <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
+            </View>
+          ) : null}
+          {item.musicPreviewUrl ? (
+            <View style={{ marginTop: 6 }}>
+              <AudioPreviewButton uri={item.musicPreviewUrl} />
             </View>
           ) : null}
         </View>
