@@ -452,32 +452,18 @@
   text-decoration: none;
 }
 
-/* ── ARCHIVE HEADER (CITY / CATEGORY) ── */
-.evt-archive-page {
-  background: var(--evt-paper);
-}
-
-/* Scoped to .evt-archive-page — the main /events page also renders a
-   .evt-timeline-section (see the TIMELINE rule above), and this was
-   previously a same-named, unscoped rule that clobbered it via source
-   order: its padding/max-width/margin silently applied to the main page
-   too, stacking on top of .evt-timeline-wrap's own padding and squeezing
-   the whole timeline into a narrow boxed column (worst on mobile, where
-   nothing overrode the leaked 64px side padding). */
-.evt-archive-page .evt-timeline-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 64px 64px;
-}
-
+/* ── ARCHIVE HEADER (CITY / CATEGORY) ──
+   City/category archives (city-archive.tsx, category-archive.tsx) now share
+   the main /events page's shell exactly (.evt-headline-wrap/.evt-headline,
+   .evt-search-wrap, .evt-timeline-section) — only these three classes are
+   archive-specific: the small back link and caption above/below the shared
+   headline, and the category icon inline within it. */
 .evt-archive-icon {
-  font-size: 36px;
+  /* em-based so it scales with .evt-headline's font-size at every
+     breakpoint instead of needing its own responsive override. */
+  font-size: 0.85em;
   color: var(--evt-ochre);
-}
-
-.evt-archive-header {
-  background: var(--evt-paper);
-  padding: 56px 64px 32px;
+  margin-right: 4px;
 }
 
 .evt-archive-back {
@@ -485,42 +471,18 @@
   color: var(--evt-mute);
   text-decoration: none;
   display: inline-block;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .evt-archive-back:hover {
   color: var(--evt-ochre);
 }
 
-.evt-archive-title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-
-.evt-archive-title-row h1 {
-  font-family: var(--evt-font-serif);
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--evt-ink);
-  margin: 0;
-}
-
-.evt-archive-country {
-  font-size: 16px;
-  color: var(--evt-mute);
-}
-
 .evt-archive-meta {
-  margin-top: 12px;
+  margin-top: 10px;
   font-family: var(--evt-font-mono);
   font-size: 13px;
   color: var(--evt-ochre);
-}
-
-.evt-archive-footer {
-  text-align: center;
-  padding: 48px 0;
 }
 
 /* ── DETAIL HERO ── */

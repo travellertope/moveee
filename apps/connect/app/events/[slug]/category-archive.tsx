@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getEventsWithFallback } from "@/lib/wp";
 import EventTimeline from "../components/EventTimeline";
+import EventsSearchBar from "../components/EventsSearchBar";
 
 interface CategoryInfo { name: string; icon: string; desc: string }
 
@@ -13,19 +16,6 @@ const ALL_CITIES = [
   { slug: "nairobi",  name: "Nairobi",  country: "Kenya" },
   { slug: "new-york", name: "New York", country: "USA" },
   { slug: "paris",    name: "Paris",    country: "France" },
-];
-
-const ALL_CATEGORIES = [
-  { slug: "music",       name: "Music",       icon: "♪" },
-  { slug: "film",        name: "Film",        icon: "◉" },
-  { slug: "visual-arts", name: "Visual Arts", icon: "◈" },
-  { slug: "fashion",     name: "Fashion",     icon: "✦" },
-  { slug: "food",        name: "Food",        icon: "◆" },
-  { slug: "literature",  name: "Literature",  icon: "▬" },
-  { slug: "design",      name: "Design",      icon: "◻" },
-  { slug: "performance", name: "Performance", icon: "★" },
-  { slug: "community",   name: "Community",   icon: "◇" },
-  { slug: "tech",        name: "Tech",        icon: "○" },
 ];
 
 /** Fetch events from REST filtered directly by the culture_interest taxonomy term slug. */
@@ -55,6 +45,9 @@ async function getEventsByInterestSlug(termSlug: string): Promise<any[]> {
 }
 
 export default async function CategoryArchive({ slug, categoryInfo }: { slug: string; categoryInfo: CategoryInfo }) {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const userCity = (session?.user as any)?.city?.toLowerCase().trim();
+
   // Fetch from REST filtered by taxonomy — more reliable than filtering GraphQL results
   const [allEvents, termEvents] = await Promise.all([
     getEventsWithFallback(100).catch(() => []),
@@ -113,29 +106,59 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
     ).length,
   })).filter((c) => c.count > 0);
 
+  const literatiAll = upcoming.filter((e) => e.isLiterati);
+  const literatiNearby = userCity
+    ? literatiAll.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(userCity))
+    : [];
+
   return (
-    <div className="evt-archive-page">
-      <div className="evt-archive-header">
+    <div className="bg-paper">
+      <div className="evt-headline-wrap">
         <Link href="/events" className="evt-archive-back">← All Happenings</Link>
-        <div className="evt-archive-title-row">
-          <span className="evt-archive-icon">{categoryInfo.icon}</span>
-          <h1><em>{categoryInfo.name}</em></h1>
-        </div>
+        <h1 className="evt-headline">
+          <span className="evt-archive-icon">{categoryInfo.icon}</span> <em>{categoryInfo.name}</em>
+        </h1>
         <p className="evt-archive-meta">{categoryInfo.desc} · {upcoming.length} upcoming</p>
       </div>
 
-      <div className="evt-timeline-section">
-        <EventTimeline
-          events={upcoming}
-          sidebarCities={sidebarCities}
-          sidebarCategories={ALL_CATEGORIES}
-          activeCategorySlug={slug}
-          emptyMessage={`No upcoming ${categoryInfo.name.toLowerCase()} events right now — check back soon.`}
-        />
+      <div className="evt-search-wrap">
+        <EventsSearchBar />
       </div>
 
-      <div className="evt-archive-footer">
-        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
+      <div className="evt-timeline-section" id="timeline">
+        <EventTimeline
+          events={upcoming}
+          emptyMessage={`No upcoming ${categoryInfo.name.toLowerCase()} events right now — check back soon.`}
+          rightRail={
+            <>
+              {sidebarCities.length > 0 && (
+                <div className="evt-sb-block">
+                  <div className="evt-sb-label">Trending Cities</div>
+                  {sidebarCities.map((c) => (
+                    <Link key={c.slug} href={`/events/${c.slug}`} className="evt-sb-row">
+                      <span className="evt-sb-name">{c.name}</span>
+                      <span className="evt-sb-count">{c.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              <div className="evt-literati-teaser">
+                <p className="evt-sb-label">🪶 Literati Connect</p>
+                <p className="evt-literati-teaser-title">Members go first.</p>
+                <p className="evt-literati-teaser-desc">
+                  Monthly, city-wide gatherings for Moveee members — supper tables, private
+                  views, and salons before anyone else hears about them.
+                </p>
+                {literatiAll.length > 0 && (
+                  <Link href="#timeline" className="evt-literati-teaser-link">
+                    {userCity && literatiNearby.length > 0 ? "See gatherings near you →" : "See this month's gatherings →"}
+                  </Link>
+                )}
+              </div>
+            </>
+          }
+        />
       </div>
     </div>
   );
