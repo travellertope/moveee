@@ -43,7 +43,7 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Route/Event, so it read
@@ -54,6 +54,7 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
+  { slug: "music-review",      label: "Music",     emoji: "🎵" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
@@ -75,6 +76,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
   "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
   "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts.",                             chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"] },
+  "music-review":      { desc: "Review an album — rate it and share your thoughts.",                                       chips: ["On repeat since:", "First listen thoughts:", "Album of the year contender:"] },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
   poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
@@ -86,6 +88,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
 const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
   "food-review":       "Food",
   "book-review":       "Literature",
+  "music-review":      "Music",
   "itinerary":         "Travel",
   "creative-showcase": "Art",
 };
@@ -122,10 +125,12 @@ function detectTagFromContent(text: string): Tag | null {
 
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
+const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
 
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
   "book-review": 800,
+  "music-review": 800,
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
@@ -199,6 +204,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   const [bookGenres, setBookGenres] = useState<string[]>([]);
+
+  // Music review specific
+  const [musicEntry, setMusicEntry] = useState<any>(null);
+  const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
+  const [musicFavLyric, setMusicFavLyric] = useState("");
+  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
+  const [musicGenres, setMusicGenres] = useState<string[]>([]);
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -373,6 +386,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return text.trim().length >= 50 && foodDishName.trim().length > 0 && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
       case "book-review":
         return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
+      case "music-review":
+        return !!musicEntry && musicOverallRating > 0 && text.trim().length >= 50 && musicRecommend !== null;
       case "creative-showcase":
         return galleryFiles.length > 0 || videoUrl.trim().length > 0;
       case "poll":
@@ -488,6 +503,20 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.book_recommend = bookRecommend;
         payload.book_genres = bookGenres.length > 0 ? bookGenres : undefined;
       }
+      if (template === "music-review") {
+        payload.linked_directory_id = musicEntry?.id;
+        payload.music_title = musicEntry?.title;
+        payload.music_artist = musicEntry?.about;
+        payload.music_overall_rating = musicOverallRating;
+        payload.music_rating_production = musicRatings.production;
+        payload.music_rating_lyrics = musicRatings.lyrics;
+        payload.music_rating_replay = musicRatings.replay;
+        payload.music_rating_vibe = musicRatings.vibe;
+        payload.music_fav_lyric = musicFavLyric.trim() || undefined;
+        payload.music_recommend = musicRecommend;
+        payload.music_genres = musicGenres.length > 0 ? musicGenres : undefined;
+        payload.music_preview_url = musicEntry?.previewUrl || undefined;
+      }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
         const expires = new Date();
@@ -580,6 +609,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     "cultural-take": "Share your take…",
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
+    "music-review": "What did you think? Standout tracks?",
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
@@ -677,6 +707,18 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   ))}
                 </div>
               </>
+            )}
+
+            {/* Album search */}
+            {template === "music-review" && (
+              <DirectorySearch
+                value={musicEntry}
+                onChange={setMusicEntry}
+                typeFilter="album"
+                aboutFieldLabel="Artist"
+                externalSource="spotify"
+                placeholder="Search for an album *"
+              />
             )}
 
             {/* Event fields */}
@@ -942,6 +984,63 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </>
             )}
 
+            {/* Music review — overall + breakdown ratings, favourite lyric, recommend, genres */}
+            {template === "music-review" && (
+              <>
+                <StarRating value={musicOverallRating} onChange={setMusicOverallRating} label="Overall rating" />
+                <MultiRating
+                  ratings={[
+                    { label: "Production", value: musicRatings.production },
+                    { label: "Lyrics", value: musicRatings.lyrics },
+                    { label: "Replay", value: musicRatings.replay },
+                    { label: "Vibe", value: musicRatings.vibe },
+                  ]}
+                  onChange={(label, v) => setMusicRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                />
+                <textarea
+                  value={musicFavLyric}
+                  onChange={e => setMusicFavLyric(e.target.value.slice(0, 300))}
+                  placeholder="Favourite lyric (optional)"
+                  rows={2}
+                  className="composer-textarea composer-textarea--italic"
+                />
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setMusicRecommend(true)}
+                    className={`composer-template-pill${musicRecommend === true ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👍 Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMusicRecommend(false)}
+                    className={`composer-template-pill${musicRecommend === false ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👎 No
+                  </button>
+                </div>
+                <div className="composer-guide-chips">
+                  {MUSIC_GENRES.map(g => {
+                    const active = musicGenres.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setMusicGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
+                        className="composer-guide-chip"
+                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
             {/* Multi-rating — food-review */}
             {template === "food-review" && (
               <MultiRating
@@ -1007,7 +1106,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && (
+            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -1037,8 +1136,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review"}
               style={{ display: "none" }}
             />
 

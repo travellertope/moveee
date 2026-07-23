@@ -13,6 +13,7 @@ import BottomSheet, { type BottomSheetHandle } from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
+import AudioPreviewButton from "../ui/AudioPreviewButton";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import CommentSection, { type CommentSectionHandle } from "./CommentSection";
@@ -146,6 +147,7 @@ const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string
   "event":             { label: "EVENT",             emoji: "📅", bg: "rgba(0,137,123,0.08)",  color: "#00695C" },
   "quote":             { label: "QUOTE",             emoji: "❝",  bg: "rgba(185,140,55,0.10)", color: "#92400E" },
   "book-review":       { label: "BOOK REVIEW",       emoji: "📚", bg: "rgba(120,53,15,0.08)",  color: "#78350F" },
+  "music-review":      { label: "MUSIC REVIEW",      emoji: "🎵", bg: "rgba(13,115,119,0.08)", color: "#0D7377" },
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
@@ -901,6 +903,109 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
   );
 }
 
+function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
+  const overall = item.musicOverallRating ?? 0;
+
+  const ratingRows: { label: string; val: number | undefined }[] = [
+    { label: "Production", val: item.musicRatingProduction },
+    { label: "Lyrics",     val: item.musicRatingLyrics },
+    { label: "Replay",     val: item.musicRatingReplay },
+    { label: "Vibe",       val: item.musicRatingVibe },
+  ].filter((r) => r.val !== undefined && r.val > 0);
+
+  return (
+    <>
+      {/* Album card */}
+      <BookCardWrapper
+        directoryId={item.linkedDirectoryId}
+        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        style={styles.bookCard}
+      >
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        ) : (
+          <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
+            <Text style={{ fontSize: 24 }}>🎵</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle ?? item.title}</Text>
+          {item.musicArtist ? (
+            <Text style={styles.bookAuthor}>{item.musicArtist}</Text>
+          ) : null}
+          {overall > 0 ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <StarRow rating={overall} c={c} />
+              <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
+            </View>
+          ) : null}
+          {item.musicPreviewUrl ? (
+            <View style={{ marginTop: 6 }}>
+              <AudioPreviewButton uri={item.musicPreviewUrl} />
+            </View>
+          ) : null}
+        </View>
+      </BookCardWrapper>
+
+      {/* Recommend chip */}
+      {item.musicRecommend === true ? (
+        <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <View style={[styles.tag, { backgroundColor: c.paperWarm, borderColor: c.gold }]}>
+            <Text style={[styles.tagText, { color: c.gold }]}>👍 Recommended</Text>
+          </View>
+        </View>
+      ) : null}
+
+      {/* Ratings section */}
+      {ratingRows.length > 0 ? (
+        <View style={styles.ratingsBlock}>
+          <Text style={styles.ratingsLabel}>RATINGS</Text>
+          {ratingRows.map((row) => (
+            <View key={row.label} style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>{row.label}</Text>
+              <StarRow rating={row.val!} c={c} />
+              <Text style={styles.ratingScore}>{row.val!.toFixed(1)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Review text */}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
+
+      {item.linkedDirectoryId ? (
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
+          <Ionicons name="grid-outline" size={12} color={c.gold} />
+          <Text style={styles.directoryChipText}>View in Directory →</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {/* Favourite lyric */}
+      {item.musicFavLyric ? (
+        <View style={styles.bookFavQuote}>
+          <Text style={styles.bookFavQuoteLabel}>🎤 Favourite lyric:</Text>
+          <Text style={styles.bookFavQuoteText}>{item.musicFavLyric}</Text>
+        </View>
+      ) : null}
+
+      {/* Genre chips */}
+      {item.musicGenres && item.musicGenres.length > 0 ? (
+        <View style={[styles.tagRow, { marginTop: 8 }]}>
+          {item.musicGenres.map((g, i) => (
+            <View key={g} style={[styles.tag, i === 0 ? { backgroundColor: c.ink, borderColor: c.ink } : {}]}>
+              <Text style={[styles.tagText, i === 0 ? { color: "#fff" } : { color: c.inkSoft }]}>{g}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </>
+  );
+}
+
 // ── Main PostDetailSheet ────────────────────────────────────────────────────────
 
 interface PostDetailSheetProps {
@@ -949,6 +1054,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
       case "itinerary":         return <TemplateItinerary item={item} c={c} styles={styles} />;
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;
       case "book-review":       return <TemplateBookReview item={item} c={c} styles={styles} />;
+      case "music-review":      return <TemplateMusicReview item={item} c={c} styles={styles} />;
       case "quote":             return <TemplateQuote item={item} c={c} styles={styles} />;
       default:                  return <TemplatePost item={item} c={c} styles={styles} onMentionPress={handleMentionPress} />;
     }

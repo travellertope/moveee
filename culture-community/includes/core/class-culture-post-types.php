@@ -162,6 +162,18 @@ class Culture_Post_Types {
             '_book_fav_quote'          => 'string',
             '_book_recommend'          => 'string',
             '_book_genres'             => 'string', // JSON: string[]
+            // Music Review template
+            '_music_title'             => 'string',
+            '_music_artist'            => 'string',
+            '_music_overall_rating'    => 'integer',
+            '_music_rating_production' => 'integer',
+            '_music_rating_lyrics'     => 'integer',
+            '_music_rating_replay'     => 'integer',
+            '_music_rating_vibe'       => 'integer',
+            '_music_fav_lyric'         => 'string',
+            '_music_recommend'         => 'string',
+            '_music_genres'            => 'string', // JSON: string[]
+            '_music_preview_url'       => 'string', // denormalized from the linked directory entry at submit time
             // Community-organiser event template (separate from the culture_event CPT above)
             '_event_date'              => 'string',
             '_event_end_date'          => 'string',
@@ -232,6 +244,7 @@ class Culture_Post_Types {
             '_external_source'        => 'string',   // 'google_books' | 'spotify' | 'tmdb'
             '_external_id'            => 'string',   // ISBN / Spotify album ID / TMDB ID
             '_external_cover_url'     => 'string',   // cover/poster art URL, not sideloaded into media library
+            '_external_preview_url'   => 'string',   // Spotify 30s track preview URL (Music Review only)
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(

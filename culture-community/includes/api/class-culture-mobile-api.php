@@ -1527,7 +1527,7 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'music-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
         }
@@ -1610,6 +1610,33 @@ class Culture_Mobile_API {
             $book_genres = $request->get_param( 'book_genres' );
             if ( is_array( $book_genres ) ) {
                 update_post_meta( $post_id, '_book_genres', wp_json_encode( array_map( 'sanitize_text_field', $book_genres ) ) );
+            }
+        }
+
+        // ── Music Review ───────────────────────────────────────────────────────
+        if ( $template === 'music-review' ) {
+            if ( $request->get_param( 'music_title' ) ) {
+                update_post_meta( $post_id, '_music_title',  sanitize_text_field( $request->get_param( 'music_title' ) ) );
+                update_post_meta( $post_id, '_music_artist', sanitize_text_field( $request->get_param( 'music_artist' ) ?: '' ) );
+            }
+            update_post_meta( $post_id, '_music_overall_rating',    max( 1, min( 5, (int) $request->get_param( 'music_overall_rating' ) ) ) );
+            update_post_meta( $post_id, '_music_rating_production', max( 0, min( 5, (int) $request->get_param( 'music_rating_production' ) ) ) );
+            update_post_meta( $post_id, '_music_rating_lyrics',     max( 0, min( 5, (int) $request->get_param( 'music_rating_lyrics' ) ) ) );
+            update_post_meta( $post_id, '_music_rating_replay',     max( 0, min( 5, (int) $request->get_param( 'music_rating_replay' ) ) ) );
+            update_post_meta( $post_id, '_music_rating_vibe',       max( 0, min( 5, (int) $request->get_param( 'music_rating_vibe' ) ) ) );
+            if ( $request->get_param( 'music_fav_lyric' ) ) {
+                update_post_meta( $post_id, '_music_fav_lyric', sanitize_textarea_field( $request->get_param( 'music_fav_lyric' ) ) );
+            }
+            $music_recommend = $request->get_param( 'music_recommend' );
+            if ( $music_recommend !== null ) {
+                update_post_meta( $post_id, '_music_recommend', (bool) $music_recommend ? '1' : '0' );
+            }
+            $music_genres = $request->get_param( 'music_genres' );
+            if ( is_array( $music_genres ) ) {
+                update_post_meta( $post_id, '_music_genres', wp_json_encode( array_map( 'sanitize_text_field', $music_genres ) ) );
+            }
+            if ( $request->get_param( 'music_preview_url' ) ) {
+                update_post_meta( $post_id, '_music_preview_url', esc_url_raw( $request->get_param( 'music_preview_url' ) ) );
             }
         }
 
@@ -3516,6 +3543,17 @@ class Culture_Mobile_API {
                 'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
                 'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
                 'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+                'musicTitle'              => get_post_meta( $post->ID, '_music_title', true ) ?: '',
+                'musicArtist'             => get_post_meta( $post->ID, '_music_artist', true ) ?: '',
+                'musicOverallRating'      => (int) get_post_meta( $post->ID, '_music_overall_rating', true ),
+                'musicRatingProduction'   => (int) get_post_meta( $post->ID, '_music_rating_production', true ),
+                'musicRatingLyrics'       => (int) get_post_meta( $post->ID, '_music_rating_lyrics', true ),
+                'musicRatingReplay'       => (int) get_post_meta( $post->ID, '_music_rating_replay', true ),
+                'musicRatingVibe'         => (int) get_post_meta( $post->ID, '_music_rating_vibe', true ),
+                'musicFavLyric'           => get_post_meta( $post->ID, '_music_fav_lyric', true ) ?: '',
+                'musicRecommend'          => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
+                'musicGenres'             => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
+                'musicPreviewUrl'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
                 // Quote template fields
                 'quoteAuthor'             => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
                 'quoteSource'             => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
@@ -3922,6 +3960,17 @@ class Culture_Mobile_API {
             'book_fav_quote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
             'book_recommend'            => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
             'book_genres'               => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+            'music_title'               => get_post_meta( $post->ID, '_music_title', true ) ?: '',
+            'music_artist'              => get_post_meta( $post->ID, '_music_artist', true ) ?: '',
+            'music_overall_rating'      => (int) get_post_meta( $post->ID, '_music_overall_rating', true ),
+            'music_rating_production'   => (int) get_post_meta( $post->ID, '_music_rating_production', true ),
+            'music_rating_lyrics'       => (int) get_post_meta( $post->ID, '_music_rating_lyrics', true ),
+            'music_rating_replay'       => (int) get_post_meta( $post->ID, '_music_rating_replay', true ),
+            'music_rating_vibe'         => (int) get_post_meta( $post->ID, '_music_rating_vibe', true ),
+            'music_fav_lyric'           => get_post_meta( $post->ID, '_music_fav_lyric', true ) ?: '',
+            'music_recommend'           => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
+            'music_genres'              => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
+            'music_preview_url'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
         );
     }
 

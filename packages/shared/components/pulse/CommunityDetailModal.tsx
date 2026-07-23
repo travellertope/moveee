@@ -11,6 +11,7 @@ import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
 import ProBadge from "@/components/ProBadge";
 import ImageLightbox from "./ImageLightbox";
+import AudioPreviewButton from "./AudioPreviewButton";
 
 function AuthorFollowToggle({ username }: { username: string }) {
   const { data: session, status } = useSession();
@@ -351,6 +352,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   📚 Book Review{item.bookTitle ? ` · ${item.bookTitle}` : ""}
                 </span>
               )}
+              {item.templateType === "music-review" && (
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0D7377", background: "rgba(13,115,119,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
+                  🎵 Music Review{item.musicTitle ? ` · ${item.musicTitle}` : ""}
+                </span>
+              )}
               {item.templateType === "creative-showcase" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Creative Showcase
@@ -419,6 +425,34 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               {item.bookGenres && item.bookGenres.length > 0 && (
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.bookGenres.map((g) => (
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Music review rating/artist/recommend/genres/favourite lyric/preview */}
+          {item.templateType === "music-review" && item.musicOverallRating && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                {item.musicArtist && <span>by {item.musicArtist}</span>}
+                {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+              </div>
+              {item.musicFavLyric && (
+                <blockquote style={{
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #0D7377", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                }}>
+                  “{item.musicFavLyric}”
+                </blockquote>
+              )}
+              {item.musicGenres && item.musicGenres.length > 0 && (
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  {item.musicGenres.map((g) => (
                     <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>

@@ -13,6 +13,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
 import ProBadge from "@/components/ProBadge";
 import ImageLightbox from "./ImageLightbox";
+import AudioPreviewButton from "./AudioPreviewButton";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -559,6 +560,11 @@ export default function FeedCard({
                       📚 Book Review {item.bookTitle ? `· ${item.bookTitle}` : ""}
                     </span>
                   )}
+                  {item.templateType === "music-review" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0D7377", background: "rgba(13,115,119,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
+                      🎵 Music Review {item.musicTitle ? `· ${item.musicTitle}` : ""}
+                    </span>
+                  )}
                   {item.templateType === "creative-showcase" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Creative Showcase
@@ -609,6 +615,15 @@ export default function FeedCard({
                 <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
                 {item.bookStatus && <span>{item.bookStatus}</span>}
                 {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              </div>
+            )}
+
+            {/* Music review rating/recommend/preview */}
+            {item.templateType === "music-review" && item.musicOverallRating && (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
               </div>
             )}
 
