@@ -282,9 +282,13 @@
 
 .evt-row-title-line {
   display: flex;
-  align-items: center;
+  /* flex-start (not center) so the tag sits against the title's first line
+     rather than centering against the whole block once a long, no-longer-
+     truncated title wraps to 2-3 lines. */
+  align-items: flex-start;
   gap: 8px;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .evt-row-title {
@@ -293,9 +297,6 @@
   color: var(--evt-ink);
   margin: 0;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .evt-row:hover .evt-row-title {
@@ -1484,6 +1485,10 @@
     margin: 0 16px;
   }
 
+  .evt-timeline-section {
+    padding: 24px 0 40px;
+  }
+
   .evt-timeline-wrap {
     display: block;
     padding: 0 20px;
@@ -1511,10 +1516,6 @@
     flex: 0 0 40px;
     width: 40px;
     height: 40px;
-  }
-
-  .evt-row-title {
-    -webkit-line-clamp: 1;
   }
 
   .evt-detail-hero {
