@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -41,6 +44,10 @@ function getDateParts(raw?: string) {
 }
 
 export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props) {
+  // AI-populated events are especially prone to a missing or dead image URL
+  // (no img at all is already handled below); this also catches a URL that
+  // 404s/fails to load, which previously fell through to a broken-image icon.
+  const [imgFailed, setImgFailed] = useState(false);
   const dateFormatted = formatDate(event.eventDate || event.date);
   const endFormatted = event.endDate ? formatDate(event.endDate) : null;
   const { day, month } = getDateParts(event.eventDate || event.date);
@@ -76,8 +83,8 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
         {/* ── LEFT: image + back ── */}
         <div className="luma-left">
           <div className="luma-poster">
-            {img ? (
-              <img src={img} alt={event.title} />
+            {img && !imgFailed ? (
+              <img src={img} alt={event.title} onError={() => setImgFailed(true)} />
             ) : (
               <div className="luma-poster-placeholder" data-cat-ph={catSlug}>
                 <div className="ev-cat-ph">

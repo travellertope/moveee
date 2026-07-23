@@ -1,9 +1,8 @@
 "use client";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { getCategoryGradient } from "../utils/categoryImages";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import EventThumb from "./EventThumb";
 
 interface CarouselEvent {
   id: string | number;
@@ -88,8 +87,8 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
           return (
             <Link key={event.slug} href={event.href || `/events/${event.slug}`} className="evt-carousel-card">
               {event.isPro && <span className="evt-carousel-pro-badge">Pro Only</span>}
-              <div className="evt-carousel-img" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
-                {img && <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />}
+              <div className="evt-carousel-img">
+                <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={22} />
               </div>
               <div className="evt-carousel-body">
                 <h4 className="evt-carousel-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />

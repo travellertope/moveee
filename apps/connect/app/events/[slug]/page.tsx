@@ -1,11 +1,11 @@
 import { getEventBySlugWithFallback, getEventsWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
 import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
+import EventThumb from "../components/EventThumb";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
@@ -132,6 +132,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const img          = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
   const cat          = event.cultureInterests?.nodes?.[0]?.name || "Happening";
+  const catSlug      = event.cultureInterests?.nodes?.[0]?.slug || "";
   const dateRaw      = event.eventDate || event.date || new Date().toISOString();
   const dateObj      = new Date(dateRaw);
   const dateValid    = !isNaN(dateObj.getTime()) ? dateObj : new Date();
@@ -186,14 +187,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 ↗ Featured in {event.city}
               </Link>
             )}
-            {img ? (
-              <Image src={img} alt={event.title} fill priority style={{ objectFit: "cover" }} />
-            ) : (
-              <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
-                <rect width="400" height="500" fill="var(--evt-ink)" />
-                <circle cx="200" cy="250" r="100" fill="var(--evt-ochre)" opacity="0.1" />
-              </svg>
-            )}
+            <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={56} priority />
           </div>
         </div>
 
@@ -391,9 +385,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <section className="evt-artist-strip">
           <div className="evt-artist-card">
             <div className="evt-artist-avatar" style={{ position: "relative", overflow: "hidden" }}>
-              {host.featuredImage?.node?.sourceUrl && (
-                <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill style={{ objectFit: "cover" }} />
-              )}
+              <EventThumb src={host.featuredImage?.node?.sourceUrl} title={host.title} fontSize={20} />
             </div>
             <div>
               <span className="evt-artist-eyebrow">{artistSectionLabel}</span>

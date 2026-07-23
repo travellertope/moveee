@@ -1,14 +1,13 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getEventsWithFallback } from "@/lib/wp";
 import { getCommunityPosts } from "@/lib/unified-feed";
 import { isEventItem } from "@/lib/event-spotlight";
-import { getCategoryImage, getCategoryGradient } from "./utils/categoryImages";
 import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
 import EventsCarousel from "./components/EventsCarousel";
+import EventThumb from "./components/EventThumb";
 import "@/app/events.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -175,13 +174,8 @@ export default async function EventsPage() {
                 const day = fmtDay(event.eventDate || event.date);
                 return (
                   <Link key={event.slug} href={event.href || `/events/${event.slug}`} className="evt-feat-card">
-                    <div className="evt-feat-img" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
-                      <Image
-                        src={img || getCategoryImage(catSlug)}
-                        alt={event.title}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
+                    <div className="evt-feat-img">
+                      <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={28} />
                       {(month || day) && (
                         <div className="evt-feat-date-badge">
                           <span className="evt-feat-date-month">{month}</span>
