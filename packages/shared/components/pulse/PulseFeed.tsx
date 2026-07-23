@@ -14,21 +14,6 @@ import StoopReminderCard from "./StoopReminderCard";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
 
-const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
-  { label: "All",        value: "all"       },
-  { label: "Pulse",      value: "community" },
-  { label: "News",       value: "pulse"     },
-  { label: "Editorial",  value: "editorial" },
-  { label: "Event",      value: "happening" },
-  { label: "Directory",  value: "directory" },
-  { label: "Quote",      value: "quote"     },
-];
-
-const CATEGORY_FILTERS = [
-  "Music", "Film", "Art", "Fashion", "Literature",
-  "Food", "Tech", "Sport", "Travel", "Design", "Ideas",
-];
-
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
 
 // Mirrors apps/mobile/src/components/community/DiscoverCard.tsx's TYPE_BADGE —
@@ -52,25 +37,6 @@ interface PulseFeedProps {
   initialItems: FeedItem[];
 }
 
-function SidebarHeading({ children }: { children: React.ReactNode }) {
-  return <p className="pulse-sidebar-heading">{children}</p>;
-}
-
-function SidebarLink({
-  label, active, onClick, accent,
-}: { label: string; active: boolean; onClick: () => void; accent?: boolean }) {
-  return (
-    <li style={{ listStyle: "none" }}>
-      <button
-        onClick={onClick}
-        className={`pulse-sidebar-link${active ? (accent ? " pulse-sidebar-link--accent-active" : " pulse-sidebar-link--active") : ""}`}
-      >
-        {label}
-      </button>
-    </li>
-  );
-}
-
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -81,7 +47,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
-  const [showSectionsMenu, setShowSectionsMenu] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Apply edition cookie → pre-select matching region
@@ -278,26 +243,11 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(20);
   }, []);
 
-const handleType = (type: FeedItemType | "all") => {
-    setActiveType(type);
-    setForYou(false);
-    setActiveTag("");
-    setActiveCategory("");
-    setVisibleCount(20);
-    if (type !== "pulse") setActiveRegion("All");
-  };
-
-  const handleForYou = () => {
+const handleForYou = () => {
     setForYou(prev => !prev);
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
-    setVisibleCount(20);
-  };
-
-  const handleCategory = (cat: string) => {
-    setActiveCategory(prev => prev === cat ? "" : cat);
-    setActiveType("all");
     setVisibleCount(20);
   };
 
@@ -307,162 +257,10 @@ const handleType = (type: FeedItemType | "all") => {
 
   return (
     <div style={{ background: "var(--paper, #ffffff)" }}>
-      <div className="pulse-layout">
-
-        {/* ── Left Sidebar ── */}
-        <aside className="pulse-sidebar-left">
-          <nav>
-            <div className="pulse-sidebar-group">
-              <div className="pulse-about-card" style={{ marginTop: 0 }}>
-                <p className="pulse-about-desc">
-                  The community for creatives, entrepreneurs, and culture lovers. Post, share, and stay in important culture conversations.
-                </p>
-              </div>
-            </div>
-
-            {hasInterests && (
-              <div className="pulse-sidebar-group">
-                <SidebarHeading>Personalised</SidebarHeading>
-                <ul style={{ margin: 0, padding: 0 }}>
-                  <SidebarLink label="For You" active={forYou} onClick={handleForYou} accent />
-                </ul>
-              </div>
-            )}
-
-            <div className="pulse-sidebar-group">
-              <SidebarHeading>Sections</SidebarHeading>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {[
-                  { label: "People Near Me", href: "/connect/people" },
-                  { label: "Membership",        href: "/connect/membership" },
-                ].map(({ label, href }) => (
-                  <li key={label} style={{ listStyle: "none" }}>
-                    <Link href={href} className="pulse-sidebar-link" style={{ display: "block", textDecoration: "none" }}>
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="pulse-sidebar-group">
-              <SidebarHeading>Content Type</SidebarHeading>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {TYPE_FILTERS.map(({ label, value }) => (
-                  <SidebarLink
-                    key={value}
-                    label={label}
-                    active={!forYou && activeType === value}
-                    onClick={() => handleType(value)}
-                  />
-                ))}
-              </ul>
-            </div>
-          </nav>
-        </aside>
+      <div className="pulse-layout pulse-layout--feed">
 
         {/* ── Center Timeline ── */}
         <main className="pulse-timeline">
-          {/* Mobile filter strip */}
-          <div className="pulse-mobile-filters">
-            <div className="pulse-mobile-filters-scroll">
-            <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem" }}>
-              {hasInterests && (
-                <button
-                  onClick={handleForYou}
-                  style={{
-                    background: forYou ? "var(--ink, #14110d)" : "transparent",
-                    color: forYou ? "var(--paper, #fff)" : "var(--ink-soft, #3a342b)",
-                    border: forYou ? "1px solid var(--ink, #14110d)" : "1px solid var(--rule, #d8d0c6)",
-                    borderRadius: "2px",
-                    padding: "0.25rem 0.7rem",
-                    fontSize: "0.72rem",
-                    fontWeight: forYou ? 700 : 400,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  For You
-                </button>
-              )}
-              {TYPE_FILTERS.map(({ label, value }) => (
-                <button
-                  key={value}
-                  onClick={() => handleType(value)}
-                  style={{
-                    background: activeType === value ? "var(--ochre, #c5491f)" : "transparent",
-                    color: activeType === value ? "var(--paper, #fff)" : "var(--ink-soft, #3a342b)",
-                    border: activeType === value ? "1px solid var(--ochre, #c5491f)" : "1px solid var(--rule, #d8d0c6)",
-                    borderRadius: "2px",
-                    padding: "0.25rem 0.7rem",
-                    fontSize: "0.72rem",
-                    fontWeight: activeType === value ? 700 : 400,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                onClick={() => setShowSectionsMenu(s => !s)}
-                style={{
-                  position: "sticky",
-                  right: 0,
-                  background: showSectionsMenu ? "var(--ochre, #c5491f)" : "var(--ink, #14110d)",
-                  color: "var(--paper, #fff)",
-                  border: "none",
-                  padding: "0.25rem 0.9rem",
-                  fontSize: "0.72rem",
-                  fontWeight: 500,
-                  whiteSpace: "nowrap",
-                  letterSpacing: "0.04em",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  boxShadow: "-8px 0 10px var(--paper, #ffffff)",
-                }}
-              >
-                ⊞ Sections
-              </button>
-            </div>
-            </div>{/* end pulse-mobile-filters-scroll */}
-
-            {/* Sections + Categories dropdown panel */}
-            {showSectionsMenu && (
-              <div style={{ borderTop: "1px solid var(--rule, #e8e2d8)", background: "var(--paper, #fff)" }}>
-                {/* Connect sections row */}
-                <div style={{ display: "flex", borderBottom: "1px solid var(--rule, #e8e2d8)" }}>
-                  {[
-                    { label: "People Near Me", href: "/connect/people" },
-                    { label: "Membership",        href: "/connect/membership" },
-                  ].map(({ label, href }, i, arr) => (
-                    <Link
-                      key={label}
-                      href={href}
-                      onClick={() => setShowSectionsMenu(false)}
-                      style={{
-                        flex: 1,
-                        textAlign: "center",
-                        padding: "0.6rem 0.5rem",
-                        fontSize: "0.65rem",
-                        fontWeight: 600,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: "var(--ink-soft, #3a342b)",
-                        textDecoration: "none",
-                        borderRight: i < arr.length - 1 ? "1px solid var(--rule, #e8e2d8)" : "none",
-                      }}
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Interests nudge for logged-in users with no interests set */}
           {session && !hasInterests && (
             <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -507,25 +305,27 @@ const handleType = (type: FeedItemType | "all") => {
             )
           )}
 
-          {/* Category filter strip */}
-          <div className="feed-category-strip">
-            <div className="feed-category-scroll">
+          {/* For You / Latest — content-type and category filtering moved into
+              the global search modal; this pair is the one remaining feed-level
+              control, mirroring the Twitter/Instagram "For You / Following"
+              pattern directly above the post list. */}
+          <div className="feed-tabs">
+            <button
+              type="button"
+              className={`feed-tab${!forYou ? " feed-tab--active" : ""}`}
+              onClick={() => { if (forYou) handleForYou(); }}
+            >
+              Latest
+            </button>
+            {hasInterests && (
               <button
-                className={`feed-category-pill${!activeCategory ? " feed-category-pill--active" : ""}`}
-                onClick={() => { setActiveCategory(""); setVisibleCount(20); }}
+                type="button"
+                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
+                onClick={() => { if (!forYou) handleForYou(); }}
               >
-                All
+                For You
               </button>
-              {CATEGORY_FILTERS.map(cat => (
-                <button
-                  key={cat}
-                  className={`feed-category-pill${activeCategory === cat ? " feed-category-pill--active" : ""}`}
-                  onClick={() => handleCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            )}
           </div>
 
           {visible.length === 0 ? (
@@ -563,6 +363,12 @@ const handleType = (type: FeedItemType | "all") => {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
+          <div className="pulse-about-card" style={{ marginTop: 0 }}>
+            <p className="pulse-about-desc">
+              The community for creatives, entrepreneurs, and culture lovers. Post, share, and stay in important culture conversations.
+            </p>
+          </div>
+
           {/* Trending directory entries — the ones community posts are
               referencing/linking to most, via the Discover feature's
               existing sort=trending (ranked by _community_review_count). */}
