@@ -224,13 +224,17 @@ export async function getPulseStories({
 
 /** Fetch a single story by its slug. */
 export async function getPulseStoryBySlug(slug: string): Promise<WpPulseStory | null> {
-  const res = await fetch(
-    `${BASE}/wp/v2/pulse-stories?slug=${encodeURIComponent(slug)}&_embed=1`,
-    { next: { revalidate: 300 } }
-  );
-  if (!res.ok) return null;
-  const posts: WpPulseStory[] = await res.json();
-  return posts[0] ?? null;
+  try {
+    const res = await fetch(
+      `${BASE}/wp/v2/pulse-stories?slug=${encodeURIComponent(slug)}&_embed=1`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return null;
+    const posts: WpPulseStory[] = await res.json().catch(() => []);
+    return posts[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Fetch all published slugs — used for generateStaticParams. */
@@ -246,12 +250,16 @@ export async function getAllPulseSlugs(): Promise<string[]> {
 
 /** Fetch approved comments for a story post. */
 export async function getPulseComments(postId: number): Promise<WpComment[]> {
-  const res = await fetch(
-    `${BASE}/wp/v2/comments?post=${postId}&per_page=50&orderby=date&order=asc&status=approve`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${BASE}/wp/v2/comments?post=${postId}&per_page=50&orderby=date&order=asc&status=approve`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json().catch(() => []);
+  } catch {
+    return [];
+  }
 }
 
 /** Post a new comment on a story. */

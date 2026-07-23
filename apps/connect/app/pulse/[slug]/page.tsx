@@ -93,7 +93,7 @@ export default async function PulseStoryPage({
   const { slug } = await params;
   const [story, session] = await Promise.all([
     getPulseStoryBySlug(slug),
-    getServerSession(authOptions),
+    getServerSession(authOptions).catch(() => null),
   ]);
   if (!story) notFound();
 

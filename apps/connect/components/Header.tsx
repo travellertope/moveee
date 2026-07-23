@@ -56,6 +56,17 @@ function RailIcon({ name }: { name: string }) {
   }
 }
 
+// A plain "↗" character renders with emoji presentation (a colorful glyph)
+// on several platforms/browsers by default — this small outline SVG avoids
+// that font-dependent inconsistency for the external-link indicator.
+function ExternalArrow() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+    </svg>
+  );
+}
+
 export default function ConnectHeader() {
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
@@ -144,7 +155,7 @@ export default function ConnectHeader() {
     <>
       {/* ══════════════ Desktop left rail (≥860px) ══════════════ */}
       <aside className="ch-rail" aria-label="Main navigation">
-        <Link href={SITE_URL} className="ch-rail-logo">
+        <Link href="/feed" className="ch-rail-logo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={LOGO_URL} alt="The Moveee" height={24} width={152} />
         </Link>
@@ -168,7 +179,7 @@ export default function ConnectHeader() {
             </Link>
           ))}
           <Link href={`${SITE_URL}/magazine`} className="ch-rail-link ch-rail-link--ext">
-            <RailIcon name="magazine" /> Magazine ↗
+            <RailIcon name="magazine" /> Magazine <ExternalArrow />
           </Link>
         </nav>
 
@@ -234,7 +245,7 @@ export default function ConnectHeader() {
       {/* ══════════════ Mobile top header (<860px) — unchanged behaviour ══════════════ */}
       <header className="ch-header">
         <div className="ch-inner">
-          <Link href={SITE_URL} className="ch-logo">
+          <Link href="/feed" className="ch-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={LOGO_URL} alt="The Moveee" className="ch-logo-img" height={28} width={178} />
           </Link>
@@ -250,7 +261,7 @@ export default function ConnectHeader() {
               </Link>
             ))}
             <Link href={`${SITE_URL}/magazine`} className="ch-nav-link ch-nav-link--external">
-              Magazine ↗
+              Magazine <ExternalArrow />
             </Link>
           </nav>
 
@@ -319,7 +330,7 @@ export default function ConnectHeader() {
         className={`ch-mobile-nav${mobileOpen ? " open" : ""}`}
         aria-label="Mobile navigation"
       >
-        <Link href={SITE_URL} className="ch-mobile-nav-logo" onClick={() => setMobileOpen(false)}>
+        <Link href="/feed" className="ch-mobile-nav-logo" onClick={() => setMobileOpen(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={LOGO_URL} alt="The Moveee" height={24} width={152} />
         </Link>
@@ -346,7 +357,7 @@ export default function ConnectHeader() {
             </Link>
           ))}
           <Link href={`${SITE_URL}/magazine`} className="ch-mobile-nav-link ch-mobile-nav-link--icon ch-mobile-nav-link--external">
-            <RailIcon name="magazine" /> Magazine ↗
+            <RailIcon name="magazine" /> Magazine <ExternalArrow />
           </Link>
         </div>
 

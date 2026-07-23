@@ -8,7 +8,7 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
 import AppDownloadModal from "@/components/AppDownloadModal";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
@@ -91,7 +91,7 @@ export default function RootLayout({
                   <ConnectHeader />
                   <div className="cw-shell-content">
                     <main>{children}</main>
-                    <Footer />
+                    <ConditionalFooter />
                   </div>
                 </div>
                 <AppDownloadModal />

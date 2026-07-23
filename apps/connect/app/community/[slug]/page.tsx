@@ -73,7 +73,7 @@ export default async function CommunityPostPage({
   const { slug } = await params;
   const [post, session] = await Promise.all([
     getCommunityPostBySlug(slug),
-    getServerSession(authOptions),
+    getServerSession(authOptions).catch(() => null),
   ]);
   if (!post) notFound();
   const comments = await getPostComments(post.id);

@@ -181,26 +181,22 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
+          {/* Icon-only context (mobile top bar) has no room for a legible
+              numbered badge without it overwhelming the 18px bell — a plain
+              dot indicator instead, matching the approved rail mockup's own
+              icon-only treatment. The exact unread count is still visible
+              once opened, or in the rail's showLabel row. */}
           {!showLabel && unread > 0 && (
             <span style={{
               position: "absolute",
-              top: 2,
-              right: 2,
+              top: 1,
+              right: 1,
               background: "#c5491f",
-              color: "#fff",
               borderRadius: "50%",
-              width: 14,
-              height: 14,
-              fontSize: 9,
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "inherit",
-              border: "1px solid #fff",
-            }}>
-              {unread > 9 ? "9+" : unread}
-            </span>
+              width: 8,
+              height: 8,
+              border: "1.5px solid #fff",
+            }} />
           )}
         </span>
         {showLabel && (

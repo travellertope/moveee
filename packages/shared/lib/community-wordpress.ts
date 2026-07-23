@@ -43,35 +43,54 @@ export interface WpCommunityPost {
 }
 
 export async function getAllCommunitySlugs(): Promise<string[]> {
-  const res = await fetch(
-    `${BASE}/community-posts?per_page=100&_fields=slug&status=publish`,
-    { next: { revalidate: 3600 } }
-  );
-  if (!res.ok) return [];
-  const posts: Array<{ slug: string }> = await res.json().catch(() => []);
-  return posts.map((p) => p.slug);
+  try {
+    const res = await fetch(
+      `${BASE}/community-posts?per_page=100&_fields=slug&status=publish`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const posts: Array<{ slug: string }> = await res.json().catch(() => []);
+    return posts.map((p) => p.slug);
+  } catch {
+    return [];
+  }
 }
 
 const COMMUNITY_FIELDS = "_fields=id,slug,date,modified,title,content,meta,comment_count";
 const COMMUNITY_META_FIELDS = "meta_fields=community_author_name,community_author_id,community_author_username,community_author_tier,community_author_avatar,community_tag,community_region,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe";
 
+// A bare fetch() can reject outright (timeout, DNS failure, connection
+// reset) rather than resolving with a non-ok response — that rejection was
+// previously left unguarded here, so a transient WP backend blip crashed
+// the whole community/[slug] page with Next's generic "server error" screen
+// instead of the graceful notFound() the page already falls back to when
+// this returns null. Wrapped in try/catch so both failure modes behave the
+// same way, consistent with every other function in this file.
 export async function getCommunityPostBySlug(slug: string): Promise<WpCommunityPost | null> {
-  const res = await fetch(
-    `${BASE}/community-posts?slug=${encodeURIComponent(slug)}&${COMMUNITY_FIELDS}&${COMMUNITY_META_FIELDS}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return null;
-  const posts: WpCommunityPost[] = await res.json().catch(() => []);
-  return posts[0] ?? null;
+  try {
+    const res = await fetch(
+      `${BASE}/community-posts?slug=${encodeURIComponent(slug)}&${COMMUNITY_FIELDS}&${COMMUNITY_META_FIELDS}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const posts: WpCommunityPost[] = await res.json().catch(() => []);
+    return posts[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function searchCommunityPosts(query: string): Promise<WpCommunityPost[]> {
-  const res = await fetch(
-    `${BASE}/community-posts?search=${encodeURIComponent(query)}&per_page=6&_fields=id,slug,date,title,content,meta`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json().catch(() => []);
+  try {
+    const res = await fetch(
+      `${BASE}/community-posts?search=${encodeURIComponent(query)}&per_page=6&_fields=id,slug,date,title,content,meta`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json().catch(() => []);
+  } catch {
+    return [];
+  }
 }
 
 export interface WpComment {
@@ -84,22 +103,30 @@ export interface WpComment {
 }
 
 export async function getPostComments(postId: number): Promise<WpComment[]> {
-  const res = await fetch(
-    `${BASE}/comments?post=${postId}&per_page=100&order=asc&_fields=id,post,parent,author_name,date,content`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json().catch(() => []);
+  try {
+    const res = await fetch(
+      `${BASE}/comments?post=${postId}&per_page=100&order=asc&_fields=id,post,parent,author_name,date,content`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json().catch(() => []);
+  } catch {
+    return [];
+  }
 }
 
 export async function getCommunityPostsByTag(tag: string): Promise<WpCommunityPost[]> {
-  const res = await fetch(
-    `${BASE}/community-posts?per_page=50&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  const posts: WpCommunityPost[] = await res.json().catch(() => []);
-  return posts.filter(
-    (p) => p.meta?.community_tag?.toLowerCase() === tag.toLowerCase()
-  );
+  try {
+    const res = await fetch(
+      `${BASE}/community-posts?per_page=50&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    const posts: WpCommunityPost[] = await res.json().catch(() => []);
+    return posts.filter(
+      (p) => p.meta?.community_tag?.toLowerCase() === tag.toLowerCase()
+    );
+  } catch {
+    return [];
+  }
 }

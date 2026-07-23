@@ -421,6 +421,22 @@ const handleForYou = () => {
               </button>
             </div>
           )}
+
+          {/* Minimal footer — the full site footer is skipped on /feed
+              (see ConditionalFooter.tsx) since infinite scroll makes it
+              effectively unreachable; this is the one piece that still
+              needs to be somewhere. */}
+          <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
+            <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--mute)", lineHeight: 1.7 }}>
+              © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+              <br />
+              <Link href="/terms" style={{ color: "var(--mute)" }}>Terms</Link>
+              {" · "}
+              <Link href="/privacy" style={{ color: "var(--mute)" }}>Privacy</Link>
+              {" · "}
+              <Link href="/contact" style={{ color: "var(--mute)" }}>Contact</Link>
+            </p>
+          </div>
         </aside>
       </div>
 

@@ -1123,19 +1123,23 @@ h1, h2, h3, h4 {
 /* Main textarea */
 .composer-textarea-wrap { position: relative; }
 .composer-textarea {
-  background: transparent;
-  border: none;
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 6px;
   color: #14110d;
   font-family: var(--font-dm-sans, "DM Sans", sans-serif);
   font-size: 15px;
   line-height: 1.5;
-  padding: 0;
+  padding: 10px 12px;
   resize: none;
   width: 100%;
+  box-sizing: border-box;
   outline: none;
   min-height: 90px;
   display: block;
+  transition: border-color 0.15s;
 }
+.composer-textarea:focus { border-color: var(--ochre, #c5491f); }
 .composer-textarea::placeholder { color: #e0d8ce; }
 .composer-textarea--italic {
   font-family: var(--font-fraunces), serif;
@@ -1178,6 +1182,12 @@ h1, h2, h3, h4 {
 .composer-quote-box .composer-textarea {
   position: relative;
   z-index: 1;
+  /* Keep this one borderless/transparent — it sits inside the quote box's
+     own tinted background + border, so the new default input border would
+     just draw a redundant box-within-a-box here. */
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 /* Action bar */
