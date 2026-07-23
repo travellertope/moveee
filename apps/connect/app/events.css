@@ -85,14 +85,8 @@
 }
 
 
-/* ── TICKER ── */
-.evt-ticker {
-  height: 40px;
-  background: var(--evt-ink);
-  overflow: hidden;
-  position: relative;
-}
-
+/* ── TICKER (detail-page only — see .evt-detail-ticker; the main /events
+   page's own ticker band was removed) ── */
 .evt-ticker-container {
   position: relative;
   height: 100%;
@@ -132,13 +126,11 @@
   margin: 0 24px;
 }
 
-.evt-ticker-item--star {
-  color: var(--evt-ochre);
-}
-
 /* ── TIMELINE ── */
 .evt-timeline-section {
-  background: var(--evt-paper-deep);
+  /* White throughout, matching /feed's .pulse-timeline/.pulse-sidebar-right
+     (both #ffffff) — this page previously used the grey --evt-paper-deep here. */
+  background: var(--evt-paper);
   padding: 64px 0 80px;
 }
 
@@ -147,21 +139,37 @@
   margin-bottom: 40px;
 }
 
+/* Column widths mirror the feed page's two-column layout exactly
+   (.pulse-layout--feed in pulse-layout.css: minmax(0,1fr) main track +
+   fixed 340px right rail, 760px reading width centered within the main
+   track) so /events and /feed read as the same grid system. */
 .evt-timeline-wrap {
-  max-width: 1200px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: 0 64px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
   gap: 40px;
 }
 
 .evt-timeline-main {
-  flex: 1;
   min-width: 0;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .evt-timeline-sidebar {
-  flex: 0 0 280px;
+  min-width: 0;
+  /* Same sticky treatment as the feed's right rail (.pulse-sidebar-right) —
+     no sticky top header to clear at desktop widths, so top:0. Disabled on
+     mobile below, where the sidebar stacks under the timeline instead of
+     sitting beside it. */
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .evt-month {
@@ -303,6 +311,11 @@
 .evt-tag--literati {
   background: rgba(197, 73, 31, 0.12);
   color: var(--evt-ochre);
+}
+
+.evt-tag--virtual {
+  background: var(--evt-blue-bg, #E3F2FD);
+  color: var(--evt-blue, #1976D2);
 }
 
 .evt-row-meta {
@@ -1593,66 +1606,12 @@
 
 /* ── RESPONSIVE / MOBILE COMPANION ── */
 @media (max-width: 768px) {
-  .evt-hero {
-    padding: 64px 24px 40px;
-  }
-
-  .evt-hero-title {
-    font-size: 40px;
-  }
-
-  .evt-hero-stats {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    gap: 0;
-  }
-
-  .evt-stat {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--evt-ghost-light);
-    padding: 12px 0;
-    width: 100%;
-  }
-
-  .evt-stat-divider {
-    display: none;
-  }
-
   .evt-ticker-item {
     margin: 0 16px;
   }
 
-  .evt-section {
-    padding: 0 20px;
-  }
-
-  .evt-feat-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .evt-feat-img {
-    height: auto;
-    aspect-ratio: 16 / 9;
-  }
-
-  .evt-city-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .evt-city-card {
-    flex-direction: row;
-    justify-content: flex-start;
-    text-align: left;
-    gap: 12px;
-  }
-
   .evt-timeline-wrap {
-    flex-direction: column;
+    display: block;
     padding: 0 20px;
   }
 
@@ -1661,6 +1620,17 @@
     border-radius: 12px;
     box-shadow: var(--evt-shadow-card);
     padding: 20px;
+    max-width: none;
+    margin: 0;
+  }
+
+  .evt-timeline-sidebar {
+    /* Stacks below the timeline on mobile instead of sitting beside it —
+       disable the desktop sticky treatment so it doesn't pin mid-scroll. */
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    margin-top: 24px;
   }
 
   .evt-row-thumb {
