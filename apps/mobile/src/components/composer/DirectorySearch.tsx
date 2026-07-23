@@ -20,6 +20,10 @@ export interface DirectoryEntry {
   thumbnail?: string | null;
   /** Spotify 30s track preview (Music Review only). */
   previewUrl?: string | null;
+  /** TMDB genres pre-mapped to the composer's own FILM_GENRES vocabulary
+   * (Film Review only) — a suggestion to pre-select genre chips with, not a
+   * final answer; the reviewer can still add/remove freely. */
+  genres?: string[];
 }
 
 /** Normalized shape every /directory/{source}/search proxy returns. */
@@ -29,6 +33,7 @@ interface ExternalResult {
   about?: string;
   year?: string;
   coverUrl?: string | null;
+  genres?: string[];
 }
 
 interface Props {
@@ -188,7 +193,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
         cover_image_url: r.coverUrl || undefined,
         preview_url: previewUrl || undefined,
       });
-      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null });
+      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null, genres: r.genres });
     } catch {
       // silent
     } finally {

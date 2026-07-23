@@ -3318,7 +3318,8 @@ TMDB) are now live — this section is the reference for how the pattern works, 
 
 - **Normalized external result shape**: every `/api/external/{source}/search` proxy route
   (`google_books` | `spotify` | `tmdb`) returns `{externalId, title, about?, year?, coverUrl?}`
-  regardless of the upstream API's own shape — duplicated in both `apps/connect` and `apps/site`
+  regardless of the upstream API's own shape (TMDB's results also carry a `genres?: string[]`,
+  see below) — duplicated in both `apps/connect` and `apps/site`
   (mobile hits `apps/site` via `PROXY`, web hits `apps/connect` via a relative fetch). Google
   Books needs an optional `GOOGLE_BOOKS_API_KEY` env var (works keyless at low volume). Spotify
   needs `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` (client-credentials OAuth via
@@ -3338,6 +3339,21 @@ TMDB) are now live — this section is the reference for how the pattern works, 
   "Director")` from TMDB's `/movie/{id}/credits`) and passes it as `about_value`. The manual "add
   anyway" fallback is **always** available alongside external results, not just when there are
   zero local matches, on both platforms.
+- **TMDB genre pre-select (July 2026, Film Review only)** — unlike the director, genre data
+  *is* on the search result itself (`genre_ids: number[]` from `/search/movie`, no extra
+  lookup needed), so both `/api/external/tmdb/search` routes map it straight into a `genres:
+  string[]` field on each result via a small static `TMDB_GENRE_MAP` (TMDB's genre IDs are a
+  small, stable set — no need for a live `/genre/movie/list` call). Only mapped for the 8 TMDB
+  genres that have a match in the composer's own curated `FILM_GENRES` list (Action, Animation,
+  Comedy, Documentary, Drama, Romance, Sci-Fi, Thriller) — the rest (Adventure, Crime, Family,
+  Fantasy, History, Horror, Music, Mystery, TV Movie, War, Western) are dropped, never
+  force-mapped to something close. Selecting a film in `DirectorySearch` passes `genres` through
+  to the parent's `onChange`/`onSelect`, which pre-selects the Film Review genre chips
+  (`setFilmGenres(entry.genres)`) — a **suggestion**, not a lock: the reviewer can still add/
+  remove chips freely afterward, and picking a different film just re-suggests from scratch.
+  Book (Google Books `categories`, free-text/inconsistent) and Music (Spotify genre is
+  artist-level, not album-level, via a separate call, and uses a messy micro-genre taxonomy)
+  were deliberately **not** given the same treatment — no clean source data to pre-fill from.
 - **Dedup**: `Culture_Directory::find_by_external_id($source, $external_id)` is checked first in
   `handle_quick_create()` — if a matching entry already exists, it's returned immediately
   instead of creating a duplicate, so every reviewer picking "the same" book/album lands on one

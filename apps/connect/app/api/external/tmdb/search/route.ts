@@ -7,6 +7,18 @@ export const runtime = "nodejs";
 // routes, so the manual "add anyway" fallback in DirectorySearch still works.
 const TMDB_API_KEY = process.env.TMDB_API_KEY ?? "";
 
+// TMDB's movie genre IDs are a small, stable, well-known set — no need for
+// a live /genre/movie/list call. Mapped down to the composer's own curated
+// FILM_GENRES vocabulary (SubmitPost.tsx); a TMDB genre with no match here
+// (Adventure, Crime, Family, Fantasy, History, Horror, Music, Mystery,
+// TV Movie, War, Western) is simply dropped, not force-mapped to something
+// close — this only ever pre-selects the chip UI's existing "+ Other" list,
+// never invents a genre value that isn't already offered.
+const TMDB_GENRE_MAP: Record<number, string> = {
+  28: "Action", 16: "Animation", 35: "Comedy", 99: "Documentary",
+  18: "Drama", 10749: "Romance", 878: "Sci-Fi", 53: "Thriller",
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
@@ -33,6 +45,9 @@ export async function GET(req: NextRequest) {
       title: m.title as string,
       year: m.release_date ? String(m.release_date).slice(0, 4) : undefined,
       coverUrl: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : null,
+      genres: Array.isArray(m.genre_ids)
+        ? Array.from(new Set(m.genre_ids.map((id: number) => TMDB_GENRE_MAP[id]).filter(Boolean)))
+        : undefined,
     }));
 
   return NextResponse.json(results);

@@ -15,6 +15,10 @@ interface DirectoryResult {
   about?: string;
   /** Spotify 30s track preview (Music Review only). */
   previewUrl?: string | null;
+  /** TMDB genres pre-mapped to the composer's own FILM_GENRES vocabulary
+   * (Film Review only) — a suggestion to pre-select genre chips with, not a
+   * final answer; the reviewer can still add/remove freely. */
+  genres?: string[];
 }
 
 /** Normalized shape every /api/external/{source}/search proxy returns,
@@ -25,6 +29,7 @@ interface ExternalResult {
   about?: string;
   year?: string;
   coverUrl?: string | null;
+  genres?: string[];
 }
 
 interface Props {
@@ -182,6 +187,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           thumbnail: r.coverUrl || null,
           about: data.about || r.about || undefined,
           previewUrl: data.previewUrl ?? previewUrl ?? null,
+          genres: r.genres,
         });
       }
     } catch {}

@@ -1410,7 +1410,12 @@ const uploadImages = async (): Promise<string[]> => {
       <View style={styles.fieldGroup}>
         <DirectorySearch
           selected={filmEntry}
-          onSelect={setFilmEntry}
+          onSelect={(entry) => {
+            setFilmEntry(entry);
+            // Pre-select genre chips from TMDB's own genres for the picked
+            // film — a suggestion, not a locked value; still freely editable.
+            if (entry?.genres?.length) setFilmGenres(entry.genres);
+          }}
           label="Film *"
           typeFilter="film"
           aboutFieldLabel="Director"
