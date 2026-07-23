@@ -67,6 +67,8 @@ export const lightColors = {
   templateBookText:    '#14532D',
   templateMusicBg:     '#E6FFFA',
   templateMusicText:   '#0D7377',
+  templateFilmBg:      '#E8EEF7',
+  templateFilmText:    '#2B4C7E',
 
   // Poll
   pollVoteBg:  'rgba(46,125,50,0.10)',
@@ -144,6 +146,8 @@ export const darkColors = {
   templateBookText:    '#4ADE80',
   templateMusicBg:     '#042F2E',
   templateMusicText:   '#5EEAD4',
+  templateFilmBg:      '#16233A',
+  templateFilmText:    '#8FB4E3',
 
   // Poll
   pollVoteBg:  'rgba(74,222,128,0.10)',

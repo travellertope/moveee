@@ -15,6 +15,10 @@ interface DirectoryResult {
   about?: string;
   /** Spotify 30s track preview (Music Review only). */
   previewUrl?: string | null;
+  /** TMDB genres pre-mapped to the composer's own FILM_GENRES vocabulary
+   * (Film Review only) — a suggestion to pre-select genre chips with, not a
+   * final answer; the reviewer can still add/remove freely. */
+  genres?: string[];
 }
 
 /** Normalized shape every /api/external/{source}/search proxy returns,
@@ -25,6 +29,7 @@ interface ExternalResult {
   about?: string;
   year?: string;
   coverUrl?: string | null;
+  genres?: string[];
 }
 
 interface Props {
@@ -149,6 +154,15 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
         if (previewRes?.ok) previewUrl = (await previewRes.json())?.previewUrl ?? null;
       }
 
+      // TMDB only — search results carry no crew data, so the director is
+      // resolved lazily here, just for the picked film, same reasoning as
+      // Spotify's preview lookup above.
+      let about = r.about;
+      if (externalSource === "tmdb") {
+        const creditsRes = await fetch(`/api/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`).catch(() => null);
+        if (creditsRes?.ok) about = (await creditsRes.json())?.director ?? undefined;
+      }
+
       const res = await fetch("/api/directory/quick-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,7 +170,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           title: r.title,
           entry_type: typeFilter || "place",
           about_label: aboutFieldLabel || undefined,
-          about_value: r.about || undefined,
+          about_value: about || undefined,
           external_source: externalSource,
           external_id: r.externalId,
           cover_image_url: r.coverUrl || undefined,
@@ -173,6 +187,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           thumbnail: r.coverUrl || null,
           about: data.about || r.about || undefined,
           previewUrl: data.previewUrl ?? previewUrl ?? null,
+          genres: r.genres,
         });
       }
     } catch {}

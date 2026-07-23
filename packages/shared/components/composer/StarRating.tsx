@@ -4,11 +4,12 @@ interface Props {
   value: number;
   onChange: (v: number) => void;
   label?: string;
+  className?: string;
 }
 
-export default function StarRating({ value, onChange, label }: Props) {
+export default function StarRating({ value, onChange, label, className }: Props) {
   return (
-    <div className="composer-star-rating">
+    <div className={`composer-star-rating${className ? ` ${className}` : ""}`}>
       {label && <span className="composer-star-label">{label}</span>}
       <div className="composer-stars">
         {[1, 2, 3, 4, 5].map((n) => (

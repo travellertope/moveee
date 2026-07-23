@@ -27,7 +27,7 @@ export default function GlobalError({
           flexDirection: "column",
           textAlign: "center",
           padding: "80px 24px",
-          background: "#f3ece0",
+          background: "#ffffff",
           fontFamily: "Georgia, serif",
           color: "#14110d",
         }}
@@ -82,7 +82,7 @@ export default function GlobalError({
               padding: "14px 28px",
               background: "#b38238",
               border: "1px solid #b38238",
-              color: "#f3ece0",
+              color: "#ffffff",
               cursor: "pointer",
             }}
           >

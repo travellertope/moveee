@@ -2561,6 +2561,125 @@ only find out it was rejected after pressing Post.
 
 ---
 
+## Composer redesign — modal-first flow + dedicated page (web, July 2026)
+
+Reworked how the `/feed` composer opens, based on an approved mockup (Reddit's post-creation
+pattern adapted to Moveee's own template system) — this replaced the old "pill expands into
+an inline wizard on the same page" behavior. **Mobile app is unaffected** — it already had a
+modal-first flow (`TemplatePickerSheet` → `NewPostScreen`); this brings web to the same shape
+rather than inventing a third pattern. Only `apps/connect`/`apps/site`'s shared `SubmitPost.tsx`
+and its two real consumers (`PulseFeed.tsx`'s feed composer, `CategoryPage.tsx`'s locked-Section
+composer) are affected.
+
+### New flow (`/feed`)
+1. Clicking `.composer-pill` opens `TypePickerModal.tsx` (`packages/shared/components/pulse/`)
+   — a 2-column grid of template tiles (emoji + full label + one-line description from a local
+   `MODAL_META` map, reputation-gated tiles dimmed with 🔒 exactly like the old inline pill row
+   was), plus a leading "Continue Draft" tile when a saved draft exists.
+2. Picking a tile navigates to `apps/connect/app/post/new/page.tsx?template={slug}` (a real
+   session-gated route, `redirect("/login?callbackUrl=/post/new")` if logged out) — `SubmitPost`
+   now renders full-page instead of inline.
+3. The dedicated page's `PostNewClient.tsx` renders `<SubmitPost key={template} initialTemplate=
+   {template} onChangeType={...} onSaveDraft={...} onPosted={...} />` — the `key={template}`
+   forces a clean remount (fresh state) whenever the template changes, rather than trying to
+   reset ~30 pieces of per-template state by hand.
+4. `SubmitPost`'s **`onChangeType` prop** is the switch between the two composer shapes: when
+   provided, the old always-visible horizontal `.composer-template-bar` chip row is replaced
+   with a slim `.composer-slim-bar` (emoji + label + a **Change Type** link that reopens
+   `TypePickerModal`) — mirrors mobile's real `templateBar`/"Change format" pattern exactly.
+   When `onChangeType` is *not* passed (`CategoryPage.tsx`'s inline, always-open, locked-Section
+   composer), the original full chip row still renders unchanged — this was a deliberate
+   backward-compat branch, not a full replacement of every `SubmitPost` usage.
+
+### "Posting to" Section picker (replaces the old `<select>`)
+The Section/tag control moved from a plain `<select>` buried in the bottom action bar to a
+`Posting to: {Section} ▾` pill near the top of the fields column (`.composer-posting-to`/
+`.composer-posting-to-wrap`/`.composer-section-menu`) — custom popover, not a native select, so
+it can show an **`AUTO`** badge (`.composer-posting-to-auto`) when the Section was set by
+`detectTagFromContent()` rather than a manual pick. **No new detection logic was written** —
+`tag`/`tagLocked`/`handleTagChange`/`detectTagFromContent()` are the exact same state/functions
+that powered the old `<select>`; only the rendering changed. Behavior unchanged from before:
+hidden entirely for quote/food-review/event, shown locked (🔒, non-interactive) when `lockedTag`
+prop is set (CategoryPage) or `TEMPLATE_TAGS[template]` has a fixed value (Book/Music/Film
+Review → Literature/Music/Film, Itinerary → Travel, Creative Showcase → Art), otherwise an
+open pill+popover listing the 11 `TAGS` plus a "Main Feed" reset option identical to the old
+empty-string option.
+
+### Ratings — Overall folded into the breakdown box, label before stars
+Book/Music/Film Review's separate "Overall rating" field above the Production/Lyrics/etc.
+breakdown box is gone — `MultiRating` (`packages/shared/components/composer/MultiRating.tsx`)
+now takes an optional `overall={{ value, onChange, label? }}` prop and renders it as the box's
+last row, set off by a dashed divider (`.composer-multi-rating-overall`) with bigger stars.
+`StarRating.tsx` gained a passthrough `className` prop to make this possible without a new
+component. Every row (breakdown and Overall) is label-then-stars on one line — the old
+`.composer-multi-rating .composer-star-rating` CSS override that stacked label above stars
+(`flex-direction: column`) was removed; the base `.composer-star-rating` row layout (already
+label-then-stars) now applies inside the box too. Music Review's "Replay" breakdown label is
+now **"Replay Value"** — `MultiRating`'s `ratings` items gained an optional `key` field so the
+display label and the state key it writes to (`replay`, unchanged) can differ; without it the
+key is still derived from `label.toLowerCase()` as before (Book/Film's labels are single words,
+so they're unaffected). Ratings box background is white (`#fff`), not the grey `#f5f5f5` it
+originally shipped with in this pass — same "no more warm/grey tints where the mockup wants
+white" direction as the sitewide paper-background removal. Mobile's `bookRatingsContainer`
+(`NewPostScreen.tsx`) got the matching explicit `backgroundColor: c.paper` — it had no background
+set before (relying on whatever sat behind it), now made explicit for the same reason.
+
+**Overall rating auto-calculates (July 2026, both web and mobile).** `bookOverallRating`/
+`musicOverallRating`/`filmOverallRating` are no longer purely independent fields — each is now
+the rounded average of that template's breakdown ratings (`averageRating()`, a small local helper
+— duplicated between `SubmitPost.tsx` and `NewPostScreen.tsx`, keep in sync), recalculated on
+every breakdown change via a `useEffect`. The moment the user taps a star on **Overall** itself,
+a `bookOverallManual`/`musicOverallManual`/`filmOverallManual` flag flips true and that effect
+stops overwriting it for the rest of the draft — same "auto until manually overridden" shape as
+the Section picker's `tagLocked`. `averageRating()` ignores unrated (`0`) breakdown fields and
+returns `0` itself until at least one is rated, so Overall stays empty rather than showing a
+misleading `0`/`NaN` average before the user has entered anything. Mobile got the same auto-calc
+logic (`NewPostScreen.tsx`) but **not** the box-merge/white-background visual changes above —
+its Overall `StarRating` stays in its own row, unchanged layout, per the existing "mobile rating
+UI visual changes are out of scope, web-mockup-only" boundary noted below.
+
+### Save Draft
+`SubmitPost` gained `initialDraft?: { text?: string; tag?: string }` (hydrates on mount only,
+same pattern as the pre-existing `initialTemplate`) and `onSaveDraft?: (draft: { template, text,
+tag }) => void` (renders a "Save draft" button in the action bar when passed). **Deliberately
+partial scope**: only `text` and `tag` are persisted — ratings, the attached `DirectorySearch`
+entry, and images are not, since `File` objects/blob preview URLs can't survive a
+`localStorage` round-trip meaningfully. A restored draft brings back the words and the Section;
+the user re-attaches images/re-picks the book/album/film if needed. `PostNewClient.tsx` owns
+the actual persistence — plain `localStorage`, key `moveee_post_draft_{userId}`, no backend
+table. `TypePickerModal`'s "Continue Draft" tile only shows when that key exists for the
+logged-in user; selecting it (or the modal itself, from either `PulseFeed.tsx` or
+`PostNewClient.tsx`) navigates to `/post/new?draft=1`, which the page reads back on mount. The
+draft is cleared on successful post (`onPosted` → `localStorage.removeItem` before redirecting
+to `/feed`), never on navigating away without saving — an unsaved draft is just lost, same as
+leaving any form.
+
+### Not yet done
+Mobile app's own Book/Music/Film Review rating UI (`NewPostScreen.tsx`'s `BookRatingsRow`
+breakdown) was **not** given the same Overall-folded-into-box treatment — this pass was scoped
+to web only, per the mockup it was built from. Revisit only if the mobile app's rating UI is
+explicitly brought into scope later.
+
+---
+
+## Hubs — user-created topic communities
+
+**Full plan (read before touching any Hub code): `docs/hubs-plan.md`.** Phases 1–4 (core
+CPT/membership/moderation, `wp_culture_hub_members`/`wp_culture_hub_follows` tables,
+`class-culture-hubs.php`) were built in an earlier session with no CLAUDE.md pointer ever added
+— this entry (and the doc itself) is the fix. Phase 6, the **Section/Hub bridge** (every
+`community_tag` value gets a matching official, platform-owned Hub; posting with a Section set
+auto-links to it; official Hubs alone are exempt from the main-feed Hub exclusion; feed cards
+get a Hub badge + Join button; the Section filter gets a "Join the X Hub →" prompt) shipped July
+2026 — see `docs/hubs-plan.md` §10 for the full mechanics/reasoning, §10.6 for exactly what's
+built vs. deferred (notably: **no bulk Hub-join-status endpoint yet**, so the feed's Join button
+always starts on "Join" even for members who already joined — idempotent, so harmless, just an
+extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**, only the backend
+fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
+see the doc's own status line, which is the authoritative source, not this summary.
+
+---
+
 ## Community event RSVP (free, capacity-limited — June 2026)
 
 Targets community-organiser events: `culture_post` CPT, `_template_type = 'event'`.
@@ -3192,30 +3311,49 @@ feed-rendering at all, so this fix is mobile-only — no `packages/shared` or
 
 ### External catalog search (Google Books / Spotify / TMDB) — Book Review web parity + Music Review (July 2026)
 
-Book Review reached full web parity (it was previously mobile-only) and a new **Music Review**
-template was built on both platforms, both backed by a reusable external-catalog-search layer.
-**Film Review (TMDB) is planned but not yet built** — follow the exact same pattern documented
-here (`typeFilter="film"`, `externalSource="tmdb"`, `aboutFieldLabel="Director"`) when it is.
+Book Review reached full web parity (it was previously mobile-only) and **Music Review** and
+**Film Review** templates were built on both platforms (July 2026), all three backed by the same
+reusable external-catalog-search layer. All three source integrations (Google Books, Spotify,
+TMDB) are now live — this section is the reference for how the pattern works, not a TODO.
 
 - **Normalized external result shape**: every `/api/external/{source}/search` proxy route
   (`google_books` | `spotify` | `tmdb`) returns `{externalId, title, about?, year?, coverUrl?}`
-  regardless of the upstream API's own shape — duplicated in both `apps/connect` and `apps/site`
+  regardless of the upstream API's own shape (TMDB's results also carry a `genres?: string[]`,
+  see below) — duplicated in both `apps/connect` and `apps/site`
   (mobile hits `apps/site` via `PROXY`, web hits `apps/connect` via a relative fetch). Google
   Books needs an optional `GOOGLE_BOOKS_API_KEY` env var (works keyless at low volume). Spotify
   needs `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` (client-credentials OAuth via
-  `packages/shared/lib/spotify.ts`'s `getSpotifyToken()`, module-level cached). Both degrade to
-  empty results (not an error) when credentials are absent — the manual "add anyway" fallback
-  always still works.
+  `packages/shared/lib/spotify.ts`'s `getSpotifyToken()`, module-level cached). TMDB has **no
+  keyless tier** — needs `TMDB_API_KEY` (v3 API, plain `api_key` query param, no OAuth) or every
+  search returns empty. All three degrade to empty results (not an error) when credentials are
+  absent — the manual "add anyway" fallback always still works.
 - **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
   `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
   `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the
   external catalog in parallel with the local directory search and shows results in a "From
   {Source}" group; selecting one calls `/api/directory/quick-create` with
-  `external_source`/`external_id`/`cover_image_url` (Spotify only, also `preview_url`, resolved
-  via a separate lazy `/api/external/spotify/preview?albumId=` call made only on selection, not
-  per search result — album search results carry no track/preview data). The manual "add
+  `external_source`/`external_id`/`cover_image_url` plus a source-specific lazy lookup made only
+  on selection, never per search result (search responses carry no track/crew data): Spotify
+  resolves `preview_url` via `/api/external/spotify/preview?albumId=`, TMDB resolves the
+  director via `/api/external/tmdb/credits?movieId=` (reads `crew.find(c => c.job ===
+  "Director")` from TMDB's `/movie/{id}/credits`) and passes it as `about_value`. The manual "add
   anyway" fallback is **always** available alongside external results, not just when there are
   zero local matches, on both platforms.
+- **TMDB genre pre-select (July 2026, Film Review only)** — unlike the director, genre data
+  *is* on the search result itself (`genre_ids: number[]` from `/search/movie`, no extra
+  lookup needed), so both `/api/external/tmdb/search` routes map it straight into a `genres:
+  string[]` field on each result via a small static `TMDB_GENRE_MAP` (TMDB's genre IDs are a
+  small, stable set — no need for a live `/genre/movie/list` call). Only mapped for the 8 TMDB
+  genres that have a match in the composer's own curated `FILM_GENRES` list (Action, Animation,
+  Comedy, Documentary, Drama, Romance, Sci-Fi, Thriller) — the rest (Adventure, Crime, Family,
+  Fantasy, History, Horror, Music, Mystery, TV Movie, War, Western) are dropped, never
+  force-mapped to something close. Selecting a film in `DirectorySearch` passes `genres` through
+  to the parent's `onChange`/`onSelect`, which pre-selects the Film Review genre chips
+  (`setFilmGenres(entry.genres)`) — a **suggestion**, not a lock: the reviewer can still add/
+  remove chips freely afterward, and picking a different film just re-suggests from scratch.
+  Book (Google Books `categories`, free-text/inconsistent) and Music (Spotify genre is
+  artist-level, not album-level, via a separate call, and uses a messy micro-genre taxonomy)
+  were deliberately **not** given the same treatment — no clean source data to pre-fill from.
 - **Dedup**: `Culture_Directory::find_by_external_id($source, $external_id)` is checked first in
   `handle_quick_create()` — if a matching entry already exists, it's returned immediately
   instead of creating a duplicate, so every reviewer picking "the same" book/album lands on one
@@ -3240,6 +3378,43 @@ Review. Badge color teal `#0D7377` everywhere (web literal + mobile `templateMus
 `templateMusicText`, light `#E6FFFA`/`#0D7377`, dark `#042F2E`/`#5EEAD4`) — Book Review is purple
 `#6B48A8`. **If a Music Review surface ever shows the wrong purple**, it's this exact mixup —
 happened once already in the web `AudioPreviewButton`, fixed.
+
+**Film Review template** — directory type `film` (pre-seeded, no new taxonomy needed), rating
+breakdown is Story/Acting/Visuals/Pacing, uses "favourite line" instead of "favourite quote"/
+"favourite lyric". Like Music Review, no status field. Deliberately ungated, same as Book/Music
+Review. No audio-preview equivalent — TMDB has no preview-clip concept, so `AudioPreviewButton`
+is not rendered anywhere on Film Review surfaces. Badge color blue `#2B4C7E` everywhere (web
+literal + mobile `templateFilmBg`/`templateFilmText`, light `#E8EEF7`/`#2B4C7E`, dark
+`#16233A`/`#8FB4E3`) — distinct from Book's purple and Music's teal.
+
+**"+ Other" custom genre input (Book/Music/Film Review, all on both platforms)** — `BOOK_GENRES`/
+`MUSIC_GENRES`/`FILM_GENRES` are fixed suggestion lists, not an enum the backend validates
+against (genres are stored as plain `sanitize_text_field`-ed strings in a JSON array, no
+taxonomy). Every genre chip row therefore ends with a "+ Other" chip that reveals a small text
+input (`show{X}GenreInput`/`{x}GenreInput` state pair) — Enter/blur commits the trimmed value
+into the same genres array (deduped case-insensitively) and the chip UI renders it identically to
+a predefined selection (`{x}Genres.filter(g => !{X}_GENRES.includes(g))`, in addition to the
+predefined `.map()`). If a future genre list needs the same escape hatch, mirror this exact
+pattern rather than only offering the fixed list.
+
+**Composer selection-chip rows wrap, they don't scroll (fixed July 2026)** — every chip-style
+selection row in the community composer (genres, section tags, cuisine, showcase medium, event
+category, quote type, book status) now uses `flex-wrap: wrap` (web: `.composer-chip-wrap` class;
+mobile: `styles.chipRow`/`.priceChipRow` with `flexWrap: "wrap"`, plain `<View>` not `<ScrollView
+horizontal>`) instead of a horizontally-scrolling single row. The old scroll pattern hid options
+off-screen with no visual affordance, and on narrow mobile widths the ratings-breakdown box
+(`.composer-multi-rating`) actually overflowed the viewport. **If you add a new chip-style
+selection row to the composer, wrap it — don't reach for horizontal scroll.** The one exception
+left as intentionally-scrollable: photo/image thumbnail strips (e.g. `.photosRow` on mobile) —
+those are a different UI pattern (browsing attached media, not choosing from a fixed option set)
+and were not touched by this fix.
+
+**Text-prefill "guide chips" removed (all templates, both platforms, fixed July 2026)** — every
+template used to show a row of tappable phrases (e.g. "Finished it and honestly:") above the
+empty textarea that inserted the phrase into the field on tap. Removed at the user's request as
+unnecessary friction — `TEMPLATE_GUIDES` (web) and `TEMPLATES` (mobile) no longer carry a `chips`
+field, only `desc` (web) / nothing extra (mobile, `tmplDef.desc` is still shown). Do not
+reintroduce this pattern.
 
 **Audio preview playback (30s Spotify clip)**: `AudioPreviewButton` exists on both platforms —
 `packages/shared/components/pulse/AudioPreviewButton.tsx` (web, plain `<audio>` element) and

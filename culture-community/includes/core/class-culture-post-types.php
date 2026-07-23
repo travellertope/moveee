@@ -174,6 +174,17 @@ class Culture_Post_Types {
             '_music_recommend'         => 'string',
             '_music_genres'            => 'string', // JSON: string[]
             '_music_preview_url'       => 'string', // denormalized from the linked directory entry at submit time
+            // Film Review template
+            '_film_title'              => 'string',
+            '_film_director'           => 'string',
+            '_film_overall_rating'     => 'integer',
+            '_film_rating_story'       => 'integer',
+            '_film_rating_acting'      => 'integer',
+            '_film_rating_visuals'     => 'integer',
+            '_film_rating_pacing'      => 'integer',
+            '_film_fav_line'           => 'string',
+            '_film_recommend'          => 'string',
+            '_film_genres'             => 'string', // JSON: string[]
             // Community-organiser event template (separate from the culture_event CPT above)
             '_event_date'              => 'string',
             '_event_end_date'          => 'string',
@@ -221,6 +232,26 @@ class Culture_Post_Types {
                         ? Culture_Community_RSVP::get_count( $id )
                         : 0,
                     'is_featured'    => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                );
+            },
+            'schema' => null,
+        ) );
+
+        // Resolved Hub badge fields (docs/hubs-plan.md §10.4) — same
+        // single-REST-field pattern as community_event_meta above, so the
+        // web feed mapper doesn't need a second request per post to resolve
+        // the linked Hub's name/slug/official status from raw _hub_id.
+        register_rest_field( 'culture_post', 'community_hub_meta', array(
+            'get_callback' => function ( $post_arr ) {
+                $hub_id = (int) get_post_meta( $post_arr['id'], '_hub_id', true );
+                if ( ! $hub_id ) {
+                    return null;
+                }
+                return array(
+                    'id'          => $hub_id,
+                    'name'        => get_post_meta( $hub_id, '_hub_name', true ) ?: null,
+                    'slug'        => get_post_meta( $hub_id, '_hub_slug', true ) ?: null,
+                    'is_official' => class_exists( 'Culture_Hubs' ) && Culture_Hubs::is_official( $hub_id ),
                 );
             },
             'schema' => null,
@@ -1822,6 +1853,8 @@ class Culture_Post_Types {
      * excludes them from the default *listing* query; a direct single-post
      * lookup (permalink page via ?slug=, or a notification deep-link via
      * ?include=) must still resolve normally, so those are left untouched.
+     * Official Hubs (docs/hubs-plan.md §10.2) are exempt from this exclusion
+     * — see Culture_Hubs::is_official() / SECTION_HUB_SLUGS.
      */
     public static function exclude_hub_posts( $args, $request ) {
         if ( $request->get_param( 'slug' ) || $request->get_param( 'include' ) ) {
@@ -1830,7 +1863,11 @@ class Culture_Post_Types {
 
         global $wpdb;
         $hub_post_ids = $wpdb->get_col(
-            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_id' AND meta_value != ''"
+            "SELECT pm.post_id FROM {$wpdb->postmeta} pm
+             WHERE pm.meta_key = '_hub_id' AND pm.meta_value != ''
+               AND pm.meta_value NOT IN (
+                   SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_is_official' AND meta_value = '1'
+               )"
         );
         if ( empty( $hub_post_ids ) ) {
             return $args;

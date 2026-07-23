@@ -43,18 +43,19 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+export type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Route/Event, so it read
 // as locked-away even though it wasn't.
-const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
+export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "music-review",      label: "Music",     emoji: "🎵" },
+  { slug: "film-review",       label: "Film",      emoji: "🎬" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
@@ -64,24 +65,25 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
 
 // Templates gated by reputation tier (Moveee Pro always bypasses) — mirrors the
 // server-side gate in handle_submit_post() / apps/connect/app/api/community/submit/route.ts
-const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
+export const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabel: string }>> = {
   poll:      { minRep: 2500, tierLabel: "Taste Maker" },
   itinerary: { minRep: 2500, tierLabel: "Taste Maker" },
   event:     { minRep: 500,  tierLabel: "Culture Contributor" },
 };
 
-const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
-  post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
-  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
-  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
-  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
-  "book-review":       { desc: "Review a book you've read — rate it and share your thoughts.",                             chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"] },
-  "music-review":      { desc: "Review an album — rate it and share your thoughts.",                                       chips: ["On repeat since:", "First listen thoughts:", "Album of the year contender:"] },
-  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
-  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
-  itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
-  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar.",   chips: ["Happening this weekend:", "Don't miss this one:", "Tickets going fast:"] },
-  quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world." },
+  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues." },
+  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing." },
+  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe." },
+  "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
+  "music-review":      { desc: "Review an album — rate it and share your thoughts." },
+  "film-review":       { desc: "Review a film — rate it and share your thoughts." },
+  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
+  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
+  itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
+  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
+  quote:               { desc: "Share a quote that moved you. Add the author and source below." },
 };
 
 // Template → default section tag
@@ -89,6 +91,7 @@ const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
   "food-review":       "Food",
   "book-review":       "Literature",
   "music-review":      "Music",
+  "film-review":       "Film",
   "itinerary":         "Travel",
   "creative-showcase": "Art",
 };
@@ -123,14 +126,26 @@ function detectTagFromContent(text: string): Tag | null {
   return bestScore >= 1 ? best : null;
 }
 
+/** Rounded average of a breakdown ratings object's rated (>0) values, 0 if
+ * none are rated yet — powers Book/Music/Film Review's auto-calculated
+ * Overall rating (see the bookOverallManual/musicOverallManual/
+ * filmOverallManual effects below). */
+function averageRating(ratings: Record<string, number>): number {
+  const rated = Object.values(ratings).filter(v => v > 0);
+  if (rated.length === 0) return 0;
+  return Math.round(rated.reduce((a, b) => a + b, 0) / rated.length);
+}
+
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
   "book-review": 800,
   "music-review": 800,
+  "film-review": 800,
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
@@ -144,9 +159,24 @@ interface SubmitPostProps {
    * just dimmed) and every submission includes hub_id. */
   hubId?: number;
   hubAllowedTemplates?: string[];
+  /** Dedicated-page mode (composer redesign, July 2026): when provided, the
+   * full horizontal template-pill row is replaced with a slim "emoji + label
+   * + Change Type" bar that calls this instead — the page hosting SubmitPost
+   * owns the type-picker modal. Omitted entirely for inline usages
+   * (CategoryPage.tsx's locked-Section composer) which keep the original
+   * always-visible chip row. */
+  onChangeType?: () => void;
+  /** Restores the main text + Section on mount — the rest of a draft
+   * (ratings, attached directory entry, images) is deliberately not
+   * restored, since it can't be serialized meaningfully to localStorage
+   * (File objects, blob preview URLs) — see "Save Draft" in CLAUDE.md. */
+  initialDraft?: { text?: string; tag?: string };
+  /** Renders a "Save draft" button in the action bar when provided — the
+   * host page owns persistence (localStorage today). */
+  onSaveDraft?: (draft: { template: TemplateType; text: string; tag: string }) => void;
 }
 
-export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates }: SubmitPostProps) {
+export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates, onChangeType, initialDraft, onSaveDraft }: SubmitPostProps) {
   const { data: session, status } = useSession();
   const visibleTemplates = hubAllowedTemplates
     ? TEMPLATES.filter(t => hubAllowedTemplates.includes(t.slug))
@@ -158,11 +188,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   );
 
   // Shared state
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialDraft?.text ?? "");
   const [tag, setTag] = useState<Tag | "">(
-    (lockedTag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
+    (lockedTag as Tag) ?? (initialDraft?.tag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
   );
-  const [tagLocked, setTagLocked] = useState(false);
+  // A restored draft's Section counts as a manual pick (stop auto-detect
+  // from immediately overwriting it) unless the template fixes it anyway.
+  const [tagLocked, setTagLocked] = useState(!!initialDraft?.tag && !TEMPLATE_TAGS[initialTemplate ?? "post"]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -200,18 +232,53 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [bookEntry, setBookEntry] = useState<any>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
+  const [bookOverallManual, setBookOverallManual] = useState(false);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   const [bookGenres, setBookGenres] = useState<string[]>([]);
+  const [showBookGenreInput, setShowBookGenreInput] = useState(false);
+  const [bookGenreInput, setBookGenreInput] = useState("");
 
   // Music review specific
   const [musicEntry, setMusicEntry] = useState<any>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicOverallManual, setMusicOverallManual] = useState(false);
   const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
   const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
   const [musicGenres, setMusicGenres] = useState<string[]>([]);
+  const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
+  const [musicGenreInput, setMusicGenreInput] = useState("");
+
+  // Film review specific
+  const [filmEntry, setFilmEntry] = useState<any>(null);
+  const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmOverallManual, setFilmOverallManual] = useState(false);
+  const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
+  const [filmFavLine, setFilmFavLine] = useState("");
+  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
+  const [filmGenres, setFilmGenres] = useState<string[]>([]);
+  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
+  const [filmGenreInput, setFilmGenreInput] = useState("");
+
+  // Overall rating auto-calculates as the rounded average of the breakdown
+  // ratings (Letterboxd/Goodreads-style) until the user taps a star on
+  // Overall themselves, at which point it's manually controlled for the
+  // rest of the draft — same "auto until manually overridden" shape as the
+  // Section picker's tagLocked, just for this field instead.
+  useEffect(() => {
+    if (bookOverallManual) return;
+    setBookOverallRating(averageRating(bookRatings));
+  }, [bookRatings, bookOverallManual]);
+  useEffect(() => {
+    if (musicOverallManual) return;
+    setMusicOverallRating(averageRating(musicRatings));
+  }, [musicRatings, musicOverallManual]);
+  useEffect(() => {
+    if (filmOverallManual) return;
+    setFilmOverallRating(averageRating(filmRatings));
+  }, [filmRatings, filmOverallManual]);
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -235,6 +302,32 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [lockedTip, setLockedTip] = useState<TemplateType | null>(null);
   const lockedTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (lockedTipTimer.current) clearTimeout(lockedTipTimer.current); }, []);
+
+  const [draftSaved, setDraftSaved] = useState(false);
+  const draftSavedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (draftSavedTimer.current) clearTimeout(draftSavedTimer.current); }, []);
+  function handleSaveDraft() {
+    onSaveDraft?.({ template, text, tag });
+    setDraftSaved(true);
+    if (draftSavedTimer.current) clearTimeout(draftSavedTimer.current);
+    draftSavedTimer.current = setTimeout(() => setDraftSaved(false), 2000);
+  }
+
+  // "Posting to" Section picker (composer redesign, July 2026) — same
+  // tag/tagLocked state and detectTagFromContent() auto-detect as before,
+  // just a custom pill + popover instead of a plain <select>.
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const sectionMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!sectionMenuOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (sectionMenuRef.current && !sectionMenuRef.current.contains(e.target as Node)) {
+        setSectionMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [sectionMenuOpen]);
 
   const user = session?.user as any;
   const isPro = user?.tier === "patron";
@@ -388,6 +481,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
       case "music-review":
         return !!musicEntry && musicOverallRating > 0 && text.trim().length >= 50 && musicRecommend !== null;
+      case "film-review":
+        return !!filmEntry && filmOverallRating > 0 && text.trim().length >= 50 && filmRecommend !== null;
       case "creative-showcase":
         return galleryFiles.length > 0 || videoUrl.trim().length > 0;
       case "poll":
@@ -517,6 +612,19 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.music_genres = musicGenres.length > 0 ? musicGenres : undefined;
         payload.music_preview_url = musicEntry?.previewUrl || undefined;
       }
+      if (template === "film-review") {
+        payload.linked_directory_id = filmEntry?.id;
+        payload.film_title = filmEntry?.title;
+        payload.film_director = filmEntry?.about;
+        payload.film_overall_rating = filmOverallRating;
+        payload.film_rating_story = filmRatings.story;
+        payload.film_rating_acting = filmRatings.acting;
+        payload.film_rating_visuals = filmRatings.visuals;
+        payload.film_rating_pacing = filmRatings.pacing;
+        payload.film_fav_line = filmFavLine.trim() || undefined;
+        payload.film_recommend = filmRecommend;
+        payload.film_genres = filmGenres.length > 0 ? filmGenres : undefined;
+      }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
         const expires = new Date();
@@ -610,40 +718,60 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
     "music-review": "What did you think? Standout tracks?",
+    "film-review": "What did you think? Any standout scenes?",
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
     event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
+  const activeTemplateMeta = TEMPLATES.find(t => t.slug === template);
+  const sectionHidden = template === "quote" || template === "food-review" || template === "event";
+  const sectionFixed = lockedTag || TEMPLATE_TAGS[template];
+  const showAutoHint = !sectionHidden && !sectionFixed && !!tag && !tagLocked;
+
   return (
     <div className="composer-card">
-      {/* Template selector */}
-      <div className="composer-template-bar">
-        <div className="composer-template-scroll">
-          {visibleTemplates.map(t => {
-            const gate = TEMPLATE_REP_GATE[t.slug];
-            const locked = gate ? !meetsTemplateGate(t.slug) : false;
-            const isQuote = t.slug === "quote";
-            return (
-              <span key={t.slug} className="composer-template-pill-wrap">
-                <button
-                  type="button"
-                  className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
-                  onClick={() => handleTemplateChange(t.slug)}
-                >
-                  <span className="composer-template-emoji">{t.emoji}</span>
-                  <span className="composer-template-label">{t.label}</span>
-                  {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
-                </button>
-                {locked && gate && (
-                  <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
-                )}
-              </span>
-            );
-          })}
+      {/* Template selector — full chip row for inline usages (CategoryPage's
+          locked-Section composer); a slim emoji+label+Change-Type bar for the
+          dedicated-page composer, which owns its own type-picker modal. */}
+      {onChangeType ? (
+        <div className="composer-slim-bar">
+          <span className="composer-slim-bar-left">
+            <span className="composer-slim-bar-emoji">{activeTemplateMeta?.emoji}</span>
+            <span className="composer-slim-bar-label">{activeTemplateMeta?.label}</span>
+          </span>
+          <button type="button" className="composer-slim-bar-change" onClick={onChangeType}>
+            Change Type
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="composer-template-bar">
+          <div className="composer-template-scroll">
+            {visibleTemplates.map(t => {
+              const gate = TEMPLATE_REP_GATE[t.slug];
+              const locked = gate ? !meetsTemplateGate(t.slug) : false;
+              const isQuote = t.slug === "quote";
+              return (
+                <span key={t.slug} className="composer-template-pill-wrap">
+                  <button
+                    type="button"
+                    className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}${locked ? " composer-template-pill--locked" : ""}${isQuote ? " composer-template-pill--quote" : ""}`}
+                    onClick={() => handleTemplateChange(t.slug)}
+                  >
+                    <span className="composer-template-emoji">{t.emoji}</span>
+                    <span className="composer-template-label">{t.label}</span>
+                    {locked && <span className="composer-template-lock" aria-hidden>🔒</span>}
+                  </button>
+                  {locked && gate && (
+                    <span className="composer-template-tooltip">{gate.tierLabel} or Pro required</span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {lockedTip && TEMPLATE_REP_GATE[lockedTip] && (
         <p className="composer-template-lock-tip">
           {TEMPLATE_REP_GATE[lockedTip]!.tierLabel} ({TEMPLATE_REP_GATE[lockedTip]!.minRep.toLocaleString()} rep) or Moveee Pro required to use the {TEMPLATES.find(t => t.slug === lockedTip)?.label} template.
@@ -661,6 +789,57 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
           </div>
 
           <div className="composer-fields">
+            {/* Posting to — Section picker. Hidden for quote/food-review/event
+                (food-review still auto-sets Food server-side, it just isn't
+                user-editable here), locked to the template's fixed Section
+                for Book/Music/Film Review, hub-scoped posts skip it entirely
+                (Hub membership already signals topic, see docs/hubs-plan.md
+                §1.4). Otherwise it's the same tag/tagLocked/detectTagFromContent
+                state as before, just a pill + popover instead of a <select>. */}
+            {!hubId && !sectionHidden && (
+              sectionFixed ? (
+                <span className="composer-posting-to composer-posting-to--locked">
+                  <span className="composer-posting-to-dot" aria-hidden />
+                  Posting to: {lockedTag || TEMPLATE_TAGS[template]}
+                  <span className="composer-posting-to-lock" aria-hidden>🔒</span>
+                </span>
+              ) : (
+                <div className="composer-posting-to-wrap" ref={sectionMenuRef}>
+                  <button
+                    type="button"
+                    className="composer-posting-to"
+                    onClick={() => setSectionMenuOpen(o => !o)}
+                  >
+                    <span className="composer-posting-to-dot" aria-hidden />
+                    Posting to: {tag || "Main Feed"}
+                    {showAutoHint && <span className="composer-posting-to-auto">auto</span>}
+                    <span className="composer-posting-to-caret" aria-hidden>▾</span>
+                  </button>
+                  {sectionMenuOpen && (
+                    <div className="composer-section-menu">
+                      <button
+                        type="button"
+                        className="composer-section-menu-item"
+                        onClick={() => { handleTagChange(""); setSectionMenuOpen(false); }}
+                      >
+                        Main Feed <span className="composer-section-menu-hint">— no section</span>
+                      </button>
+                      {TAGS.map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          className="composer-section-menu-item"
+                          onClick={() => { handleTagChange(t); setSectionMenuOpen(false); }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+
             {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
             {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
               <DirectorySearch
@@ -718,6 +897,24 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                 aboutFieldLabel="Artist"
                 externalSource="spotify"
                 placeholder="Search for an album *"
+              />
+            )}
+
+            {/* Film search */}
+            {template === "film-review" && (
+              <DirectorySearch
+                value={filmEntry}
+                onChange={(entry) => {
+                  setFilmEntry(entry);
+                  // Pre-select genre chips from TMDB's own genres for the
+                  // picked film — a suggestion the reviewer can still
+                  // freely add to or remove from, not a locked value.
+                  if (entry?.genres?.length) setFilmGenres(entry.genres);
+                }}
+                typeFilter="film"
+                aboutFieldLabel="Director"
+                externalSource="tmdb"
+                placeholder="Search for a film *"
               />
             )}
 
@@ -839,18 +1036,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Template guide */}
             <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
               <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
-              <div className="composer-guide-chips">
-                {TEMPLATE_GUIDES[template].chips.map(chip => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className="composer-guide-chip"
-                    onClick={() => { setText(chip + " "); setTimeout(() => textareaRef.current?.focus(), 0); }}
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Main text area */}
@@ -930,7 +1115,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Book review — overall + breakdown ratings, favourite quote, recommend, genres */}
             {template === "book-review" && (
               <>
-                <StarRating value={bookOverallRating} onChange={setBookOverallRating} label="Overall rating" />
                 <MultiRating
                   ratings={[
                     { label: "Writing", value: bookRatings.writing },
@@ -938,7 +1122,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Characters", value: bookRatings.characters },
                     { label: "Pacing", value: bookRatings.pacing },
                   ]}
-                  onChange={(label, v) => setBookRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                  onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: bookOverallRating, onChange: (v) => { setBookOverallManual(true); setBookOverallRating(v); } }}
                 />
                 <textarea
                   value={bookFavQuote}
@@ -947,6 +1132,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   rows={2}
                   className="composer-textarea composer-textarea--italic"
                 />
+                <p className="composer-field-label">Would you recommend it?</p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <button
                     type="button"
@@ -965,7 +1151,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     👎 No
                   </button>
                 </div>
-                <div className="composer-guide-chips">
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
                   {BOOK_GENRES.map(g => {
                     const active = bookGenres.includes(g);
                     return (
@@ -980,6 +1167,49 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       </button>
                     );
                   })}
+                  {bookGenres.filter(g => !BOOK_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setBookGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showBookGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={bookGenreInput}
+                        onChange={e => setBookGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = bookGenreInput.trim();
+                            if (v && !bookGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setBookGenres(prev => [...prev, v]);
+                            }
+                            setBookGenreInput("");
+                            setShowBookGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setBookGenreInput("");
+                            setShowBookGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowBookGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -987,15 +1217,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Music review — overall + breakdown ratings, favourite lyric, recommend, genres */}
             {template === "music-review" && (
               <>
-                <StarRating value={musicOverallRating} onChange={setMusicOverallRating} label="Overall rating" />
                 <MultiRating
                   ratings={[
                     { label: "Production", value: musicRatings.production },
                     { label: "Lyrics", value: musicRatings.lyrics },
-                    { label: "Replay", value: musicRatings.replay },
+                    { label: "Replay Value", value: musicRatings.replay, key: "replay" },
                     { label: "Vibe", value: musicRatings.vibe },
                   ]}
-                  onChange={(label, v) => setMusicRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                  onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: musicOverallRating, onChange: (v) => { setMusicOverallManual(true); setMusicOverallRating(v); } }}
                 />
                 <textarea
                   value={musicFavLyric}
@@ -1004,6 +1234,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   rows={2}
                   className="composer-textarea composer-textarea--italic"
                 />
+                <p className="composer-field-label">Would you recommend it?</p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <button
                     type="button"
@@ -1022,7 +1253,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     👎 No
                   </button>
                 </div>
-                <div className="composer-guide-chips">
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
                   {MUSIC_GENRES.map(g => {
                     const active = musicGenres.includes(g);
                     return (
@@ -1037,6 +1269,151 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       </button>
                     );
                   })}
+                  {musicGenres.filter(g => !MUSIC_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setMusicGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showMusicGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={musicGenreInput}
+                        onChange={e => setMusicGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = musicGenreInput.trim();
+                            if (v && !musicGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setMusicGenres(prev => [...prev, v]);
+                            }
+                            setMusicGenreInput("");
+                            setShowMusicGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setMusicGenreInput("");
+                            setShowMusicGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowMusicGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Film review — overall + breakdown ratings, favourite line, recommend, genres */}
+            {template === "film-review" && (
+              <>
+                <MultiRating
+                  ratings={[
+                    { label: "Story", value: filmRatings.story },
+                    { label: "Acting", value: filmRatings.acting },
+                    { label: "Visuals", value: filmRatings.visuals },
+                    { label: "Pacing", value: filmRatings.pacing },
+                  ]}
+                  onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
+                  overall={{ value: filmOverallRating, onChange: (v) => { setFilmOverallManual(true); setFilmOverallRating(v); } }}
+                />
+                <textarea
+                  value={filmFavLine}
+                  onChange={e => setFilmFavLine(e.target.value.slice(0, 300))}
+                  placeholder="Favourite line (optional)"
+                  rows={2}
+                  className="composer-textarea composer-textarea--italic"
+                />
+                <p className="composer-field-label">Would you recommend it?</p>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setFilmRecommend(true)}
+                    className={`composer-template-pill${filmRecommend === true ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👍 Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilmRecommend(false)}
+                    className={`composer-template-pill${filmRecommend === false ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👎 No
+                  </button>
+                </div>
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
+                  {FILM_GENRES.map(g => {
+                    const active = filmGenres.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setFilmGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
+                        className="composer-guide-chip"
+                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                  {filmGenres.filter(g => !FILM_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setFilmGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showFilmGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={filmGenreInput}
+                        onChange={e => setFilmGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = filmGenreInput.trim();
+                            if (v && !filmGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setFilmGenres(prev => [...prev, v]);
+                            }
+                            setFilmGenreInput("");
+                            setShowFilmGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setFilmGenreInput("");
+                            setShowFilmGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowFilmGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -1106,7 +1483,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && (
+            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -1136,33 +1513,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
               style={{ display: "none" }}
             />
 
 
             {/* Action bar */}
             <div className="composer-action-bar">
-              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories,
-                  hub-scoped posts skip it — Hub membership already signals topic, see docs/hubs-plan.md §1.4) */}
-              {!hubId && template !== "quote" && template !== "food-review" && template !== "event" && (
-                lockedTag ? (
-                  <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
-                    {lockedTag}
-                  </span>
-                ) : (
-                  <select
-                    value={tag}
-                    onChange={e => handleTagChange(e.target.value as Tag | "")}
-                    className={`composer-tag-select${tag ? " composer-tag-select--selected" : ""}`}
-                  >
-                    <option value="">Section</option>
-                    {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                )
-              )}
-
               {/* Image button — only for event (other image templates use the inline add-tile in the photo row) */}
               {template === "event" && (
                 <button
@@ -1181,6 +1539,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )}
 
               <div className="composer-spacer" />
+              {onSaveDraft && (
+                <button type="button" className="composer-draft-btn" onClick={handleSaveDraft}>
+                  {draftSaved ? "Saved ✓" : "Save draft"}
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={!canSubmit()}

@@ -20,6 +20,10 @@ export interface DirectoryEntry {
   thumbnail?: string | null;
   /** Spotify 30s track preview (Music Review only). */
   previewUrl?: string | null;
+  /** TMDB genres pre-mapped to the composer's own FILM_GENRES vocabulary
+   * (Film Review only) — a suggestion to pre-select genre chips with, not a
+   * final answer; the reviewer can still add/remove freely. */
+  genres?: string[];
 }
 
 /** Normalized shape every /directory/{source}/search proxy returns. */
@@ -29,6 +33,7 @@ interface ExternalResult {
   about?: string;
   year?: string;
   coverUrl?: string | null;
+  genres?: string[];
 }
 
 interface Props {
@@ -164,17 +169,31 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
         } catch { /* preview is optional */ }
       }
 
+      // TMDB only — search results carry no crew data, so the director is
+      // resolved lazily here, just for the picked film, same reasoning as
+      // Spotify's preview lookup above.
+      let about = r.about;
+      if (externalSource === "tmdb") {
+        try {
+          const credits = await api.get<{ director: string | null }>(
+            `${PROXY}/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`,
+            false
+          );
+          about = credits?.director ?? undefined;
+        } catch { /* director is optional */ }
+      }
+
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: r.title,
         entry_type: typeFilter || "place",
         about_label: aboutFieldLabel || undefined,
-        about_value: r.about || undefined,
+        about_value: about || undefined,
         external_source: externalSource,
         external_id: r.externalId,
         cover_image_url: r.coverUrl || undefined,
         preview_url: previewUrl || undefined,
       });
-      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null });
+      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null, genres: r.genres });
     } catch {
       // silent
     } finally {

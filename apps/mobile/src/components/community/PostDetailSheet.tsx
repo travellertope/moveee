@@ -148,6 +148,7 @@ const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string
   "quote":             { label: "QUOTE",             emoji: "❝",  bg: "rgba(185,140,55,0.10)", color: "#92400E" },
   "book-review":       { label: "BOOK REVIEW",       emoji: "📚", bg: "rgba(120,53,15,0.08)",  color: "#78350F" },
   "music-review":      { label: "MUSIC REVIEW",      emoji: "🎵", bg: "rgba(13,115,119,0.08)", color: "#0D7377" },
+  "film-review":       { label: "FILM REVIEW",       emoji: "🎬", bg: "rgba(43,76,126,0.08)",  color: "#2B4C7E" },
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
@@ -910,7 +911,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
   const ratingRows: { label: string; val: number | undefined }[] = [
     { label: "Production", val: item.musicRatingProduction },
     { label: "Lyrics",     val: item.musicRatingLyrics },
-    { label: "Replay",     val: item.musicRatingReplay },
+    { label: "Replay Value", val: item.musicRatingReplay },
     { label: "Vibe",       val: item.musicRatingVibe },
   ].filter((r) => r.val !== undefined && r.val > 0);
 
@@ -1006,6 +1007,104 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
   );
 }
 
+function TemplateFilmReview({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const nav = useNav();
+  const overall = item.filmOverallRating ?? 0;
+
+  const ratingRows: { label: string; val: number | undefined }[] = [
+    { label: "Story",   val: item.filmRatingStory },
+    { label: "Acting",  val: item.filmRatingActing },
+    { label: "Visuals", val: item.filmRatingVisuals },
+    { label: "Pacing",  val: item.filmRatingPacing },
+  ].filter((r) => r.val !== undefined && r.val > 0);
+
+  return (
+    <>
+      {/* Film card */}
+      <BookCardWrapper
+        directoryId={item.linkedDirectoryId}
+        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        style={styles.bookCard}
+      >
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        ) : (
+          <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
+            <Text style={{ fontSize: 24 }}>🎬</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bookTitle} numberOfLines={2}>{item.filmTitle ?? item.title}</Text>
+          {item.filmDirector ? (
+            <Text style={styles.bookAuthor}>{item.filmDirector}</Text>
+          ) : null}
+          {overall > 0 ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <StarRow rating={overall} c={c} />
+              <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
+            </View>
+          ) : null}
+        </View>
+      </BookCardWrapper>
+
+      {/* Recommend chip */}
+      {item.filmRecommend === true ? (
+        <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <View style={[styles.tag, { backgroundColor: c.paperWarm, borderColor: c.gold }]}>
+            <Text style={[styles.tagText, { color: c.gold }]}>👍 Recommended</Text>
+          </View>
+        </View>
+      ) : null}
+
+      {/* Ratings section */}
+      {ratingRows.length > 0 ? (
+        <View style={styles.ratingsBlock}>
+          <Text style={styles.ratingsLabel}>RATINGS</Text>
+          {ratingRows.map((row) => (
+            <View key={row.label} style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>{row.label}</Text>
+              <StarRow rating={row.val!} c={c} />
+              <Text style={styles.ratingScore}>{row.val!.toFixed(1)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Review text */}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
+
+      {item.linkedDirectoryId ? (
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
+          <Ionicons name="grid-outline" size={12} color={c.gold} />
+          <Text style={styles.directoryChipText}>View in Directory →</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {/* Favourite line */}
+      {item.filmFavLine ? (
+        <View style={styles.bookFavQuote}>
+          <Text style={styles.bookFavQuoteLabel}>🎬 Favourite line:</Text>
+          <Text style={styles.bookFavQuoteText}>{item.filmFavLine}</Text>
+        </View>
+      ) : null}
+
+      {/* Genre chips */}
+      {item.filmGenres && item.filmGenres.length > 0 ? (
+        <View style={[styles.tagRow, { marginTop: 8 }]}>
+          {item.filmGenres.map((g, i) => (
+            <View key={g} style={[styles.tag, i === 0 ? { backgroundColor: c.ink, borderColor: c.ink } : {}]}>
+              <Text style={[styles.tagText, i === 0 ? { color: "#fff" } : { color: c.inkSoft }]}>{g}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </>
+  );
+}
+
 // ── Main PostDetailSheet ────────────────────────────────────────────────────────
 
 interface PostDetailSheetProps {
@@ -1055,6 +1154,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;
       case "book-review":       return <TemplateBookReview item={item} c={c} styles={styles} />;
       case "music-review":      return <TemplateMusicReview item={item} c={c} styles={styles} />;
+      case "film-review":       return <TemplateFilmReview item={item} c={c} styles={styles} />;
       case "quote":             return <TemplateQuote item={item} c={c} styles={styles} />;
       default:                  return <TemplatePost item={item} c={c} styles={styles} onMentionPress={handleMentionPress} />;
     }

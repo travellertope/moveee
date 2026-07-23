@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -32,7 +32,6 @@ interface TemplateMeta {
   id: TemplateId;
   minText: number;
   maxText: number;
-  chips: string[];
   placeholder: string;
   showPhoto: boolean;
   showAt: boolean;
@@ -43,67 +42,61 @@ interface TemplateMeta {
 const TEMPLATES: TemplateMeta[] = [
   {
     id: "post", minText: 1, maxText: 3000,
-    chips: ["🎵 What I'm listening to", "🎬 Film reaction", "✨ Discovery", "📍 This place", "💬 Hot take"],
     placeholder: "What's on your cultural mind?",
     showPhoto: true, showAt: true, showLocation: false, multiPhoto: true,
   },
   {
     id: "hidden-gem", minText: 50, maxText: 500,
-    chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"],
     placeholder: "Tell people why this place is special…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "cultural-take", minText: 100, maxText: 1000,
-    chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"],
     placeholder: "Explain your take…",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
     id: "food-review", minText: 50, maxText: 500,
-    chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"],
     placeholder: "What did you eat and what did you think?",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "book-review", minText: 50, maxText: 800,
-    chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"],
     placeholder: "What did you think of the book? Who would love it?",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
     id: "music-review", minText: 50, maxText: 800,
-    chips: ["On repeat since:", "First listen thoughts:", "Album of the year contender:"],
     placeholder: "What did you think? Standout tracks?",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
+    id: "film-review", minText: 50, maxText: 800,
+    placeholder: "What did you think? Any standout scenes?",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
     id: "creative-showcase", minText: 0, maxText: 500,
-    chips: ["Working on something:", "New piece:", "Behind the work:"],
     placeholder: "Tell us about the work, your process, or inspiration…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "poll", minText: 10, maxText: 280,
-    chips: ["Which is better:", "Settle this for me:", "Genuine question:"],
     placeholder: "Ask the community…",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
     id: "itinerary", minText: 0, maxText: 300,
-    chips: ["A perfect day in", "My go-to route:", "For first-timers in"],
     placeholder: "Set the scene — where is this route and who is it for?",
     showPhoto: true, showAt: false, showLocation: true, multiPhoto: true,
   },
   {
     id: "event", minText: 0, maxText: 1000,
-    chips: ["Opening night:", "One night only:", "Catch it before it closes:"],
     placeholder: "Describe the event — what makes it worth attending?",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "quote", minText: 10, maxText: 600,
-    chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"],
     placeholder: "The quote…",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
@@ -163,7 +156,24 @@ const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", string> = {
+  production: "Production",
+  lyrics: "Lyrics",
+  replay: "Replay Value",
+  vibe: "Vibe",
+};
+const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
+
+/** Rounded average of a breakdown ratings object's rated (>0) values, 0 if
+ * none are rated yet — powers Book/Music/Film Review's auto-calculated
+ * Overall rating. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
+ * averageRating() — keep both in sync. */
+function averageRating(ratings: Record<string, number>): number {
+  const rated = Object.values(ratings).filter((v) => v > 0);
+  if (rated.length === 0) return 0;
+  return Math.round(rated.reduce((a, b) => a + b, 0) / rated.length);
+}
 
 interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; previewUrl?: string | null }
 
@@ -285,18 +295,52 @@ export default function NewPostScreen() {
   const [bookEntry, setBookEntry] = useState<DirectoryEntry | null>(null);
   const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
   const [bookOverallRating, setBookOverallRating] = useState(0);
+  const [bookOverallManual, setBookOverallManual] = useState(false);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   const [bookGenres, setBookGenres] = useState<string[]>([]);
+  const [showBookGenreInput, setShowBookGenreInput] = useState(false);
+  const [bookGenreInput, setBookGenreInput] = useState("");
 
   // Music Review state
   const [musicEntry, setMusicEntry] = useState<DirectoryEntry | null>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicOverallManual, setMusicOverallManual] = useState(false);
   const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
   const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
   const [musicGenres, setMusicGenres] = useState<string[]>([]);
+  const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
+  const [musicGenreInput, setMusicGenreInput] = useState("");
+
+  // Film Review state
+  const [filmEntry, setFilmEntry] = useState<DirectoryEntry | null>(null);
+  const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmOverallManual, setFilmOverallManual] = useState(false);
+  const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
+  const [filmFavLine, setFilmFavLine] = useState("");
+  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
+  const [filmGenres, setFilmGenres] = useState<string[]>([]);
+  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
+  const [filmGenreInput, setFilmGenreInput] = useState("");
+
+  // Overall rating auto-calculates as the rounded average of the breakdown
+  // ratings until the user taps a star on Overall themselves, at which
+  // point it's manually controlled for the rest of the draft — mirrors
+  // SubmitPost.tsx's web behavior, keep both in sync.
+  useEffect(() => {
+    if (bookOverallManual) return;
+    setBookOverallRating(averageRating(bookRatings));
+  }, [bookRatings, bookOverallManual]);
+  useEffect(() => {
+    if (musicOverallManual) return;
+    setMusicOverallRating(averageRating(musicRatings));
+  }, [musicRatings, musicOverallManual]);
+  useEffect(() => {
+    if (filmOverallManual) return;
+    setFilmOverallRating(averageRating(filmRatings));
+  }, [filmRatings, filmOverallManual]);
 
   // Itinerary extras
   const [itineraryTitle, setItineraryTitle] = useState("");
@@ -477,6 +521,11 @@ const uploadImages = async (): Promise<string[]> => {
       if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
       if (musicRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this album?"); return; }
+    } else if (template === "film-review") {
+      if (!filmEntry) { Alert.alert("Film required", "Search and select a film."); return; }
+      if (filmOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
+      if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
+      if (filmRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this film?"); return; }
     } else if (template === "itinerary") {
       if (!itineraryTitle.trim()) { Alert.alert("Title required", "Add a trip title."); return; }
       if (stops.filter((s) => s.name.trim()).length < 2) {
@@ -558,6 +607,28 @@ const uploadImages = async (): Promise<string[]> => {
           music_recommend: musicRecommend,
           music_genres: musicGenres.length > 0 ? musicGenres : undefined,
           music_preview_url: musicEntry!.previewUrl || undefined,
+          hub_id: hubId || undefined,
+        } as Record<string, unknown>);
+        if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
+        return;
+      }
+
+      if (template === "film-review") {
+        await api.post(`${MOBILE_API}/community/submit`, {
+          template_type: "film-review",
+          content: text,
+          linked_directory_id: filmEntry!.id,
+          film_title: filmEntry!.title,
+          film_director: filmEntry!.about,
+          film_overall_rating: filmOverallRating,
+          film_rating_story: filmRatings.story,
+          film_rating_acting: filmRatings.acting,
+          film_rating_visuals: filmRatings.visuals,
+          film_rating_pacing: filmRatings.pacing,
+          film_fav_line: filmFavLine || undefined,
+          film_recommend: filmRecommend,
+          film_genres: filmGenres.length > 0 ? filmGenres : undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
@@ -656,11 +727,13 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "creative-showcase") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
+    if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50 || filmRecommend === null;
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
   }, [submitting, template, text, eventTitle, eventDate, culturalTakeHeadline, showcaseTitle, images.length,
     bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating, musicRecommend,
+    filmEntry, filmOverallRating, filmRecommend,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
@@ -744,7 +817,7 @@ const uploadImages = async (): Promise<string[]> => {
   const renderSectionTags = (marginTop?: number) => (
     <View style={[styles.fieldGroup, marginTop != null ? { marginTop } : undefined]}>
       <Text style={styles.fieldLabel}>Section</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <View style={styles.chipRow}>
         {SECTION_TAGS.map((t) => (
           <TouchableOpacity
             key={t}
@@ -758,7 +831,7 @@ const uploadImages = async (): Promise<string[]> => {
             <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 
@@ -767,21 +840,10 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {/* Section tags FIRST */}
       {renderSectionTags(0)}
-      {/* Guide chips */}
+      {/* Guide description */}
       {text.length === 0 && (
         <View style={[styles.guide, { marginTop: space[3] }]}>
           <Text style={styles.guideDesc}>{tmplDef?.desc ?? ""}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {tmpl.chips.map((chip) => (
-              <TouchableOpacity
-                key={chip}
-                style={styles.chip}
-                onPress={() => { setText(chip + " "); setTimeout(() => textRef.current?.focus(), 50); }}
-              >
-                <Text style={styles.chipText}>{chip}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
       )}
       <MentionInput
@@ -946,7 +1008,7 @@ const uploadImages = async (): Promise<string[]> => {
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <View style={styles.chipRow}>
           {CUISINE_TAGS.map((ct) => (
             <TouchableOpacity
               key={ct}
@@ -956,7 +1018,7 @@ const uploadImages = async (): Promise<string[]> => {
               <Text style={[styles.sectionTagText, cuisineTag === ct && styles.sectionTagTextActive]}>{ct}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Price range (optional)</Text>
@@ -987,7 +1049,7 @@ const uploadImages = async (): Promise<string[]> => {
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Medium</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <View style={styles.chipRow}>
           {SHOWCASE_MEDIUMS.map((m) => (
             <TouchableOpacity
               key={m}
@@ -997,7 +1059,7 @@ const uploadImages = async (): Promise<string[]> => {
               <Text style={[styles.sectionTagText, showcaseMedium === m && styles.sectionTagTextActive]}>{m}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>About this work *</Text>
@@ -1077,7 +1139,7 @@ const uploadImages = async (): Promise<string[]> => {
       {/* Overall rating */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={bookOverallRating} onChange={setBookOverallRating} />
+        <StarRating value={bookOverallRating} onChange={(v) => { setBookOverallManual(true); setBookOverallRating(v); }} />
       </View>
 
       {/* Ratings breakdown */}
@@ -1163,6 +1225,39 @@ const uploadImages = async (): Promise<string[]> => {
               </TouchableOpacity>
             );
           })}
+          {bookGenres.filter((g) => !BOOK_GENRES.includes(g)).map((g) => (
+            <TouchableOpacity
+              key={g}
+              style={[styles.sectionTag, styles.sectionTagActive]}
+              onPress={() => setBookGenres((prev) => prev.filter((x) => x !== g))}
+            >
+              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+            </TouchableOpacity>
+          ))}
+          {showBookGenreInput ? (
+            <TextInput
+              style={styles.genreInput}
+              value={bookGenreInput}
+              onChangeText={setBookGenreInput}
+              placeholder="Custom genre"
+              placeholderTextColor={c.ghost}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const v = bookGenreInput.trim();
+                if (v && !bookGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                  setBookGenres((prev) => [...prev, v]);
+                }
+                setBookGenreInput("");
+                setShowBookGenreInput(false);
+              }}
+              onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
+            />
+          ) : (
+            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowBookGenreInput(true)}>
+              <Text style={styles.sectionTagText}>+ Other</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </>
@@ -1185,7 +1280,7 @@ const uploadImages = async (): Promise<string[]> => {
       {/* Overall rating */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={musicOverallRating} onChange={setMusicOverallRating} />
+        <StarRating value={musicOverallRating} onChange={(v) => { setMusicOverallManual(true); setMusicOverallRating(v); }} />
       </View>
 
       {/* Ratings breakdown */}
@@ -1195,7 +1290,7 @@ const uploadImages = async (): Promise<string[]> => {
           {(["production", "lyrics", "replay", "vibe"] as const).map((key) => (
             <BookRatingsRow
               key={key}
-              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              label={MUSIC_RATING_LABELS[key]}
               value={musicRatings[key]}
               onChange={(v) => setMusicRatings((prev) => ({ ...prev, [key]: v }))}
               styles={styles}
@@ -1271,6 +1366,185 @@ const uploadImages = async (): Promise<string[]> => {
               </TouchableOpacity>
             );
           })}
+          {musicGenres.filter((g) => !MUSIC_GENRES.includes(g)).map((g) => (
+            <TouchableOpacity
+              key={g}
+              style={[styles.sectionTag, styles.sectionTagActive]}
+              onPress={() => setMusicGenres((prev) => prev.filter((x) => x !== g))}
+            >
+              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+            </TouchableOpacity>
+          ))}
+          {showMusicGenreInput ? (
+            <TextInput
+              style={styles.genreInput}
+              value={musicGenreInput}
+              onChangeText={setMusicGenreInput}
+              placeholder="Custom genre"
+              placeholderTextColor={c.ghost}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const v = musicGenreInput.trim();
+                if (v && !musicGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                  setMusicGenres((prev) => [...prev, v]);
+                }
+                setMusicGenreInput("");
+                setShowMusicGenreInput(false);
+              }}
+              onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
+            />
+          ) : (
+            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowMusicGenreInput(true)}>
+              <Text style={styles.sectionTagText}>+ Other</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderFilmReview = () => (
+    <>
+      {/* Film search */}
+      <View style={styles.fieldGroup}>
+        <DirectorySearch
+          selected={filmEntry}
+          onSelect={(entry) => {
+            setFilmEntry(entry);
+            // Pre-select genre chips from TMDB's own genres for the picked
+            // film — a suggestion, not a locked value; still freely editable.
+            if (entry?.genres?.length) setFilmGenres(entry.genres);
+          }}
+          label="Film *"
+          typeFilter="film"
+          aboutFieldLabel="Director"
+          externalSource="tmdb"
+        />
+      </View>
+
+      {/* Overall rating */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Overall rating *</Text>
+        <StarRating value={filmOverallRating} onChange={(v) => { setFilmOverallManual(true); setFilmOverallRating(v); }} />
+      </View>
+
+      {/* Ratings breakdown */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Ratings *</Text>
+        <View style={styles.bookRatingsContainer}>
+          {(["story", "acting", "visuals", "pacing"] as const).map((key) => (
+            <BookRatingsRow
+              key={key}
+              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              value={filmRatings[key]}
+              onChange={(v) => setFilmRatings((prev) => ({ ...prev, [key]: v }))}
+              styles={styles}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Review */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Your review *</Text>
+        <MentionInput
+          inputRef={textRef}
+          style={styles.borderedTextarea}
+          value={text}
+          onChangeText={handleTextChange}
+          multiline
+          placeholder="What did you think? Any standout scenes?"
+          placeholderTextColor={c.ghost}
+          maxLength={tmpl.maxText + 50}
+          textAlignVertical="top"
+        />
+      </View>
+
+      {/* Favourite line */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Favourite line (optional)</Text>
+        <View style={styles.favQuoteWrap}>
+          <TextInput
+            style={styles.favQuoteInput}
+            value={filmFavLine}
+            onChangeText={setFilmFavLine}
+            multiline
+            placeholder="A line that stayed with you…"
+            placeholderTextColor={c.ghost}
+            textAlignVertical="top"
+          />
+        </View>
+      </View>
+
+      {/* Recommend */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+        <View style={styles.recommendRow}>
+          <TouchableOpacity
+            style={[styles.recommendYes, filmRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+            onPress={() => setFilmRecommend(true)}
+          >
+            <Text style={[styles.recommendText, filmRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.recommendNo, filmRecommend === false && styles.recommendNoActive]}
+            onPress={() => setFilmRecommend(false)}
+          >
+            <Text style={[styles.recommendNoText, filmRecommend === false && styles.recommendText]}>👎 No</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Genres */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Genres (optional)</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {FILM_GENRES.map((g) => {
+            const active = filmGenres.includes(g);
+            return (
+              <TouchableOpacity
+                key={g}
+                style={[styles.sectionTag, active && styles.sectionTagActive]}
+                onPress={() => setFilmGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+              >
+                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          {filmGenres.filter((g) => !FILM_GENRES.includes(g)).map((g) => (
+            <TouchableOpacity
+              key={g}
+              style={[styles.sectionTag, styles.sectionTagActive]}
+              onPress={() => setFilmGenres((prev) => prev.filter((x) => x !== g))}
+            >
+              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+            </TouchableOpacity>
+          ))}
+          {showFilmGenreInput ? (
+            <TextInput
+              style={styles.genreInput}
+              value={filmGenreInput}
+              onChangeText={setFilmGenreInput}
+              placeholder="Custom genre"
+              placeholderTextColor={c.ghost}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const v = filmGenreInput.trim();
+                if (v && !filmGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                  setFilmGenres((prev) => [...prev, v]);
+                }
+                setFilmGenreInput("");
+                setShowFilmGenreInput(false);
+              }}
+              onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+            />
+          ) : (
+            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowFilmGenreInput(true)}>
+              <Text style={styles.sectionTagText}>+ Other</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </>
@@ -1498,7 +1772,7 @@ const uploadImages = async (): Promise<string[]> => {
       </View>
 
       {/* Category chips */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipRow, { marginTop: space[3] }]}>
+      <View style={[styles.chipRow, { marginTop: space[3] }]}>
         {EVENT_CATEGORIES.map((cat) => (
           <TouchableOpacity
             key={cat.id}
@@ -1510,7 +1784,7 @@ const uploadImages = async (): Promise<string[]> => {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       {/* Organiser */}
       <View style={{ marginTop: space[3] }}>
@@ -1620,7 +1894,7 @@ const uploadImages = async (): Promise<string[]> => {
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Quote type</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <View style={styles.chipRow}>
           {QUOTE_TYPES.map((qt) => (
             <TouchableOpacity
               key={qt}
@@ -1630,7 +1904,7 @@ const uploadImages = async (): Promise<string[]> => {
               <Text style={[styles.sectionTagText, quoteType === qt && styles.sectionTagTextActive]}>{qt}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
       </View>
     </>
   );
@@ -1644,6 +1918,7 @@ const uploadImages = async (): Promise<string[]> => {
       case "creative-showcase":return renderCreativeShowcase();
       case "book-review":      return renderBookReview();
       case "music-review":     return renderMusicReview();
+      case "film-review":      return renderFilmReview();
       case "poll":             return renderPoll();
       case "itinerary":        return renderItinerary();
       case "event":            return renderEvent();
@@ -1750,15 +2025,9 @@ function createStyles(c: ColorPalette) {
     // Scroll body
     body: { padding: space[4], paddingBottom: 32 },
 
-    // Guide / starter chips
+    // Guide description
     guide:     { marginBottom: space[3] },
-    guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20, marginBottom: space[2] },
-    chips:     { gap: space[2], paddingVertical: 2 },
-    chip: {
-      backgroundColor: c.paperDeep, borderRadius: radius.full,
-      paddingHorizontal: 14, paddingVertical: 7,
-    },
-    chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
+    guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20 },
 
     // Main textarea
     textarea: {
@@ -1801,7 +2070,7 @@ function createStyles(c: ColorPalette) {
     photosHint: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost, marginTop: 6 },
 
     // Price chips
-    priceChipRow: { flexDirection: "row", gap: 8 },
+    priceChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     priceChip: {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
@@ -1841,6 +2110,7 @@ function createStyles(c: ColorPalette) {
 
     // Book
     bookRatingsContainer: {
+      backgroundColor: c.paper,
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md, overflow: "hidden",
     },
     bookRatingsRow: {
@@ -1946,7 +2216,7 @@ function createStyles(c: ColorPalette) {
     },
 
     // Section / category tags
-    chipRow: { gap: 8, paddingVertical: 4 },
+    chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingVertical: 4 },
     sectionTag: {
       height: 34, paddingHorizontal: 16, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper,
@@ -1955,6 +2225,11 @@ function createStyles(c: ColorPalette) {
     sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
     sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
     sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+    genreInput: {
+      height: 34, paddingHorizontal: 14, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ochre, backgroundColor: c.paper,
+      fontFamily: fonts.sans, fontSize: 12, color: c.ink, minWidth: 120,
+    },
 
     // Date picker
     pickerWrap: {

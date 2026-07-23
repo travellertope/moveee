@@ -192,6 +192,68 @@ function RsvpDisplay({
     </div>
   );
 }
+/**
+ * Hub badge + inline Join button (docs/hubs-plan.md §10.4) — shown on any
+ * feed card whose post carries a _hub_id (today that's always an official
+ * Hub, since regular Hubs are still excluded from this feed). No bulk
+ * join-status lookup exists yet, so this always starts on "Join" rather
+ * than "Joined" even for an already-joined viewer — Culture_Hubs::join()
+ * is idempotent, so clicking it again is a harmless no-op, just a
+ * one-click-too-many for members who already joined. Revisit with a bulk
+ * status endpoint if that turns out to matter in practice.
+ */
+function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number; hubName?: string; hubSlug?: string; hubIsOfficial?: boolean }) {
+  const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function join(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (loading || joined) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
+      if (res.ok) setJoined(true);
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.5rem" }}>
+      <Link
+        href={hubSlug ? `/hub/${hubSlug}` : "/hub/discover"}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: "4px",
+          background: hubIsOfficial ? "var(--ochre)" : "var(--gold)",
+          color: "#fff", fontSize: "0.62rem", fontWeight: 700,
+          letterSpacing: "0.04em", padding: "3px 10px", borderRadius: "9999px",
+          textDecoration: "none", whiteSpace: "nowrap",
+        }}
+      >
+        🏷 {hubName ?? "Hub"}
+      </Link>
+      <button
+        type="button"
+        onClick={join}
+        disabled={loading || joined}
+        style={{
+          background: joined ? "transparent" : "var(--ink)",
+          color: joined ? "var(--mute)" : "#fff",
+          border: joined ? "1px solid var(--rule)" : "none",
+          borderRadius: "9999px",
+          padding: "3px 10px",
+          fontSize: "0.62rem",
+          fontWeight: 700,
+          cursor: joined ? "default" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {joined ? "Joined ✓" : "Join"}
+      </button>
+    </div>
+  );
+}
+
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
@@ -527,6 +589,15 @@ export default function FeedCard({
               )}
             </div>
 
+            {item.hubId && (
+              <HubBadgeRow
+                hubId={item.hubId}
+                hubName={item.hubName}
+                hubSlug={item.hubSlug}
+                hubIsOfficial={item.hubIsOfficial}
+              />
+            )}
+
             {/* Text — clicking opens modal */}
             <div
               onClick={() => setModalOpen(true)}
@@ -563,6 +634,11 @@ export default function FeedCard({
                   {item.templateType === "music-review" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0D7377", background: "rgba(13,115,119,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
                       🎵 Music Review {item.musicTitle ? `· ${item.musicTitle}` : ""}
+                    </span>
+                  )}
+                  {item.templateType === "film-review" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2B4C7E", background: "rgba(43,76,126,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
+                      🎬 Film Review {item.filmTitle ? `· ${item.filmTitle}` : ""}
                     </span>
                   )}
                   {item.templateType === "creative-showcase" && (
@@ -624,6 +700,14 @@ export default function FeedCard({
                 <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
                 {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
                 {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+              </div>
+            )}
+
+            {/* Film review rating/recommend */}
+            {item.templateType === "film-review" && item.filmOverallRating && (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
               </div>
             )}
 
