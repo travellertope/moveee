@@ -969,9 +969,49 @@ Music-tagged posts already existing.
 
 ### 10.6 Status
 
-**Decided, not built.** This is a new phase on top of the already-shipped
-Phases 1–4 (§9) — the 11 official Hubs don't exist yet, the auto-link plumbing
-doesn't exist yet, `_hub_is_official` doesn't exist yet, and the badge/Join
-treatment on feed cards doesn't exist yet. Scope this as its own phase (Phase 6)
-rather than folding it into Phase 5's polish list — it's new mechanics, not a
-refinement of what's already there.
+**Built (July 2026), Phase 6.** All of §10.2–§10.4 shipped:
+
+- `Culture_Hubs::SECTION_HUB_SLUGS` + `maybe_seed_official_hubs()` — the 11
+  official Hubs are created lazily on first `init` after deploy (gated by
+  `culture_official_hubs_seeded`, same one-shot-option shape as every other
+  backfill in this codebase), platform-owned (`post_author = 0`, no member
+  row — there is currently no owner, so owner-only Hub actions on these are
+  only reachable via WP Admin/DB, not the API; revisit if that turns out to
+  matter), `_hub_is_official = 1`. `culture_section_hub_map` option maps
+  Section → Hub id.
+- **Auto-link is a WP hook, not a change to either submit path** — a
+  deliberate deviation from the mechanics as originally sketched in §10.2
+  above (which described updating both `handle_submit_post()` and the web
+  submit route directly). Instead, `Culture_Hubs::on_community_tag_meta_added()`
+  hooks `added_post_meta`/`updated_post_meta` for the `community_tag` key and
+  calls `maybe_autolink_official_hub()` — this covers both submit paths (and
+  any future one) for free, since both ultimately write that meta key, and
+  never overwrites an already-explicit `_hub_id` (real Hub-scoped posts).
+- `exclude_hub_posts()` (`class-culture-post-types.php`, web) and
+  `get_community_feed_items()` (`class-culture-mobile-api.php`, mobile) both
+  now exclude only *non-official* Hub posts from the main feed — one extra
+  `NOT IN (SELECT ... WHERE _hub_is_official = '1')` clause on the existing
+  raw-SQL lookup.
+- Migration: `Culture_Hubs::maybe_backfill_section_hub_links()`, same
+  gated-option shape, runs once right after seeding.
+- Badge fields: mobile's `format_community_feed_item()` gained
+  `hubName`/`hubSlug`/`hubIsOfficial` (cheap per-item lookups off `hubId`,
+  same tradeoff `hubId` itself already made — no batched map). Web got a new
+  `community_hub_meta` REST field (`class-culture-post-types.php`, mirrors
+  the existing `community_event_meta` pattern exactly) and matching fields on
+  `unified-feed.ts`'s `FeedItem`.
+- Badge + Join button: `FeedCard.tsx` and `CommunityDetailModal.tsx` render a
+  colored Hub pill (linking to `/hub/{slug}`) + inline Join button
+  (`HubBadgeRow`, duplicated between the two files per this codebase's usual
+  feed-card/detail-modal convention) whenever `item.hubId` is set. **No bulk
+  join-status endpoint exists** — the button always starts on "Join" even for
+  an already-joined viewer; clicking it again is a harmless no-op
+  (`Culture_Hubs::join()` is idempotent), just a wasted click. Add a bulk
+  lookup if that turns out to matter in practice.
+- Section-filter prompt: `PulseFeed.tsx` shows an inline "Join the {Section}
+  Hub →" link to `/hub/{slug}` above the results whenever `activeTag` matches
+  a `SECTION_HUB_SLUGS` entry — the filter itself is unchanged, no redirect.
+- **Mobile app scope**: only the backend (badge fields on the feed item) was
+  extended to mobile — `FeedItemCard.tsx`/`PostDetailSheet.tsx` do **not**
+  yet render the Hub badge/Join UI. This pass was scoped to web, matching the
+  mockup it was approved from; revisit if mobile is explicitly brought in.

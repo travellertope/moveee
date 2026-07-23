@@ -3269,9 +3269,16 @@ class Culture_Mobile_API {
         // Hub posts never appear in the default main feed (docs/hubs-plan.md
         // §4.5) — same exclusion the web equivalent applies via the
         // rest_culture_post_query filter (Culture_Post_Types::exclude_hub_posts()).
+        // Official Hubs (docs/hubs-plan.md §10.2) are exempt — every
+        // Section-tagged post already showed here before Hubs existed, and
+        // that doesn't change just because it's now also Hub-linked.
         global $wpdb;
         $hub_post_ids = $wpdb->get_col(
-            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_id' AND meta_value != ''"
+            "SELECT pm.post_id FROM {$wpdb->postmeta} pm
+             WHERE pm.meta_key = '_hub_id' AND pm.meta_value != ''
+               AND pm.meta_value NOT IN (
+                   SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_is_official' AND meta_value = '1'
+               )"
         );
 
         $query_args = array(
@@ -3494,6 +3501,7 @@ class Culture_Mobile_API {
             }
 
             $template = get_post_meta( $post->ID, '_template_type', true ) ?: 'post';
+            $hub_id   = (int) get_post_meta( $post->ID, '_hub_id', true );
 
             return array(
                 'id'                      => 'community-' . $post->ID,
@@ -3525,7 +3533,14 @@ class Culture_Mobile_API {
                 'liked'                   => in_array( $post->ID, $liked_ids, false ),
                 'userReaction'            => isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null,
                 'wpId'                    => (string) $post->ID,
-                'hubId'                   => (int) get_post_meta( $post->ID, '_hub_id', true ) ?: null,
+                'hubId'                   => $hub_id ?: null,
+                // Badge fields (docs/hubs-plan.md §10.4) — resolved from the
+                // Hub itself only when the post is Hub-linked; cheap per-item
+                // meta lookups (same tradeoff hubId above already made) since
+                // most feed items aren't Hub-linked.
+                'hubName'                 => $hub_id ? ( get_post_meta( $hub_id, '_hub_name', true ) ?: null ) : null,
+                'hubSlug'                 => $hub_id ? ( get_post_meta( $hub_id, '_hub_slug', true ) ?: null ) : null,
+                'hubIsOfficial'           => $hub_id ? Culture_Hubs::is_official( $hub_id ) : false,
                 // Template fields — all card variants
                 'templateType'            => $template,
                 'linkedDirectoryId'       => (int) get_post_meta( $post->ID, '_linked_directory_id', true ) ?: null,

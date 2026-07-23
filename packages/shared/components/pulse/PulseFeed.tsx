@@ -21,6 +21,15 @@ function draftKey(userId: string | number): string {
 
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
 
+// Mirrors Culture_Hubs::SECTION_HUB_SLUGS (docs/hubs-plan.md §10.2) — no
+// shared source of truth across the PHP/TS boundary here, same caveat as
+// every other duplicated map in this codebase (notification icons, etc.).
+const SECTION_HUB_SLUGS: Record<string, string> = {
+  Music: "music", Fashion: "fashion", Art: "art", Film: "film", Food: "food",
+  Sport: "sport", Travel: "travel", Ideas: "ideas", Literature: "literature",
+  Design: "design", Tech: "tech",
+};
+
 // Mirrors apps/mobile/src/components/community/DiscoverCard.tsx's TYPE_BADGE —
 // kept as a small local map here since this is just a compact rail glyph,
 // not the full Discover card treatment.
@@ -312,6 +321,32 @@ const handleForYou = () => {
               For You
             </button>
           </div>
+
+          {/* Section-filter → Hub prompt (docs/hubs-plan.md §10.4) — the
+              filter itself stays a lightweight, in-place list (no redirect);
+              this is just a one-click way to the fuller Hub page for anyone
+              who wants member count, Join, mod tools, etc. */}
+          {activeTag && SECTION_HUB_SLUGS[activeTag] && (
+            <Link
+              href={`/hub/${SECTION_HUB_SLUGS[activeTag]}`}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                margin: "0 1.25rem 0.75rem",
+                padding: "0.7rem 1rem",
+                background: "var(--paper-deep, #f2f2f2)",
+                border: "1px solid var(--rule-dark)",
+                borderRadius: 6,
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: "0.8rem", color: "var(--ink)", fontWeight: 600 }}>
+                Join the {activeTag} Hub →
+              </span>
+              <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>
+                Every {activeTag} post lands here too
+              </span>
+            </Link>
+          )}
 
           {visible.length === 0 ? (
             <div style={{ color: "var(--mute, #aaa)", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>

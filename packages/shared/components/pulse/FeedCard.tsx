@@ -192,6 +192,68 @@ function RsvpDisplay({
     </div>
   );
 }
+/**
+ * Hub badge + inline Join button (docs/hubs-plan.md §10.4) — shown on any
+ * feed card whose post carries a _hub_id (today that's always an official
+ * Hub, since regular Hubs are still excluded from this feed). No bulk
+ * join-status lookup exists yet, so this always starts on "Join" rather
+ * than "Joined" even for an already-joined viewer — Culture_Hubs::join()
+ * is idempotent, so clicking it again is a harmless no-op, just a
+ * one-click-too-many for members who already joined. Revisit with a bulk
+ * status endpoint if that turns out to matter in practice.
+ */
+function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number; hubName?: string; hubSlug?: string; hubIsOfficial?: boolean }) {
+  const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function join(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (loading || joined) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
+      if (res.ok) setJoined(true);
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.5rem" }}>
+      <Link
+        href={hubSlug ? `/hub/${hubSlug}` : "/hub/discover"}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: "4px",
+          background: hubIsOfficial ? "var(--ochre)" : "var(--gold)",
+          color: "#fff", fontSize: "0.62rem", fontWeight: 700,
+          letterSpacing: "0.04em", padding: "3px 10px", borderRadius: "9999px",
+          textDecoration: "none", whiteSpace: "nowrap",
+        }}
+      >
+        🏷 {hubName ?? "Hub"}
+      </Link>
+      <button
+        type="button"
+        onClick={join}
+        disabled={loading || joined}
+        style={{
+          background: joined ? "transparent" : "var(--ink)",
+          color: joined ? "var(--mute)" : "#fff",
+          border: joined ? "1px solid var(--rule)" : "none",
+          borderRadius: "9999px",
+          padding: "3px 10px",
+          fontSize: "0.62rem",
+          fontWeight: 700,
+          cursor: joined ? "default" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {joined ? "Joined ✓" : "Join"}
+      </button>
+    </div>
+  );
+}
+
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
@@ -526,6 +588,15 @@ export default function FeedCard({
                 </button>
               )}
             </div>
+
+            {item.hubId && (
+              <HubBadgeRow
+                hubId={item.hubId}
+                hubName={item.hubName}
+                hubSlug={item.hubSlug}
+                hubIsOfficial={item.hubIsOfficial}
+              />
+            )}
 
             {/* Text — clicking opens modal */}
             <div

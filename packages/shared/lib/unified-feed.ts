@@ -58,11 +58,16 @@ export interface FeedItem {
   communityTag?: string;
   communityTier?: string;
   commentCount?: number;
-  /** Hub linkage (docs/hubs-plan.md §4.5) — set only for posts fetched as
-   * For You Hub candidates via getHubCandidatePosts(), never present on the
-   * default getCommunityPosts() feed (Hub posts are excluded from that query
-   * server-side). */
+  /** Hub linkage (docs/hubs-plan.md §4.5/§10). Regular (non-official) Hub
+   * posts are still excluded from the default getCommunityPosts() feed
+   * server-side, so hubId there only ever appears on official-Hub posts
+   * (§10.2) — that's also true of posts fetched as For You Hub candidates
+   * via getHubCandidatePosts(), which can be either. hubName/hubSlug/
+   * hubIsOfficial come from the resolved community_hub_meta REST field. */
   hubId?: number;
+  hubName?: string;
+  hubSlug?: string;
+  hubIsOfficial?: boolean;
   // template fields (community posts)
   templateType?: string;
   linkedDirectoryId?: number;
@@ -176,7 +181,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
   let res: Response;
   try {
     res = await fetch(
-      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta,community_hub_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category,_hub_id`,
       { next: { revalidate: 300 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
@@ -224,6 +229,10 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
         clap: Number(m.reaction_clap ?? 0),
       },
       wpId: String(post.id),
+      hubId: m._hub_id ? Number(m._hub_id) : undefined,
+      hubName: post.community_hub_meta?.name || undefined,
+      hubSlug: post.community_hub_meta?.slug || undefined,
+      hubIsOfficial: Boolean(post.community_hub_meta?.is_official),
       // Template fields
       templateType: m._template_type || "post",
       linkedDirectoryId: m._linked_directory_id ? Number(m._linked_directory_id) : undefined,

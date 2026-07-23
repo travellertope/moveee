@@ -187,6 +187,60 @@ function RsvpDisplay({
   );
 }
 
+/** Duplicated from FeedCard.tsx — see the note there (docs/hubs-plan.md
+ * §10.4) on why this always starts on "Join" rather than checking status. */
+function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number; hubName?: string; hubSlug?: string; hubIsOfficial?: boolean }) {
+  const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function join(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (loading || joined) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
+      if (res.ok) setJoined(true);
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.75rem" }}>
+      <Link
+        href={hubSlug ? `/hub/${hubSlug}` : "/hub/discover"}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: "4px",
+          background: hubIsOfficial ? "var(--ochre)" : "var(--gold)",
+          color: "#fff", fontSize: "0.64rem", fontWeight: 700,
+          letterSpacing: "0.04em", padding: "4px 11px", borderRadius: "9999px",
+          textDecoration: "none", whiteSpace: "nowrap",
+        }}
+      >
+        🏷 {hubName ?? "Hub"}
+      </Link>
+      <button
+        type="button"
+        onClick={join}
+        disabled={loading || joined}
+        style={{
+          background: joined ? "transparent" : "var(--ink)",
+          color: joined ? "var(--mute)" : "#fff",
+          border: joined ? "1px solid var(--rule)" : "none",
+          borderRadius: "9999px",
+          padding: "4px 11px",
+          fontSize: "0.64rem",
+          fontWeight: 700,
+          cursor: joined ? "default" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {joined ? "Joined ✓" : "Join"}
+      </button>
+    </div>
+  );
+}
+
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
   if (!sourceUrl) return text;
   const escaped = sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -328,6 +382,15 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               </div>
             )}
           </div>
+
+          {item.hubId && (
+            <HubBadgeRow
+              hubId={item.hubId}
+              hubName={item.hubName}
+              hubSlug={item.hubSlug}
+              hubIsOfficial={item.hubIsOfficial}
+            />
+          )}
 
           {/* Template badge */}
           {item.templateType && item.templateType !== "post" && (

@@ -321,10 +321,15 @@ export interface FeedItem {
   // hydrating ReactionBar's initial state instead of always assuming false.
   userReaction?: "love" | "fire" | "clap" | null;
   wpId?: string;
-  /** Hub linkage (docs/hubs-plan.md §4.5) — only set on posts fetched as For
-   * You Hub candidates; never present on the default main-feed fetch, which
-   * excludes Hub posts server-side. */
+  /** Hub linkage (docs/hubs-plan.md §4.5/§10). Regular (non-official) Hub
+   * posts are still excluded from the default main-feed fetch server-side,
+   * so hubId there only ever appears on official-Hub posts (§10.2) — also
+   * true of posts fetched as For You Hub candidates, which can be either.
+   * hubName/hubSlug/hubIsOfficial come along with hubId on the same feed item. */
   hubId?: number;
+  hubName?: string;
+  hubSlug?: string;
+  hubIsOfficial?: boolean;
 }
 
 // ── Community post templates ─────────────────────────────────────────────────

@@ -2644,6 +2644,24 @@ explicitly brought into scope later.
 
 ---
 
+## Hubs — user-created topic communities
+
+**Full plan (read before touching any Hub code): `docs/hubs-plan.md`.** Phases 1–4 (core
+CPT/membership/moderation, `wp_culture_hub_members`/`wp_culture_hub_follows` tables,
+`class-culture-hubs.php`) were built in an earlier session with no CLAUDE.md pointer ever added
+— this entry (and the doc itself) is the fix. Phase 6, the **Section/Hub bridge** (every
+`community_tag` value gets a matching official, platform-owned Hub; posting with a Section set
+auto-links to it; official Hubs alone are exempt from the main-feed Hub exclusion; feed cards
+get a Hub badge + Join button; the Section filter gets a "Join the X Hub →" prompt) shipped July
+2026 — see `docs/hubs-plan.md` §10 for the full mechanics/reasoning, §10.6 for exactly what's
+built vs. deferred (notably: **no bulk Hub-join-status endpoint yet**, so the feed's Join button
+always starts on "Join" even for members who already joined — idempotent, so harmless, just an
+extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**, only the backend
+fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
+see the doc's own status line, which is the authoritative source, not this summary.
+
+---
+
 ## Community event RSVP (free, capacity-limited — June 2026)
 
 Targets community-organiser events: `culture_post` CPT, `_template_type = 'event'`.

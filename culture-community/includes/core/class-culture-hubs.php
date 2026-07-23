@@ -39,9 +39,37 @@ class Culture_Hubs {
     /** Same batching cap as Culture_Follows::SYNC_NOTIFY_BATCH. */
     const SYNC_NOTIFY_BATCH = 200;
 
+    /**
+     * Section/Hub bridge (docs/hubs-plan.md §10, Phase 6). Every value in the
+     * community_tag enum (Culture_Mobile_API::SECTION_TAGS /
+     * SubmitPost.tsx's TAGS) gets a matching official, platform-owned Hub —
+     * these slugs are what maybe_seed_official_hubs() creates them under.
+     * Official Hubs are exempt from the main-feed exclusion (§4.5) that every
+     * other Hub still gets; see is_official() / exclude_hub_posts() in
+     * class-culture-post-types.php and get_community_feed_items() in
+     * class-culture-mobile-api.php.
+     */
+    const SECTION_HUB_SLUGS = array(
+        'Music'      => 'music',
+        'Fashion'    => 'fashion',
+        'Art'        => 'art',
+        'Film'       => 'film',
+        'Food'       => 'food',
+        'Sport'      => 'sport',
+        'Travel'     => 'travel',
+        'Ideas'      => 'ideas',
+        'Literature' => 'literature',
+        'Design'     => 'design',
+        'Tech'       => 'tech',
+    );
+
     public static function init() {
         add_action( 'added_post_meta', array( __CLASS__, 'on_hub_id_meta_added' ), 10, 4 );
         add_action( 'culture_notify_hub_followers_batch', array( __CLASS__, 'process_notify_hub_post_batch' ), 10, 3 );
+        add_action( 'added_post_meta', array( __CLASS__, 'on_community_tag_meta_added' ), 10, 4 );
+        add_action( 'updated_post_meta', array( __CLASS__, 'on_community_tag_meta_added' ), 10, 4 );
+        self::maybe_seed_official_hubs();
+        self::maybe_backfill_section_hub_links();
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -53,6 +81,142 @@ class Culture_Hubs {
             return;
         }
         update_post_meta( $hub_id, '_hub_post_count', (int) get_post_meta( $hub_id, '_hub_post_count', true ) + 1 );
+    }
+
+    /**
+     * Auto-links a culture_post to its Section's official Hub the moment
+     * community_tag is set — transparent plumbing, not a poster decision
+     * (docs/hubs-plan.md §10.2). Fires on both add and update since a fresh
+     * post's first community_tag write goes through add_post_meta(), while a
+     * later edit changing the tag goes through update_post_meta().
+     */
+    public static function on_community_tag_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
+        if ( 'community_tag' !== $meta_key ) {
+            return;
+        }
+        if ( 'culture_post' !== get_post_type( $object_id ) ) {
+            return;
+        }
+        self::maybe_autolink_official_hub( $object_id, (string) $meta_value );
+    }
+
+    /**
+     * @return int The official Hub id the post was linked to, or 0 if none.
+     */
+    public static function maybe_autolink_official_hub( int $post_id, string $section ) : int {
+        if ( '' === $section ) {
+            return 0;
+        }
+        // Never overwrite an explicit Hub-scoped post (docs/hubs-plan.md
+        // §3.2's own hub_id param already set _hub_id before this fires).
+        if ( get_post_meta( $post_id, '_hub_id', true ) ) {
+            return 0;
+        }
+        $hub_id = self::get_official_hub_id_for_section( $section );
+        if ( ! $hub_id ) {
+            return 0;
+        }
+        update_post_meta( $post_id, '_hub_id', $hub_id );
+        return $hub_id;
+    }
+
+    public static function get_official_hub_id_for_section( string $section ) : int {
+        $map = get_option( 'culture_section_hub_map', array() );
+        return isset( $map[ $section ] ) ? (int) $map[ $section ] : 0;
+    }
+
+    public static function is_official( int $hub_id ) : bool {
+        return '1' === get_post_meta( $hub_id, '_hub_is_official', true );
+    }
+
+    /**
+     * One-time creation of the 11 official Hubs (docs/hubs-plan.md §10.2/§10.6)
+     * — platform-owned (post_author 0, no owner row in the members table, so
+     * every owner-only Hub action is unreachable via the API for these until
+     * an admin tool exists; edit via WP Admin/DB directly in the meantime).
+     * Gated by culture_official_hubs_seeded so this only ever runs once, same
+     * shape as Culture_Subscribers::maybe_backfill_announcements().
+     */
+    public static function maybe_seed_official_hubs() {
+        if ( '1' === get_option( 'culture_official_hubs_seeded', '' ) ) {
+            return;
+        }
+
+        $map = get_option( 'culture_section_hub_map', array() );
+        $map = is_array( $map ) ? $map : array();
+
+        foreach ( self::SECTION_HUB_SLUGS as $section => $slug ) {
+            if ( ! empty( $map[ $section ] ) && get_post( (int) $map[ $section ] ) ) {
+                continue;
+            }
+
+            $post_id = wp_insert_post( array(
+                'post_type'   => 'culture_hub',
+                'post_title'  => $section,
+                'post_status' => 'publish',
+                'post_author' => 0,
+            ), true );
+            if ( is_wp_error( $post_id ) ) {
+                continue;
+            }
+
+            $now = current_time( 'mysql' );
+            update_post_meta( $post_id, '_hub_name', $section );
+            update_post_meta( $post_id, '_hub_slug', $slug );
+            update_post_meta( $post_id, '_hub_description', "Everything {$section} — every post Sectioned {$section} lands here automatically." );
+            update_post_meta( $post_id, '_hub_cover_image_url', '' );
+            update_post_meta( $post_id, '_hub_creator_id', 0 );
+            update_post_meta( $post_id, '_hub_status', self::STATUS_ACTIVE );
+            update_post_meta( $post_id, '_hub_allowed_templates', wp_json_encode( self::ALLOWED_TEMPLATES ) );
+            update_post_meta( $post_id, '_hub_member_count', 0 );
+            update_post_meta( $post_id, '_hub_post_count', 0 );
+            update_post_meta( $post_id, '_hub_created_at', $now );
+            update_post_meta( $post_id, '_hub_is_official', 1 );
+
+            $map[ $section ] = $post_id;
+        }
+
+        update_option( 'culture_section_hub_map', $map );
+        update_option( 'culture_official_hubs_seeded', '1' );
+    }
+
+    /**
+     * Backfills _hub_id on culture_post rows that already carry a
+     * community_tag from before the official Hubs existed — without this the
+     * Music Hub (etc.) would launch with zero history despite years of
+     * Music-tagged posts (docs/hubs-plan.md §10.5). Gated the same way as
+     * Culture_Subscribers::maybe_backfill_announcements(); runs once, after
+     * the official Hubs themselves have been seeded.
+     */
+    public static function maybe_backfill_section_hub_links() {
+        if ( '1' === get_option( 'culture_hub_categories_backfilled', '' ) ) {
+            return;
+        }
+        if ( '1' !== get_option( 'culture_official_hubs_seeded', '' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        foreach ( self::SECTION_HUB_SLUGS as $section => $slug ) {
+            $hub_id = self::get_official_hub_id_for_section( $section );
+            if ( ! $hub_id ) {
+                continue;
+            }
+
+            $post_ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT p.ID FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} tag ON tag.post_id = p.ID AND tag.meta_key = 'community_tag' AND tag.meta_value = %s
+                 LEFT JOIN {$wpdb->postmeta} hub ON hub.post_id = p.ID AND hub.meta_key = '_hub_id'
+                 WHERE p.post_type = 'culture_post' AND hub.meta_id IS NULL",
+                $section
+            ) );
+
+            foreach ( $post_ids ?: array() as $post_id ) {
+                update_post_meta( (int) $post_id, '_hub_id', $hub_id );
+            }
+        }
+
+        update_option( 'culture_hub_categories_backfilled', '1' );
     }
 
     /* ——————————————————————————————————————
@@ -140,6 +304,7 @@ class Culture_Hubs {
             'postCount'         => (int) get_post_meta( $hub_id, '_hub_post_count', true ),
             'createdAt'         => get_post_meta( $hub_id, '_hub_created_at', true ),
             'pinnedPostId'      => (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) ?: null,
+            'isOfficial'        => self::is_official( $hub_id ),
         );
     }
 
