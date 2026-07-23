@@ -198,7 +198,7 @@ export default function ConnectHeader() {
             </button>
             {status === "authenticated" && user && (
               <div className="ch-rail-icon-btn ch-rail-icon-btn--bell">
-                <NotificationBell />
+                <NotificationBell showLabel />
               </div>
             )}
           </div>
