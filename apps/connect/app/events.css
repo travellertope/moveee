@@ -457,7 +457,14 @@
   background: var(--evt-paper);
 }
 
-.evt-timeline-section {
+/* Scoped to .evt-archive-page — the main /events page also renders a
+   .evt-timeline-section (see the TIMELINE rule above), and this was
+   previously a same-named, unscoped rule that clobbered it via source
+   order: its padding/max-width/margin silently applied to the main page
+   too, stacking on top of .evt-timeline-wrap's own padding and squeezing
+   the whole timeline into a narrow boxed column (worst on mobile, where
+   nothing overrode the leaked 64px side padding). */
+.evt-archive-page .evt-timeline-section {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 64px 64px;
