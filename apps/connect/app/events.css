@@ -128,7 +128,9 @@
 
 /* ── TIMELINE ── */
 .evt-timeline-section {
-  background: var(--evt-paper-deep);
+  /* White throughout, matching /feed's .pulse-timeline/.pulse-sidebar-right
+     (both #ffffff) — this page previously used the grey --evt-paper-deep here. */
+  background: var(--evt-paper);
   padding: 64px 0 80px;
 }
 
