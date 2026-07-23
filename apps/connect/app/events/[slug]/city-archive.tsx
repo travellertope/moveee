@@ -1,21 +1,11 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getEventsWithFallback } from "@/lib/wp";
 import EventTimeline from "../components/EventTimeline";
+import EventsSearchBar from "../components/EventsSearchBar";
 
 interface CityInfo { name: string; country: string }
-
-const CATEGORIES = [
-  { slug: "music",       name: "Music",       icon: "♪" },
-  { slug: "film",        name: "Film",        icon: "◉" },
-  { slug: "visual-arts", name: "Visual Arts", icon: "◈" },
-  { slug: "fashion",     name: "Fashion",     icon: "✦" },
-  { slug: "food",        name: "Food",        icon: "◆" },
-  { slug: "literature",  name: "Literature",  icon: "▬" },
-  { slug: "design",      name: "Design",      icon: "◻" },
-  { slug: "performance", name: "Performance", icon: "★" },
-  { slug: "community",   name: "Community",   icon: "◇" },
-  { slug: "tech",        name: "Tech",        icon: "○" },
-];
 
 const ALL_CITIES = [
   { slug: "lagos",    name: "Lagos",    country: "Nigeria" },
@@ -27,6 +17,9 @@ const ALL_CITIES = [
 ];
 
 export default async function CityArchive({ slug, cityInfo }: { slug: string; cityInfo: CityInfo }) {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const userCity = (session?.user as any)?.city?.toLowerCase().trim();
+
   let allEvents: any[] = [];
   try { allEvents = await getEventsWithFallback(100); } catch { /* CMS unreachable */ }
 
@@ -40,38 +33,70 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
       new Date(b.eventDate || b.date || 0).getTime()
     );
 
-  const sidebarCities = ALL_CITIES.map((c) => ({
-    ...c,
-    count: allEvents.filter((e) =>
-      `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(c.name.toLowerCase())
-    ).length,
-  })).filter((c) => c.count > 0);
+  // Other cities worth exploring — excludes the one already being viewed.
+  const sidebarCities = ALL_CITIES
+    .filter((c) => c.slug !== slug)
+    .map((c) => ({
+      ...c,
+      count: allEvents.filter((e) =>
+        `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(c.name.toLowerCase())
+      ).length,
+    }))
+    .filter((c) => c.count > 0);
+
+  const literatiAll = cityEvents.filter((e) => e.isLiterati);
+  const literatiNearby = userCity
+    ? literatiAll.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(userCity))
+    : [];
 
   return (
-    <div className="evt-archive-page">
-      <div className="evt-archive-header">
+    <div className="bg-paper">
+      <div className="evt-headline-wrap">
         <Link href="/events" className="evt-archive-back">← All Happenings</Link>
-        <div className="evt-archive-title-row">
-          <h1>Happening in <em>{cityInfo.name}</em></h1>
-          <span className="evt-archive-country">{cityInfo.country}</span>
-        </div>
+        <h1 className="evt-headline">Happening in <em>{cityInfo.name}</em></h1>
         <p className="evt-archive-meta">
-          {cityEvents.length} upcoming event{cityEvents.length !== 1 ? "s" : ""}
+          {cityInfo.country} · {cityEvents.length} upcoming event{cityEvents.length !== 1 ? "s" : ""}
         </p>
       </div>
 
-      <div className="evt-timeline-section">
-        <EventTimeline
-          events={cityEvents}
-          sidebarCities={sidebarCities}
-          sidebarCategories={CATEGORIES}
-          activeCitySlug={slug}
-          emptyMessage={`No upcoming events in ${cityInfo.name} right now — check back soon.`}
-        />
+      <div className="evt-search-wrap">
+        <EventsSearchBar />
       </div>
 
-      <div className="evt-archive-footer">
-        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
+      <div className="evt-timeline-section" id="timeline">
+        <EventTimeline
+          events={cityEvents}
+          emptyMessage={`No upcoming events in ${cityInfo.name} right now — check back soon.`}
+          rightRail={
+            <>
+              {sidebarCities.length > 0 && (
+                <div className="evt-sb-block">
+                  <div className="evt-sb-label">Other Cities</div>
+                  {sidebarCities.map((c) => (
+                    <Link key={c.slug} href={`/events/${c.slug}`} className="evt-sb-row">
+                      <span className="evt-sb-name">{c.name}</span>
+                      <span className="evt-sb-count">{c.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              <div className="evt-literati-teaser">
+                <p className="evt-sb-label">🪶 Literati Connect</p>
+                <p className="evt-literati-teaser-title">Members go first.</p>
+                <p className="evt-literati-teaser-desc">
+                  Monthly, city-wide gatherings for Moveee members — supper tables, private
+                  views, and salons before anyone else hears about them.
+                </p>
+                {literatiAll.length > 0 && (
+                  <Link href="#timeline" className="evt-literati-teaser-link">
+                    {userCity && literatiNearby.length > 0 ? "See gatherings near you →" : `See ${cityInfo.name} gatherings →`}
+                  </Link>
+                )}
+              </div>
+            </>
+          }
+        />
       </div>
     </div>
   );

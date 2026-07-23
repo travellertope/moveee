@@ -70,6 +70,13 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
   const [items, setItems]   = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [dropdownRight, setDropdownRight] = useState<number>(0);
+  // Rail context only (showLabel) — the rail is a tall, independently
+  // scrollable column (.ch-rail, overflow-y:auto). A plain position:absolute
+  // dropdown nested inside it gets clipped by that scroll box instead of
+  // floating over the page, which reads as the panel "opening at the bottom"
+  // of the sidebar. Fixed positioning (computed from the button's rect on
+  // open) escapes that clipping and floats the panel beside the rail instead.
+  const [railPanelPos, setRailPanelPos] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const loggedIn = !!(session?.user as any)?.id;
@@ -122,11 +129,23 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
     if (!open || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const dropdownW = Math.min(340, window.innerWidth - 32);
+    const dropdownH = 440;
+
+    if (showLabel) {
+      // Float to the right of the rail button, viewport-clamped.
+      let left = rect.right + 8;
+      if (left + dropdownW > window.innerWidth - 8) left = window.innerWidth - 8 - dropdownW;
+      let top = rect.top;
+      if (top + dropdownH > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - dropdownH);
+      setRailPanelPos({ top, left });
+      return;
+    }
+
     // `right: 0` means dropdown left edge = rect.right - dropdownW
     const leftEdge = rect.right - dropdownW;
     const overflow = leftEdge < 8 ? 8 - leftEdge : 0;
     setDropdownRight(-overflow);
-  }, [open]);
+  }, [open, showLabel]);
 
   async function handleOpen() {
     if (!open) {
@@ -226,7 +245,21 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
       </button>
 
       {open && (
-        <div style={{
+        <div style={showLabel && railPanelPos ? {
+          position: "fixed",
+          top: railPanelPos.top,
+          left: railPanelPos.left,
+          width: "min(340px, calc(100vw - 32px))",
+          maxHeight: 440,
+          overflowY: "auto",
+          background: "#fff",
+          border: "1px solid rgba(42,36,28,.12)",
+          borderRadius: 6,
+          boxShadow: "0 10px 25px -5px rgba(20,17,13,0.15), 0 8px 10px -6px rgba(20,17,13,0.1)",
+          zIndex: 200,
+          display: "flex",
+          flexDirection: "column",
+        } : {
           position: "absolute",
           top: "calc(100% + 8px)",
           right: dropdownRight,

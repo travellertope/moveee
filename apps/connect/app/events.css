@@ -224,6 +224,10 @@
   border-left: 2px solid var(--evt-ghost-light);
   margin-left: 4px;
   padding-left: 20px;
+  /* Mirrors the left rail's total inset (4px margin + 2px border + 20px
+     padding = 26px) so rows don't sit flush against the column's right
+     edge while indented on the left — was asymmetric before this. */
+  padding-right: 26px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -448,126 +452,18 @@
   text-decoration: none;
 }
 
-/* ── CONNECT CTA BAND ── */
-.evt-connect-band {
-  background: var(--evt-ink);
-  padding: 64px;
-}
-
-.evt-connect-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-}
-
-.evt-connect-eyebrow {
-  font-family: var(--evt-font-mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--evt-ochre);
-  display: block;
-  margin-bottom: 12px;
-}
-
-.evt-connect-inner h3 {
-  font-family: var(--evt-font-serif);
-  font-size: 40px;
-  font-weight: 700;
-  color: var(--evt-paper);
-  margin: 0 0 16px;
-}
-
-.evt-connect-inner h3 em {
-  font-style: italic;
-  font-weight: 400;
-}
-
-.evt-connect-inner p {
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-}
-
-.evt-connect-perks {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.evt-perk {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-
-.evt-perk-num {
-  font-family: var(--evt-font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--evt-gold);
-  flex: 0 0 auto;
-}
-
-.evt-perk p {
-  color: var(--evt-paper);
-  font-weight: 700;
-  font-size: 16px;
-  margin: 0;
-}
-
-.evt-perk p em {
-  font-style: italic;
-  font-weight: 400;
-}
-
-.evt-connect-cta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.evt-btn-white {
-  display: inline-block;
-  background: var(--evt-paper);
-  color: var(--evt-ink);
-  font-weight: 700;
-  font-size: 14px;
-  border-radius: 999px;
-  padding: 14px 28px;
-  text-decoration: none;
-}
-
-.evt-connect-caption {
-  font-family: var(--evt-font-mono);
-  font-size: 13px;
-  font-style: italic;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* ── ARCHIVE HEADER (CITY / CATEGORY) ── */
-.evt-archive-page {
-  background: var(--evt-paper);
-}
-
-.evt-timeline-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 64px 64px;
-}
-
+/* ── ARCHIVE HEADER (CITY / CATEGORY) ──
+   City/category archives (city-archive.tsx, category-archive.tsx) now share
+   the main /events page's shell exactly (.evt-headline-wrap/.evt-headline,
+   .evt-search-wrap, .evt-timeline-section) — only these three classes are
+   archive-specific: the small back link and caption above/below the shared
+   headline, and the category icon inline within it. */
 .evt-archive-icon {
-  font-size: 36px;
+  /* em-based so it scales with .evt-headline's font-size at every
+     breakpoint instead of needing its own responsive override. */
+  font-size: 0.85em;
   color: var(--evt-ochre);
-}
-
-.evt-archive-header {
-  background: var(--evt-paper);
-  padding: 56px 64px 32px;
+  margin-right: 4px;
 }
 
 .evt-archive-back {
@@ -575,42 +471,18 @@
   color: var(--evt-mute);
   text-decoration: none;
   display: inline-block;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .evt-archive-back:hover {
   color: var(--evt-ochre);
 }
 
-.evt-archive-title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-
-.evt-archive-title-row h1 {
-  font-family: var(--evt-font-serif);
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--evt-ink);
-  margin: 0;
-}
-
-.evt-archive-country {
-  font-size: 16px;
-  color: var(--evt-mute);
-}
-
 .evt-archive-meta {
-  margin-top: 12px;
+  margin-top: 10px;
   font-family: var(--evt-font-mono);
   font-size: 13px;
   color: var(--evt-ochre);
-}
-
-.evt-archive-footer {
-  text-align: center;
-  padding: 48px 0;
 }
 
 /* ── DETAIL HERO ── */
@@ -1641,47 +1513,6 @@
 
   .evt-row-title {
     -webkit-line-clamp: 1;
-  }
-
-  .evt-connect-band {
-    padding: 48px 24px;
-  }
-
-  .evt-connect-inner {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    text-align: center;
-  }
-
-  .evt-connect-perks {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-  }
-
-  .evt-perk {
-    justify-content: center;
-    text-align: left;
-  }
-
-  .evt-perk-num {
-    display: none;
-  }
-
-  .evt-perk::before {
-    content: '★';
-    color: var(--evt-gold);
-    margin-right: 4px;
-  }
-
-  .evt-connect-cta {
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .evt-btn-white {
-    width: 100%;
-    text-align: center;
   }
 
   .evt-detail-hero {
