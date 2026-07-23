@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import NotificationBell from "@/components/NotificationBell";
 import { useTheme } from "@/context/ThemeContext";
 import SearchModal from "@/components/SearchModal";
+import { onOpenSearchModal } from "@/lib/searchModalBus";
 import "./header.css";
 
 const SITE_URL = "https://themoveee.com";
@@ -125,6 +126,10 @@ export default function ConnectHeader() {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Lets pages other than this one trigger the same shared search modal —
+  // e.g. /events' own inline search bar — without a second modal instance.
+  useEffect(() => onOpenSearchModal(() => setSearchOpen(true)), []);
 
   function isActive(href: string) {
     if (href === "/feed") return pathname === "/feed";

@@ -68,6 +68,18 @@
 
 .sm-filter-group + .sm-filter-group { margin-top: 18px; }
 
+/* Price + Format (event-only facets) sit side by side — neither needs the
+   modal's full width alone. .sm-filter-row is a different element than
+   .sm-filter-group, so it falls outside the sibling-spacing rule above in
+   both directions — restated explicitly here. Price gets a bigger flex
+   share since it has one more chip (Members-only) than Format. */
+.sm-filter-row { display: flex; gap: 28px; margin-top: 18px; }
+.sm-filter-row + .sm-filter-group { margin-top: 18px; }
+.sm-filter-row .sm-filter-group { flex: 1; min-width: 0; margin-top: 0; }
+.sm-filter-row .sm-filter-group:first-child { flex: 1.6; }
+.sm-filter-chips--nowrap { flex-wrap: nowrap; }
+.sm-filter-chips--nowrap .sm-chip { flex-shrink: 0; }
+
 .sm-filter-label {
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;

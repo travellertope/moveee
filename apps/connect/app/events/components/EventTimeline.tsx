@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { sanitizeHtml } from "@/lib/sanitize";
 import EventThumb from "./EventThumb";
@@ -14,6 +15,7 @@ interface TimelineEvent {
   openingHours?: string;
   admission?: string;
   isFeatured?: boolean;
+  isLiterati?: boolean;
   isAiGenerated?: boolean;
   featuredImage?: { node?: { sourceUrl?: string } };
   eventImageUrl?: string;
@@ -31,6 +33,11 @@ interface EventTimelineProps {
   activeCitySlug?: string;
   activeCategorySlug?: string;
   emptyMessage?: string;
+  /** Overrides the default cities/categories sidebar with custom content —
+   * used by the main /events page for its trending-cities + Literati
+   * Connect teaser rail. Archive pages that don't pass this keep the
+   * original cities/categories list unchanged. */
+  rightRail?: ReactNode;
 }
 
 function getMonthKey(raw?: string): string {
@@ -115,14 +122,24 @@ function EventRow({ event }: { event: TimelineEvent }) {
   const place   = event.city || event.location || "";
   const timeRange = fmtTimeRange(event.eventDate, event.endDate);
   const free = !event.admission || /free/i.test(event.admission);
+  // Featured and Literati Connect are no longer separate sections — they're
+  // just rows in the same timeline, distinguished only by a tag + faint tint.
+  const rowModifier = event.isLiterati ? " evt-row--literati" : event.isFeatured ? " evt-row--featured" : "";
 
   return (
-    <Link href={event.href || `/events/${event.slug}`} className="evt-row">
+    <Link href={event.href || `/events/${event.slug}`} className={`evt-row${rowModifier}`}>
       <div className="evt-row-thumb">
         <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={14} />
       </div>
       <div className="evt-row-body">
-        <h4 className="evt-row-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+        <div className="evt-row-title-line">
+          <h4 className="evt-row-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+          {event.isLiterati ? (
+            <span className="evt-tag evt-tag--literati">🪶 Literati Connect</span>
+          ) : event.isFeatured ? (
+            <span className="evt-tag evt-tag--featured">★ Featured</span>
+          ) : null}
+        </div>
         <div className="evt-row-meta">
           {place && <span>◍ {place}</span>}
           {place && cat && <span> · </span>}
@@ -147,6 +164,7 @@ export default function EventTimeline({
   activeCitySlug,
   activeCategorySlug,
   emptyMessage = "No upcoming events right now — check back soon.",
+  rightRail,
 }: EventTimelineProps) {
   const months = groupByMonth(events);
 
@@ -180,37 +198,41 @@ export default function EventTimeline({
       </div>
 
       <aside className="evt-timeline-sidebar">
-        {sidebarCities.length > 0 && (
-          <div className="evt-sb-block">
-            <div className="evt-sb-label">Cities</div>
-            {sidebarCities.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/events/${c.slug}`}
-                className={`evt-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
-              >
-                <span className="evt-sb-name">{c.name}</span>
-                <span className="evt-sb-count">{c.count}</span>
-              </Link>
-            ))}
-            <Link href="/events" className="evt-sb-all">All cities →</Link>
-          </div>
-        )}
+        {rightRail ?? (
+          <>
+            {sidebarCities.length > 0 && (
+              <div className="evt-sb-block">
+                <div className="evt-sb-label">Cities</div>
+                {sidebarCities.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/events/${c.slug}`}
+                    className={`evt-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
+                  >
+                    <span className="evt-sb-name">{c.name}</span>
+                    <span className="evt-sb-count">{c.count}</span>
+                  </Link>
+                ))}
+                <Link href="/events" className="evt-sb-all">All cities →</Link>
+              </div>
+            )}
 
-        {sidebarCategories.length > 0 && (
-          <div className="evt-sb-block">
-            <div className="evt-sb-label">Categories</div>
-            {sidebarCategories.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/events/${c.slug}`}
-                className={`evt-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
-              >
-                <span className="evt-sb-dot" style={{ background: CAT_DOT[c.slug] || "var(--evt-gold)" }} />
-                <span className="evt-sb-name">{c.name}</span>
-              </Link>
-            ))}
-          </div>
+            {sidebarCategories.length > 0 && (
+              <div className="evt-sb-block">
+                <div className="evt-sb-label">Categories</div>
+                {sidebarCategories.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/events/${c.slug}`}
+                    className={`evt-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
+                  >
+                    <span className="evt-sb-dot" style={{ background: CAT_DOT[c.slug] || "var(--evt-gold)" }} />
+                    <span className="evt-sb-name">{c.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </aside>
     </div>
