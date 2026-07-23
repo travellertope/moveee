@@ -1274,6 +1274,8 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: calc(100% - 32px);
+  box-sizing: border-box;
   padding: 14px 16px;
   margin: 0 16px 20px;
   background: #fff;

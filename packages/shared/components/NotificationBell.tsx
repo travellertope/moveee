@@ -54,7 +54,16 @@ function timeAgo(iso: string): string {
   return "Just now";
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  /** Renders a "Notifications" label (+ inline unread badge) alongside the
+   * bell icon, filling the full row width — used by Header.tsx's rail
+   * bottom block so this row matches its icon+label siblings (Discover
+   * Culture, People Near Me, etc). Icon-only (the default) is used in the
+   * mobile top bar, where there's no room for a label. */
+  showLabel?: boolean;
+}
+
+export default function NotificationBell({ showLabel = false }: NotificationBellProps = {}) {
   const { data: session } = useSession();
   const [open, setOpen]   = useState(false);
   const [unread, setUnread] = useState(0);
@@ -146,7 +155,7 @@ export default function NotificationBell() {
   if (!loggedIn) return null;
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative", width: showLabel ? "100%" : undefined }}>
       <button
         type="button"
         onClick={handleOpen}
@@ -155,38 +164,68 @@ export default function NotificationBell() {
           background: "none",
           border: "none",
           cursor: "pointer",
-          padding: "6px",
+          padding: showLabel ? "9px 10px" : "6px",
+          borderRadius: showLabel ? 4 : undefined,
           position: "relative",
           display: "flex",
           alignItems: "center",
+          gap: showLabel ? 12 : 0,
+          width: showLabel ? "100%" : undefined,
           color: "#14110d",
           lineHeight: 1,
+          fontFamily: showLabel ? "var(--font-dm-sans), 'DM Sans', sans-serif" : undefined,
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        {unread > 0 && (
-          <span style={{
-            position: "absolute",
-            top: 2,
-            right: 2,
-            background: "#c5491f",
-            color: "#fff",
-            borderRadius: "50%",
-            width: 14,
-            height: 14,
-            fontSize: 9,
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "inherit",
-            border: "1px solid #fff",
-          }}>
-            {unread > 9 ? "9+" : unread}
-          </span>
+        <span style={{ position: "relative", display: "flex", flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {!showLabel && unread > 0 && (
+            <span style={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+              background: "#c5491f",
+              color: "#fff",
+              borderRadius: "50%",
+              width: 14,
+              height: 14,
+              fontSize: 9,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "inherit",
+              border: "1px solid #fff",
+            }}>
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </span>
+        {showLabel && (
+          <>
+            <span style={{ fontSize: 14, fontWeight: 500, flex: 1, textAlign: "left" }}>Notifications</span>
+            {unread > 0 && (
+              <span style={{
+                background: "#c5491f",
+                color: "#fff",
+                borderRadius: 9999,
+                minWidth: 18,
+                height: 18,
+                padding: "0 5px",
+                fontSize: 10,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "inherit",
+                flexShrink: 0,
+              }}>
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </>
         )}
       </button>
 

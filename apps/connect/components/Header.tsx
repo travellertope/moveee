@@ -198,7 +198,7 @@ export default function ConnectHeader() {
             </button>
             {status === "authenticated" && user && (
               <div className="ch-rail-icon-btn ch-rail-icon-btn--bell">
-                <NotificationBell />
+                <NotificationBell showLabel />
               </div>
             )}
           </div>
@@ -328,6 +328,15 @@ export default function ConnectHeader() {
         aria-label="Mobile navigation"
         style={{ top: navTop }}
       >
+        <button
+          type="button"
+          className="ch-mobile-search-btn"
+          onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+          Search Moveee…
+        </button>
+
         {NAV.map((item) => (
           <Link
             key={item.href}
@@ -344,11 +353,16 @@ export default function ConnectHeader() {
         <div className="ch-mobile-nav-divider" />
 
         {RAIL_LINKS.map((item) => (
-          <Link key={item.href} href={item.href} className="ch-mobile-nav-link">
-            {item.label}
+          <Link key={item.href} href={item.href} className="ch-mobile-nav-link ch-mobile-nav-link--icon">
+            <RailIcon name={item.icon} /> {item.label}
           </Link>
         ))}
-        <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
+        <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link ch-mobile-nav-link--icon" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
+          {theme === "dark" ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+          )}
           {theme === "dark" ? "Light mode" : "Dark mode"}
         </button>
 
