@@ -357,6 +357,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   🎵 Music Review{item.musicTitle ? ` · ${item.musicTitle}` : ""}
                 </span>
               )}
+              {item.templateType === "film-review" && (
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2B4C7E", background: "rgba(43,76,126,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
+                  🎬 Film Review{item.filmTitle ? ` · ${item.filmTitle}` : ""}
+                </span>
+              )}
               {item.templateType === "creative-showcase" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Creative Showcase
@@ -453,6 +458,33 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               {item.musicGenres && item.musicGenres.length > 0 && (
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.musicGenres.map((g) => (
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Film review rating/director/recommend/genres/favourite line */}
+          {item.templateType === "film-review" && item.filmOverallRating && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                {item.filmDirector && <span>dir. {item.filmDirector}</span>}
+                {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              </div>
+              {item.filmFavLine && (
+                <blockquote style={{
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #2B4C7E", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                }}>
+                  “{item.filmFavLine}”
+                </blockquote>
+              )}
+              {item.filmGenres && item.filmGenres.length > 0 && (
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  {item.filmGenres.map((g) => (
                     <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>

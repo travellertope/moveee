@@ -1527,7 +1527,7 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'music-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'music-review', 'film-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
         }
@@ -1637,6 +1637,30 @@ class Culture_Mobile_API {
             }
             if ( $request->get_param( 'music_preview_url' ) ) {
                 update_post_meta( $post_id, '_music_preview_url', esc_url_raw( $request->get_param( 'music_preview_url' ) ) );
+            }
+        }
+
+        // ── Film Review ────────────────────────────────────────────────────────
+        if ( $template === 'film-review' ) {
+            if ( $request->get_param( 'film_title' ) ) {
+                update_post_meta( $post_id, '_film_title',    sanitize_text_field( $request->get_param( 'film_title' ) ) );
+                update_post_meta( $post_id, '_film_director', sanitize_text_field( $request->get_param( 'film_director' ) ?: '' ) );
+            }
+            update_post_meta( $post_id, '_film_overall_rating', max( 1, min( 5, (int) $request->get_param( 'film_overall_rating' ) ) ) );
+            update_post_meta( $post_id, '_film_rating_story',   max( 0, min( 5, (int) $request->get_param( 'film_rating_story' ) ) ) );
+            update_post_meta( $post_id, '_film_rating_acting',  max( 0, min( 5, (int) $request->get_param( 'film_rating_acting' ) ) ) );
+            update_post_meta( $post_id, '_film_rating_visuals', max( 0, min( 5, (int) $request->get_param( 'film_rating_visuals' ) ) ) );
+            update_post_meta( $post_id, '_film_rating_pacing',  max( 0, min( 5, (int) $request->get_param( 'film_rating_pacing' ) ) ) );
+            if ( $request->get_param( 'film_fav_line' ) ) {
+                update_post_meta( $post_id, '_film_fav_line', sanitize_textarea_field( $request->get_param( 'film_fav_line' ) ) );
+            }
+            $film_recommend = $request->get_param( 'film_recommend' );
+            if ( $film_recommend !== null ) {
+                update_post_meta( $post_id, '_film_recommend', (bool) $film_recommend ? '1' : '0' );
+            }
+            $film_genres = $request->get_param( 'film_genres' );
+            if ( is_array( $film_genres ) ) {
+                update_post_meta( $post_id, '_film_genres', wp_json_encode( array_map( 'sanitize_text_field', $film_genres ) ) );
             }
         }
 
@@ -3554,6 +3578,16 @@ class Culture_Mobile_API {
                 'musicRecommend'          => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
                 'musicGenres'             => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
                 'musicPreviewUrl'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
+                'filmTitle'               => get_post_meta( $post->ID, '_film_title', true ) ?: '',
+                'filmDirector'            => get_post_meta( $post->ID, '_film_director', true ) ?: '',
+                'filmOverallRating'       => (int) get_post_meta( $post->ID, '_film_overall_rating', true ),
+                'filmRatingStory'         => (int) get_post_meta( $post->ID, '_film_rating_story', true ),
+                'filmRatingActing'        => (int) get_post_meta( $post->ID, '_film_rating_acting', true ),
+                'filmRatingVisuals'       => (int) get_post_meta( $post->ID, '_film_rating_visuals', true ),
+                'filmRatingPacing'        => (int) get_post_meta( $post->ID, '_film_rating_pacing', true ),
+                'filmFavLine'             => get_post_meta( $post->ID, '_film_fav_line', true ) ?: '',
+                'filmRecommend'           => get_post_meta( $post->ID, '_film_recommend', true ) === '1',
+                'filmGenres'              => json_decode( get_post_meta( $post->ID, '_film_genres', true ) ?: '[]', true ),
                 // Quote template fields
                 'quoteAuthor'             => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
                 'quoteSource'             => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
@@ -3971,6 +4005,16 @@ class Culture_Mobile_API {
             'music_recommend'           => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
             'music_genres'              => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
             'music_preview_url'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
+            'film_title'                => get_post_meta( $post->ID, '_film_title', true ) ?: '',
+            'film_director'             => get_post_meta( $post->ID, '_film_director', true ) ?: '',
+            'film_overall_rating'       => (int) get_post_meta( $post->ID, '_film_overall_rating', true ),
+            'film_rating_story'         => (int) get_post_meta( $post->ID, '_film_rating_story', true ),
+            'film_rating_acting'        => (int) get_post_meta( $post->ID, '_film_rating_acting', true ),
+            'film_rating_visuals'       => (int) get_post_meta( $post->ID, '_film_rating_visuals', true ),
+            'film_rating_pacing'        => (int) get_post_meta( $post->ID, '_film_rating_pacing', true ),
+            'film_fav_line'             => get_post_meta( $post->ID, '_film_fav_line', true ) ?: '',
+            'film_recommend'            => get_post_meta( $post->ID, '_film_recommend', true ) === '1',
+            'film_genres'               => json_decode( get_post_meta( $post->ID, '_film_genres', true ) ?: '[]', true ),
         );
     }
 

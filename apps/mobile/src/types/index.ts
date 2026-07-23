@@ -291,6 +291,17 @@ export interface FeedItem {
   musicRecommend?: boolean;
   musicGenres?: string[];
   musicPreviewUrl?: string;
+  // Film Review
+  filmTitle?: string;
+  filmDirector?: string;
+  filmOverallRating?: number;
+  filmRatingStory?: number;
+  filmRatingActing?: number;
+  filmRatingVisuals?: number;
+  filmRatingPacing?: number;
+  filmFavLine?: string;
+  filmRecommend?: boolean;
+  filmGenres?: string[];
   // Itinerary
   itineraryStops?: ItineraryStop[];
   itineraryTitle?: string;
@@ -318,7 +329,7 @@ export interface FeedItem {
 
 // ── Community post templates ─────────────────────────────────────────────────
 export type TemplateType =
-  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review' | 'music-review'
+  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review' | 'music-review' | 'film-review'
   | 'creative-showcase' | 'poll' | 'itinerary' | 'event' | 'quote';
 
 export interface PollOption {

@@ -565,6 +565,11 @@ export default function FeedCard({
                       🎵 Music Review {item.musicTitle ? `· ${item.musicTitle}` : ""}
                     </span>
                   )}
+                  {item.templateType === "film-review" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2B4C7E", background: "rgba(43,76,126,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
+                      🎬 Film Review {item.filmTitle ? `· ${item.filmTitle}` : ""}
+                    </span>
+                  )}
                   {item.templateType === "creative-showcase" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 6px", borderRadius: "2px" }}>
                       Creative Showcase
@@ -624,6 +629,14 @@ export default function FeedCard({
                 <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
                 {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
                 {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+              </div>
+            )}
+
+            {/* Film review rating/recommend */}
+            {item.templateType === "film-review" && item.filmOverallRating && (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
               </div>
             )}
 

@@ -164,11 +164,25 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
         } catch { /* preview is optional */ }
       }
 
+      // TMDB only — search results carry no crew data, so the director is
+      // resolved lazily here, just for the picked film, same reasoning as
+      // Spotify's preview lookup above.
+      let about = r.about;
+      if (externalSource === "tmdb") {
+        try {
+          const credits = await api.get<{ director: string | null }>(
+            `${PROXY}/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`,
+            false
+          );
+          about = credits?.director ?? undefined;
+        } catch { /* director is optional */ }
+      }
+
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: r.title,
         entry_type: typeFilter || "place",
         about_label: aboutFieldLabel || undefined,
-        about_value: r.about || undefined,
+        about_value: about || undefined,
         external_source: externalSource,
         external_id: r.externalId,
         cover_image_url: r.coverUrl || undefined,

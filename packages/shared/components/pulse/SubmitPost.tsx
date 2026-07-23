@@ -43,7 +43,7 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Route/Event, so it read
@@ -55,6 +55,7 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "music-review",      label: "Music",     emoji: "🎵" },
+  { slug: "film-review",       label: "Film",      emoji: "🎬" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
@@ -77,6 +78,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
   "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe." },
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
+  "film-review":       { desc: "Review a film — rate it and share your thoughts." },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
   poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
@@ -89,6 +91,7 @@ const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
   "food-review":       "Food",
   "book-review":       "Literature",
   "music-review":      "Music",
+  "film-review":       "Film",
   "itinerary":         "Travel",
   "creative-showcase": "Art",
 };
@@ -126,11 +129,13 @@ function detectTagFromContent(text: string): Tag | null {
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
   "book-review": 800,
   "music-review": 800,
+  "film-review": 800,
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
@@ -216,6 +221,16 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [musicGenres, setMusicGenres] = useState<string[]>([]);
   const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
   const [musicGenreInput, setMusicGenreInput] = useState("");
+
+  // Film review specific
+  const [filmEntry, setFilmEntry] = useState<any>(null);
+  const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
+  const [filmFavLine, setFilmFavLine] = useState("");
+  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
+  const [filmGenres, setFilmGenres] = useState<string[]>([]);
+  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
+  const [filmGenreInput, setFilmGenreInput] = useState("");
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -392,6 +407,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
       case "music-review":
         return !!musicEntry && musicOverallRating > 0 && text.trim().length >= 50 && musicRecommend !== null;
+      case "film-review":
+        return !!filmEntry && filmOverallRating > 0 && text.trim().length >= 50 && filmRecommend !== null;
       case "creative-showcase":
         return galleryFiles.length > 0 || videoUrl.trim().length > 0;
       case "poll":
@@ -521,6 +538,19 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.music_genres = musicGenres.length > 0 ? musicGenres : undefined;
         payload.music_preview_url = musicEntry?.previewUrl || undefined;
       }
+      if (template === "film-review") {
+        payload.linked_directory_id = filmEntry?.id;
+        payload.film_title = filmEntry?.title;
+        payload.film_director = filmEntry?.about;
+        payload.film_overall_rating = filmOverallRating;
+        payload.film_rating_story = filmRatings.story;
+        payload.film_rating_acting = filmRatings.acting;
+        payload.film_rating_visuals = filmRatings.visuals;
+        payload.film_rating_pacing = filmRatings.pacing;
+        payload.film_fav_line = filmFavLine.trim() || undefined;
+        payload.film_recommend = filmRecommend;
+        payload.film_genres = filmGenres.length > 0 ? filmGenres : undefined;
+      }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
         const expires = new Date();
@@ -614,6 +644,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
     "music-review": "What did you think? Standout tracks?",
+    "film-review": "What did you think? Any standout scenes?",
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
@@ -722,6 +753,18 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                 aboutFieldLabel="Artist"
                 externalSource="spotify"
                 placeholder="Search for an album *"
+              />
+            )}
+
+            {/* Film search */}
+            {template === "film-review" && (
+              <DirectorySearch
+                value={filmEntry}
+                onChange={setFilmEntry}
+                typeFilter="film"
+                aboutFieldLabel="Director"
+                externalSource="tmdb"
+                placeholder="Search for a film *"
               />
             )}
 
@@ -1123,6 +1166,108 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </>
             )}
 
+            {/* Film review — overall + breakdown ratings, favourite line, recommend, genres */}
+            {template === "film-review" && (
+              <>
+                <StarRating value={filmOverallRating} onChange={setFilmOverallRating} label="Overall rating" />
+                <MultiRating
+                  ratings={[
+                    { label: "Story", value: filmRatings.story },
+                    { label: "Acting", value: filmRatings.acting },
+                    { label: "Visuals", value: filmRatings.visuals },
+                    { label: "Pacing", value: filmRatings.pacing },
+                  ]}
+                  onChange={(label, v) => setFilmRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                />
+                <textarea
+                  value={filmFavLine}
+                  onChange={e => setFilmFavLine(e.target.value.slice(0, 300))}
+                  placeholder="Favourite line (optional)"
+                  rows={2}
+                  className="composer-textarea composer-textarea--italic"
+                />
+                <p className="composer-field-label">Would you recommend it?</p>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setFilmRecommend(true)}
+                    className={`composer-template-pill${filmRecommend === true ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👍 Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilmRecommend(false)}
+                    className={`composer-template-pill${filmRecommend === false ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👎 No
+                  </button>
+                </div>
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
+                  {FILM_GENRES.map(g => {
+                    const active = filmGenres.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setFilmGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
+                        className="composer-guide-chip"
+                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                  {filmGenres.filter(g => !FILM_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setFilmGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showFilmGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={filmGenreInput}
+                        onChange={e => setFilmGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = filmGenreInput.trim();
+                            if (v && !filmGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setFilmGenres(prev => [...prev, v]);
+                            }
+                            setFilmGenreInput("");
+                            setShowFilmGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setFilmGenreInput("");
+                            setShowFilmGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowFilmGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Multi-rating — food-review */}
             {template === "food-review" && (
               <MultiRating
@@ -1188,7 +1333,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && (
+            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -1218,8 +1363,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
               style={{ display: "none" }}
             />
 

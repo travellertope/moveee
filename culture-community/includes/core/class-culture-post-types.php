@@ -174,6 +174,17 @@ class Culture_Post_Types {
             '_music_recommend'         => 'string',
             '_music_genres'            => 'string', // JSON: string[]
             '_music_preview_url'       => 'string', // denormalized from the linked directory entry at submit time
+            // Film Review template
+            '_film_title'              => 'string',
+            '_film_director'           => 'string',
+            '_film_overall_rating'     => 'integer',
+            '_film_rating_story'       => 'integer',
+            '_film_rating_acting'      => 'integer',
+            '_film_rating_visuals'     => 'integer',
+            '_film_rating_pacing'      => 'integer',
+            '_film_fav_line'           => 'string',
+            '_film_recommend'          => 'string',
+            '_film_genres'             => 'string', // JSON: string[]
             // Community-organiser event template (separate from the culture_event CPT above)
             '_event_date'              => 'string',
             '_event_end_date'          => 'string',

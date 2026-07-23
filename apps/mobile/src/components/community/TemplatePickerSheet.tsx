@@ -8,7 +8,7 @@ import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../.
 import { useColors } from "../../hooks/useColors";
 
 export type TemplateId =
-  | "post" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review"
+  | "post" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review"
   | "creative-showcase" | "poll" | "itinerary" | "event" | "quote";
 
 export interface TemplateDef {
@@ -26,6 +26,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { id: "food-review",       emoji: "🍽️",  label: "Food Review",      desc: "Review a dish or restaurant",         color: "#B38238" },
   { id: "book-review",       emoji: "📚",  label: "Book Review",      desc: "Review a book you've read",           color: "#6B48A8" },
   { id: "music-review",      emoji: "🎵",  label: "Music Review",     desc: "Review an album you've heard",        color: "#0D7377" },
+  { id: "film-review",       emoji: "🎬",  label: "Film Review",      desc: "Review a film you've watched",        color: "#2B4C7E" },
   { id: "creative-showcase", emoji: "🎨",  label: "Showcase",         desc: "Show your creative work",             color: "#C5491F" },
   { id: "poll",              emoji: "📊",  label: "Poll",             desc: "Ask the community",                   color: "#6B48A8" },
   { id: "itinerary",         emoji: "🗺️",  label: "Itinerary",        desc: "Share a route or trip",               color: "#2D6A4F" },

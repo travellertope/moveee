@@ -3192,10 +3192,10 @@ feed-rendering at all, so this fix is mobile-only — no `packages/shared` or
 
 ### External catalog search (Google Books / Spotify / TMDB) — Book Review web parity + Music Review (July 2026)
 
-Book Review reached full web parity (it was previously mobile-only) and a new **Music Review**
-template was built on both platforms, both backed by a reusable external-catalog-search layer.
-**Film Review (TMDB) is planned but not yet built** — follow the exact same pattern documented
-here (`typeFilter="film"`, `externalSource="tmdb"`, `aboutFieldLabel="Director"`) when it is.
+Book Review reached full web parity (it was previously mobile-only) and **Music Review** and
+**Film Review** templates were built on both platforms (July 2026), all three backed by the same
+reusable external-catalog-search layer. All three source integrations (Google Books, Spotify,
+TMDB) are now live — this section is the reference for how the pattern works, not a TODO.
 
 - **Normalized external result shape**: every `/api/external/{source}/search` proxy route
   (`google_books` | `spotify` | `tmdb`) returns `{externalId, title, about?, year?, coverUrl?}`
@@ -3203,17 +3203,20 @@ here (`typeFilter="film"`, `externalSource="tmdb"`, `aboutFieldLabel="Director"`
   (mobile hits `apps/site` via `PROXY`, web hits `apps/connect` via a relative fetch). Google
   Books needs an optional `GOOGLE_BOOKS_API_KEY` env var (works keyless at low volume). Spotify
   needs `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` (client-credentials OAuth via
-  `packages/shared/lib/spotify.ts`'s `getSpotifyToken()`, module-level cached). Both degrade to
-  empty results (not an error) when credentials are absent — the manual "add anyway" fallback
-  always still works.
+  `packages/shared/lib/spotify.ts`'s `getSpotifyToken()`, module-level cached). TMDB has **no
+  keyless tier** — needs `TMDB_API_KEY` (v3 API, plain `api_key` query param, no OAuth) or every
+  search returns empty. All three degrade to empty results (not an error) when credentials are
+  absent — the manual "add anyway" fallback always still works.
 - **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
   `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
   `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the
   external catalog in parallel with the local directory search and shows results in a "From
   {Source}" group; selecting one calls `/api/directory/quick-create` with
-  `external_source`/`external_id`/`cover_image_url` (Spotify only, also `preview_url`, resolved
-  via a separate lazy `/api/external/spotify/preview?albumId=` call made only on selection, not
-  per search result — album search results carry no track/preview data). The manual "add
+  `external_source`/`external_id`/`cover_image_url` plus a source-specific lazy lookup made only
+  on selection, never per search result (search responses carry no track/crew data): Spotify
+  resolves `preview_url` via `/api/external/spotify/preview?albumId=`, TMDB resolves the
+  director via `/api/external/tmdb/credits?movieId=` (reads `crew.find(c => c.job ===
+  "Director")` from TMDB's `/movie/{id}/credits`) and passes it as `about_value`. The manual "add
   anyway" fallback is **always** available alongside external results, not just when there are
   zero local matches, on both platforms.
 - **Dedup**: `Culture_Directory::find_by_external_id($source, $external_id)` is checked first in
@@ -3240,6 +3243,43 @@ Review. Badge color teal `#0D7377` everywhere (web literal + mobile `templateMus
 `templateMusicText`, light `#E6FFFA`/`#0D7377`, dark `#042F2E`/`#5EEAD4`) — Book Review is purple
 `#6B48A8`. **If a Music Review surface ever shows the wrong purple**, it's this exact mixup —
 happened once already in the web `AudioPreviewButton`, fixed.
+
+**Film Review template** — directory type `film` (pre-seeded, no new taxonomy needed), rating
+breakdown is Story/Acting/Visuals/Pacing, uses "favourite line" instead of "favourite quote"/
+"favourite lyric". Like Music Review, no status field. Deliberately ungated, same as Book/Music
+Review. No audio-preview equivalent — TMDB has no preview-clip concept, so `AudioPreviewButton`
+is not rendered anywhere on Film Review surfaces. Badge color blue `#2B4C7E` everywhere (web
+literal + mobile `templateFilmBg`/`templateFilmText`, light `#E8EEF7`/`#2B4C7E`, dark
+`#16233A`/`#8FB4E3`) — distinct from Book's purple and Music's teal.
+
+**"+ Other" custom genre input (Book/Music/Film Review, all on both platforms)** — `BOOK_GENRES`/
+`MUSIC_GENRES`/`FILM_GENRES` are fixed suggestion lists, not an enum the backend validates
+against (genres are stored as plain `sanitize_text_field`-ed strings in a JSON array, no
+taxonomy). Every genre chip row therefore ends with a "+ Other" chip that reveals a small text
+input (`show{X}GenreInput`/`{x}GenreInput` state pair) — Enter/blur commits the trimmed value
+into the same genres array (deduped case-insensitively) and the chip UI renders it identically to
+a predefined selection (`{x}Genres.filter(g => !{X}_GENRES.includes(g))`, in addition to the
+predefined `.map()`). If a future genre list needs the same escape hatch, mirror this exact
+pattern rather than only offering the fixed list.
+
+**Composer selection-chip rows wrap, they don't scroll (fixed July 2026)** — every chip-style
+selection row in the community composer (genres, section tags, cuisine, showcase medium, event
+category, quote type, book status) now uses `flex-wrap: wrap` (web: `.composer-chip-wrap` class;
+mobile: `styles.chipRow`/`.priceChipRow` with `flexWrap: "wrap"`, plain `<View>` not `<ScrollView
+horizontal>`) instead of a horizontally-scrolling single row. The old scroll pattern hid options
+off-screen with no visual affordance, and on narrow mobile widths the ratings-breakdown box
+(`.composer-multi-rating`) actually overflowed the viewport. **If you add a new chip-style
+selection row to the composer, wrap it — don't reach for horizontal scroll.** The one exception
+left as intentionally-scrollable: photo/image thumbnail strips (e.g. `.photosRow` on mobile) —
+those are a different UI pattern (browsing attached media, not choosing from a fixed option set)
+and were not touched by this fix.
+
+**Text-prefill "guide chips" removed (all templates, both platforms, fixed July 2026)** — every
+template used to show a row of tappable phrases (e.g. "Finished it and honestly:") above the
+empty textarea that inserted the phrase into the field on tap. Removed at the user's request as
+unnecessary friction — `TEMPLATE_GUIDES` (web) and `TEMPLATES` (mobile) no longer carry a `chips`
+field, only `desc` (web) / nothing extra (mobile, `tmplDef.desc` is still shown). Do not
+reintroduce this pattern.
 
 **Audio preview playback (30s Spotify clip)**: `AudioPreviewButton` exists on both platforms —
 `packages/shared/components/pulse/AudioPreviewButton.tsx` (web, plain `<audio>` element) and

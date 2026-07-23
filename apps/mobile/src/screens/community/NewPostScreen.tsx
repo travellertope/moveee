@@ -71,6 +71,11 @@ const TEMPLATES: TemplateMeta[] = [
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
+    id: "film-review", minText: 50, maxText: 800,
+    placeholder: "What did you think? Any standout scenes?",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
     id: "creative-showcase", minText: 0, maxText: 500,
     placeholder: "Tell us about the work, your process, or inspiration…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
@@ -151,6 +156,7 @@ const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; previewUrl?: string | null }
@@ -289,6 +295,16 @@ export default function NewPostScreen() {
   const [musicGenres, setMusicGenres] = useState<string[]>([]);
   const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
   const [musicGenreInput, setMusicGenreInput] = useState("");
+
+  // Film Review state
+  const [filmEntry, setFilmEntry] = useState<DirectoryEntry | null>(null);
+  const [filmOverallRating, setFilmOverallRating] = useState(0);
+  const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
+  const [filmFavLine, setFilmFavLine] = useState("");
+  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
+  const [filmGenres, setFilmGenres] = useState<string[]>([]);
+  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
+  const [filmGenreInput, setFilmGenreInput] = useState("");
 
   // Itinerary extras
   const [itineraryTitle, setItineraryTitle] = useState("");
@@ -469,6 +485,11 @@ const uploadImages = async (): Promise<string[]> => {
       if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
       if (musicRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this album?"); return; }
+    } else if (template === "film-review") {
+      if (!filmEntry) { Alert.alert("Film required", "Search and select a film."); return; }
+      if (filmOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
+      if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
+      if (filmRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this film?"); return; }
     } else if (template === "itinerary") {
       if (!itineraryTitle.trim()) { Alert.alert("Title required", "Add a trip title."); return; }
       if (stops.filter((s) => s.name.trim()).length < 2) {
@@ -550,6 +571,28 @@ const uploadImages = async (): Promise<string[]> => {
           music_recommend: musicRecommend,
           music_genres: musicGenres.length > 0 ? musicGenres : undefined,
           music_preview_url: musicEntry!.previewUrl || undefined,
+          hub_id: hubId || undefined,
+        } as Record<string, unknown>);
+        if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
+        return;
+      }
+
+      if (template === "film-review") {
+        await api.post(`${MOBILE_API}/community/submit`, {
+          template_type: "film-review",
+          content: text,
+          linked_directory_id: filmEntry!.id,
+          film_title: filmEntry!.title,
+          film_director: filmEntry!.about,
+          film_overall_rating: filmOverallRating,
+          film_rating_story: filmRatings.story,
+          film_rating_acting: filmRatings.acting,
+          film_rating_visuals: filmRatings.visuals,
+          film_rating_pacing: filmRatings.pacing,
+          film_fav_line: filmFavLine || undefined,
+          film_recommend: filmRecommend,
+          film_genres: filmGenres.length > 0 ? filmGenres : undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
@@ -648,11 +691,13 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "creative-showcase") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
+    if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50 || filmRecommend === null;
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
   }, [submitting, template, text, eventTitle, eventDate, culturalTakeHeadline, showcaseTitle, images.length,
     bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating, musicRecommend,
+    filmEntry, filmOverallRating, filmRecommend,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
@@ -1323,6 +1368,147 @@ const uploadImages = async (): Promise<string[]> => {
     </>
   );
 
+  const renderFilmReview = () => (
+    <>
+      {/* Film search */}
+      <View style={styles.fieldGroup}>
+        <DirectorySearch
+          selected={filmEntry}
+          onSelect={setFilmEntry}
+          label="Film *"
+          typeFilter="film"
+          aboutFieldLabel="Director"
+          externalSource="tmdb"
+        />
+      </View>
+
+      {/* Overall rating */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Overall rating *</Text>
+        <StarRating value={filmOverallRating} onChange={setFilmOverallRating} />
+      </View>
+
+      {/* Ratings breakdown */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Ratings *</Text>
+        <View style={styles.bookRatingsContainer}>
+          {(["story", "acting", "visuals", "pacing"] as const).map((key) => (
+            <BookRatingsRow
+              key={key}
+              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              value={filmRatings[key]}
+              onChange={(v) => setFilmRatings((prev) => ({ ...prev, [key]: v }))}
+              styles={styles}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Review */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Your review *</Text>
+        <MentionInput
+          inputRef={textRef}
+          style={styles.borderedTextarea}
+          value={text}
+          onChangeText={handleTextChange}
+          multiline
+          placeholder="What did you think? Any standout scenes?"
+          placeholderTextColor={c.ghost}
+          maxLength={tmpl.maxText + 50}
+          textAlignVertical="top"
+        />
+      </View>
+
+      {/* Favourite line */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Favourite line (optional)</Text>
+        <View style={styles.favQuoteWrap}>
+          <TextInput
+            style={styles.favQuoteInput}
+            value={filmFavLine}
+            onChangeText={setFilmFavLine}
+            multiline
+            placeholder="A line that stayed with you…"
+            placeholderTextColor={c.ghost}
+            textAlignVertical="top"
+          />
+        </View>
+      </View>
+
+      {/* Recommend */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+        <View style={styles.recommendRow}>
+          <TouchableOpacity
+            style={[styles.recommendYes, filmRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+            onPress={() => setFilmRecommend(true)}
+          >
+            <Text style={[styles.recommendText, filmRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.recommendNo, filmRecommend === false && styles.recommendNoActive]}
+            onPress={() => setFilmRecommend(false)}
+          >
+            <Text style={[styles.recommendNoText, filmRecommend === false && styles.recommendText]}>👎 No</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Genres */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Genres (optional)</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {FILM_GENRES.map((g) => {
+            const active = filmGenres.includes(g);
+            return (
+              <TouchableOpacity
+                key={g}
+                style={[styles.sectionTag, active && styles.sectionTagActive]}
+                onPress={() => setFilmGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+              >
+                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          {filmGenres.filter((g) => !FILM_GENRES.includes(g)).map((g) => (
+            <TouchableOpacity
+              key={g}
+              style={[styles.sectionTag, styles.sectionTagActive]}
+              onPress={() => setFilmGenres((prev) => prev.filter((x) => x !== g))}
+            >
+              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+            </TouchableOpacity>
+          ))}
+          {showFilmGenreInput ? (
+            <TextInput
+              style={styles.genreInput}
+              value={filmGenreInput}
+              onChangeText={setFilmGenreInput}
+              placeholder="Custom genre"
+              placeholderTextColor={c.ghost}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const v = filmGenreInput.trim();
+                if (v && !filmGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                  setFilmGenres((prev) => [...prev, v]);
+                }
+                setFilmGenreInput("");
+                setShowFilmGenreInput(false);
+              }}
+              onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+            />
+          ) : (
+            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowFilmGenreInput(true)}>
+              <Text style={styles.sectionTagText}>+ Other</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </>
+  );
+
   const renderPoll = () => (
     <>
       <View style={styles.fieldGroup}>
@@ -1691,6 +1877,7 @@ const uploadImages = async (): Promise<string[]> => {
       case "creative-showcase":return renderCreativeShowcase();
       case "book-review":      return renderBookReview();
       case "music-review":     return renderMusicReview();
+      case "film-review":      return renderFilmReview();
       case "poll":             return renderPoll();
       case "itinerary":        return renderItinerary();
       case "event":            return renderEvent();
