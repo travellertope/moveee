@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, CULTURE_API } from "../../api/client";
@@ -16,6 +16,16 @@ export interface DirectoryEntry {
   /** Generic labelled bio field — Author for books, Artist for music,
    * Director for film, … whatever aboutFieldLabel was set to. */
   about?: string;
+  thumbnail?: string | null;
+}
+
+/** Normalized shape every /directory/{source}/search proxy returns. */
+interface ExternalResult {
+  externalId: string;
+  title: string;
+  about?: string;
+  year?: string;
+  coverUrl?: string | null;
 }
 
 interface Props {
@@ -28,11 +38,16 @@ interface Props {
   /** Show a labelled field ("Author", "Artist", "Director", …) instead of
    * City on the quick-create form. */
   aboutFieldLabel?: string;
+  /** When set, also searches this external catalog alongside the local
+   * directory and offers each result as a one-tap create (prefilled
+   * title/about/cover, deduped server-side by external ID). */
+  externalSource?: "google_books" | "spotify" | "tmdb";
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>;
+let externalDebounceTimer: ReturnType<typeof setTimeout>;
 
-export default function DirectorySearch({ onSelect, selected, label, typeFilter, aboutFieldLabel }: Props) {
+export default function DirectorySearch({ onSelect, selected, label, typeFilter, aboutFieldLabel, externalSource }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +58,11 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
   const [newName, setNewName] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newAbout, setNewAbout] = useState("");
+
+  // External catalog search
+  const [externalResults, setExternalResults] = useState<ExternalResult[]>([]);
+  const [externalLoading, setExternalLoading] = useState(false);
+  const [creatingExternalId, setCreatingExternalId] = useState<string | null>(null);
 
   const search = useCallback((q: string) => {
     clearTimeout(debounceTimer);
@@ -65,17 +85,38 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
         setLoading(false);
       }
     }, 350);
-  }, []);
+  }, [typeFilter]);
+
+  const searchExternal = useCallback((q: string) => {
+    clearTimeout(externalDebounceTimer);
+    if (!externalSource || !q.trim()) { setExternalResults([]); return; }
+    externalDebounceTimer = setTimeout(async () => {
+      setExternalLoading(true);
+      try {
+        const data = await api.get<ExternalResult[]>(
+          `${PROXY}/external/${externalSource}/search?q=${encodeURIComponent(q)}`,
+          false
+        );
+        setExternalResults(data ?? []);
+      } catch {
+        setExternalResults([]);
+      } finally {
+        setExternalLoading(false);
+      }
+    }, 350);
+  }, [externalSource]);
 
   const handleChange = (v: string) => {
     setQuery(v);
     search(v);
+    searchExternal(v);
   };
 
   const handleSelect = (entry: DirectoryEntry) => {
     onSelect(entry);
     setQuery("");
     setResults([]);
+    setExternalResults([]);
     setShowList(false);
   };
 
@@ -102,9 +143,31 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
     }
   };
 
+  const handleSelectExternal = async (r: ExternalResult) => {
+    if (!externalSource) return;
+    setCreatingExternalId(r.externalId);
+    try {
+      const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
+        title: r.title,
+        entry_type: typeFilter || "place",
+        about_label: aboutFieldLabel || undefined,
+        about_value: r.about || undefined,
+        external_source: externalSource,
+        external_id: r.externalId,
+        cover_image_url: r.coverUrl || undefined,
+      });
+      handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null });
+    } catch {
+      // silent
+    } finally {
+      setCreatingExternalId(null);
+    }
+  };
+
   if (selected) {
     return (
       <View style={styles.selectedRow}>
+        {selected.thumbnail ? <Image source={{ uri: selected.thumbnail }} style={styles.selectedThumb} /> : null}
         <View style={{ flex: 1 }}>
           <Text style={styles.selectedName}>{selected.title}</Text>
           {selected.about ? <Text style={styles.selectedCity}>{selected.about}</Text> : selected.city ? <Text style={styles.selectedCity}>{selected.city}</Text> : null}
@@ -157,6 +220,10 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
     );
   }
 
+  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "Spotify" : "TMDB";
+  const noLocalMatches = showList && results.length === 0;
+  const noExternalMatches = !externalSource || (!externalLoading && externalResults.length === 0);
+
   return (
     <View style={styles.wrap}>
       {label ? <Text style={styles.sectionLabel}>{label}</Text> : null}
@@ -169,31 +236,56 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
           placeholder="Search directory…"
           placeholderTextColor={colors.ghost}
         />
-        {loading && <ActivityIndicator size="small" color={colors.gold} />}
+        {(loading || externalLoading) && <ActivityIndicator size="small" color={colors.gold} />}
       </View>
 
       {showList && (
         <View style={styles.dropdown}>
-          {results.length === 0 ? (
+          {results.slice(0, 8).map((r) => (
+            <TouchableOpacity key={r.id} style={styles.resultRow} onPress={() => handleSelect(r)}>
+              <Text style={styles.resultTitle}>{r.title}</Text>
+              {r.about ? <Text style={styles.resultCity}>{r.about}</Text> : r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
+            </TouchableOpacity>
+          ))}
+
+          {externalSource && (externalLoading || externalResults.length > 0) && (
+            <View style={styles.externalGroup}>
+              <Text style={styles.externalLabel}>From {externalSourceLabel}</Text>
+              {externalResults.map((r) => (
+                <TouchableOpacity
+                  key={r.externalId}
+                  style={styles.resultRow}
+                  onPress={() => handleSelectExternal(r)}
+                  disabled={creatingExternalId === r.externalId}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                    {r.coverUrl ? <Image source={{ uri: r.coverUrl }} style={styles.resultThumb} /> : null}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.resultTitle}>{r.title}</Text>
+                      {(r.about || r.year) && (
+                        <Text style={styles.resultCity}>{[r.about, r.year].filter(Boolean).join(" · ")}</Text>
+                      )}
+                    </View>
+                  </View>
+                  {creatingExternalId === r.externalId && <ActivityIndicator size="small" color={colors.gold} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {noLocalMatches && noExternalMatches && (
             <View style={styles.noResults}>
               <Text style={styles.noResultsText}>No results for "{query}"</Text>
               <TouchableOpacity onPress={() => setCreating(true)}>
-                <Text style={styles.addNewLink}>+ Add to directory</Text>
+                <Text style={styles.addNewLink}>+ Add manually</Text>
               </TouchableOpacity>
             </View>
-          ) : (
-            <>
-              {results.slice(0, 8).map((r) => (
-                <TouchableOpacity key={r.id} style={styles.resultRow} onPress={() => handleSelect(r)}>
-                  <Text style={styles.resultTitle}>{r.title}</Text>
-                  {r.about ? <Text style={styles.resultCity}>{r.about}</Text> : r.city ? <Text style={styles.resultCity}>{r.city}</Text> : null}
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity style={styles.addNewRow} onPress={() => setCreating(true)}>
-                <Ionicons name="add" size={14} color={colors.gold} />
-                <Text style={styles.addNewLink}>Add to directory</Text>
-              </TouchableOpacity>
-            </>
+          )}
+          {!(noLocalMatches && noExternalMatches) && (
+            <TouchableOpacity style={styles.addNewRow} onPress={() => setCreating(true)}>
+              <Ionicons name="add" size={14} color={colors.gold} />
+              <Text style={styles.addNewLink}>Add manually</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -221,21 +313,30 @@ const styles = StyleSheet.create({
   noResultsText:{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
 
   resultRow: {
+    flexDirection: "row", alignItems: "center",
     paddingHorizontal: space[3], paddingVertical: space[2] + 2,
     borderBottomWidth: 1, borderBottomColor: colors.rule,
   },
   resultTitle: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ink },
   resultCity:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginTop: 1 },
+  resultThumb: { width: 28, height: 28, borderRadius: 4 },
+
+  externalGroup: { borderTopWidth: 1, borderTopColor: colors.rule, paddingTop: 2 },
+  externalLabel: {
+    fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute,
+    letterSpacing: 0.8, textTransform: "uppercase", paddingHorizontal: space[3], paddingTop: space[2],
+  },
 
   addNewRow:  { flexDirection: "row", alignItems: "center", gap: 4, padding: space[3] },
   addNewLink: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.gold },
 
   // selected
   selectedRow: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row", alignItems: "center", gap: space[2],
     backgroundColor: colors.goldLight, borderWidth: 1, borderColor: colors.goldBorder,
     borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: space[2],
   },
+  selectedThumb: { width: 32, height: 32, borderRadius: 4 },
   selectedName: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
   selectedCity: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
   clearBtn:     { padding: 4 },

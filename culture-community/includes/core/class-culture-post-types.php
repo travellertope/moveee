@@ -231,6 +231,7 @@ class Culture_Post_Types {
             // see Culture_Directory::find_by_external_id().
             '_external_source'        => 'string',   // 'google_books' | 'spotify' | 'tmdb'
             '_external_id'            => 'string',   // ISBN / Spotify album ID / TMDB ID
+            '_external_cover_url'     => 'string',   // cover/poster art URL, not sideloaded into media library
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(

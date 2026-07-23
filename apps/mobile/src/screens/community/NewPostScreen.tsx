@@ -1009,6 +1009,7 @@ const uploadImages = async (): Promise<string[]> => {
           label="Book *"
           typeFilter="book"
           aboutFieldLabel="Author"
+          externalSource="google_books"
         />
       </View>
 

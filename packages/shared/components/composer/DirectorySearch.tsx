@@ -14,6 +14,16 @@ interface DirectoryResult {
   about?: string;
 }
 
+/** Normalized shape every /api/external/{source}/search proxy returns,
+ * regardless of the upstream API's own response shape. */
+interface ExternalResult {
+  externalId: string;
+  title: string;
+  about?: string;
+  year?: string;
+  coverUrl?: string | null;
+}
+
 interface Props {
   value: DirectoryResult | null;
   onChange: (entry: DirectoryResult | null) => void;
@@ -22,9 +32,14 @@ interface Props {
   /** Show a labelled field ("Author", "Artist", "Director", …) instead of
    * City on the quick-create form. */
   aboutFieldLabel?: string;
+  /** When set, also searches this external catalog alongside the local
+   * directory and offers each result as a one-tap create (prefilled
+   * title/about/cover, deduped server-side by external ID) — no manual
+   * quick-create form needed for these. */
+  externalSource?: "google_books" | "spotify" | "tmdb";
 }
 
-export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel }: Props) {
+export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel, externalSource }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -35,6 +50,12 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   const [cityInput, setCityInput] = useState("");
   const [aboutInput, setAboutInput] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // External catalog search (Google Books/Spotify/TMDB)
+  const [externalResults, setExternalResults] = useState<ExternalResult[]>([]);
+  const [externalLoading, setExternalLoading] = useState(false);
+  const [creatingExternalId, setCreatingExternalId] = useState<string | null>(null);
+  const externalTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (query.length < 2) { setResults([]); return; }
@@ -51,10 +72,24 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     }, 300);
   }, [query, typeFilter]);
 
+  useEffect(() => {
+    if (!externalSource || query.length < 2) { setExternalResults([]); return; }
+    if (externalTimerRef.current) clearTimeout(externalTimerRef.current);
+    externalTimerRef.current = setTimeout(async () => {
+      setExternalLoading(true);
+      try {
+        const res = await fetch(`/api/external/${externalSource}/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) setExternalResults(await res.json());
+      } catch {}
+      setExternalLoading(false);
+    }, 350);
+  }, [query, externalSource]);
+
   function select(entry: DirectoryResult) {
     onChange(entry);
     setQuery("");
     setResults([]);
+    setExternalResults([]);
     setOpen(false);
     setShowCityInput(false);
     setCityInput("");
@@ -98,9 +133,42 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     setCreating(false);
   }
 
+  async function selectExternal(r: ExternalResult) {
+    if (!externalSource) return;
+    setCreatingExternalId(r.externalId);
+    try {
+      const res = await fetch("/api/directory/quick-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: r.title,
+          entry_type: typeFilter || "place",
+          about_label: aboutFieldLabel || undefined,
+          about_value: r.about || undefined,
+          external_source: externalSource,
+          external_id: r.externalId,
+          cover_image_url: r.coverUrl || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        select({
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          type: typeFilter || "place",
+          thumbnail: r.coverUrl || null,
+          about: data.about || r.about || undefined,
+        });
+      }
+    } catch {}
+    setCreatingExternalId(null);
+  }
+
   if (value) {
     return (
       <div className="composer-dir-selected">
+        {value.thumbnail && <img src={value.thumbnail} alt="" className="composer-dir-selected-thumb" />}
         <span className="composer-dir-selected-name">
           {value.title}
           {value.about && <span className="composer-dir-selected-city">, {value.about}</span>}
@@ -110,6 +178,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       </div>
     );
   }
+
+  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "Spotify" : "TMDB";
 
   return (
     <div className="composer-dir-search">
@@ -124,17 +194,56 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       {open && query.length >= 2 && (
         <div className="composer-dir-dropdown">
           {loading && <div className="composer-dir-loading">Searching...</div>}
-          {!loading && results.length === 0 && (
+
+          {results.map((r) => (
+            <button key={r.id} type="button" className="composer-dir-result" onClick={() => select(r)}>
+              {r.thumbnail && <img src={r.thumbnail} alt="" className="composer-dir-thumb" />}
+              <span className="composer-dir-result-text">
+                <span className="composer-dir-result-title">{r.title}</span>
+                {r.about ? <span className="composer-dir-result-city">{r.about}</span> : r.city && <span className="composer-dir-result-city">{r.city}</span>}
+              </span>
+              {r.type && <span className="composer-dir-result-type">{r.type}</span>}
+            </button>
+          ))}
+
+          {externalSource && (externalLoading || externalResults.length > 0) && (
+            <div className="composer-dir-external-group">
+              <div className="composer-dir-external-label">From {externalSourceLabel}</div>
+              {externalLoading && <div className="composer-dir-loading">Searching...</div>}
+              {externalResults.map((r) => (
+                <button
+                  key={r.externalId}
+                  type="button"
+                  className="composer-dir-result"
+                  disabled={creatingExternalId === r.externalId}
+                  onClick={() => selectExternal(r)}
+                >
+                  {r.coverUrl && <img src={r.coverUrl} alt="" className="composer-dir-thumb" />}
+                  <span className="composer-dir-result-text">
+                    <span className="composer-dir-result-title">{r.title}</span>
+                    {(r.about || r.year) && (
+                      <span className="composer-dir-result-city">
+                        {[r.about, r.year].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </span>
+                  {creatingExternalId === r.externalId && <span className="composer-dir-result-type">Adding…</span>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loading && !externalLoading && (
             <div className="composer-dir-empty">
               {!showCityInput ? (
                 <>
-                  <span>No matches for &ldquo;{query}&rdquo;.</span>
+                  {results.length === 0 && externalResults.length === 0 && <span>No matches for &ldquo;{query}&rdquo;.</span>}
                   <button
                     type="button"
                     onClick={() => setShowCityInput(true)}
                     className="composer-dir-create-btn"
                   >
-                    + Add &ldquo;{query}&rdquo; to directory
+                    + Add &ldquo;{query}&rdquo; manually
                   </button>
                 </>
               ) : (
@@ -187,16 +296,6 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
               )}
             </div>
           )}
-          {results.map((r) => (
-            <button key={r.id} type="button" className="composer-dir-result" onClick={() => select(r)}>
-              {r.thumbnail && <img src={r.thumbnail} alt="" className="composer-dir-thumb" />}
-              <span className="composer-dir-result-text">
-                <span className="composer-dir-result-title">{r.title}</span>
-                {r.about ? <span className="composer-dir-result-city">{r.about}</span> : r.city && <span className="composer-dir-result-city">{r.city}</span>}
-              </span>
-              {r.type && <span className="composer-dir-result-type">{r.type}</span>}
-            </button>
-          ))}
         </div>
       )}
     </div>

@@ -528,7 +528,11 @@ class Culture_Directory {
         foreach ( $query->posts as $post ) {
             $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
             $type_slug  = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
-            $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
+            // Falls back to the external API's cover/poster URL (Google
+            // Books/Spotify/TMDB quick-create) when there's no real WP
+            // featured image — see _external_cover_url in handle_quick_create().
+            $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: false );
 
             $results[] = array(
                 'id'        => $post->ID,
@@ -760,6 +764,9 @@ class Culture_Directory {
         // External catalog dedup (Google Books/Spotify/TMDB quick-create).
         $external_source = sanitize_key( $request->get_param( 'external_source' ) );
         $external_id     = sanitize_text_field( $request->get_param( 'external_id' ) );
+        // Cover art from the external API — stored as a plain URL rather than
+        // sideloaded into the media library (no local re-hosting for v1).
+        $cover_image_url = esc_url_raw( $request->get_param( 'cover_image_url' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -771,11 +778,13 @@ class Culture_Directory {
             $existing = self::find_by_external_id( $external_source, $external_id );
             if ( $existing ) {
                 return rest_ensure_response( array(
-                    'id'    => $existing->ID,
-                    'slug'  => $existing->post_name,
-                    'title' => $existing->post_title,
-                    'city'  => get_post_meta( $existing->ID, '_entry_city', true ) ?: '',
-                    'about' => self::get_first_about_field( $existing->ID ),
+                    'id'        => $existing->ID,
+                    'slug'      => $existing->post_name,
+                    'title'     => $existing->post_title,
+                    'city'      => get_post_meta( $existing->ID, '_entry_city', true ) ?: '',
+                    'about'     => self::get_first_about_field( $existing->ID ),
+                    'thumbnail' => get_the_post_thumbnail_url( $existing->ID, 'thumbnail' )
+                        ?: ( get_post_meta( $existing->ID, '_external_cover_url', true ) ?: null ),
                 ) );
             }
         }
@@ -812,6 +821,9 @@ class Culture_Directory {
             update_post_meta( $post_id, '_external_source', $external_source );
             update_post_meta( $post_id, '_external_id', $external_id );
         }
+        if ( $cover_image_url ) {
+            update_post_meta( $post_id, '_external_cover_url', $cover_image_url );
+        }
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
@@ -820,12 +832,13 @@ class Culture_Directory {
         }
 
         return rest_ensure_response( array(
-            'id'     => $post_id,
-            'slug'   => get_post_field( 'post_name', $post_id ),
-            'title'  => $title,
-            'city'   => $city,
-            'about'  => $about_value,
-            'author' => $about_value, // back-compat alias, see get_first_about_field()
+            'id'        => $post_id,
+            'slug'      => get_post_field( 'post_name', $post_id ),
+            'title'     => $title,
+            'city'      => $city,
+            'about'     => $about_value,
+            'author'    => $about_value, // back-compat alias, see get_first_about_field()
+            'thumbnail' => $cover_image_url ?: null,
         ) );
     }
 
