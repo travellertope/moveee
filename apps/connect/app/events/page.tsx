@@ -144,28 +144,6 @@ export default async function EventsPage() {
         />
       </div>
 
-      {/* ── CONNECT CTA BAND ── */}
-      <section className="evt-connect-band">
-        <div className="evt-connect-inner">
-          <div>
-            <span className="evt-connect-eyebrow">Moveee</span>
-            <h3>Members go <em>first</em>.</h3>
-            <p>Private views, supper tables, and early RSVP access — all yours with a Moveee membership. The culture doesn&rsquo;t wait; neither should you.</p>
-          </div>
-          <div>
-            <div className="evt-connect-perks">
-              <div className="evt-perk"><span className="evt-perk-num">01</span><p>Early RSVP on <em>all events</em> — 48 hours before public</p></div>
-              <div className="evt-perk"><span className="evt-perk-num">02</span><p>Access to <em>private views</em> and members-only dinners</p></div>
-              <div className="evt-perk"><span className="evt-perk-num">03</span><p>Priority for <em>Origins journeys</em> and supper tables</p></div>
-              <div className="evt-perk"><span className="evt-perk-num">04</span><p>15% off everything in the <em>Lifestyle</em> shop, always</p></div>
-            </div>
-            <div className="evt-connect-cta">
-              <Link href="/feed" className="evt-btn-white">Become a Member →</Link>
-              <span className="evt-connect-caption">from $9 / month</span>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
