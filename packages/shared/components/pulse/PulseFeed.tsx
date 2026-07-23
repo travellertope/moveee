@@ -371,7 +371,7 @@ const handleForYou = () => {
               referencing/linking to most, via the Discover feature's
               existing sort=trending (ranked by _community_review_count). */}
           {trendingDirectory.length > 0 && (
-            <div style={{ marginBottom: "1.5rem" }}>
+            <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
               <p className="pulse-trending-heading">{trendingDirectoryLabel}</p>
               <div>
                 {trendingDirectory.map(entry => (
