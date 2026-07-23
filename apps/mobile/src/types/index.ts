@@ -279,6 +279,18 @@ export interface FeedItem {
   bookFavQuote?: string;
   bookRecommend?: boolean;
   bookGenres?: string[];
+  // Music Review
+  musicTitle?: string;
+  musicArtist?: string;
+  musicOverallRating?: number;
+  musicRatingProduction?: number;
+  musicRatingLyrics?: number;
+  musicRatingReplay?: number;
+  musicRatingVibe?: number;
+  musicFavLyric?: string;
+  musicRecommend?: boolean;
+  musicGenres?: string[];
+  musicPreviewUrl?: string;
   // Itinerary
   itineraryStops?: ItineraryStop[];
   itineraryTitle?: string;
@@ -306,7 +318,7 @@ export interface FeedItem {
 
 // ── Community post templates ─────────────────────────────────────────────────
 export type TemplateType =
-  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review'
+  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review' | 'music-review'
   | 'creative-showcase' | 'poll' | 'itinerary' | 'event' | 'quote';
 
 export interface PollOption {

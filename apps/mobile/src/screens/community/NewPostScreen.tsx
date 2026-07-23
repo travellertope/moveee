@@ -72,6 +72,12 @@ const TEMPLATES: TemplateMeta[] = [
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
+    id: "music-review", minText: 50, maxText: 800,
+    chips: ["On repeat since:", "First listen thoughts:", "Album of the year contender:"],
+    placeholder: "What did you think? Standout tracks?",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
     id: "creative-showcase", minText: 0, maxText: 500,
     chips: ["Working on something:", "New piece:", "Behind the work:"],
     placeholder: "Tell us about the work, your process, or inspiration…",
@@ -156,9 +162,10 @@ const PRICE_RANGES_NGN = ["₦", "₦₦", "₦₦₦", "₦₦₦₦"];
 const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
+const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
-interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; previewUrl?: string | null }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -282,6 +289,14 @@ export default function NewPostScreen() {
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   const [bookGenres, setBookGenres] = useState<string[]>([]);
+
+  // Music Review state
+  const [musicEntry, setMusicEntry] = useState<DirectoryEntry | null>(null);
+  const [musicOverallRating, setMusicOverallRating] = useState(0);
+  const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
+  const [musicFavLyric, setMusicFavLyric] = useState("");
+  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
+  const [musicGenres, setMusicGenres] = useState<string[]>([]);
 
   // Itinerary extras
   const [itineraryTitle, setItineraryTitle] = useState("");
@@ -457,6 +472,11 @@ const uploadImages = async (): Promise<string[]> => {
       if (bookOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
       if (bookRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this book?"); return; }
+    } else if (template === "music-review") {
+      if (!musicEntry) { Alert.alert("Album required", "Search and select an album."); return; }
+      if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
+      if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
+      if (musicRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this album?"); return; }
     } else if (template === "itinerary") {
       if (!itineraryTitle.trim()) { Alert.alert("Title required", "Add a trip title."); return; }
       if (stops.filter((s) => s.name.trim()).length < 2) {
@@ -515,6 +535,29 @@ const uploadImages = async (): Promise<string[]> => {
           book_fav_quote: bookFavQuote || undefined,
           book_recommend: bookRecommend,
           book_genres: bookGenres.length > 0 ? bookGenres : undefined,
+          hub_id: hubId || undefined,
+        } as Record<string, unknown>);
+        if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
+        nav.navigate("ConnectFeed", { justPosted: Date.now() });
+        return;
+      }
+
+      if (template === "music-review") {
+        await api.post(`${MOBILE_API}/community/submit`, {
+          template_type: "music-review",
+          content: text,
+          linked_directory_id: musicEntry!.id,
+          music_title: musicEntry!.title,
+          music_artist: musicEntry!.about,
+          music_overall_rating: musicOverallRating,
+          music_rating_production: musicRatings.production,
+          music_rating_lyrics: musicRatings.lyrics,
+          music_rating_replay: musicRatings.replay,
+          music_rating_vibe: musicRatings.vibe,
+          music_fav_lyric: musicFavLyric || undefined,
+          music_recommend: musicRecommend,
+          music_genres: musicGenres.length > 0 ? musicGenres : undefined,
+          music_preview_url: musicEntry!.previewUrl || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
@@ -612,11 +655,13 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "cultural-take") return culturalTakeHeadline.trim().length < 10 || text.trim().length < 50;
     if (template === "creative-showcase") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
+    if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
   }, [submitting, template, text, eventTitle, eventDate, culturalTakeHeadline, showcaseTitle, images.length,
-    bookEntry, bookStatus, bookOverallRating, bookRecommend, itineraryTitle, stops, linkedEntry, tmpl.minText]);
+    bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating, musicRecommend,
+    itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
   const toolbarIcons = useMemo(() => {
@@ -1123,6 +1168,114 @@ const uploadImages = async (): Promise<string[]> => {
     </>
   );
 
+  const renderMusicReview = () => (
+    <>
+      {/* Album search */}
+      <View style={styles.fieldGroup}>
+        <DirectorySearch
+          selected={musicEntry}
+          onSelect={setMusicEntry}
+          label="Album *"
+          typeFilter="album"
+          aboutFieldLabel="Artist"
+          externalSource="spotify"
+        />
+      </View>
+
+      {/* Overall rating */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Overall rating *</Text>
+        <StarRating value={musicOverallRating} onChange={setMusicOverallRating} />
+      </View>
+
+      {/* Ratings breakdown */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Ratings *</Text>
+        <View style={styles.bookRatingsContainer}>
+          {(["production", "lyrics", "replay", "vibe"] as const).map((key) => (
+            <BookRatingsRow
+              key={key}
+              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              value={musicRatings[key]}
+              onChange={(v) => setMusicRatings((prev) => ({ ...prev, [key]: v }))}
+              styles={styles}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Review */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Your review *</Text>
+        <MentionInput
+          inputRef={textRef}
+          style={styles.borderedTextarea}
+          value={text}
+          onChangeText={handleTextChange}
+          multiline
+          placeholder="What did you think? Standout tracks?"
+          placeholderTextColor={c.ghost}
+          maxLength={tmpl.maxText + 50}
+          textAlignVertical="top"
+        />
+      </View>
+
+      {/* Favourite lyric */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Favourite lyric (optional)</Text>
+        <View style={styles.favQuoteWrap}>
+          <TextInput
+            style={styles.favQuoteInput}
+            value={musicFavLyric}
+            onChangeText={setMusicFavLyric}
+            multiline
+            placeholder="A line that stayed with you…"
+            placeholderTextColor={c.ghost}
+            textAlignVertical="top"
+          />
+        </View>
+      </View>
+
+      {/* Recommend */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+        <View style={styles.recommendRow}>
+          <TouchableOpacity
+            style={[styles.recommendYes, musicRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+            onPress={() => setMusicRecommend(true)}
+          >
+            <Text style={[styles.recommendText, musicRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.recommendNo, musicRecommend === false && styles.recommendNoActive]}
+            onPress={() => setMusicRecommend(false)}
+          >
+            <Text style={[styles.recommendNoText, musicRecommend === false && styles.recommendText]}>👎 No</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Genres */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Genres (optional)</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {MUSIC_GENRES.map((g) => {
+            const active = musicGenres.includes(g);
+            return (
+              <TouchableOpacity
+                key={g}
+                style={[styles.sectionTag, active && styles.sectionTagActive]}
+                onPress={() => setMusicGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+              >
+                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    </>
+  );
+
   const renderPoll = () => (
     <>
       <View style={styles.fieldGroup}>
@@ -1490,6 +1643,7 @@ const uploadImages = async (): Promise<string[]> => {
       case "food-review":      return renderFoodReview();
       case "creative-showcase":return renderCreativeShowcase();
       case "book-review":      return renderBookReview();
+      case "music-review":     return renderMusicReview();
       case "poll":             return renderPoll();
       case "itinerary":        return renderItinerary();
       case "event":            return renderEvent();

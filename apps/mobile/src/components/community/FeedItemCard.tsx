@@ -1730,6 +1730,101 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
   );
 }
 
+// MusicReviewCard
+function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
+  const coverUri = item.image ?? null;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
+
+  const ratings: { label: string; value?: number }[] = [
+    { label: "Production", value: item.musicRatingProduction },
+    { label: "Lyrics",     value: item.musicRatingLyrics },
+    { label: "Replay",     value: item.musicRatingReplay },
+    { label: "Vibe",       value: item.musicRatingVibe },
+  ];
+  const hasRatings = ratings.some((r) => r.value != null);
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
+      <View style={{ paddingHorizontal: 14 }}>
+        <BadgePill label="🎵 MUSIC REVIEW" bg={c.templateMusicBg} color={c.templateMusicText} styles={styles} />
+
+        {/* Album card */}
+        {item.musicTitle ? (
+          <View style={styles.bookCard}>
+            {coverUri ? (
+              <Image source={{ uri: coverUri }} style={styles.bookCover} resizeMode="cover" />
+            ) : (
+              <View style={[styles.bookCover, styles.bookCoverFallback]}>
+                <Ionicons name="musical-notes-outline" size={22} color={c.mute} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle}</Text>
+              {item.musicArtist ? <Text style={styles.bookMeta}>{item.musicArtist}</Text> : null}
+            </View>
+            {item.musicOverallRating != null ? (
+              <View style={styles.bookOverallWrap}>
+                <Text style={styles.bookOverallScore}>{item.musicOverallRating}</Text>
+                <Text style={styles.bookOverallStar}>★</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Review body */}
+        {item.title ? (
+          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+        ) : null}
+
+        {/* Favourite lyric */}
+        {item.musicFavLyric ? (
+          <View style={styles.bookFavQuote}>
+            <Text style={styles.bookFavQuoteText}>"{item.musicFavLyric}"</Text>
+          </View>
+        ) : null}
+
+        {/* Breakdown ratings */}
+        {hasRatings ? (
+          <View style={[styles.foodRatingsGrid, { marginTop: 10 }]}>
+            {ratings.filter((r) => r.value != null).map(({ label, value }) => (
+              <View key={label} style={styles.foodRatingRow}>
+                <Text style={styles.foodRatingLabel}>{label}</Text>
+                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
+                <Text style={styles.foodRatingNum}>{value}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* Recommend + genres */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginTop: 8 }}
+          contentContainerStyle={{ flexDirection: "row", gap: 6 }}
+        >
+          {item.musicRecommend != null ? (
+            <BadgePill
+              label={item.musicRecommend ? "👍 Recommend" : "👎 Not for everyone"}
+              bg={item.musicRecommend ? "#dcfce7" : "#fee2e2"}
+              color={item.musicRecommend ? "#15803d" : "#b91c1c"}
+              styles={styles}
+            />
+          ) : null}
+          {(item.musicGenres ?? []).slice(0, 3).map((g) => (
+            <BadgePill key={g} label={g} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
+          ))}
+        </ScrollView>
+      </View>
+      <FeedReactionBar item={item} marginTop={10} />
+    </TouchableOpacity>
+  );
+}
+
 // EventCommunityCard (B8 in design) — community post with _template_type = 'event'
 function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
@@ -2037,6 +2132,7 @@ export default function FeedItemCard(props: FeedCardProps) {
       case "poll":           return <PollCard {...props} />;
       case "itinerary":      return <ItineraryCard {...props} />;
       case "book-review":    return <BookReviewCard {...props} />;
+      case "music-review":   return <MusicReviewCard {...props} />;
       case "event":          return <EventCommunityCard {...props} />;
       case "quote":          return <CommunityQuoteCard {...props} />;
       default:               return <BasicPostCard {...props} />;
