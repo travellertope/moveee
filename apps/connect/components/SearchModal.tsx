@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import "./search-modal.css";
 
 const CONTENT_TYPES = [
   { label: "All",       value: "all"       },
-  { label: "Pulse",     value: "pulse"     },
+  { label: "Post",      value: "pulse"     },
   { label: "News",      value: "news"      },
   { label: "Editorial", value: "editorial" },
   { label: "Event",     value: "event"     },
@@ -22,8 +23,15 @@ const CATEGORIES = [
   "Food", "Tech", "Sport", "Travel", "Design", "Ideas",
 ];
 
+// Event-only facets — shown only when contentType === "event". Mirrors the
+// city list used across the /events page/archives (FEATURED_CITIES in
+// events/page.tsx) — no shared source of truth, same caveat as above.
+const EVENT_CITIES = ["All", "Lagos", "London", "Accra", "Nairobi", "New York", "Paris"];
+const EVENT_PRICES = ["All", "Free", "Paid", "🪶 Members-only"];
+const EVENT_FORMATS = ["All", "In-person", "Virtual"];
+
 const SUBTYPE_META: Record<string, { emoji: string; label: string }> = {
-  culture_post:     { emoji: "💬", label: "Pulse"      },
+  culture_post:     { emoji: "💬", label: "Post"       },
   pulse_story:      { emoji: "📰", label: "News"       },
   post:             { emoji: "📖", label: "Editorial"  },
   culture_event:    { emoji: "📅", label: "Event"      },
@@ -39,12 +47,17 @@ interface SearchResult {
 }
 
 export default function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [contentType, setContentType] = useState("all");
   const [category, setCategory] = useState("All");
+  const [city, setCity] = useState("All");
+  const [price, setPrice] = useState("All");
+  const [format, setFormat] = useState("All");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isEvent = contentType === "event";
 
   useEffect(() => {
     if (open) {
@@ -63,7 +76,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const runSearch = useCallback((q: string, type: string, cat: string) => {
+  const runSearch = useCallback((q: string, type: string, cat: string, evtCity: string, evtPrice: string, evtFormat: string) => {
     if (!q.trim()) {
       setResults([]);
       setLoading(false);
@@ -72,6 +85,11 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     setLoading(true);
     const params = new URLSearchParams({ q: q.trim(), type });
     if (cat !== "All") params.set("category", cat);
+    if (type === "event") {
+      if (evtCity !== "All") params.set("city", evtCity);
+      if (evtPrice !== "All") params.set("price", evtPrice);
+      if (evtFormat !== "All") params.set("format", evtFormat);
+    }
     fetch(`/api/search?${params.toString()}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setResults(data?.results ?? []))
@@ -80,19 +98,25 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => runSearch(query, contentType, category), 300);
+    const t = setTimeout(() => runSearch(query, contentType, category, city, price, format), 300);
     return () => clearTimeout(t);
-  }, [query, contentType, category, runSearch]);
+  }, [query, contentType, category, city, price, format, runSearch]);
 
-  // Reset to a clean slate each time the modal opens
+  // Reset to a clean slate each time the modal opens — defaulting Content
+  // Type to Event when opened while on /events, since that's almost always
+  // what you want to search for from there (rail search bar, ⌘K, or the
+  // page's own search bar all funnel through this same reset).
   useEffect(() => {
     if (open) {
       setQuery("");
       setResults([]);
-      setContentType("all");
+      setContentType(pathname?.startsWith("/events") ? "event" : "all");
       setCategory("All");
+      setCity("All");
+      setPrice("All");
+      setFormat("All");
     }
-  }, [open]);
+  }, [open, pathname]);
 
   if (!open) return null;
 
@@ -131,6 +155,60 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
               ))}
             </div>
           </div>
+
+          {isEvent && (
+            <div className="sm-filter-group">
+              <p className="sm-filter-label">City</p>
+              <div className="sm-filter-chips">
+                {EVENT_CITIES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`sm-chip${city === c ? " active" : ""}`}
+                    onClick={() => setCity(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isEvent && (
+            <div className="sm-filter-row">
+              <div className="sm-filter-group">
+                <p className="sm-filter-label">Price</p>
+                <div className="sm-filter-chips sm-filter-chips--nowrap">
+                  {EVENT_PRICES.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className={`sm-chip${price === p ? " active" : ""}`}
+                      onClick={() => setPrice(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sm-filter-group">
+                <p className="sm-filter-label">Format</p>
+                <div className="sm-filter-chips sm-filter-chips--nowrap">
+                  {EVENT_FORMATS.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`sm-chip${format === f ? " active" : ""}`}
+                      onClick={() => setFormat(f)}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="sm-filter-group">
             <p className="sm-filter-label">Category</p>

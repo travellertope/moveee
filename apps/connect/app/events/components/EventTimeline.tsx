@@ -1,7 +1,7 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { getCategoryImage, getCategoryGradient } from "../utils/categoryImages";
+import EventThumb from "./EventThumb";
 
 interface TimelineEvent {
   id: string | number;
@@ -15,6 +15,7 @@ interface TimelineEvent {
   openingHours?: string;
   admission?: string;
   isFeatured?: boolean;
+  isLiterati?: boolean;
   isAiGenerated?: boolean;
   featuredImage?: { node?: { sourceUrl?: string } };
   eventImageUrl?: string;
@@ -32,6 +33,11 @@ interface EventTimelineProps {
   activeCitySlug?: string;
   activeCategorySlug?: string;
   emptyMessage?: string;
+  /** Overrides the default cities/categories sidebar with custom content —
+   * used by the main /events page for its trending-cities + Literati
+   * Connect teaser rail. Archive pages that don't pass this keep the
+   * original cities/categories list unchanged. */
+  rightRail?: ReactNode;
 }
 
 function getMonthKey(raw?: string): string {
@@ -108,24 +114,6 @@ const CAT_DOT: Record<string, string> = {
   community: "#2D6A4F",
 };
 
-function CatIcon({ catSlug }: { catSlug: string }) {
-  if (catSlug === "film") {
-    return (
-      <svg className="evt-row-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-    );
-  }
-  if (catSlug === "visual-arts") {
-    return (
-      <svg className="evt-row-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    );
-  }
-  return <span className="evt-row-thumb-icon evt-row-thumb-glyph">★</span>;
-}
-
 function EventRow({ event }: { event: TimelineEvent }) {
   const img     = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
   const catNode = event.cultureInterests?.nodes?.[0];
@@ -134,18 +122,24 @@ function EventRow({ event }: { event: TimelineEvent }) {
   const place   = event.city || event.location || "";
   const timeRange = fmtTimeRange(event.eventDate, event.endDate);
   const free = !event.admission || /free/i.test(event.admission);
+  // Featured and Literati Connect are no longer separate sections — they're
+  // just rows in the same timeline, distinguished only by a tag + faint tint.
+  const rowModifier = event.isLiterati ? " evt-row--literati" : event.isFeatured ? " evt-row--featured" : "";
 
   return (
-    <Link href={event.href || `/events/${event.slug}`} className="evt-row">
-      <div className="evt-row-thumb" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
-        {img ? (
-          <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
-        ) : (
-          <CatIcon catSlug={catSlug} />
-        )}
+    <Link href={event.href || `/events/${event.slug}`} className={`evt-row${rowModifier}`}>
+      <div className="evt-row-thumb">
+        <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={14} />
       </div>
       <div className="evt-row-body">
-        <h4 className="evt-row-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+        <div className="evt-row-title-line">
+          <h4 className="evt-row-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
+          {event.isLiterati ? (
+            <span className="evt-tag evt-tag--literati">🪶 Literati Connect</span>
+          ) : event.isFeatured ? (
+            <span className="evt-tag evt-tag--featured">★ Featured</span>
+          ) : null}
+        </div>
         <div className="evt-row-meta">
           {place && <span>◍ {place}</span>}
           {place && cat && <span> · </span>}
@@ -170,6 +164,7 @@ export default function EventTimeline({
   activeCitySlug,
   activeCategorySlug,
   emptyMessage = "No upcoming events right now — check back soon.",
+  rightRail,
 }: EventTimelineProps) {
   const months = groupByMonth(events);
 
@@ -203,37 +198,41 @@ export default function EventTimeline({
       </div>
 
       <aside className="evt-timeline-sidebar">
-        {sidebarCities.length > 0 && (
-          <div className="evt-sb-block">
-            <div className="evt-sb-label">Cities</div>
-            {sidebarCities.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/events/${c.slug}`}
-                className={`evt-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
-              >
-                <span className="evt-sb-name">{c.name}</span>
-                <span className="evt-sb-count">{c.count}</span>
-              </Link>
-            ))}
-            <Link href="/events" className="evt-sb-all">All cities →</Link>
-          </div>
-        )}
+        {rightRail ?? (
+          <>
+            {sidebarCities.length > 0 && (
+              <div className="evt-sb-block">
+                <div className="evt-sb-label">Cities</div>
+                {sidebarCities.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/events/${c.slug}`}
+                    className={`evt-sb-row${activeCitySlug === c.slug ? " active" : ""}`}
+                  >
+                    <span className="evt-sb-name">{c.name}</span>
+                    <span className="evt-sb-count">{c.count}</span>
+                  </Link>
+                ))}
+                <Link href="/events" className="evt-sb-all">All cities →</Link>
+              </div>
+            )}
 
-        {sidebarCategories.length > 0 && (
-          <div className="evt-sb-block">
-            <div className="evt-sb-label">Categories</div>
-            {sidebarCategories.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/events/${c.slug}`}
-                className={`evt-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
-              >
-                <span className="evt-sb-dot" style={{ background: CAT_DOT[c.slug] || "var(--evt-gold)" }} />
-                <span className="evt-sb-name">{c.name}</span>
-              </Link>
-            ))}
-          </div>
+            {sidebarCategories.length > 0 && (
+              <div className="evt-sb-block">
+                <div className="evt-sb-label">Categories</div>
+                {sidebarCategories.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/events/${c.slug}`}
+                    className={`evt-sb-row${activeCategorySlug === c.slug ? " active" : ""}`}
+                  >
+                    <span className="evt-sb-dot" style={{ background: CAT_DOT[c.slug] || "var(--evt-gold)" }} />
+                    <span className="evt-sb-name">{c.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </aside>
     </div>

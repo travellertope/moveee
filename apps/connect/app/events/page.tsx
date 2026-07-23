@@ -1,16 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getEventsWithFallback } from "@/lib/wp";
 import { getCommunityPosts } from "@/lib/unified-feed";
 import { isEventItem } from "@/lib/event-spotlight";
-import { getCategoryImage, getCategoryGradient } from "./utils/categoryImages";
-import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
-import EventsCarousel from "./components/EventsCarousel";
+import EventsSearchBar from "./components/EventsSearchBar";
 import "@/app/events.css";
-import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -29,38 +25,11 @@ const FEATURED_CITIES = [
   { slug: "paris",    name: "Paris",    country: "France",  flag: "🇫🇷" },
 ];
 
-const CATEGORIES = [
-  { slug: "music",       name: "Music",       icon: "♪" },
-  { slug: "film",        name: "Film",        icon: "◉" },
-  { slug: "visual-arts", name: "Visual Arts", icon: "◈" },
-  { slug: "fashion",     name: "Fashion",     icon: "✦" },
-  { slug: "food",        name: "Food",        icon: "◆" },
-  { slug: "literature",  name: "Literature",  icon: "▬" },
-  { slug: "design",      name: "Design",      icon: "◻" },
-  { slug: "performance", name: "Performance", icon: "★" },
-  { slug: "community",   name: "Community",   icon: "◇" },
-  { slug: "tech",        name: "Tech",        icon: "○" },
-];
-
 const TICKER_ITEMS = ["Visual Art", "Film", "Literature", "Music", "Fashion", "Food", "Design", "Community"];
 
 function cityCount(events: any[], name: string) {
   const q = name.toLowerCase();
   return events.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(q)).length;
-}
-
-function fmtMonth(raw?: string) {
-  if (!raw) return "";
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", { month: "short" }).toUpperCase();
-}
-
-function fmtDay(raw?: string) {
-  if (!raw) return "";
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return "";
-  return d.getDate().toString();
 }
 
 /** Map a community culture_post (template_type=event) FeedItem into the editorial-event shape consumed by the shared display components. */
@@ -106,38 +75,31 @@ export default async function EventsPage() {
     (a, b) => new Date(a.eventDate || a.date || 0).getTime() - new Date(b.eventDate || b.date || 0).getTime()
   );
 
-  // Literati Connect — monthly, city-wide meetups (§1 of literati-connect-plan.md), editorial-only
+  // Literati Connect — monthly, city-wide meetups (§1 of literati-connect-plan.md),
+  // editorial-only. No longer sliced into its own carousel list — it's just used here
+  // to decide the right-rail teaser card's copy/link (events themselves are tagged
+  // rows inside the unified timeline, see EventTimeline's evt-row--literati).
   const literatiAll = upcoming.filter((e) => e.isLiterati);
   const literatiNearby = userCity
     ? literatiAll.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(userCity))
     : [];
-  const literatiEvents = (literatiNearby.length > 0 ? literatiNearby : literatiAll).slice(0, 10);
 
   const sidebarCities = FEATURED_CITIES
     .map((c) => ({ ...c, count: cityCount(upcoming, c.name) }))
     .filter((c) => c.count > 0);
 
-  // Featured: isFeatured first, then any upcoming events — always show up to 4
-  const withImage = (e: any) => e.featuredImage?.node?.sourceUrl || e.eventImageUrl;
-  const featured = [
-    ...upcoming.filter((e) => e.isFeatured),
-    ...upcoming.filter((e) => !e.isFeatured && withImage(e)),
-    ...upcoming.filter((e) => !e.isFeatured && !withImage(e)),
-  ].slice(0, 4);
-
   return (
     <div className="bg-paper">
 
-      {/* ── HERO ── */}
-      <EventHero
-        title="Moveee <em>Happenings</em>"
-        standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — from around the world."
-        stats={[
-          { num: upcoming.length, label: `Happenings · ${new Date().getFullYear()}` },
-          { num: sidebarCities.length, label: "Cities covered" },
-          { num: CATEGORIES.length, label: "Categories" },
-        ]}
-      />
+      {/* ── HEADLINE ── */}
+      <div className="evt-headline-wrap">
+        <h1 className="evt-headline">Happenings <em>worth your time</em></h1>
+      </div>
+
+      {/* ── SEARCH ── */}
+      <div className="evt-search-wrap">
+        <EventsSearchBar />
+      </div>
 
       {/* ── TICKER ── */}
       <div className="evt-ticker">
@@ -155,101 +117,44 @@ export default async function EventsPage() {
         </div>
       </div>
 
-      <main className="evt-main">
-        {/* ── FEATURED EVENTS GRID ── */}
-        {upcoming.length > 0 && (
-          <section className="evt-section">
-            <div className="evt-section-head">
-              <div>
-                <span className="evt-section-eyebrow">Spotlight</span>
-                <h3>Featured</h3>
-              </div>
-              <Link href="#timeline" className="evt-section-all">All happenings →</Link>
-            </div>
-            <div className="evt-feat-grid">
-              {featured.map((event) => {
-                const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
-                const cat = event.cultureInterests?.nodes?.[0]?.name || "";
-                const catSlug = event.cultureInterests?.nodes?.[0]?.slug || "";
-                const month = fmtMonth(event.eventDate || event.date);
-                const day = fmtDay(event.eventDate || event.date);
-                return (
-                  <Link key={event.slug} href={event.href || `/events/${event.slug}`} className="evt-feat-card">
-                    <div className="evt-feat-img" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
-                      <Image
-                        src={img || getCategoryImage(catSlug)}
-                        alt={event.title}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
-                      {(month || day) && (
-                        <div className="evt-feat-date-badge">
-                          <span className="evt-feat-date-month">{month}</span>
-                          <span className="evt-feat-date-day">{day}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="evt-feat-body">
-                      {cat && <span className="evt-feat-cat">{cat}</span>}
-                      <h3 className="evt-feat-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
-                      {(event.city || event.location) && (
-                        <span className="evt-feat-place">◍ {event.city || event.location}</span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ── BY CITY GRID ── */}
-        <section className="evt-section">
-          <div className="evt-section-head">
-            <div>
-              <span className="evt-section-eyebrow">Discover</span>
-              <h3>By City</h3>
-            </div>
-          </div>
-          <div className="evt-city-grid">
-            {FEATURED_CITIES.map((city) => {
-              const count = cityCount(upcoming, city.name);
-              return (
-                <Link key={city.slug} href={`/events/${city.slug}`} className="evt-city-card">
-                  <span className="evt-city-flag">{city.flag}</span>
-                  <span className="evt-city-name">{city.name}</span>
-                  <span className="evt-city-country">{city.country}</span>
-                  {count > 0 && <span className="evt-city-count">{count} live</span>}
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      </main>
-
-      {/* ── LITERATI CONNECT RAIL ── */}
-      {literatiEvents.length > 0 && (
-        <section className="evt-literati-band">
-          <div className="evt-section">
-            <div className="evt-section-head">
-              <div>
-                <span className="evt-section-eyebrow">Members go first</span>
-                <h3>🪶 Literati Connect{userCity && literatiNearby.length > 0 ? " near you" : ""}</h3>
-              </div>
-              <Link href="#timeline" className="evt-section-all">See all →</Link>
-            </div>
-            <EventsCarousel events={literatiEvents} />
-          </div>
-        </section>
-      )}
-
-      {/* ── TIMELINE + SIDEBAR ── */}
+      {/* ── TIMELINE + RIGHT RAIL ── */}
+      {/* Featured and Literati Connect events are no longer separate
+          sections — they're tagged rows inside this one timeline (see
+          EventTimeline's evt-row--featured/--literati). The old By City
+          grid moved into the search modal's City filter. */}
       <div className="evt-timeline-section" id="timeline">
         <EventTimeline
           events={upcoming}
-          sidebarCities={sidebarCities}
-          sidebarCategories={CATEGORIES}
           emptyMessage="No upcoming events right now — check back soon."
+          rightRail={
+            <>
+              {sidebarCities.length > 0 && (
+                <div className="evt-sb-block">
+                  <div className="evt-sb-label">Trending Cities</div>
+                  {sidebarCities.map((c) => (
+                    <Link key={c.slug} href={`/events/${c.slug}`} className="evt-sb-row">
+                      <span className="evt-sb-name">{c.name}</span>
+                      <span className="evt-sb-count">{c.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              <div className="evt-literati-teaser">
+                <p className="evt-sb-label">🪶 Literati Connect</p>
+                <p className="evt-literati-teaser-title">Members go first.</p>
+                <p className="evt-literati-teaser-desc">
+                  Monthly, city-wide gatherings for Moveee members — supper tables, private
+                  views, and salons before anyone else hears about them.
+                </p>
+                {literatiAll.length > 0 && (
+                  <Link href="#timeline" className="evt-literati-teaser-link">
+                    {userCity && literatiNearby.length > 0 ? "See gatherings near you →" : "See this month's gatherings →"}
+                  </Link>
+                )}
+              </div>
+            </>
+          }
         />
       </div>
 

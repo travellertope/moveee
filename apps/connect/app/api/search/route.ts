@@ -58,15 +58,25 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q")?.trim() ?? "";
   const type = (searchParams.get("type") ?? "").toLowerCase();
   const category = searchParams.get("category")?.trim() ?? "";
+  // Event-only facets (only ever sent when type=event) — same approximation
+  // as category below, folded into the query text rather than a true facet,
+  // since wp/v2/search has no structured filtering for any of these.
+  const city = searchParams.get("city")?.trim() ?? "";
+  const price = searchParams.get("price")?.trim() ?? "";
+  const format = searchParams.get("format")?.trim() ?? "";
 
   if (!q) {
     return NextResponse.json({ results: [] });
   }
 
   // WP's native search has no taxonomy-aware filtering across mixed post
-  // types, so a selected Category is folded into the query as an extra
-  // term rather than a real facet — an approximation, not a true filter.
-  const search = category && category.toLowerCase() !== "all" ? `${q} ${category}` : q;
+  // types, so a selected Category/City/Price/Format is folded into the
+  // query as extra terms rather than a real facet — an approximation, not
+  // a true filter.
+  const extraTerms = [category, city, price, format]
+    .filter((t) => t && t.toLowerCase() !== "all")
+    .join(" ");
+  const search = extraTerms ? `${q} ${extraTerms}` : q;
 
   const params = new URLSearchParams({ search, per_page: "20" });
   const subtype = CONTENT_TYPE_SUBTYPE[type];
