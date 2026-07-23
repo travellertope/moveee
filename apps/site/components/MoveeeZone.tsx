@@ -61,10 +61,8 @@ export default function MoveeeZone() {
     <div className="mz-zone">
       <WaitlistModal open={waitlistOpen} onClose={() => setWaitlistOpen(false)} />
       {/*
-        DEV: This zone intentionally uses the warm paper token (#F3ECE0) to bridge Site A's
-        white magazine background with Site B/Connect's visual language — do NOT change the
-        global --paper CSS variable (apps/site/app/globals.css), scope the warm background to
-        this section locally instead.
+        The warm paper background this zone used to bridge into has been retired (July 2026)
+        — --mz-paper-warm now resolves to white, same as the rest of the site.
       */}
 
       {/* ===== HERO ===== */}

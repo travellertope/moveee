@@ -1,9 +1,12 @@
 /* ===================================================================
    FEATURE PAGES — themoveee.com/features/*
    One marketing page per major Moveee (app) feature. Shares the
-   --mz-* design tokens defined in moveee-zone.css (same warm-paper /
-   white alternating section rhythm as the homepage's Moveee Zone) —
-   this file only adds page-specific layout classes, prefixed `fp-`.
+   --mz-* design tokens defined in moveee-zone.css — the warm-paper /
+   white alternating section rhythm this page used to have is retired
+   (July 2026, whole site stays on white now); .fp-section and
+   .fp-section--white both resolve to white, kept as separate classes
+   only because .fp-section--white also carries the top divider rule.
+   This file only adds page-specific layout classes, prefixed `fp-`.
    =================================================================== */
 
 /* ---------- HERO ---------- */
@@ -113,7 +116,7 @@
 
 /* ---------- SECTIONS ---------- */
 .fp-section {
-  background: var(--mz-paper-warm, #f3ece0);
+  background: var(--mz-paper-warm, #ffffff);
   padding: 56px 24px;
 }
 
@@ -290,7 +293,7 @@
 
 /* ---------- CTA STRIP (bottom of every feature page) ---------- */
 .fp-cta-strip {
-  background: var(--mz-paper-warm, #f3ece0);
+  background: var(--mz-paper-warm, #ffffff);
   border-radius: var(--mz-radius-2xl, 20px);
   box-shadow: var(--mz-shadow-card);
   padding: 36px 28px;

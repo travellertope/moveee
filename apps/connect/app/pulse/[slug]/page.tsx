@@ -153,7 +153,7 @@ export default async function PulseStoryPage({
         .pulse-story-body p:last-child { margin-bottom: 0; }
       `}</style>
 
-      <div style={{ background: "#f3ece0" }}>
+      <div style={{ background: "#ffffff" }}>
         <div className="pulse-layout">
 
           {/* ── Left sidebar ── */}
@@ -235,7 +235,7 @@ export default async function PulseStoryPage({
                   )}
                   {categories.map((cat) => (
                     <Link key={cat} href={`/connect?category=${encodeURIComponent(cat.toLowerCase())}`} style={{
-                      background: "#f3ece0", color: "#7a6f5c",
+                      background: "#f2f2f2", color: "#7a6f5c",
                       fontSize: "0.58rem", fontWeight: 600,
                       letterSpacing: "0.08em", textTransform: "uppercase",
                       padding: "0.15rem 0.4rem", borderRadius: "2px",
@@ -335,7 +335,7 @@ export default async function PulseStoryPage({
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    display: "block", background: "#14110d", color: "#f3ece0",
+                    display: "block", background: "#14110d", color: "#ffffff",
                     textAlign: "center", padding: "0.45rem 0.75rem",
                     fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
                     textTransform: "uppercase", textDecoration: "none", marginBottom: "0.5rem",

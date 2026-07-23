@@ -2,14 +2,15 @@
    MOVEEE ZONE — Hero, What is Moveee, Feature Grid, Membership,
    Join Moveee download strip, Magazine Spotlight.
 
-   DEV: This zone intentionally uses the warm paper token (#F3ECE0) to
-   bridge Site A's white magazine background with Site B/Connect's
-   visual language — scoped locally here, the global --paper variable
-   in globals.css is untouched.
+   The warm paper token this zone previously used to bridge Site A's
+   white magazine background with Site B/Connect's visual language has
+   been retired (July 2026) — the whole site now stays on white, no
+   warm-cream sections anywhere. --mz-paper-warm kept as a token name
+   for callers that still reference it, just repointed to white.
    =================================================================== */
 
 .mz-zone {
-  --mz-paper-warm: #f3ece0;
+  --mz-paper-warm: #ffffff;
   --mz-white: #ffffff;
   --mz-ink: #14110d;
   --mz-ink-soft: #3a342b;
@@ -600,7 +601,7 @@
 
 /* ---------- MAGAZINE SPOTLIGHT (paper — alternates with the white membership section above) ---------- */
 .ms-section {
-  background: #f3ece0;
+  background: #f2f2f2;
   padding: 56px 24px;
 }
 
@@ -653,7 +654,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 2 / 3;
-  background: #f3ece0;
+  background: #f2f2f2;
 }
 
 .ms-issue-text {

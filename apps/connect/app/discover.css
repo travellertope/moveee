@@ -448,7 +448,7 @@
 }
 
 .disc-filter-close {
-  background: var(--paper-warm, #fdf5e6);
+  background: var(--paper-warm, #ffffff);
   border: none;
   cursor: pointer;
   width: 32px;
