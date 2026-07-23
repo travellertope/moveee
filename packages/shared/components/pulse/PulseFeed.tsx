@@ -261,6 +261,7 @@ const handleForYou = () => {
 
         {/* ── Center Timeline ── */}
         <main className="pulse-timeline">
+        <div className="pulse-timeline-inner">
           {/* Interests nudge for logged-in users with no interests set */}
           {session && !hasInterests && (
             <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -357,6 +358,7 @@ const handleForYou = () => {
           {hasMore && (
             <div style={{ textAlign: "center", padding: "2rem", color: "var(--mute, #bbb)", fontSize: "0.78rem" }}>Loading…</div>
           )}
+        </div>
         </main>
 
         {/* ── Right Sidebar ── */}

@@ -15,10 +15,10 @@ const LOGO_URL =
   "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png";
 
 const NAV = [
-  { href: "/feed",   label: "Feed"   },
-  { href: "/events", label: "Events" },
-  { href: "/games",  label: "Games"  },
-];
+  { href: "/feed",   label: "Feed",   icon: "feed"   },
+  { href: "/events", label: "Events", icon: "events" },
+  { href: "/games",  label: "Games",  icon: "games"  },
+] as const;
 
 // Rendered at the bottom of the desktop rail — was the right-side icon
 // cluster in the old top header. Order: Discover Culture, People Near Me,
@@ -41,6 +41,16 @@ function RailIcon({ name }: { name: string }) {
       return <svg {...common} viewBox="0 0 24 24"><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /></svg>;
     case "hub":
       return <svg {...common} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><ellipse cx="12" cy="12" rx="4" ry="10" /><path d="M2 12h20" /></svg>;
+    case "feed":
+      return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1" /><rect x="3" y="10" width="18" height="4" rx="1" /><rect x="3" y="16" width="18" height="4" rx="1" /></svg>;
+    case "events":
+      return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
+    case "games":
+      return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="4" /><path d="M7 12h.01M17 12h.01M14 9l1.5 1.5M15.5 9L14 10.5" /></svg>;
+    case "magazine":
+      return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
+    case "bell":
+      return <svg {...common} viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
     default:
       return null;
   }
@@ -54,10 +64,8 @@ export default function ConnectHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [railMenuOpen, setRailMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [navTop, setNavTop] = useState(60);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const railUserMenuRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
 
   const handleSignOut = async () => {
     try {
@@ -68,21 +76,6 @@ export default function ConnectHeader() {
     signOut({ callbackUrl: "/login" });
   };
   const user = session?.user as any;
-
-  // Keep the mobile drawer pinned to the header's real bottom edge — the
-  // header isn't always at viewport y:0 (the app download banner can sit
-  // above it), so a hardcoded `top: 60px` overlaps the header whenever the
-  // banner is showing and the page hasn't scrolled past it yet.
-  useEffect(() => {
-    function measure() {
-      if (headerRef.current) {
-        setNavTop(headerRef.current.getBoundingClientRect().bottom);
-      }
-    }
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [mobileOpen]);
 
   // Close user dropdowns on outside click
   useEffect(() => {
@@ -171,11 +164,11 @@ export default function ConnectHeader() {
               href={item.href}
               className={`ch-rail-link${isActive(item.href) ? " active" : ""}`}
             >
-              {item.label}
+              <RailIcon name={item.icon} /> {item.label}
             </Link>
           ))}
           <Link href={`${SITE_URL}/magazine`} className="ch-rail-link ch-rail-link--ext">
-            Magazine ↗
+            <RailIcon name="magazine" /> Magazine ↗
           </Link>
         </nav>
 
@@ -239,7 +232,7 @@ export default function ConnectHeader() {
       </aside>
 
       {/* ══════════════ Mobile top header (<860px) — unchanged behaviour ══════════════ */}
-      <header className="ch-header" ref={headerRef}>
+      <header className="ch-header">
         <div className="ch-inner">
           <Link href={SITE_URL} className="ch-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -262,9 +255,6 @@ export default function ConnectHeader() {
           </nav>
 
           <div className="ch-right">
-            <button type="button" aria-label="Search" className="ch-icon-btn" onClick={() => setSearchOpen(true)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            </button>
             {status === "authenticated" && user ? (
               <>
                 <NotificationBell />
@@ -319,62 +309,90 @@ export default function ConnectHeader() {
         onClick={() => setMobileOpen(false)}
       />
 
-      {/* Mobile nav drawer — mirrors the desktop rail's content (main nav,
-          then the same rail links + theme toggle), just as a slide-down
-          panel instead of a permanent column. */}
+      {/* Mobile nav drawer — same content/classes as the desktop rail (logo,
+          search, main nav, spacer, bottom icon rows, account row at the
+          very bottom), presented as a left-sliding drawer over a dimmed
+          backdrop instead of a permanent column, per the approved mockup's
+          Frame 4. */}
       <nav
         id="ch-mobile-nav"
         className={`ch-mobile-nav${mobileOpen ? " open" : ""}`}
         aria-label="Mobile navigation"
-        style={{ top: navTop }}
       >
-        <button
-          type="button"
-          className="ch-mobile-search-btn"
-          onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-          Search Moveee…
-        </button>
-
-        {NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`ch-mobile-nav-link${isActive(item.href) ? " active" : ""}`}
-          >
-            {item.label}
-          </Link>
-        ))}
-        <Link href={`${SITE_URL}/magazine`} className="ch-mobile-nav-link ch-mobile-nav-link--external">
-          Magazine ↗
+        <Link href={SITE_URL} className="ch-mobile-nav-logo" onClick={() => setMobileOpen(false)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_URL} alt="The Moveee" height={24} width={152} />
         </Link>
 
-        <div className="ch-mobile-nav-divider" />
+        <div className="ch-mobile-search-wrap">
+          <button
+            type="button"
+            className="ch-mobile-search-btn"
+            onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            Search Moveee…
+          </button>
+        </div>
 
-        {RAIL_LINKS.map((item) => (
-          <Link key={item.href} href={item.href} className="ch-mobile-nav-link ch-mobile-nav-link--icon">
-            <RailIcon name={item.icon} /> {item.label}
+        <div className="ch-mobile-nav-main">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`ch-mobile-nav-link ch-mobile-nav-link--icon${isActive(item.href) ? " active" : ""}`}
+            >
+              <RailIcon name={item.icon} /> {item.label}
+            </Link>
+          ))}
+          <Link href={`${SITE_URL}/magazine`} className="ch-mobile-nav-link ch-mobile-nav-link--icon ch-mobile-nav-link--external">
+            <RailIcon name="magazine" /> Magazine ↗
           </Link>
-        ))}
-        <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link ch-mobile-nav-link--icon" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
-          {theme === "dark" ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
-          )}
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
+        </div>
 
-        {status === "unauthenticated" && (
-          <>
-            <div className="ch-mobile-nav-divider" />
+        <div className="ch-mobile-nav-spacer" />
+
+        <div className="ch-mobile-nav-bottom">
+          {RAIL_LINKS.map((item) => (
+            <Link key={item.href} href={item.href} className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+              <RailIcon name={item.icon} /> {item.label}
+            </Link>
+          ))}
+          <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link ch-mobile-nav-link--icon" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
+            {theme === "dark" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+            )}
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          {status === "authenticated" && user && (
+            <Link href="/member/notifications" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+              <RailIcon name="bell" /> Notifications
+            </Link>
+          )}
+
+          {status === "authenticated" && user ? (
+            <Link href="/member" className="ch-mobile-user" onClick={() => setMobileOpen(false)}>
+              <span className="ch-rail-user-avatar">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="ch-avatar-img" />
+                ) : (
+                  <span className="ch-avatar-initial">{(user.name || user.username || "M").charAt(0).toUpperCase()}</span>
+                )}
+              </span>
+              <span className="ch-rail-user-info">
+                <span className="ch-rail-user-name">{user.displayName || user.name}</span>
+                <span className="ch-rail-user-tier">{user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}</span>
+              </span>
+            </Link>
+          ) : status === "unauthenticated" ? (
             <div className="ch-mobile-auth">
               <Link href="/login" className="ch-btn-ghost">Sign in</Link>
               <Link href="/register" className="ch-btn-solid">Join</Link>
             </div>
-          </>
-        )}
+          ) : null}
+        </div>
       </nav>
 
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
