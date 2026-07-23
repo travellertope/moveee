@@ -864,3 +864,114 @@ are all live on both platforms.
 Do not begin Phase 2 until Phase 1 is fully shipped and confirmed working
 end-to-end (create → join → follow → discover) on both platforms — same
 build discipline Stoop's own doc enforced.
+
+---
+
+## 10. Section/category integration — decided July 2026, not yet built
+
+**Decisions already made (do not re-litigate without the user):** every value in
+the existing `community_tag` enum (`SECTION_TAGS`/`TAGS` — Music, Fashion, Art,
+Film, Food, Sport, Travel, Ideas, Literature, Design, Tech) gets a matching
+**official Hub**. Posting with a Section set auto-links the post to that Hub.
+Official Hubs are exempt from §4.5's main-feed exclusion; regular (user-created)
+Hubs are not — that rule still exists specifically to protect the main feed from
+unbounded long-tail Hub volume, and this change doesn't touch it.
+
+This section was reached by first evaluating and rejecting a full Section↔Hub
+merge (feed-visibility inversion, quotes having no `_hub_id` path, and no
+sensible owner for a "Food" Hub were all real blockers), then reconsidering once
+the user proposed relaxing the main-feed exclusion specifically for the
+already-fixed, small set of official Hubs rather than Hubs in general — which
+turns out to resolve all three blockers at once. Worth preserving that reasoning
+here rather than presenting this as though it were the first idea considered.
+
+### 10.1 Why this resolves the three original blockers
+
+- **Feed visibility.** Official-Hub posts are exempt from exclusion, so nothing
+  that shows in the main feed today stops showing there — every Section-tagged
+  post already appears there, and that doesn't change. Regular Hubs keep the
+  exclusion, so the dilution risk that rule exists for (arbitrary, unbounded
+  user-created Hubs flooding a chronological feed) is unaffected — that risk was
+  never about the fixed 11, only about long-tail volume.
+- **Quotes.** Never actually a blocker once checked — quotes are already
+  excluded from the Section picker entirely (`template !== "quote"` in the
+  composer's tag-selector condition, `SubmitPost.tsx`). No plumbing needed.
+- **Ownership.** Official Hubs are **platform-owned**, not created by or
+  attributed to any member — same as the Section label itself has no owner
+  today. Regular Hubs are unaffected: still member-created, still owner/mod
+  moderation exactly as Phase 1–4 already shipped.
+
+### 10.2 Mechanics
+
+- `_hub_id` auto-set server-side whenever `community_tag` is set on a
+  `culture_post` — both submit paths (mobile's `handle_submit_post()`, web's
+  `apps/connect/app/api/community/submit/route.ts`) resolve the Section value to
+  its matching official Hub ID and set both fields together. No new composer UI
+  — this is transparent plumbing, not a decision the poster makes. Food Review's
+  existing auto-set-to-"Food" behavior carries through unchanged (auto-links to
+  the Food Hub the same as an explicitly-chosen Section would).
+- A new lookup table/option mapping each of the 11 Section values to its
+  official Hub ID — needs to exist before this can ship, since the 11 Hubs
+  themselves don't exist yet (this is decided, not built — see §10.5).
+- §1.4's exclusion logic (mobile's `post__not_in` resolution, web's
+  `exclude_hub_posts()` `rest_culture_post_query` filter) gains an `is_official`
+  check — only non-official `_hub_id` values get excluded. `culture_hub` needs a
+  new `_hub_is_official` meta flag (bool) for this check to key off; the 11
+  official Hubs are the only rows that ever get it set.
+- **Auto-detected Section is a real edge case, flagged not resolved.**
+  `detectTagFromContent()` can silently set `community_tag` from keyword
+  scoring, not just an explicit user choice. Today that only adds a filter
+  label; once it also determines Hub membership for the post, an
+  off-topic-mention getting auto-tagged "Music" now also means it's published
+  into the Music Hub's own feed, not just filterable as Music. Worth a second
+  look before shipping — possibly fine as-is since total visibility is
+  unchanged, but it's a bigger behavioral role for the same auto-detect than it
+  had before.
+
+### 10.3 Undefined / niche categories
+
+Deliberately **not** solved by adding a free-text option to the Section field.
+Section stays the fixed 11 values, no custom entries — a topic outside that list
+is what **regular Hubs already exist for**: create or join one directly, with
+the real community/ownership/discovery mechanics a text field can't offer. Same
+shape as the composer's own "+ Other" custom-genre escape hatch (Book/Music/Film
+Review's genre chips — see CLAUDE.md) — a fixed list for the fast path, a real
+escape valve for everything else, deliberately not two overlapping mechanisms
+solving the same problem.
+
+### 10.4 Section-filter view stays separate from the Hub page
+
+Filtering the main feed by a Section (e.g. "Music") is **not** changed into a
+redirect to `/hub/music` — it stays exactly as it is today: a lightweight,
+in-place filter, no navigation. What's added is a contextual **"Join the Music
+Hub →"** prompt shown inline on that filtered view. Reasoning: filtering is a
+fast, frequent, low-commitment action; the Hub page is a heavier destination
+(member count, Join button, mod tools for mods). Content is now identical
+either way (every Music post is Hub-linked), so there's no correctness reason to
+force them together — only a UX cost, since every quick filter click would then
+pay for chrome most people filtering don't want yet. Filter stays cheap, the
+Hub stays one click away for anyone who wants the fuller experience.
+
+Feed cards carrying an official `_hub_id` should show the Hub's badge (name,
+Hub-specific styling) plus an inline **Join** button — both on the main feed and
+in For You — giving the Reddit `r/community`-per-post treatment, now accurate
+since these posts are genuinely Hub-linked rather than just labeled.
+
+### 10.5 Migration
+
+Existing posts predate this and won't have `_hub_id` set even though they
+already carry a `community_tag`. Needs a one-time backfill matching historical
+`community_tag` values to their new official Hub IDs — same shape as
+`Culture_Subscribers::maybe_backfill_announcements()` (gated by a
+`culture_hub_categories_backfilled`-style option so it runs exactly once).
+Without this, the Music Hub would launch with zero history despite years of
+Music-tagged posts already existing.
+
+### 10.6 Status
+
+**Decided, not built.** This is a new phase on top of the already-shipped
+Phases 1–4 (§9) — the 11 official Hubs don't exist yet, the auto-link plumbing
+doesn't exist yet, `_hub_is_official` doesn't exist yet, and the badge/Join
+treatment on feed cards doesn't exist yet. Scope this as its own phase (Phase 6)
+rather than folding it into Phase 5's polish list — it's new mechanics, not a
+refinement of what's already there.
