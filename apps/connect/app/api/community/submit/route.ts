@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
     book_title, book_author, book_status, book_overall_rating,
     book_rating_writing, book_rating_story, book_rating_characters, book_rating_pacing,
     book_fav_quote, book_recommend, book_genres,
+    music_title, music_artist, music_overall_rating,
+    music_rating_production, music_rating_lyrics, music_rating_replay, music_rating_vibe,
+    music_fav_lyric, music_recommend, music_genres, music_preview_url,
     event_title, event_date, event_end_date, event_venue, event_city, event_address,
     event_admission, ticket_url, event_category, organiser_directory_id,
     rsvp_enabled, rsvp_capacity, hub_id,
@@ -71,6 +74,17 @@ export async function POST(req: NextRequest) {
     book_fav_quote?: string;
     book_recommend?: boolean;
     book_genres?: string[];
+    music_title?: string;
+    music_artist?: string;
+    music_overall_rating?: number;
+    music_rating_production?: number;
+    music_rating_lyrics?: number;
+    music_rating_replay?: number;
+    music_rating_vibe?: number;
+    music_fav_lyric?: string;
+    music_recommend?: boolean;
+    music_genres?: string[];
+    music_preview_url?: string;
     event_title?: string;
     event_date?: string;
     event_end_date?: string;
@@ -86,7 +100,7 @@ export async function POST(req: NextRequest) {
     hub_id?: number;
   };
 
-  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "book-review", "creative-showcase", "poll", "itinerary", "event"];
+  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "book-review", "music-review", "creative-showcase", "poll", "itinerary", "event"];
   const templateType = ALLOWED_TEMPLATES.includes(template_type ?? "") ? template_type! : "post";
 
   const user = session.user as any;
@@ -163,6 +177,7 @@ export async function POST(req: NextRequest) {
     "cultural-take": 1000,
     "food-review": 500,
     "book-review": 800,
+    "music-review": 800,
     "creative-showcase": 500,
     poll: 280,
     itinerary: 300,
@@ -276,6 +291,19 @@ export async function POST(req: NextRequest) {
           _book_fav_quote:           book_fav_quote?.trim() || "",
           ...(book_recommend != null && { _book_recommend: book_recommend ? "1" : "0" }),
           ...(Array.isArray(book_genres) && book_genres.length > 0 && { _book_genres: JSON.stringify(book_genres) }),
+        }),
+        ...(templateType === "music-review" && {
+          _music_title:               music_title?.trim() || "",
+          _music_artist:              music_artist?.trim() || "",
+          _music_overall_rating:      Math.max(1, Math.min(5, Number(music_overall_rating) || 0)),
+          _music_rating_production:   Math.max(0, Math.min(5, Number(music_rating_production) || 0)),
+          _music_rating_lyrics:       Math.max(0, Math.min(5, Number(music_rating_lyrics) || 0)),
+          _music_rating_replay:       Math.max(0, Math.min(5, Number(music_rating_replay) || 0)),
+          _music_rating_vibe:         Math.max(0, Math.min(5, Number(music_rating_vibe) || 0)),
+          _music_fav_lyric:           music_fav_lyric?.trim() || "",
+          ...(music_recommend != null && { _music_recommend: music_recommend ? "1" : "0" }),
+          ...(Array.isArray(music_genres) && music_genres.length > 0 && { _music_genres: JSON.stringify(music_genres) }),
+          ...(music_preview_url && { _music_preview_url: music_preview_url }),
         }),
         ...(templateType === "event" && {
           _event_date:                event_date || "",

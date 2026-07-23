@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import AudioPreviewButton from "../pulse/AudioPreviewButton";
 
 interface DirectoryResult {
   id: number;
@@ -187,6 +188,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           {value.about && <span className="composer-dir-selected-city">, {value.about}</span>}
           {!value.about && value.city && <span className="composer-dir-selected-city">, {value.city}</span>}
         </span>
+        {value.previewUrl && <AudioPreviewButton src={value.previewUrl} />}
         <button type="button" className="composer-dir-clear" onClick={() => onChange(null)}>×</button>
       </div>
     );

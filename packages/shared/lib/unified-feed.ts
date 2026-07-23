@@ -89,6 +89,18 @@ export interface FeedItem {
   bookFavQuote?: string;
   bookRecommend?: boolean;
   bookGenres?: string[];
+  // music review template (community posts)
+  musicTitle?: string;
+  musicArtist?: string;
+  musicOverallRating?: number;
+  musicRatingProduction?: number;
+  musicRatingLyrics?: number;
+  musicRatingReplay?: number;
+  musicRatingVibe?: number;
+  musicFavLyric?: string;
+  musicRecommend?: boolean;
+  musicGenres?: string[];
+  musicPreviewUrl?: string;
   // event template + RSVP (community posts)
   ticketUrl?: string;
   rsvpEnabled?: boolean;
@@ -153,7 +165,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
   let res: Response;
   try {
     res = await fetch(
-      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_preview_url,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
       { next: { revalidate: 300 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
@@ -227,6 +239,18 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       bookFavQuote: m._book_fav_quote || undefined,
       bookRecommend: m._book_recommend === "1" ? true : m._book_recommend === "0" ? false : undefined,
       bookGenres: m._book_genres ? (typeof m._book_genres === "string" ? (() => { try { return JSON.parse(m._book_genres); } catch { return undefined; } })() : m._book_genres) : undefined,
+      // Music review template
+      musicTitle: m._music_title || undefined,
+      musicArtist: m._music_artist || undefined,
+      musicOverallRating: m._music_overall_rating ? Number(m._music_overall_rating) : undefined,
+      musicRatingProduction: m._music_rating_production ? Number(m._music_rating_production) : undefined,
+      musicRatingLyrics: m._music_rating_lyrics ? Number(m._music_rating_lyrics) : undefined,
+      musicRatingReplay: m._music_rating_replay ? Number(m._music_rating_replay) : undefined,
+      musicRatingVibe: m._music_rating_vibe ? Number(m._music_rating_vibe) : undefined,
+      musicFavLyric: m._music_fav_lyric || undefined,
+      musicRecommend: m._music_recommend === "1" ? true : m._music_recommend === "0" ? false : undefined,
+      musicGenres: m._music_genres ? (typeof m._music_genres === "string" ? (() => { try { return JSON.parse(m._music_genres); } catch { return undefined; } })() : m._music_genres) : undefined,
+      musicPreviewUrl: m._music_preview_url || undefined,
       // Event template (community-organiser events)
       eventDate: m._event_date || undefined,
       endDate: m._event_end_date || undefined,
