@@ -297,6 +297,13 @@
   color: var(--evt-ink);
   margin: 0;
   min-width: 0;
+  /* Cap at 2 lines instead of unlimited wrap (which could grow a row very
+     tall for a long title) or single-line truncation (which was crushing
+     titles down to 1-2 characters on narrow mobile widths). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .evt-row:hover .evt-row-title {
@@ -1495,10 +1502,9 @@
   }
 
   .evt-timeline-main {
-    background: var(--evt-paper);
-    border-radius: 12px;
-    box-shadow: var(--evt-shadow-card);
-    padding: 20px;
+    /* No card treatment on mobile — the page background is already flat
+       white throughout (matches /feed), so a rounded/shadowed box here
+       just adds a redundant nested panel + extra padding around it. */
     max-width: none;
     margin: 0;
   }
