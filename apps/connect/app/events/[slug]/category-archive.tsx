@@ -113,12 +113,11 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
 
   return (
     <div className="bg-paper">
-      <div className="evt-headline-wrap">
-        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
+      <div className="evt-headline-wrap evt-headline-row">
         <h1 className="evt-headline">
           <span className="evt-archive-icon">{categoryInfo.icon}</span> <em>{categoryInfo.name}</em>
         </h1>
-        <p className="evt-archive-meta">{categoryInfo.desc} · {upcoming.length} upcoming</p>
+        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
       </div>
 
       <div className="evt-search-wrap">

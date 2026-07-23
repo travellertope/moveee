@@ -45,9 +45,18 @@
   font-style: italic;
   color: var(--evt-ochre);
 }
+/* City/category archives only — puts the back link on the same row as the
+   title, flush to the far right, instead of stacked above it. */
+.evt-headline-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
 @media (max-width: 640px) {
   .evt-headline-wrap { padding: 18px 16px 4px; }
   .evt-headline { font-size: 22px; }
+  .evt-headline-row { flex-wrap: wrap; }
 }
 
 /* ── Search entry point ─────────────────────────────────────────────── */
@@ -455,9 +464,9 @@
 /* ── ARCHIVE HEADER (CITY / CATEGORY) ──
    City/category archives (city-archive.tsx, category-archive.tsx) now share
    the main /events page's shell exactly (.evt-headline-wrap/.evt-headline,
-   .evt-search-wrap, .evt-timeline-section) — only these three classes are
-   archive-specific: the small back link and caption above/below the shared
-   headline, and the category icon inline within it. */
+   .evt-search-wrap, .evt-timeline-section) — only these two classes are
+   archive-specific: the back link sitting flush right on the title's own
+   row (.evt-headline-row above), and the category icon inline within it. */
 .evt-archive-icon {
   /* em-based so it scales with .evt-headline's font-size at every
      breakpoint instead of needing its own responsive override. */
@@ -470,18 +479,11 @@
   font-size: 13px;
   color: var(--evt-mute);
   text-decoration: none;
-  display: inline-block;
-  margin-bottom: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .evt-archive-back:hover {
-  color: var(--evt-ochre);
-}
-
-.evt-archive-meta {
-  margin-top: 10px;
-  font-family: var(--evt-font-mono);
-  font-size: 13px;
   color: var(--evt-ochre);
 }
 
