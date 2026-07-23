@@ -222,11 +222,12 @@ function mapRestEventToFrontendShape(item: any) {
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
     isLiterati: Boolean(pick(acf.event_is_literati, meta.is_literati, meta._culture_event_is_literati)),
     // WP's own templates (single/archive-culture_event.php) default an unset
-    // _culture_is_physical to "Virtual" (only '1' counts as In-Person) —
-    // matched here via the same loose-boolean parsing isAiGenerated already
-    // uses below, since raw REST/ACF meta comes through as the string '1'/'0'
-    // rather than a real boolean (Boolean('0') would otherwise be true).
-    isPhysical: [true, 1, '1'].includes(pick(acf.is_physical, meta.is_physical, meta._culture_is_physical) as any),
+    // _culture_is_physical to "Virtual" — but almost none of the seeded/
+    // existing events have ever had this checkbox touched, so that default
+    // made the entire calendar falsely show a Virtual tag. Flipped here:
+    // only an explicit '0'/false counts as Virtual, unset/anything else
+    // defaults to In-Person.
+    isPhysical: ![false, 0, '0'].includes(pick(acf.is_physical, meta.is_physical, meta._culture_is_physical) as any),
     rsvpCount: Number(cem.rsvp_count) || 0,
     isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(cem.ai_generated ?? acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
     openingHours: pick(cem.opening_hours, acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
