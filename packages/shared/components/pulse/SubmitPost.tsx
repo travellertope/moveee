@@ -70,18 +70,18 @@ const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; tierLabe
   event:     { minRep: 500,  tierLabel: "Culture Contributor" },
 };
 
-const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
-  post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
-  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
-  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
-  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
-  "book-review":       { desc: "Review a book you've read — rate it and share your thoughts.",                             chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"] },
-  "music-review":      { desc: "Review an album — rate it and share your thoughts.",                                       chips: ["On repeat since:", "First listen thoughts:", "Album of the year contender:"] },
-  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
-  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
-  itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
-  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar.",   chips: ["Happening this weekend:", "Don't miss this one:", "Tickets going fast:"] },
-  quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world." },
+  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues." },
+  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing." },
+  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe." },
+  "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
+  "music-review":      { desc: "Review an album — rate it and share your thoughts." },
+  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
+  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
+  itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
+  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
+  quote:               { desc: "Share a quote that moved you. Add the author and source below." },
 };
 
 // Template → default section tag
@@ -204,6 +204,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   const [bookGenres, setBookGenres] = useState<string[]>([]);
+  const [showBookGenreInput, setShowBookGenreInput] = useState(false);
+  const [bookGenreInput, setBookGenreInput] = useState("");
 
   // Music review specific
   const [musicEntry, setMusicEntry] = useState<any>(null);
@@ -212,6 +214,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [musicFavLyric, setMusicFavLyric] = useState("");
   const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
   const [musicGenres, setMusicGenres] = useState<string[]>([]);
+  const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
+  const [musicGenreInput, setMusicGenreInput] = useState("");
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -839,18 +843,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Template guide */}
             <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
               <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
-              <div className="composer-guide-chips">
-                {TEMPLATE_GUIDES[template].chips.map(chip => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className="composer-guide-chip"
-                    onClick={() => { setText(chip + " "); setTimeout(() => textareaRef.current?.focus(), 0); }}
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Main text area */}
@@ -947,6 +939,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   rows={2}
                   className="composer-textarea composer-textarea--italic"
                 />
+                <p className="composer-field-label">Would you recommend it?</p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <button
                     type="button"
@@ -965,7 +958,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     👎 No
                   </button>
                 </div>
-                <div className="composer-guide-chips">
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
                   {BOOK_GENRES.map(g => {
                     const active = bookGenres.includes(g);
                     return (
@@ -980,6 +974,49 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       </button>
                     );
                   })}
+                  {bookGenres.filter(g => !BOOK_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setBookGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showBookGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={bookGenreInput}
+                        onChange={e => setBookGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = bookGenreInput.trim();
+                            if (v && !bookGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setBookGenres(prev => [...prev, v]);
+                            }
+                            setBookGenreInput("");
+                            setShowBookGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setBookGenreInput("");
+                            setShowBookGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowBookGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -1004,6 +1041,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   rows={2}
                   className="composer-textarea composer-textarea--italic"
                 />
+                <p className="composer-field-label">Would you recommend it?</p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <button
                     type="button"
@@ -1022,7 +1060,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     👎 No
                   </button>
                 </div>
-                <div className="composer-guide-chips">
+                <p className="composer-field-label">Genres (optional)</p>
+                <div className="composer-chip-wrap">
                   {MUSIC_GENRES.map(g => {
                     const active = musicGenres.includes(g);
                     return (
@@ -1037,6 +1076,49 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       </button>
                     );
                   })}
+                  {musicGenres.filter(g => !MUSIC_GENRES.includes(g)).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setMusicGenres(prev => prev.filter(x => x !== g))}
+                      className="composer-guide-chip"
+                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                    >
+                      {g} ×
+                    </button>
+                  ))}
+                  {showMusicGenreInput ? (
+                    <span style={{ display: "flex", gap: "4px" }}>
+                      <input
+                        type="text"
+                        value={musicGenreInput}
+                        onChange={e => setMusicGenreInput(e.target.value)}
+                        placeholder="Custom genre"
+                        className="composer-input"
+                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = musicGenreInput.trim();
+                            if (v && !musicGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
+                              setMusicGenres(prev => [...prev, v]);
+                            }
+                            setMusicGenreInput("");
+                            setShowMusicGenreInput(false);
+                          } else if (e.key === "Escape") {
+                            setMusicGenreInput("");
+                            setShowMusicGenreInput(false);
+                          }
+                        }}
+                        onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
+                      />
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setShowMusicGenreInput(true)} className="composer-guide-chip">
+                      + Other
+                    </button>
+                  )}
                 </div>
               </>
             )}
