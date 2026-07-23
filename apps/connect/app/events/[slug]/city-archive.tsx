@@ -51,12 +51,9 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
 
   return (
     <div className="bg-paper">
-      <div className="evt-headline-wrap">
-        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
+      <div className="evt-headline-wrap evt-headline-row">
         <h1 className="evt-headline">Happening in <em>{cityInfo.name}</em></h1>
-        <p className="evt-archive-meta">
-          {cityInfo.country} · {cityEvents.length} upcoming event{cityEvents.length !== 1 ? "s" : ""}
-        </p>
+        <Link href="/events" className="evt-archive-back">← All Happenings</Link>
       </div>
 
       <div className="evt-search-wrap">
