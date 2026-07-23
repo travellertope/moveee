@@ -17,9 +17,18 @@
    and the search modal (see Header.tsx/SearchModal.tsx). This modifier
    drops the left 240px track for that page only; the single-story pages
    below (pulse/[slug], community/[slug]) still use the base 3-column
-   .pulse-layout with a real .pulse-sidebar-left. */
+   .pulse-layout with a real .pulse-sidebar-left.
+   The timeline track is 1fr (fills all remaining space) rather than a
+   fixed max-width, so the two tracks always sum to exactly the container
+   width — the base .pulse-layout's justify-content:center has nothing
+   left to redistribute, which previously showed up as an asymmetric
+   leading gap glued to the timeline's left edge only (its right edge,
+   against the right-rail column, got none of that extra space, so the
+   column read as unevenly padded). The 760px reading-width cap moves
+   onto .pulse-timeline-inner below, which centers via margin:auto within
+   the now-full-width track, splitting any leftover space evenly. */
 .pulse-layout--feed {
-  grid-template-columns: minmax(0, 760px) 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 .pulse-sidebar-left {
   border-right: 1px solid var(--rule, #e8e2d8);
@@ -39,6 +48,14 @@
   background: #ffffff;
   min-height: 80vh;
   min-width: 0;
+}
+/* Caps + centers the feed's actual content within the now-full-width
+   .pulse-timeline track (see .pulse-layout--feed comment above) — kept
+   separate from .pulse-timeline itself so its border-right/background
+   still span the full track width. */
+.pulse-timeline-inner {
+  max-width: 760px;
+  margin: 0 auto;
 }
 .pulse-sidebar-right {
   position: sticky;

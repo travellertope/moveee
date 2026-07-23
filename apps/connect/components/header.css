@@ -268,11 +268,11 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(20, 17, 13, 0.35);
-  z-index: 150;
+  background: rgba(20, 17, 13, 0.5);
+  z-index: 205; /* above .ch-header (200), below .ch-mobile-nav (210) */
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.18s;
 }
 
 .ch-mobile-overlay.open {
@@ -280,74 +280,81 @@
   pointer-events: auto;
 }
 
-/* ── Mobile nav drawer ── */
+/* ── Mobile nav drawer — a left-sliding full-height panel over the dimmed
+   backdrop above (matches the approved mockup's Frame 4), not a slide-down
+   panel below the header. It shares content/classes with the desktop rail
+   (logo, search, main nav, spacer, bottom icon rows, account row) and
+   overlays the header entirely while open, same as the mockup. ── */
 .ch-mobile-nav {
   display: none;
   position: fixed;
-  top: 60px;
+  top: 0;
   left: 0;
-  right: 0;
+  bottom: 0;
+  width: min(80%, 300px);
   background: var(--paper);
-  border-bottom: 1px solid rgba(42, 36, 28, 0.15);
-  z-index: 190;
-  padding: 0.75rem 1.25rem 1.25rem;
+  z-index: 210;
   flex-direction: column;
-  gap: 0.15rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  transform: translateY(-8px);
-  opacity: 0;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.18);
+  transform: translateX(-100%);
   pointer-events: none;
-  transition: transform 0.2s, opacity 0.2s;
+  transition: transform 0.2s ease;
+  overflow-y: auto;
 }
 
 .ch-mobile-nav.open {
-  transform: translateY(0);
-  opacity: 1;
+  transform: translateX(0);
   pointer-events: auto;
 }
 
-.ch-mobile-nav-link {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--ink-soft);
-  text-decoration: none;
-  padding: 0.65rem 0.75rem;
-  border-radius: 6px;
-  display: block;
-  transition: background 0.12s, color 0.12s;
-}
+.ch-mobile-nav-logo { padding: 22px 22px 16px; display: block; }
+.ch-mobile-nav-logo img { height: 24px; width: auto; display: block; }
 
-/* Icon+label rows (Discover Culture, People Near Me, Stoop IRL, Interest
-   Hubs, theme toggle) — mirrors .ch-rail-icon-btn's treatment so the mobile
-   drawer visually matches the desktop rail's bottom block instead of
-   falling back to a plain text list. */
-.ch-mobile-nav-link--icon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
+.ch-mobile-search-wrap { padding: 0 14px 14px; }
 /* Search entry point at the top of the mobile drawer — mirrors
    .ch-rail-search-btn's rounded pill treatment, since the top bar itself
-   only has room for a small icon button. */
+   only has room for bell/avatar/hamburger (no search icon there). */
 .ch-mobile-search-btn {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  margin-bottom: 0.5rem;
+  padding: 8px 10px;
   border-radius: 999px;
   border: 1px solid rgba(42, 36, 28, 0.15);
   background: var(--paper-deep);
   color: var(--mute);
-  font-size: 14px;
+  font-size: 13px;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
   text-align: left;
   cursor: pointer;
 }
 .ch-mobile-search-btn svg { flex-shrink: 0; }
+
+.ch-mobile-nav-main { padding: 4px 14px; display: flex; flex-direction: column; }
+
+.ch-mobile-nav-link {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  padding: 9px 10px;
+  border-radius: 4px;
+  display: block;
+  transition: background 0.12s, color 0.12s;
+}
+
+/* Icon+label rows (main nav + Discover Culture, People Near Me, Stoop IRL,
+   Interest Hubs, theme toggle, Notifications) — mirrors .ch-rail-link/
+   .ch-rail-icon-btn's treatment so the mobile drawer visually matches the
+   desktop rail instead of falling back to a plain text list. */
+.ch-mobile-nav-link--icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ch-mobile-nav-link--icon svg { flex-shrink: 0; }
 
 .ch-mobile-nav-link:hover,
 .ch-mobile-nav-link.active {
@@ -357,19 +364,33 @@
 
 .ch-mobile-nav-link--external {
   color: var(--mute);
-  font-size: 0.875rem;
 }
 
-.ch-mobile-nav-divider {
-  height: 1px;
-  background: rgba(42, 36, 28, 0.1);
-  margin: 0.5rem 0;
+.ch-mobile-nav-spacer { flex: 1; }
+
+.ch-mobile-nav-bottom {
+  border-top: 1px solid rgba(42, 36, 28, 0.1);
+  padding: 10px 4px 14px;
+  display: flex;
+  flex-direction: column;
 }
+
+.ch-mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.ch-mobile-user:hover { background: var(--paper-deep); }
 
 .ch-mobile-auth {
   display: flex;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem 0;
+  padding: 10px;
+  margin-top: 6px;
 }
 
 .ch-mobile-auth .ch-btn-ghost,
@@ -414,10 +435,11 @@
 
 .ch-rail-nav { padding: 4px 14px; display: flex; flex-direction: column; gap: 1px; }
 .ch-rail-link {
-  display: flex; align-items: center; padding: 9px 10px; border-radius: 4px;
+  display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 4px;
   font-size: 14px; font-weight: 500; color: var(--ink-soft); text-decoration: none;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
+.ch-rail-link svg { flex-shrink: 0; }
 .ch-rail-link:hover { background: var(--paper-deep); color: var(--ink); }
 .ch-rail-link.active { background: var(--ink); color: var(--paper); font-weight: 600; }
 .ch-rail-link--ext { color: var(--mute); }
