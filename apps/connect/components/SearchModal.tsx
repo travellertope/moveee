@@ -6,7 +6,7 @@ import "./search-modal.css";
 
 const CONTENT_TYPES = [
   { label: "All",       value: "all"       },
-  { label: "Pulse",     value: "pulse"     },
+  { label: "Post",      value: "pulse"     },
   { label: "News",      value: "news"      },
   { label: "Editorial", value: "editorial" },
   { label: "Event",     value: "event"     },
@@ -23,7 +23,7 @@ const CATEGORIES = [
 ];
 
 const SUBTYPE_META: Record<string, { emoji: string; label: string }> = {
-  culture_post:     { emoji: "💬", label: "Pulse"      },
+  culture_post:     { emoji: "💬", label: "Post"       },
   pulse_story:      { emoji: "📰", label: "News"       },
   post:             { emoji: "📖", label: "Editorial"  },
   culture_event:    { emoji: "📅", label: "Event"      },
