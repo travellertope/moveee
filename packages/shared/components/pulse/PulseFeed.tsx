@@ -317,15 +317,13 @@ const handleForYou = () => {
             >
               Latest
             </button>
-            {hasInterests && (
-              <button
-                type="button"
-                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-                onClick={() => { if (!forYou) handleForYou(); }}
-              >
-                For You
-              </button>
-            )}
+            <button
+              type="button"
+              className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
+              onClick={() => { if (!forYou) handleForYou(); }}
+            >
+              For You
+            </button>
           </div>
 
           {visible.length === 0 ? (
