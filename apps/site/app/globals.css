@@ -1163,6 +1163,27 @@ h1, h2, h3, h4 {
   border: 1px solid #e0d8ce;
   border-radius: 6px;
 }
+.composer-dir-selected-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.composer-dir-external-group {
+  border-top: 1px solid #e0d8ce;
+  padding-top: 4px;
+  margin-top: 4px;
+}
+.composer-dir-external-label {
+  font-family: var(--font-jetbrains-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a6f5c;
+  padding: 6px 12px 2px;
+}
 .composer-dir-selected-name {
   flex: 1;
   font-family: var(--font-dm-sans, "DM Sans", sans-serif);

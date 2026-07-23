@@ -146,6 +146,22 @@ class Culture_Post_Types {
             '_food_rating_taste'   => 'integer',
             '_food_rating_value'   => 'integer',
             '_food_rating_vibe'    => 'integer',
+            // Book Review template — was mobile-only until this registration was
+            // added; the mobile custom endpoint saves these via raw
+            // update_post_meta() regardless, but the web composer creates posts
+            // via native WP REST, which silently drops any meta key not
+            // registered here.
+            '_book_title'              => 'string',
+            '_book_author'             => 'string',
+            '_book_status'             => 'string',
+            '_book_overall_rating'     => 'integer',
+            '_book_rating_writing'     => 'integer',
+            '_book_rating_story'       => 'integer',
+            '_book_rating_characters'  => 'integer',
+            '_book_rating_pacing'      => 'integer',
+            '_book_fav_quote'          => 'string',
+            '_book_recommend'          => 'string',
+            '_book_genres'             => 'string', // JSON: string[]
             // Community-organiser event template (separate from the culture_event CPT above)
             '_event_date'              => 'string',
             '_event_end_date'          => 'string',
@@ -211,6 +227,11 @@ class Culture_Post_Types {
             '_entry_quote'            => 'string',   // featured quote for Concept/Book blockquote
             '_selected_works'         => 'string',   // JSON: [{imageUrl?, caption}]
             '_related_entries'        => 'string',   // JSON: [{id, title, type, slug}]
+            // External catalog dedup (Google Books/Spotify/TMDB quick-create) —
+            // see Culture_Directory::find_by_external_id().
+            '_external_source'        => 'string',   // 'google_books' | 'spotify' | 'tmdb'
+            '_external_id'            => 'string',   // ISBN / Spotify album ID / TMDB ID
+            '_external_cover_url'     => 'string',   // cover/poster art URL, not sideloaded into media library
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(

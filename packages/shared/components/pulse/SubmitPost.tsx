@@ -43,7 +43,7 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Route/Event, so it read
@@ -53,6 +53,7 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
+  { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
@@ -73,6 +74,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
   "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
   "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
+  "book-review":       { desc: "Review a book you've read — rate it and share your thoughts.",                             chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"] },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
   poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
@@ -83,6 +85,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
 // Template → default section tag
 const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
   "food-review":       "Food",
+  "book-review":       "Literature",
   "itinerary":         "Travel",
   "creative-showcase": "Art",
 };
@@ -117,8 +120,12 @@ function detectTagFromContent(text: string): Tag | null {
   return bestScore >= 1 ? best : null;
 }
 
+const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
+const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
+
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
+  "book-review": 800,
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
@@ -183,6 +190,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [foodTaste, setFoodTaste] = useState(0);
   const [foodValue, setFoodValue] = useState(0);
   const [foodVibe, setFoodVibe] = useState(0);
+
+  // Book review specific
+  const [bookEntry, setBookEntry] = useState<any>(null);
+  const [bookStatus, setBookStatus] = useState<"Finished" | "Reading" | "Want to Read" | "">("");
+  const [bookOverallRating, setBookOverallRating] = useState(0);
+  const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
+  const [bookFavQuote, setBookFavQuote] = useState("");
+  const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
+  const [bookGenres, setBookGenres] = useState<string[]>([]);
 
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
@@ -355,6 +371,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
         return text.trim().length >= 50 && foodDishName.trim().length > 0 && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
+      case "book-review":
+        return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
       case "creative-showcase":
         return galleryFiles.length > 0 || videoUrl.trim().length > 0;
       case "poll":
@@ -456,6 +474,20 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.food_rating_value = foodValue;
         payload.food_rating_vibe = foodVibe;
       }
+      if (template === "book-review") {
+        payload.linked_directory_id = bookEntry?.id;
+        payload.book_title = bookEntry?.title;
+        payload.book_author = bookEntry?.about;
+        payload.book_status = bookStatus;
+        payload.book_overall_rating = bookOverallRating;
+        payload.book_rating_writing = bookRatings.writing;
+        payload.book_rating_story = bookRatings.story;
+        payload.book_rating_characters = bookRatings.characters;
+        payload.book_rating_pacing = bookRatings.pacing;
+        payload.book_fav_quote = bookFavQuote.trim() || undefined;
+        payload.book_recommend = bookRecommend;
+        payload.book_genres = bookGenres.length > 0 ? bookGenres : undefined;
+      }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
         const expires = new Date();
@@ -547,6 +579,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     "hidden-gem": "Tell us about this gem — what makes it special?",
     "cultural-take": "Share your take…",
     "food-review": "How was the food?",
+    "book-review": "What did you think? Who would love it?",
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
@@ -617,6 +650,33 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                 placeholder="Dish or item name *"
                 className="composer-input"
               />
+            )}
+
+            {/* Book search + status */}
+            {template === "book-review" && (
+              <>
+                <DirectorySearch
+                  value={bookEntry}
+                  onChange={setBookEntry}
+                  typeFilter="book"
+                  aboutFieldLabel="Author"
+                  externalSource="google_books"
+                  placeholder="Search for a book *"
+                />
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  {BOOK_STATUSES.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setBookStatus(s)}
+                      className={`composer-template-pill${bookStatus === s ? " composer-template-pill--active" : ""}`}
+                      style={{ flex: 1, justifyContent: "center" }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
 
             {/* Event fields */}
@@ -825,6 +885,63 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               <StarRating value={starRating} onChange={setStarRating} label="Rating" />
             )}
 
+            {/* Book review — overall + breakdown ratings, favourite quote, recommend, genres */}
+            {template === "book-review" && (
+              <>
+                <StarRating value={bookOverallRating} onChange={setBookOverallRating} label="Overall rating" />
+                <MultiRating
+                  ratings={[
+                    { label: "Writing", value: bookRatings.writing },
+                    { label: "Story", value: bookRatings.story },
+                    { label: "Characters", value: bookRatings.characters },
+                    { label: "Pacing", value: bookRatings.pacing },
+                  ]}
+                  onChange={(label, v) => setBookRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                />
+                <textarea
+                  value={bookFavQuote}
+                  onChange={e => setBookFavQuote(e.target.value.slice(0, 300))}
+                  placeholder="Favourite quote (optional)"
+                  rows={2}
+                  className="composer-textarea composer-textarea--italic"
+                />
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setBookRecommend(true)}
+                    className={`composer-template-pill${bookRecommend === true ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👍 Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookRecommend(false)}
+                    className={`composer-template-pill${bookRecommend === false ? " composer-template-pill--active" : ""}`}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    👎 No
+                  </button>
+                </div>
+                <div className="composer-guide-chips">
+                  {BOOK_GENRES.map(g => {
+                    const active = bookGenres.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setBookGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
+                        className="composer-guide-chip"
+                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
             {/* Multi-rating — food-review */}
             {template === "food-review" && (
               <MultiRating
@@ -890,7 +1007,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && (
+            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -920,8 +1037,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review"}
               style={{ display: "none" }}
             />
 

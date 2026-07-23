@@ -77,6 +77,18 @@ export interface FeedItem {
   foodRatingTaste?: number;
   foodRatingValue?: number;
   foodRatingVibe?: number;
+  // book review template (community posts)
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookStatus?: string;
+  bookOverallRating?: number;
+  bookRatingWriting?: number;
+  bookRatingStory?: number;
+  bookRatingCharacters?: number;
+  bookRatingPacing?: number;
+  bookFavQuote?: string;
+  bookRecommend?: boolean;
+  bookGenres?: string[];
   // event template + RSVP (community posts)
   ticketUrl?: string;
   rsvpEnabled?: boolean;
@@ -141,7 +153,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
   let res: Response;
   try {
     res = await fetch(
-      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category`,
       { next: { revalidate: 300 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
@@ -203,6 +215,18 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       foodRatingTaste: m._food_rating_taste ? Number(m._food_rating_taste) : undefined,
       foodRatingValue: m._food_rating_value ? Number(m._food_rating_value) : undefined,
       foodRatingVibe: m._food_rating_vibe ? Number(m._food_rating_vibe) : undefined,
+      // Book review template
+      bookTitle: m._book_title || undefined,
+      bookAuthor: m._book_author || undefined,
+      bookStatus: m._book_status || undefined,
+      bookOverallRating: m._book_overall_rating ? Number(m._book_overall_rating) : undefined,
+      bookRatingWriting: m._book_rating_writing ? Number(m._book_rating_writing) : undefined,
+      bookRatingStory: m._book_rating_story ? Number(m._book_rating_story) : undefined,
+      bookRatingCharacters: m._book_rating_characters ? Number(m._book_rating_characters) : undefined,
+      bookRatingPacing: m._book_rating_pacing ? Number(m._book_rating_pacing) : undefined,
+      bookFavQuote: m._book_fav_quote || undefined,
+      bookRecommend: m._book_recommend === "1" ? true : m._book_recommend === "0" ? false : undefined,
+      bookGenres: m._book_genres ? (typeof m._book_genres === "string" ? (() => { try { return JSON.parse(m._book_genres); } catch { return undefined; } })() : m._book_genres) : undefined,
       // Event template (community-organiser events)
       eventDate: m._event_date || undefined,
       endDate: m._event_end_date || undefined,

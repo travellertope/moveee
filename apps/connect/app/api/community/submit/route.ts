@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
     template_type, linked_directory_id, star_rating, location_name, location_lat, location_lng,
     poll_options, poll_expires_at, itinerary_stops, gallery_images, video_url,
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
+    book_title, book_author, book_status, book_overall_rating,
+    book_rating_writing, book_rating_story, book_rating_characters, book_rating_pacing,
+    book_fav_quote, book_recommend, book_genres,
     event_title, event_date, event_end_date, event_venue, event_city, event_address,
     event_admission, ticket_url, event_category, organiser_directory_id,
     rsvp_enabled, rsvp_capacity, hub_id,
@@ -57,6 +60,17 @@ export async function POST(req: NextRequest) {
     food_rating_taste?: number;
     food_rating_value?: number;
     food_rating_vibe?: number;
+    book_title?: string;
+    book_author?: string;
+    book_status?: string;
+    book_overall_rating?: number;
+    book_rating_writing?: number;
+    book_rating_story?: number;
+    book_rating_characters?: number;
+    book_rating_pacing?: number;
+    book_fav_quote?: string;
+    book_recommend?: boolean;
+    book_genres?: string[];
     event_title?: string;
     event_date?: string;
     event_end_date?: string;
@@ -72,7 +86,7 @@ export async function POST(req: NextRequest) {
     hub_id?: number;
   };
 
-  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "creative-showcase", "poll", "itinerary", "event"];
+  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "book-review", "creative-showcase", "poll", "itinerary", "event"];
   const templateType = ALLOWED_TEMPLATES.includes(template_type ?? "") ? template_type! : "post";
 
   const user = session.user as any;
@@ -148,6 +162,7 @@ export async function POST(req: NextRequest) {
     "hidden-gem": 500,
     "cultural-take": 1000,
     "food-review": 500,
+    "book-review": 800,
     "creative-showcase": 500,
     poll: 280,
     itinerary: 300,
@@ -249,6 +264,19 @@ export async function POST(req: NextRequest) {
         ...(food_rating_taste != null                 && { _food_rating_taste: food_rating_taste }),
         ...(food_rating_value != null                 && { _food_rating_value: food_rating_value }),
         ...(food_rating_vibe != null                  && { _food_rating_vibe: food_rating_vibe }),
+        ...(templateType === "book-review" && {
+          _book_title:               book_title?.trim() || "",
+          _book_author:              book_author?.trim() || "",
+          ...(book_status && { _book_status: book_status }),
+          _book_overall_rating:      Math.max(1, Math.min(5, Number(book_overall_rating) || 0)),
+          _book_rating_writing:      Math.max(0, Math.min(5, Number(book_rating_writing) || 0)),
+          _book_rating_story:        Math.max(0, Math.min(5, Number(book_rating_story) || 0)),
+          _book_rating_characters:   Math.max(0, Math.min(5, Number(book_rating_characters) || 0)),
+          _book_rating_pacing:       Math.max(0, Math.min(5, Number(book_rating_pacing) || 0)),
+          _book_fav_quote:           book_fav_quote?.trim() || "",
+          ...(book_recommend != null && { _book_recommend: book_recommend ? "1" : "0" }),
+          ...(Array.isArray(book_genres) && book_genres.length > 0 && { _book_genres: JSON.stringify(book_genres) }),
+        }),
         ...(templateType === "event" && {
           _event_date:                event_date || "",
           _event_end_date:            event_end_date?.trim() || "",

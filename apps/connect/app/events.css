@@ -282,9 +282,13 @@
 
 .evt-row-title-line {
   display: flex;
-  align-items: center;
+  /* flex-start (not center) so the tag sits against the title's first line
+     rather than centering against the whole block once a long, no-longer-
+     truncated title wraps to 2-3 lines. */
+  align-items: flex-start;
   gap: 8px;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .evt-row-title {
@@ -293,9 +297,7 @@
   color: var(--evt-ink);
   margin: 0;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* No truncation — wraps as many lines as the title needs. */
 }
 
 .evt-row:hover .evt-row-title {
@@ -1484,16 +1486,19 @@
     margin: 0 16px;
   }
 
+  .evt-timeline-section {
+    padding: 24px 0 40px;
+  }
+
   .evt-timeline-wrap {
     display: block;
     padding: 0 20px;
   }
 
   .evt-timeline-main {
-    background: var(--evt-paper);
-    border-radius: 12px;
-    box-shadow: var(--evt-shadow-card);
-    padding: 20px;
+    /* No card treatment on mobile — the page background is already flat
+       white throughout (matches /feed), so a rounded/shadowed box here
+       just adds a redundant nested panel + extra padding around it. */
     max-width: none;
     margin: 0;
   }
@@ -1514,7 +1519,7 @@
   }
 
   .evt-row-title {
-    -webkit-line-clamp: 1;
+    font-size: 13.5px;
   }
 
   .evt-detail-hero {

@@ -346,6 +346,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   Food Review{item.foodDishName ? ` · ${item.foodDishName}` : ""}
                 </span>
               )}
+              {item.templateType === "book-review" && (
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B48A8", background: "rgba(107,72,168,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
+                  📚 Book Review{item.bookTitle ? ` · ${item.bookTitle}` : ""}
+                </span>
+              )}
               {item.templateType === "creative-showcase" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Creative Showcase
@@ -390,6 +395,34 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
               {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
               {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
+            </div>
+          )}
+
+          {/* Book review rating/status/recommend/genres/favourite quote */}
+          {item.templateType === "book-review" && item.bookOverallRating && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
+                {item.bookAuthor && <span>by {item.bookAuthor}</span>}
+                {item.bookStatus && <span>{item.bookStatus}</span>}
+                {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              </div>
+              {item.bookFavQuote && (
+                <blockquote style={{
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #6B48A8", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                }}>
+                  “{item.bookFavQuote}”
+                </blockquote>
+              )}
+              {item.bookGenres && item.bookGenres.length > 0 && (
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  {item.bookGenres.map((g) => (
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

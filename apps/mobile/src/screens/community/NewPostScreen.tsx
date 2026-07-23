@@ -158,7 +158,7 @@ const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
-interface DirectoryEntry { id: number; title: string; type: string; city?: string; author?: string }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -505,7 +505,7 @@ const uploadImages = async (): Promise<string[]> => {
           content: text,
           linked_directory_id: bookEntry!.id,
           book_title: bookEntry!.title,
-          book_author: bookEntry!.author,
+          book_author: bookEntry!.about,
           book_status: bookStatus,
           book_overall_rating: bookOverallRating,
           book_rating_writing: bookRatings.writing,
@@ -1008,7 +1008,8 @@ const uploadImages = async (): Promise<string[]> => {
           onSelect={setBookEntry}
           label="Book *"
           typeFilter="book"
-          showAuthorField
+          aboutFieldLabel="Author"
+          externalSource="google_books"
         />
       </View>
 
