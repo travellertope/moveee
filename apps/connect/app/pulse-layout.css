@@ -12,13 +12,22 @@
   align-items: start;
   overflow-x: clip;
 }
+/* The main /feed page has no left sidebar of its own anymore — its
+   Content Type / Sections controls moved into the global left-nav rail
+   and the search modal (see Header.tsx/SearchModal.tsx). This modifier
+   drops the left 240px track for that page only; the single-story pages
+   below (pulse/[slug], community/[slug]) still use the base 3-column
+   .pulse-layout with a real .pulse-sidebar-left. */
+.pulse-layout--feed {
+  grid-template-columns: minmax(0, 760px) 340px;
+}
 .pulse-sidebar-left {
   border-right: 1px solid var(--rule, #e8e2d8);
   position: sticky;
-  /* clears the sticky site header (.ch-header, 60px tall, z-index 200) —
-     top:0 here would let the header cover the sidebar's top 60px on scroll */
-  top: 60px;
-  max-height: calc(100vh - 60px);
+  /* the site header is now a left-hand rail (.ch-rail) at >=860px, not a
+     sticky top bar, so there's no header height to clear here anymore */
+  top: 0;
+  max-height: 100vh;
   overflow-y: auto;
   background: #ffffff;
   padding: 24px 16px;
@@ -33,110 +42,51 @@
 }
 .pulse-sidebar-right {
   position: sticky;
-  top: 60px; /* clears the sticky site header, same as .pulse-sidebar-left */
-  max-height: calc(100vh - 60px);
+  top: 0; /* see .pulse-sidebar-left comment above */
+  max-height: 100vh;
   overflow-y: auto;
   background: #ffffff;
   padding: 24px 16px;
 }
-.pulse-mobile-filters {
-  display: none;
-  border-bottom: 1px solid var(--rule, #e8e2d8);
-  background: #fff;
-}
-.pulse-mobile-filters-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.pulse-mobile-filters-scroll::-webkit-scrollbar { display: none; }
 @media (max-width: 860px) {
   .pulse-layout              { grid-template-columns: 1fr; }
   .pulse-sidebar-left        { display: none; }
   .pulse-sidebar-right       { display: none; }
   .pulse-timeline            { border-right: none; }
-  .pulse-mobile-filters      { display: block; }
 }
 
-/* ── Left rail: section groups (matches the approved three-column mockup) ── */
-.pulse-sidebar-heading {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--mute);
-  letter-spacing: .13em;
-  margin: 0 0 10px;
-  padding-left: 10px;
-}
-.pulse-sidebar-group + .pulse-sidebar-group { margin-top: 28px; }
-.pulse-sidebar-link {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 13.5px;
-  color: var(--ink-soft);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md, 4px);
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: color .12s, background-color .12s;
-}
-.pulse-sidebar-link:hover {
-  color: var(--ink);
-  background: var(--paper-deep, #f2f2f2);
-}
-.pulse-sidebar-link--active {
-  font-weight: 600;
-  color: var(--paper);
-  background: var(--ink);
-}
-.pulse-sidebar-link--accent-active {
-  font-weight: 600;
-  color: #fff;
-  background: var(--ochre);
-}
-
-/* ── Category filter strip (in-feed pill row) ───────────────────────────────── */
-.feed-category-strip { background: var(--paper); }
-.feed-category-scroll {
+/* ── For You / Latest tabs (replaces the old in-feed Content Type sidebar +
+   category pill strip — content-type/category filtering now lives in the
+   global search modal; this is the one remaining feed-level control) ── */
+.feed-tabs {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  border-top: 1px solid var(--rule, #e8e2d8);
+  gap: 4px;
+  padding: 0 20px;
   border-bottom: 1px solid var(--rule, #e8e2d8);
+  background: var(--paper);
 }
-.feed-category-scroll::-webkit-scrollbar { display: none; }
-.feed-category-pill {
-  flex-shrink: 0;
-  height: 32px;
-  padding: 0 16px;
-  border-radius: var(--radius-full, 9999px);
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 13px;
-  font-weight: 500;
+.feed-tab {
+  position: relative;
+  background: none;
+  border: none;
   cursor: pointer;
-  background: #ffffff;
-  color: var(--ink-soft);
-  border: 1px solid #c8bfb0;
-  white-space: nowrap;
-  transition: background-color .12s, border-color .12s, color .12s;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mute);
+  padding: 14px 12px;
 }
-.feed-category-pill:hover:not(.feed-category-pill--active) { color: var(--ink); }
-.feed-category-pill--active {
+.feed-tab:hover { color: var(--ink); }
+.feed-tab--active { color: var(--ink); }
+.feed-tab--active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
   background: var(--ochre);
-  border-color: var(--ochre);
-  color: #ffffff;
-  font-weight: 700;
+  border-radius: 2px 2px 0 0;
 }
 
 /* ── Right rail: trending + about ───────────────────────────────── */

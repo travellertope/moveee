@@ -87,9 +87,13 @@ export default function RootLayout({
             <LanguageProvider>
               <ThemeProvider>
                 <AppDownloadBanner />
-                <ConnectHeader />
-                <main>{children}</main>
-                <Footer />
+                <div className="cw-shell">
+                  <ConnectHeader />
+                  <div className="cw-shell-content">
+                    <main>{children}</main>
+                    <Footer />
+                  </div>
+                </div>
                 <AppDownloadModal />
                 <GlobalAuthModal />
               </ThemeProvider>
