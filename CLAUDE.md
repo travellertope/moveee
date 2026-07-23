@@ -1806,6 +1806,69 @@ either path on themoveee.com correctly forwards to web.themoveee.com.
 
 ---
 
+## Connect app left-nav rail (replaces the top header, July 2026)
+
+`apps/connect/components/Header.tsx` renders **two full markup trees on every page, always**,
+with visibility toggled purely by CSS media query at the **860px** breakpoint (same breakpoint
+the 3-column `/feed` layout already used) — there is no conditional rendering in JS, to avoid a
+hydration mismatch between server and client:
+
+- **`<aside className="ch-rail">`** — the `>=860px` surface. A WhatsDhype-style left sidebar:
+  logo → search bar button (opens `SearchModal`) → main nav (Feed/Events/Games/Magazine) →
+  spacer → a bottom block (`.ch-rail-bottom`) with `RAIL_LINKS` (**Discover Culture**, **People
+  Near Me**, **Stoop IRL**, **Interest Hubs** — in that order), theme toggle, notification bell,
+  then account (avatar+name+tier opening a dropdown that opens **upward** via
+  `.ch-user-menu--rail`, since it's anchored near the bottom of a tall sidebar) or Sign in/Join
+  when logged out. `position: sticky; top: 0; height: 100vh`.
+- **`<header className="ch-header">`** — the `<860px` surface, essentially the old top bar
+  (unchanged), except the inline Discover/Hubs/Stoop links and theme toggle were removed from
+  `.ch-right` (to avoid crowding an already-tight mobile bar) and now only live in the mobile
+  hamburger drawer (`#ch-mobile-nav`), which mirrors the rail's bottom block content.
+
+**This replaced per-page sidebars, not just added a new one.** `/feed`'s old
+`.pulse-sidebar-left` (Content Type filter list + Sections links + a "For You" personalised
+link) is now fully redundant with the global rail + search modal and was **removed from
+`PulseFeed.tsx` entirely** — the feed's left rail is gone, replaced by a simple **For You /
+Latest tab pair** (`.feed-tabs`) directly above the post list (Twitter/Instagram pattern), and
+the "About Moveee" card moved to the top of the right sidebar. `apps/connect/app/pulse-layout.css`
+gained a `.pulse-layout--feed` modifier (2-column: timeline + right rail, no 240px left track) —
+**the base 3-column `.pulse-layout`/`.pulse-sidebar-left` classes are still real and still used**
+by `pulse/[slug]/page.tsx` and `community/[slug]/page.tsx`'s own (unrelated, inline-styled)
+sidebars, so don't delete those base rules when touching this file — only `/feed` opted out via
+the modifier class.
+
+**Sticky offset gotcha (fixed as part of this change):** `.pulse-sidebar-left`/
+`.pulse-sidebar-right`'s sticky `top` used to be `60px` (with `max-height: calc(100vh - 60px)`)
+to clear the old sticky top header. Since the header is now a left rail at `>=860px` (no sticky
+top bar to clear at that width — the top header only exists at `<860px`, where both sidebars are
+already `display: none` anyway), both were reverted to `top: 0` / `max-height: 100vh`. **If you
+ever reintroduce a sticky top bar at desktop widths in this app, this offset will need to come
+back.**
+
+**Global search** (`Cmd+K`/`Ctrl+K` or the rail's search button) opens `SearchModal.tsx` —
+content-type chips (Pulse/News/Editorial/Event/Directory/Quote) and category chips are the
+**replacement** for the filtering controls that used to live in `/feed`'s left sidebar and
+category pill strip; they don't filter the feed itself, they filter a separate search query.
+Backend: `apps/connect/app/api/search/route.ts` proxies to WordPress core's **native**
+`GET /wp-json/wp/v2/search` (not a custom `culture/v1` endpoint) with a `subtype` param mapped
+from the content-type chip — confirmed via live testing to genuinely cover all six content types
+(`culture_post`, `pulse_story`, `post`, `culture_event`, `culture_directory`, `culture_quote`).
+The category chip has no true taxonomy-aware filter on this endpoint, so it's folded into the
+search query as an extra term (`${q} ${category}`) — an approximation, not a real facet. Hrefs
+are reconstructed from `subtype` + a slug parsed out of WP's raw permalink (mirroring the route
+shapes in `packages/shared/lib/unified-feed.ts`), since `wp/v2/search` doesn't return app-facing
+routes. `SearchModal.tsx`'s `CATEGORIES` array is a manually-kept-in-sync copy of the categories
+that used to live in `PulseFeed.tsx` — no shared source of truth, same caveat as the
+notification-icon maps and `TEMPLATE_REP_GATE` elsewhere in this file.
+
+`apps/connect/app/layout.tsx` now wraps `ConnectHeader` + `<main>` + `Footer` in a
+`.cw-shell`/`.cw-shell-content` flex pair (`display:flex` only at `>=860px`, so the rail and
+page content sit side-by-side) — `AppDownloadBanner`/`AppDownloadModal`/`GlobalAuthModal` are
+deliberately kept **outside** `.cw-shell` so the download banner still spans the full viewport
+width regardless of the rail.
+
+---
+
 ## App download nudge (Connect web only, June 2026)
 
 `apps/connect` (web.themoveee.com) shows a non-blocking nudge encouraging visitors to use
