@@ -911,7 +911,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
   const ratingRows: { label: string; val: number | undefined }[] = [
     { label: "Production", val: item.musicRatingProduction },
     { label: "Lyrics",     val: item.musicRatingLyrics },
-    { label: "Replay",     val: item.musicRatingReplay },
+    { label: "Replay Value", val: item.musicRatingReplay },
     { label: "Vibe",       val: item.musicRatingVibe },
   ].filter((r) => r.val !== undefined && r.val > 0);
 

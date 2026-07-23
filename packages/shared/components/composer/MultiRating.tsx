@@ -3,16 +3,17 @@
 import StarRating from "./StarRating";
 
 interface Props {
-  ratings: { label: string; value: number }[];
-  onChange: (label: string, value: number) => void;
+  ratings: { label: string; value: number; key?: string }[];
+  onChange: (key: string, value: number) => void;
 }
 
 export default function MultiRating({ ratings, onChange }: Props) {
   return (
     <div className="composer-multi-rating">
-      {ratings.map(({ label, value }) => (
-        <StarRating key={label} label={label} value={value} onChange={(v) => onChange(label, v)} />
-      ))}
+      {ratings.map(({ label, value, key }) => {
+        const resolvedKey = key ?? label.toLowerCase();
+        return <StarRating key={label} label={label} value={value} onChange={(v) => onChange(resolvedKey, v)} />;
+      })}
     </div>
   );
 }

@@ -156,6 +156,12 @@ const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", string> = {
+  production: "Production",
+  lyrics: "Lyrics",
+  replay: "Replay Value",
+  vibe: "Vibe",
+};
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
@@ -1254,7 +1260,7 @@ const uploadImages = async (): Promise<string[]> => {
           {(["production", "lyrics", "replay", "vibe"] as const).map((key) => (
             <BookRatingsRow
               key={key}
-              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              label={MUSIC_RATING_LABELS[key]}
               value={musicRatings[key]}
               onChange={(v) => setMusicRatings((prev) => ({ ...prev, [key]: v }))}
               styles={styles}

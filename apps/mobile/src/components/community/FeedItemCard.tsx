@@ -1742,7 +1742,7 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
   const ratings: { label: string; value?: number }[] = [
     { label: "Production", value: item.musicRatingProduction },
     { label: "Lyrics",     value: item.musicRatingLyrics },
-    { label: "Replay",     value: item.musicRatingReplay },
+    { label: "Replay Value", value: item.musicRatingReplay },
     { label: "Vibe",       value: item.musicRatingVibe },
   ];
   const hasRatings = ratings.some((r) => r.value != null);

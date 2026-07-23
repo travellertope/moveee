@@ -973,7 +973,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Characters", value: bookRatings.characters },
                     { label: "Pacing", value: bookRatings.pacing },
                   ]}
-                  onChange={(label, v) => setBookRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                  onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
                 />
                 <textarea
                   value={bookFavQuote}
@@ -1072,10 +1072,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   ratings={[
                     { label: "Production", value: musicRatings.production },
                     { label: "Lyrics", value: musicRatings.lyrics },
-                    { label: "Replay", value: musicRatings.replay },
+                    { label: "Replay Value", value: musicRatings.replay, key: "replay" },
                     { label: "Vibe", value: musicRatings.vibe },
                   ]}
-                  onChange={(label, v) => setMusicRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                  onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
                 />
                 <textarea
                   value={musicFavLyric}
@@ -1177,7 +1177,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     { label: "Visuals", value: filmRatings.visuals },
                     { label: "Pacing", value: filmRatings.pacing },
                   ]}
-                  onChange={(label, v) => setFilmRatings(prev => ({ ...prev, [label.toLowerCase()]: v }))}
+                  onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
                 />
                 <textarea
                   value={filmFavLine}
