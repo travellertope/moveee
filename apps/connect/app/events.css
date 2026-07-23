@@ -297,13 +297,7 @@
   color: var(--evt-ink);
   margin: 0;
   min-width: 0;
-  /* Cap at 2 lines instead of unlimited wrap (which could grow a row very
-     tall for a long title) or single-line truncation (which was crushing
-     titles down to 1-2 characters on narrow mobile widths). */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  /* No truncation — wraps as many lines as the title needs. */
 }
 
 .evt-row:hover .evt-row-title {
@@ -1522,6 +1516,10 @@
     flex: 0 0 40px;
     width: 40px;
     height: 40px;
+  }
+
+  .evt-row-title {
+    font-size: 13.5px;
   }
 
   .evt-detail-hero {
