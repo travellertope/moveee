@@ -25,8 +25,6 @@ const FEATURED_CITIES = [
   { slug: "paris",    name: "Paris",    country: "France",  flag: "🇫🇷" },
 ];
 
-const TICKER_ITEMS = ["Visual Art", "Film", "Literature", "Music", "Fashion", "Food", "Design", "Community"];
-
 function cityCount(events: any[], name: string) {
   const q = name.toLowerCase();
   return events.filter((e) => `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(q)).length;
@@ -47,6 +45,10 @@ function mapCommunityEvent(item: any) {
     city: item.city,
     admission: item.admission,
     isFeatured: item.isFeatured,
+    // Community-organised events have no virtual/in-person concept in the
+    // composer (RSVP/venue fields assume a real place) — always physical,
+    // unlike editorial events where isPhysical is a real WP Admin field.
+    isPhysical: true,
     eventImageUrl: item.image,
     cultureInterests: catName ? { nodes: [{ name: catName, slug: catSlug }] } : undefined,
     href: item.href,
@@ -99,22 +101,6 @@ export default async function EventsPage() {
       {/* ── SEARCH ── */}
       <div className="evt-search-wrap">
         <EventsSearchBar />
-      </div>
-
-      {/* ── TICKER ── */}
-      <div className="evt-ticker">
-        <div className="evt-ticker-container">
-          {["a", "b"].map((variant) => (
-            <div key={variant} className={`evt-ticker-track${variant === "b" ? " evt-ticker-track--b" : ""}`} aria-hidden={variant === "b"}>
-              {TICKER_ITEMS.map((item, i) => (
-                <span key={item}>
-                  <span className="evt-ticker-item">{item}</span>
-                  <span className="evt-ticker-item evt-ticker-item--star">★</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── TIMELINE + RIGHT RAIL ── */}

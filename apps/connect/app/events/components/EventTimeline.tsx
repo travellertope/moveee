@@ -16,6 +16,11 @@ interface TimelineEvent {
   admission?: string;
   isFeatured?: boolean;
   isLiterati?: boolean;
+  /** Real WP Admin field on editorial events ("Physical Event" checkbox) —
+   * absent/false means Virtual, matching the WP theme templates' own
+   * default direction (single/archive-culture_event.php). Community events
+   * are always mapped to true (see mapCommunityEvent in events/page.tsx). */
+  isPhysical?: boolean;
   isAiGenerated?: boolean;
   featuredImage?: { node?: { sourceUrl?: string } };
   eventImageUrl?: string;
@@ -139,6 +144,9 @@ function EventRow({ event }: { event: TimelineEvent }) {
           ) : event.isFeatured ? (
             <span className="evt-tag evt-tag--featured">★ Featured</span>
           ) : null}
+          {event.isPhysical === false && (
+            <span className="evt-tag evt-tag--virtual">◎ Virtual</span>
+          )}
         </div>
         <div className="evt-row-meta">
           {place && <span>◍ {place}</span>}
