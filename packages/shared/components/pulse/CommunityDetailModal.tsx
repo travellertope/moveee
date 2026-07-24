@@ -432,7 +432,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               )}
               {item.templateType === "itinerary" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 8px", borderRadius: "999px" }}>
-                  Weekend Route
+                  Itinerary
                 </span>
               )}
               {item.templateType === "event" && (

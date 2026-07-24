@@ -1527,7 +1527,7 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'music-review', 'film-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'food-review', 'book-review', 'music-review', 'film-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
         }

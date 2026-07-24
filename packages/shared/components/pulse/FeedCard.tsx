@@ -648,7 +648,7 @@ export default function FeedCard({
                   )}
                   {item.templateType === "itinerary" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Weekend Route
+                      Itinerary
                     </span>
                   )}
                   {item.templateType === "event" && (

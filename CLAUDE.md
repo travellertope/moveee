@@ -2788,6 +2788,88 @@ that hidden-gem also uses; now it has its own, same as book/music/film. Feed ren
 same `foodDishName` field on `FeedItem` as before — untouched, since only the *source* of that
 value in the composer changed, not the field name it's stored/displayed under.
 
+### Update family — Update/Poll/Quote unified under one "Updates" tile; Cultural Take removed entirely (July 2026)
+
+Same shape as the Review family merge above, applied to a second group: **Update ("post"),
+Poll, and Quote now share one "Updates" entry point** in the type picker (web `TypePickerModal.tsx`,
+mobile `TemplatePickerSheet.tsx`), with an in-form tab row to switch between them — mirroring
+`composer-review-tabs`. **Cultural Take was removed as a template entirely**, not folded in
+alongside Update/Poll/Quote as a fourth tab — its one distinguishing feature (a required
+"what are you writing about?" directory link) became an **optional** field on the plain Update
+form instead, since a normal update should still work with no directory link at all.
+
+- **Config constants** (`packages/shared/components/pulse/SubmitPost.tsx`): `UPDATE_FAMILY =
+  ["post", "poll", "quote"]`, `UPDATE_DEFAULT = "post"`, `UPDATE_TAB_META` (label + emoji per
+  slug), `isUpdateTemplate()` — same shape as `REVIEW_FAMILY`/`REVIEW_DEFAULT`/`REVIEW_TAB_META`/
+  `isReviewTemplate()` directly above them. Mirrored on mobile in
+  `components/community/TemplatePickerSheet.tsx` (`UPDATE_FAMILY`/`UPDATE_DEFAULT`/
+  `UPDATE_TAB_META`/`isUpdateTemplate()`/`UPDATE_CARD_DEF`) — keep both in sync per the project's
+  usual web/mobile duplication convention.
+- **`TemplateType`/`TemplateId` no longer has a `cultural-take` member** on either platform — it's
+  not just hidden from the picker, the composer-side type itself dropped the slug. The
+  **display-side** types that render *historical* posts (mobile `types/index.ts`'s `TemplateType`,
+  web `FeedCard.tsx`/`CommunityDetailModal.tsx`/`PostDetailSheet.tsx`'s plain-string
+  `item.templateType` checks) **deliberately still handle `"cultural-take"`** — old cultural-take
+  posts already in the DB must keep rendering correctly; only the *creation* path was removed.
+  Don't conflate the two type surfaces when touching this area again.
+- **Generic subtype-tabs helper, shared by both families**: what was `.composer-review-tabs`/
+  `.composer-review-tab*` CSS (both `apps/connect/app/globals.css` and `apps/site/app/globals.css`)
+  and a Review-only JSX block in `SubmitPost.tsx` is now `.composer-subtype-tabs`/
+  `.composer-subtype-tab*`, driven by a single `renderSubtypeTabs(family, meta)` function (a plain
+  function, not a nested component, so it doesn't remount on every render) called once per family:
+  `{isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}` and
+  `{isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}`. Mobile's
+  `NewPostScreen.tsx` got the equivalent treatment: `reviewTabs`/`reviewTab*` styles renamed to
+  `subtypeTabs`/`subtypeTab*`, and a `renderSubtypeTabs()` helper replaces the old inline
+  Review-only tab-row JSX.
+- **Optional directory field on Update and Poll**: both `template === "post"` and `template ===
+  "poll"` now render an (optional) `DirectorySearch` — web: `placeholder="What are you writing
+  about? (optional)"`; mobile: same label, wired to the same `linkedEntry` state Hidden Gem/Place
+  already used (mobile) / `directoryEntry` state Hidden Gem already used (web) — no new state
+  variable needed, since Cultural Take used to share exactly this state already. When set,
+  `payload.linked_directory_id`/`body.linked_directory_id` (+ `location_name`) are attached to the
+  submission generically, same as every other template that carries a directory link. Poll's field
+  was added per an explicit "should we add this to Poll too?" ask, not left as a follow-up.
+- **Removed entirely, not just hidden**: `culturalTakeHeadline` state, `renderCulturalTake()`
+  (mobile), the cultural-take branches in `validateAndSubmit()`/`isSubmitDisabled`/payload-building
+  (mobile) and `canSubmit()`/payload-building (web), the `cultural-take` `MAX_CHARS`/
+  `TEMPLATE_GUIDES`/`placeholders` entries, and the `styles.culturalHeadline` style block.
+  `TEMPLATE_REP_GATE` never had a cultural-take entry (it was never rep-gated), so no gate cleanup
+  was needed there.
+- **Backend allowlists updated to reject new cultural-take submissions** (still fully serving
+  historical reads — no data migration, no table changes): `apps/connect/app/api/community/submit/
+  route.ts`'s `ALLOWED_TEMPLATES`/`MAX_CHARS`, `class-culture-mobile-api.php`'s
+  `handle_submit_post()` `$allowed_templates`, and `class-culture-hubs.php`'s
+  `Culture_Hubs::ALLOWED_TEMPLATES`/`DEFAULT_ALLOWED_TEMPLATES` (the latter's "which templates are
+  ungated by default" rationale shrank from `['post', 'cultural-take']` to just `['post']`).
+  **Deliberately left untouched** (historical/reward plumbing only, reads existing data, doesn't
+  gate creation): `class-culture-gamification.php`'s `culture_guide` badge (still earnable from
+  *past* cultural-take posts) and its `cultural-take` credit/reputation award-map entry, and
+  `class-culture-settings.php`'s admin label for the `cultural_take_count` badge-trigger dropdown —
+  none of these can be reached by a new submission anymore, so there's nothing to break by leaving
+  them as-is.
+- **Hub template allowlists** (`apps/connect/app/hub/create/CreateHubClient.tsx`,
+  `apps/connect/app/hub/[slug]/HubManage.tsx`, mobile's `HubCreateScreen.tsx`/
+  `HubDetailScreen.tsx` — all four keep their own hardcoded `ALL_TEMPLATES` arrays, not sourced
+  from `SubmitPost.tsx`/`TemplatePickerSheet.tsx`) had their `cultural-take` entries removed and
+  `DEFAULT_TEMPLATES` trimmed from `["post", "cultural-take"]` to `["post"]`.
+- **Itinerary rename** (below) landed in the same pass — if you're grepping history for one and
+  find the other, that's why they're adjacent.
+
+### "Route" renamed to "Itinerary" (display label only, July 2026)
+
+Copy-only rename, same convention as the Hidden Gem→Place rename above: the `itinerary` slug,
+`_itinerary_*` payload/meta field names, and all internal identifiers are untouched — only the
+**label text "Route"** shown to users was changed to **"Itinerary"**. Touched: `TEMPLATES` in
+`SubmitPost.tsx`, `MODAL_META` in `TypePickerModal.tsx`, the hardcoded `ALL_TEMPLATES` arrays in
+both hub-management files (web) and both hub screens (mobile — though mobile's own
+`TEMPLATE_DEFS` in `TemplatePickerSheet.tsx` already said "Itinerary", only the hub-scoped lists
+needed fixing), and three "Weekend Route" itinerary-badge labels that had drifted out of sync
+with the template's own name (`FeedCard.tsx`, `CommunityDetailModal.tsx`,
+`apps/connect/app/community/[slug]/CommunityPostClient.tsx` — all now say "Itinerary"; the
+`apps/figma/` design-token showcase had the same stale label and was updated too, for
+consistency, even though that app isn't the production composer).
+
 ---
 
 ## Hubs — user-created topic communities

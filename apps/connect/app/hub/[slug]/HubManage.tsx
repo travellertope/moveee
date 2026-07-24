@@ -13,14 +13,13 @@ interface HubMember {
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
-  { slug: "cultural-take", label: "Take", emoji: "💬" },
   { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
   { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
   { slug: "event", label: "Event", emoji: "📅", gated: "Culture Contributor rep (or Pro)" },
   { slug: "poll", label: "Poll", emoji: "📊", gated: "Taste Maker rep (or Pro)" },
-  { slug: "itinerary", label: "Route", emoji: "🗺️", gated: "Taste Maker rep (or Pro)" },
+  { slug: "itinerary", label: "Itinerary", emoji: "🗺️", gated: "Taste Maker rep (or Pro)" },
 ];
 
 export default function HubManage({

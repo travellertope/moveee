@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     hub_id?: number;
   };
 
-  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "book-review", "music-review", "film-review", "creative-showcase", "poll", "itinerary", "event"];
+  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "food-review", "book-review", "music-review", "film-review", "creative-showcase", "poll", "itinerary", "event"];
   const templateType = ALLOWED_TEMPLATES.includes(template_type ?? "") ? template_type! : "post";
 
   const user = session.user as any;
@@ -187,7 +187,6 @@ export async function POST(req: NextRequest) {
   const MAX_CHARS: Record<string, number> = {
     post: 280 * 5,
     "hidden-gem": 500,
-    "cultural-take": 1000,
     "food-review": 500,
     "book-review": 800,
     "music-review": 800,

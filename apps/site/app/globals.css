@@ -1493,18 +1493,20 @@ h1, h2, h3, h4 {
   margin: 0 0 6px;
 }
 
-/* Review subtype tabs — Place/Food/Music/Book/Film Review share one entry
-   point in the type picker (REVIEW_FAMILY); this row lets the user switch
-   between them without reopening the picker. */
-.composer-review-tabs {
+/* Family subtype tabs — Place/Food/Music/Book/Film Review share one entry
+   point in the type picker (REVIEW_FAMILY), and Update/Poll/Quote share
+   another (UPDATE_FAMILY); this row lets the user switch between a family's
+   subtypes without reopening the picker. Shared by both families — was
+   .composer-review-tab* before the Update family was added (July 2026). */
+.composer-subtype-tabs {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--rule, #e0d8ce);
   overflow-x: auto;
   scrollbar-width: none;
 }
-.composer-review-tabs::-webkit-scrollbar { display: none; }
-.composer-review-tab {
+.composer-subtype-tabs::-webkit-scrollbar { display: none; }
+.composer-subtype-tab {
   flex: 0 0 auto;
   background: none;
   border: none;
@@ -1517,8 +1519,8 @@ h1, h2, h3, h4 {
   cursor: pointer;
   white-space: nowrap;
 }
-.composer-review-tab:hover { color: var(--ink, #14110d); }
-.composer-review-tab--active {
+.composer-subtype-tab:hover { color: var(--ink, #14110d); }
+.composer-subtype-tab--active {
   color: var(--ochre, #c5491f);
   border-bottom-color: var(--ochre, #c5491f);
 }

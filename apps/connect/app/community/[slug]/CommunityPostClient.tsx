@@ -252,7 +252,7 @@ export default function CommunityPostClient({
           )}
           {templateType === "itinerary" && (
             <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
-              Weekend Route
+              Itinerary
             </span>
           )}
         </div>

@@ -43,15 +43,14 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-export type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+export type TemplateType = "post" | "quote" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
-// lock — Quote was never gated but sat after Poll/Route/Event, so it read
+// lock — Quote was never gated but sat after Poll/Itinerary/Event, so it read
 // as locked-away even though it wasn't.
 export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Place",     emoji: "💎" },
-  { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "music-review",      label: "Music",     emoji: "🎵" },
@@ -59,7 +58,7 @@ export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] =
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
-  { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
+  { slug: "itinerary",         label: "Itinerary", emoji: "🗺️" },
   { slug: "event",             label: "Event",     emoji: "📅" },
 ];
 
@@ -89,16 +88,33 @@ export function isReviewTemplate(t: TemplateType): boolean {
   return REVIEW_FAMILY.includes(t);
 }
 
+// Update family (July 2026) — Update/Poll/Quote are presented as one
+// "Updates" entry point in the type picker; once inside, a tab row (same
+// pattern as REVIEW_FAMILY above) lets the user switch between them without
+// leaving the page. Cultural Take was folded into Update entirely — its
+// "what are you writing about?" directory-linking idea lives on as an
+// optional field on the plain Update ("post") form instead of its own
+// template; there is no cultural-take slug anymore.
+export const UPDATE_FAMILY: TemplateType[] = ["post", "poll", "quote"];
+export const UPDATE_DEFAULT: TemplateType = "post";
+export const UPDATE_TAB_META: Record<string, { label: string; emoji: string }> = {
+  post:  { label: "Update", emoji: "📝" },
+  poll:  { label: "Poll",   emoji: "📊" },
+  quote: { label: "Quote",  emoji: "✦" },
+};
+export function isUpdateTemplate(t: TemplateType): boolean {
+  return UPDATE_FAMILY.includes(t);
+}
+
 const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
-  post:                { desc: "Share news, a link, or a quick thought from your cultural world." },
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world — optionally tag what it's about." },
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues." },
-  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing." },
   "food-review":       { desc: "Review a dish or food item. Rate the taste, value, and vibe." },
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
   "film-review":       { desc: "Review a film — rate it and share your thoughts." },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
-  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
+  poll:                { desc: "Ask the community something — optionally link the directory item it's about. Great for settling debates or gathering opinions." },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
   event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
   quote:               { desc: "Share a quote that moved you. Add the author and source below." },
@@ -106,7 +122,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long page — short
-// templates (post, quote, poll, cultural-take) stay single-step/unlisted here.
+// templates (post, quote, poll) stay single-step/unlisted here.
 const WIZARD_STEPS: Partial<Record<TemplateType, number>> = {
   "hidden-gem": 3,
   "food-review": 3,
@@ -187,7 +203,7 @@ const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highli
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 
 const MAX_CHARS: Record<string, number> = {
-  post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
+  post: 3000, "hidden-gem": 500, "food-review": 500,
   "book-review": 800,
   "music-review": 800,
   "film-review": 800,
@@ -530,8 +546,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
       case "hidden-gem":
         return text.trim().length >= 50 && starRating > 0 && !!directoryEntry && (!!imageFile || galleryFiles.length > 0);
-      case "cultural-take":
-        return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
         return text.trim().length >= 50 && !!foodEntry && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
       case "book-review":
@@ -788,6 +802,30 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     }
   };
 
+  // Shared tab-row renderer for both the Review family and the Update
+  // family — a plain function (not a nested component) so it doesn't remount
+  // its children on every render; it's a closure over `template` and
+  // `handleTemplateChange` rather than its own component identity.
+  function renderSubtypeTabs(family: TemplateType[], meta: Record<string, { label: string; emoji: string }>) {
+    return (
+      <div className="composer-subtype-tabs">
+        {family.map(rt => {
+          const m = meta[rt];
+          return (
+            <button
+              key={rt}
+              type="button"
+              className={`composer-subtype-tab${template === rt ? " composer-subtype-tab--active" : ""}`}
+              onClick={() => handleTemplateChange(rt)}
+            >
+              <span aria-hidden>{m.emoji}</span> {m.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   if (status === "loading") return null;
 
   if (!loggedIn) {
@@ -818,7 +856,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     post: "What's happening in culture?",
     quote: "The quote…",
     "hidden-gem": "Tell us about this place — what makes it special?",
-    "cultural-take": "Share your take…",
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
     "music-review": "What did you think? Standout tracks?",
@@ -829,14 +866,17 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
-  // In the review family, the slim bar shows the subtype's review-specific
-  // label ("Place"/"Food"/"Music"/"Book"/"Film") so it stays consistent with
-  // the tab row below it. TEMPLATES' own chip labels for these 5 now match
-  // REVIEW_TAB_META exactly (both say "Place" for hidden-gem, etc.), so this
-  // branch is currently redundant but kept as the source of truth for the
-  // review-family label specifically, in case the two ever diverge again.
+  // In the review/update families, the slim bar shows the subtype's own
+  // label ("Place"/"Food"/"Music"/"Book"/"Film" or "Update"/"Poll"/"Quote")
+  // so it stays consistent with the tab row below it. TEMPLATES' own chip
+  // labels for these slugs now match REVIEW_TAB_META/UPDATE_TAB_META
+  // exactly, so this branch is currently redundant but kept as the source
+  // of truth for the family label specifically, in case the two ever
+  // diverge again.
   const activeTemplateMeta = isReviewTemplate(template)
     ? REVIEW_TAB_META[template]
+    : isUpdateTemplate(template)
+    ? UPDATE_TAB_META[template]
     : TEMPLATES.find(t => t.slug === template);
   const sectionHidden = template === "quote" || template === "food-review" || template === "event";
   const sectionFixed = lockedTag || TEMPLATE_TAGS[template];
@@ -914,28 +954,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
             </div>
 
-            {/* Review subtype tabs — Place/Food/Music/Book/Film Review are one
-                "Review" entry point in the type picker (see REVIEW_FAMILY);
-                this lets the user switch between subtypes in place instead of
-                reopening the picker. Reuses handleTemplateChange() exactly
-                like the chip row / picker modal do — same reset behavior. */}
-            {isReviewTemplate(template) && (
-              <div className="composer-review-tabs">
-                {REVIEW_FAMILY.map(rt => {
-                  const meta = REVIEW_TAB_META[rt];
-                  return (
-                    <button
-                      key={rt}
-                      type="button"
-                      className={`composer-review-tab${template === rt ? " composer-review-tab--active" : ""}`}
-                      onClick={() => handleTemplateChange(rt)}
-                    >
-                      <span aria-hidden>{meta.emoji}</span> {meta.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {/* Family subtype tabs — Place/Food/Music/Book/Film Review are one
+                "Review" entry point in the type picker (see REVIEW_FAMILY),
+                and Update/Poll/Quote are one "Updates" entry point (see
+                UPDATE_FAMILY) — this lets the user switch between a family's
+                subtypes in place instead of reopening the picker. Reuses
+                handleTemplateChange() exactly like the chip row / picker
+                modal do — same reset behavior. */}
+            {isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}
+            {isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}
 
             {/* Step progress — long templates only (WIZARD_STEPS above) */}
             {isWizard && (
@@ -1004,12 +1031,25 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )
             )}
 
-            {/* Directory search — for cultural-take (required), hidden-gem */}
-            {(template === "cultural-take" || (template === "hidden-gem" && showSection("search"))) && (
+            {/* Directory search — required for hidden-gem (Place), optional
+                "what are you writing about?" link for Update and Poll (July
+                2026 — this is what used to be the standalone Cultural Take
+                template's required directory field; folding Cultural Take
+                into Update made it optional rather than required, since a
+                plain Update should still work with no directory link at
+                all). */}
+            {template === "hidden-gem" && showSection("search") && (
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
-                placeholder={template === "cultural-take" ? "What are you writing about?" : "Search or add a location *"}
+                placeholder="Search or add a location *"
+              />
+            )}
+            {(template === "post" || template === "poll") && (
+              <DirectorySearch
+                value={directoryEntry}
+                onChange={setDirectoryEntry}
+                placeholder="What are you writing about? (optional)"
               />
             )}
 
@@ -1237,7 +1277,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       value={text}
                       onChange={handleTextChange}
                       placeholder={placeholders[template]}
-                      rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
+                      rows={template === "creative-showcase" ? 2 : 4}
                       className="composer-textarea"
                     />
                     <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
@@ -1671,7 +1711,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" && showSection("photos") && (
+            ) : template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review" && showSection("photos") && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -1701,8 +1741,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
               style={{ display: "none" }}
             />
 

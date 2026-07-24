@@ -23,7 +23,7 @@ import DirectorySearch from "../../components/composer/DirectorySearch";
 import UserSearch, { MemberResult } from "../../components/composer/UserSearch";
 import MentionInput from "../../components/composer/MentionInput";
 
-import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate } from "../../components/community/TemplatePickerSheet";
+import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate, UPDATE_FAMILY, UPDATE_TAB_META, isUpdateTemplate } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 
@@ -49,11 +49,6 @@ const TEMPLATES: TemplateMeta[] = [
     id: "hidden-gem", minText: 50, maxText: 500,
     placeholder: "Tell people why this place is special…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
-  },
-  {
-    id: "cultural-take", minText: 100, maxText: 1000,
-    placeholder: "Explain your take…",
-    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
     id: "food-review", minText: 50, maxText: 500,
@@ -167,8 +162,8 @@ const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long screen — short
-// templates (post, quote, poll, cultural-take) stay single-step/unlisted
-// here. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
+// templates (post, quote, poll) stay single-step/unlisted here. Mirrors
+// packages/shared/components/pulse/SubmitPost.tsx's
 // WIZARD_STEPS/WIZARD_SECTION_STEP — keep both in sync.
 const WIZARD_STEPS: Partial<Record<TemplateId, number>> = {
   "hidden-gem": 3,
@@ -309,9 +304,6 @@ export default function NewPostScreen() {
   const [hiddenGemLocation, setHiddenGemLocation] = useState("");
   const [hiddenGemPriceRange, setHiddenGemPriceRange] = useState("");
   const [hiddenGemOpeningHours, setHiddenGemOpeningHours] = useState("");
-
-  // Cultural Take extras
-  const [culturalTakeHeadline, setCulturalTakeHeadline] = useState("");
 
   // Food Review extras
   const [cuisineTag, setCuisineTag] = useState("");
@@ -538,14 +530,7 @@ const uploadImages = async (): Promise<string[]> => {
   };
 
   const validateAndSubmit = async () => {
-    if (template === "cultural-take") {
-      if (culturalTakeHeadline.trim().length < 10) {
-        Alert.alert("Headline too short", "Your take headline needs at least 10 characters."); return;
-      }
-      if (text.trim().length < 50) {
-        Alert.alert("Explanation too short", "Explain your take in at least 50 characters."); return;
-      }
-    } else if (template === "creative-showcase") {
+    if (template === "creative-showcase") {
       if (!showcaseTitle.trim()) { Alert.alert("Title required", "Add a title for your work."); return; }
       if (text.trim().length < 10) { Alert.alert("Description too short", "Tell us about the work."); return; }
       if (images.length === 0) { Alert.alert("Media required", "Add at least one image of your work."); return; }
@@ -696,9 +681,11 @@ const uploadImages = async (): Promise<string[]> => {
         body.price_range         = hiddenGemPriceRange || undefined;
         body.opening_hours       = hiddenGemOpeningHours.trim() || undefined;
       }
-      if (template === "cultural-take") {
-        body.headline            = culturalTakeHeadline.trim();
-        body.linked_directory_id = linkedEntry?.id || undefined;
+      // What are you writing about? — optional directory link on Update and
+      // Poll (July 2026, folded in from the removed Cultural Take template).
+      if ((template === "post" || template === "poll") && linkedEntry) {
+        body.linked_directory_id = linkedEntry.id;
+        body.location_name       = linkedEntry.title || undefined;
       }
       if (template === "food-review") {
         body.food_dish_name      = foodEntry?.title;
@@ -762,7 +749,6 @@ const uploadImages = async (): Promise<string[]> => {
   const isSubmitDisabled = useMemo(() => {
     if (submitting) return true;
     if (template === "event") return !eventTitle.trim() || !eventDate;
-    if (template === "cultural-take") return culturalTakeHeadline.trim().length < 10 || text.trim().length < 50;
     if (template === "creative-showcase") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
@@ -770,7 +756,7 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
-  }, [submitting, template, text, eventTitle, eventDate, culturalTakeHeadline, showcaseTitle, images.length,
+  }, [submitting, template, text, eventTitle, eventDate, showcaseTitle, images.length,
     bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating, musicRecommend,
     filmEntry, filmOverallRating, filmRecommend,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
@@ -860,6 +846,31 @@ const uploadImages = async (): Promise<string[]> => {
   // ── Render helpers ────────────────────────────────────────────────────────────
   const renderDivider = () => <View style={styles.divider} />;
 
+  // Shared subtype-tab row for both the Review family (Place/Food/Music/
+  // Book/Film Review) and the Update family (Update/Poll/Quote) — each
+  // shares one entry point in the template picker; this row lets the user
+  // switch between a family's subtypes without reopening the picker.
+  // Mirrors SubmitPost.tsx's renderSubtypeTabs().
+  const renderSubtypeTabs = (family: TemplateId[], meta: Record<string, { label: string; emoji: string }>) => (
+    <View style={styles.subtypeTabs}>
+      {family.map((rt) => {
+        const m = meta[rt];
+        const active = template === rt;
+        return (
+          <TouchableOpacity
+            key={rt}
+            style={[styles.subtypeTab, active && styles.subtypeTabActive]}
+            onPress={() => switchTemplate(rt)}
+          >
+            <Text style={[styles.subtypeTabText, active && styles.subtypeTabTextActive]}>
+              {m.emoji} {m.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
   const renderPriceChips = (options: string[], value: string, onChange: (v: string) => void) => (
     <View style={styles.priceChipRow}>
       {options.map((p) => (
@@ -922,6 +933,17 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {/* Section tags FIRST */}
       {renderSectionTags(0)}
+      {/* What are you writing about? — optional directory link (July 2026).
+          This is what used to be the standalone Cultural Take template's
+          required directory field; folding Cultural Take into Update made
+          it optional rather than required. */}
+      <View style={[styles.fieldGroup, { marginTop: space[2] }]}>
+        <DirectorySearch
+          selected={linkedEntry}
+          onSelect={setLinkedEntry}
+          label="What are you writing about? (optional)"
+        />
+      </View>
       <MentionInput
         inputRef={textRef}
         style={[styles.textarea, { marginTop: space[2] }]}
@@ -1015,44 +1037,6 @@ const uploadImages = async (): Promise<string[]> => {
           />
         </>
       )}
-    </>
-  );
-
-  const renderCulturalTake = () => (
-    <>
-      <TextInput
-        style={styles.culturalHeadline}
-        value={culturalTakeHeadline}
-        onChangeText={setCulturalTakeHeadline}
-        multiline
-        placeholder="Your take *"
-        placeholderTextColor={c.ghost}
-        textAlignVertical="top"
-      />
-      {renderDivider()}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Explain your take *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={[styles.borderedTextarea, { minHeight: 200 }]}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="Go deeper…"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="Related place or work (optional)"
-        />
-      </View>
-      {renderDivider()}
-      {renderSectionTags(space[2])}
     </>
   );
 
@@ -1697,11 +1681,18 @@ const uploadImages = async (): Promise<string[]> => {
         <Text style={styles.fieldLabel}>Options *</Text>
         <PollBuilder poll={poll} onChange={setPoll} />
       </View>
+      <View style={styles.fieldGroup}>
+        <DirectorySearch
+          selected={linkedEntry}
+          onSelect={setLinkedEntry}
+          label="What's this about? (optional)"
+        />
+      </View>
       {renderDivider()}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Poll duration</Text>
         <View style={styles.segmented}>
-          {[1, 3, 7].map((d) => (
+          {([1, 3, 7] as const).map((d) => (
             <TouchableOpacity
               key={d}
               style={[styles.segmentedBtn, poll.durationDays === d && styles.segmentedBtnActive]}
@@ -2061,7 +2052,6 @@ const uploadImages = async (): Promise<string[]> => {
     switch (template) {
       case "post":             return renderStandardPost();
       case "hidden-gem":       return renderHiddenGem();
-      case "cultural-take":    return renderCulturalTake();
       case "food-review":      return renderFoodReview();
       case "creative-showcase":return renderCreativeShowcase();
       case "book-review":      return renderBookReview();
@@ -2133,29 +2123,9 @@ const uploadImages = async (): Promise<string[]> => {
           </View>
         ) : null}
 
-        {/* ── Review subtype tabs — Place/Food/Music/Book/Film Review share one
-             "Review" entry point in the template picker (REVIEW_FAMILY); this
-             row lets the user switch between subtypes without reopening the
-             picker. Mirrors SubmitPost.tsx's composer-review-tabs. ── */}
-        {isReviewTemplate(template) && (
-          <View style={styles.reviewTabs}>
-            {REVIEW_FAMILY.map((rt) => {
-              const meta = REVIEW_TAB_META[rt];
-              const active = template === rt;
-              return (
-                <TouchableOpacity
-                  key={rt}
-                  style={[styles.reviewTab, active && styles.reviewTabActive]}
-                  onPress={() => switchTemplate(rt)}
-                >
-                  <Text style={[styles.reviewTabText, active && styles.reviewTabTextActive]}>
-                    {meta.emoji} {meta.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+        {/* ── Family subtype tabs — see renderSubtypeTabs() above ── */}
+        {isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}
+        {isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}
 
         {/* ── Step progress — long templates only (WIZARD_STEPS above) ── */}
         {isWizard && (
@@ -2257,24 +2227,25 @@ function createStyles(c: ColorPalette) {
     guide:     { paddingHorizontal: space[4], paddingTop: space[3] },
     guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20 },
 
-    // Review subtype tabs — plain text + underline indicator, kept
-    // deliberately subtle/simple rather than a pill/chip row.
-    reviewTabs: {
+    // Family subtype tabs (Review and Update families) — plain text +
+    // underline indicator, kept deliberately subtle/simple rather than a
+    // pill/chip row.
+    subtypeTabs: {
       flexDirection: "row",
       paddingHorizontal: space[4],
       paddingTop: space[2],
       borderBottomWidth: 1,
       borderBottomColor: c.rule,
     },
-    reviewTab: {
+    subtypeTab: {
       paddingVertical: 8,
       paddingHorizontal: 10,
       borderBottomWidth: 2,
       borderBottomColor: "transparent",
     },
-    reviewTabActive: { borderBottomColor: c.ochre },
-    reviewTabText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.mute },
-    reviewTabTextActive: { color: c.ochre },
+    subtypeTabActive: { borderBottomColor: c.ochre },
+    subtypeTabText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.mute },
+    subtypeTabTextActive: { color: c.ochre },
 
     // Main textarea
     textarea: {
@@ -2334,12 +2305,6 @@ function createStyles(c: ColorPalette) {
     },
     prefixIcon: { fontSize: 16 },
     prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink },
-
-    // Cultural Take headline
-    culturalHeadline: {
-      fontFamily: fonts.serifBold, fontSize: 20, color: c.ink,
-      lineHeight: 28, minHeight: 80, textAlignVertical: "top",
-    },
 
     // Creative Showcase upload zone
     showcaseUploadZone: {

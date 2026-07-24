@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { TEMPLATES, TEMPLATE_REP_GATE, REVIEW_FAMILY, REVIEW_DEFAULT, type TemplateType } from "./SubmitPost";
+import { TEMPLATES, TEMPLATE_REP_GATE, REVIEW_FAMILY, REVIEW_DEFAULT, UPDATE_FAMILY, UPDATE_DEFAULT, type TemplateType } from "./SubmitPost";
 
 // Fuller label + one-line description for the picker tile — distinct from
 // TEMPLATES' compact chip labels ("Book", "Music", "Film") which stay as-is
@@ -11,7 +11,6 @@ import { TEMPLATES, TEMPLATE_REP_GATE, REVIEW_FAMILY, REVIEW_DEFAULT, type Templ
 const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   post:                { label: "Update",             desc: "Share a thought or moment" },
   "hidden-gem":        { label: "Place",               desc: "Spotlight a place worth knowing" },
-  "cultural-take":     { label: "Cultural Take",      desc: "Share a cultural opinion" },
   "food-review":       { label: "Food Review",        desc: "Rate a dish or food item" },
   "book-review":       { label: "Book Review",        desc: "Rate a book you've read" },
   "music-review":      { label: "Music Review",       desc: "Rate an album you've heard" },
@@ -19,23 +18,27 @@ const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   "creative-showcase": { label: "Creative Showcase",  desc: "Share your creative work" },
   quote:               { label: "Quote",              desc: "Share a quote that moved you" },
   poll:                { label: "Poll",               desc: "Ask the community something" },
-  itinerary:           { label: "Route",              desc: "Share a travel route" },
+  itinerary:           { label: "Itinerary",          desc: "Share a travel itinerary" },
   event:               { label: "Event",              desc: "Announce something happening" },
 };
 
-// Grid items: REVIEW_FAMILY (Hidden Gem/Food/Music/Book/Film Review) collapse
-// into one synthetic "review" tile, inserted at the position of the first
-// review-family member so it still lands in a sensible spot in the grid.
-// Picking it opens the composer on REVIEW_DEFAULT — the in-form tab row
-// (SubmitPost.tsx's composer-review-tabs) is where the user actually picks
-// Place/Food/Music/Book/Film.
-type GridItem = TemplateType | "review";
+// Grid items: REVIEW_FAMILY (Place/Food/Music/Book/Film Review) collapses
+// into one synthetic "review" tile, and UPDATE_FAMILY (Update/Poll/Quote)
+// collapses into one synthetic "update" tile — each inserted at the
+// position of its first family member so it still lands in a sensible spot
+// in the grid. Picking either opens the composer on that family's default
+// slug — the in-form tab row (SubmitPost.tsx's composer-subtype-tabs) is
+// where the user actually picks the specific subtype.
+type GridItem = TemplateType | "review" | "update";
 const GRID_ITEMS: GridItem[] = (() => {
   const items: GridItem[] = [];
   let reviewInserted = false;
+  let updateInserted = false;
   for (const t of TEMPLATES) {
     if (REVIEW_FAMILY.includes(t.slug)) {
       if (!reviewInserted) { items.push("review"); reviewInserted = true; }
+    } else if (UPDATE_FAMILY.includes(t.slug)) {
+      if (!updateInserted) { items.push("update"); updateInserted = true; }
     } else {
       items.push(t.slug);
     }
@@ -147,6 +150,26 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
                     )}
                     <b>Review</b>
                     <span className="type-picker-tile-desc">Rate a place, dish, album, book, or film</span>
+                  </button>
+                );
+              }
+              if (item === "update") {
+                const isSelecting = selecting != null && UPDATE_FAMILY.includes(selecting as TemplateType);
+                return (
+                  <button
+                    key="update"
+                    type="button"
+                    className={`type-picker-tile${selecting && !isSelecting ? " type-picker-tile--dimmed" : ""}`}
+                    onClick={() => pick(UPDATE_DEFAULT)}
+                    disabled={!!selecting}
+                  >
+                    {isSelecting ? (
+                      <span className="type-picker-tile-spinner" aria-hidden />
+                    ) : (
+                      <span className="type-picker-tile-em" aria-hidden>📝</span>
+                    )}
+                    <b>Updates</b>
+                    <span className="type-picker-tile-desc">Share a thought, a poll, or a quote</span>
                   </button>
                 );
               }

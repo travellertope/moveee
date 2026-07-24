@@ -8,7 +8,7 @@ import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../.
 import { useColors } from "../../hooks/useColors";
 
 export type TemplateId =
-  | "post" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review"
+  | "post" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review"
   | "creative-showcase" | "poll" | "itinerary" | "event" | "quote";
 
 export interface TemplateDef {
@@ -22,7 +22,6 @@ export interface TemplateDef {
 export const TEMPLATE_DEFS: TemplateDef[] = [
   { id: "post",              emoji: "✏️",  label: "Post",             desc: "Share a thought or cultural moment",  color: "#B38238" },
   { id: "hidden-gem",        emoji: "💎",  label: "Place",            desc: "Recommend a place worth discovering", color: "#2D6A4F" },
-  { id: "cultural-take",     emoji: "🔥",  label: "Cultural Take",    desc: "Drop a hot take on culture",          color: "#C5491F" },
   { id: "food-review",       emoji: "🍽️",  label: "Food Review",      desc: "Review a dish or food item",          color: "#B38238" },
   { id: "book-review",       emoji: "📚",  label: "Book Review",      desc: "Review a book you've read",           color: "#6B48A8" },
   { id: "music-review",      emoji: "🎵",  label: "Music Review",     desc: "Review an album you've heard",        color: "#0D7377" },
@@ -56,6 +55,28 @@ const REVIEW_CARD_DEF: TemplateDef = {
   desc: "Rate a place, dish, album, book, or film", color: "#B38238",
 };
 
+// Update family (July 2026) — Post/Poll/Quote share one "Updates" entry
+// point in the picker; once inside NewPostScreen, a tab row (see
+// NewPostScreen.tsx's renderSubtypeTabs) switches between them. Cultural
+// Take was removed entirely — its directory-linking idea lives on as an
+// optional field on the plain Post form. Mirrors
+// packages/shared/components/pulse/SubmitPost.tsx's UPDATE_FAMILY — keep
+// both in sync.
+export const UPDATE_FAMILY: TemplateId[] = ["post", "poll", "quote"];
+export const UPDATE_DEFAULT: TemplateId = "post";
+export const UPDATE_TAB_META: Record<string, { label: string; emoji: string }> = {
+  post:  { label: "Update", emoji: "✏️" },
+  poll:  { label: "Poll",   emoji: "📊" },
+  quote: { label: "Quote",  emoji: "❝" },
+};
+export function isUpdateTemplate(id: TemplateId): boolean {
+  return UPDATE_FAMILY.includes(id);
+}
+const UPDATE_CARD_DEF: TemplateDef = {
+  id: UPDATE_DEFAULT, emoji: "✏️", label: "Updates",
+  desc: "Share a thought, a poll, or a quote", color: "#B38238",
+};
+
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -69,14 +90,18 @@ export default function TemplatePickerSheet({ visible, onClose, onSelect, allowe
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const rawDefs = allowedIds ? TEMPLATE_DEFS.filter((t) => allowedIds.includes(t.id)) : TEMPLATE_DEFS;
-  // Collapse the review family into one "Review" card, inserted at the
-  // position of the first review-family member still present.
+  // Collapse the review family into one "Review" card and the update family
+  // into one "Updates" card, each inserted at the position of its first
+  // family member still present.
   const defs = useMemo(() => {
     const out: TemplateDef[] = [];
     let reviewInserted = false;
+    let updateInserted = false;
     for (const t of rawDefs) {
       if (isReviewTemplate(t.id)) {
         if (!reviewInserted) { out.push(REVIEW_CARD_DEF); reviewInserted = true; }
+      } else if (isUpdateTemplate(t.id)) {
+        if (!updateInserted) { out.push(UPDATE_CARD_DEF); updateInserted = true; }
       } else {
         out.push(t);
       }
