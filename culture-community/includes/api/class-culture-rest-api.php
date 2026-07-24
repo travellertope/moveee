@@ -2292,7 +2292,9 @@ class Culture_REST_API {
         $user_id = (int) $request->get_param( 'user_id' );
         $hub_id  = (int) $request->get_param( 'id' );
 
-        Culture_Hubs::unfollow( $hub_id, $user_id );
+        if ( ! Culture_Hubs::unfollow( $hub_id, $user_id ) ) {
+            return new WP_Error( 'unfollow_failed', 'Could not unfollow this Hub right now. Please try again.', array( 'status' => 500 ) );
+        }
 
         return rest_ensure_response( Culture_Hubs::get_status( $hub_id, $user_id ) );
     }

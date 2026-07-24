@@ -53,9 +53,14 @@ export default function HubActions({
 
   const join = async () => {
     const data = await call("join");
-    if (data) {
+    // Trust the server's actual isMember, not just that the call succeeded —
+    // a write that silently failed server-side (e.g. a DB error) can still
+    // come back as a successful response with isMember still false.
+    if (data?.isMember) {
       setIsMember(true);
       router.refresh();
+    } else if (data) {
+      setError("Something went wrong. Please try again.");
     }
     setBusy(false);
   };
@@ -64,24 +69,35 @@ export default function HubActions({
     if (isOwner) return;
     if (!confirm("Leave this Hub?")) return;
     const data = await call("leave");
-    if (data) {
+    if (data && !data.isMember) {
       setIsMember(false);
       router.refresh();
+    } else if (data) {
+      setError("Something went wrong. Please try again.");
     }
     setBusy(false);
   };
 
   const follow = async () => {
     const data = await call("follow", { notify_posts: notifyPosts });
-    if (data) setIsFollowing(true);
+    // Trust the server's actual isFollowing, not just that the call
+    // succeeded — a write that silently failed server-side can still come
+    // back as a successful response with isFollowing still false.
+    if (data?.isFollowing) {
+      setIsFollowing(true);
+    } else if (data) {
+      setError("Something went wrong. Please try again.");
+    }
     setBusy(false);
   };
 
   const unfollow = async () => {
     const data = await call("unfollow");
-    if (data) {
+    if (data && !data.isFollowing) {
       setIsFollowing(false);
       setNotifyPosts(false);
+    } else if (data) {
+      setError("Something went wrong. Please try again.");
     }
     setBusy(false);
   };
@@ -89,7 +105,11 @@ export default function HubActions({
   const toggleNotify = async () => {
     const next = !notifyPosts;
     const data = await call("follow", { notify_posts: next });
-    if (data) setNotifyPosts(next);
+    if (data?.notifyPosts === next) {
+      setNotifyPosts(next);
+    } else if (data) {
+      setError("Something went wrong. Please try again.");
+    }
     setBusy(false);
   };
 

@@ -39,7 +39,11 @@ function AuthorFollowToggle({ username }: { username: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: isFollowing ? "unfollow" : "follow" }),
       });
-      if (res.ok) setIsFollowing(!isFollowing);
+      const data = await res.json().catch(() => null);
+      // Trust the server's actual isFollowing, not just the HTTP status — a
+      // write that silently failed server-side can still come back as a
+      // 200 with the toggle not having actually flipped.
+      if (res.ok && data) setIsFollowing(!!data.isFollowing);
     } catch {}
     setBusy(false);
   }
@@ -199,7 +203,11 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
     setLoading(true);
     try {
       const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
-      if (res.ok) setJoined(true);
+      const data = await res.json().catch(() => null);
+      // Trust the server's actual isMember, not just the HTTP status — a
+      // write that silently failed server-side (e.g. a DB error) can still
+      // come back as a 200 with isMember still false.
+      if (res.ok && data?.isMember) setJoined(true);
     } catch {}
     setLoading(false);
   }

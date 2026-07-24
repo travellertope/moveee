@@ -646,15 +646,24 @@ class Culture_Hubs {
         }
 
         if ( $existing ) {
-            $wpdb->update( $table, array( 'status' => 'active' ), array( 'id' => $existing['id'] ), array( '%s' ), array( '%d' ) );
+            $write_ok = false !== $wpdb->update( $table, array( 'status' => 'active' ), array( 'id' => $existing['id'] ), array( '%s' ), array( '%d' ) );
         } else {
-            $wpdb->insert( $table, array(
+            $write_ok = false !== $wpdb->insert( $table, array(
                 'hub_id'    => $hub_id,
                 'user_id'   => $user_id,
                 'role'      => 'member',
                 'joined_at' => current_time( 'mysql' ),
                 'status'    => 'active',
             ), array( '%d', '%d', '%s', '%s', '%s' ) );
+        }
+
+        // $wpdb suppresses errors by default (see the "Plugin DB table
+        // auto-upgrade" note elsewhere in this codebase) — without this
+        // check, a missing/broken wp_culture_hub_members table would still
+        // return `true` here, so the REST response looks like a successful
+        // join while nothing was actually persisted.
+        if ( ! $write_ok ) {
+            return new WP_Error( 'join_failed', 'Could not join this Hub right now. Please try again.', array( 'status' => 500 ) );
         }
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
@@ -717,11 +726,13 @@ class Culture_Hubs {
             array( '%s' ), array( '%d', '%d' )
         );
 
-        if ( false !== $updated ) {
-            update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+        if ( false === $updated ) {
+            return new WP_Error( 'leave_failed', 'Could not leave this Hub right now. Please try again.', array( 'status' => 500 ) );
         }
 
-        return false !== $updated;
+        update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+        return true;
     }
 
     public static function follow( int $hub_id, int $user_id, bool $notify_posts = false ) {
@@ -738,14 +749,18 @@ class Culture_Hubs {
         ) );
 
         if ( $existing ) {
-            $wpdb->update( $table, array( 'notify_posts' => $notify_posts ? 1 : 0 ), array( 'id' => $existing ), array( '%d' ), array( '%d' ) );
+            $write_ok = false !== $wpdb->update( $table, array( 'notify_posts' => $notify_posts ? 1 : 0 ), array( 'id' => $existing ), array( '%d' ), array( '%d' ) );
         } else {
-            $wpdb->insert( $table, array(
+            $write_ok = false !== $wpdb->insert( $table, array(
                 'hub_id'       => $hub_id,
                 'user_id'      => $user_id,
                 'notify_posts' => $notify_posts ? 1 : 0,
                 'created_at'   => current_time( 'mysql' ),
             ), array( '%d', '%d', '%d', '%s' ) );
+        }
+
+        if ( ! $write_ok ) {
+            return new WP_Error( 'follow_failed', 'Could not follow this Hub right now. Please try again.', array( 'status' => 500 ) );
         }
 
         return true;
