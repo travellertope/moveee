@@ -564,7 +564,10 @@ export default function FeedCard({
               {isPro && <ProBadge size={13} />}
               <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>·</span>
               <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>{formatDate(item.date)}</span>
-              {item.communityTag && (
+              {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
+                  Hub Phase 6 auto-links every Section to an official Hub, so
+                  the two used to show the same label ("Literature") twice. */}
+              {item.communityTag && !item.hubId && (
                 <button
                   onClick={() => onTagClick?.(item.communityTag!)}
                   style={{

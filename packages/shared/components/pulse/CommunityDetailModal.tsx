@@ -318,7 +318,10 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Community</span>
-            {item.communityTag && (
+            {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
+                Hub Phase 6 auto-links every Section to an official Hub, so
+                the two used to show the same label ("Literature") twice. */}
+            {item.communityTag && !item.hubId && (
               <span style={{ fontSize: "0.62rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.communityTag}
               </span>
