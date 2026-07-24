@@ -2108,7 +2108,18 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 | `components/pulse/DirectoryDetailModal.tsx` | Click Directory card body | Entry name, type badge, excerpt, full body, "View full entry →" link |
 | `components/pulse/QuoteDetailModal.tsx` | Click Quote card body | Large quote text, author, source, `ReactionBar` |
 
-FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
+FeedCard lazy-loads these modals via `dynamic(() => import(...), { ssr: false })`.
+
+**Community cards are the exception (web, July 2026) — they navigate directly to
+`/community/{slug}` instead of opening an off-canvas drawer.** `FeedCard.tsx`'s community
+branch used to open `CommunityDetailModal.tsx` the same way the three modals above still
+work; this was changed to `router.push(\`/community/${item.slug}\`)` on both the post-body
+click and the comment-count button click, and the `modalOpen`/`CommunityDetailModal` state
+and dynamic import were removed from `FeedCard.tsx` entirely. `CommunityDetailModal.tsx`
+the component file is **not** dead — `EventSpotlightCarousel.tsx` still renders it for
+community-type spotlight items (see "Event Spotlight carousel" above) — only `FeedCard.tsx`
+stopped using it. Mobile's equivalent (`PostDetailSheet.tsx` bottom sheet in
+`ConnectFeedScreen.tsx`) was deliberately left unchanged — this was a web-only UX request.
 
 ### RN unified comment system — `CommentSection.tsx` (June 2026)
 

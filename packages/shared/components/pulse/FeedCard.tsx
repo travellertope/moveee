@@ -257,7 +257,6 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
-const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
 const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
 const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
 const QuoteDetailModal = dynamic(() => import("./QuoteDetailModal"), { ssr: false });
@@ -459,10 +458,10 @@ export default function FeedCard({
     const closeLightbox = useCallback(() => setLightbox(null), []);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [modalOpen, setModalOpen] = useState(false);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const closeModal = useCallback(() => setModalOpen(false), []);
+    // Community posts open their own full page directly (no off-canvas
+    // drawer) — unlike Quote/Happening/Directory cards elsewhere in this
+    // file, which still use their detail modals.
+    const openPost = useCallback(() => router.push(`/community/${item.slug}`), [item.slug]);
 
     const isPro = item.communityTier === "patron";
 
@@ -598,9 +597,9 @@ export default function FeedCard({
               />
             )}
 
-            {/* Text — clicking opens modal */}
+            {/* Text — clicking opens the post's own page directly */}
             <div
-              onClick={() => setModalOpen(true)}
+              onClick={openPost}
               style={{ cursor: "pointer" }}
             >
               {/* Template-specific header badges */}
@@ -844,7 +843,7 @@ export default function FeedCard({
                 </div>
               )}
               <button
-                onClick={() => setModalOpen(true)}
+                onClick={openPost}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.3rem",
                   color: "var(--mute)", background: "none", border: "none",
@@ -894,10 +893,6 @@ export default function FeedCard({
             </div>
           </div>
         </article>
-
-        {modalOpen && (
-          <CommunityDetailModal item={item} onClose={closeModal} onMentionClick={handleMentionClick} />
-        )}
       </>
     );
   }
