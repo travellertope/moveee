@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -21,9 +21,22 @@ export default function HubActions({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const primaryBtnStyle: CSSProperties = {
+    display: "inline-block", background: "#c93c2a", color: "#fff",
+    padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
+    letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none",
+    border: "none", cursor: "pointer",
+  };
+  const ghostBtnStyle: CSSProperties = {
+    display: "inline-block", background: "#fff", color: "#3a342b",
+    padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
+    letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none",
+    border: "1px solid #e8e2d8", cursor: "pointer",
+  };
+
   if (!loggedIn) {
     return (
-      <Link href={`/login?callbackUrl=/hub`} className="con-btn-primary">
+      <Link href={`/login?callbackUrl=/hub`} style={primaryBtnStyle}>
         Log in to join →
       </Link>
     );
@@ -119,20 +132,23 @@ export default function HubActions({
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {isMember ? (
           isOwner ? (
-            <span className="mem-card-desc" style={{ margin: 0, fontWeight: 600 }}>You own this Hub</span>
+            <span style={{ fontSize: "0.85rem", color: "#3a342b", fontWeight: 600 }}>You own this Hub</span>
           ) : (
             <button
               type="button"
               onClick={leave}
               disabled={busy}
-              className="mem-settings-back-link"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#c0392b" }}
+              style={{
+                background: "none", border: "1px solid #e8e2d8", cursor: "pointer",
+                padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
+                letterSpacing: "0.06em", textTransform: "uppercase", color: "#c0392b",
+              }}
             >
               {busy ? "Leaving…" : "Leave Hub"}
             </button>
           )
         ) : (
-          <button type="button" onClick={join} disabled={busy} className="con-btn-primary" style={{ border: "none", cursor: "pointer" }}>
+          <button type="button" onClick={join} disabled={busy} style={primaryBtnStyle}>
             {busy ? "Joining…" : "Join →"}
           </button>
         )}
@@ -141,15 +157,14 @@ export default function HubActions({
           type="button"
           onClick={isFollowing ? unfollow : follow}
           disabled={busy}
-          className="con-btn-ghost"
-          style={{ border: "1px solid var(--rule)", cursor: "pointer" }}
+          style={ghostBtnStyle}
         >
           {isFollowing ? "Following ✓" : "Follow"}
         </button>
       </div>
 
       {isFollowing && (
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "var(--mute)", cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "#7a6f5c", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={notifyPosts}
