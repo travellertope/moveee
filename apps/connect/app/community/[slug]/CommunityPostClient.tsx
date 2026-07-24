@@ -232,7 +232,7 @@ export default function CommunityPostClient({
         <div style={{ marginBottom: "0.65rem" }}>
           {templateType === "hidden-gem" && (
             <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "3px 8px", borderRadius: "2px" }}>
-              Hidden Gem {starRating ? "★".repeat(starRating) : ""}
+              Place {starRating ? "★".repeat(starRating) : ""}
             </span>
           )}
           {templateType === "cultural-take" && (

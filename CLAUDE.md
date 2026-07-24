@@ -1900,6 +1900,24 @@ form rather than just scrolling them to it. **Once the app actually ships to the
 swap these href targets for real store URLs** (same TODO as the `DEV:` comment already in
 `MoveeeZone.tsx` for its own store badges) rather than leaving the waitlist redirect in place.
 
+**Desktop hide (fixed July 2026).** Both the banner and the modal used to render at every
+viewport width — since there is no desktop app to push people toward, showing "Moveee is
+better in the app" copy on a desktop browser was actively wrong, not just unnecessary. Fixed
+with a single CSS rule in `components/app-download-nudge.css`:
+```css
+@media (min-width: 860px) {
+  .adb-banner,
+  .adm-overlay {
+    display: none;
+  }
+}
+```
+`860px` matches the project's existing desktop breakpoint (same value the left-nav rail in
+`Header.tsx` switches on — see "Connect app left-nav rail" above). CSS-only fix — no JS
+viewport check was added, since `AppDownloadModal.tsx`'s page-view counter still increments
+on desktop; the modal's overlay just never becomes visible there, which is simpler than
+gating the counter logic itself and has the same net effect.
+
 ---
 
 ## Plugin DB table auto-upgrade (critical — June 2026)
@@ -2711,6 +2729,64 @@ kept in sync per the project's usual web/mobile duplication convention.
   also includes the inline `DateTimePicker` modal (web uses native `<input type="datetime-local">`,
   no separate picker UI to gate). If you add a field to one platform's template, check whether the
   other platform has an equivalent before assuming the step split should match exactly.
+
+### Guide description moved to top of form (web + mobile, July 2026)
+The per-template description (`TEMPLATE_GUIDES[template].desc` on web, `tmplDef.desc` on mobile —
+same text source the type-picker cards already used) used to render just above the main textarea
+and hide once the user started typing. It's now pinned to the **top of the form**, above the
+wizard progress/Posting-to picker, and stays visible permanently (the hide-on-typing behavior made
+sense next to the textarea; it didn't make sense once the wizard put the textarea on a later step).
+Web: unconditional `<div className="composer-guide">` at the top of `.composer-fields`, no longer
+gated by `showSection("text")`. Mobile: previously **only** the `post` template showed this at all
+(inline inside `renderStandardPost()`) — now every template shows it, moved above the wizard
+progress row in the fixed header area (outside the `ScrollView`, so it needed its own
+`paddingHorizontal` since the body's own padding no longer applies to it).
+
+### Review family — Place/Food/Music/Book/Film Review unified under one "Review" tile (July 2026)
+Hidden Gem, Food Review, Music Review, Book Review, and Film Review are still five separate
+`TemplateType`/`TemplateId` slugs internally (`hidden-gem`, `food-review`, `music-review`,
+`book-review`, `film-review` — payloads, validation, and backend gating are all untouched), but
+the type picker now shows **one** "⭐ Review" tile instead of five separate ones. Picking it opens
+the composer on `REVIEW_DEFAULT` (`hidden-gem`); a **subtype tab row** (`.composer-review-tabs` on
+web, `styles.reviewTabs` on mobile — plain text + ochre underline, deliberately not a pill/chip
+row) then lets the user switch between Place/Food/Music/Book/Film in place, calling the same
+`handleTemplateChange()`/`switchTemplate()` every other template switch already uses.
+
+- **Config, mirrored between `packages/shared/components/pulse/SubmitPost.tsx` (exports
+  `REVIEW_FAMILY`, `REVIEW_DEFAULT`, `REVIEW_TAB_META`, `isReviewTemplate()`) and
+  `apps/mobile/src/components/community/TemplatePickerSheet.tsx`** (same four exports) — keep both
+  in sync, same convention as `WIZARD_STEPS`/`WIZARD_SECTION_STEP`.
+- **Type-picker merge**: `TypePickerModal.tsx` builds a `GRID_ITEMS` list (web) / `TemplatePickerSheet.tsx`
+  builds a filtered `defs` list (mobile) that walks the full template list once and collapses the
+  first review-family member it hits into a single synthetic "review" tile, skipping the rest —
+  this preserves the tile's original grid position (where Hidden Gem used to sit) rather than
+  appending it at the end.
+- **Slim bar / template-bar label**: when the current template is a review-family member, the
+  dedicated-page slim bar (web) reads its emoji+label from `REVIEW_TAB_META` instead of the base
+  `TEMPLATES` array, so it stays consistent with the tab row directly below it.
+- **"Hidden Gem" renamed to "Place" everywhere it's a display label** (copy-only — same convention
+  as the Stoop rename: internal slug/keys/DB values/theme keys like `templateGemBg`/`templateGemText`
+  and the `gem_hunter` achievement badge are all untouched, only user-facing text changed). Hit
+  every `TEMPLATES`/`TEMPLATE_DEFS` array, badge/label maps in feed cards and detail
+  screens/sheets/modals, the WP admin credits-settings label, and one apps/site feature-card title.
+  Marketing prose that uses "hidden gem(s)" as a plain descriptive phrase (not a literal UI label —
+  apps/site's pulse-feed/discover/features pages, `MoveeeZone.tsx`) was deliberately left alone —
+  that's a copywriting call, not a UI label rename.
+
+### Food Review: dish/item is now the searchable field, not a restaurant search (July 2026)
+Food Review used to show a `DirectorySearch` for "Which restaurant or venue?" (`typeFilter=
+"restaurant"`) followed by a plain-text "Dish or item name" input. The restaurant search is
+**removed** — restaurant/venue reviews are now expected to go through Place (Hidden Gem) review
+instead. The dish/item name is now itself the searchable `DirectorySearch` field
+(`typeFilter="food"`, matching the Book/Music/Film Review pattern exactly), backed by a dedicated
+`foodEntry` state (web) / `foodEntry` state (mobile) — replacing the old plain-text `foodDishName`
+state on both platforms. `payload.food_dish_name`/`body.food_dish_name` (the field name sent to
+the backend is unchanged) is now sourced from `foodEntry?.title`, and `linked_directory_id` from
+`foodEntry?.id` — previously food-review reused the shared `directoryEntry`/`linkedEntry` state
+that hidden-gem also uses; now it has its own, same as book/music/film. Feed rendering
+(`FeedCard.tsx`, `CommunityDetailModal.tsx`, `PostDetailSheet.tsx`, `FeedItemCard.tsx`) reads the
+same `foodDishName` field on `FeedItem` as before — untouched, since only the *source* of that
+value in the composer changed, not the field name it's stored/displayed under.
 
 ---
 

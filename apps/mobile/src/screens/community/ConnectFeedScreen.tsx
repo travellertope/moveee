@@ -432,7 +432,7 @@ export default function ConnectFeedScreen() {
                 ) : (
                   <View style={[styles.avatarImg, styles.avatarFallback]}>
                     <Text style={styles.avatarInitial}>
-                      {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                      {(user?.displayName ?? "?")[0]?.toUpperCase()}
                     </Text>
                   </View>
                 )}

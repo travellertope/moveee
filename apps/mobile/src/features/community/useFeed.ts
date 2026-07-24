@@ -1,7 +1,17 @@
 import { useState, useCallback, useEffect } from "react";
 import { api, MOBILE_API } from "../../api/client";
 import { cache, TTL } from "../../store/storage";
-import type { CommunityPost } from "../../types";
+
+// Not the unified FeedItem shape — a raw community_post API response,
+// same loose/pragmatic style as the local CommunityPost interfaces in
+// DirectoryDetailScreen.tsx / MemberProfileScreen.tsx / PostCard.tsx
+// (none of which share this type either).
+interface CommunityPost {
+  id: string;
+  liked: boolean;
+  likeCount: number;
+  [key: string]: any;
+}
 
 const CACHE_KEY = "community_feed";
 const PAGE_SIZE = 20;

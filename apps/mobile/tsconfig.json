@@ -3,6 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "module": "esnext",
+    "moduleResolution": "node10",
     "paths": {
       "@moveee/utils/*": ["../../packages/utils/*"],
       "react": ["./node_modules/@types/react"],
@@ -12,7 +14,6 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "../../packages/utils/**/*.ts"
+    "**/*.tsx"
   ]
 }

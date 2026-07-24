@@ -50,7 +50,7 @@ export type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "
 // as locked-away even though it wasn't.
 export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
-  { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
+  { slug: "hidden-gem",        label: "Place",     emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
@@ -71,11 +71,29 @@ export const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; t
   event:     { minRep: 500,  tierLabel: "Culture Contributor" },
 };
 
+// Review family (July 2026) — Hidden Gem/Food/Book/Music/Film Review are
+// presented as one "Review" entry point in the type picker; once inside,
+// a tab row lets the user switch between subtypes without leaving the page.
+// Internal template_type slugs/payloads/validation are all unchanged — this
+// only changes how the 5 are grouped in the UI. Order here is the tab order.
+export const REVIEW_FAMILY: TemplateType[] = ["hidden-gem", "food-review", "music-review", "book-review", "film-review"];
+export const REVIEW_DEFAULT: TemplateType = "hidden-gem";
+export const REVIEW_TAB_META: Record<string, { label: string; emoji: string }> = {
+  "hidden-gem":   { label: "Place", emoji: "💎" },
+  "food-review":  { label: "Food",  emoji: "🍽️" },
+  "music-review": { label: "Music", emoji: "🎵" },
+  "book-review":  { label: "Book",  emoji: "📚" },
+  "film-review":  { label: "Film",  emoji: "🎬" },
+};
+export function isReviewTemplate(t: TemplateType): boolean {
+  return REVIEW_FAMILY.includes(t);
+}
+
 const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
   post:                { desc: "Share news, a link, or a quick thought from your cultural world." },
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues." },
   "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing." },
-  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe." },
+  "food-review":       { desc: "Review a dish or food item. Rate the taste, value, and vibe." },
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
   "film-review":       { desc: "Review a film — rate it and share your thoughts." },
@@ -258,8 +276,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
 
-  // Food review specific
-  const [foodDishName, setFoodDishName] = useState("");
+  // Food review specific — foodEntry is the searchable dish/item directory
+  // entry (July 2026, replaces the old plain-text dish name + restaurant search).
+  const [foodEntry, setFoodEntry] = useState<any>(null);
   const [foodTaste, setFoodTaste] = useState(0);
   const [foodValue, setFoodValue] = useState(0);
   const [foodVibe, setFoodVibe] = useState(0);
@@ -450,7 +469,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       { name: "", lat: 0, lng: 0, note: "", image_url: "" },
     ]);
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
-    setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
+    setFoodEntry(null); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource(""); setQuoteSharingReason(""); setQuoteType("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
@@ -514,7 +533,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       case "cultural-take":
         return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
-        return text.trim().length >= 50 && foodDishName.trim().length > 0 && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
+        return text.trim().length >= 50 && !!foodEntry && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
       case "book-review":
         return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
       case "music-review":
@@ -549,7 +568,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         if (step === 1) return starRating > 0 && text.trim().length >= 50;
         return true;
       case "food-review":
-        if (step === 0) return !!directoryEntry && foodDishName.trim().length > 0;
+        if (step === 0) return !!foodEntry;
         if (step === 1) return foodTaste > 0 && foodValue > 0 && foodVibe > 0 && text.trim().length >= 50;
         return true;
       case "book-review":
@@ -662,7 +681,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.star_rating = starRating;
       }
       if (template === "food-review") {
-        payload.food_dish_name = foodDishName;
+        payload.linked_directory_id = foodEntry?.id;
+        payload.food_dish_name = foodEntry?.title;
         payload.star_rating = Math.round((foodTaste + foodValue + foodVibe) / 3);
         payload.food_rating_taste = foodTaste;
         payload.food_rating_value = foodValue;
@@ -797,7 +817,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const placeholders: Record<TemplateType, string> = {
     post: "What's happening in culture?",
     quote: "The quote…",
-    "hidden-gem": "Tell us about this gem — what makes it special?",
+    "hidden-gem": "Tell us about this place — what makes it special?",
     "cultural-take": "Share your take…",
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
@@ -809,7 +829,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
-  const activeTemplateMeta = TEMPLATES.find(t => t.slug === template);
+  // In the review family, the slim bar shows the subtype's review-specific
+  // label ("Place"/"Food"/"Music"/"Book"/"Film") so it stays consistent with
+  // the tab row below it. TEMPLATES' own chip labels for these 5 now match
+  // REVIEW_TAB_META exactly (both say "Place" for hidden-gem, etc.), so this
+  // branch is currently redundant but kept as the source of truth for the
+  // review-family label specifically, in case the two ever diverge again.
+  const activeTemplateMeta = isReviewTemplate(template)
+    ? REVIEW_TAB_META[template]
+    : TEMPLATES.find(t => t.slug === template);
   const sectionHidden = template === "quote" || template === "food-review" || template === "event";
   const sectionFixed = lockedTag || TEMPLATE_TAGS[template];
   const showAutoHint = !sectionHidden && !sectionFixed && !!tag && !tagLocked;
@@ -876,6 +904,39 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
           )}
 
           <div className="composer-fields">
+            {/* Template guide — pinned to the top of the form (moved off the
+                textarea, July 2026) so it stays visible across every wizard
+                step instead of only showing up on whichever step has the
+                main text field. Always visible now — the old "hide once the
+                user starts typing" behavior made sense next to the textarea,
+                not as a top-of-form caption. */}
+            <div className="composer-guide">
+              <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
+            </div>
+
+            {/* Review subtype tabs — Place/Food/Music/Book/Film Review are one
+                "Review" entry point in the type picker (see REVIEW_FAMILY);
+                this lets the user switch between subtypes in place instead of
+                reopening the picker. Reuses handleTemplateChange() exactly
+                like the chip row / picker modal do — same reset behavior. */}
+            {isReviewTemplate(template) && (
+              <div className="composer-review-tabs">
+                {REVIEW_FAMILY.map(rt => {
+                  const meta = REVIEW_TAB_META[rt];
+                  return (
+                    <button
+                      key={rt}
+                      type="button"
+                      className={`composer-review-tab${template === rt ? " composer-review-tab--active" : ""}`}
+                      onClick={() => handleTemplateChange(rt)}
+                    >
+                      <span aria-hidden>{meta.emoji}</span> {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Step progress — long templates only (WIZARD_STEPS above) */}
             {isWizard && (
               <div className="composer-wizard-progress">
@@ -943,24 +1004,24 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )
             )}
 
-            {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
-            {(template === "cultural-take" || ((template === "hidden-gem" || template === "food-review") && showSection("search"))) && (
+            {/* Directory search — for cultural-take (required), hidden-gem */}
+            {(template === "cultural-take" || (template === "hidden-gem" && showSection("search"))) && (
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
-                typeFilter={template === "food-review" ? "restaurant" : undefined}
-                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Search or add a location *"}
+                placeholder={template === "cultural-take" ? "What are you writing about?" : "Search or add a location *"}
               />
             )}
 
-            {/* Food dish name */}
+            {/* Food/dish search — the dish or item itself is now the searchable
+                directory entry (July 2026). Restaurant/venue search was
+                removed here; that's now Place (Hidden Gem) review's job. */}
             {template === "food-review" && showSection("search") && (
-              <input
-                type="text"
-                value={foodDishName}
-                onChange={e => setFoodDishName(e.target.value)}
-                placeholder="Dish or item name *"
-                className="composer-input"
+              <DirectorySearch
+                value={foodEntry}
+                onChange={setFoodEntry}
+                typeFilter="food"
+                placeholder="Search or add a dish *"
               />
             )}
 
@@ -1145,14 +1206,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )
             )}
 
-            {/* Template guide + main text area — step-gated for wizard templates
-                (see WIZARD_SECTION_STEP's "text" entries); always shown for
-                short/non-wizard templates, showSection() defaults to true. */}
+            {/* Main text area — step-gated for wizard templates (see
+                WIZARD_SECTION_STEP's "text" entries); always shown for
+                short/non-wizard templates, showSection() defaults to true.
+                The guide description itself now lives at the top of the
+                form (see composer-fields' opening block above). */}
             {showSection("text") && (
               <>
-                <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
-                  <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
-                </div>
                 {template === "quote" ? (
                   <div className="composer-quote-box">
                     <span className="composer-quote-glyph" aria-hidden>&ldquo;</span>

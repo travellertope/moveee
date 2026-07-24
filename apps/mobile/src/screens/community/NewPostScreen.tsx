@@ -23,7 +23,7 @@ import DirectorySearch from "../../components/composer/DirectorySearch";
 import UserSearch, { MemberResult } from "../../components/composer/UserSearch";
 import MentionInput from "../../components/composer/MentionInput";
 
-import { TEMPLATE_DEFS } from "../../components/community/TemplatePickerSheet";
+import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 
@@ -294,7 +294,10 @@ export default function NewPostScreen() {
   // Template-specific state
   const [starRating, setStarRating] = useState(0);
   const [foodRatings, setFoodRatings] = useState({ taste: 0, value: 0, vibe: 0 });
-  const [foodDishName, setFoodDishName] = useState("");
+  // Dish/item is the searchable directory entry (July 2026, replaces the old
+  // plain-text dish name + restaurant search — restaurant/venue reviews are
+  // now expected via Place/Hidden Gem review instead).
+  const [foodEntry, setFoodEntry] = useState<DirectoryEntry | null>(null);
   const [linkedEntry, setLinkedEntry] = useState<DirectoryEntry | null>(null);
   const [poll, setPoll] = useState<PollDraft>({ options: ["", ""], durationDays: 3 });
   const [stops, setStops] = useState<StopDraft[]>([{ name: "", note: "" }, { name: "", note: "" }]);
@@ -576,12 +579,12 @@ const uploadImages = async (): Promise<string[]> => {
         Alert.alert("Too short", `Need at least ${tmpl.minText} characters.`); return;
       }
     } else if (template === "food-review") {
-      if (!foodDishName) { Alert.alert("Dish required", "Please add the dish name."); return; }
+      if (!foodEntry) { Alert.alert("Dish required", "Search and select or add a dish."); return; }
       if (foodRatings.taste === 0) { Alert.alert("Rating required", "Please add a taste rating."); return; }
       if (text.trim().length < tmpl.minText) {
         Alert.alert("Too short", `Need at least ${tmpl.minText} characters.`); return;
       }
-    } else if (template !== "event" && text.length < tmpl.minText) {
+    } else if (text.length < tmpl.minText) {
       Alert.alert("Too short", `Need at least ${tmpl.minText} characters for this template.`); return;
     }
 
@@ -698,11 +701,11 @@ const uploadImages = async (): Promise<string[]> => {
         body.linked_directory_id = linkedEntry?.id || undefined;
       }
       if (template === "food-review") {
-        body.food_dish_name      = foodDishName;
+        body.food_dish_name      = foodEntry?.title;
         body.food_rating_taste   = foodRatings.taste;
         body.food_rating_value   = foodRatings.value;
         body.food_rating_vibe    = foodRatings.vibe;
-        body.linked_directory_id = linkedEntry?.id;
+        body.linked_directory_id = foodEntry?.id;
         body.cuisine_tag         = cuisineTag || undefined;
         body.price_range         = foodPriceRange || undefined;
       }
@@ -783,7 +786,7 @@ const uploadImages = async (): Promise<string[]> => {
         if (step === 1) return text.trim().length >= tmpl.minText;
         return true;
       case "food-review":
-        if (step === 0) return foodDishName.trim().length > 0;
+        if (step === 0) return !!foodEntry;
         if (step === 1) return foodRatings.taste > 0 && text.trim().length >= tmpl.minText;
         return true;
       case "book-review":
@@ -811,7 +814,7 @@ const uploadImages = async (): Promise<string[]> => {
       default:
         return true;
     }
-  }, [template, step, linkedEntry, text, tmpl.minText, foodDishName, foodRatings.taste,
+  }, [template, step, linkedEntry, text, tmpl.minText, foodEntry, foodRatings.taste,
     bookEntry, bookStatus, bookOverallRating, musicEntry, musicOverallRating,
     filmEntry, filmOverallRating, showcaseTitle, itineraryTitle, stops, eventTitle, eventDate]);
 
@@ -919,12 +922,6 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {/* Section tags FIRST */}
       {renderSectionTags(0)}
-      {/* Guide description */}
-      {text.length === 0 && (
-        <View style={[styles.guide, { marginTop: space[3] }]}>
-          <Text style={styles.guideDesc}>{tmplDef?.desc ?? ""}</Text>
-        </View>
-      )}
       <MentionInput
         inputRef={textRef}
         style={[styles.textarea, { marginTop: space[2] }]}
@@ -1062,25 +1059,14 @@ const uploadImages = async (): Promise<string[]> => {
   const renderFoodReview = () => (
     <>
       {showSection("search") && (
-        <>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Dish / Item *</Text>
-            <TextInput
-              style={styles.input}
-              value={foodDishName}
-              onChangeText={setFoodDishName}
-              placeholder="What did you eat?"
-              placeholderTextColor={c.ghost}
-            />
-          </View>
-          <View style={styles.fieldGroup}>
-            <DirectorySearch
-              selected={linkedEntry}
-              onSelect={setLinkedEntry}
-              label="Restaurant or venue"
-            />
-          </View>
-        </>
+        <View style={styles.fieldGroup}>
+          <DirectorySearch
+            selected={foodEntry}
+            onSelect={setFoodEntry}
+            label="Dish / Item *"
+            typeFilter="food"
+          />
+        </View>
       )}
       {showSection("rating") && (
         <>
@@ -2137,6 +2123,40 @@ const uploadImages = async (): Promise<string[]> => {
           </TouchableOpacity>
         </View>
 
+        {/* ── Template guide — pinned to the top of the form, every template
+             (previously only "post" showed this, and only above its
+             textarea — moved to the top and made consistent across all
+             templates, mirroring SubmitPost.tsx's web layout, July 2026) ── */}
+        {tmplDef?.desc ? (
+          <View style={styles.guide}>
+            <Text style={styles.guideDesc}>{tmplDef.desc}</Text>
+          </View>
+        ) : null}
+
+        {/* ── Review subtype tabs — Place/Food/Music/Book/Film Review share one
+             "Review" entry point in the template picker (REVIEW_FAMILY); this
+             row lets the user switch between subtypes without reopening the
+             picker. Mirrors SubmitPost.tsx's composer-review-tabs. ── */}
+        {isReviewTemplate(template) && (
+          <View style={styles.reviewTabs}>
+            {REVIEW_FAMILY.map((rt) => {
+              const meta = REVIEW_TAB_META[rt];
+              const active = template === rt;
+              return (
+                <TouchableOpacity
+                  key={rt}
+                  style={[styles.reviewTab, active && styles.reviewTabActive]}
+                  onPress={() => switchTemplate(rt)}
+                >
+                  <Text style={[styles.reviewTabText, active && styles.reviewTabTextActive]}>
+                    {meta.emoji} {meta.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         {/* ── Step progress — long templates only (WIZARD_STEPS above) ── */}
         {isWizard && (
           <View style={styles.wizardProgress}>
@@ -2232,9 +2252,29 @@ function createStyles(c: ColorPalette) {
     // Scroll body
     body: { padding: space[4], paddingBottom: 32 },
 
-    // Guide description
-    guide:     { marginBottom: space[3] },
+    // Guide description — pinned above the scrollable body, so it needs its
+    // own horizontal padding (the ScrollView's body padding no longer applies).
+    guide:     { paddingHorizontal: space[4], paddingTop: space[3] },
     guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20 },
+
+    // Review subtype tabs — plain text + underline indicator, kept
+    // deliberately subtle/simple rather than a pill/chip row.
+    reviewTabs: {
+      flexDirection: "row",
+      paddingHorizontal: space[4],
+      paddingTop: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: c.rule,
+    },
+    reviewTab: {
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      borderBottomWidth: 2,
+      borderBottomColor: "transparent",
+    },
+    reviewTabActive: { borderBottomColor: c.ochre },
+    reviewTabText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.mute },
+    reviewTabTextActive: { color: c.ochre },
 
     // Main textarea
     textarea: {

@@ -19,7 +19,7 @@ import FeedItemCard from "../../components/community/FeedItemCard";
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
   { slug: "cultural-take", label: "Take", emoji: "💬" },
-  { slug: "hidden-gem", label: "Gem", emoji: "💎" },
+  { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
   { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },

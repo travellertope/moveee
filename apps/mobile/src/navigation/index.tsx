@@ -173,7 +173,7 @@ function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MagazineList"      component={MagazineScreen} />
-      <Stack.Screen name="Article"           component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="Article"           component={ArticleScreen} />
       <Stack.Screen name="IssuesArchive"     component={IssuesArchiveScreen} />
       <Stack.Screen name="MagazineSearch"    component={MagazineSearchScreen} />
       <Stack.Screen name="AuthorArchive"     component={AuthorArchiveScreen} />

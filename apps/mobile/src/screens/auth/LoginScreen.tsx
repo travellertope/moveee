@@ -24,7 +24,12 @@ GoogleSignin.configure({
 });
 
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
-let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
+import type { CreationResponse, AuthenticationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
+let Passkeys: {
+  isSupported: () => boolean;
+  create: (o: unknown) => Promise<CreationResponse | null>;
+  get: (o: unknown) => Promise<AuthenticationResponseJSON | null>;
+} = {
   isSupported: () => false, create: async () => null, get: async () => null,
 };
 try { Passkeys = require("react-native-passkeys"); } catch {}
@@ -156,7 +161,7 @@ function Wordmark() {
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function LoginScreen() {
   const nav = useNav();
-  const { login, loginWithToken, isLoading, error: authError } = useAuthStore();
+  const { login, loginWithToken, isLoading } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -258,7 +263,7 @@ export default function LoginScreen() {
     }
   }
 
-  const displayError = localError || authError;
+  const displayError = localError;
   const canSubmit = email.trim().length > 0 && password.length > 0;
 
   return (

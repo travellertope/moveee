@@ -397,7 +397,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             <div style={{ marginBottom: "0.5rem" }}>
               {item.templateType === "hidden-gem" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gold)", background: "rgba(179,130,56,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
-                  Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                  Place {item.starRating ? "★".repeat(item.starRating) : ""}
                 </span>
               )}
               {item.templateType === "cultural-take" && (

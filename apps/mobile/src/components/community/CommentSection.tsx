@@ -152,9 +152,9 @@ const CommentSection = forwardRef<CommentSectionHandle, CommentSectionProps>(fun
 
       {signedIn ? (
         <>
-          {user?.displayName || user?.name ? (
+          {user?.displayName ? (
             <Text style={styles.commentingAs}>
-              Commenting as <Text style={styles.commentingAsName}>{user.displayName ?? user.name}</Text>
+              Commenting as <Text style={styles.commentingAsName}>{user.displayName}</Text>
             </Text>
           ) : null}
           <View style={styles.composeRow}>

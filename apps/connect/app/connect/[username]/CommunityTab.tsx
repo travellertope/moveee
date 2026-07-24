@@ -21,7 +21,7 @@ interface Post {
 
 const TEMPLATE_FILTERS = [
   { value: "",                 label: "All" },
-  { value: "hidden-gem",       label: "Gems" },
+  { value: "hidden-gem",       label: "Places" },
   { value: "cultural-take",    label: "Takes" },
   { value: "food-review",      label: "Food" },
   { value: "creative-showcase",label: "Showcases" },

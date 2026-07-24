@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { TEMPLATES, TEMPLATE_REP_GATE, type TemplateType } from "./SubmitPost";
+import { TEMPLATES, TEMPLATE_REP_GATE, REVIEW_FAMILY, REVIEW_DEFAULT, type TemplateType } from "./SubmitPost";
 
 // Fuller label + one-line description for the picker tile — distinct from
 // TEMPLATES' compact chip labels ("Book", "Music", "Film") which stay as-is
 // for the in-composer pill row (CategoryPage.tsx's inline usage).
 const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   post:                { label: "Update",             desc: "Share a thought or moment" },
-  "hidden-gem":        { label: "Hidden Gem",         desc: "Spotlight a place worth knowing" },
+  "hidden-gem":        { label: "Place",               desc: "Spotlight a place worth knowing" },
   "cultural-take":     { label: "Cultural Take",      desc: "Share a cultural opinion" },
-  "food-review":       { label: "Food Review",        desc: "Rate a dish or restaurant" },
+  "food-review":       { label: "Food Review",        desc: "Rate a dish or food item" },
   "book-review":       { label: "Book Review",        desc: "Rate a book you've read" },
   "music-review":      { label: "Music Review",       desc: "Rate an album you've heard" },
   "film-review":       { label: "Film Review",        desc: "Rate a film you've seen" },
@@ -22,6 +22,26 @@ const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   itinerary:           { label: "Route",              desc: "Share a travel route" },
   event:               { label: "Event",              desc: "Announce something happening" },
 };
+
+// Grid items: REVIEW_FAMILY (Hidden Gem/Food/Music/Book/Film Review) collapse
+// into one synthetic "review" tile, inserted at the position of the first
+// review-family member so it still lands in a sensible spot in the grid.
+// Picking it opens the composer on REVIEW_DEFAULT — the in-form tab row
+// (SubmitPost.tsx's composer-review-tabs) is where the user actually picks
+// Place/Food/Music/Book/Film.
+type GridItem = TemplateType | "review";
+const GRID_ITEMS: GridItem[] = (() => {
+  const items: GridItem[] = [];
+  let reviewInserted = false;
+  for (const t of TEMPLATES) {
+    if (REVIEW_FAMILY.includes(t.slug)) {
+      if (!reviewInserted) { items.push("review"); reviewInserted = true; }
+    } else {
+      items.push(t.slug);
+    }
+  }
+  return items;
+})();
 
 // Same brand colors already used elsewhere for these templates' badges
 // (Book Review purple, Music Review teal, Film Review blue, Quote purple).
@@ -109,7 +129,28 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
                 <span className="type-picker-tile-desc">Pick up where you left off</span>
               </button>
             )}
-            {TEMPLATES.map(t => {
+            {GRID_ITEMS.map(item => {
+              if (item === "review") {
+                const isSelecting = selecting != null && REVIEW_FAMILY.includes(selecting as TemplateType);
+                return (
+                  <button
+                    key="review"
+                    type="button"
+                    className={`type-picker-tile${selecting && !isSelecting ? " type-picker-tile--dimmed" : ""}`}
+                    onClick={() => pick(REVIEW_DEFAULT)}
+                    disabled={!!selecting}
+                  >
+                    {isSelecting ? (
+                      <span className="type-picker-tile-spinner" aria-hidden />
+                    ) : (
+                      <span className="type-picker-tile-em" aria-hidden>⭐</span>
+                    )}
+                    <b>Review</b>
+                    <span className="type-picker-tile-desc">Rate a place, dish, album, book, or film</span>
+                  </button>
+                );
+              }
+              const t = TEMPLATES.find(x => x.slug === item)!;
               const gate = TEMPLATE_REP_GATE[t.slug];
               const locked = gate ? !meetsGate(t.slug) : false;
               const meta = MODAL_META[t.slug];

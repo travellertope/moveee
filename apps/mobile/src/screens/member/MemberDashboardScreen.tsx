@@ -122,7 +122,7 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
 
 const EARN_TABLE = [
   { action: "Post validated (5+ reactions or 3+ comments)", cr: "+10", rep: "+5" },
-  { action: "Hidden Gem / Food Review validated",           cr: "+15", rep: "+10" },
+  { action: "Place / Food Review validated",                cr: "+15", rep: "+10" },
   { action: "Event RSVP",                                   cr: "+1",  rep: "+5" },
   { action: "Event check-in",                               cr: "+2",  rep: "+15" },
   { action: "Refer a member",                               cr: "+3",  rep: "+25" },

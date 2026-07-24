@@ -608,7 +608,7 @@ export default function FeedCard({
                 <div style={{ marginBottom: "0.4rem" }}>
                   {item.templateType === "hidden-gem" && (
                     <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold)", background: "var(--cat-pulse-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
-                      💎 Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                      💎 Place {item.starRating ? "★".repeat(item.starRating) : ""}
                     </span>
                   )}
                   {item.templateType === "poll" && (

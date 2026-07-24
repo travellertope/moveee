@@ -93,7 +93,7 @@ export default function EditorialSheet({ visible, item, onClose }: Props) {
             </Text>
             <Text style={styles.authorSub}>
               {timeAgoShort(item.date)}
-              {item.readTime ? ` · ${item.readTime} min read` : ""}
+              {item.readingTime ? ` · ${item.readingTime} min read` : ""}
             </Text>
           </View>
         </View>

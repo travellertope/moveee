@@ -78,6 +78,7 @@ export interface Member {
   followersCount?: number;
   followingCount?: number;
   isFollowing?: boolean;
+  interests?: string[];
 }
 
 // ── Stoop (area clusters) ──────────────────────────────────────
@@ -253,7 +254,6 @@ export interface FeedItem {
   placeName?: string;
   placeLocation?: string;
   priceRange?: string;
-  openingHours?: string;
   // Cultural Take
   culturalTakeHeadline?: string;
   // Food Review

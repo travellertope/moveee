@@ -1492,6 +1492,37 @@ h1, h2, h3, h4 {
   line-height: 1.45;
   margin: 0 0 6px;
 }
+
+/* Review subtype tabs — Place/Food/Music/Book/Film Review share one entry
+   point in the type picker (REVIEW_FAMILY); this row lets the user switch
+   between them without reopening the picker. */
+.composer-review-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--rule, #e0d8ce);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.composer-review-tabs::-webkit-scrollbar { display: none; }
+.composer-review-tab {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 10px;
+  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--mute, #7a6f5c);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.composer-review-tab:hover { color: var(--ink, #14110d); }
+.composer-review-tab--active {
+  color: var(--ochre, #c5491f);
+  border-bottom-color: var(--ochre, #c5491f);
+}
+
 .composer-chip-wrap {
   display: flex;
   flex-wrap: wrap;
