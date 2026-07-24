@@ -377,6 +377,18 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
             )}
           </div>
+
+          {/* apps/connect has no site-wide footer — every page with a
+              right rail carries this copyright block instead. */}
+          <p style={{ margin: "1rem 0 0", padding: "0 4px", fontSize: "0.68rem", color: "var(--evt-mute, #7a6f5c)", lineHeight: 1.7 }}>
+            © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+            <br />
+            <Link href="/terms" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Terms</Link>
+            {" · "}
+            <Link href="/privacy" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Privacy</Link>
+            {" · "}
+            <Link href="/contact" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Contact</Link>
+          </p>
         </aside>
       </main>
 

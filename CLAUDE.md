@@ -1869,6 +1869,33 @@ width regardless of the rail.
 
 ---
 
+## Footer removed sitewide (Connect web only, July 2026)
+
+`apps/connect` (web.themoveee.com) no longer renders a site footer anywhere —
+`ConditionalFooter.tsx` (which used to render the shared `packages/shared/components/Footer.tsx`
+on every page except `/feed`) was deleted, and `app/layout.tsx` no longer mounts it (or imports
+`footer.css`). **`apps/site` (themoveee.com Magazine) is unaffected** — it still renders
+`Footer.tsx` directly from its own `layout.tsx`; only `apps/connect` had this removed.
+
+In its place, every `apps/connect` page that has a right rail carries a small copyright block
+(`© {year} The Moveee. All Rights Reserved.` + Terms/Privacy/Contact links) at the bottom of
+that rail — this is the exact pattern `/feed` already used before this change (see
+`PulseFeed.tsx`, which predates and motivated this). Pages without a right rail (member
+dashboard/settings/wallet/perks/coupons/notifications/analytics, `/connect/people`,
+`/connect/membership`, auth pages, hub pages, vendor dashboard, etc.) simply have no footer and
+no copyright line — this was a deliberate scope decision (only add the block where a natural
+right-rail slot already exists), not an oversight; revisit only if a future pass gives those
+pages a right rail of their own.
+
+Pages with the copyright block: `/feed` (`PulseFeed.tsx`), `/community/[slug]`, `/pulse/[slug]`,
+`/directory/[slug]`, `/events/[slug]`, and `/events` + its city/category archives (all three via
+the shared `EventTimeline.tsx`'s `evt-timeline-sidebar`, appended after the `rightRail` prop
+override so it shows regardless of which rail content a given page passes in). `apps/connect`'s
+`vendor/layout.tsx` also has an `<aside>`, but it's a persistent nav sidebar (vendor dashboard
+chrome), not a content right-rail — deliberately excluded.
+
+---
+
 ## App download nudge (Connect web only, June 2026)
 
 `apps/connect` (web.themoveee.com) shows a non-blocking nudge encouraging visitors to use

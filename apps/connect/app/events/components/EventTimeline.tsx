@@ -242,6 +242,20 @@ export default function EventTimeline({
             )}
           </>
         )}
+
+        {/* apps/connect has no site-wide footer — every page with a right
+            rail carries this copyright block instead. Shown regardless of
+            whether rightRail was overridden, so every page using this
+            component (main /events list, city/category archives) gets it. */}
+        <p style={{ margin: "1rem 0 0", padding: "0 4px", fontSize: "0.68rem", color: "var(--evt-mute, #7a6f5c)", lineHeight: 1.7 }}>
+          © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+          <br />
+          <Link href="/terms" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Terms</Link>
+          {" · "}
+          <Link href="/privacy" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Privacy</Link>
+          {" · "}
+          <Link href="/contact" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Contact</Link>
+        </p>
       </aside>
     </div>
   );

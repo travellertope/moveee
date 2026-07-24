@@ -375,6 +375,18 @@ export default async function PulseStoryPage({
                   </Link>
                 )}
               </div>
+
+              {/* apps/connect has no site-wide footer — every page with a
+                  right rail carries this copyright block instead. */}
+              <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
+                © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+                <br />
+                <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>
+                {" · "}
+                <Link href="/privacy" style={{ color: "#7a6f5c" }}>Privacy</Link>
+                {" · "}
+                <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
+              </p>
             </div>
           </aside>
 

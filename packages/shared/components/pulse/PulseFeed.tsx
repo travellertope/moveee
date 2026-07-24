@@ -444,10 +444,10 @@ const handleForYou = () => {
             </div>
           )}
 
-          {/* Minimal footer — the full site footer is skipped on /feed
-              (see ConditionalFooter.tsx) since infinite scroll makes it
-              effectively unreachable; this is the one piece that still
-              needs to be somewhere. */}
+          {/* Minimal footer — apps/connect has no site-wide footer at all
+              (removed July 2026); every page with a right rail carries this
+              same copyright block instead. See "Footer removed sitewide"
+              in CLAUDE.md for the full list of pages. */}
           <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
             <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--mute)", lineHeight: 1.7 }}>
               © {new Date().getFullYear()} The Moveee. All Rights Reserved.
