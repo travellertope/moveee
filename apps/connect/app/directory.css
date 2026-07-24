@@ -281,7 +281,14 @@
    ═══════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════
-   SINGLE ENTRY — WIKIPEDIA STYLE (triple column)
+   SINGLE ENTRY — WIKIPEDIA STYLE (main + right rail)
+
+   Was a 3-in-page-column layout (related-entries sidebar + article +
+   infobox sidebar) — on top of the global left-nav rail (.ch-rail,
+   Header.tsx) that made 4 visible columns at >=860px. Related Entries
+   + the Improve CTA now live inside .dir-wiki-right, stacked below the
+   infobox, so the page itself is just main + one right rail (matching
+   every other content page's column count with the global rail).
    ═══════════════════════════════════════════════════════ */
 
 .dir-wiki-page {
@@ -298,18 +305,12 @@
 
 .dir-wiki-layout {
   display: grid;
-  grid-template-columns: 220px 1fr 260px;
+  grid-template-columns: 1fr 280px;
   gap: 36px;
   max-width: 1360px;
   margin: 0 auto;
   padding: 28px 32px 0;
   align-items: start;
-}
-
-/* ── Left sidebar ── */
-.dir-wiki-left {
-  position: sticky;
-  top: 80px;
 }
 
 .dir-wiki-sidebar-card {
@@ -509,6 +510,7 @@
   background: #faf7f2;
   font-size: 13px;
   overflow: hidden;
+  margin-bottom: 16px;
 }
 
 .dir-wiki-infobox-img {
@@ -570,7 +572,7 @@
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .dir-wiki-layout {
-    grid-template-columns: 200px 1fr 240px;
+    grid-template-columns: 1fr 240px;
     gap: 24px;
     padding: 20px 24px 0;
   }
@@ -581,12 +583,10 @@
     grid-template-columns: 1fr;
     padding: 16px 20px 0;
   }
-  .dir-wiki-left,
   .dir-wiki-right { position: static; }
-  /* Show infobox first on mobile, then article, then related */
+  /* Show infobox + related entries first on mobile, article after */
   .dir-wiki-right  { order: -1; }
   .dir-wiki-main   { order: 0; }
-  .dir-wiki-left   { order: 1; }
   .dir-wiki-infobox-img { aspect-ratio: 16 / 7; }
 }
 

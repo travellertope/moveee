@@ -224,51 +224,10 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
         <Link href="/discover" className="dir-back">← Discover</Link>
       </div>
 
-      {/* ── Three-column layout ── */}
+      {/* ── Main + right rail layout (see the CSS comment above
+          .dir-wiki-layout for why this collapsed from 3 in-page columns
+          to 2) ── */}
       <div className="dir-wiki-layout">
-
-        {/* LEFT SIDEBAR — Related entries */}
-        <aside className="dir-wiki-left">
-          <div className="dir-wiki-sidebar-card">
-            <div className="dir-wiki-sidebar-heading">Related {typeLabel}s</div>
-            {relatedEntries.length === 0 ? (
-              <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
-            ) : (
-              <ul className="dir-wiki-related-list">
-                {relatedEntries.map((e: any) => (
-                  <li key={e.slug}>
-                    <Link href={`/directory/${e.slug}`} className="dir-wiki-related-link">
-                      {e.featuredImage?.node?.sourceUrl && (
-                        <DirectoryLightboxImage
-                          className="dir-wiki-related-thumb"
-                          src={e.featuredImage.node.sourceUrl}
-                          alt={e.title}
-                        >
-                          <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
-                        </DirectoryLightboxImage>
-                      )}
-                      <span className="dir-wiki-related-title">{e.title}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="dir-wiki-sidebar-footer">
-              <Link href={`/discover?type=${typeSlug}`} className="dir-wiki-see-all">
-                See all {typeLabel}s →
-              </Link>
-            </div>
-          </div>
-
-          {/* Improve CTA */}
-          <div className="dir-wiki-improve">
-            <div className="dir-wiki-improve-label">★ Community Wiki</div>
-            <p>Know more? Help improve this entry.</p>
-            <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
-              Improve →
-            </Link>
-          </div>
-        </aside>
 
         {/* CENTRE — Main article */}
         <article className="dir-wiki-main">
@@ -524,6 +483,48 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 )}
               </>
             )}
+          </div>
+
+          {/* Related entries — moved here from the old standalone left
+              sidebar (see the CSS comment above .dir-wiki-layout). */}
+          <div className="dir-wiki-sidebar-card">
+            <div className="dir-wiki-sidebar-heading">Related {typeLabel}s</div>
+            {relatedEntries.length === 0 ? (
+              <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
+            ) : (
+              <ul className="dir-wiki-related-list">
+                {relatedEntries.map((e: any) => (
+                  <li key={e.slug}>
+                    <Link href={`/directory/${e.slug}`} className="dir-wiki-related-link">
+                      {e.featuredImage?.node?.sourceUrl && (
+                        <DirectoryLightboxImage
+                          className="dir-wiki-related-thumb"
+                          src={e.featuredImage.node.sourceUrl}
+                          alt={e.title}
+                        >
+                          <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
+                        </DirectoryLightboxImage>
+                      )}
+                      <span className="dir-wiki-related-title">{e.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="dir-wiki-sidebar-footer">
+              <Link href={`/discover?type=${typeSlug}`} className="dir-wiki-see-all">
+                See all {typeLabel}s →
+              </Link>
+            </div>
+          </div>
+
+          {/* Improve CTA */}
+          <div className="dir-wiki-improve">
+            <div className="dir-wiki-improve-label">★ Community Wiki</div>
+            <p>Know more? Help improve this entry.</p>
+            <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
+              Improve →
+            </Link>
           </div>
 
           {/* apps/connect has no site-wide footer — every page with a

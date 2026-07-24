@@ -154,51 +154,25 @@ export default async function PulseStoryPage({
       `}</style>
 
       <div style={{ background: "#ffffff" }}>
-        <div className="pulse-layout">
-
-          {/* ── Left sidebar ── */}
-          <aside className="pulse-sidebar-left">
-            <nav style={{ padding: "1.25rem 0" }}>
-              <div style={{
-                padding: "0 0.75rem 1rem",
-                borderBottom: "1px solid #e8e2d8",
-                marginBottom: "1rem",
-              }}>
-                <Link href="/feed" style={{
-                  display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                  color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
-                  letterSpacing: "0.06em", textTransform: "uppercase",
-                }}>
-                  ← Feed
-                </Link>
-              </div>
-              <p style={{
-                color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
-                letterSpacing: "0.15em", textTransform: "uppercase",
-                marginBottom: "0.4rem", paddingLeft: "0.75rem",
-              }}>
-                Pulse
-              </p>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {["News", "Music", "Film", "Art", "Fashion", "Culture"].map((cat) => (
-                  <li key={cat}>
-                    <Link href={`/connect?category=${encodeURIComponent(cat.toLowerCase())}`} style={{
-                      display: "block",
-                      padding: "0.28rem 0.75rem",
-                      color: "#3a342b",
-                      fontSize: "0.83rem",
-                      textDecoration: "none",
-                    }}>
-                      {cat}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </aside>
+        {/* Same 2-column track as /feed (.pulse-layout--feed: timeline +
+            right rail, no separate content-type sidebar) — this page is an
+            extension of the feed, not a distinct section with its own nav. */}
+        <div className="pulse-layout pulse-layout--feed">
 
           {/* ── Main content ── */}
           <main className="pulse-timeline">
+          <div className="pulse-timeline-inner">
+            {/* Back link */}
+            <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
+              <Link href="/feed" style={{
+                color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+              }}>
+                ← Feed
+              </Link>
+            </div>
+
             <article style={{
               background: "#fff",
               borderLeft: "3px solid #b38238",
@@ -315,6 +289,7 @@ export default async function PulseStoryPage({
                 />
               </div>
             </article>
+          </div>
           </main>
 
           {/* ── Right sidebar ── */}
