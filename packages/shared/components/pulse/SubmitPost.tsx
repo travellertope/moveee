@@ -781,12 +781,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       {/* Form */}
       <form onSubmit={handleSubmit} className="composer-form-body">
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          {/* Avatar */}
-          <div className={`composer-avatar${template === "quote" ? " composer-avatar--quote" : ""}`}>
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" />
-            ) : initials}
-          </div>
+          {/* Avatar — skipped in dedicated-page mode (onChangeType set) to
+              give the form the width back, Reddit's /submit has none either. */}
+          {!onChangeType && (
+            <div className={`composer-avatar${template === "quote" ? " composer-avatar--quote" : ""}`}>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" />
+              ) : initials}
+            </div>
+          )}
 
           <div className="composer-fields">
             {/* Posting to — Section picker. Hidden for quote/food-review/event

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { TEMPLATES, TEMPLATE_REP_GATE, type TemplateType } from "./SubmitPost";
 
@@ -41,6 +43,22 @@ interface Props {
 
 export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onSelectDraft }: Props) {
   const { data: session } = useSession();
+  const router = useRouter();
+  // Set the instant a tile is tapped and kept true until the page we're
+  // navigating to actually mounts (the caller no longer closes the modal
+  // itself — see PulseFeed.tsx/PostNewClient.tsx) — without this a template
+  // pick looked like a dead click while the route transition was in flight.
+  const [selecting, setSelecting] = useState<TemplateType | "draft" | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      // Warms /post/new's route chunk + RSC payload the moment the modal
+      // opens, so the actual pick below has less work left to do.
+      router.prefetch("/post/new");
+      setSelecting(null);
+    }
+  }, [open, router]);
+
   if (!open) return null;
 
   const user = session?.user as any;
@@ -53,20 +71,40 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
     return isPro || reputation >= gate.minRep;
   }
 
+  function pick(t: TemplateType) {
+    if (selecting) return;
+    setSelecting(t);
+    onSelect(t);
+  }
+  function pickDraft() {
+    if (selecting || !onSelectDraft) return;
+    setSelecting("draft");
+    onSelectDraft();
+  }
+
   return (
     <div className="type-picker-modal" role="dialog" aria-modal="true" aria-label="New post">
-      <div className="type-picker-scrim" onClick={onClose} />
+      <div className="type-picker-scrim" onClick={() => { if (!selecting) onClose(); }} />
       <div className="type-picker-card">
         <div className="type-picker-head">
           <span>New post</span>
-          <button type="button" className="type-picker-close" onClick={onClose} aria-label="Close">✕</button>
+          <button type="button" className="type-picker-close" onClick={onClose} aria-label="Close" disabled={!!selecting}>✕</button>
         </div>
         <div className="type-picker-body">
           <p className="composer-field-label" style={{ marginBottom: "10px" }}>What are you posting?</p>
           <div className="type-picker-grid">
             {hasDraft && onSelectDraft && (
-              <button type="button" className="type-picker-tile type-picker-tile--draft" onClick={onSelectDraft}>
-                <span className="type-picker-tile-em" aria-hidden>📄</span>
+              <button
+                type="button"
+                className={`type-picker-tile type-picker-tile--draft${selecting && selecting !== "draft" ? " type-picker-tile--dimmed" : ""}`}
+                onClick={pickDraft}
+                disabled={!!selecting}
+              >
+                {selecting === "draft" ? (
+                  <span className="type-picker-tile-spinner" aria-hidden />
+                ) : (
+                  <span className="type-picker-tile-em" aria-hidden>📄</span>
+                )}
                 <b>Continue Draft</b>
                 <span className="type-picker-tile-desc">Pick up where you left off</span>
               </button>
@@ -76,19 +114,25 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
               const locked = gate ? !meetsGate(t.slug) : false;
               const meta = MODAL_META[t.slug];
               const accent = MODAL_ACCENT[t.slug];
+              const isSelecting = selecting === t.slug;
               return (
                 <button
                   key={t.slug}
                   type="button"
-                  className={`type-picker-tile${locked ? " type-picker-tile--locked" : ""}`}
+                  className={`type-picker-tile${locked ? " type-picker-tile--locked" : ""}${selecting && !isSelecting ? " type-picker-tile--dimmed" : ""}`}
                   style={accent ? ({ "--tp-accent": accent } as React.CSSProperties) : undefined}
-                  onClick={() => { if (!locked) onSelect(t.slug); }}
+                  onClick={() => { if (!locked) pick(t.slug); }}
+                  disabled={!!selecting}
                   title={locked && gate ? `${gate.tierLabel} or Pro required` : undefined}
                 >
-                  <span className="type-picker-tile-em" aria-hidden>{t.emoji}</span>
+                  {isSelecting ? (
+                    <span className="type-picker-tile-spinner" aria-hidden />
+                  ) : (
+                    <span className="type-picker-tile-em" aria-hidden>{t.emoji}</span>
+                  )}
                   <b>{meta.label}</b>
                   <span className="type-picker-tile-desc">{meta.desc}</span>
-                  {locked && <span className="type-picker-tile-lock" aria-hidden>🔒</span>}
+                  {locked && !isSelecting && <span className="type-picker-tile-lock" aria-hidden>🔒</span>}
                 </button>
               );
             })}
