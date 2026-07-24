@@ -165,6 +165,32 @@ const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", s
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
+// Templates with forms long enough to overwhelm in one scroll get broken
+// into up to 3 logical steps (Next/Back) instead of one long screen — short
+// templates (post, quote, poll, cultural-take) stay single-step/unlisted
+// here. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
+// WIZARD_STEPS/WIZARD_SECTION_STEP — keep both in sync.
+const WIZARD_STEPS: Partial<Record<TemplateId, number>> = {
+  "hidden-gem": 3,
+  "food-review": 3,
+  "book-review": 3,
+  "music-review": 3,
+  "film-review": 3,
+  "creative-showcase": 2,
+  itinerary: 3,
+  event: 3,
+};
+
+const WIZARD_SECTION_STEP: Record<string, Partial<Record<TemplateId, number>>> = {
+  rating: { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1 },
+  text:   { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1, event: 1 },
+  extras: { "book-review": 2, "music-review": 2, "film-review": 2 },
+  stops:  { itinerary: 1 },
+  photos: { "hidden-gem": 2, "food-review": 2, "creative-showcase": 1, itinerary: 2 },
+  details:   { event: 1 },
+  rsvpphoto: { event: 2 },
+};
+
 /** Rounded average of a breakdown ratings object's rated (>0) values, 0 if
  * none are rated yet — powers Book/Music/Film Review's auto-calculated
  * Overall rating. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
@@ -256,6 +282,8 @@ export default function NewPostScreen() {
       : (hubAllowedTemplates?.[0] as TemplateId) ?? "post"
   );
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Multi-step wizard (long templates only — see WIZARD_STEPS above).
+  const [step, setStep] = useState(0);
   const [text, setText] = useState("");
   const [sectionTag, setSectionTag] = useState<string | null>(null);
   const [tagLocked, setTagLocked] = useState(false);
@@ -388,11 +416,19 @@ export default function NewPostScreen() {
 
   const switchTemplate = useCallback((id: TemplateId) => {
     setTemplate(id);
+    setStep(0);
     setText("");
     setTagLocked(false);
     setShowPicker(false);
     setImages([]);
   }, []);
+
+  const totalSteps = WIZARD_STEPS[template] ?? 1;
+  const isWizard = totalSteps > 1;
+  const showSection = useCallback(
+    (section: string) => (!isWizard ? true : step === (WIZARD_SECTION_STEP[section]?.[template] ?? 0)),
+    [isWizard, step, template]
+  );
 
   const MAX_IMAGES = 4;
 
@@ -736,10 +772,53 @@ const uploadImages = async (): Promise<string[]> => {
     filmEntry, filmOverallRating, filmRecommend,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
+  /** Gates the wizard's "Next" button — lighter, per-step version of the
+   * validateAndSubmit()/isSubmitDisabled checks above, so a step can't be
+   * skipped without its own required fields, without requiring later
+   * steps' fields yet. Mirrors SubmitPost.tsx's canProceedStep(). */
+  const canProceedStep = useMemo(() => {
+    switch (template) {
+      case "hidden-gem":
+        if (step === 0) return !!linkedEntry;
+        if (step === 1) return text.trim().length >= tmpl.minText;
+        return true;
+      case "food-review":
+        if (step === 0) return foodDishName.trim().length > 0;
+        if (step === 1) return foodRatings.taste > 0 && text.trim().length >= tmpl.minText;
+        return true;
+      case "book-review":
+        if (step === 0) return !!bookEntry && !!bookStatus;
+        if (step === 1) return bookOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "music-review":
+        if (step === 0) return !!musicEntry;
+        if (step === 1) return musicOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "film-review":
+        if (step === 0) return !!filmEntry;
+        if (step === 1) return filmOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "creative-showcase":
+        if (step === 0) return showcaseTitle.trim().length > 0 && text.trim().length >= 10;
+        return true;
+      case "itinerary":
+        if (step === 0) return itineraryTitle.trim().length > 0;
+        if (step === 1) return stops.filter((s) => s.name.trim()).length >= 2;
+        return true;
+      case "event":
+        if (step === 0) return !!eventTitle.trim() && !!eventDate;
+        return true;
+      default:
+        return true;
+    }
+  }, [template, step, linkedEntry, text, tmpl.minText, foodDishName, foodRatings.taste,
+    bookEntry, bookStatus, bookOverallRating, musicEntry, musicOverallRating,
+    filmEntry, filmOverallRating, showcaseTitle, itineraryTitle, stops, eventTitle, eventDate]);
+
   // ── Toolbar ──────────────────────────────────────────────────────────────────
   const toolbarIcons = useMemo(() => {
     const icons: React.ReactNode[] = [];
-    if (tmpl.showPhoto) {
+    if (tmpl.showPhoto && showSection("photos")) {
       icons.push(
         <TouchableOpacity
           key="photo"
@@ -773,7 +852,7 @@ const uploadImages = async (): Promise<string[]> => {
       );
     }
     return icons;
-  }, [tmpl, images.length, c, pickImages, insertAt]);
+  }, [tmpl, images.length, c, pickImages, insertAt, showSection]);
 
   // ── Render helpers ────────────────────────────────────────────────────────────
   const renderDivider = () => <View style={styles.divider} />;
@@ -869,64 +948,76 @@ const uploadImages = async (): Promise<string[]> => {
 
   const renderHiddenGem = () => (
     <>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Place name *</Text>
-        <TextInput
-          style={styles.input}
-          value={hiddenGemPlaceName}
-          onChangeText={setHiddenGemPlaceName}
-          placeholder="What's this place called?"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
-      <View style={[styles.fieldGroup]}>
-        <Text style={styles.fieldLabel}>Location</Text>
-        {renderPrefixedInput("📍", hiddenGemLocation, setHiddenGemLocation, "Area, city or address")}
-      </View>
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="Link this place in the Directory"
-        />
-      </View>
-      {renderDivider()}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Tell us about it *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="Tell people why this place is special…"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={styles.fieldLabel}>Rating (optional)</Text>
-          <StarRating value={starRating} onChange={setStarRating} />
-        </View>
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Price range (optional)</Text>
-        {renderPriceChips(PRICE_RANGES_NGN, hiddenGemPriceRange, setHiddenGemPriceRange)}
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Opening hours (optional)</Text>
-        {renderPrefixedInput("🕐", hiddenGemOpeningHours, setHiddenGemOpeningHours, "e.g. Mon–Sat 10am–10pm")}
-      </View>
-      {renderDivider()}
-      <InlinePhotosSection
-        images={images}
-        onAdd={() => pickImages(true)}
-        onRemove={removeImage}
-        styles={styles}
-        c={c}
-      />
+      {showSection("search") && (
+        <>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Place name *</Text>
+            <TextInput
+              style={styles.input}
+              value={hiddenGemPlaceName}
+              onChangeText={setHiddenGemPlaceName}
+              placeholder="What's this place called?"
+              placeholderTextColor={c.ghost}
+            />
+          </View>
+          <View style={[styles.fieldGroup]}>
+            <Text style={styles.fieldLabel}>Location</Text>
+            {renderPrefixedInput("📍", hiddenGemLocation, setHiddenGemLocation, "Area, city or address")}
+          </View>
+          <View style={styles.fieldGroup}>
+            <DirectorySearch
+              selected={linkedEntry}
+              onSelect={setLinkedEntry}
+              label="Link this place in the Directory"
+            />
+          </View>
+        </>
+      )}
+      {showSection("rating") && (
+        <>
+          {renderDivider()}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Tell us about it *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="Tell people why this place is special…"
+              placeholderTextColor={c.ghost}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={styles.fieldLabel}>Rating (optional)</Text>
+              <StarRating value={starRating} onChange={setStarRating} />
+            </View>
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Price range (optional)</Text>
+            {renderPriceChips(PRICE_RANGES_NGN, hiddenGemPriceRange, setHiddenGemPriceRange)}
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Opening hours (optional)</Text>
+            {renderPrefixedInput("🕐", hiddenGemOpeningHours, setHiddenGemOpeningHours, "e.g. Mon–Sat 10am–10pm")}
+          </View>
+        </>
+      )}
+      {showSection("photos") && (
+        <>
+          {renderDivider()}
+          <InlinePhotosSection
+            images={images}
+            onAdd={() => pickImages(true)}
+            onRemove={removeImage}
+            styles={styles}
+            c={c}
+          />
+        </>
+      )}
     </>
   );
 
@@ -970,583 +1061,633 @@ const uploadImages = async (): Promise<string[]> => {
 
   const renderFoodReview = () => (
     <>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Dish / Item *</Text>
-        <TextInput
-          style={styles.input}
-          value={foodDishName}
-          onChangeText={setFoodDishName}
-          placeholder="What did you eat?"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="Restaurant or venue"
-        />
-      </View>
-      {renderDivider()}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Ratings *</Text>
-        <MultiRating ratings={foodRatings} onChange={setFoodRatings} />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Your review *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="What did you eat and what did you think?"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
-        <View style={styles.chipRow}>
-          {CUISINE_TAGS.map((ct) => (
-            <TouchableOpacity
-              key={ct}
-              style={[styles.sectionTag, cuisineTag === ct && styles.sectionTagActive]}
-              onPress={() => setCuisineTag(cuisineTag === ct ? "" : ct)}
-            >
-              <Text style={[styles.sectionTagText, cuisineTag === ct && styles.sectionTagTextActive]}>{ct}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Price range (optional)</Text>
-        {renderPriceChips(PRICE_RANGES_NGN, foodPriceRange, setFoodPriceRange)}
-      </View>
-      {renderDivider()}
-      <InlinePhotosSection
-        images={images}
-        onAdd={() => pickImages(true)}
-        onRemove={removeImage}
-        styles={styles}
-        c={c}
-      />
+      {showSection("search") && (
+        <>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Dish / Item *</Text>
+            <TextInput
+              style={styles.input}
+              value={foodDishName}
+              onChangeText={setFoodDishName}
+              placeholder="What did you eat?"
+              placeholderTextColor={c.ghost}
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <DirectorySearch
+              selected={linkedEntry}
+              onSelect={setLinkedEntry}
+              label="Restaurant or venue"
+            />
+          </View>
+        </>
+      )}
+      {showSection("rating") && (
+        <>
+          {renderDivider()}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Ratings *</Text>
+            <MultiRating ratings={foodRatings} onChange={setFoodRatings} />
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Your review *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="What did you eat and what did you think?"
+              placeholderTextColor={c.ghost}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
+            <View style={styles.chipRow}>
+              {CUISINE_TAGS.map((ct) => (
+                <TouchableOpacity
+                  key={ct}
+                  style={[styles.sectionTag, cuisineTag === ct && styles.sectionTagActive]}
+                  onPress={() => setCuisineTag(cuisineTag === ct ? "" : ct)}
+                >
+                  <Text style={[styles.sectionTagText, cuisineTag === ct && styles.sectionTagTextActive]}>{ct}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Price range (optional)</Text>
+            {renderPriceChips(PRICE_RANGES_NGN, foodPriceRange, setFoodPriceRange)}
+          </View>
+        </>
+      )}
+      {showSection("photos") && (
+        <>
+          {renderDivider()}
+          <InlinePhotosSection
+            images={images}
+            onAdd={() => pickImages(true)}
+            onRemove={removeImage}
+            styles={styles}
+            c={c}
+          />
+        </>
+      )}
     </>
   );
 
   const renderCreativeShowcase = () => (
     <>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Title of your work *</Text>
-        <TextInput
-          style={styles.input}
-          value={showcaseTitle}
-          onChangeText={setShowcaseTitle}
-          placeholder="What is this piece called?"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Medium</Text>
-        <View style={styles.chipRow}>
-          {SHOWCASE_MEDIUMS.map((m) => (
-            <TouchableOpacity
-              key={m}
-              style={[styles.sectionTag, showcaseMedium === m && styles.sectionTagActive]}
-              onPress={() => setShowcaseMedium(showcaseMedium === m ? "" : m)}
-            >
-              <Text style={[styles.sectionTagText, showcaseMedium === m && styles.sectionTagTextActive]}>{m}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>About this work *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="Tell us about the work, your process, or inspiration…"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <UserSearch
-          label="Collaborator (optional)"
-          placeholder="Search members by name or username"
-          selected={showcaseCollaborator}
-          onSelect={setShowcaseCollaborator}
-        />
-      </View>
-      {renderDivider()}
-      {/* Upload zone */}
-      <TouchableOpacity
-        style={[styles.showcaseUploadZone, images.length > 0 && styles.showcaseUploadZoneFilled]}
-        onPress={() => pickImages(true)}
-        activeOpacity={0.85}
-      >
-        {images.length === 0 ? (
-          <>
-            <Ionicons name="camera-outline" size={28} color={c.ochre} />
-            <Text style={styles.showcaseUploadTitle}>Add photos or video</Text>
-            <Text style={styles.showcaseUploadSub}>Tap to select files</Text>
-          </>
-        ) : (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Ionicons name="checkmark-circle" size={20} color={c.ochre} />
-            <Text style={styles.showcaseUploadTitle}>{images.length} file{images.length > 1 ? "s" : ""} selected</Text>
+      {showSection("text") && (
+        <>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Title of your work *</Text>
+            <TextInput
+              style={styles.input}
+              value={showcaseTitle}
+              onChangeText={setShowcaseTitle}
+              placeholder="What is this piece called?"
+              placeholderTextColor={c.ghost}
+            />
           </View>
-        )}
-      </TouchableOpacity>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Medium</Text>
+            <View style={styles.chipRow}>
+              {SHOWCASE_MEDIUMS.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.sectionTag, showcaseMedium === m && styles.sectionTagActive]}
+                  onPress={() => setShowcaseMedium(showcaseMedium === m ? "" : m)}
+                >
+                  <Text style={[styles.sectionTagText, showcaseMedium === m && styles.sectionTagTextActive]}>{m}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>About this work *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="Tell us about the work, your process, or inspiration…"
+              placeholderTextColor={c.ghost}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <UserSearch
+              label="Collaborator (optional)"
+              placeholder="Search members by name or username"
+              selected={showcaseCollaborator}
+              onSelect={setShowcaseCollaborator}
+            />
+          </View>
+        </>
+      )}
+      {showSection("photos") && (
+        <>
+          {renderDivider()}
+          {/* Upload zone */}
+          <TouchableOpacity
+            style={[styles.showcaseUploadZone, images.length > 0 && styles.showcaseUploadZoneFilled]}
+            onPress={() => pickImages(true)}
+            activeOpacity={0.85}
+          >
+            {images.length === 0 ? (
+              <>
+                <Ionicons name="camera-outline" size={28} color={c.ochre} />
+                <Text style={styles.showcaseUploadTitle}>Add photos or video</Text>
+                <Text style={styles.showcaseUploadSub}>Tap to select files</Text>
+              </>
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="checkmark-circle" size={20} color={c.ochre} />
+                <Text style={styles.showcaseUploadTitle}>{images.length} file{images.length > 1 ? "s" : ""} selected</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
     </>
   );
 
   const renderBookReview = () => (
     <>
-      {/* Book search */}
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={bookEntry}
-          onSelect={setBookEntry}
-          label="Book *"
-          typeFilter="book"
-          aboutFieldLabel="Author"
-          externalSource="google_books"
-        />
-      </View>
-
-      {/* Status */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Status *</Text>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {BOOK_STATUSES.map((s) => (
-            <TouchableOpacity
-              key={s}
-              style={[styles.sectionTag, bookStatus === s && styles.sectionTagActive, { flex: 1, height: 36 }]}
-              onPress={() => setBookStatus(s)}
-            >
-              <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: 11 }]}>{s}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Overall rating */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={bookOverallRating} onChange={(v) => { setBookOverallManual(true); setBookOverallRating(v); }} />
-      </View>
-
-      {/* Ratings breakdown */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Ratings *</Text>
-        <View style={styles.bookRatingsContainer}>
-          {(["writing", "story", "characters", "pacing"] as const).map((key) => (
-            <BookRatingsRow
-              key={key}
-              label={key.charAt(0).toUpperCase() + key.slice(1)}
-              value={bookRatings[key]}
-              onChange={(v) => setBookRatings((prev) => ({ ...prev, [key]: v }))}
-              styles={styles}
+      {showSection("search") && (
+        <>
+          {/* Book search */}
+          <View style={styles.fieldGroup}>
+            <DirectorySearch
+              selected={bookEntry}
+              onSelect={setBookEntry}
+              label="Book *"
+              typeFilter="book"
+              aboutFieldLabel="Author"
+              externalSource="google_books"
             />
-          ))}
-        </View>
-      </View>
+          </View>
 
-      {/* Review */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Your review *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="What did you think? Who would love it?"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
+          {/* Status */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Status *</Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {BOOK_STATUSES.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={[styles.sectionTag, bookStatus === s && styles.sectionTagActive, { flex: 1, height: 36 }]}
+                  onPress={() => setBookStatus(s)}
+                >
+                  <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: 11 }]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </>
+      )}
 
-      {/* Favourite quote */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Favourite quote (optional)</Text>
-        <View style={styles.favQuoteWrap}>
-          <TextInput
-            style={styles.favQuoteInput}
-            value={bookFavQuote}
-            onChangeText={setBookFavQuote}
-            multiline
-            placeholder="A line that stayed with you…"
-            placeholderTextColor={c.ghost}
-            textAlignVertical="top"
-          />
-        </View>
-      </View>
+      {showSection("rating") && (
+        <>
+          {/* Overall rating */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Overall rating *</Text>
+            <StarRating value={bookOverallRating} onChange={(v) => { setBookOverallManual(true); setBookOverallRating(v); }} />
+          </View>
 
-      {/* Recommend */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
-        <View style={styles.recommendRow}>
-          <TouchableOpacity
-            style={[styles.recommendYes, bookRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-            onPress={() => setBookRecommend(true)}
-          >
-            <Text style={[styles.recommendText, bookRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.recommendNo, bookRecommend === false && styles.recommendNoActive]}
-            onPress={() => setBookRecommend(false)}
-          >
-            <Text style={[styles.recommendNoText, bookRecommend === false && styles.recommendText]}>👎 No</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          {/* Ratings breakdown */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Ratings *</Text>
+            <View style={styles.bookRatingsContainer}>
+              {(["writing", "story", "characters", "pacing"] as const).map((key) => (
+                <BookRatingsRow
+                  key={key}
+                  label={key.charAt(0).toUpperCase() + key.slice(1)}
+                  value={bookRatings[key]}
+                  onChange={(v) => setBookRatings((prev) => ({ ...prev, [key]: v }))}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </View>
 
-      {/* Genres */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Genres (optional)</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {BOOK_GENRES.map((g) => {
-            const active = bookGenres.includes(g);
-            return (
-              <TouchableOpacity
-                key={g}
-                style={[styles.sectionTag, active && styles.sectionTagActive]}
-                onPress={() => setBookGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-              >
-                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            );
-          })}
-          {bookGenres.filter((g) => !BOOK_GENRES.includes(g)).map((g) => (
-            <TouchableOpacity
-              key={g}
-              style={[styles.sectionTag, styles.sectionTagActive]}
-              onPress={() => setBookGenres((prev) => prev.filter((x) => x !== g))}
-            >
-              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-            </TouchableOpacity>
-          ))}
-          {showBookGenreInput ? (
-            <TextInput
-              style={styles.genreInput}
-              value={bookGenreInput}
-              onChangeText={setBookGenreInput}
-              placeholder="Custom genre"
+          {/* Review */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Your review *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="What did you think? Who would love it?"
               placeholderTextColor={c.ghost}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={() => {
-                const v = bookGenreInput.trim();
-                if (v && !bookGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                  setBookGenres((prev) => [...prev, v]);
-                }
-                setBookGenreInput("");
-                setShowBookGenreInput(false);
-              }}
-              onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
             />
-          ) : (
-            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowBookGenreInput(true)}>
-              <Text style={styles.sectionTagText}>+ Other</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+          </View>
+        </>
+      )}
+
+      {showSection("extras") && (
+        <>
+          {/* Favourite quote */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Favourite quote (optional)</Text>
+            <View style={styles.favQuoteWrap}>
+              <TextInput
+                style={styles.favQuoteInput}
+                value={bookFavQuote}
+                onChangeText={setBookFavQuote}
+                multiline
+                placeholder="A line that stayed with you…"
+                placeholderTextColor={c.ghost}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {/* Recommend */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+            <View style={styles.recommendRow}>
+              <TouchableOpacity
+                style={[styles.recommendYes, bookRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+                onPress={() => setBookRecommend(true)}
+              >
+                <Text style={[styles.recommendText, bookRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.recommendNo, bookRecommend === false && styles.recommendNoActive]}
+                onPress={() => setBookRecommend(false)}
+              >
+                <Text style={[styles.recommendNoText, bookRecommend === false && styles.recommendText]}>👎 No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Genres */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Genres (optional)</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {BOOK_GENRES.map((g) => {
+                const active = bookGenres.includes(g);
+                return (
+                  <TouchableOpacity
+                    key={g}
+                    style={[styles.sectionTag, active && styles.sectionTagActive]}
+                    onPress={() => setBookGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+                  >
+                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              {bookGenres.filter((g) => !BOOK_GENRES.includes(g)).map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.sectionTag, styles.sectionTagActive]}
+                  onPress={() => setBookGenres((prev) => prev.filter((x) => x !== g))}
+                >
+                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+                </TouchableOpacity>
+              ))}
+              {showBookGenreInput ? (
+                <TextInput
+                  style={styles.genreInput}
+                  value={bookGenreInput}
+                  onChangeText={setBookGenreInput}
+                  placeholder="Custom genre"
+                  placeholderTextColor={c.ghost}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    const v = bookGenreInput.trim();
+                    if (v && !bookGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                      setBookGenres((prev) => [...prev, v]);
+                    }
+                    setBookGenreInput("");
+                    setShowBookGenreInput(false);
+                  }}
+                  onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
+                />
+              ) : (
+                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowBookGenreInput(true)}>
+                  <Text style={styles.sectionTagText}>+ Other</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </>
+      )}
     </>
   );
 
   const renderMusicReview = () => (
     <>
-      {/* Album search */}
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={musicEntry}
-          onSelect={setMusicEntry}
-          label="Album *"
-          typeFilter="album"
-          aboutFieldLabel="Artist"
-          externalSource="spotify"
-        />
-      </View>
-
-      {/* Overall rating */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={musicOverallRating} onChange={(v) => { setMusicOverallManual(true); setMusicOverallRating(v); }} />
-      </View>
-
-      {/* Ratings breakdown */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Ratings *</Text>
-        <View style={styles.bookRatingsContainer}>
-          {(["production", "lyrics", "replay", "vibe"] as const).map((key) => (
-            <BookRatingsRow
-              key={key}
-              label={MUSIC_RATING_LABELS[key]}
-              value={musicRatings[key]}
-              onChange={(v) => setMusicRatings((prev) => ({ ...prev, [key]: v }))}
-              styles={styles}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Review */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Your review *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="What did you think? Standout tracks?"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-
-      {/* Favourite lyric */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Favourite lyric (optional)</Text>
-        <View style={styles.favQuoteWrap}>
-          <TextInput
-            style={styles.favQuoteInput}
-            value={musicFavLyric}
-            onChangeText={setMusicFavLyric}
-            multiline
-            placeholder="A line that stayed with you…"
-            placeholderTextColor={c.ghost}
-            textAlignVertical="top"
+      {showSection("search") && (
+        <View style={styles.fieldGroup}>
+          <DirectorySearch
+            selected={musicEntry}
+            onSelect={setMusicEntry}
+            label="Album *"
+            typeFilter="album"
+            aboutFieldLabel="Artist"
+            externalSource="spotify"
           />
         </View>
-      </View>
+      )}
 
-      {/* Recommend */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
-        <View style={styles.recommendRow}>
-          <TouchableOpacity
-            style={[styles.recommendYes, musicRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-            onPress={() => setMusicRecommend(true)}
-          >
-            <Text style={[styles.recommendText, musicRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.recommendNo, musicRecommend === false && styles.recommendNoActive]}
-            onPress={() => setMusicRecommend(false)}
-          >
-            <Text style={[styles.recommendNoText, musicRecommend === false && styles.recommendText]}>👎 No</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {showSection("rating") && (
+        <>
+          {/* Overall rating */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Overall rating *</Text>
+            <StarRating value={musicOverallRating} onChange={(v) => { setMusicOverallManual(true); setMusicOverallRating(v); }} />
+          </View>
 
-      {/* Genres */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Genres (optional)</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {MUSIC_GENRES.map((g) => {
-            const active = musicGenres.includes(g);
-            return (
-              <TouchableOpacity
-                key={g}
-                style={[styles.sectionTag, active && styles.sectionTagActive]}
-                onPress={() => setMusicGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-              >
-                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            );
-          })}
-          {musicGenres.filter((g) => !MUSIC_GENRES.includes(g)).map((g) => (
-            <TouchableOpacity
-              key={g}
-              style={[styles.sectionTag, styles.sectionTagActive]}
-              onPress={() => setMusicGenres((prev) => prev.filter((x) => x !== g))}
-            >
-              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-            </TouchableOpacity>
-          ))}
-          {showMusicGenreInput ? (
-            <TextInput
-              style={styles.genreInput}
-              value={musicGenreInput}
-              onChangeText={setMusicGenreInput}
-              placeholder="Custom genre"
+          {/* Ratings breakdown */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Ratings *</Text>
+            <View style={styles.bookRatingsContainer}>
+              {(["production", "lyrics", "replay", "vibe"] as const).map((key) => (
+                <BookRatingsRow
+                  key={key}
+                  label={MUSIC_RATING_LABELS[key]}
+                  value={musicRatings[key]}
+                  onChange={(v) => setMusicRatings((prev) => ({ ...prev, [key]: v }))}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Review */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Your review *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="What did you think? Standout tracks?"
               placeholderTextColor={c.ghost}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={() => {
-                const v = musicGenreInput.trim();
-                if (v && !musicGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                  setMusicGenres((prev) => [...prev, v]);
-                }
-                setMusicGenreInput("");
-                setShowMusicGenreInput(false);
-              }}
-              onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
             />
-          ) : (
-            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowMusicGenreInput(true)}>
-              <Text style={styles.sectionTagText}>+ Other</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+          </View>
+        </>
+      )}
+
+      {showSection("extras") && (
+        <>
+          {/* Favourite lyric */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Favourite lyric (optional)</Text>
+            <View style={styles.favQuoteWrap}>
+              <TextInput
+                style={styles.favQuoteInput}
+                value={musicFavLyric}
+                onChangeText={setMusicFavLyric}
+                multiline
+                placeholder="A line that stayed with you…"
+                placeholderTextColor={c.ghost}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {/* Recommend */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+            <View style={styles.recommendRow}>
+              <TouchableOpacity
+                style={[styles.recommendYes, musicRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+                onPress={() => setMusicRecommend(true)}
+              >
+                <Text style={[styles.recommendText, musicRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.recommendNo, musicRecommend === false && styles.recommendNoActive]}
+                onPress={() => setMusicRecommend(false)}
+              >
+                <Text style={[styles.recommendNoText, musicRecommend === false && styles.recommendText]}>👎 No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Genres */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Genres (optional)</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {MUSIC_GENRES.map((g) => {
+                const active = musicGenres.includes(g);
+                return (
+                  <TouchableOpacity
+                    key={g}
+                    style={[styles.sectionTag, active && styles.sectionTagActive]}
+                    onPress={() => setMusicGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+                  >
+                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              {musicGenres.filter((g) => !MUSIC_GENRES.includes(g)).map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.sectionTag, styles.sectionTagActive]}
+                  onPress={() => setMusicGenres((prev) => prev.filter((x) => x !== g))}
+                >
+                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+                </TouchableOpacity>
+              ))}
+              {showMusicGenreInput ? (
+                <TextInput
+                  style={styles.genreInput}
+                  value={musicGenreInput}
+                  onChangeText={setMusicGenreInput}
+                  placeholder="Custom genre"
+                  placeholderTextColor={c.ghost}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    const v = musicGenreInput.trim();
+                    if (v && !musicGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                      setMusicGenres((prev) => [...prev, v]);
+                    }
+                    setMusicGenreInput("");
+                    setShowMusicGenreInput(false);
+                  }}
+                  onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
+                />
+              ) : (
+                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowMusicGenreInput(true)}>
+                  <Text style={styles.sectionTagText}>+ Other</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </>
+      )}
     </>
   );
 
   const renderFilmReview = () => (
     <>
-      {/* Film search */}
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={filmEntry}
-          onSelect={(entry) => {
-            setFilmEntry(entry);
-            // Pre-select genre chips from TMDB's own genres for the picked
-            // film — a suggestion, not a locked value; still freely editable.
-            if (entry?.genres?.length) setFilmGenres(entry.genres);
-          }}
-          label="Film *"
-          typeFilter="film"
-          aboutFieldLabel="Director"
-          externalSource="tmdb"
-        />
-      </View>
-
-      {/* Overall rating */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Overall rating *</Text>
-        <StarRating value={filmOverallRating} onChange={(v) => { setFilmOverallManual(true); setFilmOverallRating(v); }} />
-      </View>
-
-      {/* Ratings breakdown */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Ratings *</Text>
-        <View style={styles.bookRatingsContainer}>
-          {(["story", "acting", "visuals", "pacing"] as const).map((key) => (
-            <BookRatingsRow
-              key={key}
-              label={key.charAt(0).toUpperCase() + key.slice(1)}
-              value={filmRatings[key]}
-              onChange={(v) => setFilmRatings((prev) => ({ ...prev, [key]: v }))}
-              styles={styles}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Review */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Your review *</Text>
-        <MentionInput
-          inputRef={textRef}
-          style={styles.borderedTextarea}
-          value={text}
-          onChangeText={handleTextChange}
-          multiline
-          placeholder="What did you think? Any standout scenes?"
-          placeholderTextColor={c.ghost}
-          maxLength={tmpl.maxText + 50}
-          textAlignVertical="top"
-        />
-      </View>
-
-      {/* Favourite line */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Favourite line (optional)</Text>
-        <View style={styles.favQuoteWrap}>
-          <TextInput
-            style={styles.favQuoteInput}
-            value={filmFavLine}
-            onChangeText={setFilmFavLine}
-            multiline
-            placeholder="A line that stayed with you…"
-            placeholderTextColor={c.ghost}
-            textAlignVertical="top"
+      {showSection("search") && (
+        <View style={styles.fieldGroup}>
+          <DirectorySearch
+            selected={filmEntry}
+            onSelect={(entry) => {
+              setFilmEntry(entry);
+              // Pre-select genre chips from TMDB's own genres for the picked
+              // film — a suggestion, not a locked value; still freely editable.
+              if (entry?.genres?.length) setFilmGenres(entry.genres);
+            }}
+            label="Film *"
+            typeFilter="film"
+            aboutFieldLabel="Director"
+            externalSource="tmdb"
           />
         </View>
-      </View>
+      )}
 
-      {/* Recommend */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
-        <View style={styles.recommendRow}>
-          <TouchableOpacity
-            style={[styles.recommendYes, filmRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-            onPress={() => setFilmRecommend(true)}
-          >
-            <Text style={[styles.recommendText, filmRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.recommendNo, filmRecommend === false && styles.recommendNoActive]}
-            onPress={() => setFilmRecommend(false)}
-          >
-            <Text style={[styles.recommendNoText, filmRecommend === false && styles.recommendText]}>👎 No</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {showSection("rating") && (
+        <>
+          {/* Overall rating */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Overall rating *</Text>
+            <StarRating value={filmOverallRating} onChange={(v) => { setFilmOverallManual(true); setFilmOverallRating(v); }} />
+          </View>
 
-      {/* Genres */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Genres (optional)</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {FILM_GENRES.map((g) => {
-            const active = filmGenres.includes(g);
-            return (
-              <TouchableOpacity
-                key={g}
-                style={[styles.sectionTag, active && styles.sectionTagActive]}
-                onPress={() => setFilmGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-              >
-                <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            );
-          })}
-          {filmGenres.filter((g) => !FILM_GENRES.includes(g)).map((g) => (
-            <TouchableOpacity
-              key={g}
-              style={[styles.sectionTag, styles.sectionTagActive]}
-              onPress={() => setFilmGenres((prev) => prev.filter((x) => x !== g))}
-            >
-              <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-            </TouchableOpacity>
-          ))}
-          {showFilmGenreInput ? (
-            <TextInput
-              style={styles.genreInput}
-              value={filmGenreInput}
-              onChangeText={setFilmGenreInput}
-              placeholder="Custom genre"
+          {/* Ratings breakdown */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Ratings *</Text>
+            <View style={styles.bookRatingsContainer}>
+              {(["story", "acting", "visuals", "pacing"] as const).map((key) => (
+                <BookRatingsRow
+                  key={key}
+                  label={key.charAt(0).toUpperCase() + key.slice(1)}
+                  value={filmRatings[key]}
+                  onChange={(v) => setFilmRatings((prev) => ({ ...prev, [key]: v }))}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Review */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Your review *</Text>
+            <MentionInput
+              inputRef={textRef}
+              style={styles.borderedTextarea}
+              value={text}
+              onChangeText={handleTextChange}
+              multiline
+              placeholder="What did you think? Any standout scenes?"
               placeholderTextColor={c.ghost}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={() => {
-                const v = filmGenreInput.trim();
-                if (v && !filmGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                  setFilmGenres((prev) => [...prev, v]);
-                }
-                setFilmGenreInput("");
-                setShowFilmGenreInput(false);
-              }}
-              onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+              maxLength={tmpl.maxText + 50}
+              textAlignVertical="top"
             />
-          ) : (
-            <TouchableOpacity style={styles.sectionTag} onPress={() => setShowFilmGenreInput(true)}>
-              <Text style={styles.sectionTagText}>+ Other</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+          </View>
+        </>
+      )}
+
+      {showSection("extras") && (
+        <>
+          {/* Favourite line */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Favourite line (optional)</Text>
+            <View style={styles.favQuoteWrap}>
+              <TextInput
+                style={styles.favQuoteInput}
+                value={filmFavLine}
+                onChangeText={setFilmFavLine}
+                multiline
+                placeholder="A line that stayed with you…"
+                placeholderTextColor={c.ghost}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {/* Recommend */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+            <View style={styles.recommendRow}>
+              <TouchableOpacity
+                style={[styles.recommendYes, filmRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
+                onPress={() => setFilmRecommend(true)}
+              >
+                <Text style={[styles.recommendText, filmRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.recommendNo, filmRecommend === false && styles.recommendNoActive]}
+                onPress={() => setFilmRecommend(false)}
+              >
+                <Text style={[styles.recommendNoText, filmRecommend === false && styles.recommendText]}>👎 No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Genres */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Genres (optional)</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {FILM_GENRES.map((g) => {
+                const active = filmGenres.includes(g);
+                return (
+                  <TouchableOpacity
+                    key={g}
+                    style={[styles.sectionTag, active && styles.sectionTagActive]}
+                    onPress={() => setFilmGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
+                  >
+                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              {filmGenres.filter((g) => !FILM_GENRES.includes(g)).map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.sectionTag, styles.sectionTagActive]}
+                  onPress={() => setFilmGenres((prev) => prev.filter((x) => x !== g))}
+                >
+                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
+                </TouchableOpacity>
+              ))}
+              {showFilmGenreInput ? (
+                <TextInput
+                  style={styles.genreInput}
+                  value={filmGenreInput}
+                  onChangeText={setFilmGenreInput}
+                  placeholder="Custom genre"
+                  placeholderTextColor={c.ghost}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    const v = filmGenreInput.trim();
+                    if (v && !filmGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
+                      setFilmGenres((prev) => [...prev, v]);
+                    }
+                    setFilmGenreInput("");
+                    setShowFilmGenreInput(false);
+                  }}
+                  onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
+                />
+              ) : (
+                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowFilmGenreInput(true)}>
+                  <Text style={styles.sectionTagText}>+ Other</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </>
+      )}
     </>
   );
 
@@ -1602,242 +1743,263 @@ const uploadImages = async (): Promise<string[]> => {
 
   const renderItinerary = () => (
     <>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Trip title *</Text>
-        <TextInput
-          style={styles.input}
-          value={itineraryTitle}
-          onChangeText={setItineraryTitle}
-          placeholder="e.g. A perfect weekend in Lagos"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>City / Region</Text>
-        {renderPrefixedInput("📍", itineraryCity, setItineraryCity, "e.g. Lagos, London, Tokyo…")}
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Stops *</Text>
-        <ItineraryBuilder stops={stops} onChange={setStops} />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Estimated duration (optional)</Text>
-        {renderPrefixedInput("⏱", itineraryDuration, setItineraryDuration, "e.g. 2 days, 1 weekend")}
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Budget level (optional)</Text>
-        {renderPriceChips(PRICE_RANGES_GBP, itineraryBudget, setItineraryBudget)}
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Best time to visit (optional)</Text>
-        {renderPrefixedInput("☀️", itineraryBestTime, setItineraryBestTime, "e.g. April–October")}
-      </View>
-      {renderDivider()}
-      <InlinePhotosSection
-        images={images}
-        onAdd={() => pickImages(true)}
-        onRemove={removeImage}
-        styles={styles}
-        c={c}
-      />
+      {showSection("text") && (
+        <>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Trip title *</Text>
+            <TextInput
+              style={styles.input}
+              value={itineraryTitle}
+              onChangeText={setItineraryTitle}
+              placeholder="e.g. A perfect weekend in Lagos"
+              placeholderTextColor={c.ghost}
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>City / Region</Text>
+            {renderPrefixedInput("📍", itineraryCity, setItineraryCity, "e.g. Lagos, London, Tokyo…")}
+          </View>
+        </>
+      )}
+      {showSection("stops") && (
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Stops *</Text>
+          <ItineraryBuilder stops={stops} onChange={setStops} />
+        </View>
+      )}
+      {showSection("photos") && (
+        <>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Estimated duration (optional)</Text>
+            {renderPrefixedInput("⏱", itineraryDuration, setItineraryDuration, "e.g. 2 days, 1 weekend")}
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Budget level (optional)</Text>
+            {renderPriceChips(PRICE_RANGES_GBP, itineraryBudget, setItineraryBudget)}
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Best time to visit (optional)</Text>
+            {renderPrefixedInput("☀️", itineraryBestTime, setItineraryBestTime, "e.g. April–October")}
+          </View>
+          {renderDivider()}
+          <InlinePhotosSection
+            images={images}
+            onAdd={() => pickImages(true)}
+            onRemove={removeImage}
+            styles={styles}
+            c={c}
+          />
+        </>
+      )}
     </>
   );
 
   const renderEvent = () => (
     <>
-      <View style={styles.eventBanner}>
-        <Ionicons name="calendar-outline" size={14} color={c.mute} />
-        <Text style={styles.eventBannerText}>This will be added to the Moveee events calendar.</Text>
-      </View>
-      <TextInput
-        style={styles.eventTitleInput}
-        value={eventTitle}
-        onChangeText={setEventTitle}
-        placeholder="Event name *"
-        placeholderTextColor={c.ghost}
-        autoFocus
-      />
-
-      {/* 2-col date grid */}
-      <View style={[styles.eventDateGrid, { marginTop: space[3] }]}>
-        <View style={styles.eventDateGridRow}>
-          <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("start", "date")}>
-            <Text style={styles.eventDateCellEmoji}>📅</Text>
-            <Text style={[styles.eventDateCellText, !eventDate && { color: c.ghost }]}>
-              {eventDate ? fmtDate(eventDate) : "Start date *"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("start", "time")}>
-            <Text style={styles.eventDateCellEmoji}>🕐</Text>
-            <Text style={[styles.eventDateCellText, !eventDate && { color: c.ghost }]}>
-              {eventDate ? fmtTime(eventDate) : "Start time *"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.eventDateGridRow}>
-          <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("end", "date")}>
-            <Text style={styles.eventDateCellEmoji}>📅</Text>
-            <Text style={[styles.eventDateCellText, !eventEndDate && { color: c.ghost }]}>
-              {eventEndDate ? fmtDate(eventEndDate) : "End date (opt.)"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("end", "time")}>
-            <Text style={styles.eventDateCellEmoji}>🕐</Text>
-            <Text style={[styles.eventDateCellText, !eventEndDate && { color: c.ghost }]}>
-              {eventEndDate ? fmtTime(eventEndDate) : "End time (opt.)"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {showPicker && (
-        <View style={styles.pickerWrap}>
-          {Platform.OS === "ios" && (
-            <TouchableOpacity onPress={() => setShowPicker(false)} style={styles.iosDoneBtn}>
-              <Text style={styles.iosDoneBtnText}>Done</Text>
-            </TouchableOpacity>
-          )}
-          <DateTimePicker
-            value={pickerValue()}
-            mode={pickerMode}
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onPickerChange}
+      {showSection("basics") && (
+        <>
+          <View style={styles.eventBanner}>
+            <Ionicons name="calendar-outline" size={14} color={c.mute} />
+            <Text style={styles.eventBannerText}>This will be added to the Moveee events calendar.</Text>
+          </View>
+          <TextInput
+            style={styles.eventTitleInput}
+            value={eventTitle}
+            onChangeText={setEventTitle}
+            placeholder="Event name *"
+            placeholderTextColor={c.ghost}
+            autoFocus
           />
-        </View>
+
+          {/* 2-col date grid */}
+          <View style={[styles.eventDateGrid, { marginTop: space[3] }]}>
+            <View style={styles.eventDateGridRow}>
+              <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("start", "date")}>
+                <Text style={styles.eventDateCellEmoji}>📅</Text>
+                <Text style={[styles.eventDateCellText, !eventDate && { color: c.ghost }]}>
+                  {eventDate ? fmtDate(eventDate) : "Start date *"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("start", "time")}>
+                <Text style={styles.eventDateCellEmoji}>🕐</Text>
+                <Text style={[styles.eventDateCellText, !eventDate && { color: c.ghost }]}>
+                  {eventDate ? fmtTime(eventDate) : "Start time *"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.eventDateGridRow}>
+              <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("end", "date")}>
+                <Text style={styles.eventDateCellEmoji}>📅</Text>
+                <Text style={[styles.eventDateCellText, !eventEndDate && { color: c.ghost }]}>
+                  {eventEndDate ? fmtDate(eventEndDate) : "End date (opt.)"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.eventDateCell} onPress={() => openPicker("end", "time")}>
+                <Text style={styles.eventDateCellEmoji}>🕐</Text>
+                <Text style={[styles.eventDateCellText, !eventEndDate && { color: c.ghost }]}>
+                  {eventEndDate ? fmtTime(eventEndDate) : "End time (opt.)"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {showPicker && (
+            <View style={styles.pickerWrap}>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity onPress={() => setShowPicker(false)} style={styles.iosDoneBtn}>
+                  <Text style={styles.iosDoneBtnText}>Done</Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={pickerValue()}
+                mode={pickerMode}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={onPickerChange}
+              />
+            </View>
+          )}
+        </>
       )}
 
-      {/* Location block */}
-      {renderDivider()}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Location</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={styles.prefixIcon}>🏛</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={eventVenue}
-            onChangeText={setEventVenue}
-            placeholder="Venue name"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-        <View style={[styles.prefixedInputWrap, { marginTop: 8 }]}>
-          <Text style={styles.prefixIcon}>📍</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={eventAddress}
-            onChangeText={setEventAddress}
-            placeholder="Full address"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-        <TextInput
-          style={[styles.input, { marginTop: 8 }]}
-          value={eventCity}
-          onChangeText={setEventCity}
-          placeholder="City *"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
-
-      {renderDivider()}
-
-      {/* Admission */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Admission</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={[styles.prefixIcon, { fontFamily: fonts.sansBold }]}>£</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={eventAdmission}
-            onChangeText={setEventAdmission}
-            placeholder="Free / 15 adv / 20 door"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Ticket link (optional)</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={styles.prefixIcon}>🔗</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={eventTicketUrl}
-            onChangeText={setEventTicketUrl}
-            placeholder="https://…"
-            placeholderTextColor={c.ghost}
-            autoCapitalize="none"
-            keyboardType="url"
-          />
-        </View>
-      </View>
-
-      {/* Category chips */}
-      <View style={[styles.chipRow, { marginTop: space[3] }]}>
-        {EVENT_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[styles.sectionTag, eventCategory === cat.id && styles.sectionTagActive]}
-            onPress={() => setEventCategory(eventCategory === cat.id ? "" : cat.id)}
-          >
-            <Text style={[styles.sectionTagText, eventCategory === cat.id && styles.sectionTagTextActive]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Organiser */}
-      <View style={{ marginTop: space[3] }}>
-        <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" typeFilter="person" />
-      </View>
-
-      {renderDivider()}
-
-      {/* RSVP — Moveee Pro only */}
-      <View style={styles.fieldGroup}>
-        <TouchableOpacity
-          style={styles.rsvpToggleRow}
-          onPress={() => {
-            if (user?.tier !== "patron") {
-              Alert.alert(
-                "Moveee Pro feature",
-                "RSVP management is available to Moveee Pro members. Upgrade to enable RSVP for your events."
-              );
-              return;
-            }
-            setRsvpEnabled((v) => !v);
-          }}
-        >
-          <Text style={styles.fieldLabel}>
-            {user?.tier !== "patron" ? "🔒 " : ""}Enable RSVP
-          </Text>
-          <View style={[styles.rsvpToggleTrack, rsvpEnabled && styles.rsvpToggleTrackActive]}>
-            <View style={[styles.rsvpToggleThumb, rsvpEnabled && styles.rsvpToggleThumbActive]} />
-          </View>
-        </TouchableOpacity>
-        {rsvpEnabled && (
-          <View style={[styles.prefixedInputWrap, { marginTop: 8 }]}>
-            <Text style={styles.prefixIcon}>🎟</Text>
+      {showSection("details") && (
+        <>
+          {/* Location block */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Location</Text>
+            <View style={styles.prefixedInputWrap}>
+              <Text style={styles.prefixIcon}>🏛</Text>
+              <TextInput
+                style={styles.prefixedInput}
+                value={eventVenue}
+                onChangeText={setEventVenue}
+                placeholder="Venue name"
+                placeholderTextColor={c.ghost}
+              />
+            </View>
+            <View style={[styles.prefixedInputWrap, { marginTop: 8 }]}>
+              <Text style={styles.prefixIcon}>📍</Text>
+              <TextInput
+                style={styles.prefixedInput}
+                value={eventAddress}
+                onChangeText={setEventAddress}
+                placeholder="Full address"
+                placeholderTextColor={c.ghost}
+              />
+            </View>
             <TextInput
-              style={styles.prefixedInput}
-              value={rsvpCapacity}
-              onChangeText={(v) => setRsvpCapacity(v.replace(/[^0-9]/g, ""))}
-              placeholder="Capacity (0 = unlimited)"
+              style={[styles.input, { marginTop: 8 }]}
+              value={eventCity}
+              onChangeText={setEventCity}
+              placeholder="City *"
               placeholderTextColor={c.ghost}
-              keyboardType="number-pad"
             />
           </View>
-        )}
-      </View>
 
-      {/* Inline photos */}
-      <InlinePhotosSection
-        images={images}
-        onAdd={() => pickImages(true)}
-        onRemove={removeImage}
-        styles={styles}
-        c={c}
-      />
+          {renderDivider()}
+
+          {/* Admission */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Admission</Text>
+            <View style={styles.prefixedInputWrap}>
+              <Text style={[styles.prefixIcon, { fontFamily: fonts.sansBold }]}>£</Text>
+              <TextInput
+                style={styles.prefixedInput}
+                value={eventAdmission}
+                onChangeText={setEventAdmission}
+                placeholder="Free / 15 adv / 20 door"
+                placeholderTextColor={c.ghost}
+              />
+            </View>
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Ticket link (optional)</Text>
+            <View style={styles.prefixedInputWrap}>
+              <Text style={styles.prefixIcon}>🔗</Text>
+              <TextInput
+                style={styles.prefixedInput}
+                value={eventTicketUrl}
+                onChangeText={setEventTicketUrl}
+                placeholder="https://…"
+                placeholderTextColor={c.ghost}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+          </View>
+
+          {/* Category chips */}
+          <View style={[styles.chipRow, { marginTop: space[3] }]}>
+            {EVENT_CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.sectionTag, eventCategory === cat.id && styles.sectionTagActive]}
+                onPress={() => setEventCategory(eventCategory === cat.id ? "" : cat.id)}
+              >
+                <Text style={[styles.sectionTagText, eventCategory === cat.id && styles.sectionTagTextActive]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Organiser */}
+          <View style={{ marginTop: space[3] }}>
+            <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" typeFilter="person" />
+          </View>
+        </>
+      )}
+
+      {showSection("rsvpphoto") && (
+        <>
+          {renderDivider()}
+
+          {/* RSVP — Moveee Pro only */}
+          <View style={styles.fieldGroup}>
+            <TouchableOpacity
+              style={styles.rsvpToggleRow}
+              onPress={() => {
+                if (user?.tier !== "patron") {
+                  Alert.alert(
+                    "Moveee Pro feature",
+                    "RSVP management is available to Moveee Pro members. Upgrade to enable RSVP for your events."
+                  );
+                  return;
+                }
+                setRsvpEnabled((v) => !v);
+              }}
+            >
+              <Text style={styles.fieldLabel}>
+                {user?.tier !== "patron" ? "🔒 " : ""}Enable RSVP
+              </Text>
+              <View style={[styles.rsvpToggleTrack, rsvpEnabled && styles.rsvpToggleTrackActive]}>
+                <View style={[styles.rsvpToggleThumb, rsvpEnabled && styles.rsvpToggleThumbActive]} />
+              </View>
+            </TouchableOpacity>
+            {rsvpEnabled && (
+              <View style={[styles.prefixedInputWrap, { marginTop: 8 }]}>
+                <Text style={styles.prefixIcon}>🎟</Text>
+                <TextInput
+                  style={styles.prefixedInput}
+                  value={rsvpCapacity}
+                  onChangeText={(v) => setRsvpCapacity(v.replace(/[^0-9]/g, ""))}
+                  placeholder="Capacity (0 = unlimited)"
+                  placeholderTextColor={c.ghost}
+                  keyboardType="number-pad"
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Inline photos */}
+          <InlinePhotosSection
+            images={images}
+            onAdd={() => pickImages(true)}
+            onRemove={removeImage}
+            styles={styles}
+            c={c}
+          />
+        </>
+      )}
     </>
   );
 
@@ -1933,21 +2095,35 @@ const uploadImages = async (): Promise<string[]> => {
 
         {/* ── Header ── */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
-            <Text style={styles.cancelText}>Cancel</Text>
+          <TouchableOpacity
+            onPress={() => (isWizard && step > 0 ? setStep((s) => s - 1) : nav.goBack())}
+            style={styles.headerSideBtn}
+          >
+            <Text style={styles.cancelText}>{isWizard && step > 0 ? "← Back" : "Cancel"}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New {tmplDef?.label ?? "Post"}</Text>
-          <TouchableOpacity
-            style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
-            onPress={validateAndSubmit}
-            disabled={isSubmitDisabled}
-            activeOpacity={0.8}
-          >
-            {submitting
-              ? <ActivityIndicator color={c.paper} size="small" />
-              : <Text style={styles.postBtnText}>Post</Text>
-            }
-          </TouchableOpacity>
+          {isWizard && step < totalSteps - 1 ? (
+            <TouchableOpacity
+              style={[styles.postBtn, !canProceedStep && styles.postBtnDisabled]}
+              onPress={() => setStep((s) => s + 1)}
+              disabled={!canProceedStep}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.postBtnText}>Next</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
+              onPress={validateAndSubmit}
+              disabled={isSubmitDisabled}
+              activeOpacity={0.8}
+            >
+              {submitting
+                ? <ActivityIndicator color={c.paper} size="small" />
+                : <Text style={styles.postBtnText}>Post</Text>
+              }
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Compact template indicator bar ── */}
@@ -1960,6 +2136,25 @@ const uploadImages = async (): Promise<string[]> => {
             <Text style={styles.changeFormatText}>Change format</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ── Step progress — long templates only (WIZARD_STEPS above) ── */}
+        {isWizard && (
+          <View style={styles.wizardProgress}>
+            <View style={styles.wizardDots}>
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.wizardDot,
+                    i === step && styles.wizardDotActive,
+                    i < step && styles.wizardDotDone,
+                  ]}
+                />
+              ))}
+            </View>
+            <Text style={styles.wizardLabel}>Step {step + 1} of {totalSteps}</Text>
+          </View>
+        )}
 
         {/* ── Template picker sheet ── */}
         <TemplatePickerSheet
@@ -2021,6 +2216,18 @@ function createStyles(c: ColorPalette) {
     templateBarEmoji:  { fontSize: 14, lineHeight: 18 },
     templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: 13 },
     changeFormatText:  { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
+
+    // Wizard step progress — dots + "Step N of M" label
+    wizardProgress: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: space[4], paddingVertical: 8,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    wizardDots:      { flexDirection: "row", alignItems: "center", gap: 5 },
+    wizardDot:       { width: 6, height: 6, borderRadius: 999, backgroundColor: c.rule },
+    wizardDotActive: { backgroundColor: c.ochre, transform: [{ scale: 1.3 }] },
+    wizardDotDone:   { backgroundColor: c.gold },
+    wizardLabel:     { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft, textTransform: "uppercase", letterSpacing: 0.3 },
 
     // Scroll body
     body: { padding: space[4], paddingBottom: 32 },

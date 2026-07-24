@@ -2660,6 +2660,58 @@ breakdown) was **not** given the same Overall-folded-into-box treatment — this
 to web only, per the mockup it was built from. Revisit only if the mobile app's rating UI is
 explicitly brought into scope later.
 
+### Multi-step wizard for long templates (web + mobile, July 2026)
+Hidden Gem, Food Review, Book/Music/Film Review, Creative Showcase, Route (itinerary), and Event
+were broken into up to 3 logical steps with Next/Back nav instead of one long scroll — Post,
+Quote, Poll, and Cultural Take stay single-step (short forms, no wizard needed). Implemented
+independently on web (`SubmitPost.tsx`) and mobile (`NewPostScreen.tsx`), same shape on both,
+kept in sync per the project's usual web/mobile duplication convention.
+
+- **Config**: `WIZARD_STEPS` (template → step count, only long templates listed; anything absent
+  defaults to 1/non-wizard) + `WIZARD_SECTION_STEP` (section key → per-template step index;
+  absent entries default to step 0) — both are plain module-level consts, mirrored verbatim
+  between the two files.
+- **`showSection(key)`** — `!isWizard ? true : step === (WIZARD_SECTION_STEP[key]?.[template] ?? 0)`.
+  Existing JSX blocks got this ANDed onto their `template === "x"` condition rather than being
+  restructured — e.g. web's Book Review block split from one `<>...</>` into two
+  (`showSection("rating")` for the MultiRating+review, `showSection("extras")` for fav
+  quote/recommend/genres); mobile's per-template `render*()` functions got the same treatment
+  inside their existing bodies. Section keys used: `search` (default step 0, DirectorySearch +
+  any paired fields), `rating` (breakdown ratings + review text), `extras` (fav
+  quote/lyric/line + recommend + genres — Book/Music/Film Review only), `stops` (itinerary's
+  `ItineraryBuilder`), `photos` (final image/video step), `basics`/`details`/`rsvpphoto`
+  (event's 3 steps). `text`/`photos` are reused across templates with different step numbers per
+  template — that's intentional, not a naming collision.
+- **Step-local validation**: `canProceedStep()` (web) / the `canProceedStep` memo (mobile) gates
+  the "Next" button — a lighter, per-step version of `canSubmit()`/`isSubmitDisabled` so a step
+  can't be skipped without its own required fields, without demanding later steps' fields yet.
+  Kept in sync with each file's own final-submit validation (not invented fresh) — e.g. mobile's
+  food-review step-1 gate only requires `foodRatings.taste > 0`, matching what
+  `validateAndSubmit()` actually enforces (not the full taste+value+vibe web enforces), since the
+  two platforms' final gates already differed before this pass and the wizard didn't newly
+  tighten either one.
+- **Web-specific**: `handleSubmit` now early-returns when `isWizard && step < totalSteps - 1` —
+  needed because a text `<input>`'s Enter key submits the form natively regardless of the
+  visible button's `type="button"`/label, so without this guard a fast typist could
+  Enter-key-submit an event from step 0 with only title+date filled. `resetForm()` and
+  `handleTemplateChange()` both reset `step` to 0. Progress UI: `.composer-wizard-progress`
+  (dots + "Step N of M" label) at the top of `.composer-fields`; `.composer-back-btn` next to
+  the existing Save Draft/Post buttons in the action bar.
+- **Mobile-specific**: the header's right button swaps between "Next" (advances `step`, disabled
+  via `canProceedStep`) and "Post" (final step, unchanged `validateAndSubmit`/`isSubmitDisabled`
+  behavior); the left button swaps between "← Back" (steps > 0) and "Cancel" (`nav.goBack()`).
+  Progress dots row (`wizardProgress`/`wizardDots`/`wizardDot*` styles) sits below the existing
+  template indicator bar. The bottom toolbar's photo icon is additionally gated on
+  `showSection("photos")` so tapping it never adds an image while looking at an unrelated step.
+  `switchTemplate()` resets `step` to 0.
+- **Step→section assignments are identical across both files** (see `WIZARD_SECTION_STEP` above)
+  except where the two platforms' own field sets already differ — e.g. mobile's Itinerary has a
+  `itineraryTitle`/`itineraryCity` step 0 the web version doesn't (web's itinerary template has
+  no separate title/city fields, only the shared description textarea), and mobile's Event step 0
+  also includes the inline `DateTimePicker` modal (web uses native `<input type="datetime-local">`,
+  no separate picker UI to gate). If you add a field to one platform's template, check whether the
+  other platform has an equivalent before assuming the step split should match exactly.
+
 ---
 
 ## Hubs — user-created topic communities
