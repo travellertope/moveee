@@ -2,9 +2,13 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "baseUrl": ".",
     "paths": {
-      "@moveee/utils/*": ["../../packages/utils/*"]
-    }
+      "@moveee/utils/*": ["../../packages/utils/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
+    },
+    "types": ["react"]
   },
   "include": [
     "**/*.ts",

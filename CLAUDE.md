@@ -3879,6 +3879,39 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
 - To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
   (must be outside the monorepo to avoid workspace interference)
 
+### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed, sandbox-only bug)
+In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
+since nothing forces it local to `apps/mobile`) has its own bundled `.d.ts` files that do
+`import * as React from 'react'`. Because those `.d.ts` files physically live under
+`/node_modules/react-native/...`, TypeScript's classic (`Node10`) module resolution walks
+**up from that location**, not from `apps/mobile/`, when it falls back to an `@types/<pkg>`
+lookup — and lands on the monorepo root's `node_modules/@types/react` (v19, installed for
+`apps/site`/`apps/connect`'s Next.js/React 19 apps) instead of `apps/mobile`'s own pinned
+`@types/react` (v18.3, matching the Expo SDK 52 / `react@18.3.1` pin above). Two conflicting
+global `ReactNode`/`JSX` declarations end up in one compilation — React 19's `ReactNode` type
+added `bigint` as a member, React 18's didn't — so **every** JSX element in the app (`<View>`,
+`<Text>`, etc.) fails with `TS2786: 'X' cannot be used as a JSX component ... Type 'bigint' is
+not assignable to type 'ReactNode'`, cascading into 5,000+ near-duplicate errors from one root
+cause. A plain `"types": ["react"]` restriction does **not** fix this — that only controls
+*implicit* ambient `@types` inclusion, not this specific `@types` **fallback** step, which
+ignores it. A `"paths"` remap of the bare `"react"` specifier to `apps/mobile`'s own package also
+doesn't fix it *by itself* — Node10 resolution's `@types` fallback re-walks from the *original*
+importing file's location if the redirected target has no directly-colocated `.d.ts`/`types`
+field (which `react`'s own `package.json` doesn't have — its types come entirely from the
+sibling `@types/react` package). **Fix, in `apps/mobile/tsconfig.json`**: add `"baseUrl": "."`
+and remap `"react"`/`"react/*"` straight to `./node_modules/@types/react` (not to
+`./node_modules/react`) — pointing directly at the `@types` package (which *does* have its own
+resolvable `.d.ts`/`types` field) makes the `paths` substitution succeed immediately, so
+resolution never falls through to the ancestor-walk that finds the root copy. Confirmed this is
+**sandbox-only, not a runtime bug** — Metro (the actual bundler) resolves modules per-file with
+its own algorithm and never mixes the two React type trees; this only ever affected `tsc
+--noEmit` type-checking. Reduced the mobile app's error count from ~5,375 baseline to 82 (all
+pre-existing, unrelated real type issues — missing properties, PollBuilder setState type, one
+dead narrowing check in `validateAndSubmit()` — none touching JSX/React types). If this
+resolution trick ever needs revisiting (e.g. after a dependency bump changes how `react-native`
+or `@types/react` are laid out), re-run `npx tsc --noEmit --traceResolution | grep "Resolving
+module 'react' from.*react-native"` to see exactly which `@types/react` copy wins.
+
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
 - `patron` = Moveee Pro DB value — never rename in code
