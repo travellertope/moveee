@@ -7,7 +7,14 @@ import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@
 import CommunityPostClient from "./CommunityPostClient";
 import "@/app/pulse-layout.css";
 
-export const revalidate = 300;
+// Fully dynamic, not ISR — every fetch this page depends on
+// (getCommunityPostBySlug/getPostComments in community-wordpress.ts) uses
+// cache: "no-store" so reactions/comments/poll votes are always fresh.
+// `export const revalidate` previously coexisted with those no-store
+// fetches, which Next.js treats as a genuine conflict ("Page changed from
+// static to dynamic at runtime") and throws a hard 500 for instead of
+// picking one — see https://nextjs.org/docs/messages/app-static-to-dynamic-error.
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
