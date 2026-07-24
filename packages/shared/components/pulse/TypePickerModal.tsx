@@ -18,7 +18,7 @@ const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   "creative-showcase": { label: "Creative Showcase",  desc: "Share your creative work" },
   quote:               { label: "Quote",              desc: "Share a quote that moved you" },
   poll:                { label: "Poll",               desc: "Ask the community something" },
-  itinerary:           { label: "Itinerary",          desc: "Share a travel itinerary" },
+  itinerary:           { label: "Itinerary",          desc: "Share a travel itinerary or weekend route" },
   event:               { label: "Event",              desc: "Announce something happening" },
 };
 

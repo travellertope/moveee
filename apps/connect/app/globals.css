@@ -1110,7 +1110,7 @@ h1, h2, h3, h4 {
 .composer-dir-input::placeholder,
 .composer-poll-input::placeholder,
 .composer-itinerary-input::placeholder,
-.composer-itinerary-note::placeholder { color: var(--rule, #e0d8ce); }
+.composer-itinerary-note::placeholder { color: var(--mute, #7a6f5c); }
 .composer-input:focus,
 .composer-dir-input:focus,
 .composer-poll-input:focus,
@@ -1139,7 +1139,7 @@ h1, h2, h3, h4 {
   transition: border-color 0.15s;
 }
 .composer-textarea:focus { border-color: var(--ochre, #c5491f); }
-.composer-textarea::placeholder { color: var(--rule, #e0d8ce); }
+.composer-textarea::placeholder { color: var(--mute, #7a6f5c); }
 .composer-textarea--italic {
   font-family: var(--font-fraunces), serif;
   font-style: italic;
@@ -1162,7 +1162,7 @@ h1, h2, h3, h4 {
 /* Quote decorative box */
 .composer-quote-box {
   position: relative;
-  background: var(--paper-deep, #f2f2f2);
+  background: #ffffff;
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 6px;
   padding: 16px;
@@ -1208,7 +1208,7 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: var(--paper-deep, #f2f2f2);
+  background: #ffffff;
   border-bottom: 1px solid var(--rule, #e0d8ce);
 }
 .composer-slim-bar-left { display: flex; align-items: center; gap: 7px; }
@@ -1852,10 +1852,10 @@ h1, h2, h3, h4 {
 }
 .composer-guide-desc {
   font-family: var(--font-dm-sans, "DM Sans", sans-serif);
-  font-size: 0.74rem;
+  font-size: 0.95rem;
   color: var(--mute, #7a6f5c);
   font-style: italic;
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0 0 6px;
 }
 

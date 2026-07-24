@@ -81,9 +81,12 @@ export default function PostNewClient() {
     setHasDraft(true);
   }
 
-  function handlePosted() {
+  function handlePosted(item: { id: string; slug?: string }) {
     if (userId) localStorage.removeItem(draftKey(userId));
-    router.push("/feed");
+    // Land on the new post's own page — the just-created post can lag
+    // behind the feed list fetch by a beat, so sending the user back to
+    // /feed made it look like the post hadn't gone through.
+    router.push(item.slug ? `/community/${item.slug}` : "/feed");
   }
 
   return (
