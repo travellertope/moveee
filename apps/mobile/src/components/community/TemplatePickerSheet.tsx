@@ -28,7 +28,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { id: "film-review",       emoji: "🎬",  label: "Film Review",      desc: "Review a film you've watched",        color: "#2B4C7E" },
   { id: "creative-showcase", emoji: "🎨",  label: "Showcase",         desc: "Show your creative work",             color: "#C5491F" },
   { id: "poll",              emoji: "📊",  label: "Poll",             desc: "Ask the community",                   color: "#6B48A8" },
-  { id: "itinerary",         emoji: "🗺️",  label: "Itinerary",        desc: "Share a route or trip",               color: "#2D6A4F" },
+  { id: "itinerary",         emoji: "🗺️",  label: "Itinerary",        desc: "Share a travel itinerary or weekend route", color: "#2D6A4F" },
   { id: "event",             emoji: "📅",  label: "Event",            desc: "Announce an event",                   color: "#B38238" },
   { id: "quote",             emoji: "❝",   label: "Quote",            desc: "Share a quote you love",              color: "#3A342B" },
 ];

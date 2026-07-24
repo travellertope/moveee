@@ -162,8 +162,8 @@ const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long screen — short
-// templates (post, quote, poll) stay single-step/unlisted here. Mirrors
-// packages/shared/components/pulse/SubmitPost.tsx's
+// templates (post, quote, poll, creative-showcase) stay single-step/unlisted
+// here. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
 // WIZARD_STEPS/WIZARD_SECTION_STEP — keep both in sync.
 const WIZARD_STEPS: Partial<Record<TemplateId, number>> = {
   "hidden-gem": 3,
@@ -171,7 +171,6 @@ const WIZARD_STEPS: Partial<Record<TemplateId, number>> = {
   "book-review": 3,
   "music-review": 3,
   "film-review": 3,
-  "creative-showcase": 2,
   itinerary: 3,
   event: 3,
 };
@@ -181,7 +180,7 @@ const WIZARD_SECTION_STEP: Record<string, Partial<Record<TemplateId, number>>> =
   text:   { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1, event: 1 },
   extras: { "book-review": 2, "music-review": 2, "film-review": 2 },
   stops:  { itinerary: 1 },
-  photos: { "hidden-gem": 2, "food-review": 2, "creative-showcase": 1, itinerary: 2 },
+  photos: { "hidden-gem": 2, "food-review": 2, itinerary: 2 },
   details:   { event: 1 },
   rsvpphoto: { event: 2 },
 };
@@ -681,9 +680,9 @@ const uploadImages = async (): Promise<string[]> => {
         body.price_range         = hiddenGemPriceRange || undefined;
         body.opening_hours       = hiddenGemOpeningHours.trim() || undefined;
       }
-      // What are you writing about? — optional directory link on Update and
-      // Poll (July 2026, folded in from the removed Cultural Take template).
-      if ((template === "post" || template === "poll") && linkedEntry) {
+      // What are you writing about? — optional directory link on Update
+      // (July 2026, folded in from the removed Cultural Take template).
+      if (template === "post" && linkedEntry) {
         body.linked_directory_id = linkedEntry.id;
         body.location_name       = linkedEntry.title || undefined;
       }
@@ -1680,13 +1679,6 @@ const uploadImages = async (): Promise<string[]> => {
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Options *</Text>
         <PollBuilder poll={poll} onChange={setPoll} />
-      </View>
-      <View style={styles.fieldGroup}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="What's this about? (optional)"
-        />
       </View>
       {renderDivider()}
       <View style={styles.fieldGroup}>

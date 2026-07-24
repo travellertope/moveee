@@ -114,7 +114,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
   "film-review":       { desc: "Review a film — rate it and share your thoughts." },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
-  poll:                { desc: "Ask the community something — optionally link the directory item it's about. Great for settling debates or gathering opinions." },
+  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
   event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
   quote:               { desc: "Share a quote that moved you. Add the author and source below." },
@@ -122,14 +122,14 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long page — short
-// templates (post, quote, poll) stay single-step/unlisted here.
+// templates (post, quote, poll, creative-showcase) stay single-step/unlisted
+// here.
 const WIZARD_STEPS: Partial<Record<TemplateType, number>> = {
   "hidden-gem": 3,
   "food-review": 3,
   "book-review": 3,
   "music-review": 3,
   "film-review": 3,
-  "creative-showcase": 2,
   itinerary: 3,
   event: 3,
 };
@@ -142,7 +142,7 @@ const WIZARD_SECTION_STEP: Record<string, Partial<Record<TemplateType, number>>>
   text:   { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1, event: 1 },
   extras: { "book-review": 2, "music-review": 2, "film-review": 2 },
   stops:  { itinerary: 1 },
-  photos: { "hidden-gem": 2, "food-review": 2, "creative-showcase": 1, itinerary: 2 },
+  photos: { "hidden-gem": 2, "food-review": 2, itinerary: 2 },
   details:   { event: 1 },
   rsvpphoto: { event: 2 },
 };
@@ -201,6 +201,7 @@ const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
+const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "food-review": 500,
@@ -212,7 +213,7 @@ const MAX_CHARS: Record<string, number> = {
 
 
 interface SubmitPostProps {
-  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
+  onPosted?: (item: { id: string; slug?: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
   lockedTag?: string;
   initialTemplate?: TemplateType;
   /** Hub-scoped composer (docs/hubs-plan.md §3.1). When set, the template
@@ -399,6 +400,22 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [sectionMenuOpen]);
+
+  // Quote type picker — same pill + popover pattern as "Posting to" above,
+  // shown in its place at the top of the form for the Quote template (which
+  // hides the Section picker entirely).
+  const [quoteTypeMenuOpen, setQuoteTypeMenuOpen] = useState(false);
+  const quoteTypeMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!quoteTypeMenuOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (quoteTypeMenuRef.current && !quoteTypeMenuRef.current.contains(e.target as Node)) {
+        setQuoteTypeMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [quoteTypeMenuOpen]);
 
   const user = session?.user as any;
   const isPro = user?.tier === "patron";
@@ -783,6 +800,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       const region = detectRegion(user?.countryOfResidence);
       onPosted?.({
         id: data.id,
+        slug: data.slug,
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
         tag: payload.tag || null,
@@ -1031,13 +1049,53 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )
             )}
 
+            {/* Quote type — same pill + popover pattern as "Posting to"
+                above, shown in its place (top of the form) since Quote hides
+                the Section picker entirely. */}
+            {template === "quote" && (
+              <div className="composer-posting-to-wrap" ref={quoteTypeMenuRef}>
+                <button
+                  type="button"
+                  className="composer-posting-to"
+                  onClick={() => setQuoteTypeMenuOpen(o => !o)}
+                >
+                  <span className="composer-posting-to-dot" aria-hidden />
+                  Quote type: {quoteType || "None"}
+                  <span className="composer-posting-to-caret" aria-hidden>▾</span>
+                </button>
+                {quoteTypeMenuOpen && (
+                  <div className="composer-section-menu">
+                    <button
+                      type="button"
+                      className="composer-section-menu-item"
+                      onClick={() => { setQuoteType(""); setQuoteTypeMenuOpen(false); }}
+                    >
+                      None <span className="composer-section-menu-hint">— no type</span>
+                    </button>
+                    {QUOTE_TYPES.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        className="composer-section-menu-item"
+                        onClick={() => { setQuoteType(t); setQuoteTypeMenuOpen(false); }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Directory search — required for hidden-gem (Place), optional
-                "what are you writing about?" link for Update and Poll (July
-                2026 — this is what used to be the standalone Cultural Take
+                "what are you writing about?" link for Update (July 2026 —
+                this is what used to be the standalone Cultural Take
                 template's required directory field; folding Cultural Take
                 into Update made it optional rather than required, since a
                 plain Update should still work with no directory link at
-                all). */}
+                all). Deliberately not offered on Poll — a poll usually
+                spans multiple options, and a single directory link doesn't
+                capture a comparison well. */}
             {template === "hidden-gem" && showSection("search") && (
               <DirectorySearch
                 value={directoryEntry}
@@ -1045,7 +1103,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                 placeholder="Search or add a location *"
               />
             )}
-            {(template === "post" || template === "poll") && (
+            {template === "post" && (
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
@@ -1302,25 +1360,16 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </div>
             )}
 
-            {/* Quote type + sharing reason */}
+            {/* Sharing reason — quote type itself moved to the top of the
+                form (see the "Posting to"-styled pill above). */}
             {template === "quote" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <select
-                  value={quoteType}
-                  onChange={e => setQuoteType(e.target.value)}
-                  className={`composer-tag-select${quoteType ? " composer-tag-select--selected" : ""}`}
-                >
-                  <option value="">Quote type (optional)</option>
-                  {["Person", "Book", "Film", "Speech", "Song"].map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <textarea
-                  value={quoteSharingReason}
-                  onChange={e => setQuoteSharingReason(e.target.value.slice(0, 280))}
-                  placeholder="Why are you sharing this? (optional)"
-                  rows={2}
-                  className="composer-textarea"
-                />
-              </div>
+              <textarea
+                value={quoteSharingReason}
+                onChange={e => setQuoteSharingReason(e.target.value.slice(0, 280))}
+                placeholder="Why are you sharing this? (optional)"
+                rows={2}
+                className="composer-textarea"
+              />
             )}
 
             {/* Star rating — hidden-gem */}
@@ -1654,10 +1703,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   { label: "Value", value: foodValue },
                   { label: "Vibe", value: foodVibe },
                 ]}
-                onChange={(label, v) => {
-                  if (label === "Taste") setFoodTaste(v);
-                  if (label === "Value") setFoodValue(v);
-                  if (label === "Vibe") setFoodVibe(v);
+                onChange={(key, v) => {
+                  // MultiRating resolves the key as label.toLowerCase() when no
+                  // explicit `key` is set on the ratings item (see MultiRating.tsx) —
+                  // this used to compare against the capitalized labels ("Taste"),
+                  // which never matched, so clicking a star silently no-op'd.
+                  if (key === "taste") setFoodTaste(v);
+                  if (key === "value") setFoodValue(v);
+                  if (key === "vibe") setFoodVibe(v);
                 }}
               />
             )}

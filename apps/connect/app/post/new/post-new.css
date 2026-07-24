@@ -7,6 +7,7 @@
   margin: 0;
   padding: 24px 16px 60px;
   min-height: calc(100vh - 60px);
+  background: #ffffff;
 }
 
 /* Route-level loading skeleton (loading.tsx) — shown the instant navigation
