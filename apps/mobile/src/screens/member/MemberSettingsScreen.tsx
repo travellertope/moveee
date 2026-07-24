@@ -10,7 +10,12 @@ import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
-let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
+import type { CreationResponse, AuthenticationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
+let Passkeys: {
+  isSupported: () => boolean;
+  create: (o: unknown) => Promise<CreationResponse | null>;
+  get: (o: unknown) => Promise<AuthenticationResponseJSON | null>;
+} = {
   isSupported: () => false, create: async () => null, get: async () => null,
 };
 try { Passkeys = require("react-native-passkeys"); } catch {}
@@ -277,7 +282,7 @@ function ProfileTab() {
                 <Image source={{ uri: user.avatarUrl }} style={profileStyles.avatarImage} resizeMode="cover" />
               ) : (
                 <Text style={profileStyles.avatarInitials}>
-                  {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                  {(user?.displayName ?? "?")[0]?.toUpperCase()}
                 </Text>
               )}
             </View>

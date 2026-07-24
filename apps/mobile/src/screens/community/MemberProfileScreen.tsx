@@ -161,7 +161,7 @@ function formatMemberSince(ts?: number): string {
 
 const TEMPLATE_META: Record<string, { emoji: string; label: string }> = {
   post:                { emoji: "📝", label: "Post" },
-  "hidden-gem":        { emoji: "💎", label: "Hidden Gem" },
+  "hidden-gem":        { emoji: "💎", label: "Place" },
   "cultural-take":     { emoji: "💬", label: "Cultural Take" },
   "food-review":       { emoji: "🍽", label: "Food Review" },
   "creative-showcase": { emoji: "🎨", label: "Creative Showcase" },

@@ -693,7 +693,7 @@ function CardB8() {
       <div style={{ padding: 16 }}>
         <AuthorRow name="Seun Okonkwo" username="@seun.routes" time="2d" tier="pro" />
         <div style={{ marginTop: 10 }}>
-          <BadgePill label="Weekend Route" bg="#D1FAE5" color="#065F46" />
+          <BadgePill label="Itinerary" bg="#D1FAE5" color="#065F46" />
         </div>
         <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.mute, margin: "6px 0 0" }}>
           📍 Lagos, Nigeria

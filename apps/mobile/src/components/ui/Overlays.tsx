@@ -71,7 +71,7 @@ export function BottomSheet({ visible, onClose, children, showHandle = true }: B
 
 const POST_TYPES = [
   { id: "post",               emoji: "✏️", label: "Post" },
-  { id: "hidden-gem",         emoji: "💎", label: "Hidden Gem" },
+  { id: "hidden-gem",         emoji: "💎", label: "Place" },
   { id: "cultural-take",      emoji: "💬", label: "Cultural Take" },
   { id: "food-review",        emoji: "🍽️", label: "Food Review" },
   { id: "creative-showcase",  emoji: "🎨", label: "Creative Showcase" },

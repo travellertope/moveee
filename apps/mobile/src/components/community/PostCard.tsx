@@ -9,10 +9,27 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
-import type { CommunityPost } from "../../types";
+import type { Tier } from "../../types";
 import TierBadge from "../ui/TierBadge";
 import TimeAgo from "../ui/TimeAgo";
 import Avatar from "../ui/Avatar";
+
+// Not the unified FeedItem shape — a raw community_post API response,
+// same loose/pragmatic style as the local CommunityPost interfaces in
+// DirectoryDetailScreen.tsx / MemberProfileScreen.tsx (which don't share
+// this type either — see Culture_Mobile_API::format_community_post()
+// for the full field list).
+interface CommunityPost {
+  id: string;
+  author: { avatarUrl: string; name: string; tier: Tier };
+  publishedAt: string;
+  status?: string;
+  content: string;
+  imageUrl?: string | null;
+  liked: boolean;
+  likeCount: number;
+  commentCount: number;
+}
 
 interface Props {
   post: CommunityPost;

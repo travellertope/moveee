@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@simplewebauthn/typescript-types": "^8.0.0",
     "@types/react": "~18.3.12",
     "babel-plugin-module-resolver": "^5.0.0",
     "fs-extra": "^11.3.5",

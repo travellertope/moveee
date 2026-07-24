@@ -15,17 +15,16 @@ import type { Hub } from "../../types";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: boolean }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
-  { slug: "cultural-take", label: "Take", emoji: "💬" },
-  { slug: "hidden-gem", label: "Gem", emoji: "💎" },
+  { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
   { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
   { slug: "event", label: "Event", emoji: "📅", gated: true },
   { slug: "poll", label: "Poll", emoji: "📊", gated: true },
-  { slug: "itinerary", label: "Route", emoji: "🗺️", gated: true },
+  { slug: "itinerary", label: "Itinerary", emoji: "🗺️", gated: true },
 ];
 
-const DEFAULT_TEMPLATES = ["post", "cultural-take"];
+const DEFAULT_TEMPLATES = ["post"];
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({

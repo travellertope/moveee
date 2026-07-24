@@ -1381,7 +1381,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label="💎 HIDDEN GEM" bg={c.templateGemBg} color={c.templateGemText} styles={styles} />
+          <BadgePill label="💎 PLACE" bg={c.templateGemBg} color={c.templateGemText} styles={styles} />
           {(item.placeLocation ?? item.locationName) ? (
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}

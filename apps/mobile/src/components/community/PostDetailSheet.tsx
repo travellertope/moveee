@@ -77,7 +77,7 @@ function GalleryGrid({ images }: { images: string[] }) {
     // 4+ → 2×2 grid, last cell has +N overlay
     const hw = (w - gap) / 2;
     const extra = count - 4;
-    const rows: React.ReactNode[][] = [
+    const rows: string[][] = [
       [images[0], images[1]],
       [images[2], images[3]],
     ];
@@ -138,7 +138,7 @@ const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeho
 
 const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string; color: string }> = {
   "post":              { label: "POST",             emoji: "✏️", bg: "rgba(100,100,100,0.08)", color: "#555" },
-  "hidden-gem":        { label: "HIDDEN GEM",       emoji: "💎", bg: "rgba(98,0,238,0.08)",   color: "#6200EE" },
+  "hidden-gem":        { label: "PLACE",             emoji: "💎", bg: "rgba(98,0,238,0.08)",   color: "#6200EE" },
   "cultural-take":     { label: "CULTURAL TAKE",    emoji: "🎯", bg: "rgba(183,28,28,0.08)",  color: "#B71C1C" },
   "food-review":       { label: "FOOD REVIEW",      emoji: "🍽️", bg: "rgba(197,73,31,0.08)",  color: "#C5491F" },
   "creative-showcase": { label: "CREATIVE SHOWCASE",emoji: "🎨", bg: "rgba(25,118,210,0.08)", color: "#1976D2" },
@@ -647,7 +647,7 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
               <TouchableOpacity
                 onPress={() =>
                   nav.navigate("DirectoryDetail", {
-                    id: item.organiserDirectoryId,
+                    id: item.organiserDirectoryId ?? undefined,
                     slug: item.organiserSlug,
                     title: item.organiserName,
                   })

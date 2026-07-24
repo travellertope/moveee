@@ -89,7 +89,7 @@ function GridIllustration({ height }: { height: number }) {
   const cards = [
     { fill: "#C5491F", label: "Editorial" },
     { fill: "#4C1D95", label: "Happening" },
-    { fill: "#92400E", label: "Hidden Gem" },
+    { fill: "#92400E", label: "Place" },
     { fill: "#14110D", label: "Pulse" },
     { fill: "#065F46", label: "Quote" },
     { fill: "#1E3A5F", label: "Poll" },

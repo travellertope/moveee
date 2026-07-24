@@ -1900,6 +1900,24 @@ form rather than just scrolling them to it. **Once the app actually ships to the
 swap these href targets for real store URLs** (same TODO as the `DEV:` comment already in
 `MoveeeZone.tsx` for its own store badges) rather than leaving the waitlist redirect in place.
 
+**Desktop hide (fixed July 2026).** Both the banner and the modal used to render at every
+viewport width — since there is no desktop app to push people toward, showing "Moveee is
+better in the app" copy on a desktop browser was actively wrong, not just unnecessary. Fixed
+with a single CSS rule in `components/app-download-nudge.css`:
+```css
+@media (min-width: 860px) {
+  .adb-banner,
+  .adm-overlay {
+    display: none;
+  }
+}
+```
+`860px` matches the project's existing desktop breakpoint (same value the left-nav rail in
+`Header.tsx` switches on — see "Connect app left-nav rail" above). CSS-only fix — no JS
+viewport check was added, since `AppDownloadModal.tsx`'s page-view counter still increments
+on desktop; the modal's overlay just never becomes visible there, which is simpler than
+gating the counter logic itself and has the same net effect.
+
 ---
 
 ## Plugin DB table auto-upgrade (critical — June 2026)
@@ -2659,6 +2677,198 @@ Mobile app's own Book/Music/Film Review rating UI (`NewPostScreen.tsx`'s `BookRa
 breakdown) was **not** given the same Overall-folded-into-box treatment — this pass was scoped
 to web only, per the mockup it was built from. Revisit only if the mobile app's rating UI is
 explicitly brought into scope later.
+
+### Multi-step wizard for long templates (web + mobile, July 2026)
+Hidden Gem, Food Review, Book/Music/Film Review, Creative Showcase, Route (itinerary), and Event
+were broken into up to 3 logical steps with Next/Back nav instead of one long scroll — Post,
+Quote, Poll, and Cultural Take stay single-step (short forms, no wizard needed). Implemented
+independently on web (`SubmitPost.tsx`) and mobile (`NewPostScreen.tsx`), same shape on both,
+kept in sync per the project's usual web/mobile duplication convention.
+
+- **Config**: `WIZARD_STEPS` (template → step count, only long templates listed; anything absent
+  defaults to 1/non-wizard) + `WIZARD_SECTION_STEP` (section key → per-template step index;
+  absent entries default to step 0) — both are plain module-level consts, mirrored verbatim
+  between the two files.
+- **`showSection(key)`** — `!isWizard ? true : step === (WIZARD_SECTION_STEP[key]?.[template] ?? 0)`.
+  Existing JSX blocks got this ANDed onto their `template === "x"` condition rather than being
+  restructured — e.g. web's Book Review block split from one `<>...</>` into two
+  (`showSection("rating")` for the MultiRating+review, `showSection("extras")` for fav
+  quote/recommend/genres); mobile's per-template `render*()` functions got the same treatment
+  inside their existing bodies. Section keys used: `search` (default step 0, DirectorySearch +
+  any paired fields), `rating` (breakdown ratings + review text), `extras` (fav
+  quote/lyric/line + recommend + genres — Book/Music/Film Review only), `stops` (itinerary's
+  `ItineraryBuilder`), `photos` (final image/video step), `basics`/`details`/`rsvpphoto`
+  (event's 3 steps). `text`/`photos` are reused across templates with different step numbers per
+  template — that's intentional, not a naming collision.
+- **Step-local validation**: `canProceedStep()` (web) / the `canProceedStep` memo (mobile) gates
+  the "Next" button — a lighter, per-step version of `canSubmit()`/`isSubmitDisabled` so a step
+  can't be skipped without its own required fields, without demanding later steps' fields yet.
+  Kept in sync with each file's own final-submit validation (not invented fresh) — e.g. mobile's
+  food-review step-1 gate only requires `foodRatings.taste > 0`, matching what
+  `validateAndSubmit()` actually enforces (not the full taste+value+vibe web enforces), since the
+  two platforms' final gates already differed before this pass and the wizard didn't newly
+  tighten either one.
+- **Web-specific**: `handleSubmit` now early-returns when `isWizard && step < totalSteps - 1` —
+  needed because a text `<input>`'s Enter key submits the form natively regardless of the
+  visible button's `type="button"`/label, so without this guard a fast typist could
+  Enter-key-submit an event from step 0 with only title+date filled. `resetForm()` and
+  `handleTemplateChange()` both reset `step` to 0. Progress UI: `.composer-wizard-progress`
+  (dots + "Step N of M" label) at the top of `.composer-fields`; `.composer-back-btn` next to
+  the existing Save Draft/Post buttons in the action bar.
+- **Mobile-specific**: the header's right button swaps between "Next" (advances `step`, disabled
+  via `canProceedStep`) and "Post" (final step, unchanged `validateAndSubmit`/`isSubmitDisabled`
+  behavior); the left button swaps between "← Back" (steps > 0) and "Cancel" (`nav.goBack()`).
+  Progress dots row (`wizardProgress`/`wizardDots`/`wizardDot*` styles) sits below the existing
+  template indicator bar. The bottom toolbar's photo icon is additionally gated on
+  `showSection("photos")` so tapping it never adds an image while looking at an unrelated step.
+  `switchTemplate()` resets `step` to 0.
+- **Step→section assignments are identical across both files** (see `WIZARD_SECTION_STEP` above)
+  except where the two platforms' own field sets already differ — e.g. mobile's Itinerary has a
+  `itineraryTitle`/`itineraryCity` step 0 the web version doesn't (web's itinerary template has
+  no separate title/city fields, only the shared description textarea), and mobile's Event step 0
+  also includes the inline `DateTimePicker` modal (web uses native `<input type="datetime-local">`,
+  no separate picker UI to gate). If you add a field to one platform's template, check whether the
+  other platform has an equivalent before assuming the step split should match exactly.
+
+### Guide description moved to top of form (web + mobile, July 2026)
+The per-template description (`TEMPLATE_GUIDES[template].desc` on web, `tmplDef.desc` on mobile —
+same text source the type-picker cards already used) used to render just above the main textarea
+and hide once the user started typing. It's now pinned to the **top of the form**, above the
+wizard progress/Posting-to picker, and stays visible permanently (the hide-on-typing behavior made
+sense next to the textarea; it didn't make sense once the wizard put the textarea on a later step).
+Web: unconditional `<div className="composer-guide">` at the top of `.composer-fields`, no longer
+gated by `showSection("text")`. Mobile: previously **only** the `post` template showed this at all
+(inline inside `renderStandardPost()`) — now every template shows it, moved above the wizard
+progress row in the fixed header area (outside the `ScrollView`, so it needed its own
+`paddingHorizontal` since the body's own padding no longer applies to it).
+
+### Review family — Place/Food/Music/Book/Film Review unified under one "Review" tile (July 2026)
+Hidden Gem, Food Review, Music Review, Book Review, and Film Review are still five separate
+`TemplateType`/`TemplateId` slugs internally (`hidden-gem`, `food-review`, `music-review`,
+`book-review`, `film-review` — payloads, validation, and backend gating are all untouched), but
+the type picker now shows **one** "⭐ Review" tile instead of five separate ones. Picking it opens
+the composer on `REVIEW_DEFAULT` (`hidden-gem`); a **subtype tab row** (`.composer-review-tabs` on
+web, `styles.reviewTabs` on mobile — plain text + ochre underline, deliberately not a pill/chip
+row) then lets the user switch between Place/Food/Music/Book/Film in place, calling the same
+`handleTemplateChange()`/`switchTemplate()` every other template switch already uses.
+
+- **Config, mirrored between `packages/shared/components/pulse/SubmitPost.tsx` (exports
+  `REVIEW_FAMILY`, `REVIEW_DEFAULT`, `REVIEW_TAB_META`, `isReviewTemplate()`) and
+  `apps/mobile/src/components/community/TemplatePickerSheet.tsx`** (same four exports) — keep both
+  in sync, same convention as `WIZARD_STEPS`/`WIZARD_SECTION_STEP`.
+- **Type-picker merge**: `TypePickerModal.tsx` builds a `GRID_ITEMS` list (web) / `TemplatePickerSheet.tsx`
+  builds a filtered `defs` list (mobile) that walks the full template list once and collapses the
+  first review-family member it hits into a single synthetic "review" tile, skipping the rest —
+  this preserves the tile's original grid position (where Hidden Gem used to sit) rather than
+  appending it at the end.
+- **Slim bar / template-bar label**: when the current template is a review-family member, the
+  dedicated-page slim bar (web) reads its emoji+label from `REVIEW_TAB_META` instead of the base
+  `TEMPLATES` array, so it stays consistent with the tab row directly below it.
+- **"Hidden Gem" renamed to "Place" everywhere it's a display label** (copy-only — same convention
+  as the Stoop rename: internal slug/keys/DB values/theme keys like `templateGemBg`/`templateGemText`
+  and the `gem_hunter` achievement badge are all untouched, only user-facing text changed). Hit
+  every `TEMPLATES`/`TEMPLATE_DEFS` array, badge/label maps in feed cards and detail
+  screens/sheets/modals, the WP admin credits-settings label, and one apps/site feature-card title.
+  Marketing prose that uses "hidden gem(s)" as a plain descriptive phrase (not a literal UI label —
+  apps/site's pulse-feed/discover/features pages, `MoveeeZone.tsx`) was deliberately left alone —
+  that's a copywriting call, not a UI label rename.
+
+### Food Review: dish/item is now the searchable field, not a restaurant search (July 2026)
+Food Review used to show a `DirectorySearch` for "Which restaurant or venue?" (`typeFilter=
+"restaurant"`) followed by a plain-text "Dish or item name" input. The restaurant search is
+**removed** — restaurant/venue reviews are now expected to go through Place (Hidden Gem) review
+instead. The dish/item name is now itself the searchable `DirectorySearch` field
+(`typeFilter="food"`, matching the Book/Music/Film Review pattern exactly), backed by a dedicated
+`foodEntry` state (web) / `foodEntry` state (mobile) — replacing the old plain-text `foodDishName`
+state on both platforms. `payload.food_dish_name`/`body.food_dish_name` (the field name sent to
+the backend is unchanged) is now sourced from `foodEntry?.title`, and `linked_directory_id` from
+`foodEntry?.id` — previously food-review reused the shared `directoryEntry`/`linkedEntry` state
+that hidden-gem also uses; now it has its own, same as book/music/film. Feed rendering
+(`FeedCard.tsx`, `CommunityDetailModal.tsx`, `PostDetailSheet.tsx`, `FeedItemCard.tsx`) reads the
+same `foodDishName` field on `FeedItem` as before — untouched, since only the *source* of that
+value in the composer changed, not the field name it's stored/displayed under.
+
+### Update family — Update/Poll/Quote unified under one "Updates" tile; Cultural Take removed entirely (July 2026)
+
+Same shape as the Review family merge above, applied to a second group: **Update ("post"),
+Poll, and Quote now share one "Updates" entry point** in the type picker (web `TypePickerModal.tsx`,
+mobile `TemplatePickerSheet.tsx`), with an in-form tab row to switch between them — mirroring
+`composer-review-tabs`. **Cultural Take was removed as a template entirely**, not folded in
+alongside Update/Poll/Quote as a fourth tab — its one distinguishing feature (a required
+"what are you writing about?" directory link) became an **optional** field on the plain Update
+form instead, since a normal update should still work with no directory link at all.
+
+- **Config constants** (`packages/shared/components/pulse/SubmitPost.tsx`): `UPDATE_FAMILY =
+  ["post", "poll", "quote"]`, `UPDATE_DEFAULT = "post"`, `UPDATE_TAB_META` (label + emoji per
+  slug), `isUpdateTemplate()` — same shape as `REVIEW_FAMILY`/`REVIEW_DEFAULT`/`REVIEW_TAB_META`/
+  `isReviewTemplate()` directly above them. Mirrored on mobile in
+  `components/community/TemplatePickerSheet.tsx` (`UPDATE_FAMILY`/`UPDATE_DEFAULT`/
+  `UPDATE_TAB_META`/`isUpdateTemplate()`/`UPDATE_CARD_DEF`) — keep both in sync per the project's
+  usual web/mobile duplication convention.
+- **`TemplateType`/`TemplateId` no longer has a `cultural-take` member** on either platform — it's
+  not just hidden from the picker, the composer-side type itself dropped the slug. The
+  **display-side** types that render *historical* posts (mobile `types/index.ts`'s `TemplateType`,
+  web `FeedCard.tsx`/`CommunityDetailModal.tsx`/`PostDetailSheet.tsx`'s plain-string
+  `item.templateType` checks) **deliberately still handle `"cultural-take"`** — old cultural-take
+  posts already in the DB must keep rendering correctly; only the *creation* path was removed.
+  Don't conflate the two type surfaces when touching this area again.
+- **Generic subtype-tabs helper, shared by both families**: what was `.composer-review-tabs`/
+  `.composer-review-tab*` CSS (both `apps/connect/app/globals.css` and `apps/site/app/globals.css`)
+  and a Review-only JSX block in `SubmitPost.tsx` is now `.composer-subtype-tabs`/
+  `.composer-subtype-tab*`, driven by a single `renderSubtypeTabs(family, meta)` function (a plain
+  function, not a nested component, so it doesn't remount on every render) called once per family:
+  `{isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}` and
+  `{isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}`. Mobile's
+  `NewPostScreen.tsx` got the equivalent treatment: `reviewTabs`/`reviewTab*` styles renamed to
+  `subtypeTabs`/`subtypeTab*`, and a `renderSubtypeTabs()` helper replaces the old inline
+  Review-only tab-row JSX.
+- **Optional directory field on Update and Poll**: both `template === "post"` and `template ===
+  "poll"` now render an (optional) `DirectorySearch` — web: `placeholder="What are you writing
+  about? (optional)"`; mobile: same label, wired to the same `linkedEntry` state Hidden Gem/Place
+  already used (mobile) / `directoryEntry` state Hidden Gem already used (web) — no new state
+  variable needed, since Cultural Take used to share exactly this state already. When set,
+  `payload.linked_directory_id`/`body.linked_directory_id` (+ `location_name`) are attached to the
+  submission generically, same as every other template that carries a directory link. Poll's field
+  was added per an explicit "should we add this to Poll too?" ask, not left as a follow-up.
+- **Removed entirely, not just hidden**: `culturalTakeHeadline` state, `renderCulturalTake()`
+  (mobile), the cultural-take branches in `validateAndSubmit()`/`isSubmitDisabled`/payload-building
+  (mobile) and `canSubmit()`/payload-building (web), the `cultural-take` `MAX_CHARS`/
+  `TEMPLATE_GUIDES`/`placeholders` entries, and the `styles.culturalHeadline` style block.
+  `TEMPLATE_REP_GATE` never had a cultural-take entry (it was never rep-gated), so no gate cleanup
+  was needed there.
+- **Backend allowlists updated to reject new cultural-take submissions** (still fully serving
+  historical reads — no data migration, no table changes): `apps/connect/app/api/community/submit/
+  route.ts`'s `ALLOWED_TEMPLATES`/`MAX_CHARS`, `class-culture-mobile-api.php`'s
+  `handle_submit_post()` `$allowed_templates`, and `class-culture-hubs.php`'s
+  `Culture_Hubs::ALLOWED_TEMPLATES`/`DEFAULT_ALLOWED_TEMPLATES` (the latter's "which templates are
+  ungated by default" rationale shrank from `['post', 'cultural-take']` to just `['post']`).
+  **Deliberately left untouched** (historical/reward plumbing only, reads existing data, doesn't
+  gate creation): `class-culture-gamification.php`'s `culture_guide` badge (still earnable from
+  *past* cultural-take posts) and its `cultural-take` credit/reputation award-map entry, and
+  `class-culture-settings.php`'s admin label for the `cultural_take_count` badge-trigger dropdown —
+  none of these can be reached by a new submission anymore, so there's nothing to break by leaving
+  them as-is.
+- **Hub template allowlists** (`apps/connect/app/hub/create/CreateHubClient.tsx`,
+  `apps/connect/app/hub/[slug]/HubManage.tsx`, mobile's `HubCreateScreen.tsx`/
+  `HubDetailScreen.tsx` — all four keep their own hardcoded `ALL_TEMPLATES` arrays, not sourced
+  from `SubmitPost.tsx`/`TemplatePickerSheet.tsx`) had their `cultural-take` entries removed and
+  `DEFAULT_TEMPLATES` trimmed from `["post", "cultural-take"]` to `["post"]`.
+- **Itinerary rename** (below) landed in the same pass — if you're grepping history for one and
+  find the other, that's why they're adjacent.
+
+### "Route" renamed to "Itinerary" (display label only, July 2026)
+
+Copy-only rename, same convention as the Hidden Gem→Place rename above: the `itinerary` slug,
+`_itinerary_*` payload/meta field names, and all internal identifiers are untouched — only the
+**label text "Route"** shown to users was changed to **"Itinerary"**. Touched: `TEMPLATES` in
+`SubmitPost.tsx`, `MODAL_META` in `TypePickerModal.tsx`, the hardcoded `ALL_TEMPLATES` arrays in
+both hub-management files (web) and both hub screens (mobile — though mobile's own
+`TEMPLATE_DEFS` in `TemplatePickerSheet.tsx` already said "Itinerary", only the hub-scoped lists
+needed fixing), and three "Weekend Route" itinerary-badge labels that had drifted out of sync
+with the template's own name (`FeedCard.tsx`, `CommunityDetailModal.tsx`,
+`apps/connect/app/community/[slug]/CommunityPostClient.tsx` — all now say "Itinerary"; the
+`apps/figma/` design-token showcase had the same stale label and was updated too, for
+consistency, even though that app isn't the production composer).
 
 ---
 
@@ -3826,6 +4036,39 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
   `package.json` but not in the lockfile, it won't be installed.
 - To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
   (must be outside the monorepo to avoid workspace interference)
+
+### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed, sandbox-only bug)
+In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
+since nothing forces it local to `apps/mobile`) has its own bundled `.d.ts` files that do
+`import * as React from 'react'`. Because those `.d.ts` files physically live under
+`/node_modules/react-native/...`, TypeScript's classic (`Node10`) module resolution walks
+**up from that location**, not from `apps/mobile/`, when it falls back to an `@types/<pkg>`
+lookup — and lands on the monorepo root's `node_modules/@types/react` (v19, installed for
+`apps/site`/`apps/connect`'s Next.js/React 19 apps) instead of `apps/mobile`'s own pinned
+`@types/react` (v18.3, matching the Expo SDK 52 / `react@18.3.1` pin above). Two conflicting
+global `ReactNode`/`JSX` declarations end up in one compilation — React 19's `ReactNode` type
+added `bigint` as a member, React 18's didn't — so **every** JSX element in the app (`<View>`,
+`<Text>`, etc.) fails with `TS2786: 'X' cannot be used as a JSX component ... Type 'bigint' is
+not assignable to type 'ReactNode'`, cascading into 5,000+ near-duplicate errors from one root
+cause. A plain `"types": ["react"]` restriction does **not** fix this — that only controls
+*implicit* ambient `@types` inclusion, not this specific `@types` **fallback** step, which
+ignores it. A `"paths"` remap of the bare `"react"` specifier to `apps/mobile`'s own package also
+doesn't fix it *by itself* — Node10 resolution's `@types` fallback re-walks from the *original*
+importing file's location if the redirected target has no directly-colocated `.d.ts`/`types`
+field (which `react`'s own `package.json` doesn't have — its types come entirely from the
+sibling `@types/react` package). **Fix, in `apps/mobile/tsconfig.json`**: add `"baseUrl": "."`
+and remap `"react"`/`"react/*"` straight to `./node_modules/@types/react` (not to
+`./node_modules/react`) — pointing directly at the `@types` package (which *does* have its own
+resolvable `.d.ts`/`types` field) makes the `paths` substitution succeed immediately, so
+resolution never falls through to the ancestor-walk that finds the root copy. Confirmed this is
+**sandbox-only, not a runtime bug** — Metro (the actual bundler) resolves modules per-file with
+its own algorithm and never mixes the two React type trees; this only ever affected `tsc
+--noEmit` type-checking. Reduced the mobile app's error count from ~5,375 baseline to 82 (all
+pre-existing, unrelated real type issues — missing properties, PollBuilder setState type, one
+dead narrowing check in `validateAndSubmit()` — none touching JSX/React types). If this
+resolution trick ever needs revisiting (e.g. after a dependency bump changes how `react-native`
+or `@types/react` are laid out), re-run `npx tsc --noEmit --traceResolution | grep "Resolving
+module 'react' from.*react-native"` to see exactly which `@types/react` copy wins.
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`

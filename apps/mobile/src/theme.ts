@@ -155,7 +155,12 @@ export const darkColors = {
   pollWinner:  '#4ADE80',
 } as const;
 
-export type ColorPalette = typeof lightColors;
+// Keys come from lightColors (so a new color added there is automatically
+// part of the palette), but values are widened to plain `string` — both
+// lightColors and darkColors are `as const`, so each locks every value to
+// its own specific hex literal; without this widening, darkColors' literals
+// (different from lightColors') fail to structurally satisfy the type.
+export type ColorPalette = { [K in keyof typeof lightColors]: string };
 
 export const fonts = {
   serif:           'Fraunces_400Regular',

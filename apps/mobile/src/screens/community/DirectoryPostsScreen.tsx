@@ -31,7 +31,7 @@ const TEMPLATE_BADGE: Record<string, { label: string; color: string }> = {
   post:                { label: "💬 Post",             color: "#3A342B" },
   "cultural-take":     { label: "🔥 Cultural Take",    color: "#6B48A8" },
   "food-review":       { label: "🍽️ Food Review",      color: "#C5491F" },
-  "hidden-gem":        { label: "💎 Hidden Gem",        color: "#2D9CDB" },
+  "hidden-gem":        { label: "💎 Place",              color: "#2D9CDB" },
   "book-review":       { label: "📖 Book Review",       color: "#3A342B" },
   "creative-showcase": { label: "🎨 Creative Showcase", color: "#1976D2" },
   itinerary:           { label: "🗺️ Itinerary",         color: "#B38238" },
@@ -289,7 +289,10 @@ export default function DirectoryPostsScreen() {
               styles={styles}
               c={c}
               onPress={() => nav.navigate("PostDetail", {
-                item: { id: item.id, slug: item.slug, title: item.title, excerpt: item.excerpt },
+                item: {
+                  id: String(item.id), slug: item.slug, title: item.title, excerpt: item.excerpt,
+                  type: "community", date: new Date().toISOString(), href: `/community/${item.slug}`,
+                },
               })}
             />
           )}

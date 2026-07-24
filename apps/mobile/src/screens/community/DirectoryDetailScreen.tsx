@@ -98,7 +98,7 @@ const TEMPLATE_BADGE: Record<string, { label: string; color: string }> = {
   post:               { label: "💬 POST",             color: "#3A342B" },
   "cultural-take":    { label: "🔥 CULTURAL TAKE",    color: "#6B48A8" },
   "food-review":      { label: "🍽️ FOOD REVIEW",      color: "#C5491F" },
-  "hidden-gem":       { label: "💎 HIDDEN GEM",        color: "#2D9CDB" },
+  "hidden-gem":       { label: "💎 PLACE",              color: "#2D9CDB" },
   "book-review":      { label: "📖 BOOK REVIEW",       color: "#3A342B" },
   "creative-showcase":{ label: "🎨 CREATIVE SHOWCASE", color: "#1976D2" },
   itinerary:          { label: "🗺️ ITINERARY",         color: "#B38238" },
@@ -426,7 +426,7 @@ export default function DirectoryDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         {/* Hero gradient placeholder */}
         <LinearGradient
-          colors={gradient as unknown as string[]}
+          colors={gradient}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={styles.heroWrap}
         >
@@ -446,7 +446,7 @@ export default function DirectoryDetailScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
-          colors={gradient as unknown as string[]}
+          colors={gradient}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={styles.heroWrap}
         >
@@ -486,7 +486,7 @@ export default function DirectoryDetailScreen() {
             <Image source={{ uri: entry.imageUrl }} style={styles.heroImage} resizeMode="cover" />
           ) : (
             <LinearGradient
-              colors={gradient as unknown as string[]}
+              colors={gradient}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.heroGradient}
             />
@@ -612,7 +612,7 @@ export default function DirectoryDetailScreen() {
                     <Image source={{ uri: work.imageUrl }} style={styles.workImage} resizeMode="cover" />
                   ) : (
                     <LinearGradient
-                      colors={[gradient[0], gradient[2]] as unknown as string[]}
+                      colors={[gradient[0], gradient[2]] as const}
                       style={styles.workImage}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                     />
@@ -729,7 +729,7 @@ export default function DirectoryDetailScreen() {
                     activeOpacity={0.75}
                   >
                     <LinearGradient
-                      colors={relConfig.gradient as unknown as string[]}
+                      colors={relConfig.gradient}
                       style={styles.relatedAvatar}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                     />

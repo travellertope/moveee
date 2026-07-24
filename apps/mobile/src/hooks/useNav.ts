@@ -13,7 +13,11 @@ export type AppParamList = {
     hubSlug?: string;
     hubAllowedTemplates?: string[];
   } | undefined;
-  DirectorySubmit: undefined;
+  DirectorySubmit: {
+    improvingSlug?: string;
+    improvingTitle?: string;
+    improvingEntryType?: string;
+  } | undefined;
   MemberProfile: { userId?: string; username?: string };
   MemberDirectory: undefined;
   Notifications: undefined;

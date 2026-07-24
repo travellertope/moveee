@@ -652,7 +652,7 @@ class Culture_Settings {
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label for="culture_credits_post_validated_special"><?php esc_html_e( 'Special Posts (Hidden Gem, Food Review)', 'culture-community' ); ?></label></th>
+                <th scope="row"><label for="culture_credits_post_validated_special"><?php esc_html_e( 'Special Posts (Place, Food Review)', 'culture-community' ); ?></label></th>
                 <td>
                     <input type="number" id="culture_credits_post_validated_special" name="culture_credits_post_validated_special"
                            value="<?php echo esc_attr( get_option( 'culture_credits_post_validated_special', 15 ) ); ?>" min="0" step="1" class="small-text" />

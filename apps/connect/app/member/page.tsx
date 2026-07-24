@@ -124,7 +124,7 @@ export default async function MemberPage() {
               <div className="mem-points-list">
                 {[
                   ["Post validated (5 reactions or 3 comments)", "+10 cr", "+5"],
-                  ["Hidden Gem or Food Review validated",         "+15 cr", "+10"],
+                  ["Place or Food Review validated",              "+15 cr", "+10"],
                   ["Event RSVP",                                  "+1 cr",  "+5"],
                   ["Event check-in",                              "+2 cr",  "+15"],
                   ["Refer a member",                              "+3 cr",  "+25"],

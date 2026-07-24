@@ -73,6 +73,18 @@
   }
 }
 
+/* No desktop app exists (iOS/Android only) — hide both the persistent
+   banner and the occasional modal nudge at desktop widths. 860px matches
+   the breakpoint the left-nav rail switches over at (see Header.tsx),
+   i.e. "desktop" here means the same thing it does everywhere else in
+   this app. */
+@media (min-width: 860px) {
+  .adb-banner,
+  .adm-overlay {
+    display: none;
+  }
+}
+
 /* ===== App download modal (occasional, never blocking) ===== */
 .adm-overlay {
   position: fixed;

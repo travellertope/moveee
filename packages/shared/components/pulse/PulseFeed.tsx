@@ -216,12 +216,13 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (!userId) return;
     setHasDraft(!!localStorage.getItem(draftKey(userId)));
   }, [userId]);
+  // Deliberately does NOT close the modal here — TypePickerModal shows a
+  // spinner on the picked tile and stays mounted until /post/new actually
+  // finishes navigating in, so a pick never looks like a dead click.
   const selectTemplate = useCallback((t: TemplateType) => {
-    setTypeModalOpen(false);
     router.push(`/post/new?template=${t}`);
   }, [router]);
   const selectDraftTile = useCallback(() => {
-    setTypeModalOpen(false);
     router.push("/post/new?draft=1");
   }, [router]);
 

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 const TEMPLATES = [
   { icon: "📝", title: "Standard Post", body: "Say what's on your mind — tag the section it belongs to and let the feed find its people." },
-  { icon: "💎", title: "Hidden Gem", body: "The spot nobody's posted yet. Location, price range, opening hours — pinned for everyone after you." },
+  { icon: "💎", title: "Place", body: "The spot nobody's posted yet. Location, price range, opening hours — pinned for everyone after you." },
   { icon: "🗣️", title: "Cultural Take", body: "Your hot take, headline-first. No image required — just the argument." },
   { icon: "🍽️", title: "Food Review", body: "Rate taste, value and vibe separately. Link the restaurant straight to Discover." },
   { icon: "📚", title: "Book Review", body: "Status, star rating, a breakdown by writing/story/characters/pacing, and your favourite quote." },

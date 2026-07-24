@@ -43,15 +43,14 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-export type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+export type TemplateType = "post" | "quote" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
-// lock — Quote was never gated but sat after Poll/Route/Event, so it read
+// lock — Quote was never gated but sat after Poll/Itinerary/Event, so it read
 // as locked-away even though it wasn't.
 export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
-  { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
-  { slug: "cultural-take",     label: "Take",      emoji: "💬" },
+  { slug: "hidden-gem",        label: "Place",     emoji: "💎" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "music-review",      label: "Music",     emoji: "🎵" },
@@ -59,7 +58,7 @@ export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] =
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
-  { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
+  { slug: "itinerary",         label: "Itinerary", emoji: "🗺️" },
   { slug: "event",             label: "Event",     emoji: "📅" },
 ];
 
@@ -71,19 +70,81 @@ export const TEMPLATE_REP_GATE: Partial<Record<TemplateType, { minRep: number; t
   event:     { minRep: 500,  tierLabel: "Culture Contributor" },
 };
 
+// Review family (July 2026) — Hidden Gem/Food/Book/Music/Film Review are
+// presented as one "Review" entry point in the type picker; once inside,
+// a tab row lets the user switch between subtypes without leaving the page.
+// Internal template_type slugs/payloads/validation are all unchanged — this
+// only changes how the 5 are grouped in the UI. Order here is the tab order.
+export const REVIEW_FAMILY: TemplateType[] = ["hidden-gem", "food-review", "music-review", "book-review", "film-review"];
+export const REVIEW_DEFAULT: TemplateType = "hidden-gem";
+export const REVIEW_TAB_META: Record<string, { label: string; emoji: string }> = {
+  "hidden-gem":   { label: "Place", emoji: "💎" },
+  "food-review":  { label: "Food",  emoji: "🍽️" },
+  "music-review": { label: "Music", emoji: "🎵" },
+  "book-review":  { label: "Book",  emoji: "📚" },
+  "film-review":  { label: "Film",  emoji: "🎬" },
+};
+export function isReviewTemplate(t: TemplateType): boolean {
+  return REVIEW_FAMILY.includes(t);
+}
+
+// Update family (July 2026) — Update/Poll/Quote are presented as one
+// "Updates" entry point in the type picker; once inside, a tab row (same
+// pattern as REVIEW_FAMILY above) lets the user switch between them without
+// leaving the page. Cultural Take was folded into Update entirely — its
+// "what are you writing about?" directory-linking idea lives on as an
+// optional field on the plain Update ("post") form instead of its own
+// template; there is no cultural-take slug anymore.
+export const UPDATE_FAMILY: TemplateType[] = ["post", "poll", "quote"];
+export const UPDATE_DEFAULT: TemplateType = "post";
+export const UPDATE_TAB_META: Record<string, { label: string; emoji: string }> = {
+  post:  { label: "Update", emoji: "📝" },
+  poll:  { label: "Poll",   emoji: "📊" },
+  quote: { label: "Quote",  emoji: "✦" },
+};
+export function isUpdateTemplate(t: TemplateType): boolean {
+  return UPDATE_FAMILY.includes(t);
+}
+
 const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
-  post:                { desc: "Share news, a link, or a quick thought from your cultural world." },
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world — optionally tag what it's about." },
   "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues." },
-  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing." },
-  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe." },
+  "food-review":       { desc: "Review a dish or food item. Rate the taste, value, and vibe." },
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
   "film-review":       { desc: "Review a film — rate it and share your thoughts." },
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
-  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
+  poll:                { desc: "Ask the community something — optionally link the directory item it's about. Great for settling debates or gathering opinions." },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
   event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
   quote:               { desc: "Share a quote that moved you. Add the author and source below." },
+};
+
+// Templates with forms long enough to overwhelm in one scroll get broken
+// into up to 3 logical steps (Next/Back) instead of one long page — short
+// templates (post, quote, poll) stay single-step/unlisted here.
+const WIZARD_STEPS: Partial<Record<TemplateType, number>> = {
+  "hidden-gem": 3,
+  "food-review": 3,
+  "book-review": 3,
+  "music-review": 3,
+  "film-review": 3,
+  "creative-showcase": 2,
+  itinerary: 3,
+  event: 3,
+};
+
+// Which step (0-indexed) a given form section belongs to, per wizard
+// template — sections not listed for a template default to step 0, which is
+// also correct for non-wizard templates (they only ever render step 0).
+const WIZARD_SECTION_STEP: Record<string, Partial<Record<TemplateType, number>>> = {
+  rating: { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1 },
+  text:   { "hidden-gem": 1, "food-review": 1, "book-review": 1, "music-review": 1, "film-review": 1, event: 1 },
+  extras: { "book-review": 2, "music-review": 2, "film-review": 2 },
+  stops:  { itinerary: 1 },
+  photos: { "hidden-gem": 2, "food-review": 2, "creative-showcase": 1, itinerary: 2 },
+  details:   { event: 1 },
+  rsvpphoto: { event: 2 },
 };
 
 // Template → default section tag
@@ -142,7 +203,7 @@ const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highli
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 
 const MAX_CHARS: Record<string, number> = {
-  post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
+  post: 3000, "hidden-gem": 500, "food-review": 500,
   "book-review": 800,
   "music-review": 800,
   "film-review": 800,
@@ -187,6 +248,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       : (visibleTemplates[0]?.slug ?? "post")
   );
 
+  // Multi-step wizard (long templates only — see WIZARD_STEPS above).
+  const [step, setStep] = useState(0);
+  const totalSteps = WIZARD_STEPS[template] ?? 1;
+  const isWizard = totalSteps > 1;
+  function showSection(section: string): boolean {
+    if (!isWizard) return true;
+    return step === (WIZARD_SECTION_STEP[section]?.[template] ?? 0);
+  }
+
   // Shared state
   const [text, setText] = useState(initialDraft?.text ?? "");
   const [tag, setTag] = useState<Tag | "">(
@@ -222,8 +292,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
 
-  // Food review specific
-  const [foodDishName, setFoodDishName] = useState("");
+  // Food review specific — foodEntry is the searchable dish/item directory
+  // entry (July 2026, replaces the old plain-text dish name + restaurant search).
+  const [foodEntry, setFoodEntry] = useState<any>(null);
   const [foodTaste, setFoodTaste] = useState(0);
   const [foodValue, setFoodValue] = useState(0);
   const [foodVibe, setFoodVibe] = useState(0);
@@ -405,6 +476,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   }
 
   function resetForm() {
+    setStep(0);
     setText(""); setTag(TEMPLATE_TAGS[template] ?? ""); setTagLocked(false); removeImage(); setError(""); setSuccess("");
     setStarRating(0); setDirectoryEntry(null);
     setPollOptions(["", ""]); setPollDuration("3");
@@ -413,7 +485,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       { name: "", lat: 0, lng: 0, note: "", image_url: "" },
     ]);
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
-    setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
+    setFoodEntry(null); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource(""); setQuoteSharingReason(""); setQuoteType("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
@@ -440,6 +512,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     }
     setLockedTip(null);
     setTemplate(t);
+    setStep(0);
     setError("");
     if (!lockedTag) {
       setTagLocked(false);
@@ -473,10 +546,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
       case "hidden-gem":
         return text.trim().length >= 50 && starRating > 0 && !!directoryEntry && (!!imageFile || galleryFiles.length > 0);
-      case "cultural-take":
-        return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
-        return text.trim().length >= 50 && foodDishName.trim().length > 0 && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
+        return text.trim().length >= 50 && !!foodEntry && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
       case "book-review":
         return !!bookEntry && !!bookStatus && bookOverallRating > 0 && text.trim().length >= 50 && bookRecommend !== null;
       case "music-review":
@@ -501,8 +572,54 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     }
   }
 
+  /** Gates the wizard's "Next" button — lighter, per-step version of
+   * canSubmit()'s full-form checks so a step can't be skipped without its
+   * own required fields, without requiring later steps' fields yet. */
+  function canProceedStep(): boolean {
+    switch (template) {
+      case "hidden-gem":
+        if (step === 0) return !!directoryEntry;
+        if (step === 1) return starRating > 0 && text.trim().length >= 50;
+        return true;
+      case "food-review":
+        if (step === 0) return !!foodEntry;
+        if (step === 1) return foodTaste > 0 && foodValue > 0 && foodVibe > 0 && text.trim().length >= 50;
+        return true;
+      case "book-review":
+        if (step === 0) return !!bookEntry && !!bookStatus;
+        if (step === 1) return bookOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "music-review":
+        if (step === 0) return !!musicEntry;
+        if (step === 1) return musicOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "film-review":
+        if (step === 0) return !!filmEntry;
+        if (step === 1) return filmOverallRating > 0 && text.trim().length >= 50;
+        return true;
+      case "itinerary":
+        if (step === 1) return itineraryStops.filter(s => s.name.trim()).length >= 2;
+        return true;
+      case "event":
+        if (step === 0) {
+          if (!eventTitle.trim() || !eventDate) return false;
+          const d = new Date(eventDate);
+          if (isNaN(d.getTime())) return false;
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          return d >= today;
+        }
+        return true;
+      default:
+        return true;
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // A text input's Enter key submits the form natively even though the
+    // visible button on a non-final step says "Next" — block it here too,
+    // not just via the button's own type="button".
+    if (isWizard && step < totalSteps - 1) return;
     if (!canSubmit()) return;
     setLoading(true);
     setError("");
@@ -578,7 +695,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         payload.star_rating = starRating;
       }
       if (template === "food-review") {
-        payload.food_dish_name = foodDishName;
+        payload.linked_directory_id = foodEntry?.id;
+        payload.food_dish_name = foodEntry?.title;
         payload.star_rating = Math.round((foodTaste + foodValue + foodVibe) / 3);
         payload.food_rating_taste = foodTaste;
         payload.food_rating_value = foodValue;
@@ -684,6 +802,30 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     }
   };
 
+  // Shared tab-row renderer for both the Review family and the Update
+  // family — a plain function (not a nested component) so it doesn't remount
+  // its children on every render; it's a closure over `template` and
+  // `handleTemplateChange` rather than its own component identity.
+  function renderSubtypeTabs(family: TemplateType[], meta: Record<string, { label: string; emoji: string }>) {
+    return (
+      <div className="composer-subtype-tabs">
+        {family.map(rt => {
+          const m = meta[rt];
+          return (
+            <button
+              key={rt}
+              type="button"
+              className={`composer-subtype-tab${template === rt ? " composer-subtype-tab--active" : ""}`}
+              onClick={() => handleTemplateChange(rt)}
+            >
+              <span aria-hidden>{m.emoji}</span> {m.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   if (status === "loading") return null;
 
   if (!loggedIn) {
@@ -713,8 +855,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   const placeholders: Record<TemplateType, string> = {
     post: "What's happening in culture?",
     quote: "The quote…",
-    "hidden-gem": "Tell us about this gem — what makes it special?",
-    "cultural-take": "Share your take…",
+    "hidden-gem": "Tell us about this place — what makes it special?",
     "food-review": "How was the food?",
     "book-review": "What did you think? Who would love it?",
     "music-review": "What did you think? Standout tracks?",
@@ -725,7 +866,18 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
-  const activeTemplateMeta = TEMPLATES.find(t => t.slug === template);
+  // In the review/update families, the slim bar shows the subtype's own
+  // label ("Place"/"Food"/"Music"/"Book"/"Film" or "Update"/"Poll"/"Quote")
+  // so it stays consistent with the tab row below it. TEMPLATES' own chip
+  // labels for these slugs now match REVIEW_TAB_META/UPDATE_TAB_META
+  // exactly, so this branch is currently redundant but kept as the source
+  // of truth for the family label specifically, in case the two ever
+  // diverge again.
+  const activeTemplateMeta = isReviewTemplate(template)
+    ? REVIEW_TAB_META[template]
+    : isUpdateTemplate(template)
+    ? UPDATE_TAB_META[template]
+    : TEMPLATES.find(t => t.slug === template);
   const sectionHidden = template === "quote" || template === "food-review" || template === "event";
   const sectionFixed = lockedTag || TEMPLATE_TAGS[template];
   const showAutoHint = !sectionHidden && !sectionFixed && !!tag && !tagLocked;
@@ -781,14 +933,53 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
       {/* Form */}
       <form onSubmit={handleSubmit} className="composer-form-body">
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          {/* Avatar */}
-          <div className={`composer-avatar${template === "quote" ? " composer-avatar--quote" : ""}`}>
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" />
-            ) : initials}
-          </div>
+          {/* Avatar — skipped in dedicated-page mode (onChangeType set) to
+              give the form the width back, Reddit's /submit has none either. */}
+          {!onChangeType && (
+            <div className={`composer-avatar${template === "quote" ? " composer-avatar--quote" : ""}`}>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" />
+              ) : initials}
+            </div>
+          )}
 
           <div className="composer-fields">
+            {/* Template guide — pinned to the top of the form (moved off the
+                textarea, July 2026) so it stays visible across every wizard
+                step instead of only showing up on whichever step has the
+                main text field. Always visible now — the old "hide once the
+                user starts typing" behavior made sense next to the textarea,
+                not as a top-of-form caption. */}
+            <div className="composer-guide">
+              <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
+            </div>
+
+            {/* Family subtype tabs — Place/Food/Music/Book/Film Review are one
+                "Review" entry point in the type picker (see REVIEW_FAMILY),
+                and Update/Poll/Quote are one "Updates" entry point (see
+                UPDATE_FAMILY) — this lets the user switch between a family's
+                subtypes in place instead of reopening the picker. Reuses
+                handleTemplateChange() exactly like the chip row / picker
+                modal do — same reset behavior. */}
+            {isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}
+            {isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}
+
+            {/* Step progress — long templates only (WIZARD_STEPS above) */}
+            {isWizard && (
+              <div className="composer-wizard-progress">
+                <span className="composer-wizard-dots">
+                  {Array.from({ length: totalSteps }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`composer-wizard-dot${i === step ? " composer-wizard-dot--active" : i < step ? " composer-wizard-dot--done" : ""}`}
+                      aria-hidden
+                    />
+                  ))}
+                </span>
+                <span className="composer-wizard-label">Step {step + 1} of {totalSteps}</span>
+              </div>
+            )}
+
             {/* Posting to — Section picker. Hidden for quote/food-review/event
                 (food-review still auto-sets Food server-side, it just isn't
                 user-editable here), locked to the template's fixed Section
@@ -840,29 +1031,42 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )
             )}
 
-            {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
-            {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
+            {/* Directory search — required for hidden-gem (Place), optional
+                "what are you writing about?" link for Update and Poll (July
+                2026 — this is what used to be the standalone Cultural Take
+                template's required directory field; folding Cultural Take
+                into Update made it optional rather than required, since a
+                plain Update should still work with no directory link at
+                all). */}
+            {template === "hidden-gem" && showSection("search") && (
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
-                typeFilter={template === "food-review" ? "restaurant" : undefined}
-                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Search or add a location *"}
+                placeholder="Search or add a location *"
+              />
+            )}
+            {(template === "post" || template === "poll") && (
+              <DirectorySearch
+                value={directoryEntry}
+                onChange={setDirectoryEntry}
+                placeholder="What are you writing about? (optional)"
               />
             )}
 
-            {/* Food dish name */}
-            {template === "food-review" && (
-              <input
-                type="text"
-                value={foodDishName}
-                onChange={e => setFoodDishName(e.target.value)}
-                placeholder="Dish or item name *"
-                className="composer-input"
+            {/* Food/dish search — the dish or item itself is now the searchable
+                directory entry (July 2026). Restaurant/venue search was
+                removed here; that's now Place (Hidden Gem) review's job. */}
+            {template === "food-review" && showSection("search") && (
+              <DirectorySearch
+                value={foodEntry}
+                onChange={setFoodEntry}
+                typeFilter="food"
+                placeholder="Search or add a dish *"
               />
             )}
 
             {/* Book search + status */}
-            {template === "book-review" && (
+            {template === "book-review" && showSection("search") && (
               <>
                 <DirectorySearch
                   value={bookEntry}
@@ -889,7 +1093,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             {/* Album search */}
-            {template === "music-review" && (
+            {template === "music-review" && showSection("search") && (
               <DirectorySearch
                 value={musicEntry}
                 onChange={setMusicEntry}
@@ -901,7 +1105,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             {/* Film search */}
-            {template === "film-review" && (
+            {template === "film-review" && showSection("search") && (
               <DirectorySearch
                 value={filmEntry}
                 onChange={(entry) => {
@@ -918,8 +1122,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               />
             )}
 
-            {/* Event fields */}
-            {template === "event" && (
+            {/* Event fields — step 1: basics (title + dates) */}
+            {template === "event" && showSection("basics") && (
               <>
                 <input
                   type="text"
@@ -948,6 +1152,12 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     />
                   </div>
                 </div>
+              </>
+            )}
+
+            {/* Event fields — step 2: venue/admission/category/organiser */}
+            {template === "event" && showSection("details") && (
+              <>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <input
                     type="text"
@@ -1003,73 +1213,79 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   onChange={setEventOrganiser}
                   placeholder="Search directory for organiser…"
                 />
-
-                {isPro ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={eventRsvpEnabled}
-                        onChange={e => setEventRsvpEnabled(e.target.checked)}
-                      />
-                      Enable RSVP for this event
-                    </label>
-                    {eventRsvpEnabled && (
-                      <input
-                        type="number"
-                        min={0}
-                        value={eventRsvpCapacity}
-                        onChange={e => setEventRsvpCapacity(e.target.value)}
-                        placeholder="Capacity (0 = unlimited)"
-                        className="composer-input"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "0.25rem" }}>
-                    Moveee Pro members can enable RSVP for their events.
-                  </p>
-                )}
               </>
             )}
 
-            {/* Template guide */}
-            <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
-              <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
-            </div>
-
-            {/* Main text area */}
-            {template === "quote" ? (
-              <div className="composer-quote-box">
-                <span className="composer-quote-glyph" aria-hidden>&ldquo;</span>
-                <div className="composer-textarea-wrap">
-                  <textarea
-                    ref={textareaRef}
-                    value={text}
-                    onChange={handleTextChange}
-                    placeholder={placeholders[template]}
-                    rows={4}
-                    className="composer-textarea composer-textarea--italic"
-                  />
-                  <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
-                    {charCount}/{maxChars}
-                  </span>
+            {/* Event fields — step 3: RSVP (photo grid for event renders further below, also step-gated to rsvpphoto) */}
+            {template === "event" && showSection("rsvpphoto") && (
+              isPro ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={eventRsvpEnabled}
+                      onChange={e => setEventRsvpEnabled(e.target.checked)}
+                    />
+                    Enable RSVP for this event
+                  </label>
+                  {eventRsvpEnabled && (
+                    <input
+                      type="number"
+                      min={0}
+                      value={eventRsvpCapacity}
+                      onChange={e => setEventRsvpCapacity(e.target.value)}
+                      placeholder="Capacity (0 = unlimited)"
+                      className="composer-input"
+                    />
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="composer-textarea-wrap">
-                <textarea
-                  ref={textareaRef}
-                  value={text}
-                  onChange={handleTextChange}
-                  placeholder={placeholders[template]}
-                  rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
-                  className="composer-textarea"
-                />
-                <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
-                  {charCount}/{maxChars}
-                </span>
-              </div>
+              ) : (
+                <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "0.25rem" }}>
+                  Moveee Pro members can enable RSVP for their events.
+                </p>
+              )
+            )}
+
+            {/* Main text area — step-gated for wizard templates (see
+                WIZARD_SECTION_STEP's "text" entries); always shown for
+                short/non-wizard templates, showSection() defaults to true.
+                The guide description itself now lives at the top of the
+                form (see composer-fields' opening block above). */}
+            {showSection("text") && (
+              <>
+                {template === "quote" ? (
+                  <div className="composer-quote-box">
+                    <span className="composer-quote-glyph" aria-hidden>&ldquo;</span>
+                    <div className="composer-textarea-wrap">
+                      <textarea
+                        ref={textareaRef}
+                        value={text}
+                        onChange={handleTextChange}
+                        placeholder={placeholders[template]}
+                        rows={4}
+                        className="composer-textarea composer-textarea--italic"
+                      />
+                      <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
+                        {charCount}/{maxChars}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="composer-textarea-wrap">
+                    <textarea
+                      ref={textareaRef}
+                      value={text}
+                      onChange={handleTextChange}
+                      placeholder={placeholders[template]}
+                      rows={template === "creative-showcase" ? 2 : 4}
+                      className="composer-textarea"
+                    />
+                    <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
+                      {charCount}/{maxChars}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Quote author/source */}
@@ -1108,23 +1324,27 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             {/* Star rating — hidden-gem */}
-            {template === "hidden-gem" && (
+            {template === "hidden-gem" && showSection("rating") && (
               <StarRating value={starRating} onChange={setStarRating} label="Rating" />
             )}
 
-            {/* Book review — overall + breakdown ratings, favourite quote, recommend, genres */}
-            {template === "book-review" && (
+            {/* Book review — overall + breakdown ratings (step: rating) */}
+            {template === "book-review" && showSection("rating") && (
+              <MultiRating
+                ratings={[
+                  { label: "Writing", value: bookRatings.writing },
+                  { label: "Story", value: bookRatings.story },
+                  { label: "Characters", value: bookRatings.characters },
+                  { label: "Pacing", value: bookRatings.pacing },
+                ]}
+                onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
+                overall={{ value: bookOverallRating, onChange: (v) => { setBookOverallManual(true); setBookOverallRating(v); } }}
+              />
+            )}
+
+            {/* Book review — favourite quote, recommend, genres (step: extras) */}
+            {template === "book-review" && showSection("extras") && (
               <>
-                <MultiRating
-                  ratings={[
-                    { label: "Writing", value: bookRatings.writing },
-                    { label: "Story", value: bookRatings.story },
-                    { label: "Characters", value: bookRatings.characters },
-                    { label: "Pacing", value: bookRatings.pacing },
-                  ]}
-                  onChange={(key, v) => setBookRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: bookOverallRating, onChange: (v) => { setBookOverallManual(true); setBookOverallRating(v); } }}
-                />
                 <textarea
                   value={bookFavQuote}
                   onChange={e => setBookFavQuote(e.target.value.slice(0, 300))}
@@ -1214,19 +1434,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </>
             )}
 
-            {/* Music review — overall + breakdown ratings, favourite lyric, recommend, genres */}
-            {template === "music-review" && (
+            {/* Music review — overall + breakdown ratings (step: rating) */}
+            {template === "music-review" && showSection("rating") && (
+              <MultiRating
+                ratings={[
+                  { label: "Production", value: musicRatings.production },
+                  { label: "Lyrics", value: musicRatings.lyrics },
+                  { label: "Replay Value", value: musicRatings.replay, key: "replay" },
+                  { label: "Vibe", value: musicRatings.vibe },
+                ]}
+                onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
+                overall={{ value: musicOverallRating, onChange: (v) => { setMusicOverallManual(true); setMusicOverallRating(v); } }}
+              />
+            )}
+
+            {/* Music review — favourite lyric, recommend, genres (step: extras) */}
+            {template === "music-review" && showSection("extras") && (
               <>
-                <MultiRating
-                  ratings={[
-                    { label: "Production", value: musicRatings.production },
-                    { label: "Lyrics", value: musicRatings.lyrics },
-                    { label: "Replay Value", value: musicRatings.replay, key: "replay" },
-                    { label: "Vibe", value: musicRatings.vibe },
-                  ]}
-                  onChange={(key, v) => setMusicRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: musicOverallRating, onChange: (v) => { setMusicOverallManual(true); setMusicOverallRating(v); } }}
-                />
                 <textarea
                   value={musicFavLyric}
                   onChange={e => setMusicFavLyric(e.target.value.slice(0, 300))}
@@ -1316,19 +1540,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </>
             )}
 
-            {/* Film review — overall + breakdown ratings, favourite line, recommend, genres */}
-            {template === "film-review" && (
+            {/* Film review — overall + breakdown ratings (step: rating) */}
+            {template === "film-review" && showSection("rating") && (
+              <MultiRating
+                ratings={[
+                  { label: "Story", value: filmRatings.story },
+                  { label: "Acting", value: filmRatings.acting },
+                  { label: "Visuals", value: filmRatings.visuals },
+                  { label: "Pacing", value: filmRatings.pacing },
+                ]}
+                onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
+                overall={{ value: filmOverallRating, onChange: (v) => { setFilmOverallManual(true); setFilmOverallRating(v); } }}
+              />
+            )}
+
+            {/* Film review — favourite line, recommend, genres (step: extras) */}
+            {template === "film-review" && showSection("extras") && (
               <>
-                <MultiRating
-                  ratings={[
-                    { label: "Story", value: filmRatings.story },
-                    { label: "Acting", value: filmRatings.acting },
-                    { label: "Visuals", value: filmRatings.visuals },
-                    { label: "Pacing", value: filmRatings.pacing },
-                  ]}
-                  onChange={(key, v) => setFilmRatings(prev => ({ ...prev, [key]: v }))}
-                  overall={{ value: filmOverallRating, onChange: (v) => { setFilmOverallManual(true); setFilmOverallRating(v); } }}
-                />
                 <textarea
                   value={filmFavLine}
                   onChange={e => setFilmFavLine(e.target.value.slice(0, 300))}
@@ -1419,7 +1647,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             {/* Multi-rating — food-review */}
-            {template === "food-review" && (
+            {template === "food-review" && showSection("rating") && (
               <MultiRating
                 ratings={[
                   { label: "Taste", value: foodTaste },
@@ -1445,7 +1673,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             {/* Itinerary builder */}
-            {template === "itinerary" && (
+            {template === "itinerary" && showSection("stops") && (
               <ItineraryBuilder stops={itineraryStops} onChange={setItineraryStops} />
             )}
 
@@ -1475,7 +1703,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
 
             {/* Photo grid — single image (event) or gallery (post/hidden-gem/food-review/creative-showcase/itinerary) */}
             {template === "event" ? (
-              imagePreview && (
+              showSection("rsvpphoto") && imagePreview && (
                 <div className="composer-photo-row">
                   <div className="composer-photo-thumb">
                     <img src={imagePreview} alt="Preview" />
@@ -1483,7 +1711,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                   </div>
                 </div>
               )
-            ) : template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" && (
+            ) : template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review" && showSection("photos") && (
               <div className="composer-photo-row">
                 {galleryPreviews.map((p, i) => (
                   <div key={i} className="composer-photo-thumb">
@@ -1504,8 +1732,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </div>
             )}
 
-            {/* Video URL — creative-showcase */}
-            {template === "creative-showcase" && (
+            {/* Video URL — creative-showcase (same step as its photo grid) */}
+            {template === "creative-showcase" && showSection("photos") && (
               <input
                 type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
                 placeholder="Video URL (YouTube, Vimeo)" className="composer-input"
@@ -1513,8 +1741,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "book-review" && template !== "music-review" && template !== "film-review"}
               style={{ display: "none" }}
             />
 
@@ -1522,7 +1750,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
             {/* Action bar */}
             <div className="composer-action-bar">
               {/* Image button — only for event (other image templates use the inline add-tile in the photo row) */}
-              {template === "event" && (
+              {template === "event" && showSection("rsvpphoto") && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -1539,18 +1767,34 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               )}
 
               <div className="composer-spacer" />
+              {isWizard && step > 0 && (
+                <button type="button" className="composer-back-btn" onClick={() => setStep(s => s - 1)}>
+                  ← Back
+                </button>
+              )}
               {onSaveDraft && (
                 <button type="button" className="composer-draft-btn" onClick={handleSaveDraft}>
                   {draftSaved ? "Saved ✓" : "Save draft"}
                 </button>
               )}
-              <button
-                type="submit"
-                disabled={!canSubmit()}
-                className="composer-submit"
-              >
-                {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
-              </button>
+              {isWizard && step < totalSteps - 1 ? (
+                <button
+                  type="button"
+                  disabled={!canProceedStep()}
+                  className="composer-submit"
+                  onClick={() => setStep(s => s + 1)}
+                >
+                  Next →
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!canSubmit()}
+                  className="composer-submit"
+                >
+                  {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
+                </button>
+              )}
             </div>
             {error && <p className="composer-error">{error}</p>}
           </div>

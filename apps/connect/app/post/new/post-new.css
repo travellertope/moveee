@@ -1,6 +1,26 @@
+/* Reddit-style: left-aligned within the content column, not centered —
+   the composer sits right after the left-nav rail, same as /submit does
+   right after Reddit's own sidebar, rather than floating in the middle
+   of the remaining space. */
 .post-new-wrap {
-  max-width: 640px;
-  margin: 0 auto;
+  max-width: 680px;
+  margin: 0;
   padding: 24px 16px 60px;
   min-height: calc(100vh - 60px);
+}
+
+/* Route-level loading skeleton (loading.tsx) — shown the instant navigation
+   to /post/new starts, so a template pick never looks like a dead click. */
+.post-new-skeleton { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.post-new-skeleton-bar {
+  background: var(--paper-deep, #f2f2f2);
+  border-radius: 6px;
+  animation: post-new-pulse 1.3s ease-in-out infinite;
+}
+@keyframes post-new-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .post-new-skeleton-bar { animation: none; }
 }

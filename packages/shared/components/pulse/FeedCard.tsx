@@ -608,7 +608,7 @@ export default function FeedCard({
                 <div style={{ marginBottom: "0.4rem" }}>
                   {item.templateType === "hidden-gem" && (
                     <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold)", background: "var(--cat-pulse-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
-                      💎 Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                      💎 Place {item.starRating ? "★".repeat(item.starRating) : ""}
                     </span>
                   )}
                   {item.templateType === "poll" && (
@@ -648,7 +648,7 @@ export default function FeedCard({
                   )}
                   {item.templateType === "itinerary" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Weekend Route
+                      Itinerary
                     </span>
                   )}
                   {item.templateType === "event" && (
