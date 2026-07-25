@@ -19,15 +19,6 @@ export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
-const NAV_LINKS = [
-  { label: "All",       href: "/feed" },
-  { label: "Pulse",     href: "/feed" },
-  { label: "News",      href: "/feed" },
-  { label: "Editorial", href: "/feed" },
-  { label: "Event",     href: "/feed" },
-  { label: "Directory", href: "/feed" },
-];
-
 export function generateStaticParams() {
   return [];
 }
@@ -143,50 +134,14 @@ export default async function CommunityPostPage({
       />
 
       <div style={{ background: "#ffffff" }}>
-        <div className="pulse-layout">
-
-          {/* ── Left sidebar ── */}
-          <aside className="pulse-sidebar-left">
-            <nav style={{ padding: "1.25rem 0" }}>
-              <div style={{ padding: "0 0.75rem 1rem", borderBottom: "1px solid #e8e2d8", marginBottom: "1rem" }}>
-                <Link href="/feed" style={{
-                  display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                  color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
-                  letterSpacing: "0.06em", textTransform: "uppercase",
-                }}>
-                  ← Pulse Feed
-                </Link>
-              </div>
-
-              <p style={{
-                color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
-                letterSpacing: "0.15em", textTransform: "uppercase",
-                marginBottom: "0.4rem", paddingLeft: "0.75rem",
-              }}>
-                Content
-              </p>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {NAV_LINKS.map(({ label, href }) => (
-                  <li key={label} style={{ listStyle: "none" }}>
-                    <Link href={href} style={{
-                      display: "block",
-                      borderLeft: label === "Pulse" ? "2px solid #c5491f" : "2px solid transparent",
-                      padding: "0.28rem 0.75rem",
-                      color: label === "Pulse" ? "#c5491f" : "#3a342b",
-                      fontSize: "0.83rem",
-                      fontWeight: label === "Pulse" ? 600 : 400,
-                      textDecoration: "none",
-                    }}>
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </aside>
+        {/* Same 2-column track as /feed (.pulse-layout--feed: timeline +
+            right rail, no separate content-type sidebar) — this page is an
+            extension of the feed, not a distinct section with its own nav. */}
+        <div className="pulse-layout pulse-layout--feed">
 
           {/* ── Main post ── */}
           <main className="pulse-timeline">
+          <div className="pulse-timeline-inner">
             {/* Back link */}
             <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
               <Link href="/feed" style={{
@@ -293,6 +248,7 @@ export default async function CommunityPostPage({
 
               </div>
             </article>
+          </div>
           </main>
 
           {/* ── Right sidebar ── */}

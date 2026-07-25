@@ -272,9 +272,14 @@ export default function HubManage({
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
         <button
           type="button"
-          className="con-btn-primary"
           onClick={save}
           disabled={saving || isArchived || !name.trim() || !description.trim()}
+          style={{
+            background: "#c93c2a", color: "#fff", border: "none", cursor: "pointer",
+            padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
+            letterSpacing: "0.06em", textTransform: "uppercase",
+            opacity: saving || isArchived || !name.trim() || !description.trim() ? 0.6 : 1,
+          }}
         >
           {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
         </button>

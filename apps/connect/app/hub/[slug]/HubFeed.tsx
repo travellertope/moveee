@@ -94,7 +94,15 @@ export default function HubFeed({
               }}
             />
           ) : (
-            <button type="button" className="con-btn-primary" onClick={() => setShowComposer(true)}>
+            <button
+              type="button"
+              onClick={() => setShowComposer(true)}
+              style={{
+                background: "#c93c2a", color: "#fff", border: "none", cursor: "pointer",
+                padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
+                letterSpacing: "0.06em", textTransform: "uppercase",
+              }}
+            >
               + New post
             </button>
           )}

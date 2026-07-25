@@ -4,6 +4,10 @@ import Link from "next/link";
 import HubActions from "./HubActions";
 import HubManage from "./HubManage";
 import HubFeed from "./HubFeed";
+import "@/app/pulse-layout.css";
+// member.css is still needed for HubManage's form controls (hfc-*,
+// mem-card-label, mem-settings-back-link) — this page's own chrome no
+// longer uses mem-hero/mem-body (see the pulse-layout--feed switch below).
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +26,7 @@ interface Hub {
   allowedTemplates: string[];
   memberCount: number;
   postCount: number;
+  isOfficial?: boolean;
 }
 
 interface HubStatus {
@@ -65,12 +70,19 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
   const hub = await fetchHub(slug);
   if (!hub) {
     return (
-      <div className="mem-body">
-        <section className="mem-card">
-          <div className="mem-card-label">Not found</div>
-          <p className="mem-card-desc">This Hub doesn't exist or has been removed.</p>
-          <Link href="/hub" className="mem-settings-back-link">← Back to Hubs</Link>
-        </section>
+      <div style={{ background: "#ffffff" }}>
+        <div className="pulse-layout pulse-layout--feed">
+          <main className="pulse-timeline">
+            <div className="pulse-timeline-inner" style={{ padding: "2rem 1.25rem" }}>
+              <p style={{ fontSize: "0.95rem", color: "#3a342b", margin: "0 0 0.5rem" }}>
+                This Hub doesn't exist or has been removed.
+              </p>
+              <Link href="/hub" style={{ color: "#c5491f", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
+                ← Back to Hubs
+              </Link>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
@@ -78,87 +90,155 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
   const status = loggedIn
     ? await fetchStatus(hub.id, Number(session.user.id))
     : { isMember: false, role: null, isFollowing: false, notifyPosts: false };
+  const isModerator = status.role === "owner" || status.role === "mod";
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">
-              <Link href="/hub" style={{ color: "inherit", textDecoration: "none" }}>Hubs</Link>
-              {" "}&rsaquo;{" "}{hub.name}
+    <div style={{ background: "#ffffff" }}>
+      {/* Same 2-column track as /feed and /community/[slug] (.pulse-layout--feed:
+          timeline + right rail) — a Hub is an extension of the feed, not its
+          own distinct section with different chrome. */}
+      <div className="pulse-layout pulse-layout--feed">
+
+        <main className="pulse-timeline">
+          <div className="pulse-timeline-inner">
+            {/* Back link — matches /community/[slug] and /pulse/[slug] exactly */}
+            <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
+              <Link href="/hub" style={{
+                color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+              }}>
+                ← Hubs
+              </Link>
             </div>
-            <h1 className="mem-name">{hub.name}</h1>
-            <div className="mem-meta">
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(243,236,224,.6)" }}>
+
+            {/* Hub header — same card shape as a feed post: white bg, bottom
+                rule, no rounded corners, matching every card in the timeline. */}
+            <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1.25rem" }}>
+              {hub.coverImageUrl && (
+                <div style={{ margin: "-1.25rem -1.25rem 1rem", overflow: "hidden" }}>
+                  <img
+                    src={hub.coverImageUrl}
+                    alt=""
+                    style={{ width: "100%", maxHeight: "220px", objectFit: "cover", display: "block" }}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
+                {hub.isOfficial && (
+                  <span style={{
+                    background: "var(--ochre, #c5491f)", color: "#fff",
+                    fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em",
+                    textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px",
+                  }}>
+                    Official
+                  </span>
+                )}
+                {hub.status === "archived" && (
+                  <span style={{
+                    background: "#f7f5f2", color: "#7a6f5c",
+                    fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em",
+                    textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px",
+                  }}>
+                    Archived — read only
+                  </span>
+                )}
+              </div>
+
+              <h1 style={{
+                fontFamily: "var(--font-fraunces), serif", fontSize: "1.6rem", fontWeight: 700,
+                color: "#14110d", margin: "0 0 0.4rem", lineHeight: 1.2,
+              }}>
+                {hub.name}
+              </h1>
+
+              <p style={{ color: "#3a342b", fontSize: "0.9rem", lineHeight: 1.6, margin: "0 0 0.75rem" }}>
+                {hub.description}
+              </p>
+
+              <div style={{
+                fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem", color: "#7a6f5c",
+                marginBottom: "1rem",
+              }}>
                 {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
-              </span>
+              </div>
+
+              <HubActions
+                hubId={hub.id}
+                loggedIn={loggedIn}
+                initialIsMember={status.isMember}
+                initialIsFollowing={status.isFollowing}
+                initialNotifyPosts={status.notifyPosts}
+                isOwner={status.role === "owner"}
+              />
+
+              {isModerator && (
+                <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid #e8e2d8" }}>
+                  <HubManage
+                    hubId={hub.id}
+                    initialName={hub.name}
+                    initialDescription={hub.description}
+                    initialAllowedTemplates={hub.allowedTemplates}
+                    initialCoverImageUrl={hub.coverImageUrl}
+                    isArchived={hub.status === "archived"}
+                    role={status.role === "owner" ? "owner" : "mod"}
+                  />
+                </div>
+              )}
+            </article>
+
+            {/* Posts */}
+            <div style={{ padding: "1rem 1.25rem" }}>
+              <HubFeed
+                hubId={hub.id}
+                isMember={status.isMember}
+                isModerator={isModerator}
+                allowedTemplates={hub.allowedTemplates}
+              />
             </div>
           </div>
-        </div>
-      </div>
+        </main>
 
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/hub" className="mem-settings-back-link">← Back to Hubs</Link>
-        </div>
+        {/* Right rail — same "About Moveee" + copyright pattern as every
+            other page's right rail (see /feed, /community/[slug], /events). */}
+        <aside className="pulse-sidebar-right">
+          <div style={{ padding: "1.25rem 1rem" }}>
+            <div style={{ background: "#fff", border: "1px solid #e8e2d8", padding: "0.85rem" }}>
+              <p style={{
+                color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
+                letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem",
+              }}>
+                About Moveee
+              </p>
+              <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: "0 0 0.85rem" }}>
+                Village square for culture loving creatives, entrepreneurs, professionals.
+              </p>
+              <Link href="/hub" style={{
+                display: "block", background: "#c93c2a", color: "#fff",
+                textAlign: "center", padding: "0.45rem 0.75rem",
+                fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
+                textTransform: "uppercase", textDecoration: "none",
+              }}>
+                Browse all Hubs →
+              </Link>
+            </div>
 
-        {hub.status === "archived" && (
-          <section className="mem-card" style={{ background: "var(--paper-warm, #f7f5f2)" }}>
-            <p className="mem-card-desc" style={{ margin: 0, fontWeight: 600 }}>
-              This Hub is archived — read-only, no new posts or members.
+            {/* apps/connect has no site-wide footer — every page with a
+                right rail carries this copyright block instead. */}
+            <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
+              © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+              <br />
+              <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>
+              {" · "}
+              <Link href="/privacy" style={{ color: "#7a6f5c" }}>Privacy</Link>
+              {" · "}
+              <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
             </p>
-          </section>
-        )}
+          </div>
+        </aside>
 
-        {hub.coverImageUrl && (
-          <img
-            src={hub.coverImageUrl}
-            alt=""
-            style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: "var(--radius-xl, 12px)" }}
-          />
-        )}
-
-        <section className="mem-card">
-          <div className="mem-card-label">About</div>
-          <p className="mem-card-desc" style={{ margin: 0 }}>{hub.description}</p>
-        </section>
-
-        <section className="mem-card">
-          <HubActions
-            hubId={hub.id}
-            loggedIn={loggedIn}
-            initialIsMember={status.isMember}
-            initialIsFollowing={status.isFollowing}
-            initialNotifyPosts={status.notifyPosts}
-            isOwner={status.role === "owner"}
-          />
-        </section>
-
-        {(status.role === "owner" || status.role === "mod") && (
-          <section className="mem-card">
-            <HubManage
-              hubId={hub.id}
-              initialName={hub.name}
-              initialDescription={hub.description}
-              initialAllowedTemplates={hub.allowedTemplates}
-              initialCoverImageUrl={hub.coverImageUrl}
-              isArchived={hub.status === "archived"}
-              role={status.role === "owner" ? "owner" : "mod"}
-            />
-          </section>
-        )}
-
-        <section className="mem-card">
-          <div className="mem-card-label">Posts</div>
-          <HubFeed
-            hubId={hub.id}
-            isMember={status.isMember}
-            isModerator={status.role === "owner" || status.role === "mod"}
-            allowedTemplates={hub.allowedTemplates}
-          />
-        </section>
       </div>
-    </>
+    </div>
   );
 }

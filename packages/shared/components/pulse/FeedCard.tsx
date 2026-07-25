@@ -212,7 +212,11 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
     setLoading(true);
     try {
       const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
-      if (res.ok) setJoined(true);
+      const data = await res.json().catch(() => null);
+      // Trust the server's actual isMember, not just the HTTP status — a
+      // write that silently failed server-side (e.g. a DB error) can still
+      // come back as a 200 with isMember still false.
+      if (res.ok && data?.isMember) setJoined(true);
     } catch {}
     setLoading(false);
   }
@@ -564,7 +568,10 @@ export default function FeedCard({
               {isPro && <ProBadge size={13} />}
               <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>·</span>
               <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>{formatDate(item.date)}</span>
-              {item.communityTag && (
+              {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
+                  Hub Phase 6 auto-links every Section to an official Hub, so
+                  the two used to show the same label ("Literature") twice. */}
+              {item.communityTag && !item.hubId && (
                 <button
                   onClick={() => onTagClick?.(item.communityTag!)}
                   style={{
