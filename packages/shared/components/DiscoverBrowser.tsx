@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "@/app/discover.css";
 import { interestsToTagSet } from "@/lib/interest-mappings";
+import { openSearchModal } from "@/lib/searchModalBus";
 
 export interface DiscoverEntry {
   id: number;
@@ -59,6 +60,11 @@ const SORTS: { value: SortOption; label: string }[] = [
 
 const PER_PAGE = 20;
 
+// Purely decorative height cycle for the Explore More masonry — same
+// technique the approved mockup used (manually varied heights, not derived
+// from real image aspect ratios, since the API doesn't expose those).
+const MASONRY_HEIGHTS = [280, 190, 230, 340, 210, 260, 220, 300];
+
 function daysAgo(dateStr: string): number {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
@@ -76,39 +82,43 @@ function matchesInterestTags(entry: DiscoverEntry, tagSet: Set<string>): boolean
   return false;
 }
 
-function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean }) {
+function DiscoverCard({ entry, rail, height }: { entry: DiscoverEntry; rail?: boolean; height?: number }) {
   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
   return (
-    <Link href={`/directory/${entry.slug}`} className={`disc-card${rail ? " disc-card--rail" : ""}`}>
-      <div>
-        <div className="disc-card-type" style={{ color: badge.color }}>
-          {badge.emoji} {badge.label}
-        </div>
-        <div className="disc-card-title">{entry.title}</div>
-        {!rail && entry.excerpt && <div className="disc-card-excerpt">{entry.excerpt}</div>}
-      </div>
-      <div>
-        {entry.city && <div className="disc-card-city">📍 {entry.city}</div>}
-        {rail ? (
-          <div className={`disc-card-age${entry.isNew ? " disc-card-age--new" : ""}`}>
-            {entry.isNew ? "🆕 Added today" : `Added ${daysAgo(entry.dateAdded)}d ago`}
-          </div>
+    <Link
+      href={`/directory/${entry.slug}`}
+      className={`disc-card${rail ? " disc-card--rail" : ""}`}
+      style={height ? { height } : undefined}
+    >
+      <div className="disc-card-art">
+        {entry.thumbnail ? (
+          <img src={entry.thumbnail} alt="" className="disc-card-img" loading="lazy" />
         ) : (
-          (entry.averageRating || entry.subtype) && (
-            <div className="disc-card-footer">
-              {entry.averageRating ? (
-                <span className="disc-card-rating" style={{ color: "#B38238" }}>
-                  {"★".repeat(Math.round(entry.averageRating))}
-                  <span style={{ color: "var(--ghost, #d8cfc0)" }}>
-                    {"☆".repeat(5 - Math.round(entry.averageRating))}
-                  </span>{" "}
-                  {entry.averageRating.toFixed(1)}
-                </span>
-              ) : <span />}
-              {entry.subtype && <span className="disc-card-subtype">{entry.subtype}</span>}
-            </div>
-          )
+          <div className="disc-card-art-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
         )}
+        <div className="disc-card-scrim" />
+      </div>
+      <div className="disc-card-content">
+        <span className="disc-card-badge" style={{ color: badge.color }}>{badge.emoji} {badge.label}</span>
+        <div>
+          {rail && entry.isNew && <span className="disc-card-new">🆕 Added today</span>}
+          <div className="disc-card-title">{entry.title}</div>
+          <div className="disc-card-meta">
+            {entry.city && <span>📍 {entry.city}</span>}
+            {entry.city && (rail ? true : entry.averageRating || entry.subtype) && <span>·</span>}
+            {rail ? (
+              !entry.isNew && <span>Added {daysAgo(entry.dateAdded)}d ago</span>
+            ) : entry.averageRating ? (
+              <span className="disc-card-rating">
+                {"★".repeat(Math.round(entry.averageRating))}
+                <span style={{ opacity: 0.4 }}>{"☆".repeat(5 - Math.round(entry.averageRating))}</span>{" "}
+                {entry.averageRating.toFixed(1)}
+              </span>
+            ) : entry.subtype ? (
+              <span className="disc-card-subtype-pill">{entry.subtype}</span>
+            ) : null}
+          </div>
+        </div>
       </div>
     </Link>
   );
@@ -124,13 +134,10 @@ export default function DiscoverBrowser({
   viewerInterests?: string[];
 }) {
   const interestTags = interestsToTagSet(viewerInterests);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(initialType);
   const [region, setRegion] = useState<string | null>(initialRegion);
   const [sort, setSort] = useState<SortOption>("relevant");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
 
   const [draftRegion, setDraftRegion] = useState<string | null>(region);
   const [draftSort, setDraftSort] = useState<SortOption>(sort);
@@ -200,12 +207,11 @@ export default function DiscoverBrowser({
 
   async function fetchPage(pageNum: number, replace: boolean) {
     const params = new URLSearchParams();
-    if (query) params.set("q", query);
     if (type) params.set("type", type);
     if (region) params.set("region", region);
-    // Default browsing (no search, no explicit sort choice) shows a fresh
-    // random mix every visit rather than the same "most relevant" order.
-    const effectiveSort = sort === "relevant" && !query ? "random" : sort;
+    // Default browsing (no explicit sort choice) shows a fresh random mix
+    // every visit rather than the same "most relevant" order.
+    const effectiveSort = sort === "relevant" ? "random" : sort;
     params.set("sort", effectiveSort);
     if (effectiveSort === "random") params.set("seed", String(seedRef.current));
     params.set("page", String(pageNum));
@@ -223,10 +229,10 @@ export default function DiscoverBrowser({
     debounceRef.current = setTimeout(async () => {
       await fetchPage(1, true);
       setLoading(false);
-    }, 300);
+    }, 200);
     return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, type, region, sort]);
+  }, [type, region, sort]);
 
   async function loadMore() {
     if (loadingMore || entries.length >= total) return;
@@ -241,7 +247,6 @@ export default function DiscoverBrowser({
     clearTimeout(countDebounceRef.current);
     countDebounceRef.current = setTimeout(async () => {
       const params = new URLSearchParams();
-      if (query) params.set("q", query);
       if (type) params.set("type", type);
       if (draftRegion) params.set("region", draftRegion);
       params.set("sort", draftSort);
@@ -255,7 +260,7 @@ export default function DiscoverBrowser({
       }
     }, 350);
     return () => clearTimeout(countDebounceRef.current);
-  }, [filterOpen, query, type, draftRegion, draftSort]);
+  }, [filterOpen, type, draftRegion, draftSort]);
 
   function openFilter() {
     setDraftRegion(region);
@@ -276,75 +281,50 @@ export default function DiscoverBrowser({
     <div>
       <div className="disc-header">
         <h1 className="disc-title">Discover</h1>
-        <button
-          type="button"
-          className="disc-search-toggle"
-          aria-label={searchOpen ? "Close search" : "Search"}
-          onClick={() => setSearchOpen((v) => !v)}
-        >
-          {searchOpen ? "✕" : "🔍"}
-        </button>
       </div>
 
-      {searchOpen && (
-        <div className="disc-search-bar">
-          <span>🔍</span>
-          <input
-            className="disc-search-input"
-            placeholder="Search people, places, books…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
-        </div>
-      )}
+      {/* Same "opens the shared SearchModal" pattern as /events — this
+          finds a specific entry by typing; it doesn't filter the browse
+          grid below, which is why type/region/sort stay as separate,
+          always-visible controls instead of living inside the modal. */}
+      <button type="button" className="disc-search-btn" onClick={() => openSearchModal()}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+        Search people, places, books, films…
+      </button>
 
-      <div className="disc-chip-row">
-        <div className="disc-type-dd">
+      {/* Quiet underline tabs, not filled pills — the type facet filters
+          the grid directly (no typing required), so it stays visually
+          subordinate to the search entry point above. */}
+      <div className="disc-type-tabs">
+        <button
+          type="button"
+          className={`disc-type-tab${!type ? " active" : ""}`}
+          style={{ ["--tab-color" as any]: "var(--ochre)" }}
+          onClick={() => setType(null)}
+        >
+          ✦ All
+        </button>
+        {Object.entries(TYPE_BADGE).map(([slug, badge]) => (
           <button
+            key={slug}
             type="button"
-            className={`disc-type-trigger${type ? " disc-type-trigger--active" : ""}${typeMenuOpen ? " disc-type-trigger--open" : ""}`}
-            onClick={() => setTypeMenuOpen((v) => !v)}
+            className={`disc-type-tab${type === slug ? " active" : ""}`}
+            style={{ ["--tab-color" as any]: badge.color }}
+            onClick={() => setType(type === slug ? null : slug)}
           >
-            {type ? `${TYPE_BADGE[type]?.emoji ?? "✦"} ${TYPE_BADGE[type]?.label ?? type}` : "All Types"}
-            <span className="disc-type-trigger-caret">▾</span>
+            <span className="disc-type-tab-dot" style={{ background: badge.color }} />
+            {badge.emoji} {badge.label}
           </button>
-          {typeMenuOpen && (
-            <>
-              <div className="disc-type-menu-backdrop" onClick={() => setTypeMenuOpen(false)} />
-              <div className="disc-type-menu">
-                <button
-                  type="button"
-                  className={`disc-type-menu-item${!type ? " disc-type-menu-item--active" : ""}`}
-                  onClick={() => { setType(null); setTypeMenuOpen(false); }}
-                >
-                  ✦ All Types
-                </button>
-                {Object.entries(TYPE_BADGE).map(([slug, badge]) => {
-                  const active = type === slug;
-                  return (
-                    <button
-                      key={slug}
-                      type="button"
-                      className={`disc-type-menu-item${active ? " disc-type-menu-item--active" : ""}`}
-                      onClick={() => { setType(active ? null : slug); setTypeMenuOpen(false); }}
-                    >
-                      {badge.emoji} {badge.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-        <button
-          type="button"
-          className={`disc-filter-btn${hasActiveRefinement ? " disc-filter-btn--active" : ""}`}
-          onClick={openFilter}
-        >
-          ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
-        </button>
+        ))}
       </div>
+
+      <button
+        type="button"
+        className={`disc-filter-btn${hasActiveRefinement ? " disc-filter-btn--active" : ""}`}
+        onClick={openFilter}
+      >
+        ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+      </button>
 
       {recommended.length > 0 && (
         <>
@@ -390,9 +370,9 @@ export default function DiscoverBrowser({
         </div>
       ) : (
         <>
-          <div className="disc-grid">
-            {entries.map((e) => (
-              <DiscoverCard key={e.id} entry={e} />
+          <div className="disc-masonry">
+            {entries.map((e, i) => (
+              <DiscoverCard key={e.id} entry={e} height={MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length]} />
             ))}
           </div>
           {entries.length < total ? (
