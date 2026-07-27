@@ -110,7 +110,11 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     if (open) {
       setQuery("");
       setResults([]);
-      setContentType(pathname?.startsWith("/events") ? "event" : "all");
+      setContentType(
+        pathname?.startsWith("/events") ? "event" :
+        pathname?.startsWith("/discover") ? "directory" :
+        "all"
+      );
       setCategory("All");
       setCity("All");
       setPrice("All");
