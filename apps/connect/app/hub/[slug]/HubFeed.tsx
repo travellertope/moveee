@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import FeedCard from "@/components/pulse/FeedCard";
-import SubmitPost from "@/components/pulse/SubmitPost";
 import type { FeedItem } from "@/lib/unified-feed";
 
 /**
@@ -17,16 +18,17 @@ function toFeedItem(raw: any): FeedItem {
 }
 
 export default function HubFeed({
-  hubId, isMember, isModerator, allowedTemplates,
+  hubId, hubSlug, isMember, isModerator,
 }: {
   hubId: number;
+  hubSlug: string;
   isMember: boolean;
   isModerator: boolean;
-  allowedTemplates: string[];
 }) {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showComposer, setShowComposer] = useState(false);
   const [busyWpId, setBusyWpId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -84,28 +86,25 @@ export default function HubFeed({
     <div>
       {isMember && (
         <div style={{ marginBottom: 16 }}>
-          {showComposer ? (
-            <SubmitPost
-              hubId={hubId}
-              hubAllowedTemplates={allowedTemplates}
-              onPosted={() => {
-                setShowComposer(false);
-                load();
-              }}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowComposer(true)}
-              style={{
-                background: "#c93c2a", color: "#fff", border: "none", cursor: "pointer",
-                padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
-                letterSpacing: "0.06em", textTransform: "uppercase",
-              }}
-            >
-              + New post
-            </button>
-          )}
+          {/* Same composer-pill → type-picker-modal → dedicated-page flow as
+              /feed (PulseFeed.tsx) — picking a template navigates to
+              /hub/{slug}/post/new instead of expanding a form inline. */}
+          <button
+            type="button"
+            className="composer-pill"
+            onClick={() => router.push(`/hub/${hubSlug}/post/new`)}
+          >
+            <span className="composer-pill-avatar">
+              {(session?.user as any)?.avatarUrl ? (
+                <img src={(session!.user as any).avatarUrl} alt="" />
+              ) : (
+                (session?.user?.name ?? (session?.user as any)?.displayName ?? "?")
+                  .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+              )}
+            </span>
+            <span className="composer-pill-input">Share something with this Hub…</span>
+            <span className="composer-pill-post">Post</span>
+          </button>
         </div>
       )}
 
