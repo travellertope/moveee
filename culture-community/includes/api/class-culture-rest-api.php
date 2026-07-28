@@ -628,7 +628,17 @@ class Culture_REST_API {
                 'search'     => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
                 'discipline' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
                 'location'   => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                // region: one of nigeria|ghana|uk|usa|pan-african — a structured
+                // alternative to 'location' (which is a raw LIKE match) for the
+                // People Near Me page's Location chips. Mirrors the region slugs
+                // Culture_Directory::REGION_CITY_KEYWORDS already uses for
+                // Discover, though the underlying field/matching differs (see
+                // handle_get_members_directory).
+                'region'     => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                // sort: name (default, alphabetical) | recent (newest members first)
+                'sort'       => array( 'default' => 'name', 'sanitize_callback' => 'sanitize_text_field' ),
                 'per_page'   => array( 'default' => 50, 'sanitize_callback' => 'absint' ),
+                'offset'     => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -4946,13 +4956,15 @@ class Culture_REST_API {
     /**
      * GET /culture/v1/members
      * Returns members opted into the Connect directory.
-     * Supports ?search=, ?discipline=, ?location=, ?per_page=
+     * Supports ?search=, ?discipline=, ?location=, ?region=, ?sort=, ?per_page=
      */
     public static function handle_get_members_directory( $request ) {
         $only_directory = $request->get_param( 'directory' ) === '1';
         $search         = $request->get_param( 'search' );
         $discipline     = $request->get_param( 'discipline' );
         $location       = $request->get_param( 'location' );
+        $region         = $request->get_param( 'region' );
+        $sort           = $request->get_param( 'sort' );
         $per_page       = min( (int) $request->get_param( 'per_page' ), 200 );
 
         $meta_query = array( 'relation' => 'AND' );
@@ -5005,11 +5017,54 @@ class Culture_REST_API {
             );
         }
 
+        // region — a structured alternative to 'location' for the People Near
+        // Me page's Location chips. _culture_country_of_residence stores the
+        // full country name as picked from LocationSelect.tsx's COUNTRIES list
+        // (e.g. "Nigeria", "United Kingdom"), so nigeria/ghana/uk/usa match
+        // their exact country string; pan-african is deliberately broader
+        // (matches any country name containing "Africa", plus a couple of
+        // named non-"Africa" countries) since there's no single literal value
+        // for it — mirrors the same broad-fallback approach
+        // Culture_Directory::REGION_CITY_KEYWORDS uses for Discover, applied
+        // here to a different field (_culture_country_of_residence, not
+        // _entry_city).
+        if ( $region ) {
+            $region_countries = array();
+            switch ( $region ) {
+                case 'nigeria': $region_countries = array( 'Nigeria' ); break;
+                case 'ghana':   $region_countries = array( 'Ghana' ); break;
+                case 'uk':      $region_countries = array( 'United Kingdom' ); break;
+                case 'usa':     $region_countries = array( 'United States' ); break;
+                case 'pan-african': $region_countries = array( 'Senegal', 'Kenya' ); break;
+            }
+            if ( $region_countries ) {
+                $region_or = array( 'relation' => 'OR' );
+                foreach ( $region_countries as $country ) {
+                    $region_or[] = array(
+                        'key'     => '_culture_country_of_residence',
+                        'value'   => $country,
+                        'compare' => '=',
+                    );
+                }
+                if ( 'pan-african' === $region ) {
+                    $region_or[] = array(
+                        'key'     => '_culture_country_of_residence',
+                        'value'   => 'Africa',
+                        'compare' => 'LIKE',
+                    );
+                }
+                $meta_query[] = $region_or;
+            }
+        }
+
+        $offset = max( 0, (int) $request->get_param( 'offset' ) );
+
         $args = array(
             'number'     => $per_page,
+            'offset'     => $offset,
             'meta_query' => $meta_query,
-            'orderby'    => 'display_name',
-            'order'      => 'ASC',
+            'orderby'    => 'recent' === $sort ? 'registered' : 'display_name',
+            'order'      => 'recent' === $sort ? 'DESC' : 'ASC',
         );
 
         if ( $search ) {
@@ -5068,6 +5123,7 @@ class Culture_REST_API {
                 'directory_twitter'      => $m['_culture_directory_twitter']      ?? '',
                 'directory_linkedin'     => $m['_culture_directory_linkedin']     ?? '',
                 'directory_website'      => $m['_culture_directory_website']      ?? '',
+                'registered_at'          => $user->user_registered,
             );
         }, $users );
 

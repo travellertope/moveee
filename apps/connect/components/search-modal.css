@@ -115,6 +115,25 @@
   font-weight: 600;
 }
 
+/* Industry chips (People context) — colored bullet instead of an emoji,
+   matching the approved Discover Type-tab convention. */
+.sm-chip { display: inline-flex; align-items: center; gap: 6px; }
+.sm-chip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.sm-result-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
 .sm-results {
   margin-top: 20px;
   padding-top: 18px;
