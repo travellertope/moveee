@@ -4963,6 +4963,22 @@ class Culture_REST_API {
                 'value'   => '1',
                 'compare' => '=',
             );
+            // Unverified accounts (bot/spam signups — see handle_register(),
+            // which sets this to '0' on every signup) were previously opted
+            // into the directory by default at creation and shown with
+            // their raw, often randomly-generated username as display_name,
+            // since nothing here checked verification status.
+            //
+            // Excludes only an explicit '0', not "= '1'" — accounts that
+            // predate this field entirely (registered before email
+            // verification existed) have no _culture_email_verified row at
+            // all, and requiring an exact '1' match would wrongly hide
+            // every one of those legitimate, longstanding members too.
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array( 'key' => '_culture_email_verified', 'value' => '0', 'compare' => '!=' ),
+                array( 'key' => '_culture_email_verified', 'compare' => 'NOT EXISTS' ),
+            );
         }
 
         if ( $discipline ) {
