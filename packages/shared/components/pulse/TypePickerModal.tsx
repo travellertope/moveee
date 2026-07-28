@@ -30,11 +30,12 @@ const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
 // slug — the in-form tab row (SubmitPost.tsx's composer-subtype-tabs) is
 // where the user actually picks the specific subtype.
 type GridItem = TemplateType | "review" | "update";
-const GRID_ITEMS: GridItem[] = (() => {
+function buildGridItems(allowedTemplates?: string[]): GridItem[] {
   const items: GridItem[] = [];
   let reviewInserted = false;
   let updateInserted = false;
   for (const t of TEMPLATES) {
+    if (allowedTemplates && !allowedTemplates.includes(t.slug)) continue;
     if (REVIEW_FAMILY.includes(t.slug)) {
       if (!reviewInserted) { items.push("review"); reviewInserted = true; }
     } else if (UPDATE_FAMILY.includes(t.slug)) {
@@ -44,7 +45,19 @@ const GRID_ITEMS: GridItem[] = (() => {
     }
   }
   return items;
-})();
+}
+const GRID_ITEMS: GridItem[] = buildGridItems();
+
+/** First family member allowedTemplates actually permits, preferring the
+ * family's usual default when it's among them. Hubs can allow only part of
+ * a family (e.g. book-review but not music/film-review — see
+ * Culture_Hubs::ALLOWED_TEMPLATES), so the family tile can't always default
+ * to REVIEW_DEFAULT/UPDATE_DEFAULT the way the unscoped picker does. */
+function familyDefault(family: TemplateType[], preferred: TemplateType, allowedTemplates?: string[]): TemplateType {
+  if (!allowedTemplates) return preferred;
+  if (allowedTemplates.includes(preferred)) return preferred;
+  return family.find(f => allowedTemplates.includes(f)) ?? preferred;
+}
 
 // Same brand colors already used elsewhere for these templates' badges
 // (Book Review purple, Music Review teal, Film Review blue, Quote purple).
@@ -62,9 +75,15 @@ interface Props {
   /** Shown as a leading "Continue Draft" tile when a saved draft exists. */
   hasDraft?: boolean;
   onSelectDraft?: () => void;
+  /** Hub-scoped picker (docs/hubs-plan.md §3.1) — when set, tiles are
+   * filtered down to what the Hub allows (same source SubmitPost.tsx's own
+   * hubAllowedTemplates prop uses), and the route warmed on open is the
+   * Hub's own /hub/{slug}/post/new page instead of the global /post/new. */
+  allowedTemplates?: string[];
+  prefetchHref?: string;
 }
 
-export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onSelectDraft }: Props) {
+export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onSelectDraft, allowedTemplates, prefetchHref = "/post/new" }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
   // Set the instant a tile is tapped and kept true until the page we're
@@ -72,15 +91,16 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
   // itself — see PulseFeed.tsx/PostNewClient.tsx) — without this a template
   // pick looked like a dead click while the route transition was in flight.
   const [selecting, setSelecting] = useState<TemplateType | "draft" | null>(null);
+  const gridItems = allowedTemplates ? buildGridItems(allowedTemplates) : GRID_ITEMS;
 
   useEffect(() => {
     if (open) {
-      // Warms /post/new's route chunk + RSC payload the moment the modal
-      // opens, so the actual pick below has less work left to do.
-      router.prefetch("/post/new");
+      // Warms the destination page's route chunk + RSC payload the moment
+      // the modal opens, so the actual pick below has less work left to do.
+      router.prefetch(prefetchHref);
       setSelecting(null);
     }
-  }, [open, router]);
+  }, [open, router, prefetchHref]);
 
   if (!open) return null;
 
@@ -132,7 +152,7 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
                 <span className="type-picker-tile-desc">Pick up where you left off</span>
               </button>
             )}
-            {GRID_ITEMS.map(item => {
+            {gridItems.map(item => {
               if (item === "review") {
                 const isSelecting = selecting != null && REVIEW_FAMILY.includes(selecting as TemplateType);
                 return (
@@ -140,7 +160,7 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
                     key="review"
                     type="button"
                     className={`type-picker-tile${selecting && !isSelecting ? " type-picker-tile--dimmed" : ""}`}
-                    onClick={() => pick(REVIEW_DEFAULT)}
+                    onClick={() => pick(familyDefault(REVIEW_FAMILY, REVIEW_DEFAULT, allowedTemplates))}
                     disabled={!!selecting}
                   >
                     {isSelecting ? (
@@ -160,7 +180,7 @@ export default function TypePickerModal({ open, onClose, onSelect, hasDraft, onS
                     key="update"
                     type="button"
                     className={`type-picker-tile${selecting && !isSelecting ? " type-picker-tile--dimmed" : ""}`}
-                    onClick={() => pick(UPDATE_DEFAULT)}
+                    onClick={() => pick(familyDefault(UPDATE_FAMILY, UPDATE_DEFAULT, allowedTemplates))}
                     disabled={!!selecting}
                   >
                     {isSelecting ? (

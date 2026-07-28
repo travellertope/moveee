@@ -205,19 +205,29 @@ function RsvpDisplay({
 function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number; hubName?: string; hubSlug?: string; hubIsOfficial?: boolean }) {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function join(e: React.MouseEvent) {
     e.stopPropagation();
     if (loading || joined) return;
     setLoading(true);
+    setError("");
     try {
       const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
       const data = await res.json().catch(() => null);
       // Trust the server's actual isMember, not just the HTTP status — a
       // write that silently failed server-side (e.g. a DB error) can still
       // come back as a 200 with isMember still false.
-      if (res.ok && data?.isMember) setJoined(true);
-    } catch {}
+      if (res.ok && data?.isMember) {
+        setJoined(true);
+      } else {
+        // Surfaced so a failed join isn't a silent no-op — previously the
+        // button just reverted with no indication anything went wrong.
+        setError(data?.message || "Couldn't join — try again");
+      }
+    } catch {
+      setError("Couldn't join — try again");
+    }
     setLoading(false);
   }
 
@@ -240,8 +250,9 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
         type="button"
         onClick={join}
         disabled={loading || joined}
+        title={error || undefined}
         style={{
-          background: joined ? "transparent" : "var(--ink)",
+          background: joined ? "transparent" : error ? "var(--error, #c62828)" : "var(--ink)",
           color: joined ? "var(--mute)" : "#fff",
           border: joined ? "1px solid var(--rule)" : "none",
           borderRadius: "9999px",
@@ -252,7 +263,7 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
           opacity: loading ? 0.6 : 1,
         }}
       >
-        {joined ? "Joined ✓" : "Join"}
+        {joined ? "Joined ✓" : error ? "Retry" : "Join"}
       </button>
     </div>
   );

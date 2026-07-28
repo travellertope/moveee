@@ -825,9 +825,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   // its children on every render; it's a closure over `template` and
   // `handleTemplateChange` rather than its own component identity.
   function renderSubtypeTabs(family: TemplateType[], meta: Record<string, { label: string; emoji: string }>) {
+    // Hub-scoped composer: don't offer a subtype the Hub doesn't allow (a
+    // Hub can permit only part of a family, e.g. book-review but not
+    // music/film-review — see Culture_Hubs::ALLOWED_TEMPLATES).
+    const visibleFamily = hubAllowedTemplates ? family.filter(f => hubAllowedTemplates.includes(f)) : family;
     return (
       <div className="composer-subtype-tabs">
-        {family.map(rt => {
+        {visibleFamily.map(rt => {
           const m = meta[rt];
           return (
             <button

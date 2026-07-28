@@ -192,9 +192,9 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
             <div style={{ padding: "1rem 1.25rem" }}>
               <HubFeed
                 hubId={hub.id}
+                hubSlug={hub.slug}
                 isMember={status.isMember}
                 isModerator={isModerator}
-                allowedTemplates={hub.allowedTemplates}
               />
             </div>
           </div>
