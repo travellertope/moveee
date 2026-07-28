@@ -5,7 +5,7 @@ import Link from "next/link";
 import "@/app/discover.css";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { openSearchModal } from "@/lib/searchModalBus";
-import { onDiscoverFilters } from "@/lib/discoverFiltersBus";
+import { emitDiscoverFilters, onDiscoverFilters } from "@/lib/discoverFiltersBus";
 
 export interface DiscoverEntry {
   id: number;
@@ -43,6 +43,12 @@ export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: s
   concept:     { emoji: "💡", label: "CONCEPT",   color: "#3A342B" },
   fashion:     { emoji: "👗", label: "FASHION",   color: "#7B1FA2" },
   "tv-series": { emoji: "📺", label: "TV SERIES", color: "#00695C" },
+};
+
+// Mirrors DISCOVER_REGIONS in SearchModal.tsx (label for the active-filter
+// chip) — no shared source of truth, same caveat as TYPE_BADGE above.
+const REGION_LABELS: Record<string, string> = {
+  nigeria: "Nigeria", ghana: "Ghana", uk: "UK", usa: "USA", "pan-african": "Pan-African",
 };
 
 const PER_PAGE = 20;
@@ -140,11 +146,12 @@ export default function DiscoverBrowser({
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Region/Sort now live inside SearchModal (Directory context) instead of
-  // an on-page "Filters" panel — see discoverFiltersBus.ts for why this
-  // needs an event bus rather than a normal prop/callback.
+  // Type/Region/Sort now live inside SearchModal (Directory context)
+  // instead of on-page tabs/a "Filters" panel — see discoverFiltersBus.ts
+  // for why this needs an event bus rather than a normal prop/callback.
   useEffect(() => {
-    return onDiscoverFilters(({ region: r, sort: s }) => {
+    return onDiscoverFilters(({ type: t, region: r, sort: s }) => {
+      setType(t);
       setRegion(r);
       setSort(s);
     });
@@ -240,38 +247,47 @@ export default function DiscoverBrowser({
 
       {/* Same "opens the shared SearchModal" pattern as /events — this
           finds a specific entry by typing, and (in Directory context) is
-          also where Region/Sort now live, wired back to this page via
-          discoverFiltersBus. Type stays here as an always-visible,
-          no-typing-required browse control. */}
+          also where Type/Region/Sort now all live, wired back to this page
+          via discoverFiltersBus. Type moved off the on-page underline tabs
+          and into the modal (July 2026) — same treatment as Region/Sort. */}
       <button type="button" className="disc-search-btn" onClick={() => openSearchModal()}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
         Search people, places, books, films…
       </button>
 
-      {/* Quiet underline tabs, not filled pills — colored bullets instead
-          of emoji, matching the approved mockup. */}
-      <div className="disc-type-tabs">
-        <button
-          type="button"
-          className={`disc-type-tab${!type ? " active" : ""}`}
-          style={{ ["--tab-color" as any]: "var(--ochre)" }}
-          onClick={() => setType(null)}
-        >
-          ✦ All
-        </button>
-        {Object.entries(TYPE_BADGE).map(([slug, badge]) => (
-          <button
-            key={slug}
-            type="button"
-            className={`disc-type-tab${type === slug ? " active" : ""}`}
-            style={{ ["--tab-color" as any]: badge.color }}
-            onClick={() => setType(type === slug ? null : slug)}
-          >
-            <span className="disc-type-tab-dot" style={{ background: badge.color }} />
-            {badge.label}
-          </button>
-        ))}
-      </div>
+      {/* Active-filter chips — the only on-page trace of Type/Region once
+          applied via the modal (same pattern People Near Me uses). */}
+      {(type || region) && (
+        <div className="disc-active-filters">
+          {type && (
+            <span className="disc-active-filter">
+              <span className="disc-active-filter-dot" style={{ background: (TYPE_BADGE[type] ?? { color: "#7a6f5c" }).color }} />
+              {(TYPE_BADGE[type] ?? { label: type }).label}
+              <button
+                type="button"
+                className="disc-active-filter-clear"
+                onClick={() => { setType(null); emitDiscoverFilters({ type: null, region, sort }); }}
+                aria-label="Clear type filter"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+          {region && (
+            <span className="disc-active-filter">
+              📍 {REGION_LABELS[region] ?? region}
+              <button
+                type="button"
+                className="disc-active-filter-clear"
+                onClick={() => { setRegion(null); emitDiscoverFilters({ type, region: null, sort }); }}
+                aria-label="Clear region filter"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+        </div>
+      )}
 
       {recommended.length > 0 && (
         <>

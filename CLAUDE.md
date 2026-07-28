@@ -3544,7 +3544,7 @@ Format) only ever fed into `runSearch()`, which early-returns when `query` is em
 those chips with an empty search box silently did nothing. Two fixes landed from this:
 - **The generic Category chip row is now hidden in both Directory and People context**
   (`!isDirectory && !isPeople`) — it never had real wiring in either context (Directory has its
-  own on-page Type tabs; People has the Industry group below), so showing it was a dead control,
+  own Type group below; People has the Industry group below), so showing it was a dead control,
   not a smaller version of a working one.
 - **Any future context-specific chip group must follow the Region/Sort pattern**: call its own
   `emit*Filters()` bus function directly from the `onClick`, not route through `runSearch`/
@@ -3552,6 +3552,19 @@ those chips with an empty search box silently did nothing. Two fixes landed from
   populating the modal's own inline result list — a completely separate concern from
   remote-controlling a page's grid. Events' City/Price/Format chips still have this exact gap
   (flagged, not yet fixed — out of scope for this pass, only Discover and People were in scope).
+
+**Discover's Type filter also moved into the modal (later same month, July 2026)** — it had
+originally been kept on-page as `.disc-type-tabs` underline tabs (a deliberate choice at the
+time: "no typing required, always visible"), but the user asked to bring it in line with
+People Near Me's Industry treatment. `DiscoverFilters` (`discoverFiltersBus.ts`) gained a `type:
+string | null` field alongside `region`/`sort`; `SearchModal.tsx` gained a `DISCOVER_TYPES` chip
+group (mirrors `TYPE_BADGE` in `DiscoverBrowser.tsx`, colored dot, no emoji) right above Region,
+with a `selectDiscoverType()` handler following the exact same immediate-emit pattern. On the
+page side, `.disc-type-tabs` is now dead (left in `discover.css`, not deleted, same "kept in case
+needed again" convention used elsewhere in this file) and replaced by a `.disc-active-filters`
+row — one chip for Type, one for Region, each independently clearable — mirroring
+`.ppl-active-filters` exactly. The modal's own text-search fold-in (for its inline result list)
+now combines both Type and Region labels into the `category` keyword param when present.
 
 ### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
 
