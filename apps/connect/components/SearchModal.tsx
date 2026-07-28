@@ -76,11 +76,25 @@ const EVENT_PRICES = ["All", "Free", "Paid", "🪶 Members-only"];
 const EVENT_FORMATS = ["All", "In-person", "Virtual"];
 
 // Directory-only facets — shown only when contentType === "directory".
-// Mirrors REGIONS/SORTS in DiscoverBrowser.tsx — no shared source of
-// truth, same caveat as above. Unlike the event facets, these don't just
-// refine this modal's own search text — they also remote-control the
-// /discover page's own grid via discoverFiltersBus, since Region/Sort are
-// real structured filters there (not folded-into-text approximations).
+// Mirrors TYPE_BADGE/REGIONS/SORTS in DiscoverBrowser.tsx — no shared
+// source of truth, same caveat as above. Unlike the event facets, these
+// don't just refine this modal's own search text — they also remote-control
+// the /discover page's own grid via discoverFiltersBus, since
+// Type/Region/Sort are real structured filters there (not folded-into-text
+// approximations).
+const DISCOVER_TYPES: { slug: string; label: string; color: string }[] = [
+  { slug: "person", label: "Person", color: "#B38238" },
+  { slug: "place", label: "Place", color: "#2E7D32" },
+  { slug: "food", label: "Food", color: "#C5491F" },
+  { slug: "book", label: "Book", color: "#78350F" },
+  { slug: "film", label: "Film", color: "#1976D2" },
+  { slug: "genre", label: "Genre", color: "#6B48A8" },
+  { slug: "movement", label: "Movement", color: "#6B48A8" },
+  { slug: "artwork", label: "Artwork", color: "#1976D2" },
+  { slug: "concept", label: "Concept", color: "#3A342B" },
+  { slug: "fashion", label: "Fashion", color: "#7B1FA2" },
+  { slug: "tv-series", label: "TV Series", color: "#00695C" },
+];
 const DISCOVER_REGIONS: { slug: string; label: string }[] = [
   { slug: "nigeria", label: "Nigeria" },
   { slug: "ghana", label: "Ghana" },
@@ -118,6 +132,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   const [city, setCity] = useState("All");
   const [price, setPrice] = useState("All");
   const [format, setFormat] = useState("All");
+  const [discoverType, setDiscoverType] = useState<string | null>(null);
   const [discoverRegion, setDiscoverRegion] = useState<string | null>(null);
   const [discoverSort, setDiscoverSort] = useState<DiscoverFilters["sort"]>("relevant");
   const [peopleIndustry, setPeopleIndustry] = useState<string | null>(null);
@@ -147,7 +162,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const runSearch = useCallback((q: string, type: string, cat: string, evtCity: string, evtPrice: string, evtFormat: string, discRegion: string | null) => {
+  const runSearch = useCallback((q: string, type: string, cat: string, evtCity: string, evtPrice: string, evtFormat: string, discType: string | null, discRegion: string | null) => {
     if (!q.trim()) {
       setResults([]);
       setLoading(false);
@@ -161,13 +176,15 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       if (evtPrice !== "All") params.set("price", evtPrice);
       if (evtFormat !== "All") params.set("format", evtFormat);
     }
-    // Region is a real structured filter for the /discover page itself
-    // (see the discoverRegion click handlers below) — here, against this
-    // modal's own generic text search, it's just folded in as an
-    // approximate keyword, same treatment as City for events.
-    if (type === "directory" && discRegion) {
-      const label = DISCOVER_REGIONS.find((r) => r.slug === discRegion)?.label;
-      if (label) params.set("category", [cat !== "All" ? cat : "", label].filter(Boolean).join(" "));
+    // Type/Region are real structured filters for the /discover page itself
+    // (see the discoverType/discoverRegion click handlers below) — here,
+    // against this modal's own generic text search, they're just folded in
+    // as approximate keywords, same treatment as City for events.
+    if (type === "directory" && (discType || discRegion)) {
+      const typeLabel = DISCOVER_TYPES.find((t) => t.slug === discType)?.label;
+      const regionLabel = DISCOVER_REGIONS.find((r) => r.slug === discRegion)?.label;
+      const combined = [cat !== "All" ? cat : "", typeLabel, regionLabel].filter(Boolean).join(" ");
+      if (combined) params.set("category", combined);
     }
     fetch(`/api/search?${params.toString()}`)
       .then(res => res.ok ? res.json() : null)
@@ -202,22 +219,28 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   useEffect(() => {
     const t = setTimeout(() => {
       if (isPeople) runPeopleSearch(query, peopleIndustry, peopleRegion);
-      else runSearch(query, contentType, category, city, price, format, discoverRegion);
+      else runSearch(query, contentType, category, city, price, format, discoverType, discoverRegion);
     }, 300);
     return () => clearTimeout(t);
-  }, [query, contentType, category, city, price, format, discoverRegion, isPeople, peopleIndustry, peopleRegion, runSearch, runPeopleSearch]);
+  }, [query, contentType, category, city, price, format, discoverType, discoverRegion, isPeople, peopleIndustry, peopleRegion, runSearch, runPeopleSearch]);
 
-  // Directory-only — Region/Sort remote-control the /discover page's own
-  // grid via discoverFiltersBus (see the file for why: SearchModal is a
-  // single global instance, unrelated to whatever page opened it).
+  // Directory-only — Type/Region/Sort remote-control the /discover page's
+  // own grid via discoverFiltersBus (see the file for why: SearchModal is a
+  // single global instance, unrelated to whatever page opened it). Type
+  // moved off the on-page underline tabs and into here (July 2026).
+  function selectDiscoverType(slug: string) {
+    const next = discoverType === slug ? null : slug;
+    setDiscoverType(next);
+    emitDiscoverFilters({ type: next, region: discoverRegion, sort: discoverSort });
+  }
   function selectDiscoverRegion(slug: string) {
     const next = discoverRegion === slug ? null : slug;
     setDiscoverRegion(next);
-    emitDiscoverFilters({ region: next, sort: discoverSort });
+    emitDiscoverFilters({ type: discoverType, region: next, sort: discoverSort });
   }
   function selectDiscoverSort(value: DiscoverFilters["sort"]) {
     setDiscoverSort(value);
-    emitDiscoverFilters({ region: discoverRegion, sort: value });
+    emitDiscoverFilters({ type: discoverType, region: discoverRegion, sort: value });
   }
 
   // People-only — same immediate-apply pattern as Discover's Region/Sort:
@@ -254,6 +277,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       setCity("All");
       setPrice("All");
       setFormat("All");
+      setDiscoverType(null);
       setDiscoverRegion(null);
       setDiscoverSort("relevant");
       setPeopleIndustry(null);
@@ -349,6 +373,35 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {isDirectory && (
+            <div className="sm-filter-group">
+              <p className="sm-filter-label">Type</p>
+              <div className="sm-filter-chips">
+                <button
+                  type="button"
+                  className={`sm-chip${!discoverType ? " active" : ""}`}
+                  onClick={() => {
+                    setDiscoverType(null);
+                    emitDiscoverFilters({ type: null, region: discoverRegion, sort: discoverSort });
+                  }}
+                >
+                  ✦ All
+                </button>
+                {DISCOVER_TYPES.map((t) => (
+                  <button
+                    key={t.slug}
+                    type="button"
+                    className={`sm-chip${discoverType === t.slug ? " active" : ""}`}
+                    onClick={() => selectDiscoverType(t.slug)}
+                  >
+                    <span className="sm-chip-dot" style={{ background: t.color }} />
+                    {t.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}

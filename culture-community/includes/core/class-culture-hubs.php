@@ -71,6 +71,7 @@ class Culture_Hubs {
         add_action( 'updated_post_meta', array( __CLASS__, 'on_community_tag_meta_added' ), 10, 4 );
         self::maybe_seed_official_hubs();
         self::maybe_backfill_section_hub_links();
+        self::maybe_merge_duplicate_official_hubs();
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -143,11 +144,46 @@ class Culture_Hubs {
             return;
         }
 
+        // init() fires on *every* request, and this whole function is a
+        // rare, slow path (WP_Query + up to 11 wp_insert_post() calls) that
+        // only actually does anything during the brief window before
+        // culture_official_hubs_seeded gets persisted. Without a lock,
+        // concurrent requests landing in that window can each pass the
+        // "not seeded yet" check above, then each create their own
+        // duplicate Hub for the same section (this is exactly how two
+        // "Literature" Hubs ended up live in production — see
+        // maybe_merge_duplicate_official_hubs() for the one-time cleanup).
+        // A transient acts as a cheap advisory mutex; it isn't perfectly
+        // atomic against a request landing in the same instant as another,
+        // but combined with the direct DB slug-existence check below (the
+        // real invariant we care about), duplicate creation going forward
+        // is effectively closed off.
+        if ( get_transient( 'culture_hubs_seeding_lock' ) ) {
+            return;
+        }
+        set_transient( 'culture_hubs_seeding_lock', 1, 30 );
+
         $map = get_option( 'culture_section_hub_map', array() );
         $map = is_array( $map ) ? $map : array();
 
+        global $wpdb;
+
         foreach ( self::SECTION_HUB_SLUGS as $section => $slug ) {
             if ( ! empty( $map[ $section ] ) && get_post( (int) $map[ $section ] ) ) {
+                continue;
+            }
+
+            // Direct DB check (not the possibly-stale $map above) — catches
+            // a Hub already created for this slug by another request that
+            // hasn't yet persisted culture_section_hub_map itself.
+            $existing_id = $wpdb->get_var( $wpdb->prepare(
+                "SELECT p.ID FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_hub_slug' AND m.meta_value = %s
+                 WHERE p.post_type = 'culture_hub' ORDER BY p.ID ASC LIMIT 1",
+                $slug
+            ) );
+            if ( $existing_id ) {
+                $map[ $section ] = (int) $existing_id;
                 continue;
             }
 
@@ -179,6 +215,7 @@ class Culture_Hubs {
 
         update_option( 'culture_section_hub_map', $map );
         update_option( 'culture_official_hubs_seeded', '1' );
+        delete_transient( 'culture_hubs_seeding_lock' );
     }
 
     /**
@@ -218,6 +255,107 @@ class Culture_Hubs {
         }
 
         update_option( 'culture_hub_categories_backfilled', '1' );
+    }
+
+    /**
+     * One-time cleanup for the race condition maybe_seed_official_hubs()
+     * had before its transient lock + direct-DB slug check were added: on
+     * an early request storm right after this feature first went live,
+     * concurrent requests could each pass the "not seeded yet" gate and
+     * independently create their own official Hub for the same section —
+     * e.g. two separate "Literature" Hub posts, one left orphaned out of
+     * culture_section_hub_map and invisible to auto-linking, but still
+     * `publish`ed and still showing up in the Discover listing. This finds
+     * any leftover duplicate for each section's slug, merges its real data
+     * (posts/members/follows) onto the canonical (mapped) Hub via
+     * merge_hub_into(), and trashes the empty shell. Gated the same way as
+     * every other maybe_backfill_*() in this class — runs once.
+     */
+    public static function maybe_merge_duplicate_official_hubs() {
+        if ( '1' === get_option( 'culture_hub_duplicates_merged', '' ) ) {
+            return;
+        }
+        if ( '1' !== get_option( 'culture_official_hubs_seeded', '' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        foreach ( self::SECTION_HUB_SLUGS as $section => $slug ) {
+            $canonical_id = self::get_official_hub_id_for_section( $section );
+            if ( ! $canonical_id ) {
+                continue;
+            }
+
+            $duplicate_ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT p.ID FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_hub_slug' AND m.meta_value = %s
+                 WHERE p.post_type = 'culture_hub' AND p.ID != %d AND p.post_status != 'trash'",
+                $slug, $canonical_id
+            ) );
+
+            foreach ( $duplicate_ids ?: array() as $dup_id ) {
+                self::merge_hub_into( (int) $dup_id, $canonical_id );
+            }
+        }
+
+        update_option( 'culture_hub_duplicates_merged', '1' );
+    }
+
+    /**
+     * Re-points every real record referencing $from_id (linked posts, Hub
+     * membership, Hub follows) onto $into_id, recomputes $into_id's cached
+     * counters, then trashes $from_id. Used by
+     * maybe_merge_duplicate_official_hubs() — nothing genuine (a post
+     * someone made, a membership, a follow) is lost, only the duplicate
+     * shell post itself goes away.
+     */
+    private static function merge_hub_into( int $from_id, int $into_id ) {
+        if ( ! $from_id || ! $into_id || $from_id === $into_id ) {
+            return;
+        }
+        global $wpdb;
+
+        // Posts: no uniqueness constraint, straightforward reassignment.
+        $wpdb->update(
+            $wpdb->postmeta,
+            array( 'meta_value' => $into_id ),
+            array( 'meta_key' => '_hub_id', 'meta_value' => $from_id ),
+            array( '%d' ),
+            array( '%s', '%d' )
+        );
+
+        // Members/follows both have a UNIQUE (hub_id, user_id) — a user who
+        // ended up joined/following both duplicate Hubs would collide on a
+        // naive UPDATE, so drop the duplicate's row for any user who
+        // already has one on the canonical Hub, and reassign the rest.
+        foreach ( array( self::members_table(), self::follows_table() ) as $table ) {
+            $user_ids = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$table} WHERE hub_id = %d", $from_id ) );
+            foreach ( $user_ids ?: array() as $user_id ) {
+                $user_id = (int) $user_id;
+                $exists  = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT id FROM {$table} WHERE hub_id = %d AND user_id = %d", $into_id, $user_id
+                ) );
+                if ( $exists ) {
+                    $wpdb->delete( $table, array( 'hub_id' => $from_id, 'user_id' => $user_id ), array( '%d', '%d' ) );
+                } else {
+                    $wpdb->update( $table, array( 'hub_id' => $into_id ), array( 'hub_id' => $from_id, 'user_id' => $user_id ), array( '%d' ), array( '%d', '%d' ) );
+                }
+            }
+        }
+
+        // _hub_member_count/_hub_post_count are cached counters (see
+        // get_hub()), not live queries — recompute from the now-merged data
+        // rather than trying to add the duplicate's stale counts on top.
+        update_post_meta( $into_id, '_hub_member_count', self::get_member_count( $into_id ) );
+        $post_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_hub_id' AND meta_value = %d", $into_id
+        ) );
+        update_post_meta( $into_id, '_hub_post_count', $post_count );
+
+        // Trash rather than hard-delete — reversible, and get_hub_by_slug()
+        // already excludes trashed posts so it resolves to the canonical
+        // Hub regardless (see that method).
+        wp_trash_post( $from_id );
     }
 
     /* ——————————————————————————————————————
@@ -311,8 +449,16 @@ class Culture_Hubs {
 
     public static function get_hub_by_slug( string $slug ) {
         global $wpdb;
+        // Excludes trashed posts — matters when a duplicate Hub sharing
+        // this slug has been merged/trashed by
+        // maybe_merge_duplicate_official_hubs(); without this join, its
+        // postmeta row (untouched by wp_trash_post()) could still win the
+        // LIMIT 1 depending on row order.
         $hub_id = $wpdb->get_var( $wpdb->prepare(
-            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_slug' AND meta_value = %s LIMIT 1",
+            "SELECT m.post_id FROM {$wpdb->postmeta} m
+             INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id
+             WHERE m.meta_key = '_hub_slug' AND m.meta_value = %s AND p.post_status != 'trash'
+             ORDER BY m.post_id ASC LIMIT 1",
             $slug
         ) );
         return $hub_id ? self::get_hub( (int) $hub_id ) : null;

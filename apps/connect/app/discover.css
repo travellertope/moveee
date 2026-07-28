@@ -46,9 +46,46 @@
 .disc-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
 .disc-search-btn svg { flex-shrink: 0; }
 
-/* Underline tabs — quiet by design, since this filters the grid directly
-   (no typing needed) and shouldn't compete with the search button above
-   it for attention. */
+/* Active-filter chips — the only on-page trace of Type/Region once applied
+   via SearchModal (both moved off on-page tabs and into the modal, July
+   2026 — see the People Near Me rebuild for the identical pattern). */
+.disc-active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.disc-active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.disc-active-filter-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.disc-active-filter-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.disc-active-filter-clear:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* Dead since Type moved into SearchModal (July 2026, see above) — kept in
+   case anything else ever needs an underline-tab treatment again. */
 .disc-type-tabs {
   display: flex;
   gap: 20px;

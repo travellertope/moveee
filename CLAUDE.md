@@ -2926,6 +2926,49 @@ extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**,
 fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
 see the doc's own status line, which is the authoritative source, not this summary.
 
+### Official-Hub seeding race condition — duplicate Hubs (fixed July 2026)
+
+User-reported: two "Literature" Hub cards on `/hub`, one with real member/post activity, one
+nearly empty. Root cause: `Culture_Hubs::init()` (which calls `maybe_seed_official_hubs()`) is
+hooked on WordPress's `init` action — fires on **every** request, not just plugin
+activation/deploy. `maybe_seed_official_hubs()`'s only guard was a `culture_official_hubs_seeded`
+option checked-then-set with no locking, so any concurrent requests landing in the brief window
+before that option was persisted (realistically: a burst of traffic right after this feature
+first deployed) could each pass the "not seeded yet" check, then each independently
+`wp_insert_post()` their own Hub for the same section — one ends up referenced in
+`culture_section_hub_map` (the "canonical" one everything auto-links to going forward), the
+other(s) become invisible, un-linked-to orphans that are still `publish`ed and still show up in
+the Discover listing (`Culture_Hubs::discover()`, which only filters by `_hub_status`/
+`post_status`, not slug-uniqueness).
+
+Fixed with three changes in `class-culture-hubs.php`:
+- **`maybe_seed_official_hubs()`** now takes a `get_transient()`/`set_transient()` advisory lock
+  (30s TTL) before entering the seeding loop, plus a direct DB check (`_hub_slug` meta, not the
+  possibly-stale `$map` local variable) for an already-existing Hub before inserting a new one for
+  any given section. Neither is a perfect atomic guarantee on its own, but together they close off
+  the race for all practical purposes — this was a one-time burst-traffic bug, not an ongoing
+  contention path.
+- **`maybe_merge_duplicate_official_hubs()`** (new, hooked into `init()` after the two existing
+  `maybe_*` calls, gated by its own `culture_hub_duplicates_merged` option — same one-time-only
+  shape as every other `maybe_backfill_*()` in this class) finds any leftover duplicate Hub post
+  per section slug and merges it onto the canonical (mapped) Hub via a new private
+  `merge_hub_into()`: reassigns any `culture_post._hub_id` pointing at the duplicate, reassigns
+  `wp_culture_hub_members`/`wp_culture_hub_follows` rows (dropping the duplicate's row instead of
+  reassigning it for any user who already has one on the canonical Hub, since both tables have a
+  `UNIQUE (hub_id, user_id)` constraint), recomputes the canonical Hub's cached
+  `_hub_member_count`/`_hub_post_count` counters from the merged data (these are cached counters,
+  not live queries — see `get_hub()`), then `wp_trash_post()`s the now-empty duplicate. Nothing
+  genuine (a post, a membership, a follow) is lost — only the duplicate shell post goes away, and
+  it's trashed rather than hard-deleted, so it's reversible.
+- **`get_hub_by_slug()`** now joins `wp_posts` and excludes `post_status = 'trash'` — previously a
+  raw `postmeta` lookup with no status filter, so a trashed duplicate's `_hub_slug` postmeta row
+  (untouched by `wp_trash_post()`) could still win the `LIMIT 1` depending on row order even after
+  merging. Fixed with an explicit `ORDER BY post_id ASC` for determinism too.
+- **If this pattern (a `maybe_*once*` seeding/backfill function hooked on `init`) is reused for a
+  future feature, give it the same transient-lock + direct-DB-existence-check treatment from the
+  start** — `maybe_seed_official_hubs()` had none of this until the bug actually surfaced in
+  production.
+
 ---
 
 ## Community event RSVP (free, capacity-limited — June 2026)
@@ -3544,7 +3587,7 @@ Format) only ever fed into `runSearch()`, which early-returns when `query` is em
 those chips with an empty search box silently did nothing. Two fixes landed from this:
 - **The generic Category chip row is now hidden in both Directory and People context**
   (`!isDirectory && !isPeople`) — it never had real wiring in either context (Directory has its
-  own on-page Type tabs; People has the Industry group below), so showing it was a dead control,
+  own Type group below; People has the Industry group below), so showing it was a dead control,
   not a smaller version of a working one.
 - **Any future context-specific chip group must follow the Region/Sort pattern**: call its own
   `emit*Filters()` bus function directly from the `onClick`, not route through `runSearch`/
@@ -3552,6 +3595,19 @@ those chips with an empty search box silently did nothing. Two fixes landed from
   populating the modal's own inline result list — a completely separate concern from
   remote-controlling a page's grid. Events' City/Price/Format chips still have this exact gap
   (flagged, not yet fixed — out of scope for this pass, only Discover and People were in scope).
+
+**Discover's Type filter also moved into the modal (later same month, July 2026)** — it had
+originally been kept on-page as `.disc-type-tabs` underline tabs (a deliberate choice at the
+time: "no typing required, always visible"), but the user asked to bring it in line with
+People Near Me's Industry treatment. `DiscoverFilters` (`discoverFiltersBus.ts`) gained a `type:
+string | null` field alongside `region`/`sort`; `SearchModal.tsx` gained a `DISCOVER_TYPES` chip
+group (mirrors `TYPE_BADGE` in `DiscoverBrowser.tsx`, colored dot, no emoji) right above Region,
+with a `selectDiscoverType()` handler following the exact same immediate-emit pattern. On the
+page side, `.disc-type-tabs` is now dead (left in `discover.css`, not deleted, same "kept in case
+needed again" convention used elsewhere in this file) and replaced by a `.disc-active-filters`
+row — one chip for Type, one for Region, each independently clearable — mirroring
+`.ppl-active-filters` exactly. The modal's own text-search fold-in (for its inline result list)
+now combines both Type and Region labels into the `category` keyword param when present.
 
 ### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
 
