@@ -2969,6 +2969,43 @@ Fixed with three changes in `class-culture-hubs.php`:
   start** — `maybe_seed_official_hubs()` had none of this until the bug actually surfaced in
   production.
 
+### Official-Hub default cover images (July 2026)
+
+Official Hubs are platform-owned (`post_author = 0`, no owner row in `wp_culture_hub_members`),
+so nobody could ever upload a cover for them — they launched with an empty `_hub_cover_image_url`
+and showed the generic 🏷 placeholder on `/hub` for all 11. (Creator-owned Hubs already had a
+working upload flow the whole time — `CreateHubClient.tsx`/`HubManage.tsx` — this only affects the
+11 platform-owned ones.)
+
+- **`Culture_Hubs::SECTION_COVER_IMAGES`** — one Wikimedia Commons `upload.wikimedia.org` URL per
+  section (Music/Fashion/Art/Film/Food/Sport/Travel/Ideas/Literature/Design/Tech), chosen for
+  stability (permanent direct file URLs, no API key, no expiry) over Unsplash/Pexels (both need a
+  key for programmatic use; `source.unsplash.com`'s keyless redirect service was deprecated).
+- **`Culture_Hubs::SECTION_COVER_CREDITS`** — attribution text for the 6 sections under CC BY /
+  CC BY-SA (license requires credit); empty string for the 5 under CC0/Public Domain
+  (Music/Travel/Literature/Design/Tech), which require none. Stored per-Hub as
+  `_hub_cover_image_credit` postmeta, surfaced only as the cover `<img>`'s `title` attribute (a
+  native hover tooltip) in `HubDiscoverClient.tsx` and the single-Hub banner
+  (`hub/[slug]/page.tsx`) — a ~100px archive card thumbnail has no good spot for a permanent
+  visible credit line without cluttering it, and a hover tooltip is a defensible "reasonable to
+  the medium" attribution for a small decorative thumbnail. **If a future redesign gives Hub
+  covers more visual real estate (e.g. a full-width single-Hub hero), consider making the credit
+  visible rather than hover-only** — the tooltip is a deliberate space-constrained compromise, not
+  the ideal.
+- Both maps are keyed by section name and consumed by `maybe_seed_official_hubs()` (new installs)
+  and the new one-time `maybe_backfill_official_hub_covers()` (hooked into `init()`, gated by
+  `culture_hub_covers_backfilled`, same shape as every other `maybe_*` in this class) — the
+  backfill only ever fills in a currently-empty `_hub_cover_image_url`, never overwrites one an
+  admin set manually. `handle_hub_update()`'s `coverImageUrl` branch clears
+  `_hub_cover_image_credit` when a real cover replaces a default one (not reachable via the API
+  today for official Hubs specifically, since they have no owner row, but kept correct for if an
+  admin tool for that ever ships).
+- Sourcing method: none of the 11 images are a portrait of a specific identifiable named person
+  (avoids likeness/publicity-right complications) — all were verified to actually resolve (real
+  image bytes, not a 404/redirect) before being hardcoded into the constants above. If any ever
+  goes stale (Commons file renamed/deleted — rare but not impossible for permanent file URLs),
+  swap the one broken entry in `SECTION_COVER_IMAGES`/`SECTION_COVER_CREDITS`, not the whole set.
+
 ---
 
 ## Community event RSVP (free, capacity-limited — June 2026)

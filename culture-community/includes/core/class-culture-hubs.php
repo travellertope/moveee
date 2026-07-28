@@ -64,6 +64,53 @@ class Culture_Hubs {
         'Tech'       => 'tech',
     );
 
+    /**
+     * Default cover images for the 11 official Hubs (docs/hubs-plan.md §10.6
+     * flagged this as a gap — official Hubs had no owner to upload one, so
+     * they launched with an empty _hub_cover_image_url and a placeholder
+     * icon on /hub, added July 2026). Sourced from Wikimedia Commons —
+     * stable, permanent upload.wikimedia.org URLs, no API key/expiry risk.
+     * Used by both maybe_seed_official_hubs() (new installs) and
+     * maybe_backfill_official_hub_covers() (existing installs whose Hubs
+     * were already seeded with an empty cover).
+     */
+    const SECTION_COVER_IMAGES = array(
+        'Music'      => 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Vintage_vinyl_records_%28Unsplash%29.jpg',
+        'Fashion'    => 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Catwalk_fashion_week_westergas_2010.jpg',
+        'Art'        => 'https://upload.wikimedia.org/wikipedia/commons/e/e4/New_Art_Gallery_Walsall_-_interior_13_-_entrance.JPG',
+        'Film'       => 'https://upload.wikimedia.org/wikipedia/commons/2/26/Film_reel.jpg',
+        'Food'       => 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Color_y_sabor_mexicano.jpg',
+        'Sport'      => 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Marathon_Runners.jpg',
+        'Travel'     => 'https://upload.wikimedia.org/wikipedia/commons/4/44/Donner_und_Blitzen_Wild_and_Scenic_River_%2830022819488%29.jpg',
+        'Ideas'      => 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Sticky_notes_on_the_wall_of_the_Wikimedia_Foundation_office%2C_2010-10-26.jpg',
+        'Literature' => 'https://upload.wikimedia.org/wikipedia/commons/9/96/Picton_Reading_Room_Staircase_%28106406979%29.jpeg',
+        'Design'     => 'https://upload.wikimedia.org/wikipedia/commons/d/dd/Graphasel_Design_Studio_01.jpg',
+        'Tech'       => 'https://upload.wikimedia.org/wikipedia/commons/3/36/Laptop_coding_programs_%28Unsplash%29.jpg',
+    );
+
+    /**
+     * Attribution text for SECTION_COVER_IMAGES entries under CC BY /
+     * CC BY-SA (license requires credit) — empty string for the CC0/Public
+     * Domain entries (Music, Travel, Literature, Design, Tech), which
+     * require none. Surfaced as the cover image's title attribute (a
+     * native hover tooltip) rather than permanent on-card text, since a
+     * ~100px card thumbnail has no good spot for a visible credit line
+     * without cluttering it.
+     */
+    const SECTION_COVER_CREDITS = array(
+        'Music'      => '',
+        'Fashion'    => 'Photo: Michiel, CC BY 2.0, via Wikimedia Commons',
+        'Art'        => 'Photo: Andy Mabbett, CC BY-SA 3.0, via Wikimedia Commons',
+        'Film'       => 'Photo: Runner1616, CC BY-SA 3.0, via Wikimedia Commons',
+        'Food'       => 'Photo: Andrea Mayerly Niño Hernández, CC BY-SA 4.0, via Wikimedia Commons',
+        'Sport'      => 'Photo: Chris Brown, CC BY 2.0, via Wikimedia Commons',
+        'Travel'     => '',
+        'Ideas'      => 'Photo: Ragesoss, CC BY 3.0, via Wikimedia Commons',
+        'Literature' => '',
+        'Design'     => '',
+        'Tech'       => '',
+    );
+
     public static function init() {
         add_action( 'added_post_meta', array( __CLASS__, 'on_hub_id_meta_added' ), 10, 4 );
         add_action( 'culture_notify_hub_followers_batch', array( __CLASS__, 'process_notify_hub_post_batch' ), 10, 3 );
@@ -72,6 +119,7 @@ class Culture_Hubs {
         self::maybe_seed_official_hubs();
         self::maybe_backfill_section_hub_links();
         self::maybe_merge_duplicate_official_hubs();
+        self::maybe_backfill_official_hub_covers();
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -201,7 +249,8 @@ class Culture_Hubs {
             update_post_meta( $post_id, '_hub_name', $section );
             update_post_meta( $post_id, '_hub_slug', $slug );
             update_post_meta( $post_id, '_hub_description', "Everything {$section} — every post Sectioned {$section} lands here automatically." );
-            update_post_meta( $post_id, '_hub_cover_image_url', '' );
+            update_post_meta( $post_id, '_hub_cover_image_url', self::SECTION_COVER_IMAGES[ $section ] ?? '' );
+            update_post_meta( $post_id, '_hub_cover_image_credit', self::SECTION_COVER_CREDITS[ $section ] ?? '' );
             update_post_meta( $post_id, '_hub_creator_id', 0 );
             update_post_meta( $post_id, '_hub_status', self::STATUS_ACTIVE );
             update_post_meta( $post_id, '_hub_allowed_templates', wp_json_encode( self::ALLOWED_TEMPLATES ) );
@@ -358,6 +407,39 @@ class Culture_Hubs {
         wp_trash_post( $from_id );
     }
 
+    /**
+     * Backfills a default cover image + credit onto any official Hub whose
+     * _hub_cover_image_url is still empty (July 2026) — every official Hub
+     * seeded before SECTION_COVER_IMAGES existed launched with an empty
+     * cover and a placeholder icon on /hub, since they're platform-owned
+     * (post_author 0) with no one able to upload one. Gated the same way
+     * as every other maybe_backfill_*()/maybe_merge_*() in this class —
+     * runs once, and only ever fills in an empty cover, never overwrites
+     * one an admin may have set manually via WP Admin/DB in the meantime.
+     */
+    public static function maybe_backfill_official_hub_covers() {
+        if ( '1' === get_option( 'culture_hub_covers_backfilled', '' ) ) {
+            return;
+        }
+        if ( '1' !== get_option( 'culture_official_hubs_seeded', '' ) ) {
+            return;
+        }
+
+        foreach ( self::SECTION_HUB_SLUGS as $section => $slug ) {
+            $hub_id = self::get_official_hub_id_for_section( $section );
+            if ( ! $hub_id ) {
+                continue;
+            }
+            if ( get_post_meta( $hub_id, '_hub_cover_image_url', true ) ) {
+                continue;
+            }
+            update_post_meta( $hub_id, '_hub_cover_image_url', self::SECTION_COVER_IMAGES[ $section ] ?? '' );
+            update_post_meta( $hub_id, '_hub_cover_image_credit', self::SECTION_COVER_CREDITS[ $section ] ?? '' );
+        }
+
+        update_option( 'culture_hub_covers_backfilled', '1' );
+    }
+
     /* ——————————————————————————————————————
      *  Tables
      * —————————————————————————————————————— */
@@ -436,6 +518,7 @@ class Culture_Hubs {
             'slug'              => get_post_meta( $hub_id, '_hub_slug', true ) ?: $post->post_name,
             'description'       => get_post_meta( $hub_id, '_hub_description', true ),
             'coverImageUrl'     => get_post_meta( $hub_id, '_hub_cover_image_url', true ) ?: '',
+            'coverImageCredit'  => get_post_meta( $hub_id, '_hub_cover_image_credit', true ) ?: '',
             'creatorId'         => (int) get_post_meta( $hub_id, '_hub_creator_id', true ),
             'status'            => get_post_meta( $hub_id, '_hub_status', true ) ?: self::STATUS_ACTIVE,
             'allowedTemplates'  => array_values( $templates ),
@@ -735,6 +818,11 @@ class Culture_Hubs {
 
         if ( isset( $data['coverImageUrl'] ) ) {
             update_post_meta( $hub_id, '_hub_cover_image_url', esc_url_raw( (string) $data['coverImageUrl'] ) );
+            // A real upload replacing a default Wikimedia cover no longer
+            // needs that image's attribution — not reachable via the API
+            // today for official Hubs (no owner row exists for them), but
+            // kept correct in case an admin tool for that ever ships.
+            update_post_meta( $hub_id, '_hub_cover_image_credit', '' );
         }
 
         if ( isset( $data['allowedTemplates'] ) && is_array( $data['allowedTemplates'] ) ) {

@@ -21,6 +21,7 @@ interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   creatorId: number;
   status: string;
   allowedTemplates: string[];
@@ -120,6 +121,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                   <img
                     src={hub.coverImageUrl}
                     alt=""
+                    title={hub.coverImageCredit || undefined}
                     style={{ width: "100%", maxHeight: "220px", objectFit: "cover", display: "block" }}
                   />
                 </div>
