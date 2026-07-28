@@ -296,21 +296,30 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             </div>
           )}
 
-          <div className="sm-filter-group">
-            <p className="sm-filter-label">Category</p>
-            <div className="sm-filter-chips">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`sm-chip${category === c ? " active" : ""}`}
-                  onClick={() => setCategory(c)}
-                >
-                  {c}
-                </button>
-              ))}
+          {/* Hidden in Directory context — this chip row only ever folds into
+              the modal's own text search (needs a typed query to run at
+              all), and Directory already has its own structural filter
+              (the on-page Type tabs) covering the same role. Showing it
+              here would be a dead control: clicking a chip with no query
+              typed does nothing, which is exactly the confusion this whole
+              change is meant to fix. */}
+          {!isDirectory && (
+            <div className="sm-filter-group">
+              <p className="sm-filter-label">Category</p>
+              <div className="sm-filter-chips">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`sm-chip${category === c ? " active" : ""}`}
+                    onClick={() => setCategory(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="sm-results">
             {!query.trim() ? (
