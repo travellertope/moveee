@@ -1,0 +1,387 @@
+/* ═══════════════════════════════════════════════════
+   PEOPLE NEAR ME — ppl = People namespace
+   Rebuilt to follow the Feed/Discover/Events conventions (search-modal
+   trigger button, underline/chip-driven filters instead of an on-page
+   search input+select, white feed-card visual language). Full-width,
+   single-column layout — same as .disc-wrap/.disc-page-bg, no right rail
+   (this page is a browse/search grid like Discover, not a text feed).
+   ═══════════════════════════════════════════════════ */
+
+.ppl-page-bg {
+  background: #fff;
+  min-height: 100vh;
+}
+
+.ppl-wrap {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.ppl-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 0 16px;
+  flex-wrap: wrap;
+}
+.ppl-header-text { max-width: 640px; }
+.ppl-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+.ppl-lede {
+  font-size: 13.5px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.5;
+}
+.ppl-header-cta {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--ochre);
+  padding-bottom: 2px;
+}
+
+/* Same "opens the shared SearchModal" pill button as .disc-search-btn /
+   .evt-search-btn — kept visually identical across every surface that
+   uses this pattern. */
+.ppl-search-btn {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 4px 0 4px;
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid rgba(42, 36, 28, 0.15);
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-family: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.ppl-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
+.ppl-search-btn svg { flex-shrink: 0; }
+
+/* Active-filter chips — the only on-page trace of Industry/Location once
+   applied via SearchModal (see the People Near Me mockup for why: those
+   filters now live entirely inside the modal, not as on-page tabs). */
+.ppl-active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.ppl-active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ppl-active-filter-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ppl-active-filter-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.ppl-active-filter-clear:hover { background: rgba(255, 255, 255, 0.3); }
+
+.ppl-rail-heading, .ppl-grid-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 22px 0 12px;
+}
+
+/* ── Rails: compact cards for Near You / New to Moveee ── */
+.ppl-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.ppl-rail::-webkit-scrollbar { display: none; }
+
+.ppl-rail-card {
+  flex: 0 0 220px;
+  width: 220px;
+  border-radius: var(--radius-lg, 6px);
+  border: 1px solid var(--rule, #e8e2d8);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  position: relative;
+}
+.ppl-rail-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.ppl-rail-name { font-size: 14px; font-weight: 700; margin: 0 0 2px; color: var(--ink); }
+.ppl-rail-role {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ppl-rail-loc {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0;
+}
+.ppl-new-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--ochre);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--radius-full, 999px);
+}
+
+/* ── Explore grid: full member cards, feed-card visual language ── */
+.ppl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.ppl-card {
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: flex;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ppl-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(20,17,13,.08), 0 14px 28px -14px rgba(20,17,13,.24); }
+.ppl-card--pro { border-color: rgba(179, 130, 56, 0.35); }
+.ppl-card--skeleton {
+  height: 148px;
+  background: linear-gradient(90deg, rgba(42,36,28,.04) 25%, rgba(42,36,28,.08) 50%, rgba(42,36,28,.04) 75%);
+  background-size: 200% 100%;
+  animation: ppl-skeleton 1.5s ease infinite;
+  box-shadow: none;
+}
+@keyframes ppl-skeleton {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.ppl-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+.ppl-info { flex: 1; min-width: 0; }
+.ppl-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ppl-pro-pill {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--gold);
+  background: rgba(179, 130, 56, 0.12);
+  border: 1px solid rgba(179, 130, 56, 0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.ppl-role { font-size: 13px; color: var(--ink-soft); margin: 0 0 4px; line-height: 1.35; }
+.ppl-loc {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 8px;
+}
+.ppl-disciplines { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.ppl-discipline {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  background: rgba(197, 73, 31, 0.07);
+  border: 1px solid rgba(197, 73, 31, 0.15);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.ppl-bio {
+  font-size: 12.5px;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ppl-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(42, 36, 28, 0.08);
+}
+.ppl-link {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--paper-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+.ppl-link:hover { background: rgba(42, 36, 28, 0.12); }
+.ppl-view {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ochre);
+}
+
+.ppl-load-more {
+  display: block;
+  margin: 28px auto 8px;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-full, 999px);
+  padding: 10px 22px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ppl-count {
+  text-align: center;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 8px 0 28px;
+}
+
+.ppl-empty {
+  text-align: center;
+  color: var(--mute);
+  padding: 48px 24px;
+  border: 2px dashed var(--ghost, var(--rule));
+  border-radius: 12px;
+  background: rgba(243, 236, 224, 0.5);
+  margin-top: 8px;
+}
+.ppl-empty-icon {
+  font-size: 32px;
+  filter: grayscale(1);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+.ppl-empty-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 20px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.ppl-empty-body {
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0 auto 16px;
+}
+.ppl-empty-cta {
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: var(--radius-full, 999px);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.ppl-empty-cta:hover { background: var(--ochre); }
+
+.ppl-loading { text-align: center; color: var(--mute); padding: 24px 0; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .ppl-wrap { padding: 0 16px 32px; }
+  .ppl-header { flex-direction: column; align-items: flex-start; }
+}

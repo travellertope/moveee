@@ -27,6 +27,12 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Honeypot — a field real users never see or fill, but form-filling bots
+  // that blindly populate every input often do. Paired with a minimum
+  // time-on-form check server-side (see /api/register/route.ts); neither
+  // needs an external CAPTCHA service or API keys.
+  const [website, setWebsite] = useState("");
+  const [formLoadedAt] = useState(() => Date.now());
 
   function validate(): string {
     if (!username.trim()) return "Username is required.";
@@ -52,6 +58,8 @@ function RegisterForm() {
         password,
         display_name: username.trim(),
         directory_opt_in: "1",
+        website, // honeypot — must stay empty
+        form_loaded_at: String(formLoadedAt),
       };
       if (referralFromUrl) body.referral_code = referralFromUrl;
       if (nextUrl) body.next = nextUrl;
@@ -119,6 +127,22 @@ function RegisterForm() {
         </p>
 
         <form onSubmit={handleSubmit} noValidate>
+          {/* Honeypot — visually and semantically hidden from real users
+              (off-screen, not display:none, since some bots skip that but
+              not this), left unlabeled so autofill doesn't touch it. */}
+          <div style={{ position: "absolute", left: "-9999px", top: "auto", width: 1, height: 1, overflow: "hidden" }} aria-hidden="true">
+            <label htmlFor="website">Website</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </div>
+
           <div style={styles.field}>
             <label style={styles.label} htmlFor="email">
               Email <span style={{ color: "#c5491f" }}>*</span>

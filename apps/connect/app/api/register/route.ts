@@ -16,7 +16,17 @@ interface RegisterBody {
   directory_disciplines?: string;
   directory_bio?: string;
   next?: string;
+  /** Honeypot — real users never see or fill this field; a non-empty value
+   * means a bot populated every input on the form. */
+  website?: string;
+  /** Timestamp (ms) the form mounted, from the client — a submit that
+   * arrives implausibly fast almost certainly wasn't a human filling out
+   * three fields. Both this and the honeypot need no external service or
+   * API keys, unlike a real CAPTCHA. */
+  form_loaded_at?: string;
 }
+
+const MIN_FORM_FILL_MS = 2500;
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
@@ -34,6 +44,17 @@ export async function POST(req: NextRequest) {
       { success: false, message: "Invalid request body." },
       { status: 400 }
     );
+  }
+
+  if (body.website) {
+    // Silently reject rather than explain why — no point telling a bot
+    // script exactly what tripped it.
+    return Response.json({ success: false, message: "Registration failed." }, { status: 400 });
+  }
+
+  const loadedAt = Number(body.form_loaded_at);
+  if (Number.isFinite(loadedAt) && Date.now() - loadedAt < MIN_FORM_FILL_MS) {
+    return Response.json({ success: false, message: "Registration failed." }, { status: 400 });
   }
 
   const { username, email, password } = body;

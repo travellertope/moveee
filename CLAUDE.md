@@ -3534,6 +3534,101 @@ the page open in a lightbox. All three fixed in `apps/connect/app/directory.css`
   `tsc --noEmit` (clean) on `apps/connect` and a CSS brace-balance check on `directory.css`
   (180/180, confirmed unchanged after these edits).
 
+### SearchModal structural-filter pattern — chips apply without typing (July 2026)
+
+A real gap was found and fixed while building the People Near Me rebuild below: not every chip
+group in `apps/connect/components/SearchModal.tsx` actually did anything without a typed query.
+Only Directory's Region/Sort chips called their bus emitters directly on click
+(`emitDiscoverFilters()`, independent of `query`); every other facet (Category, Event City/Price/
+Format) only ever fed into `runSearch()`, which early-returns when `query` is empty — so clicking
+those chips with an empty search box silently did nothing. Two fixes landed from this:
+- **The generic Category chip row is now hidden in both Directory and People context**
+  (`!isDirectory && !isPeople`) — it never had real wiring in either context (Directory has its
+  own on-page Type tabs; People has the Industry group below), so showing it was a dead control,
+  not a smaller version of a working one.
+- **Any future context-specific chip group must follow the Region/Sort pattern**: call its own
+  `emit*Filters()` bus function directly from the `onClick`, not route through `runSearch`/
+  `runPeopleSearch`. Those two functions (and their `!q.trim()` early-return) are only for
+  populating the modal's own inline result list — a completely separate concern from
+  remote-controlling a page's grid. Events' City/Price/Format chips still have this exact gap
+  (flagged, not yet fixed — out of scope for this pass, only Discover and People were in scope).
+
+### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
+
+`apps/connect/app/connect/people/page.tsx` + `packages/shared/components/connect/
+MemberDirectory.tsx` rebuilt from a mockup (approved via Artifact, iterated through two rounds —
+active-filter-chip placement, then moving Industry/Location off on-page tabs into SearchModal
+entirely) to bring People Near Me onto the same conventions established for `/feed`/`/discover`/
+`/events`: a `.disc-wrap`-style full-width single-column layout (no right rail — this page is a
+browse/search grid like Discover, not a text feed), a search-modal-trigger button
+(`.ppl-search-btn`, identical to `.disc-search-btn`/`.evt-search-btn`), and white feed-card-style
+member cards (`.ppl-card`, rounded + `shadow-card`, Pro-tier border tint) replacing the old
+`.mco-hero`/`.mco-dir-grid` treatment (which is untouched and still live on `/connect`,
+`/connect/membership`, `/connect/stoop` — only the People page itself moved off it).
+
+- **Industry and Location are no longer on-page controls at all** — both used to be (Industry) or
+  were mocked as (Location) on-page tabs; per explicit user direction they now live entirely
+  inside `SearchModal`'s new People context (`contentType === "member"`, added as an 8th
+  `CONTENT_TYPES` entry — not a real WP post subtype like the other seven, it routes to a
+  different endpoint entirely, see below). The **only** on-page trace once a filter is applied is
+  a small `.ppl-active-filter` chip (colored dot for Industry, 📍 for Location) with an inline ✕
+  to clear — same "chip is the only trace, modal always resets to defaults on open" pattern
+  Discover established for Region/Sort.
+- **`apps/connect/lib/peopleFiltersBus.ts`** (new, mirrors `discoverFiltersBus.ts` exactly) —
+  `PeopleFilters { industry: string | null; region: string | null }`. `region: null` = "Near Me"
+  (default — scope to the viewer's own city/country, the same fallback `MemberDirectory.tsx`
+  already had), `"all"` = no location scoping at all, or one of 5 region slugs
+  (nigeria/ghana/uk/usa/pan-african, same slugs as `DISCOVER_REGIONS` but a separate const since
+  they gate different pages/params).
+  `SearchModal.tsx`'s `selectPeopleIndustry()`/`selectPeopleRegion()` emit on every click,
+  completely independent of the search box — clicking a chip filters the page's rails/grid
+  immediately, no typing required (this was the explicit ask that prompted the SearchModal fix
+  above).
+- **Member search is a genuinely new capability, not just UI** — WordPress's native search (what
+  `/api/search` uses for every other content type) has no concept of Users, so typing a member's
+  name into SearchModal previously could never find anyone. `runPeopleSearch()` in
+  `SearchModal.tsx` hits `/api/connect/members?search=...&discipline=...&region=...` instead
+  (that endpoint already supported `search` server-side; discipline/region are net-new — see
+  below), and the results branch renders member rows (avatar-initial circle + name + occupation,
+  linking to `/connect/{username}`) instead of the generic post-shaped `SearchResult` rows.
+- **Backend: `handle_get_members_directory()` gained `region`, `sort`, and `offset` params**
+  (`class-culture-rest-api.php`) — previously only `search`/`discipline`/`location` (a raw LIKE
+  match) and a fixed `per_page` with no offset (so no real pagination) existed.
+  - `region` OR-matches `_culture_country_of_residence` against the literal country name(s) for
+    that slug (values come from `LocationSelect.tsx`'s `COUNTRIES` array, e.g. "Nigeria",
+    "United Kingdom" — not abbreviations), with `pan-african` deliberately broad (`LIKE '%Africa%'`
+    plus Senegal/Kenya as named non-"Africa" examples) since there's no single literal value for
+    it, mirroring the same broad-fallback approach `Culture_Directory::REGION_CITY_KEYWORDS` uses
+    for Discover on a different field (`_entry_city`, not `_culture_country_of_residence`).
+  - `sort=recent` orders by `registered` DESC (WP core `get_users()` orderby, no new column) —
+    powers the "New to Moveee" rail; default `sort=name` is unchanged (`display_name` ASC).
+  - `offset` enables real "Load more" pagination on the Explore More grid — since `get_users()`
+    doesn't expose a total count without switching to `WP_User_Query` directly (out of scope for
+    this pass), pagination is presence-based: fewer than `per_page` results back means no more
+    pages, same convention as a typical infinite-scroll-without-a-total-count implementation.
+  - `registered_at` (raw `user_registered` core column, no extra query) added to every member row
+    — powers the "New" badge (≤14 days, same threshold as the shop's existing "new" product
+    badge) on rail cards.
+- **`MemberDirectory.tsx` fully rewritten** — no more local search `<input>`/discipline `<select>`
+  (removed entirely, replaced by the `.ppl-search-btn` → SearchModal flow above); subscribes to
+  `peopleFiltersBus` for industry/region state, three sections: a **Near You** rail (only rendered
+  when `region === null` — a real, viewer-picked region or "All Locations" makes "near you"
+  meaningless, so the rail hides itself rather than showing something misleading), a **New to
+  Moveee** rail (site-wide or region-scoped, independent of the viewer's own location,
+  `sort=recent`), and the paginated **Explore More** grid. Avatar background colors are a stable
+  hash of `member.id` into a fixed palette (purely decorative — no per-member color stored
+  server-side).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
+  `apps/connect` and `php -l` (clean) on `class-culture-rest-api.php`. The `apps/site` `tsc`
+  errors for `MemberDirectory.tsx`/`DiscoverBrowser.tsx` (`Cannot find module '@/lib/
+  searchModalBus'` etc.) are pre-existing and not a regression — these are Connect-only shared
+  components never actually imported by any `apps/site` page; `DiscoverBrowser.tsx` already had
+  the identical error shape before this pass. Re-check pixel fidelity against the approved
+  Artifact mockup in a real environment, and confirm the WordPress plugin has been redeployed
+  (manual zip+upload — see "Plugin DB table auto-upgrade" for why a code push alone isn't enough)
+  before considering the `region`/`sort`/`offset` params live in production.
+
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
 same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.
