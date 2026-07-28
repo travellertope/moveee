@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { emitDiscoverFilters, type DiscoverFilters } from "@/lib/discoverFiltersBus";
 import "./search-modal.css";
 
 const CONTENT_TYPES = [
@@ -30,6 +31,25 @@ const EVENT_CITIES = ["All", "Lagos", "London", "Accra", "Nairobi", "New York", 
 const EVENT_PRICES = ["All", "Free", "Paid", "🪶 Members-only"];
 const EVENT_FORMATS = ["All", "In-person", "Virtual"];
 
+// Directory-only facets — shown only when contentType === "directory".
+// Mirrors REGIONS/SORTS in DiscoverBrowser.tsx — no shared source of
+// truth, same caveat as above. Unlike the event facets, these don't just
+// refine this modal's own search text — they also remote-control the
+// /discover page's own grid via discoverFiltersBus, since Region/Sort are
+// real structured filters there (not folded-into-text approximations).
+const DISCOVER_REGIONS: { slug: string; label: string }[] = [
+  { slug: "nigeria", label: "Nigeria" },
+  { slug: "ghana", label: "Ghana" },
+  { slug: "uk", label: "UK" },
+  { slug: "usa", label: "USA" },
+  { slug: "pan-african", label: "Pan-African" },
+];
+const DISCOVER_SORTS: { value: DiscoverFilters["sort"]; label: string }[] = [
+  { value: "relevant", label: "Most Relevant" },
+  { value: "recent", label: "Recently Added" },
+  { value: "rating", label: "Highest Rated" },
+];
+
 const SUBTYPE_META: Record<string, { emoji: string; label: string }> = {
   culture_post:     { emoji: "💬", label: "Post"       },
   pulse_story:      { emoji: "📰", label: "News"       },
@@ -54,10 +74,13 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   const [city, setCity] = useState("All");
   const [price, setPrice] = useState("All");
   const [format, setFormat] = useState("All");
+  const [discoverRegion, setDiscoverRegion] = useState<string | null>(null);
+  const [discoverSort, setDiscoverSort] = useState<DiscoverFilters["sort"]>("relevant");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isEvent = contentType === "event";
+  const isDirectory = contentType === "directory";
 
   useEffect(() => {
     if (open) {
@@ -76,7 +99,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const runSearch = useCallback((q: string, type: string, cat: string, evtCity: string, evtPrice: string, evtFormat: string) => {
+  const runSearch = useCallback((q: string, type: string, cat: string, evtCity: string, evtPrice: string, evtFormat: string, discRegion: string | null) => {
     if (!q.trim()) {
       setResults([]);
       setLoading(false);
@@ -90,6 +113,14 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       if (evtPrice !== "All") params.set("price", evtPrice);
       if (evtFormat !== "All") params.set("format", evtFormat);
     }
+    // Region is a real structured filter for the /discover page itself
+    // (see the discoverRegion click handlers below) — here, against this
+    // modal's own generic text search, it's just folded in as an
+    // approximate keyword, same treatment as City for events.
+    if (type === "directory" && discRegion) {
+      const label = DISCOVER_REGIONS.find((r) => r.slug === discRegion)?.label;
+      if (label) params.set("category", [cat !== "All" ? cat : "", label].filter(Boolean).join(" "));
+    }
     fetch(`/api/search?${params.toString()}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setResults(data?.results ?? []))
@@ -98,9 +129,22 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => runSearch(query, contentType, category, city, price, format), 300);
+    const t = setTimeout(() => runSearch(query, contentType, category, city, price, format, discoverRegion), 300);
     return () => clearTimeout(t);
-  }, [query, contentType, category, city, price, format, runSearch]);
+  }, [query, contentType, category, city, price, format, discoverRegion, runSearch]);
+
+  // Directory-only — Region/Sort remote-control the /discover page's own
+  // grid via discoverFiltersBus (see the file for why: SearchModal is a
+  // single global instance, unrelated to whatever page opened it).
+  function selectDiscoverRegion(slug: string) {
+    const next = discoverRegion === slug ? null : slug;
+    setDiscoverRegion(next);
+    emitDiscoverFilters({ region: next, sort: discoverSort });
+  }
+  function selectDiscoverSort(value: DiscoverFilters["sort"]) {
+    setDiscoverSort(value);
+    emitDiscoverFilters({ region: discoverRegion, sort: value });
+  }
 
   // Reset to a clean slate each time the modal opens — defaulting Content
   // Type to Event when opened while on /events, since that's almost always
@@ -119,6 +163,8 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       setCity("All");
       setPrice("All");
       setFormat("All");
+      setDiscoverRegion(null);
+      setDiscoverSort("relevant");
     }
   }, [open, pathname]);
 
@@ -210,6 +256,42 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {isDirectory && (
+            <div className="sm-filter-group">
+              <p className="sm-filter-label">Region</p>
+              <div className="sm-filter-chips">
+                {DISCOVER_REGIONS.map((r) => (
+                  <button
+                    key={r.slug}
+                    type="button"
+                    className={`sm-chip${discoverRegion === r.slug ? " active" : ""}`}
+                    onClick={() => selectDiscoverRegion(r.slug)}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isDirectory && (
+            <div className="sm-filter-group">
+              <p className="sm-filter-label">Sort</p>
+              <div className="sm-filter-chips">
+                {DISCOVER_SORTS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    className={`sm-chip${discoverSort === s.value ? " active" : ""}`}
+                    onClick={() => selectDiscoverSort(s.value)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}

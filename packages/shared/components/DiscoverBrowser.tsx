@@ -5,6 +5,7 @@ import Link from "next/link";
 import "@/app/discover.css";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { openSearchModal } from "@/lib/searchModalBus";
+import { onDiscoverFilters } from "@/lib/discoverFiltersBus";
 
 export interface DiscoverEntry {
   id: number;
@@ -43,20 +44,6 @@ export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: s
   fashion:     { emoji: "👗", label: "FASHION",   color: "#7B1FA2" },
   "tv-series": { emoji: "📺", label: "TV SERIES", color: "#00695C" },
 };
-
-const REGIONS: { slug: string; label: string }[] = [
-  { slug: "nigeria", label: "Nigeria" },
-  { slug: "ghana", label: "Ghana" },
-  { slug: "uk", label: "UK" },
-  { slug: "usa", label: "USA" },
-  { slug: "pan-african", label: "Pan-African" },
-];
-
-const SORTS: { value: SortOption; label: string }[] = [
-  { value: "relevant", label: "Most Relevant" },
-  { value: "recent", label: "Recently Added" },
-  { value: "rating", label: "Highest Rated" },
-];
 
 const PER_PAGE = 20;
 
@@ -137,11 +124,6 @@ export default function DiscoverBrowser({
   const [type, setType] = useState<string | null>(initialType);
   const [region, setRegion] = useState<string | null>(initialRegion);
   const [sort, setSort] = useState<SortOption>("relevant");
-  const [filterOpen, setFilterOpen] = useState(false);
-
-  const [draftRegion, setDraftRegion] = useState<string | null>(region);
-  const [draftSort, setDraftSort] = useState<SortOption>(sort);
-  const [draftCount, setDraftCount] = useState<number | null>(null);
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
   const [trending, setTrending] = useState<DiscoverEntry[]>([]);
@@ -157,7 +139,16 @@ export default function DiscoverBrowser({
   const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const countDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Region/Sort now live inside SearchModal (Directory context) instead of
+  // an on-page "Filters" panel — see discoverFiltersBus.ts for why this
+  // needs an event bus rather than a normal prop/callback.
+  useEffect(() => {
+    return onDiscoverFilters(({ region: r, sort: s }) => {
+      setRegion(r);
+      setSort(s);
+    });
+  }, []);
 
   // Recently Added rail
   useEffect(() => {
@@ -241,42 +232,6 @@ export default function DiscoverBrowser({
     setLoadingMore(false);
   }
 
-  // Live debounced count for the filter panel footer
-  useEffect(() => {
-    if (!filterOpen) return;
-    clearTimeout(countDebounceRef.current);
-    countDebounceRef.current = setTimeout(async () => {
-      const params = new URLSearchParams();
-      if (type) params.set("type", type);
-      if (draftRegion) params.set("region", draftRegion);
-      params.set("sort", draftSort);
-      params.set("per_page", "1");
-      try {
-        const res = await fetch(`/api/directory/browse?${params.toString()}`);
-        const data: BrowseResponse = await res.json();
-        setDraftCount(data?.total ?? 0);
-      } catch {
-        setDraftCount(null);
-      }
-    }, 350);
-    return () => clearTimeout(countDebounceRef.current);
-  }, [filterOpen, type, draftRegion, draftSort]);
-
-  function openFilter() {
-    setDraftRegion(region);
-    setDraftSort(sort);
-    setFilterOpen(true);
-  }
-
-  function applyFilter() {
-    setRegion(draftRegion);
-    setSort(draftSort);
-    setFilterOpen(false);
-  }
-
-  const activeFilterCount = (region ? 1 : 0) + (sort !== "relevant" ? 1 : 0);
-  const hasActiveRefinement = activeFilterCount > 0;
-
   return (
     <div>
       <div className="disc-header">
@@ -284,17 +239,17 @@ export default function DiscoverBrowser({
       </div>
 
       {/* Same "opens the shared SearchModal" pattern as /events — this
-          finds a specific entry by typing; it doesn't filter the browse
-          grid below, which is why type/region/sort stay as separate,
-          always-visible controls instead of living inside the modal. */}
+          finds a specific entry by typing, and (in Directory context) is
+          also where Region/Sort now live, wired back to this page via
+          discoverFiltersBus. Type stays here as an always-visible,
+          no-typing-required browse control. */}
       <button type="button" className="disc-search-btn" onClick={() => openSearchModal()}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
         Search people, places, books, films…
       </button>
 
-      {/* Quiet underline tabs, not filled pills — the type facet filters
-          the grid directly (no typing required), so it stays visually
-          subordinate to the search entry point above. */}
+      {/* Quiet underline tabs, not filled pills — colored bullets instead
+          of emoji, matching the approved mockup. */}
       <div className="disc-type-tabs">
         <button
           type="button"
@@ -313,18 +268,10 @@ export default function DiscoverBrowser({
             onClick={() => setType(type === slug ? null : slug)}
           >
             <span className="disc-type-tab-dot" style={{ background: badge.color }} />
-            {badge.emoji} {badge.label}
+            {badge.label}
           </button>
         ))}
       </div>
-
-      <button
-        type="button"
-        className={`disc-filter-btn${hasActiveRefinement ? " disc-filter-btn--active" : ""}`}
-        onClick={openFilter}
-      >
-        ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
-      </button>
 
       {recommended.length > 0 && (
         <>
@@ -385,76 +332,6 @@ export default function DiscoverBrowser({
             </div>
           )}
         </>
-      )}
-
-      {filterOpen && (
-        <div className="disc-filter-overlay" onClick={() => setFilterOpen(false)}>
-          <div className="disc-filter-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="disc-filter-header">
-              <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Filter Discover</h2>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {(draftRegion || draftSort !== "relevant") && (
-                  <button
-                    type="button"
-                    className="disc-filter-reset"
-                    onClick={() => {
-                      setDraftRegion(null);
-                      setDraftSort("relevant");
-                    }}
-                  >
-                    Reset
-                  </button>
-                )}
-                <button type="button" className="disc-filter-close" aria-label="Close" onClick={() => setFilterOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="disc-filter-section-label">Region</div>
-            <div className="disc-chip-row" style={{ paddingTop: 0 }}>
-              <button
-                type="button"
-                className={`disc-chip${!draftRegion ? " disc-chip--active" : ""}`}
-                onClick={() => setDraftRegion(null)}
-              >
-                All
-              </button>
-              {REGIONS.map((r) => {
-                const active = draftRegion === r.slug;
-                return (
-                  <button
-                    key={r.slug}
-                    type="button"
-                    className={`disc-chip${active ? " disc-chip--active" : ""}`}
-                    onClick={() => setDraftRegion(active ? null : r.slug)}
-                  >
-                    {r.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="disc-filter-section-label">Sort by</div>
-            {SORTS.map((s) => {
-              const active = draftSort === s.value;
-              return (
-                <div key={s.value} className="disc-sort-row" onClick={() => setDraftSort(s.value)}>
-                  <span className={`disc-radio${active ? " disc-radio--active" : ""}`}>
-                    {active && <span className="disc-radio-dot" />}
-                  </span>
-                  <span>{s.label}</span>
-                </div>
-              );
-            })}
-
-            <button type="button" className="disc-filter-apply" onClick={applyFilter}>
-              {draftCount === null ? "Show entries" : `Show ${draftCount} ${draftCount === 1 ? "entry" : "entries"}`}
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );
