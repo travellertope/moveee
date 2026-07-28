@@ -9,6 +9,7 @@ interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   memberCount: number;
   postCount: number;
 }
@@ -28,6 +29,7 @@ function HubCard({ hub }: { hub: Hub }) {
         <img
           src={hub.coverImageUrl}
           alt=""
+          title={hub.coverImageCredit || undefined}
           style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: "var(--radius-md, 4px)" }}
         />
       ) : (

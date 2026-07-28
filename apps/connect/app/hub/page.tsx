@@ -16,6 +16,7 @@ interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   memberCount: number;
   postCount: number;
 }
