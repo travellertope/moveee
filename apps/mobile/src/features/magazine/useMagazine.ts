@@ -18,7 +18,7 @@ export interface MagazineSection {
 
 interface WPEmbedded {
   "wp:featuredmedia"?: Array<{ source_url?: string }>;
-  "wp:term"?: Array<Array<{ id: number; name: string; taxonomy: string }>>;
+  "wp:term"?: Array<Array<{ id: number; name: string; slug: string; taxonomy: string }>>;
   author?: Array<{ name: string; avatar_urls?: Record<string, string>; slug: string }>;
 }
 
@@ -60,7 +60,12 @@ function mapPost(post: WPPost): Article {
   const embedded = post._embedded;
   const media = embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? "";
   const terms = embedded?.["wp:term"] ?? [];
-  const category = terms.flat().find((t) => t.taxonomy === "category")?.name ?? "";
+  const flatTerms = terms.flat();
+  const category = flatTerms.find((t) => t.taxonomy === "category")?.name ?? "";
+  // wp:term already embeds every taxonomy attached to the post (not just
+  // category), so the `country` term is already present in this same array
+  // — no extra fetch/param needed, same as `slug` for the country archive link.
+  const countryTerm = flatTerms.find((t) => t.taxonomy === "country");
   const author = embedded?.author?.[0];
 
   return {
@@ -76,6 +81,7 @@ function mapPost(post: WPPost): Article {
       slug: author?.slug ?? "",
     },
     category,
+    country: countryTerm ? { name: countryTerm.name, slug: countryTerm.slug ?? "" } : undefined,
     publishedAt: post.date,
     readingTime: readingTimeFromHtml(post.content.rendered),
     liked: false,

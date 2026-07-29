@@ -1,20 +1,20 @@
 import {
   getWPData,
   GET_STORIES,
-  GET_STORIES_TAGS,
   GET_SERIES_STORIES_BATCH,
   GET_PRODUCTS,
   getLatestIssue,
   getPostsByIssue,
+  getStoriesByCountrySlugs,
   type IssueTerm,
 } from "@/lib/wp";
-import { REGIONAL_SLUGS } from "@/lib/editions";
+import { EDITIONS, type RegionalSlug } from "@/lib/editions";
 
 /**
  * Fetch all data needed for a homepage edition (editorial only).
  * Events, directory, quotes, and pulse stories have moved to web.themoveee.com.
  */
-export async function fetchHomepageData(editionTag?: string) {
+export async function fetchHomepageData(edition?: RegionalSlug) {
   let stories: any[] = [];
   let coverStory: any = null;
   let products: any[] = [];
@@ -29,26 +29,34 @@ export async function fetchHomepageData(editionTag?: string) {
   const OPT = { revalidate: 600 };
 
   // ── 1. Stories ────────────────────────────────────────────────────────────
+  // Edition-scoped by the `country` taxonomy (not Tags) — see
+  // getStoriesByCountrySlugs()/EDITIONS[...].countrySlugs in packages/utils/
+  // editions.ts for why this is REST-backed rather than GraphQL.
   try {
-    if (editionTag) {
-      const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
+    if (edition) {
+      const countrySlugs = EDITIONS[edition]?.countrySlugs ?? [];
+      const [editionPosts, latestData] = await Promise.all([
+        getStoriesByCountrySlugs(countrySlugs as unknown as string[], 14, OPT),
+        getWPData(GET_STORIES, { first: 20 }, OPT),
+      ]);
+      const latestPosts: any[] = latestData?.posts?.nodes || [];
 
-      const editionData = await getWPData(GET_STORIES, { first: 14, tag: editionTag }, OPT);
-      const latestData  = await getWPData(GET_STORIES, { first: 20 }, OPT);
-
-      const otherTagData = await Promise.all(
-        otherEditions.map(tag => getWPData(GET_STORIES_TAGS, { first: 50, tag }, OPT))
-      );
-
-      const editionPosts: any[] = editionData?.posts?.nodes || [];
-      const latestPosts: any[]  = latestData?.posts?.nodes  || [];
-      const otherEditionIds = new Set<string>(
-        otherTagData.flatMap((d: any) => d?.posts?.nodes?.map((p: any) => p.id) ?? [])
+      // A post only counts as "universal" filler if it isn't tagged to ANY
+      // edition's countries — a Nigeria-tagged post should never appear as
+      // generic filler on the UK homepage. countries.nodes is already
+      // fetched on every story via STORY_FIELDS_FRAGMENT, so determining
+      // this needs no extra request (replaces the old cross-tag-exclusion
+      // fetches against the other two editions).
+      const allEditionCountrySlugs = new Set(
+        Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
       );
       const editionIds = new Set(editionPosts.map((p: any) => p.id));
-      const universalPosts = latestPosts.filter(
-        (p: any) => !editionIds.has(p.id) && !otherEditionIds.has(p.id)
-      );
+      const universalPosts = latestPosts.filter((p: any) => {
+        if (editionIds.has(p.id)) return false;
+        const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
+        return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
+      });
+
       const pool = [...editionPosts, ...universalPosts];
       coverStory = pool[0] || null;
       stories = pool.slice(1, 14);
@@ -61,7 +69,10 @@ export async function fetchHomepageData(editionTag?: string) {
   } catch (err) { console.error("Stories fetch error:", err); }
 
   // ── 2. Products ───────────────────────────────────────────────────────────
+  // Still Tags-based (unrelated to the country-taxonomy migration above —
+  // shop products aren't magazine content and weren't in scope).
   try {
+    const editionTag = edition ? EDITIONS[edition]?.tag : undefined;
     const globalData = await getWPData(GET_PRODUCTS, { first: 10 }, OPT);
     const globalProducts: any[] = globalData?.products?.nodes || [];
     if (editionTag) {

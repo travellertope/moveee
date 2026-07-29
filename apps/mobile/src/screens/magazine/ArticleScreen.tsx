@@ -1095,6 +1095,7 @@ export default function ArticleScreen() {
               {[
                 ["WRITER", article.author?.name ?? "—"],
                 ["SECTION", article.category ?? "—"],
+                ...(article.country?.name ? [["LOCATION", article.country.name]] : []),
                 ["READ TIME", article.readingTime ? `${article.readingTime} min` : "—"],
               ].map(([label, val]) => (
                 <View key={label} style={styles.tocMetaRow}>

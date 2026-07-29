@@ -25,6 +25,7 @@ const SEARCH_POSTS = `
         slug
         featuredImage { node { sourceUrl altText } }
         categories { nodes { name slug } }
+        countries { nodes { name slug } }
       }
     }
   }

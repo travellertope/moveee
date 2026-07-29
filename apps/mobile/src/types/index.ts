@@ -360,6 +360,9 @@ export interface Article {
   featuredImage: string;
   author: { name: string; avatarUrl: string; slug: string };
   category: string;
+  // From the `country` WP taxonomy (content geotagging) — undefined when the
+  // article has no country term set, not every article has one.
+  country?: { name: string; slug: string };
   publishedAt: string;
   readingTime: number;
   liked: boolean;

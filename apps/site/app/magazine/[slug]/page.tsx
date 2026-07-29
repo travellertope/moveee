@@ -209,6 +209,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
     url: articleUrl,
+    ...(post.countries?.nodes?.[0]?.name && {
+      contentLocation: { "@type": "Place", name: post.countries.nodes[0].name },
+    }),
   };
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -251,7 +254,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div className="ar-hero-eyebrow">
               <span>★ {categoryName}</span>
               {post.countries?.nodes?.[0]?.name && (
-                <> · <span>{post.countries.nodes[0].name}</span></>
+                <> · <Link href={`/magazine/country/${post.countries.nodes[0].slug}`}>{post.countries.nodes[0].name}</Link></>
               )}
             </div>
             <h1 className="ar-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
