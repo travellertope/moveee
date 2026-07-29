@@ -25,6 +25,35 @@
   --evt-font-mono: var(--font-mono, 'JetBrains Mono', monospace);
 }
 
+/* ── Dark mode — this page keeps its own --evt-* namespace (see above) but
+   had no dark-mode override at all until now, so /events never actually
+   responded to the theme toggle. Mirrors globals.css's global dark values
+   for the tokens that have a direct equivalent there; --evt-ghost/
+   --evt-ghost-light/--evt-rule have no global counterpart to mirror, so
+   their dark values are hand-picked to preserve the same relative
+   lightness/contrast against the new dark --evt-paper. Not visually
+   verified in a browser — same credentials gap as every other dark-mode
+   pass in this codebase (see CLAUDE.md). ── */
+[data-theme="dark"] {
+  --evt-paper-warm: #1A1612;
+  --evt-paper-deep: #2D2820;
+  --evt-paper: #242018;
+  --evt-ochre: #D4603A;
+  --evt-gold: #C9963F;
+  --evt-ink: #F3ECE0;
+  --evt-ink-soft: #D4C9B8;
+  --evt-mute: #9E9288;
+  --evt-ghost: #5A5248;
+  --evt-ghost-light: #332D24;
+  --evt-rule: #4A4238;
+  --evt-success: #4A9B76;
+  --evt-success-bg: rgba(74, 155, 118, 0.16);
+  --evt-error: #E05D5D;
+  --evt-error-bg: rgba(224, 93, 93, 0.16);
+  --evt-blue: #6FA8DC;
+  --evt-blue-bg: rgba(111, 168, 220, 0.16);
+}
+
 .events-page * {
   box-sizing: border-box;
 }
@@ -62,7 +91,7 @@
 /* ── Search entry point ─────────────────────────────────────────────── */
 .evt-search-wrap {
   padding: 16px 32px;
-  border-bottom: 1px solid rgba(42, 36, 28, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
 .evt-search-btn {
   width: 100%;
@@ -72,7 +101,7 @@
   gap: 8px;
   padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(42, 36, 28, 0.15);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   background: var(--evt-paper-deep);
   color: var(--evt-mute);
   font-family: var(--evt-font-sans);
@@ -1636,7 +1665,7 @@
   width: 100%;
   aspect-ratio: 3/4;
   overflow: hidden;
-  background: rgba(42,36,28,0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   margin-bottom: 18px;
 }
 .luma-poster img { width: 100%; height: 100%; object-fit: cover; }
@@ -1645,7 +1674,7 @@
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 4px;
-  background: rgba(42,36,28,0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   font-family: var(--font-mono);
 }
 .luma-poster-placeholder span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.4; }
@@ -1734,7 +1763,7 @@
   flex-direction: column;
   gap: 0;
   margin-bottom: 28px;
-  border: 1px solid rgba(42,36,28,0.1);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .luma-meta-row {
@@ -1742,7 +1771,7 @@
   align-items: flex-start;
   gap: 16px;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(42,36,28,0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 .luma-meta-row:last-child { border-bottom: none; }
 
@@ -1782,10 +1811,10 @@
 
 /* registration box */
 .luma-register-box {
-  border: 1px solid rgba(42,36,28,0.12);
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
   padding: 24px;
   margin-bottom: 36px;
-  background: rgba(42,36,28,0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 .luma-register-label {
   font-family: var(--font-mono);
@@ -1827,7 +1856,7 @@
   opacity: 0.4;
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(42,36,28,0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 .luma-excerpt {
   font-size: 15px;
@@ -1855,12 +1884,12 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--mute);
-  background: rgba(42,36,28,0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   padding: 5px 12px;
   text-decoration: none;
   transition: background 0.15s;
 }
-.luma-tag:hover { background: rgba(42,36,28,0.1); color: var(--ink); }
+.luma-tag:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
 
 /* related */
 .luma-related { margin-bottom: 40px; }
@@ -1869,7 +1898,7 @@
   align-items: flex-start;
   gap: 16px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(42,36,28,0.07);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
   text-decoration: none;
   color: inherit;
   transition: opacity 0.15s;
@@ -1898,7 +1927,7 @@
   color: var(--ochre);
   text-decoration: none;
 }
-.luma-footer-nav { padding-top: 20px; border-top: 1px solid rgba(42,36,28,0.08); }
+.luma-footer-nav { padding-top: 20px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
 .luma-back-footer {
   font-family: var(--font-mono);
   font-size: 10px;

@@ -283,7 +283,7 @@
   text-transform: uppercase;
   color: var(--mute);
   text-decoration: none;
-  border-bottom: 1px solid rgba(42,36,28,.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
   padding-bottom: 2px;
   transition: color .15s, border-color .15s;
 }
@@ -306,7 +306,7 @@
   gap: 32px;
 }
 .con-tier-card {
-  border: 1px solid rgba(42,36,28,.15);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   padding: 36px 32px 32px;
   display: flex;
   flex-direction: column;
@@ -379,7 +379,7 @@
   text-decoration: none;
   transition: background .2s, color .2s;
   align-self: flex-start;
-  border: 1px solid rgba(42,36,28,.2);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
   color: var(--ink);
   background: transparent;
   border-radius: var(--radius-lg);
@@ -400,8 +400,8 @@
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--mute);
-  background: rgba(42,36,28,.05);
-  border: 1px dashed rgba(42,36,28,.2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
   align-self: flex-start;
   pointer-events: none;
   border-radius: var(--radius-lg);

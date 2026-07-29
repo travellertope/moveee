@@ -1796,6 +1796,103 @@ gap as every other pass in this file. Verified via `tsc --noEmit` (clean) in bot
 
 ---
 
+### Dark-mode sweep #2 — CSS-file structural chrome + two undiscovered page-scoped token gaps (July 2026)
+
+The June 2026 audit above covered `packages/shared/components/pulse/`/`connect/` (React
+inline styles). This pass covers the remaining class of dark-mode bug: hardcoded colors
+in the **CSS files themselves** (`apps/connect/app/*.css`) — never audited before,
+surfaced by a user report that `/discover`, `/connect/people`, and even `/feed` still
+showed white boxes in dark mode. Same root cause as the June pass (literal hex/rgba
+instead of the theme-aware `--paper`/`--ink`/etc. tokens), same `var(--token,
+#original-literal)` / `color-mix(in srgb, var(--token) X%, transparent)` fix pattern —
+but this time at the CSS-file level, and it turned up two much bigger structural gaps,
+not just isolated literals.
+
+- **Structural chrome backgrounds** (`pulse-layout.css`, `discover.css`, `people.css`,
+  `member.css`, `globals.css`'s `.composer-*` rules) — page/card/sidebar backgrounds
+  hardcoded to `#fff`/`#ffffff` instead of `var(--paper, #fff)`. This is what was
+  actually visible in the report: the feed's `.pulse-about-card`/`.pulse-sidebar-right`,
+  the whole `/discover` and `/connect/people` page backgrounds, member/badge cards, and
+  the composer's quote-box/slim-bar.
+- **`background: var(--ink); color: #fff;` pairing bug** (`discover.css`'s
+  `.disc-active-filter`, `people.css`'s `.ppl-active-filter`/`.ppl-empty-cta`,
+  `member.css`'s `.hfc-submit-btn`/`.hfc-nav-next`) — `--ink` **flips** between themes
+  (dark in light mode, light in dark mode), so pairing it with a *literal* white text
+  color works in light mode but goes invisible-on-light-background in dark mode. Fixed by
+  swapping the literal to `var(--paper)`, which flips the opposite direction and stays
+  correctly contrasting in both themes — confirmed via a full-codebase scan (parsed every
+  CSS rule block, not just grep) that no other occurrence of this exact pairing survived
+  anywhere in `apps/connect/app/*.css` after the fix.
+- **Mechanical `rgba(42, 36, 28, X)` → `color-mix(in srgb, var(--ink) X%, transparent)`
+  sweep**, ~51 occurrences across `member.css`, `events.css`, `footer.css`,
+  `sections.css`, `games.css`, `people.css`. `rgba(42,36,28,...)` was a pervasive
+  copy-pasted "subtle dark tint" literal for hairline borders/hover backgrounds,
+  effectively always assuming a light background underneath — invisible or wrong-weight
+  once the surface actually went dark. `color-mix` against `var(--ink)` preserves the
+  exact original visual weight in light mode (the two colors are close enough at
+  low opacity to be imperceptibly different) while correctly inverting in dark mode.
+  Script-verified value-by-value before applying (extracted every distinct opacity used,
+  confirmed the percentage math), not a blind find/replace.
+- **Two page-scoped color-token namespaces had zero dark-mode override, ever** —
+  `directory.css`'s `--dir-*` tokens and `events.css`'s `--evt-*` tokens (each page
+  intentionally keeps its own separate namespace instead of the global `--paper`/`--ink`,
+  see each file's own header comment) were defined once in `:root` with no
+  `[data-theme="dark"]` block anywhere in either file. This meant the **entire** Directory
+  Entry Detail page and the **entire** Events/Happenings surface never responded to the
+  theme toggle at all — not isolated literals, a total gap. Fixed by adding a
+  `[data-theme="dark"]` override block to each, mirroring `globals.css`'s already-shipped
+  dark values for every token with a direct equivalent (`--dir-ink`/`--dir-paper`/
+  `--dir-ochre` ← global `--ink`/`--paper`/`--gold`; `--evt-*`'s full set). `--dir-muted`/
+  `--dir-border` were also refactored from separate literals into `color-mix(in srgb,
+  var(--dir-ink) X%, transparent)` derivations, so they auto-flip with `--dir-ink` instead
+  of needing their own duplicate dark-mode entries. `--evt-ghost`/`--evt-ghost-light`/
+  `--evt-rule` have no global-token equivalent to mirror (they're page-specific neutral
+  shades) — their dark values were hand-picked to preserve the same relative
+  lightness/contrast against the new dark `--evt-paper`, not derived from an existing
+  value. **`--dir-dark-bg`/`--dir-dark-ink`** (directory.css) were deliberately left
+  untouched — those name the page's permanently-dark "Improve this entry" CTA section,
+  independent of site theme, not a token that should flip (see the existing "Directory
+  Entry Detail page" entry above for why that section is dark-styled regardless of
+  theme).
+- **Tailwind's `@theme` block tokens were a separate, silent gap** — `globals.css`'s
+  `[data-theme="dark"]` block only ever redefined the plain `--paper`/`--ink`/etc. custom
+  properties (used directly by hand-written CSS via `var(--paper)`). The `@theme { --color-paper:
+  ...; --color-ink: ...; }` block a few lines above it defines a **separate** set of
+  `--color-`-prefixed properties that Tailwind's generated utility classes
+  (`bg-paper`, `text-ink`, `text-ink-soft`, used directly in JSX — e.g. `apps/connect/app/events/page.tsx`,
+  `events/[slug]/city-archive.tsx`/`category-archive.tsx`, `quotes/[slug]/page.tsx`) actually
+  compile to underneath. Nothing had ever mirrored those into the dark block, so every
+  page using `bg-paper`/`text-ink`-style utility classes silently never changed with the
+  theme toggle, sitting alongside otherwise-correctly-dark-mode-aware hand-written CSS on
+  the same page. Fixed by adding matching `--color-*` mirrors (same values, `--color-`
+  prefix) inside the existing `[data-theme="dark"]` block — since Tailwind's compiled
+  utilities reference the custom property, not a static value, this alone is enough; no
+  Tailwind `dark:` variant config needed. **If a future page uses a `bg-*`/`text-*`
+  Tailwind utility for a themeable color, verify the underlying `--color-*` token has a
+  dark-mode mirror in this block — it's easy to add a new `--color-*` token to the
+  `@theme` block above without remembering it needs one here too, since the two blocks
+  aren't adjacent and don't visually look connected.**
+- Deliberately left alone (confirmed intentional, not bugs, on inspection of each): white
+  text/badges/borders sitting on top of a photo or a solid saturated-color background
+  (`.disc-card`/`.ppl-avatar`/`.disc-card-new`/ochre-and-gold badges throughout) — these
+  don't need to track theme since the surface behind them isn't `--paper`-based; and
+  `rgba(243, 236, 224, X)` literals used as text/border color on components that are
+  themselves permanently dark-styled regardless of theme (`.con-tier-card--patron`,
+  `.cookie-bar-*`, `.nl-manage--dark`) — matches the project's existing "dark backgrounds
+  are only acceptable for buttons/hover-states/single-issue-page-components" rule, not a
+  gap to fix.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every dark-mode pass in this file, and true here in particular for the two new
+  `--evt-*`/`[data-theme="dark"]` hand-picked ghost/rule values (no exact source to mirror
+  them from) — re-check `/events` and `/directory/[slug]` pixel-by-pixel in dark mode in a
+  real environment before considering those two specifically fully closed. Verified via
+  `tsc --noEmit` (clean) on `apps/connect`, and a brace/paren-balance check on every
+  edited CSS file (`pulse-layout.css`, `discover.css`, `people.css`, `member.css`,
+  `games.css`, `footer.css`, `sections.css`, `events.css`, `directory.css`,
+  `globals.css`).
+
+---
+
 ### Server stability fixes applied (June 10 2026)
 On `cms.themoveee.com` (AWS Lightsail 2GB, London):
 - `/opt/bitnami/php/etc/memory.conf` — `pm.max_children=5`, `memory_limit=128M`

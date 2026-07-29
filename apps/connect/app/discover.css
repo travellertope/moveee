@@ -1,5 +1,5 @@
 .disc-page-bg {
-  background: #fff;
+  background: var(--paper, #fff);
   min-height: 100vh;
 }
 
@@ -35,7 +35,7 @@
   padding: 10px 14px;
   margin: 4px 0 4px;
   border-radius: 999px;
-  border: 1px solid rgba(42, 36, 28, 0.15);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   background: var(--paper-deep);
   color: var(--mute);
   font-family: inherit;
@@ -62,7 +62,7 @@
   padding: 6px 8px 6px 12px;
   border-radius: var(--radius-full, 999px);
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   font-size: 12px;
   font-weight: 600;
 }
@@ -71,9 +71,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--paper) 16%, transparent);
   border: none;
-  color: #fff;
+  color: var(--paper);
   font-size: 11px;
   line-height: 1;
   cursor: pointer;
@@ -82,7 +82,7 @@
   justify-content: center;
   padding: 0;
 }
-.disc-active-filter-clear:hover { background: rgba(255, 255, 255, 0.3); }
+.disc-active-filter-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
 
 /* Dead since Type moved into SearchModal (July 2026, see above) — kept in
    case anything else ever needs an underline-tab treatment again. */
@@ -288,7 +288,7 @@
   padding: 48px 24px;
   border: 2px dashed var(--ghost, var(--rule));
   border-radius: 12px;
-  background: rgba(243, 236, 224, 0.5);
+  background: color-mix(in srgb, var(--paper-deep) 50%, transparent);
 }
 
 .disc-empty-icon {

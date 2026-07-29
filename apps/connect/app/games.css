@@ -222,7 +222,7 @@
 .wsi-progress__bar {
   flex: 1;
   height: 3px;
-  background: rgba(42,36,28,.15);
+  background: color-mix(in srgb, var(--ink) 15%, transparent);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -1094,7 +1094,7 @@
 .game-loading__spinner {
   width: 32px;
   height: 32px;
-  border: 2px solid rgba(42,36,28,.12);
+  border: 2px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-top-color: var(--ochre);
   border-radius: 50%;
   animation: spin .8s linear infinite;

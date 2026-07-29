@@ -2,7 +2,7 @@
 .hb-footer {
   background: var(--paper, #ffffff);
   color: var(--ink, #14110d);
-  border-top: 1px solid rgba(42, 36, 28, 0.15);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   position: relative;
   z-index: 2;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
@@ -15,7 +15,7 @@
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 64px;
-  border-bottom: 1px solid rgba(42, 36, 28, 0.12);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 /* ── Link columns ── */
@@ -106,7 +106,7 @@
 
 .hb-footer-nl-form {
   display: flex;
-  border: 1px solid rgba(42, 36, 28, 0.25);
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -201,7 +201,7 @@
 }
 
 .hb-footer-legal span {
-  color: rgba(42, 36, 28, 0.2);
+  color: color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .hb-footer-edition {
@@ -221,7 +221,7 @@
 
 .hb-footer-edition-select {
   background: transparent;
-  border: 1px solid rgba(42, 36, 28, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 3px;
   color: var(--mute, #7a6f5c);
   font-size: 10px;
@@ -236,7 +236,7 @@
 
 .hb-footer-edition-select:hover,
 .hb-footer-edition-select:focus {
-  border-color: rgba(42, 36, 28, 0.4);
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
   color: var(--ink, #14110d);
 }
 

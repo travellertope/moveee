@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════ */
 
 .ppl-page-bg {
-  background: #fff;
+  background: var(--paper, #fff);
   min-height: 100vh;
 }
 
@@ -63,7 +63,7 @@
   padding: 10px 14px;
   margin: 4px 0 4px;
   border-radius: var(--radius-full, 999px);
-  border: 1px solid rgba(42, 36, 28, 0.15);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   background: var(--paper-deep);
   color: var(--mute);
   font-family: inherit;
@@ -90,7 +90,7 @@
   padding: 6px 8px 6px 12px;
   border-radius: var(--radius-full, 999px);
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   font-size: 12px;
   font-weight: 600;
 }
@@ -99,9 +99,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--paper) 16%, transparent);
   border: none;
-  color: #fff;
+  color: var(--paper);
   font-size: 11px;
   line-height: 1;
   cursor: pointer;
@@ -110,7 +110,7 @@
   justify-content: center;
   padding: 0;
 }
-.ppl-active-filter-clear:hover { background: rgba(255, 255, 255, 0.3); }
+.ppl-active-filter-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
 
 .ppl-rail-heading, .ppl-grid-heading {
   font-size: 16px;
@@ -134,7 +134,7 @@
   width: 220px;
   border-radius: var(--radius-lg, 6px);
   border: 1px solid var(--rule, #e8e2d8);
-  background: #fff;
+  background: var(--paper, #fff);
   box-shadow: var(--shadow-card);
   padding: 16px;
   text-decoration: none;
@@ -195,7 +195,7 @@
 .ppl-card {
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-lg, 6px);
-  background: #fff;
+  background: var(--paper, #fff);
   box-shadow: var(--shadow-card);
   padding: 20px;
   display: flex;
@@ -209,7 +209,12 @@
 .ppl-card--pro { border-color: rgba(179, 130, 56, 0.35); }
 .ppl-card--skeleton {
   height: 148px;
-  background: linear-gradient(90deg, rgba(42,36,28,.04) 25%, rgba(42,36,28,.08) 50%, rgba(42,36,28,.04) 75%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ink) 4%, transparent) 25%,
+    color-mix(in srgb, var(--ink) 8%, transparent) 50%,
+    color-mix(in srgb, var(--ink) 4%, transparent) 75%
+  );
   background-size: 200% 100%;
   animation: ppl-skeleton 1.5s ease infinite;
   box-shadow: none;
@@ -292,7 +297,7 @@
   align-items: center;
   gap: 8px;
   padding-top: 12px;
-  border-top: 1px solid rgba(42, 36, 28, 0.08);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 .ppl-link {
   width: 28px;
@@ -307,7 +312,7 @@
   color: var(--ink);
   text-decoration: none;
 }
-.ppl-link:hover { background: rgba(42, 36, 28, 0.12); }
+.ppl-link:hover { background: color-mix(in srgb, var(--ink) 12%, transparent); }
 .ppl-view {
   margin-left: auto;
   font-size: 11.5px;
@@ -321,7 +326,7 @@
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-full, 999px);
   padding: 10px 22px;
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink);
   font-weight: 700;
   font-size: 13px;
@@ -341,7 +346,7 @@
   padding: 48px 24px;
   border: 2px dashed var(--ghost, var(--rule));
   border-radius: 12px;
-  background: rgba(243, 236, 224, 0.5);
+  background: color-mix(in srgb, var(--paper-deep) 50%, transparent);
   margin-top: 8px;
 }
 .ppl-empty-icon {
@@ -368,7 +373,7 @@
 .ppl-empty-cta {
   display: inline-block;
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   padding: 10px 22px;
   border-radius: var(--radius-full, 999px);
   font-family: var(--font-jetbrains-mono), monospace;

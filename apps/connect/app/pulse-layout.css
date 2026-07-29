@@ -38,14 +38,14 @@
   top: 0;
   max-height: 100vh;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--paper, #ffffff);
   padding: 24px 16px;
 }
 .pulse-sidebar-left::-webkit-scrollbar { width: 3px; }
-.pulse-sidebar-left::-webkit-scrollbar-thumb { background: #e0d8ce; }
+.pulse-sidebar-left::-webkit-scrollbar-thumb { background: var(--rule-dark, #e0d8ce); }
 .pulse-timeline {
   border-right: 1px solid var(--rule, #e8e2d8);
-  background: #ffffff;
+  background: var(--paper, #ffffff);
   min-height: 80vh;
   min-width: 0;
 }
@@ -62,7 +62,7 @@
   top: 0; /* see .pulse-sidebar-left comment above */
   max-height: 100vh;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--paper, #ffffff);
   padding: 24px 16px;
 }
 @media (max-width: 860px) {
@@ -147,7 +147,7 @@
   margin-top: 4px;
 }
 .pulse-about-card {
-  background: #ffffff;
+  background: var(--paper, #ffffff);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: 4px;
   padding: 14px;
