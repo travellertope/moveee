@@ -236,7 +236,7 @@ export default async function MagazineArchiveWrapper({
                     })}
                   </span>
                   <Link href={`/magazine/${heroStory.slug}`} className="mg-hero-read">
-                    Read Extended Edit ↗
+                    Read Full Story ↗
                   </Link>
                 </div>
               </div>

@@ -1,8 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import Link from "next/link";
 import MagazineArchiveWrapper from "../MagazineArchiveWrapper";
-import "../../newsletter.css";
 
 export const revalidate = 300;
 
@@ -31,22 +29,5 @@ export const metadata: Metadata = {
 };
 
 export default function MagazineUKPage() {
-  return (
-    <>
-      <div className="nl-edition-banner">
-        <div className="nl-edition-banner-inner">
-          <span className="nl-edition-badge">★ UK Edition</span>
-          <span className="nl-edition-switch">
-            Switch:{" "}
-            <Link href="/magazine/africa">Africa Edition</Link>
-            {" · "}
-            <Link href="/magazine/us">US Edition</Link>
-            {" · "}
-            <Link href="/magazine">Global</Link>
-          </span>
-        </div>
-      </div>
-      <MagazineArchiveWrapper />
-    </>
-  );
+  return <MagazineArchiveWrapper />;
 }
