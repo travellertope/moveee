@@ -1113,6 +1113,80 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 stories, products, latest issue, interviews, series batch.
 Events, directory, quotes, pulse, origins removed from homepage.
 
+**Edition story-scoping migrated from Tags to the `country` taxonomy (July 2026).** This
+was previously dead code — `HomepageContent.tsx` accepted `coverStory`/`stories`/`products`/
+`interviewStories`/`seriesX` as props but only ever rendered `latestIssue`, so the
+Tags-based (`tag: "uk"/"us"/"africa"`) edition filtering in `fetchHomepageData.ts`'s Stories
+section had zero visible effect on `/`, `/uk`, `/us`, `/africa` (which are themselves
+`robots: { index: false }`, not indexed). Per explicit user direction this was turned into a
+real, live feature rather than left dead or deleted — `HomepageContent.tsx` now actually
+renders `coverStory` (as a `.mg-hero`) and `stories` (as a `.mg-band`/`.mg-filtered-grid`,
+reusing `apps/site/app/magazine.css`'s existing card classes) below `MoveeeZone`.
+`products`/`interviewStories`/`seriesTheRadar`/etc. are still computed-but-unused — that's a
+separate, unrelated dead-code question, deliberately out of scope for this pass (which was
+specifically about country-taxonomy geotagging).
+
+- **`country` is a JetEngine-registered taxonomy, not registered anywhere in this repo** —
+  bridged into WPGraphQL via `moveee-graphql-bridge.php`'s `register_taxonomy_args` filter
+  (confirms `graphql_single_name: country` / `graphql_plural_name: countries`, matching
+  every `country`/`countries` GraphQL query already in `wp.ts`). Confirmed live via REST
+  that JetEngine has `show_in_rest` enabled for it — `wp-json/wp/v2/country` (collection),
+  `wp-json/wp/v2/posts?country={id}` (filter), and `_embed`'s `wp:term` all expose real term
+  data (id/name/slug), which is what makes both the web REST helper below and the mobile
+  `country` field (see "Mobile: country field" below) possible at all.
+- **The `country` taxonomy has real data-hygiene issues** — duplicate terms for the same
+  country (`uk` vs `united-kingdom`, `united-states` vs `united-states-of-america`,
+  `ivory-coast` vs `cote-divoire`), plus several non-country terms mixed in (person names
+  like `rema`/`usain-bolt`/`helon-habila`, labels like `book-review`/`exhibition`/`review`).
+  `EDITIONS[...].countrySlugs` (`packages/utils/editions.ts`) is a deliberately curated
+  allow-list of only the real, verified-live country slugs per edition (including known
+  duplicate-slug variants for UK/US), not a blind dump of every term — an unmatched/junk
+  slug is simply never in the list, so it's naturally excluded without needing the taxonomy
+  itself cleaned up first. **If editors keep adding stray/duplicate country terms, that's a
+  WP Admin data-quality question, not a code bug** — worth a cleanup pass in
+  `/wp-admin/edit-tags.php?taxonomy=country` at some point (merge duplicates, delete
+  non-country terms), but nothing here depends on it.
+- **No GraphQL bulk country filter exists** — WPGraphQL only exposes single-country lookups
+  (`country(id, idType: SLUG) { posts }`, used by `GET_COUNTRY_STORIES` for the
+  `/magazine/country/[slug]` archive) — confirmed against the live schema that
+  `countryIn`/`countrySlugIn`/etc. don't exist on the `posts` root query's `where` args. WP
+  core's REST API, however, natively supports comma-separated term IDs on any
+  REST-queryable taxonomy's query var with zero plugin changes — confirmed live:
+  `wp-json/wp/v2/posts?country=982,1042,1070` just works. **`getStoriesByCountrySlugs()`
+  (`packages/shared/lib/wp.ts`) is the REST path this uses**: resolves slugs → term IDs via
+  `wp-json/wp/v2/country?slug=a,b,c`, then fetches `wp-json/wp/v2/posts?country=<ids>&_embed=1`
+  and maps the raw REST shape via a new `mapRestStoryToFrontendShape()` — **this is the
+  first REST-fallback path for magazine stories in this file**; `STORY_FIELDS_FRAGMENT`-based
+  queries (`GET_STORIES` etc.) are otherwise GraphQL-only with no REST equivalent, unlike
+  events/directory/newsletters which each have a real `mapRest*ToFrontendShape()`.
+  `fetchHomepageData.ts`'s "universal filler" logic (posts with no edition-country match,
+  backfilled to pad out the edition's story pool) now derives directly from `countries.nodes`
+  already present on the GraphQL-fetched "latest 20" posts (via `STORY_FIELDS_FRAGMENT`) —
+  no separate cross-edition-tag-exclusion fetch needed anymore (`GET_STORIES_TAGS` is still
+  exported from `wp.ts` but no longer used anywhere).
+- **Article page**: the country name in the hero eyebrow (`ar-hero-eyebrow`) is now a
+  `Link` to `/magazine/country/{slug}`, matching the category breadcrumb. **Deliberately
+  left as plain text**: the TOC sidebar's "Location" meta item (`ar-toc-meta-item`) — its
+  siblings (Section/Series/Industry) are all plain text too, so linking only Location would
+  read as an inconsistency, not a feature. Also added `contentLocation` (schema.org `Place`)
+  to the Article JSON-LD when a country is set.
+- **`sitemap.ts`** now includes `/magazine/country/{slug}` for every term returned by
+  `GET_FILTERS`'s `countries` field (alongside the pre-existing gap that category/tag/series
+  archive URLs are also missing from the sitemap — see `docs/seo-plan.md` — country was
+  fixed here since it was in scope, the others weren't).
+- **Search**: `SEARCH_POSTS` (`app/api/search/route.ts`) now selects `countries { nodes {
+  name slug } }` too; `SearchOverlay.tsx` shows it as part of the result's meta line
+  (`"{Category} · {Country}"`) — a display facet, not a server-side filter (no bulk-country
+  GraphQL filter exists, per above, so this stays a lightweight addition rather than a full
+  faceted-search rebuild).
+- **Mobile: country field** — `Article.country?: { name, slug }` added to
+  `apps/mobile/src/types/index.ts`. `useMagazine.ts`'s `mapPost()` extracts it from the
+  already-fetched `wp:term` embed (every taxonomy attached to the post is already in that
+  array, including `country` — no new `_embed`/fetch param needed, same as how `category`
+  is already extracted there). Surfaced in `ArticleScreen.tsx`'s TOC bottom sheet as a
+  "LOCATION" row (shown only when set), mirroring the web TOC sidebar's scope decision
+  above — no new filter UI was built for this pass.
+
 ### Figma Make web design rebuild — section-by-section status tracker (June 2026)
 
 Tracks progress against the 18 numbered sections in `docs/figma-make-prompts-web.md`

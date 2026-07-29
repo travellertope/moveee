@@ -931,6 +931,82 @@ export const GET_COUNTRY_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+// ── Multi-country story lookup (REST) ───────────────────────────────────────
+// WPGraphQL only exposes single-country lookups for this taxonomy —
+// `country(id, idType: SLUG) { posts }` — there's no countryIn/countrySlugIn
+// filter on the posts root query (confirmed against the live schema). WP
+// core's REST API natively supports comma-separated term IDs on any
+// REST-queryable taxonomy's query var, though — confirmed live:
+// wp-json/wp/v2/posts?country=982,1042,1070 just works with zero plugin
+// changes. Used for edition (UK/US/Africa) story scoping in
+// fetchHomepageData.ts, which needs "any of several countries", not just one.
+function mapRestStoryToFrontendShape(item: any) {
+  const media = item?._embedded?.["wp:featuredmedia"]?.[0];
+  const author = item?._embedded?.author?.[0];
+  const terms: any[] = (item?._embedded?.["wp:term"] ?? []).flat();
+  const byTaxonomy = (tax: string) =>
+    terms.filter((t) => t?.taxonomy === tax).map((t) => ({ name: t.name, slug: t.slug }));
+
+  return {
+    id: String(item?.id ?? ""),
+    databaseId: item?.id,
+    title: item?.title?.rendered ?? "Untitled",
+    slug: item?.slug ?? "",
+    date: item?.date ?? null,
+    excerpt: item?.excerpt?.rendered ?? "",
+    featuredImage: media?.source_url
+      ? { node: { sourceUrl: media.source_url, altText: media.alt_text ?? "" } }
+      : null,
+    author: author
+      ? { node: { name: author.name ?? "", slug: author.slug ?? "", databaseId: author.id, avatar: { url: author.avatar_urls?.["96"] ?? "" } } }
+      : null,
+    categories: { nodes: byTaxonomy("category") },
+    countries: { nodes: byTaxonomy("country") },
+  };
+}
+
+/**
+ * Resolves `country` taxonomy slugs to term IDs, then fetches the most
+ * recent posts tagged with any of them — the REST path for multi-country
+ * "edition" scoping (see mapRestStoryToFrontendShape above for why this
+ * isn't done via GraphQL). Returns [] on any failure — best-effort, same as
+ * every other REST fallback helper in this file.
+ */
+export async function getStoriesByCountrySlugs(slugs: string[], first = 14, options: any = {}) {
+  if (!slugs.length) return [];
+  try {
+    const { signal: termsSignal, clear: clearTerms } = wpSignal();
+    const termsUrl = `${WP_BASE_URL}/wp-json/wp/v2/country?slug=${encodeURIComponent(slugs.join(","))}&per_page=100&_fields=id,slug`;
+    const termsRes = await fetch(termsUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal: termsSignal,
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+    });
+    clearTerms();
+    if (!termsRes.ok) return [];
+    const terms = await termsRes.json();
+    const ids = Array.isArray(terms) ? terms.map((t: any) => t.id).filter(Boolean) : [];
+    if (!ids.length) return [];
+
+    const { signal: postsSignal, clear: clearPosts } = wpSignal();
+    const postsUrl = `${WP_BASE_URL}/wp-json/wp/v2/posts?country=${ids.join(",")}&per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const postsRes = await fetch(postsUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal: postsSignal,
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 600 },
+    });
+    clearPosts();
+    if (!postsRes.ok) return [];
+    const json = await postsRes.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestStoryToFrontendShape);
+  } catch {
+    return [];
+  }
+}
+
 export const GET_CATEGORY_INFO = `
   query GetCategoryInfo($slug: ID!) {
     category(id: $slug, idType: SLUG) {

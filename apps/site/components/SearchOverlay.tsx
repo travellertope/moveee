@@ -12,6 +12,7 @@ interface SearchResult {
   featuredImage?: { node: { sourceUrl: string; altText: string } };
   image?: { sourceUrl: string };
   categories?: { nodes: { name: string; slug: string }[] };
+  countries?: { nodes: { name: string; slug: string }[] };
   price?: string;
   /** Pre-computed subtitle (author for quotes, entry type for directory entries) */
   meta?: string | null;
@@ -171,8 +172,10 @@ function ResultSection({
       {items.slice(0, 4).map(item => {
         const title  = isProduct ? item.name   : item.title;
         const imgSrc = isProduct ? item.image?.sourceUrl : item.featuredImage?.node?.sourceUrl;
-        const cat    = !isProduct ? item.categories?.nodes?.[0]?.name : undefined;
-        const meta   = isProduct ? item.price : (item.meta ?? cat);
+        const cat     = !isProduct ? item.categories?.nodes?.[0]?.name : undefined;
+        const country = !isProduct ? item.countries?.nodes?.[0]?.name : undefined;
+        const catAndCountry = [cat, country].filter(Boolean).join(' · ') || undefined;
+        const meta   = isProduct ? item.price : (item.meta ?? catAndCountry);
         return (
           <Link key={item.id} href={`${basePath}/${item.slug}`} className="search-result-item" onClick={onClose}>
             {imgSrc ? (

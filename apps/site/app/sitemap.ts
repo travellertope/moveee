@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getWPData, GET_STORIES, GET_PRODUCTS, GET_NEWSLETTERS, GET_JOURNEYS } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_PRODUCTS, GET_NEWSLETTERS, GET_JOURNEYS, GET_FILTERS } from "@/lib/wp";
 import { FEATURE_PAGES } from "@/lib/features";
 
 const BASE = "https://themoveee.com";
@@ -18,12 +18,14 @@ async function fetchSlugs<T extends { slug: string }>(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [articles, products, newsletters, journeys] = await Promise.all([
+  const [articles, products, newsletters, journeys, filters] = await Promise.all([
     fetchSlugs(GET_STORIES, { first: 500 }, (d) => d?.posts?.nodes ?? []),
     fetchSlugs(GET_PRODUCTS, { first: 500 }, (d) => d?.products?.nodes ?? []),
     fetchSlugs(GET_NEWSLETTERS, { first: 200 }, (d) => d?.cultureNewsletters?.nodes ?? []),
     fetchSlugs(GET_JOURNEYS, { first: 100 }, (d) => d?.cultureJourneys?.nodes ?? []),
+    getWPData(GET_FILTERS, {}, { revalidate: 3600 }).catch(() => null),
   ]);
+  const countries: { slug: string }[] = filters?.countries?.nodes ?? [];
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE,                   changeFrequency: "daily"   as const, priority: 1.0, lastModified: new Date() },
@@ -73,5 +75,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...featureUrls, ...articleUrls, ...productUrls, ...newsletterUrls, ...journeyUrls];
+  const countryUrls: MetadataRoute.Sitemap = countries.map((c) => ({
+    url: `${BASE}/magazine/country/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPages, ...featureUrls, ...articleUrls, ...productUrls, ...newsletterUrls, ...journeyUrls, ...countryUrls];
 }
