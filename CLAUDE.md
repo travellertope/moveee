@@ -3758,7 +3758,9 @@ member cards (`.ppl-card`, rounded + `shadow-card`, Pro-tier border tint) replac
   a small `.ppl-active-filter` chip (colored dot for Industry, 📍 for Location) with an inline ✕
   to clear — same "chip is the only trace, modal always resets to defaults on open" pattern
   Discover established for Region/Sort.
-- **`apps/connect/lib/peopleFiltersBus.ts`** (new, mirrors `discoverFiltersBus.ts` exactly) —
+- **`packages/shared/lib/peopleFiltersBus.ts`** (new, mirrors `discoverFiltersBus.ts` exactly;
+  moved here from `apps/connect/lib/` in July 2026 along with its two sibling bus files — see
+  the correction note in the Figma-rebuild section above for why) —
   `PeopleFilters { industry: string | null; region: string | null }`. `region: null` = "Near Me"
   (default — scope to the viewer's own city/country, the same fallback `MemberDirectory.tsx`
   already had), `"all"` = no location scoping at all, or one of 5 region slugs
@@ -3804,14 +3806,35 @@ member cards (`.ppl-card`, rounded + `shadow-card`, Pro-tier border tint) replac
   server-side).
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
-  `apps/connect` and `php -l` (clean) on `class-culture-rest-api.php`. The `apps/site` `tsc`
-  errors for `MemberDirectory.tsx`/`DiscoverBrowser.tsx` (`Cannot find module '@/lib/
-  searchModalBus'` etc.) are pre-existing and not a regression — these are Connect-only shared
-  components never actually imported by any `apps/site` page; `DiscoverBrowser.tsx` already had
-  the identical error shape before this pass. Re-check pixel fidelity against the approved
-  Artifact mockup in a real environment, and confirm the WordPress plugin has been redeployed
-  (manual zip+upload — see "Plugin DB table auto-upgrade" for why a code push alone isn't enough)
-  before considering the `region`/`sort`/`offset` params live in production.
+  `apps/connect` and `php -l` (clean) on `class-culture-rest-api.php`. Re-check pixel fidelity
+  against the approved Artifact mockup in a real environment, and confirm the WordPress plugin
+  has been redeployed (manual zip+upload — see "Plugin DB table auto-upgrade" for why a code
+  push alone isn't enough) before considering the `region`/`sort`/`offset` params live in
+  production.
+  **Correction (July 2026): the `apps/site` `tsc` "Cannot find module '@/lib/searchModalBus'"
+  error described above as "pre-existing, not a regression, out of scope" was actually a real,
+  production-breaking bug** — it was dismissed for months because `next build`'s type-check
+  step type-checks every file matched by `apps/site/tsconfig.json`'s `include` array, which
+  explicitly globs the entire `packages/shared/**` tree (`"../../packages/shared/**/*.tsx"`)
+  regardless of whether any `apps/site` page actually imports it. `DiscoverBrowser.tsx` and
+  `MemberDirectory.tsx` live in `packages/shared/components/` (since they're nominally shared
+  components, even though only `apps/connect` currently consumes them) and imported
+  `searchModalBus.ts`/`discoverFiltersBus.ts`/`peopleFiltersBus.ts` via the `@/lib/*` alias —
+  those three files lived only in `apps/connect/lib/`, which is checked *last* in the `@/lib/*`
+  paths array (`packages/shared/lib/*` → `packages/utils/*` → `./lib/*`), so the alias resolved
+  fine for `apps/connect`'s own build but never for `apps/site`'s. This eventually surfaced as
+  an actual Vercel deploy failure on `main` (`next build`'s TypeScript check, not just an IDE
+  squiggle) once enough shared-component/bus-file pairs accumulated. **Fixed** by moving all
+  three bus files from `apps/connect/lib/` to `packages/shared/lib/` — zero import-line changes
+  needed anywhere (every consumer already used the `@/lib/*` alias, never a relative path), and
+  `packages/shared/lib/*` being checked first in the paths array means both apps now resolve
+  them identically. **Lesson: a shared component that's only consumed by one app still needs
+  its *own* dependencies (not just itself) to live under `packages/shared/`, not under that
+  one app's local `lib/`/`components/` — otherwise the other app's build will still try to
+  type-check the shared component (via the `tsconfig.json` `include` glob) and fail on the
+  unresolvable import.** Don't dismiss a "Cannot find module '@/lib/...'" error under
+  `packages/shared/` as some other app's problem without checking whether `next build`'s own
+  type-check (not just a manual `tsc --noEmit` run scoped to one app) would actually hit it.
 
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
