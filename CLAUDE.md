@@ -1134,7 +1134,7 @@ specifically about country-taxonomy geotagging).
   `wp-json/wp/v2/posts?country={id}` (filter), and `_embed`'s `wp:term` all expose real term
   data (id/name/slug), which is what makes both the web REST helper below and the mobile
   `country` field (see "Mobile: country field" below) possible at all.
-- **The `country` taxonomy has real data-hygiene issues** — duplicate terms for the same
+- **The `country` taxonomy had real data-hygiene issues** — duplicate terms for the same
   country (`uk` vs `united-kingdom`, `united-states` vs `united-states-of-america`,
   `ivory-coast` vs `cote-divoire`), plus several non-country terms mixed in (person names
   like `rema`/`usain-bolt`/`helon-habila`, labels like `book-review`/`exhibition`/`review`).
@@ -1142,10 +1142,27 @@ specifically about country-taxonomy geotagging).
   allow-list of only the real, verified-live country slugs per edition (including known
   duplicate-slug variants for UK/US), not a blind dump of every term — an unmatched/junk
   slug is simply never in the list, so it's naturally excluded without needing the taxonomy
-  itself cleaned up first. **If editors keep adding stray/duplicate country terms, that's a
-  WP Admin data-quality question, not a code bug** — worth a cleanup pass in
-  `/wp-admin/edit-tags.php?taxonomy=country` at some point (merge duplicates, delete
-  non-country terms), but nothing here depends on it.
+  itself cleaned up.
+  **The duplicate-term half of this is now fixed automatically, not just worked around.**
+  `Culture_Country_Cleanup` (`includes/core/class-culture-country-cleanup.php`, hooked on
+  `wp_loaded` — not `init`, since JetEngine registers `country` on its own `init` callback
+  and this plugin's `culture_community_init` runs at priority 5, so `taxonomy_exists()`
+  could still see "not registered yet" on `init`; `wp_loaded` fires after every `init`
+  callback at any priority has run, so the taxonomy is guaranteed to exist by then if it
+  exists at all) merges `Culture_Country_Cleanup::DUPLICATE_MAP`'s three known pairs
+  (reassigns every post via `wp_set_object_terms(..., true)` so other countries already on
+  the post are preserved, then `wp_delete_term()`s the empty duplicate) exactly once, gated
+  by the `culture_country_terms_deduped` option — same one-time-migration shape as
+  `Culture_Hubs::maybe_merge_duplicate_official_hubs()`. Runs automatically on the next
+  deploy; no manual WP Admin step needed for these three pairs specifically. **The
+  non-country-term half is deliberately still untouched and still manual** — person names
+  and generic labels aren't safe to auto-delete (unlike merging two same-country terms,
+  there's no unambiguous "correct" side to keep), so that still needs a human pass through
+  `/wp-admin/edit-tags.php?taxonomy=country` whenever someone gets to it. If a new
+  duplicate pair turns up in the future, add it to `DUPLICATE_MAP` rather than hand-merging
+  it in WP Admin — the option gate means a new entry added after the first deploy won't
+  re-run automatically on its own; either bump/rename the gate option or run the merge via
+  `wp eval` for a one-off addition.
 - **No GraphQL bulk country filter exists** — WPGraphQL only exposes single-country lookups
   (`country(id, idType: SLUG) { posts }`, used by `GET_COUNTRY_STORIES` for the
   `/magazine/country/[slug]` archive) — confirmed against the live schema that

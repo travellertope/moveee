@@ -48,6 +48,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-auth.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-country-cleanup.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -155,6 +156,7 @@ function culture_community_init() {
     Culture_Notifications::init();
     Culture_Follows::init();
     Culture_Hubs::init();
+    Culture_Country_Cleanup::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {
