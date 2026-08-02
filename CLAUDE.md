@@ -1534,11 +1534,11 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
 - **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3,
-  Notifications + Analytics as Phase 4 (see below for all three). Remaining:
-  Events/Referrals/Portfolio/Collection. Each phase should: swap that page's own
-  back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
-  page's own content the same `.acct-card` white-card treatment Phase 1 established —
-  don't invent a third visual language.
+  Notifications + Analytics as Phase 4, My Events + Referrals as Phase 5 (see below for
+  all four). Remaining: Portfolio/Collection. Each phase should give the page's own
+  content the same `.acct-card` white-card treatment Phase 1 established — don't invent a
+  third visual language. `MemberNavSelect` no longer exists (deleted in Phase 5 once its
+  last importer was migrated) — nothing left to swap out for future phases.
 
 ### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
 
@@ -1636,6 +1636,40 @@ changed.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
   gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (463/463).
+
+### Account Dashboard redesign — Phase 5: My Events + Referrals (August 2026)
+
+Both pages were entirely inline-styled going in — same debt state Wallet/Coupons/
+Notifications were in before their own rebuilds — so both got full rebuilds, same
+treatment as those.
+
+- **My Events** (`/member/events`) — `page.tsx` extracted the avatar/name/tier-pill strip
+  into a shared `profileStrip` JSX const (both the Pro and non-Pro branches render it
+  identically, only the body below differs) plus `<AccountNav isPatron={isPatron} />` on
+  both. The non-Pro branch's upgrade gate now reuses `.evt-upsell` — the exact same dark
+  full-width upsell card shape as Wallet's cash-out gate in Phase 2, not a new pattern.
+  `EventsClient.tsx`'s expandable event rows + attendee sub-lists moved onto `.evt-row`/
+  `.evt-attendee-row` classes; `toggleEvent()`/`downloadCsv()` logic is untouched. The
+  card itself provides its own `.acct-card` wrapper + header (matching Wallet/
+  Notifications' pattern of the client component owning its card, not the page
+  double-wrapping it).
+- **Referrals** (`/member/referrals`) — same shell swap. `ReferralsClient.tsx`'s share-link
+  card, 3-tile stat row (`.ref-stats`/`.ref-stat`, same shape as `.an-stats`/`.an-stat` from
+  Phase 4), badge-progress bars (`.ref-track`/`.ref-fill`, flips to `.ref-fill--done` at
+  100%), invited-friends list, and the numbered "How It Works" steps all moved off inline
+  styles onto `.ref-*` classes. `handleCopy()`'s clipboard logic and the `useEffect` fetch
+  fallback (for when `initialData` is null) are untouched.
+- **`MemberNavSelect.tsx` deleted** (`packages/shared/components/`) — Phase 5 was the last
+  page still importing it (`/member/events`'s side-rail); confirmed zero remaining
+  importers repo-wide via grep before removing, rather than leaving it as dead code. If a
+  future phase needs a flat link-list component again, this is gone — don't assume it
+  still exists.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site` — including after deleting `MemberNavSelect.tsx`, since
+  both apps' tsconfigs type-check `packages/shared/**` regardless of which app actually
+  imports a given file (see the production-build-fix entry earlier in this doc for why
+  that check matters) — and a CSS brace-balance check on `member.css` (515/515).
 
 ### Member Settings — visual rebuild (§10, June 2026)
 

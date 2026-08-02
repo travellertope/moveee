@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import MemberNavSelect from "@/components/MemberNavSelect";
+import AccountNav from "@/components/AccountNav";
 import EventsClient from "./EventsClient";
 import "../../member.css";
 
@@ -35,87 +35,66 @@ export default async function MemberEventsPage() {
 
   const user = session.user;
   const isPatron = user.tier === "patron";
+  const displayName = user.displayName || user.name || user.username || "Member";
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const profileStrip = (
+    <div className="acct-profile">
+      <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+        ) : initial}
+      </div>
+      <div className="acct-profile-body">
+        <h1 className="acct-name">My Events</h1>
+        <div className="acct-meta">
+          <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
+            {isPatron ? "Moveee Pro" : "Moveee Citizen"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 
   if (!isPatron) {
     return (
-      <>
-        <div className="mem-hero">
-          <div className="mem-hero-inner">
-            <div className="mem-hero-body">
-              <div className="mem-eyebrow">
-                <Link href="/member" style={{ color: "inherit", textDecoration: "none" }}>Dashboard</Link>
-                {" "}&rsaquo;{" "}My Events
-              </div>
-              <h1 className="mem-name">My Events</h1>
-            </div>
-          </div>
-        </div>
-        <div className="mem-body">
-          <section className="mem-card">
-            <div className="mem-card-label">Moveee Pro feature</div>
-            <p className="mem-card-desc">
+      <div className="acct-page">
+        <div className="acct-wrap">
+          {profileStrip}
+          <AccountNav isPatron={isPatron} />
+          <div className="evt-upsell">
+            <span className="evt-upsell-badge">Moveee Pro</span>
+            <h3 className="evt-upsell-title">RSVP management is a Moveee Pro feature</h3>
+            <p className="evt-upsell-desc">
               RSVP management for community events is available to Moveee Pro members.
               Upgrade your membership to enable RSVP on your events and view attendee lists.
             </p>
-            <Link href="/connect/membership" className="mem-settings-back-link">
-              View Moveee Pro →
-            </Link>
-          </section>
+            <Link href="/connect/membership" className="evt-upsell-btn">Become a Moveee Pro →</Link>
+          </div>
         </div>
-      </>
+      </div>
     );
   }
 
   const events = await fetchOrganiserEvents(Number(user.id));
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">
-              <Link href="/member" style={{ color: "inherit", textDecoration: "none" }}>Dashboard</Link>
-              {" "}&rsaquo;{" "}My Events
-            </div>
-            <h1 className="mem-name">My Events</h1>
-            <div className="mem-meta">
-              <span className="mem-tier-badge patron">Moveee Pro</span>
-            </div>
-          </div>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        {profileStrip}
+        <AccountNav isPatron={isPatron} />
+
+        <EventsClient events={events} />
+
+        <div className="acct-card">
+          <div className="acct-card-header"><span className="acct-card-title">About RSVP</span></div>
+          <p className="acct-card-desc" style={{ marginTop: 0 }}>
+            Enable RSVP when you create an event in the Moveee app to track free,
+            capacity-limited signups. Only the organiser can view the attendee list
+            for their own events.
+          </p>
         </div>
       </div>
-
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member" className="mem-settings-back-link">← Back to Dashboard</Link>
-        </div>
-
-        <div className="mem-settings-grid">
-          <div className="mem-col-main">
-            <EventsClient events={events} />
-          </div>
-
-          <div className="mem-col-side">
-            <MemberNavSelect items={[
-              { label: "Dashboard", href: "/member" },
-              { label: "Settings",  href: "/member/settings" },
-            ]} />
-
-            <section className="mem-card">
-              <div className="mem-card-label">About RSVP</div>
-              <div style={{ fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.6 }}>
-                <p style={{ margin: "0 0 8px" }}>
-                  Enable RSVP when you create an event in the Moveee app to track free,
-                  capacity-limited signups.
-                </p>
-                <p style={{ margin: 0 }}>
-                  Only the organiser can view the attendee list for their own events.
-                </p>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

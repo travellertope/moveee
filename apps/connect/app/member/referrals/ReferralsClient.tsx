@@ -68,156 +68,104 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
     : null;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-
+    <>
       {/* Share link card */}
-      <div className="mem-card">
-        <div className="mem-card-header">Your Referral Link</div>
-        <div style={{ padding: "1.25rem 1.5rem" }}>
-          <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: "1rem", lineHeight: 1.6 }}>
-            Share your personal link. Every friend who signs up earns you{" "}
-            <strong>+{repPerReferral} reputation</strong> and{" "}
-            <strong>+{creditsPerReferral} credits</strong>.
-          </p>
-          <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-            <input
-              readOnly
-              value={referralUrl}
-              style={{
-                flex: 1, padding: "10px 14px", borderRadius: 8,
-                border: "1px solid var(--rule)", background: "var(--paper-deep)",
-                fontFamily: "monospace", fontSize: 13, color: "var(--ink)",
-              }}
-              onFocus={(e) => e.target.select()}
-            />
-            <button
-              onClick={handleCopy}
-              style={{
-                padding: "10px 20px", borderRadius: 8, border: "none",
-                background: copied ? "var(--success, #2D6A4F)" : "var(--ink)",
-                color: "var(--paper)", fontWeight: 700, fontSize: 14,
-                cursor: "pointer", whiteSpace: "nowrap", transition: "background 0.2s",
-              }}
-            >
-              {copied ? "Copied ✓" : "Copy link"}
-            </button>
-          </div>
-          <p style={{ fontSize: 12, color: "var(--mute)", marginTop: 8 }}>
-            Or share the short URL:{" "}
-            <strong>web.themoveee.com/r/{data.referralCode}</strong>
-          </p>
+      <section className="acct-card">
+        <div className="acct-card-header"><span className="acct-card-title">Your Referral Link</span></div>
+        <p className="ref-desc">
+          Share your personal link. Every friend who signs up earns you{" "}
+          <strong>+{repPerReferral} reputation</strong> and{" "}
+          <strong>+{creditsPerReferral} credits</strong>.
+        </p>
+        <div className="ref-link-row">
+          <input readOnly value={referralUrl} className="ref-link-input" onFocus={(e) => e.target.select()} />
+          <button onClick={handleCopy} className={`ref-copy-btn${copied ? " ref-copy-btn--copied" : ""}`}>
+            {copied ? "Copied ✓" : "Copy link"}
+          </button>
         </div>
-      </div>
+        <p className="ref-short">
+          Or share the short URL: <strong>web.themoveee.com/r/{data.referralCode}</strong>
+        </p>
+      </section>
 
       {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+      <div className="ref-stats">
         {[
           { label: "Friends referred", value: referralCount },
           { label: "Points earned", value: `+${referralCount * repPerReferral}` },
           { label: "Credits earned", value: `+${referralCount * creditsPerReferral}` },
         ].map(({ label, value }) => (
-          <div key={label} className="mem-card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
-            <div style={{ fontSize: 28, fontFamily: "var(--font-serif)", fontWeight: 700, color: "var(--ochre)" }}>
-              {value}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--mute)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {label}
-            </div>
+          <div key={label} className="ref-stat">
+            <div className="ref-stat-value">{value}</div>
+            <div className="ref-stat-label">{label}</div>
           </div>
         ))}
       </div>
 
       {/* Badge progress */}
-      <div className="mem-card">
-        <div className="mem-card-header">Badge Progress</div>
-        <div style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {[
-            { label: "Connector", emoji: "🔗", threshold: connectorThreshold, pct: connectorPct },
-            { label: "Super Connector", emoji: "⚡", threshold: superConnectorThreshold, pct: superPct },
-          ].map(({ label, emoji, threshold, pct }) => (
-            <div key={label}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                  {emoji} {label}
-                </span>
-                <span style={{ fontSize: 12, color: "var(--mute)" }}>
-                  {Math.min(referralCount, threshold)}/{threshold} referrals
-                  {referralCount >= threshold && " ✓"}
-                </span>
-              </div>
-              <div style={{ height: 6, borderRadius: 99, background: "var(--paper-deep)", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", borderRadius: 99,
-                  width: `${pct}%`,
-                  background: pct >= 100 ? "var(--success, #2D6A4F)" : "var(--ochre)",
-                  transition: "width 0.4s ease",
-                }} />
-              </div>
+      <section className="acct-card">
+        <div className="acct-card-header"><span className="acct-card-title">Badge Progress</span></div>
+        {[
+          { label: "Connector", emoji: "🔗", threshold: connectorThreshold, pct: connectorPct },
+          { label: "Super Connector", emoji: "⚡", threshold: superConnectorThreshold, pct: superPct },
+        ].map(({ label, emoji, threshold, pct }) => (
+          <div key={label} className="ref-badge-row">
+            <div className="ref-badge-head">
+              <span className="ref-badge-label">{emoji} {label}</span>
+              <span className="ref-badge-count">
+                {Math.min(referralCount, threshold)}/{threshold} referrals
+                {referralCount >= threshold && " ✓"}
+              </span>
             </div>
-          ))}
-          {nextBadge && (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: 0 }}>
-              Refer <strong>{nextBadge.target - referralCount}</strong> more friend
-              {nextBadge.target - referralCount !== 1 ? "s" : ""} to unlock the{" "}
-              <strong>{nextBadge.label}</strong> badge.
-            </p>
-          )}
-        </div>
-      </div>
+            <div className="ref-track">
+              <div className={`ref-fill${pct >= 100 ? " ref-fill--done" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        ))}
+        {nextBadge && (
+          <p className="ref-next-note">
+            Refer <strong>{nextBadge.target - referralCount}</strong> more friend
+            {nextBadge.target - referralCount !== 1 ? "s" : ""} to unlock the{" "}
+            <strong>{nextBadge.label}</strong> badge.
+          </p>
+        )}
+      </section>
 
       {/* Referred users list */}
-      <div className="mem-card">
-        <div className="mem-card-header">
-          Friends You&apos;ve Invited ({referredUsers.length})
-        </div>
-        <div>
-          {referredUsers.length === 0 ? (
-            <p style={{ padding: "1.25rem 1.5rem", color: "var(--mute)", fontSize: 14, margin: 0 }}>
-              No one has joined with your link yet. Share it to get started!
-            </p>
-          ) : (
-            referredUsers.map((u) => (
-              <div key={u.username} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "12px 1.5rem", borderBottom: "1px solid var(--rule)",
-              }}>
-                <div>
-                  <Link href={`/${u.username}`} style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none", fontSize: 14 }}>
-                    {u.displayName}
-                  </Link>
-                  <div style={{ fontSize: 12, color: "var(--mute)" }}>@{u.username}</div>
-                </div>
-                <div style={{ fontSize: 12, color: "var(--ghost, #999)" }}>
-                  {timeAgo(u.joinedAt)}
-                </div>
+      <section className="acct-card">
+        <div className="acct-card-header"><span className="acct-card-title">Friends You&apos;ve Invited ({referredUsers.length})</span></div>
+        {referredUsers.length === 0 ? (
+          <p style={{ color: "var(--mute)", fontSize: 14, margin: 0 }}>
+            No one has joined with your link yet. Share it to get started!
+          </p>
+        ) : (
+          referredUsers.map((u) => (
+            <div key={u.username} className="ref-user-row">
+              <div>
+                <Link href={`/${u.username}`} className="ref-user-name">{u.displayName}</Link>
+                <div className="ref-user-handle">@{u.username}</div>
               </div>
-            ))
-          )}
-        </div>
-      </div>
+              <div className="ref-user-time">{timeAgo(u.joinedAt)}</div>
+            </div>
+          ))
+        )}
+      </section>
 
       {/* How it works */}
-      <div className="mem-card">
-        <div className="mem-card-header">How It Works</div>
-        <div style={{ padding: "1.25rem 1.5rem" }}>
-          {[
-            { n: "1", text: `Share your link — send it via WhatsApp, Instagram DMs, or email.` },
-            { n: "2", text: `Your friend signs up at web.themoveee.com using your link.` },
-            { n: "3", text: `You instantly earn +${repPerReferral} reputation and +${creditsPerReferral} credits. No waiting.` },
-            { n: "4", text: `Refer 3 friends → Connector badge. Refer 10 → Super Connector badge.` },
-          ].map(({ n, text }) => (
-            <div key={n} style={{ display: "flex", gap: 14, marginBottom: 14, alignItems: "flex-start" }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", background: "var(--ochre)",
-                color: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>{n}</div>
-              <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0, lineHeight: 1.6 }}>{text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-    </div>
+      <section className="acct-card" style={{ marginBottom: 0 }}>
+        <div className="acct-card-header"><span className="acct-card-title">How It Works</span></div>
+        {[
+          { n: "1", text: `Share your link — send it via WhatsApp, Instagram DMs, or email.` },
+          { n: "2", text: `Your friend signs up at web.themoveee.com using your link.` },
+          { n: "3", text: `You instantly earn +${repPerReferral} reputation and +${creditsPerReferral} credits. No waiting.` },
+          { n: "4", text: `Refer 3 friends → Connector badge. Refer 10 → Super Connector badge.` },
+        ].map(({ n, text }) => (
+          <div key={n} className="ref-step">
+            <div className="ref-step-num">{n}</div>
+            <p className="ref-step-text">{text}</p>
+          </div>
+        ))}
+      </section>
+    </>
   );
 }

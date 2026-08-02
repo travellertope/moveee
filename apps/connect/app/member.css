@@ -2556,4 +2556,183 @@ select.mem-field-input { cursor: pointer; }
 .an-post-date { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--mute); margin-top: 2px; }
 .an-post-eng { display: flex; gap: 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink-soft); }
 .an-post-total { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; color: var(--ink); text-align: right; margin-top: 2px; }
+
+/* ═══════════════════════════════════════════════════
+   ACCOUNT DASHBOARD — PHASE 5: MY EVENTS + REFERRALS
+   Same .acct-* shell as prior phases. Both client components moved
+   off inline styles onto real classes, same treatment as Wallet/
+   Coupons/Notifications.
+   ═══════════════════════════════════════════════════ */
+
+/* ── My Events (organiser) ── */
+.evt-row { border-bottom: 1px solid var(--rule); }
+.evt-row:last-child { border-bottom: none; }
+.evt-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.evt-row-head:disabled { cursor: default; }
+.evt-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+.evt-meta { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); margin-top: 3px; }
+.evt-count { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--ochre); white-space: nowrap; flex-shrink: 0; }
+
+.evt-attendees { padding: 0 0 16px; }
+.evt-export { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.evt-export-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.evt-export-btn:hover { color: var(--ochre-deep); }
+.evt-attendee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--paper-deep);
+  border-radius: var(--radius-md);
+  margin-bottom: 1px;
+}
+.evt-attendee-name { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--ink); }
+.evt-attendee-email { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--mute); }
+.evt-attendee-date { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); }
+
+.evt-upsell {
+  background: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: 24px 22px;
+  max-width: 640px;
+}
+.evt-upsell-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+.evt-upsell-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; color: var(--paper); margin: 0 0 8px; }
+.evt-upsell-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+.evt-upsell-btn {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+}
+.evt-upsell-btn:hover { opacity: .9; }
+
+/* ── Referrals ── */
+.ref-desc { font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 16px; }
+.ref-link-row { display: flex; gap: 8px; }
+.ref-link-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule-dark);
+  background: var(--paper-deep);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.ref-copy-btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s;
+}
+.ref-copy-btn--copied { background: var(--success); }
+.ref-short { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); margin: 10px 0 0; }
+.ref-short strong { color: var(--ink); }
+
+.ref-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 640px; margin-bottom: 20px; }
+@media (max-width: 480px) { .ref-stats { grid-template-columns: 1fr; } }
+.ref-stat {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 18px 12px;
+  text-align: center;
+}
+.ref-stat-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; color: var(--ochre); }
+.ref-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-top: 6px;
+}
+
+.ref-badge-row { margin-bottom: 20px; }
+.ref-badge-row:last-child { margin-bottom: 0; }
+.ref-badge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.ref-badge-label { font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.ref-badge-count { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
+.ref-track { height: 6px; border-radius: var(--radius-full); background: var(--paper-deep); overflow: hidden; }
+.ref-fill { height: 100%; border-radius: var(--radius-full); background: var(--ochre); transition: width .4s ease; }
+.ref-fill--done { background: var(--success); }
+.ref-next-note { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--ink-soft); margin: 16px 0 0; }
+
+.ref-user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.ref-user-row:last-child { border-bottom: none; }
+.ref-user-name { font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.ref-user-handle { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
+.ref-user-time { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
+
+.ref-step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+.ref-step:last-child { margin-bottom: 0; }
+.ref-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ochre);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ref-step-text { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0; }
 .acct-explore-arrow { color: var(--mute); font-size: 11px; }
