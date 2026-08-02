@@ -3974,6 +3974,19 @@ TMDB) are now live — this section is the reference for how the pattern works, 
   keyless tier** — needs `TMDB_API_KEY` (v3 API, plain `api_key` query param, no OAuth) or every
   search returns empty. All three degrade to empty results (not an error) when credentials are
   absent — the manual "add anyway" fallback always still works.
+  **Bug fixed (July 2026): the Google Books route folder was actually `/api/external/books/search`**
+  in both apps — a naming mismatch against `DirectorySearch.tsx`'s `externalSource="google_books"`
+  (which fetches `/api/external/${externalSource}/search`), so every Google Books search silently
+  hit a 404 and fell back to empty results, **regardless of whether `GOOGLE_BOOKS_API_KEY` was set
+  correctly** — the request never reached the route at all. Fixed by renaming the folder to
+  `google_books` in both `apps/connect` and `apps/site` to match the already-correct
+  `externalSource` convention used by Spotify/TMDB. If Spotify/TMDB search still doesn't work
+  after confirming this fix is deployed, check that `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/
+  `TMDB_API_KEY` are set on **both** Vercel projects (Site A `apps/site` and Site B
+  `apps/connect` have entirely separate env var configs — web hits `apps/connect`'s own routes,
+  mobile hits `apps/site`'s via `PROXY`) and that a fresh deploy happened *after* adding them —
+  Vercel snapshots env vars per-deployment, so saving them in the dashboard alone doesn't reach
+  an already-running serverless function until the next build.
 - **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
   `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
   `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the
