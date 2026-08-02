@@ -67,14 +67,11 @@ export default function GamesHub() {
   return (
     <div className="games-hub">
       <header className="games-hub__header">
-        <div className="container-custom">
-          <p className="games-hub__eyebrow">Culture Games</p>
-          <h1 className="games-hub__title">Play. Learn.&nbsp;Connect.</h1>
-          <p className="games-hub__subtitle">
-            Test your knowledge of culture — music, film,
-            literature, history, and everything in between.
-          </p>
-        </div>
+        <h1 className="games-hub__title">Culture Games</h1>
+        <p className="games-hub__subtitle">
+          Test your knowledge of culture — music, film, literature, history,
+          and everything in between.
+        </p>
       </header>
 
       <div className="games-hub__grid">
