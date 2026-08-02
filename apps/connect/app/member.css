@@ -2417,4 +2417,143 @@ select.mem-field-input { cursor: pointer; }
 }
 .cpn-row-status--used { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink-soft); }
 .cpn-row-status--expired { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); border: 1px solid color-mix(in srgb, var(--error) 20%, transparent); }
+
+/* ═══════════════════════════════════════════════════
+   ACCOUNT DASHBOARD — PHASE 4: NOTIFICATIONS + ANALYTICS
+   Same .acct-* shell as prior phases. Notifications gets a full
+   rebuild off inline styles; Analytics folds its stat grid into the
+   same tile language as Wallet/Overview.
+   ═══════════════════════════════════════════════════ */
+
+/* ── Notifications ── */
+.ntf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--rule);
+}
+.ntf-header-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.ntf-header-title span { color: var(--ochre); }
+.ntf-mark-all {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ochre);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.ntf-mark-all:hover { color: var(--ochre-deep); }
+
+.ntf-empty { font-size: 0.82rem; color: var(--mute); font-style: italic; padding: 20px 22px; margin: 0; }
+
+.ntf-row {
+  display: flex;
+  gap: 14px;
+  padding: 18px 22px;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+}
+.ntf-row:last-child { border-bottom: none; }
+.ntf-row--unread { background: color-mix(in srgb, var(--ochre) 5%, transparent); cursor: pointer; }
+.ntf-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--paper-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.ntf-body { flex: 1; min-width: 0; }
+.ntf-title { font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); font-weight: 500; }
+.ntf-title--unread { font-weight: 700; }
+.ntf-desc { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--mute); line-height: 1.5; margin-top: 2px; }
+.ntf-row--unread .ntf-desc { color: var(--ink-soft); }
+.ntf-date { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); margin-top: 6px; }
+.ntf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ochre); flex-shrink: 0; margin-top: 6px; }
+
+.ntf-loadmore { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--rule); }
+.ntf-loadmore-btn {
+  background: none;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 0;
+}
+.ntf-loadmore-btn:hover { color: var(--ink); }
+
+/* ── Analytics ── */
+.an-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media (max-width: 900px) { .an-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .an-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.an-stat {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+.an-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 8px;
+}
+.an-stat-value { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: var(--ink); }
+.an-stat-sub { font-family: 'DM Sans', sans-serif; font-size: 10.5px; color: var(--mute); margin-top: 4px; }
+
+.an-chart-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 14px;
+}
+
+.an-post-row { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--rule); }
+.an-post-row:last-child { border-bottom: none; }
+.an-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.an-rank--1 { background: var(--ochre); color: #fff; }
+.an-post-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.an-post-date { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--mute); margin-top: 2px; }
+.an-post-eng { display: flex; gap: 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink-soft); }
+.an-post-total { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; color: var(--ink); text-align: right; margin-top: 2px; }
 .acct-explore-arrow { color: var(--mute); font-size: 11px; }

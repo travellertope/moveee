@@ -1533,8 +1533,8 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3 (see
-  below for both). Remaining: Notifications + Analytics, then
+- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3,
+  Notifications + Analytics as Phase 4 (see below for all three). Remaining:
   Events/Referrals/Portfolio/Collection. Each phase should: swap that page's own
   back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
   page's own content the same `.acct-card` white-card treatment Phase 1 established —
@@ -1611,6 +1611,31 @@ changed.
   gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site` — no CSS changes in this pass, so no brace-balance check
   was needed.
+
+### Account Dashboard redesign — Phase 4: Notifications + Analytics (August 2026)
+
+- **Notifications** (`/member/notifications`) — full rebuild, same as Wallet/Coupons in
+  Phase 2. `NotificationsClient.tsx` was entirely inline `style={{}}` objects (the same
+  debt state Wallet/Coupons were in before their own rebuild) — every row, the header bar,
+  and the load-more footer moved onto new `.ntf-*` classes (`apps/connect/app/member.css`).
+  `page.tsx` swapped `.mem-hero` + the `mem-settings-grid`/`MemberNavSelect` side-rail
+  (four links, all already covered by `AccountNav`) for the standard `.acct-page`/`.acct-wrap`
+  shell. **Zero behavior changes** — `markRead()`, the optimistic read-state update, and
+  the 20-per-page `visibleCount` pagination are byte-for-byte the same logic, only the JSX
+  markup and class names changed.
+- **Analytics** (`/member/analytics`) — lighter touch, matching the mockup. `StatCard`
+  already had radius+shadow going in; it was moved onto `.an-stat` classes and its ad hoc
+  `grid-template-columns: repeat(auto-fill, minmax(140px,1fr))` replaced with a fixed
+  `.an-stats` 6-column grid (3-col at ≤900px, 2-col at ≤560px — same breakpoint shape as
+  Phase 1's `.acct-stats`). The two chart sections and the Top Posts list moved from
+  `.mem-card`/raw inline-styled divs onto `.acct-card`/`.an-post-row` — chart-drawing logic
+  in `BarChart`/`LineChart` (plain SVG, no library) is completely unchanged, only the
+  wrapping card markup differs. The redundant "← Back to Dashboard" link that used to sit
+  below the Top Posts card was removed — `AccountNav`'s Overview item already covers this,
+  same reasoning as every other phase.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (463/463).
 
 ### Member Settings — visual rebuild (§10, June 2026)
 
