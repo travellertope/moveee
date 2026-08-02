@@ -1,14 +1,13 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import Stoop from "@/components/connect/Stoop";
+import StoopBrowser from "@/components/connect/StoopBrowser";
 import Link from "next/link";
-import "../../sections.css";
-import "../../feed/feed.css";
+import "../../stoop.css";
 
 export const metadata: Metadata = {
   title: "Stoop — Moveee",
-  description: "Weekly, area-level gatherings of Moveee members near you.",
+  description: "Small, weekly gatherings of Moveee members in your own area.",
 };
 
 export default async function StoopPage() {
@@ -18,38 +17,29 @@ export default async function StoopPage() {
   const viewerCountry = (session?.user as any)?.countryOfResidence ?? "";
 
   return (
-    <div>
-      <section className="mco-hero">
-        <div className="mco-hero-inner">
-          <div className="mco-hero-text">
-            <p className="mco-eyebrow">Moveee · Stoop</p>
-            <h1 className="mco-headline">
-              Culture, <em>close to home.</em>
-            </h1>
-            <p className="mco-lede">
-              Weekly, area-level gatherings of Moveee members near you.
+    <div className="stoop-page-bg">
+      <div className="stoop-wrap">
+        <div className="stoop-header">
+          <div className="stoop-header-text">
+            <h1 className="stoop-title">Culture, <em>close to home.</em></h1>
+            <p className="stoop-lede">
+              Small, weekly gatherings of Moveee members in your own area — no ticket, no big crowd,
+              just your neighbours in culture.
             </p>
           </div>
-          <div className="mco-hero-cta">
-            {loggedIn ? (
-              <Link href="/hub" className="con-btn-ghost">Browse Hubs →</Link>
-            ) : (
-              <Link href="/login?callbackUrl=/connect/stoop" className="con-btn-primary">Log in →</Link>
-            )}
-            <Link href="/feed" className="con-btn-ghost">← Back to Feed</Link>
-          </div>
         </div>
-      </section>
 
-      {loggedIn ? (
-        <Stoop viewerCity={viewerCity} viewerCountry={viewerCountry} />
-      ) : (
-        <section className="mco-directory-section" style={{ borderTop: "none" }}>
-          <p style={{ padding: "2rem 1rem", textAlign: "center", color: "var(--mute)" }}>
-            Log in to find or start a Stoop near you.
-          </p>
-        </section>
-      )}
+        {loggedIn ? (
+          <StoopBrowser viewerCity={viewerCity} viewerCountry={viewerCountry} />
+        ) : (
+          <div className="stoop-empty">
+            <span className="stoop-empty-icon" aria-hidden="true">🚪</span>
+            <h4>Log in to find or start a Stoop near you.</h4>
+            <p>Stoop is open to every Moveee member — sign in to see who's meeting near you.</p>
+            <Link href="/login?callbackUrl=/connect/stoop" className="stoop-start-btn">Log in →</Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

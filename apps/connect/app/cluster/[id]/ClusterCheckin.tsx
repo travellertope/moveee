@@ -113,57 +113,42 @@ export default function ClusterCheckin({
 
   return (
     <div>
-      <div className="mem-card-label">Check-in</div>
-      {error && <p style={{ fontSize: "0.78rem", color: "#c0392b", margin: "8px 0 0" }}>{error}</p>}
+      {error && <p className="stoop-detail-error">{error}</p>}
+
+      {attendance && (
+        <div className="stoop-checkin-stats">
+          <div>
+            <div className="stoop-stat-num">{attendance.totalCheckins}</div>
+            <div className="stoop-stat-label">Check-ins</div>
+          </div>
+          <div>
+            <div className="stoop-stat-num">{attendance.streak}</div>
+            <div className="stoop-stat-label">Week streak</div>
+          </div>
+        </div>
+      )}
 
       {isHost ? (
-        <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={openHostQr}
-            className="con-btn-primary"
-            style={{ border: "none", cursor: "pointer" }}
-          >
-            Show check-in code
-          </button>
-          <button
-            type="button"
-            onClick={openMembers}
-            className="mem-settings-back-link"
-            style={{
-              background: "none", border: "1px solid var(--ochre)", borderRadius: 999,
-              padding: "8px 16px", cursor: "pointer", color: "var(--ochre)", fontSize: "0.78rem",
-            }}
-          >
-            Manual check-in
-          </button>
-        </div>
+        <>
+          <div className="stoop-qr-card">
+            <div className="stoop-qr-copy">
+              <p><b>Hosting this week?</b> Bring up your check-in code — refreshes automatically, no need to open it in advance.</p>
+            </div>
+          </div>
+          <div className="stoop-checkin-host-actions">
+            <button type="button" className="stoop-btn-secondary" onClick={openHostQr}>
+              Show check-in code
+            </button>
+            <button type="button" className="stoop-btn-secondary stoop-btn-secondary--muted" onClick={openMembers}>
+              Manual check-in
+            </button>
+          </div>
+        </>
       ) : (
-        <p className="mem-card-desc" style={{ marginTop: 8 }}>
+        <p className="stoop-detail-note">
           Open the Moveee app and scan your host's check-in code to mark yourself present —
           or ask your host to check you in manually.
         </p>
-      )}
-
-      {attendance && (
-        <div style={{ display: "flex", gap: 24, marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--rule)" }}>
-          <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "1.2rem", fontWeight: 700 }}>
-              {attendance.totalCheckins}
-            </div>
-            <div style={{ fontSize: "0.7rem", color: "var(--mute)", textTransform: "uppercase" }}>
-              Check-ins
-            </div>
-          </div>
-          <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "1.2rem", fontWeight: 700 }}>
-              {attendance.streak}
-            </div>
-            <div style={{ fontSize: "0.7rem", color: "var(--mute)", textTransform: "uppercase" }}>
-              Week streak
-            </div>
-          </div>
-        </div>
       )}
 
       {showHostQr && (
@@ -181,23 +166,19 @@ export default function ClusterCheckin({
               display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
             }}
           >
-            <div className="mem-card-label">Check-in code</div>
+            <div className="stoop-detail-sec-title">Check-in code</div>
             {hostQr ? (
               <QRCodeSVG
                 value={JSON.stringify({ clusterId, ...hostQr })}
                 size={220}
               />
             ) : (
-              <p className="mem-card-desc">Loading…</p>
+              <p className="stoop-detail-note" style={{ margin: 0 }}>Loading…</p>
             )}
-            <p className="mem-card-desc" style={{ textAlign: "center", maxWidth: 220 }}>
+            <p className="stoop-detail-note" style={{ textAlign: "center", maxWidth: 220, margin: 0 }}>
               Members scan this with the Moveee app to check in. Refreshes automatically.
             </p>
-            <button
-              type="button"
-              onClick={() => setShowHostQr(false)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ochre)", fontSize: "0.85rem" }}
-            >
+            <button type="button" onClick={() => setShowHostQr(false)} className="stoop-detail-link-btn">
               Close
             </button>
           </div>
@@ -219,31 +200,20 @@ export default function ClusterCheckin({
               maxHeight: "70vh", overflowY: "auto",
             }}
           >
-            <div className="mem-card-label" style={{ marginBottom: 12 }}>Manual check-in</div>
+            <div className="stoop-detail-sec-title" style={{ marginBottom: 12 }}>Manual check-in</div>
             {members.length === 0 ? (
-              <p className="mem-card-desc">No members yet.</p>
+              <p className="stoop-detail-note">No members yet.</p>
             ) : (
               members.map((m) => {
                 const checkedIn = checkedInIds.has(m.id);
                 return (
-                  <div
-                    key={m.id}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "8px 0", borderBottom: "1px solid var(--rule)",
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>{m.name}</div>
+                  <div key={m.id} className="stoop-member-row" style={{ justifyContent: "space-between", borderBottom: "1px solid var(--rule)" }}>
+                    <span className="stoop-member-name" style={{ flex: "unset" }}>{m.name}</span>
                     <button
                       type="button"
                       onClick={() => manualCheckin(m.id)}
                       disabled={busy || checkedIn}
-                      style={{
-                        border: "1px solid var(--ochre)", borderRadius: 999, padding: "4px 12px",
-                        background: checkedIn ? "var(--ochre)" : "transparent",
-                        color: checkedIn ? "var(--paper)" : "var(--ochre)",
-                        fontSize: "0.7rem", fontWeight: 600, cursor: checkedIn ? "default" : "pointer",
-                      }}
+                      className={`stoop-election-vote-btn${checkedIn ? " stoop-election-vote-btn--voted" : ""}`}
                     >
                       {checkedIn ? "Checked in" : "Check in"}
                     </button>
@@ -251,11 +221,7 @@ export default function ClusterCheckin({
                 );
               })
             )}
-            <button
-              type="button"
-              onClick={() => setShowMembers(false)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ochre)", fontSize: "0.85rem", marginTop: 12 }}
-            >
+            <button type="button" onClick={() => setShowMembers(false)} className="stoop-detail-link-btn" style={{ marginTop: 12 }}>
               Close
             </button>
           </div>

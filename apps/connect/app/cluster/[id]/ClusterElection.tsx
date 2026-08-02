@@ -76,43 +76,32 @@ export default function ClusterElection({
     setBusy(false);
   };
 
+  const maxVotes = Math.max(1, ...(election?.candidates.map((c) => c.voteCount) ?? [1]));
+
   return (
     <div>
-      <div className="mem-card-label">Host Election</div>
-      {error && <p style={{ fontSize: "0.78rem", color: "#c0392b", margin: "8px 0 0" }}>{error}</p>}
+      {error && <p className="stoop-detail-error">{error}</p>}
 
       {election?.open ? (
         <>
           {election.candidates.length === 0 ? (
-            <p className="mem-card-desc" style={{ marginTop: 8 }}>
+            <p className="stoop-detail-sec-sub" style={{ marginBottom: 0 }}>
               No votes yet — be the first to put yourself forward.
             </p>
           ) : (
-            <div style={{ marginTop: 8 }}>
+            <div>
               {election.candidates.map((cand) => (
-                <div
-                  key={cand.id}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "8px 0", borderBottom: "1px solid var(--rule)",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>{cand.name}</div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "var(--mute)" }}>
-                      {cand.voteCount} vote{cand.voteCount === 1 ? "" : "s"}
-                    </div>
+                <div key={cand.id} className="stoop-election-row">
+                  <span className="stoop-election-name">{cand.name}</span>
+                  <div className="stoop-election-bar-track">
+                    <div className="stoop-election-bar-fill" style={{ width: `${(cand.voteCount / maxVotes) * 100}%` }} />
+                    <span className="stoop-election-votes">{cand.voteCount} vote{cand.voteCount === 1 ? "" : "s"}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => castVote(cand.id)}
                     disabled={busy}
-                    style={{
-                      border: "1px solid var(--ochre)", borderRadius: 999, padding: "4px 12px",
-                      background: election.myVote === cand.id ? "var(--ochre)" : "transparent",
-                      color: election.myVote === cand.id ? "var(--paper)" : "var(--ochre)",
-                      fontSize: "0.7rem", fontWeight: 600, cursor: "pointer",
-                    }}
+                    className={`stoop-election-vote-btn${election.myVote === cand.id ? " stoop-election-vote-btn--voted" : ""}`}
                   >
                     {election.myVote === cand.id ? "Voted" : "Vote"}
                   </button>
@@ -121,28 +110,16 @@ export default function ClusterElection({
             </div>
           )}
           {election.myVote !== myUserId && (
-            <button
-              type="button"
-              onClick={() => castVote(myUserId)}
-              disabled={busy}
-              className="mem-settings-back-link"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 12, color: "var(--ochre)" }}
-            >
+            <button type="button" onClick={() => castVote(myUserId)} disabled={busy} className="stoop-election-run-btn">
               I'll run →
             </button>
           )}
         </>
       ) : (
         <>
-          <p className="mem-card-desc" style={{ marginTop: 8 }}>No election in progress.</p>
-          <button
-            type="button"
-            onClick={startElection}
-            disabled={busy}
-            className="con-btn-primary"
-            style={{ border: "none", cursor: "pointer", marginTop: 8 }}
-          >
-            {busy ? "Starting…" : "Start a host election"}
+          <p className="stoop-detail-sec-sub">No election open right now.</p>
+          <button type="button" onClick={startElection} disabled={busy} className="stoop-detail-link-btn">
+            {busy ? "Starting…" : "Start a new election"}
           </button>
         </>
       )}
