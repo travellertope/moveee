@@ -1533,12 +1533,12 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2 (see below). Remaining:
-  Settings (6 tabs — wire in `AccountNav` above `SettingsTabs`' existing sub-tab row),
-  Notifications + Analytics, then Events/Referrals/Portfolio/Collection. Each phase should:
-  swap that page's own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...}
-  />`, and give the page's own content the same `.acct-card` white-card treatment Phase 1
-  established — don't invent a third visual language.
+- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3 (see
+  below for both). Remaining: Notifications + Analytics, then
+  Events/Referrals/Portfolio/Collection. Each phase should: swap that page's own
+  back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
+  page's own content the same `.acct-card` white-card treatment Phase 1 established —
+  don't invent a third visual language.
 
 ### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
 
@@ -1576,6 +1576,41 @@ hardcode a remembered hex), then approved and built for real.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (425/425).
+
+### Account Dashboard redesign — Phase 3: Settings (August 2026)
+
+Shell-only, per the mockup and the same "light touch" reasoning used for Perks in Phase 2
+— the 6 tab-content components (`ProfileEditor.tsx`, `DirectoryProfile.tsx`,
+`InterestEditor.tsx`, `NewsletterPreferences.tsx`, `NotificationPreferences.tsx`,
+`PasskeyManager.tsx`) already render into `.mem-card`/`.mem-card--editable` (12px radius +
+shadow, ochre-tinted border on editable cards) and `.mem-field-*`/`.mem-toggle` classes
+from the June §10 rebuild directly below — that styling is **already** visually
+equivalent to the `.acct-card` language (same radius, same shadow weight, just a
+different literal shadow value), so none of it was touched. Only `settings/layout.tsx`
+changed.
+
+- **`settings/layout.tsx`** — swapped the dark `.mem-hero` + `.mem-settings-back` link +
+  `.mem-settings-grid` two-column split (main content + a `MemberNavSelect` side-rail
+  duplicating ~9 links, several of them not even account destinations) for the same
+  `.acct-page`/`.acct-wrap`/`.acct-profile` + `<AccountNav isPatron={...} />` shell every
+  other Phase 1–3 page now uses. `SettingsTabs.tsx` itself is **unchanged** — it already
+  used the existing `.prf-tab` underline convention (the same one `WalletClient.tsx`'s
+  History/Cash Out switcher uses), which reads correctly as a second, subordinate level of
+  navigation sitting right below `AccountNav` without needing a new tab style invented for
+  it. (An earlier mockup draft for this phase sketched a plain-sans tab style for
+  `SettingsTabs` before the real `.prf-tab` CSS was re-checked — reusing the existing
+  convention was the right call once it was clear `.prf-tab` already does this job
+  elsewhere in the same shell.)
+- **Tab content is now wrapped in a `maxWidth: 640` flex column** (inline style in
+  `layout.tsx`, not a new CSS class) instead of the old grid's `minmax(0,1fr)` main column
+  — needed because `.mem-card` has no max-width of its own (by design, since e.g.
+  Wallet's cash-out grid wants it to stretch), so rendering the six settings pages
+  directly into the full 1100px `.acct-wrap` without this wrapper would have stretched
+  every field-list/toggle-row card edge-to-edge, which reads badly for a form.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site` — no CSS changes in this pass, so no brace-balance check
+  was needed.
 
 ### Member Settings — visual rebuild (§10, June 2026)
 
