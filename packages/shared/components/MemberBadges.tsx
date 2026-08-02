@@ -30,7 +30,7 @@ interface Props {
 /** Renders the achievements grid; fetches live badge data on mount. */
 export default function MemberBadges({ initialBadges }: Props) {
   const [earnedBadges, setEarnedBadges] = useState<string[]>(initialBadges);
-
+  const [showAll, setShowAll] = useState(false);
 
   const earnedCount = earnedBadges.length;
 
@@ -40,31 +40,36 @@ export default function MemberBadges({ initialBadges }: Props) {
     return aEarned - bEarned;
   });
 
+  const visibleBadges = showAll ? sortedBadges : sortedBadges.slice(0, 6);
+
   return (
-    <section className="mem-card">
-      <div className="mem-card-header">
-        <div className="mem-card-label">Achievements</div>
-        <span className="mem-card-count">
-          {earnedCount} of {ALL_BADGES.length} earned
-        </span>
+    <section className="acct-card">
+      <div className="acct-card-header">
+        <span className="acct-card-title">Achievements</span>
+        <span className="acct-card-count">{earnedCount} of {ALL_BADGES.length} earned</span>
       </div>
-      <div className="mem-badges-grid">
-        {sortedBadges.map((badge) => {
+      <div className="acct-badges">
+        {visibleBadges.map((badge) => {
           const earned = earnedBadges.includes(badge.slug);
           return (
             <div
               key={badge.slug}
-              className={`mem-badge ${earned ? 'earned' : 'locked'}`}
+              className={`acct-badge ${earned ? 'acct-badge--earned' : 'acct-badge--locked'}`}
             >
-              <div className="mem-badge-icon">{earned ? '★' : '○'}</div>
-              <div className="mem-badge-text">
-                <div className="mem-badge-name">{badge.name}</div>
-                <div className="mem-badge-desc">{badge.desc}</div>
+              <div className="acct-badge-icon">{earned ? '★' : '○'}</div>
+              <div className="acct-badge-text">
+                <div className="acct-badge-name">{badge.name}</div>
+                <div className="acct-badge-desc">{badge.desc}</div>
               </div>
             </div>
           );
         })}
       </div>
+      {sortedBadges.length > 6 && (
+        <button type="button" className="acct-card-more" onClick={() => setShowAll((v) => !v)}>
+          {showAll ? "Show fewer" : `Show all ${ALL_BADGES.length}`}
+        </button>
+      )}
     </section>
   );
 }

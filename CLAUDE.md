@@ -1415,6 +1415,70 @@ rebuilt against `mockups/web/moveee_dashboard_web.html`:
   `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
   fully closed.
 
+### Account Dashboard redesign — Phase 1: Overview + shared AccountNav (July 2026)
+
+**Supersedes the "Full-bleed band pattern" from the §9 rebuild directly above** — that
+dark/light-band structure is gone from `/member`; this pass moved the page onto the same
+full-width single-column convention as Discover/Events/Stoop/Games (see those sections),
+built from a user-approved Artifact mockup after an explicit scope conversation: the user
+wants the *entire* account area (Overview, Settings' 6 tabs, Wallet, Coupons, Perks,
+Notifications, Analytics, My Events, Referrals, Portfolio, Collection) redesigned for a
+"sleek, simple, easily navigable" account section, shipped **phase by phase** rather than
+all at once. This is Phase 1: the Overview landing page plus the shared navigation piece
+every later phase will plug into. `.mem-*` classes are **deliberately left untouched** —
+Settings/Wallet/Perks/Coupons/Notifications/Analytics/Events/Referrals/Portfolio/Collection
+still render with them until each gets its own phase; only `/member` itself and its
+Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touched.
+
+- **New: `AccountNav.tsx`** (`packages/shared/components/`) — the reusable piece. A
+  horizontally-scrollable pill/tab row (`.acct-nav-*`, underline-active style matching
+  `SettingsTabs.tsx`'s `.prf-tab` convention) listing every top-level account destination:
+  Overview · Wallet · Coupons · Perks · Notifications · Analytics · My Events (Pro-only,
+  filtered by an `isPatron` prop) · Referrals · Settings. Active state is `usePathname()`-
+  derived (exact match for Overview since every other `/member/*` route would otherwise
+  also match it as a prefix; prefix match for the rest, so `/member/settings/profile` etc.
+  still highlight "Settings"). **This replaces `MemberNavSelect`'s navigational role on
+  `/member` specifically** — `MemberNavSelect` itself is untouched and still used by
+  `/member/wallet`, `/member/events`, and `/member/settings/layout.tsx` until those get
+  their own phases and adopt `AccountNav` too.
+- **New `.acct-*` CSS namespace** (`apps/connect/app/member.css`, appended at the end,
+  ~350 lines) — full-width `.acct-page`/`.acct-wrap` (max-width 1100px, no more full-bleed
+  bands), `.acct-profile` (lighter avatar+name+tier-pill strip, replaces the old `.mem-hero`
+  *on this page only* — `.mem-hero` itself is untouched since 8 other pages still use it),
+  `.acct-stats` (5 individual white `radius-xl`/`shadow-card` stat tiles replacing the old
+  single flat `.mem-stats-band`), `.acct-card`/`.acct-badges`/`.acct-earn-*` (Achievements
+  and How-to-Earn restyled onto the same card language), `.acct-card--upgrade` (dark side
+  card, same visual role as the old `.mem-card--dark`).
+- **`MemberDashboard.tsx` and `MemberBadges.tsx` rewritten** (both confirmed single-use —
+  only `/member/page.tsx` imports either, so no risk to other pages) to render into the new
+  `.acct-stat-card`/`.acct-badge` markup instead of the old flat band/grid. `MemberBadges.tsx`
+  also gained a "Show all 18" / "Show fewer" toggle (previously always rendered all 18
+  badges unconditionally, which was dense) — collapses to 6 by default, sorted
+  earned-first as before.
+- **`PasskeyBanner.tsx` and `MemberReferralCopy.tsx` kept as-is (component logic
+  untouched)** — both are also single-use on this page, so their existing CSS classes
+  (`.mem-passkey-banner`, `.mem-referral-*`) were restyled in place (rounded `radius-xl`
+  card instead of a full-bleed edge-to-edge band; subtle corner-rounding on the referral
+  URL/copy-button pair) rather than given new class names — no JSX changes needed.
+- **The old flat ~15-item `MemberNavSelect` dropdown/list is gone from this page** — its
+  navigational entries are now `AccountNav`; the handful of genuinely non-account links it
+  also carried (Newsletters, Upcoming Events, Magazine, Discover, Quotes Archive, Sign out)
+  moved into a small new "Explore Moveee" card in the side column, kept deliberately
+  separate from the account nav since they're not account destinations.
+- **New "Stoop" card** in the side column — the `myCluster` lookup (already fetched
+  server-side, previously only surfaced as one line inside the giant nav list) now gets its
+  own small card, same pattern as the Upgrade/Referral cards.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
+- **Next phases (not yet started, in rough priority order)**: Wallet + Coupons + Perks
+  (thematically adjacent, likely worth a shared visual pass together), Settings (6 tabs —
+  wire in `AccountNav` above `SettingsTabs`' existing sub-tab row), Notifications +
+  Analytics, then Events/Referrals/Portfolio/Collection. Each phase should: swap that page's
+  own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
+  page's own content the same `.acct-card` white-card treatment this phase established —
+  don't invent a third visual language.
+
 ### Member Settings — visual rebuild (§10, June 2026)
 
 `apps/connect/app/member.css` plus `app/member/settings/profile/page.tsx` and

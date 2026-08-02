@@ -55,68 +55,71 @@ export default function MemberDashboard({
   const capHit    = dailyCreditsRemaining === 0;
 
   return (
-    <div className="mem-stats-band">
-    <div className="mem-stats" ref={tooltipRef}>
+    <div className="acct-stats" ref={tooltipRef}>
       {/* Credits */}
-      <div className="mem-stat mem-stat--credits">
-        <span className="mem-stat-value">{credits}</span>
-        <span className="mem-stat-label">
-          Moveee Credits
+      <div className="acct-stat-card">
+        <div className="acct-stat-icon">💰</div>
+        <span className="acct-stat-value">{credits}</span>
+        <div className="acct-stat-label">
+          Credits
           <button
-            className="mem-stat-info"
+            className="acct-stat-info"
             aria-label="About credits"
             onClick={() => setOpenTooltip(openTooltip === 'credits' ? null : 'credits')}
-          >ⓘ</button>
-          {openTooltip === 'credits' && (
-            <div className="mem-tooltip" role="tooltip">
-              <strong>Moveee Credits</strong> are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Moveee Pro only, 40% fee). Daily cap: <strong>50 credits</strong>.
-            </div>
-          )}
-        </span>
+          >i</button>
+        </div>
+        {openTooltip === 'credits' && (
+          <div className="acct-stat-tooltip" role="tooltip">
+            <strong>Moveee Credits</strong> are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem them for partner perks or cash out (Moveee Pro only, 40% fee). Daily cap: <strong>50 credits</strong>.
+          </div>
+        )}
         {capHit ? (
-          <span className="mem-stat-sublabel mem-stat-sublabel--cap">Daily limit reached</span>
+          <div className="acct-stat-sub acct-stat-sub--warn">Daily limit reached</div>
         ) : (
-          <span className="mem-stat-sublabel">{dailyLeft} remaining today</span>
+          <div className="acct-stat-sub">{dailyLeft} remaining today</div>
         )}
       </div>
 
       {/* Reputation */}
-      <div className="mem-stat mem-stat--reputation">
-        <span className="mem-stat-value">{reputation}</span>
-        <span className="mem-stat-label">
+      <div className="acct-stat-card">
+        <div className="acct-stat-icon">⭐</div>
+        <span className="acct-stat-value">{reputation}</span>
+        <div className="acct-stat-label">
           Points
           <button
-            className="mem-stat-info"
+            className="acct-stat-info"
             aria-label="About points"
             onClick={() => setOpenTooltip(openTooltip === 'reputation' ? null : 'reputation')}
-          >ⓘ</button>
-          {openTooltip === 'reputation' && (
-            <div className="mem-tooltip" role="tooltip">
-              <strong>Points</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, points cannot be spent.
-            </div>
-          )}
-        </span>
-        <span className="mem-stat-sublabel">{tierLabel}</span>
+          >i</button>
+        </div>
+        {openTooltip === 'reputation' && (
+          <div className="acct-stat-tooltip" role="tooltip">
+            <strong>Points</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, points cannot be spent.
+          </div>
+        )}
+        <div className="acct-stat-sub">{tierLabel}</div>
       </div>
 
       {/* Badges */}
-      <div className="mem-stat">
-        <span className="mem-stat-value">{badgeCount} / {TOTAL_BADGES}</span>
-        <span className="mem-stat-label">Badges Earned</span>
+      <div className="acct-stat-card">
+        <div className="acct-stat-icon">🏅</div>
+        <span className="acct-stat-value">{badgeCount} / {TOTAL_BADGES}</span>
+        <div className="acct-stat-label">Badges</div>
       </div>
 
       {/* Referrals */}
-      <div className="mem-stat">
-        <span className="mem-stat-value">{referralCount}</span>
-        <span className="mem-stat-label">Referrals</span>
+      <div className="acct-stat-card">
+        <div className="acct-stat-icon">🤝</div>
+        <span className="acct-stat-value">{referralCount}</span>
+        <div className="acct-stat-label">Referrals</div>
       </div>
 
       {/* Membership */}
-      <div className="mem-stat">
-        <span className="mem-stat-value">{membership}</span>
-        <span className="mem-stat-label">Membership</span>
+      <div className="acct-stat-card">
+        <div className="acct-stat-icon">👤</div>
+        <span className="acct-stat-value acct-stat-value--sm">{membership}</span>
+        <div className="acct-stat-label">Membership</div>
       </div>
-    </div>
     </div>
   );
 }

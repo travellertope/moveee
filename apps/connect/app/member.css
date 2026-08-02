@@ -95,12 +95,13 @@
   width: 100%;
   background: var(--ink);
   color: var(--paper);
-  padding: 16px 60px;
+  padding: 16px 20px;
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 .mem-passkey-banner-inner {
@@ -403,6 +404,7 @@
   background: var(--paper-deep);
   border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
   padding: 10px 12px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -415,6 +417,7 @@
   background: var(--ink);
   color: var(--paper);
   border: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   padding: 10px 16px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
@@ -1670,3 +1673,412 @@ select.mem-field-input { cursor: pointer; }
   transition: border-color 0.15s, color 0.15s;
 }
 .clu-share-inline-btn:hover { border-color: var(--ochre); }
+
+/* ═══════════════════════════════════════════════════
+   ACCOUNT DASHBOARD — Phase 1 redesign (July 2026)
+
+   Full-width single-column page (matches Discover/Events/Stoop/Games)
+   replacing the old .mem-hero + .mem-grid two-column shell on /member
+   specifically. `.mem-*` classes are left untouched — Settings, Wallet,
+   Perks, Coupons, Notifications, Analytics, Events, Referrals, Portfolio,
+   and Collection still use them and get their own redesign passes later;
+   only `AccountNav` (new, `.acct-nav-*`) is meant to be reused on those
+   pages once each gets its turn.
+   ═══════════════════════════════════════════════════ */
+
+.acct-page {
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+.acct-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 56px;
+}
+
+/* ── Profile strip ── */
+.acct-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 0 20px;
+}
+
+.acct-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--ochre));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 3px solid var(--gold);
+}
+
+.acct-profile-body { min-width: 0; }
+
+.acct-name {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.acct-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.acct-tier-pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+}
+.acct-tier-pill--patron { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
+.acct-tier-pill--citizen { background: var(--paper-deep); color: var(--mute); }
+
+.acct-meta-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--mute);
+}
+
+/* ── Account nav — horizontally scrollable pill row, persists across
+      every account page (Overview/Wallet/Perks/Notifications/etc). ── */
+.acct-nav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+.acct-nav::-webkit-scrollbar { display: none; }
+
+.acct-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 10px 14px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.acct-nav-item:hover { color: var(--ink); }
+.acct-nav-item--active { color: var(--ink); border-bottom-color: var(--ochre); }
+.acct-nav-item-emoji { font-size: 14px; }
+
+/* ── Stat cards ── */
+.acct-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+@media (max-width: 860px) { .acct-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .acct-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.acct-stat-card {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  position: relative;
+}
+
+.acct-stat-icon { font-size: 18px; margin-bottom: 10px; }
+
+.acct-stat-value {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  display: block;
+}
+.acct-stat-value--sm { font-size: 16px; }
+
+.acct-stat-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.acct-stat-info {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-dark);
+  background: none;
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--mute);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.acct-stat-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-card);
+}
+
+.acct-stat-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--mute);
+  margin-top: 6px;
+}
+.acct-stat-sub--warn { color: var(--ochre); font-weight: 600; }
+
+/* ── Two-column body ── */
+.acct-body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 860px) { .acct-body { grid-template-columns: 1fr; } }
+
+.acct-card {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.acct-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.acct-card-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.acct-card-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.acct-card-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--mute);
+  line-height: 1.55;
+  margin: 10px 0 0;
+}
+
+.acct-card-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.acct-card-link:hover { color: var(--ochre-deep); }
+.acct-card-link--inline { margin-top: 0; }
+
+.acct-card-more {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-align: center;
+  cursor: pointer;
+}
+.acct-card-more:hover { color: var(--ochre-deep); }
+
+/* ── Achievements ── */
+.acct-badges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) { .acct-badges { grid-template-columns: 1fr; } }
+
+.acct-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule);
+}
+.acct-badge--earned {
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+}
+.acct-badge--locked { opacity: .55; }
+
+.acct-badge-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+.acct-badge--earned .acct-badge-icon { background: var(--gold); color: #fff; }
+.acct-badge--locked .acct-badge-icon { background: var(--paper-deep); color: var(--mute); }
+
+.acct-badge-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.acct-badge-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--mute);
+  margin-top: 1px;
+}
+
+/* ── How to earn ── */
+.acct-earn-intro {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+.acct-earn-list {
+  display: flex;
+  flex-direction: column;
+}
+.acct-earn-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.acct-earn-row:last-child { border-bottom: none; }
+.acct-earn-cr { color: var(--ochre); font-weight: 700; }
+.acct-earn-pt { color: var(--mute); font-weight: 700; }
+
+/* ── Upgrade card (dark, side column) ── */
+.acct-card--upgrade { background: var(--ink); color: var(--paper); }
+.acct-card--upgrade .acct-card-title { color: var(--gold); }
+.acct-upgrade-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 8px 0 12px;
+}
+.acct-upgrade-perks {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  line-height: 1.9;
+  opacity: .85;
+}
+.acct-upgrade-btn {
+  display: block;
+  text-align: center;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 11px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+}
+.acct-upgrade-btn:hover { opacity: .9; }
+
+.acct-referral-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--mute);
+  margin-top: 10px;
+}
+
+/* ── Explore card ── */
+.acct-explore-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.acct-explore-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 6px;
+  margin: 0 -6px;
+  border-radius: var(--radius-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.acct-explore-link:hover { background: var(--paper-deep); }
+.acct-explore-link--muted { color: var(--mute); }
+.acct-explore-arrow { color: var(--mute); font-size: 11px; }
