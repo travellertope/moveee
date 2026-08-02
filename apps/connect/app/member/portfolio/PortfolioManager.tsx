@@ -153,14 +153,14 @@ export default function PortfolioManager({ reputation, username }: Props) {
 
   if (!unlocked) {
     return (
-      <section className="mem-card">
-        <div className="mem-card-label">Creative Portfolio</div>
-        <p style={{ fontSize: "0.83rem", color: "var(--mute)", lineHeight: 1.6 }}>
+      <section className="acct-card">
+        <div className="acct-card-header"><span className="acct-card-title">Creative Portfolio</span></div>
+        <p className="pf-locked-note">
           The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 points).
           You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
-        <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "8px" }}>
+        <p className="pf-locked-note" style={{ marginTop: 8 }}>
           You can still add portfolio items here — they will be published once you reach Taste Maker status.
         </p>
       </section>
@@ -168,112 +168,85 @@ export default function PortfolioManager({ reputation, username }: Props) {
   }
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Creative Portfolio</div>
+    <section className="acct-card">
+      <div className="acct-card-header"><span className="acct-card-title">Creative Portfolio</span></div>
 
       {username && (
-        <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginBottom: "16px" }}>
+        <p className="pf-locked-note" style={{ marginBottom: 16 }}>
           Public portfolio: <a href={`/connect/${username}`} style={{ color: "var(--ochre)" }}>/connect/{username}</a>
         </p>
       )}
 
-      {success && (
-        <p style={{ fontSize: "0.78rem", color: "green", marginBottom: "12px" }}>{success}</p>
-      )}
-      {error && (
-        <p style={{ fontSize: "0.78rem", color: "#c5491f", marginBottom: "12px" }}>{error}</p>
-      )}
+      {success && <p className="pf-status--success">{success}</p>}
+      {error && <p className="pf-status--error">{error}</p>}
 
       {loading ? (
         <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>Loading…</p>
       ) : (
         <>
-          <div style={{ marginBottom: "24px" }}>
-            <p style={{ margin: "0 0 8px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".06em" }}>
-              Pinned community posts
-            </p>
+          <div style={{ marginBottom: 24 }}>
+            <p className="pf-section-label">Pinned Community Posts</p>
             {pinnedPosts.length === 0 ? (
-              <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>
+              <p className="pf-locked-note">
                 No pinned posts yet. Pin a Creative Showcase or other community post to feature it here.
               </p>
             ) : (
               pinnedPosts.map(post => (
-                <div key={post.id} style={{
-                  display: "flex", gap: "12px", alignItems: "center",
-                  padding: "10px 0", borderBottom: "1px solid rgba(42,36,28,.08)",
-                }}>
+                <div key={post.id} className="pf-pin-row">
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mute)", textTransform: "uppercase", letterSpacing: ".06em" }}>{post.tag || post.template_type}</p>
-                    <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.text}</p>
+                    <p className="pf-pin-tag">{post.tag || post.template_type}</p>
+                    <p className="pf-pin-text">{post.text}</p>
                   </div>
-                  <button
-                    onClick={() => togglePin(post.id, false)}
-                    disabled={pinning === post.id}
-                    className="mem-field-btn"
-                    style={{ color: "#c5491f", flexShrink: 0 }}
-                  >
+                  <button onClick={() => togglePin(post.id, false)} disabled={pinning === post.id} className="pf-btn pf-btn--danger">
                     Unpin
                   </button>
                 </div>
               ))
             )}
-            <button onClick={openPicker} className="mem-field-btn" style={{ marginTop: "12px" }}>
-              + Pin a community post
-            </button>
+            <button onClick={openPicker} className="pf-btn pf-add-btn">+ Pin a community post</button>
           </div>
 
           {showPicker && (
-            <div style={{ marginBottom: "24px", borderTop: "1px solid rgba(42,36,28,.1)", paddingTop: "16px" }}>
-              <p style={{ margin: "0 0 8px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ink)" }}>Choose a post to pin</p>
+            <div style={{ marginBottom: 24, borderTop: "1px solid var(--rule)", paddingTop: 16 }}>
+              <p className="pf-section-label">Choose a Post to Pin</p>
               {myPosts.length === 0 ? (
-                <p style={{ fontSize: "0.82rem", color: "var(--mute)" }}>No community posts found.</p>
+                <p className="pf-locked-note">No community posts found.</p>
               ) : (
                 myPosts
                   .filter(p => !pinnedPosts.some(pp => pp.id === p.id))
                   .map(post => (
-                    <div key={post.id} style={{
-                      display: "flex", gap: "12px", alignItems: "center",
-                      padding: "8px 0", borderBottom: "1px solid rgba(42,36,28,.06)",
-                    }}>
+                    <div key={post.id} className="pf-pin-row">
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mute)", textTransform: "uppercase", letterSpacing: ".06em" }}>{post.tag || post.template_type}</p>
-                        <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.text}</p>
+                        <p className="pf-pin-tag">{post.tag || post.template_type}</p>
+                        <p className="pf-pin-text">{post.text}</p>
                       </div>
-                      <button
-                        onClick={() => togglePin(post.id, true)}
-                        disabled={pinning === post.id}
-                        className="mem-field-btn"
-                        style={{ flexShrink: 0 }}
-                      >
+                      <button onClick={() => togglePin(post.id, true)} disabled={pinning === post.id} className="pf-btn">
                         Pin
                       </button>
                     </div>
                   ))
               )}
-              <button onClick={() => setShowPicker(false)} className="mem-field-btn" style={{ marginTop: "12px" }}>Close</button>
+              <button onClick={() => setShowPicker(false)} className="pf-btn pf-add-btn">Close</button>
             </div>
           )}
 
           {items.length === 0 && !showForm && (
-            <p style={{ fontSize: "0.83rem", color: "var(--mute)", marginBottom: "20px" }}>
+            <p className="pf-locked-note" style={{ marginBottom: 20 }}>
               No portfolio items yet. Add your first piece of work below.
             </p>
           )}
 
           {items.map((item, i) => (
-            <div key={item.id} style={{
-              display: "flex", gap: "12px", alignItems: "center",
-              padding: "12px 0", borderBottom: "1px solid rgba(42,36,28,.08)",
-            }}>
+            <div key={item.id} className="pf-item-row">
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)" }}>{item.title}</p>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mute)", textTransform: "uppercase", letterSpacing: ".06em" }}>{item.type}</p>
+                <p className="pf-item-title">{item.title}</p>
+                <p className="pf-item-type">{item.type}</p>
               </div>
-              <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                <button onClick={() => moveUp(i)} disabled={i === 0} className="mem-field-btn" style={{ padding: "4px 8px" }}>↑</button>
-                <button onClick={() => moveDown(i)} disabled={i === items.length - 1} className="mem-field-btn" style={{ padding: "4px 8px" }}>↓</button>
-                <button onClick={() => setEditItem(item)} className="mem-field-btn">Edit</button>
-                <button onClick={() => handleDelete(item.id)} className="mem-field-btn" style={{ color: "#c5491f" }}>Remove</button>
+              <div className="pf-item-actions">
+                <button onClick={() => moveUp(i)} disabled={i === 0} className="pf-btn pf-btn--icon">↑</button>
+                <button onClick={() => moveDown(i)} disabled={i === items.length - 1} className="pf-btn pf-btn--icon">↓</button>
+                <button onClick={() => setEditItem(item)} className="pf-btn">Edit</button>
+                <button onClick={() => handleDelete(item.id)} className="pf-btn pf-btn--danger">Remove</button>
               </div>
             </div>
           ))}
@@ -288,11 +261,7 @@ export default function PortfolioManager({ reputation, username }: Props) {
           )}
 
           {!editItem && !showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="mem-field-btn"
-              style={{ marginTop: "16px" }}
-            >
+            <button onClick={() => setShowForm(true)} className="pf-btn" style={{ marginTop: 16 }}>
               + Add portfolio item
             </button>
           )}
