@@ -4226,6 +4226,60 @@ host-only and a domain-scoped clear, with `secure: true` added whenever the name
 
 ---
 
+## Auth flow — full visual rebuild onto the composer design system (`auth-*`, July 2026)
+
+All 5 auth pages in `apps/connect` — `login/page.tsx`, `register/page.tsx`,
+`register/complete/page.tsx`, `forgot-password/page.tsx`, `reset-password/page.tsx` — were
+rebuilt from a user-approved Artifact mockup, replacing five separate hardcoded-hex inline
+`style={{...}}`/`StyleSheet`-style objects (zero dark-mode support, one-off colors not shared
+with any other surface) with a single new CSS file, `apps/connect/app/auth.css` (`auth-*`
+namespace), styled explicitly off the **composer's own form tokens**
+(`.composer-input`/`.composer-field-label`/`.composer-submit` in `globals.css`) per an explicit
+user request to match "form styles like used in the post creation page" — ochre focus borders on
+inputs, ochre primary buttons, uppercase DM Sans field labels, `var(--radius-md)` (4px) inputs, a
+`--shadow-card`-elevated card floating on `--paper-warm`. Same "mockup first, then build exactly
+what was approved" process as the Stoop rebuild above — the user explicitly corrected an early
+attempt to skip straight to code with "mockup first perhaps," and the approved mockup dropped a
+"The Moveee — Culture Community" eyebrow that was in an earlier draft ("no need for the eyebrow").
+
+- **This was a pure visual rebuild — zero business-logic changes.** All auth logic (passkey
+  sign-in via `@simplewebauthn/browser`, Google OAuth, NextAuth credentials sign-in, the
+  honeypot-plus-timestamp anti-bot pair on `/register`, the 5-step `register/complete` state
+  machine — verify/about/interests/membership/done — token verification, `/api/complete-profile`
+  and `/api/membership/upgrade-init` calls, the `?next=`/`?upgrade=patron` redirect handling) was
+  preserved verbatim; only the render/JSX/className layer changed on all 5 files.
+- **Key `auth-*` class groups** (all in `auth.css`, all token-driven — no hardcoded hex except
+  documented `var(--token, #fallback)` pairs): `.auth-page`/`.auth-card`(`--wide`/`--center`) for
+  page/card chrome; `.auth-field`/`.auth-label`(`-required`/`-optional`)/`.auth-input`(`--error`)
+  for form fields; `.auth-btn-primary`/`.auth-btn-secondary`(`--nav`) for buttons;
+  `.auth-error`/`.auth-success` for status messages; `.auth-divider*` for the login page's
+  "or" rule between password and passkey/Google; `.auth-footer*`/`.auth-link` for the
+  below-form links. `register/complete`'s multi-step UI got its own sub-families:
+  `.auth-steps`/`.auth-step`/`.auth-step-circle`(`--done`/`--active`)/`.auth-step-label`
+  (`--current`)/`.auth-steps-track`/`.auth-steps-fill` for the 3-step progress bar (replaces a
+  fully inline-styled `ProgressBar` component — the component itself is unchanged in structure,
+  only its render swapped from inline styles to these classes); `.auth-chip*` for the interest
+  picker grid (`.auth-chip`(`--active`)/`.auth-chip-emoji`/`.auth-chip-label`/`.auth-chip-count`
+  (`--ok`)); `.auth-billing-toggle`/`.auth-cycle-btn`(`--active`)/`.auth-savings-tag` for the
+  Monthly/Annually toggle; `.auth-tier-*` for the Citizen/Moveee Pro membership cards
+  (`.auth-tier-grid`/`.auth-tier-card`(`--active`)/`.auth-tier-radio-input`/`.auth-tier-label`/
+  `.auth-tier-price-row`/`.auth-tier-price`/`.auth-tier-period`/`.auth-tier-perks`);
+  `.auth-currency-notice`/`.auth-currency-switch` for the NGN/USD toggle; `.auth-nav` for the
+  Back/Continue footer row shared by all 3 register/complete steps.
+- `CountrySelect`/`CitySelect` (`packages/shared/components/LocationSelect.tsx`) already
+  supported an `inputClassName` prop (in addition to `inputStyle`) going into this pass — switched
+  from `inputStyle={styles.input}` to `inputClassName="auth-input"`, no component changes needed.
+- The `/register` honeypot field (`website`, off-screen absolute positioning, `aria-hidden`,
+  paired with a `formLoadedAt` timestamp checked server-side) was deliberately kept as a raw
+  inline `style` object rather than converted to a CSS class — it's a functional anti-bot
+  mechanism, not decorative chrome, and its off-screen positioning technique is unrelated to the
+  visual system being rebuilt here.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, a CSS brace/paren-balance check on `auth.css` (79/79, 94/94),
+  and a grep confirming no leftover references to the old inline `styles`/`StyleSheet` objects or
+  the removed "Culture Community" eyebrow text across all 5 files.
+
 ## Registration flow (redesigned)
 
 New flow: 3-field quick signup → email verification → 2 post-verification steps.

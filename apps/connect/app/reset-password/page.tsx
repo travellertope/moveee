@@ -3,6 +3,7 @@
 import { useState, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import "../auth.css";
 
 function ResetForm() {
   const searchParams = useSearchParams();
@@ -17,15 +18,12 @@ function ResetForm() {
 
   if (!key || !login) {
     return (
-      <div style={s.card}>
-        <p style={s.eyebrow}>The Moveee</p>
-        <h1 style={s.heading}>Invalid link</h1>
-        <p style={s.body}>
+      <div className="auth-card">
+        <h1 className="auth-heading">Invalid link</h1>
+        <p className="auth-sub">
           This password-reset link is missing required information. Please request a new one.
         </p>
-        <Link href="/" style={s.link} onClick={() => {}}>
-          Back to home
-        </Link>
+        <Link href="/" className="auth-link">Back to home</Link>
       </div>
     );
   }
@@ -63,16 +61,15 @@ function ResetForm() {
   }
 
   return (
-    <div style={s.card}>
-      <p style={s.eyebrow}>The Moveee &mdash; Culture Community</p>
-      <h1 style={s.heading}>Set a new password</h1>
+    <div className="auth-card">
+      <h1 className="auth-heading">Set a new password</h1>
 
       {status === "done" ? (
-        <p style={s.successBlock}>{message}</p>
+        <p className="auth-success">{message}</p>
       ) : (
         <form onSubmit={handleSubmit} noValidate>
-          <div style={s.field}>
-            <label style={s.label} htmlFor="pw">New password</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="pw">New password</label>
             <input
               id="pw"
               type="password"
@@ -81,13 +78,13 @@ function ResetForm() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={s.input}
+              className="auth-input"
               disabled={status === "loading"}
             />
-            <span style={s.hint}>At least 8 characters</span>
+            <span className="auth-hint">At least 8 characters</span>
           </div>
-          <div style={s.field}>
-            <label style={s.label} htmlFor="confirm">Confirm password</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="confirm">Confirm password</label>
             <input
               id="confirm"
               type="password"
@@ -95,16 +92,12 @@ function ResetForm() {
               required
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              style={s.input}
+              className="auth-input"
               disabled={status === "loading"}
             />
           </div>
-          {status === "error" && <p style={s.error}>{message}</p>}
-          <button
-            type="submit"
-            style={{ ...s.btn, opacity: status === "loading" ? 0.7 : 1 }}
-            disabled={status === "loading"}
-          >
+          {status === "error" && <p className="auth-error">{message}</p>}
+          <button type="submit" className="auth-btn-primary" disabled={status === "loading"}>
             {status === "loading" ? "Updating…" : "Set new password →"}
           </button>
         </form>
@@ -115,105 +108,10 @@ function ResetForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div style={s.page}>
+    <div className="auth-page">
       <Suspense>
         <ResetForm />
       </Suspense>
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#ffffff",
-    padding: "40px 24px",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  },
-  card: {
-    maxWidth: 440,
-    width: "100%",
-    background: "#fffdf8",
-    border: "1px solid #e8e0d4",
-    borderRadius: 4,
-    padding: "40px 40px 32px",
-    color: "#14110d",
-  },
-  eyebrow: {
-    fontSize: 11,
-    letterSpacing: "0.2em",
-    textTransform: "uppercase",
-    color: "#7a6f5c",
-    margin: "0 0 20px",
-  },
-  heading: {
-    fontSize: 26,
-    fontWeight: 300,
-    fontFamily: "Georgia, serif",
-    margin: "0 0 24px",
-    color: "#14110d",
-  },
-  body: { fontSize: 15, color: "#7a6f5c", lineHeight: 1.6, margin: "0 0 20px" },
-  field: { marginBottom: 18 },
-  label: {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 400,
-    color: "#7a6f5c",
-    marginBottom: 6,
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "10px 14px",
-    border: "1px solid #d4cbbf",
-    borderRadius: 3,
-    fontSize: 15,
-    color: "#14110d",
-    background: "#fff",
-    outline: "none",
-    boxSizing: "border-box",
-    fontFamily: "inherit",
-  },
-  hint: { display: "block", fontSize: 12, color: "#7a6f5c", marginTop: 4 },
-  successBlock: {
-    background: "#f0fdf4",
-    border: "1px solid rgba(39,174,96,.15)",
-    color: "#27ae60",
-    padding: 16,
-    borderRadius: 3,
-    textAlign: "center",
-  },
-  error: {
-    fontSize: 14,
-    color: "#c0392b",
-    background: "#fef2f2",
-    border: "1px solid rgba(192,57,43,.15)",
-    borderRadius: 3,
-    padding: "10px 14px",
-    margin: "0 0 14px",
-  },
-  btn: {
-    display: "block",
-    width: "100%",
-    padding: "12px 24px",
-    background: "#14110d",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: 3,
-    fontSize: 13,
-    fontWeight: 600,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
-    cursor: "pointer",
-    fontFamily: "inherit",
-  },
-  link: {
-    fontSize: 13,
-    color: "#14110d",
-    textDecoration: "underline",
-  },
-};
