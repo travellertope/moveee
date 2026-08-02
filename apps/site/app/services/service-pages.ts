@@ -499,7 +499,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "03",
           title: "Your Sponsored Content Slot",
-          body: "One piece of genuinely useful content shared to the community — a guide, resource, offer, or insight that serves people first. A Nigerian fashion brand might share how to get stocked in Abuja concept stores. A fintech might share a practical guide to diaspora remittance options. Value-first, brand second.",
+          body: "One piece of genuinely useful content shared to the community — a guide, resource, offer, or insight that serves people first. A fashion brand might share how to get stocked in independent concept stores. A fintech might share a practical guide to cross-border payments. Value-first, brand second.",
         },
         {
           step: "04",
@@ -1126,7 +1126,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
   us: {
     editorial: {
-      headline: "For Brands That Know Global Culture Isn't One Story",
+      headline: "For Brands That Know Culture Isn't One Story",
       tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage culturally engaged communities with substance.",
       intro: [
         "Our audience in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's creative economy and the Nigerian American professional community in the DMV.",

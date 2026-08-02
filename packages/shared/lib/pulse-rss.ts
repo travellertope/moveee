@@ -1,8 +1,11 @@
 /**
  * pulse-rss.ts
  *
- * Fetches and parses RSS/Atom feeds from 25+ African, diaspora, music,
- * fashion, and culture publications. Each feed has a 6-second timeout;
+ * Fetches and parses RSS/Atom feeds from 25+ music, fashion, and culture
+ * publications (see the FEEDS registry below — current source list still
+ * skews heavily toward African and Black-British/American outlets; flagged
+ * as a follow-up to broaden with more globally-representative sources).
+ * Each feed has a 6-second timeout;
  * failures are silent so one broken feed never kills the whole refresh.
  *
  * Returns deduplicated items from the last 72 hours, sorted newest-first,

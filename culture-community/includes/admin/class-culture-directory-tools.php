@@ -523,7 +523,7 @@ class Culture_Directory_Tools {
             <div class="cdt-panel">
                 <h2><?php esc_html_e( 'Directory Seeder', 'culture-community' ); ?></h2>
                 <p class="description">
-                    <?php esc_html_e( 'Automatically generate and publish notable African & diaspora culture entries using Gemini AI. Each batch picks a random selection of topics not yet in the directory.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'Automatically generate and publish notable culture entries using Gemini AI. Each batch picks a random selection of topics not yet in the directory.', 'culture-community' ); ?>
                 </p>
 
                 <div class="cdt-progress-block">

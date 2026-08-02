@@ -65,16 +65,16 @@ const BODY_PLACEHOLDERS: Record<string, string> = {
 };
 
 const EXCERPT_PLACEHOLDERS: Record<string, string> = {
-  person:      "e.g. Pioneering Nigerian musician and political activist…",
+  person:      "e.g. Acclaimed Japanese architect and Pritzker Prize winner…",
   place:       "e.g. A legendary jazz club in Harlem, New York…",
-  food:        "e.g. A slow-cooked West African stew of black-eyed beans…",
-  book:        "e.g. A landmark novel exploring diaspora identity…",
-  film:        "e.g. A groundbreaking superhero film set in a fictional African nation…",
-  genre:       "e.g. A danceable West African pop genre with roots in highlife…",
-  movement:    "e.g. A 1930s literary movement of Black francophone intellectuals…",
+  food:        "e.g. A slow-simmered Moroccan stew of apricots and almonds…",
+  book:        "e.g. A landmark novel exploring migration and belonging…",
+  film:        "e.g. A groundbreaking sci-fi film set in a near-future Seoul…",
+  genre:       "e.g. A danceable Brazilian pop genre with roots in samba…",
+  movement:    "e.g. A 1920s art movement that redefined European design…",
   artwork:     "e.g. A large-scale double self-portrait by Frida Kahlo, 1939…",
-  concept:     "e.g. A Nguni Bantu philosophy meaning 'humanity towards others'…",
-  fashion:     "e.g. A four-piece formal attire from the Yoruba people of West Africa…",
+  concept:     "e.g. A Japanese philosophy centred on finding beauty in imperfection…",
+  fashion:     "e.g. A hand-woven silk sari tradition from South India…",
   "tv-series": "e.g. A South African teen crime drama set in Cape Town…",
 };
 
@@ -133,12 +133,12 @@ const IMPROVE_FIELDS: Record<string, Array<{ key: string; label: string; placeho
     { key: "Subgenres",      label: "Subgenres",      placeholder: "e.g. Afro-fusion · Afro-soul" },
   ],
   movement: [
-    { key: "Founders",          label: "Founders",          placeholder: "e.g. Aimé Césaire · Léopold Sédar Senghor" },
-    { key: "Origin country",    label: "Origin country",    placeholder: "e.g. France (Francophone diaspora)" },
+    { key: "Founders",          label: "Founders",          placeholder: "e.g. Walter Gropius · Mies van der Rohe" },
+    { key: "Origin country",    label: "Origin country",    placeholder: "e.g. Germany" },
     { key: "Active period",     label: "Active period",     placeholder: "e.g. 1930s–1960s" },
-    { key: "Ideology",          label: "Ideology",          placeholder: "e.g. Anti-colonialism · Black consciousness" },
-    { key: "Key figures",       label: "Key figures",       placeholder: "e.g. Frantz Fanon · Paulette Nardal" },
-    { key: "Related movements", label: "Related movements", placeholder: "e.g. Pan-Africanism · Harlem Renaissance" },
+    { key: "Ideology",          label: "Ideology",          placeholder: "e.g. Form follows function · anti-ornamentation" },
+    { key: "Key figures",       label: "Key figures",       placeholder: "e.g. Aimé Césaire · Frantz Fanon" },
+    { key: "Related movements", label: "Related movements", placeholder: "e.g. Pan-Africanism · Bauhaus" },
   ],
   artwork: [
     { key: "Artist",           label: "Artist",           placeholder: "e.g. Frida Kahlo" },

@@ -39,9 +39,104 @@ stale history.
 - Never use "Moveee Connect" as a product name.
 - Site tagline (Moveee Magazine): **"Best in Culture"**
 - App tagline (Moveee): **"Connect to Culture"**
-- Brand description framing: universal/global — do not describe the brand as specifically
-  African or Nigerian in metadata or SEO copy. The content and community speak for themselves.
+- Brand description framing: universal — do not describe the brand as specifically African,
+  Black, Nigerian, or "diaspora" in metadata, SEO copy, AI prompts, or any other user-facing
+  text. The content and community speak for themselves.
   Use language like: *"an independent magazine and community for people who live for culture."*
+  **Read the "Brand language" section immediately below before writing or copying ANY
+  copy** — this one-line rule is not enough on its own; it has been violated repeatedly
+  (see that section for why and how to actually not repeat it).
+
+---
+
+## Brand language — no default geography, race, or "worldwide" qualifier (read this before writing copy)
+
+**This is a recurring failure mode, not a one-time fix — read this section fully before
+writing or copying any user-facing string, AI prompt, or example/placeholder text,
+anywhere in this repo (web, mobile, PHP, docs, mockups).** As of August 2026 a full-repo
+sweep found and fixed ~90 files where copy, AI prompts, seed data, and example placeholders
+defaulted to framing Moveee as an African/Black-diaspora product — including inside a
+brand-new Games-hub mockup built in the *same session* that had already read this file's
+predecessor version of this rule. The instruction existing in this file is not sufficient by
+itself; an agent (including a future instance of you) has to actively re-check new or copied
+text against it every time, because copy-pasting an existing string is exactly how the old
+framing keeps reappearing.
+
+**The rule, precisely:**
+1. **Never frame the brand, its audience, or its content scope as African, Black, or
+   "diaspora"** — not "African and diaspora culture," not "Black diaspora," not "African
+   audience," not "through an African lens" (except the one deliberately symmetric exception
+   below). Moveee serves everyone; centering any one region/race as the default or the
+   implicit norm is exactly the bias this rule exists to prevent, even when unintentional.
+2. **Never reach for "worldwide," "global culture," "around the world," or similar
+   geography-emphasizing qualifiers either** — corrected explicitly in August 2026 after an
+   initial pass over-corrected toward "culture worldwide"/"global culture" as the fix for #1.
+   That is *also* wrong: it's a tell, not neutral. The house style is plain, unqualified
+   **"culture."** Don't say *"celebrating culture worldwide"* — say *"celebrating culture."*
+   Don't say *"a global culture platform"* — say *"a culture platform."* If a sentence reads
+   fine with the qualifier deleted outright, delete it; don't reach for a synonym.
+3. **Examples and placeholder text must actually be diverse, not default to one region.**
+   A form's illustrative "e.g. …" text, an AI prompt's sample topics, a seed-data list —
+   these are exactly where the bias hides, because each individual instance looks like an
+   innocuous specific example. If every "e.g." in a file happens to be Nigerian/African/
+   Black-diaspora, that's the bug, even though no single line says "we are an African
+   brand." Vary examples across regions/cultures deliberately (see the fix to
+   `apps/mobile/src/screens/community/DirectorySubmitScreen.tsx`'s `EXCERPT_PLACEHOLDERS`
+   for the pattern: Japan, Morocco, Korea, Brazil, Mexico, India, South Africa, NY — one
+   region does not repeat as the default across every field).
+
+**The one legitimate exception:** the `/uk`, `/us`, and `/africa` edition pages
+(`apps/site/app/[edition]/page.tsx`, `EditionNewsletterHub.tsx`, `magazine/africa/page.tsx`,
+etc.) are *deliberately* region-scoped — a member who navigates to the Africa edition should
+see Africa-focused framing, exactly as the UK edition says "rooted in Britain" and the US
+edition says "through an American lens." This is symmetric, chosen scoping for a page whose
+whole purpose is regional content, not a default. If you ever touch one of these edition
+pages, check that whatever you write is symmetric with its UK/US siblings — the bug pattern
+seen in this sweep was the Africa edition specifically getting *extra* framing language
+("Best in Global Culture") that its UK/US siblings didn't have.
+
+**Before considering any copy-writing task done, run:**
+```bash
+bash scripts/check-brand-language.sh
+```
+This greps the whole repo for the violating patterns above and prints file:line hits for
+review (it is a review tool, not a hard CI gate — some hits are legitimate, e.g. the
+`pulse_region` WordPress taxonomy literally has seeded terms named "Diaspora UK" etc. that
+can't be renamed without a data migration; the script's own `ALLOWLIST` array documents
+every accepted exception with a reason). If it reports a new hit that isn't a documented
+exception, that's a real bug — fix the copy, don't add a bypass. If you find a genuinely new
+legitimate exception, add a narrow entry to the script's `ALLOWLIST` **and** a note here
+explaining why, the same way every existing entry is documented — don't broaden an existing
+entry's pattern to cover it.
+
+**Known, deliberately-not-fixed structural gaps** (flagged during the August 2026 sweep,
+out of scope for a language-only pass — each needs a real content/product decision, not a
+find-and-replace):
+- `packages/shared/lib/pulse-rss.ts`'s `FEEDS` registry (Moveee Pulse's RSS source list) is
+  ~30 sources, effectively all African or Black-British/American outlets — zero Asian, Latin
+  American (non-diaspora), continental European, or Middle Eastern sources. The AI prompt
+  that curates from these feeds (`pulse-gemini.ts`) now says "culture," but the *sourcing*
+  still can't surface non-African/diaspora stories because none of the feeds carry them.
+  Needs real editorial research into credible sources for other regions, not a blind add.
+- `apps/site/app/api/games/trivia/daily/route.ts`'s `TOPIC_POOL` (~150 entries) is
+  explicitly split "Africa/diaspora (~70%) / other regions & cultures (~30%)" per its own
+  section comments — the prompt no longer *states* that ratio, but the pool itself still
+  produces it. Needs new topics authored for other regions to rebalance, not just relabeling.
+- `culture-community/includes/admin/class-culture-directory-tools.php`'s `$seed_topics`
+  (mirrored in `apps/*/app/api/directory/auto-populate/route.ts`'s `SEED_TOPICS`) — the
+  ~60-entry Culture Directory auto-populate seed list is entirely African/Black-diaspora
+  names/places/concepts. The AI prompt that expands on it now says the scope is just
+  "culture," but a seed list this one-sided will keep biasing what the AI expands into.
+  Needs topics added across other world regions.
+- `apps/mobile/src/screens/community/DirectorySubmitScreen.tsx`'s `IMPROVE_FIELDS` map has
+  ~64 per-field example placeholders across all 11 directory entry types; only the top-level
+  `EXCERPT_PLACEHOLDERS` (11 entries) and the `movement` type's fields were rebalanced in
+  this pass. A full pass through the other ~50 placeholders in that map would find more of
+  the same pattern.
+
+If you're asked to work on any of the above, treat it as "the pattern already fixed
+elsewhere in this file, but at a larger scale" — same principle (deliberately vary examples
+across regions), just more content to author.
 
 ---
 

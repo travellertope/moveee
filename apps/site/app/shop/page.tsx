@@ -6,11 +6,11 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: { absolute: "Shop | The Moveee" },
-  description: "Curated lifestyle goods from vetted makers from around the world — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
+  description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
   alternates: { canonical: "https://themoveee.com/shop" },
   openGraph: {
     title: "Shop | The Moveee",
-    description: "Curated lifestyle goods from vetted makers from around the world — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
+    description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
     url: "https://themoveee.com/shop",
     siteName: "Moveee Magazine",
     type: "website",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     site: "@moveeemedia",
     creator: "@moveeemedia",
     title: "Shop | The Moveee",
-    description: "Curated lifestyle goods from vetted makers from around the world — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
+    description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
   },
 };
 

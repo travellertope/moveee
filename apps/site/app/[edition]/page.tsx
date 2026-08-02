@@ -30,7 +30,7 @@ const EDITION_META: Record<RegionalSlug, { title: string; description: string; l
     locale: "en_US",
   },
   africa: {
-    title: "The Moveee Africa — Best in Global Culture",
+    title: "The Moveee Africa — Culture in Africa",
     description:
       "The Moveee Africa edition: editorials, happenings, travel, lifestyle, and community from across the continent.",
     locale: "en_GB",

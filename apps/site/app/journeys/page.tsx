@@ -9,11 +9,11 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Origins · Curated Journeys · The Moveee" },
-  description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+  description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
   alternates: { canonical: "https://themoveee.com/journeys" },
   openGraph: {
     title: "Origins · Curated Journeys · The Moveee",
-    description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+    description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
     url: "https://themoveee.com/journeys",
     siteName: "Moveee",
     type: "website",
@@ -24,7 +24,7 @@ export const metadata = {
     site: "@moveeemedia",
     creator: "@moveeemedia",
     title: "Origins · Curated Journeys · The Moveee",
-    description: "Curated cultural journeys around the world. Not tours. Slow, deep, culturally anchored experiences.",
+    description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
   },
 };
 
@@ -155,7 +155,7 @@ export default async function OriginsPage() {
         <div className="origins-js-header">
           <h3>Every place we&rsquo;ve <em>been.</em></h3>
           {journeys.length > 0 && (
-            <p>{journeys.length} {journeys.length === 1 ? "journey" : "journeys"} · Around the World</p>
+            <p>{journeys.length} {journeys.length === 1 ? "journey" : "journeys"}</p>
           )}
         </div>
 

@@ -101,7 +101,7 @@ export default async function PartnershipHubPage({
               { title: "Editorial Reviews", body: "Critical coverage written with genuine opinion and cultural context — not promotional summaries." },
               { title: "Profile Interviews", body: "In-depth interviews with authors, artists, or filmmakers. Written and edited for publication, not just transcribed." },
               { title: "News Releases", body: "Professionally written press releases for launches, events, milestones, and announcements." },
-              { title: "GetMeLit Distribution", body: "All editorial content distributes through GetMeLit, our newsletter read by Nigerian and diaspora professionals across Lagos, Abuja, London, and New York." },
+              { title: "GetMeLit Distribution", body: "All editorial content distributes through GetMeLit, our newsletter read by professionals across Lagos, Abuja, London, and New York." },
               { title: "Social Amplification", body: "Social posts across The Moveee's channels for every piece of published content. Multimedia posts on higher tiers." },
               { title: "Three-Month Partnership Window", body: "Enough time to cover a launch properly, sustain a programme, and build a meaningful media record." },
             ].map((f) => (

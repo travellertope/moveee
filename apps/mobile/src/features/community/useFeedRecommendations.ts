@@ -5,11 +5,11 @@ const COUNTRY_TO_REGION: Record<string, string> = {
   nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
   kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
   ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
-  "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
-  "united states": "Diaspora US", us: "Diaspora US",
-  canada: "Diaspora US", ca: "Diaspora US",
-  france: "Diaspora Europe", germany: "Diaspora Europe",
-  netherlands: "Diaspora Europe", spain: "Diaspora Europe",
+  "united kingdom": "UK", uk: "UK", gb: "UK",
+  "united states": "US", us: "US",
+  canada: "US", ca: "US",
+  france: "Europe", germany: "Europe",
+  netherlands: "Europe", spain: "Europe",
 };
 
 export function detectRegion(countryOfResidence?: string): string | null {

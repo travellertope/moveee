@@ -13,7 +13,7 @@ export const dynamicParams = true;
 
 export const metadata = {
   title: { absolute: "Happenings | The Moveee" },
-  description: "Curated cultural events from around the world — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
+  description: "Curated cultural events — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
 };
 
 const FEATURED_CITIES = [

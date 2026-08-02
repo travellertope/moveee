@@ -16,18 +16,18 @@ const COUNTRY_TO_REGION: Record<string, string> = {
   nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
   kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
   ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
-  "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
-  "united states": "Diaspora US", us: "Diaspora US",
-  canada: "Diaspora US", ca: "Diaspora US",
-  france: "Diaspora Europe", germany: "Diaspora Europe",
-  netherlands: "Diaspora Europe", spain: "Diaspora Europe",
+  "united kingdom": "UK", uk: "UK", gb: "UK",
+  "united states": "US", us: "US",
+  canada: "US", ca: "US",
+  france: "Europe", germany: "Europe",
+  netherlands: "Europe", spain: "Europe",
 };
 
 export function detectRegion(countryOfResidence?: string): string | null {
   if (typeof document !== "undefined") {
     const edition = document.cookie.split("; ")
       .find(r => r.startsWith("moveee_edition="))?.split("=")[1];
-    const editionMap: Record<string, string> = { uk: "Diaspora UK", us: "Diaspora US", africa: "Africa" };
+    const editionMap: Record<string, string> = { uk: "UK", us: "US", africa: "Africa" };
     if (edition && editionMap[edition]) return editionMap[edition];
   }
   if (!countryOfResidence) return null;

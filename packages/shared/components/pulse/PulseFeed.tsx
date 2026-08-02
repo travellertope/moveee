@@ -19,8 +19,6 @@ function draftKey(userId: string | number): string {
   return `moveee_post_draft_${userId}`;
 }
 
-const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
-
 // Mirrors Culture_Hubs::SECTION_HUB_SLUGS (docs/hubs-plan.md §10.2) — no
 // shared source of truth across the PHP/TS boundary here, same caveat as
 // every other duplicated map in this codebase (notification icons, etc.).
@@ -67,8 +65,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   useEffect(() => {
     const edition = document.cookie.split("; ").find(r => r.startsWith("moveee_edition="))?.split("=")[1];
     const editionToRegion: Record<string, string> = {
-      uk:     "Diaspora UK",
-      us:     "Diaspora US",
+      uk:     "UK",
+      us:     "US",
       africa: "Africa",
     };
     if (edition && editionToRegion[edition]) {
@@ -97,9 +95,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (!userCountry) return undefined;
     const map: Record<string, string> = {
       nigeria: "Africa", gh: "Africa", ghana: "Africa", kenya: "Africa", "south africa": "Africa",
-      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
-      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
-      france: "Diaspora Europe", germany: "Diaspora Europe",
+      "united kingdom": "UK", uk: "UK", gb: "UK",
+      "united states": "US", us: "US", canada: "US",
+      france: "Europe", germany: "Europe",
     };
     return map[userCountry.toLowerCase().trim()] ?? undefined;
   }, [userCountry]);

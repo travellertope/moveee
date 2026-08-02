@@ -114,7 +114,7 @@ const publishersPage: ServicePageContent = {
     {
       step: "04",
       title: "Publish & Distribute",
-      body: "Content publishes on The Moveee and distributes through GetMeLit to our newsletter audience across Nigeria and the diaspora. Social posts go out across our channels. You receive live links as each piece goes up.",
+      body: "Content publishes on The Moveee and distributes through GetMeLit to our newsletter audience. Social posts go out across our channels. You receive live links as each piece goes up.",
     },
   ],
   benefits: [
@@ -124,7 +124,7 @@ const publishersPage: ServicePageContent = {
     },
     {
       title: "Reach Beyond Lagos Book Club Circles",
-      body: "GetMeLit reaches Nigerian and diaspora readers across Lagos, Abuja, Accra, London, and New York. These are readers who buy books, attend events, and recommend titles — not just social media engagement.",
+      body: "GetMeLit reaches readers across Lagos, Abuja, Accra, London, and New York. These are readers who buy books, attend events, and recommend titles — not just social media engagement.",
     },
     {
       title: "Sustained Coverage, Not a Single Spike",
@@ -138,7 +138,7 @@ const publishersPage: ServicePageContent = {
   faqs: [
     {
       question: "Do you cover all genres?",
-      answer: "We cover fiction, non-fiction, poetry, and creative non-fiction by African and diaspora authors. Literary fiction, Afrofuturism, memoir, cultural criticism, and business titles with cultural relevance are particularly strong fits for our audience.",
+      answer: "We cover fiction, non-fiction, poetry, and creative non-fiction by authors from every region. Literary fiction, Afrofuturism, memoir, cultural criticism, and business titles with cultural relevance are particularly strong fits for our audience.",
     },
     {
       question: "What if a review is negative?",
@@ -279,7 +279,7 @@ const galleriesPage: ServicePageContent = {
     },
     {
       title: "Reach Collectors, Curators, and the Cultural Class",
-      body: "GetMeLit reaches Nigerian and diaspora professionals who engage with culture intentionally. Early collectors, architects, creative directors, and the culturally curious — the people who attend, follow artists, and start acquiring in their twenties and thirties.",
+      body: "GetMeLit reaches professionals who engage with culture intentionally. Early collectors, architects, creative directors, and the culturally curious — the people who attend, follow artists, and start acquiring in their twenties and thirties.",
     },
     {
       title: "A Permanent Editorial Record",
@@ -398,7 +398,7 @@ const filmmakersPage: ServicePageContent = {
   tagline: "A sustained editorial partnership for Nigerian and African filmmakers, producers, and film festival organisers who want critical coverage that travels.",
   intro: [
     "Nollywood is the third-largest film industry in the world and still largely self-covered. Critical coverage of independent Nigerian and African cinema — the kind that ends up in international press packets, streaming negotiations, and festival submissions — is scarce. The Media Partnership for Filmmakers closes that gap: film and series reviews, filmmaker profiles, festival coverage, and news releases that build a press record your distribution team can actually use.",
-    "We serve independent Nigerian filmmakers, Lagos and Abuja production companies, diaspora filmmakers with Nigerian projects, and film festival organisers. Tiers are named after production phases — Development, Release, Festival, Distribution — so you can enter at the moment that makes sense for your project.",
+    "We serve independent filmmakers, production companies, and film festival organisers. Tiers are named after production phases — Development, Release, Festival, Distribution — so you can enter at the moment that makes sense for your project.",
     "This is not promotional recap coverage. We write film criticism, director profiles with depth, and news releases for productions worth announcing.",
   ],
   howItWorks: [
@@ -430,7 +430,7 @@ const filmmakersPage: ServicePageContent = {
     },
     {
       title: "An Audience That Watches Intentionally",
-      body: "GetMeLit readers are the Nigerian and diaspora professional and creative class. They stream, they attend screenings, they argue about films. These are the people whose word-of-mouth actually moves ticket sales and streaming numbers.",
+      body: "GetMeLit readers are the professional and creative class. They stream, they attend screenings, they argue about films. These are the people whose word-of-mouth actually moves ticket sales and streaming numbers.",
     },
     {
       title: "Critical Coverage, Not Synopses",
@@ -444,7 +444,7 @@ const filmmakersPage: ServicePageContent = {
   faqs: [
     {
       question: "Do you cover Nollywood studio releases as well as independent films?",
-      answer: "We cover both, with a particular focus on independent Nigerian cinema, diaspora productions, and African films that don't get mainstream coverage. Studio releases are covered when there's genuine editorial interest.",
+      answer: "We cover both, with a particular focus on independent and international cinema that doesn't get mainstream coverage. Studio releases are covered when there's genuine editorial interest.",
     },
     {
       question: "Can you review a series, not just a feature film?",

@@ -29,7 +29,7 @@ export default async function MembershipPage() {
               Belong to <em>something.</em>
             </h1>
             <p className="mco-lede">
-              Moveee is for creatives from around the world, entrepreneurs, professionals,
+              Moveee is for creatives, entrepreneurs, professionals,
               and culture lovers. Membership is how you show up.
             </p>
           </div>

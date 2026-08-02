@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     default: "Moveee — Culture. Discover and Engage.",
     template: "%s | Moveee",
   },
-  description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
+  description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
   alternates: {
     canonical: "https://themoveee.com/",
   },
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     site: "@moveeemedia",
     creator: "@moveeemedia",
     title: "Moveee — Culture. Discover and Engage.",
-    description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture worldwide.",
+    description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
     images: ["/og-fallback.png"],
   },
 };

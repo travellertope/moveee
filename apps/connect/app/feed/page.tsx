@@ -14,7 +14,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Moveee — Community for Global Creatives",
   description:
-    "Where creatives from around the world, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
+    "Where creatives, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
 };
 
 export default async function ConnectPage() {
