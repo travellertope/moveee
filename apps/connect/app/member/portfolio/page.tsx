@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PortfolioManager from "./PortfolioManager";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -23,42 +24,33 @@ export default async function PortfolioPage() {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             ) : initial}
           </div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">The Moveee — Creative Portfolio</div>
-            <h1 className="mem-name">{displayName}</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">Creative Portfolio</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
               {username && (
-                <>
-                  <span className="mem-sep">·</span>
-                  <Link href={`/connect/${username}`} style={{ color: "var(--ochre)", fontSize: "0.78rem" }}>
-                    View public profile →
-                  </Link>
-                </>
+                <Link href={`/connect/${username}`} className="acct-meta-link">
+                  View public profile →
+                </Link>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member/settings" className="mem-settings-back-link">← Back to Settings</Link>
-        </div>
-        <div style={{ maxWidth: "720px" }}>
-          <PortfolioManager reputation={reputation} username={username} />
-        </div>
+        <AccountNav isPatron={isPatron} />
+
+        <PortfolioManager reputation={reputation} username={username} />
       </div>
-    </>
+    </div>
   );
 }

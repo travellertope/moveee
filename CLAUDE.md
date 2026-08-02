@@ -1533,12 +1533,13 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3 (see
-  below for both). Remaining: Notifications + Analytics, then
-  Events/Referrals/Portfolio/Collection. Each phase should: swap that page's own
-  back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
-  page's own content the same `.acct-card` white-card treatment Phase 1 established —
-  don't invent a third visual language.
+- **All phases shipped — initiative complete.** Wallet + Coupons + Perks (Phase 2),
+  Settings (Phase 3), Notifications + Analytics (Phase 4), My Events + Referrals
+  (Phase 5), Portfolio + Collection (Phase 6 — see below for all five phase entries).
+  Every account-area page now shares the `.acct-*` shell and `AccountNav`. If a new
+  account-area page is ever added, follow this same pattern from the start — don't
+  invent a third visual language, and don't reintroduce `.mem-hero`/a bespoke side-rail.
+  `MemberNavSelect` no longer exists (deleted in Phase 5).
 
 ### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
 
@@ -1611,6 +1612,110 @@ changed.
   gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site` — no CSS changes in this pass, so no brace-balance check
   was needed.
+
+### Account Dashboard redesign — Phase 4: Notifications + Analytics (August 2026)
+
+- **Notifications** (`/member/notifications`) — full rebuild, same as Wallet/Coupons in
+  Phase 2. `NotificationsClient.tsx` was entirely inline `style={{}}` objects (the same
+  debt state Wallet/Coupons were in before their own rebuild) — every row, the header bar,
+  and the load-more footer moved onto new `.ntf-*` classes (`apps/connect/app/member.css`).
+  `page.tsx` swapped `.mem-hero` + the `mem-settings-grid`/`MemberNavSelect` side-rail
+  (four links, all already covered by `AccountNav`) for the standard `.acct-page`/`.acct-wrap`
+  shell. **Zero behavior changes** — `markRead()`, the optimistic read-state update, and
+  the 20-per-page `visibleCount` pagination are byte-for-byte the same logic, only the JSX
+  markup and class names changed.
+- **Analytics** (`/member/analytics`) — lighter touch, matching the mockup. `StatCard`
+  already had radius+shadow going in; it was moved onto `.an-stat` classes and its ad hoc
+  `grid-template-columns: repeat(auto-fill, minmax(140px,1fr))` replaced with a fixed
+  `.an-stats` 6-column grid (3-col at ≤900px, 2-col at ≤560px — same breakpoint shape as
+  Phase 1's `.acct-stats`). The two chart sections and the Top Posts list moved from
+  `.mem-card`/raw inline-styled divs onto `.acct-card`/`.an-post-row` — chart-drawing logic
+  in `BarChart`/`LineChart` (plain SVG, no library) is completely unchanged, only the
+  wrapping card markup differs. The redundant "← Back to Dashboard" link that used to sit
+  below the Top Posts card was removed — `AccountNav`'s Overview item already covers this,
+  same reasoning as every other phase.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (463/463).
+
+### Account Dashboard redesign — Phase 5: My Events + Referrals (August 2026)
+
+Both pages were entirely inline-styled going in — same debt state Wallet/Coupons/
+Notifications were in before their own rebuilds — so both got full rebuilds, same
+treatment as those.
+
+- **My Events** (`/member/events`) — `page.tsx` extracted the avatar/name/tier-pill strip
+  into a shared `profileStrip` JSX const (both the Pro and non-Pro branches render it
+  identically, only the body below differs) plus `<AccountNav isPatron={isPatron} />` on
+  both. The non-Pro branch's upgrade gate now reuses `.evt-upsell` — the exact same dark
+  full-width upsell card shape as Wallet's cash-out gate in Phase 2, not a new pattern.
+  `EventsClient.tsx`'s expandable event rows + attendee sub-lists moved onto `.evt-row`/
+  `.evt-attendee-row` classes; `toggleEvent()`/`downloadCsv()` logic is untouched. The
+  card itself provides its own `.acct-card` wrapper + header (matching Wallet/
+  Notifications' pattern of the client component owning its card, not the page
+  double-wrapping it).
+- **Referrals** (`/member/referrals`) — same shell swap. `ReferralsClient.tsx`'s share-link
+  card, 3-tile stat row (`.ref-stats`/`.ref-stat`, same shape as `.an-stats`/`.an-stat` from
+  Phase 4), badge-progress bars (`.ref-track`/`.ref-fill`, flips to `.ref-fill--done` at
+  100%), invited-friends list, and the numbered "How It Works" steps all moved off inline
+  styles onto `.ref-*` classes. `handleCopy()`'s clipboard logic and the `useEffect` fetch
+  fallback (for when `initialData` is null) are untouched.
+- **`MemberNavSelect.tsx` deleted** (`packages/shared/components/`) — Phase 5 was the last
+  page still importing it (`/member/events`'s side-rail); confirmed zero remaining
+  importers repo-wide via grep before removing, rather than leaving it as dead code. If a
+  future phase needs a flat link-list component again, this is gone — don't assume it
+  still exists.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site` — including after deleting `MemberNavSelect.tsx`, since
+  both apps' tsconfigs type-check `packages/shared/**` regardless of which app actually
+  imports a given file (see the production-build-fix entry earlier in this doc for why
+  that check matters) — and a CSS brace-balance check on `member.css` (515/515).
+
+### Account Dashboard redesign — Phase 6: Portfolio + Collection (August 2026, final phase)
+
+Last phase of the initiative that began with Phase 1's Overview rebuild — see that entry
+for the full "Everything, page by page" scope this closes out. Two different starting
+points again, same as Phase 4's Notifications/Analytics split:
+
+- **Portfolio** (`/member/portfolio`) — fully inline-styled going in, full rebuild.
+  `page.tsx` swapped `.mem-hero` for the `.acct-page`/`.acct-wrap`/`AccountNav` shell.
+  `PortfolioManager.tsx`'s locked state (below Taste Maker/500 rep), pinned-posts list,
+  portfolio-item list (reorder/edit/delete), and the add/edit `ItemForm` all moved onto
+  new `.pf-*` classes. All state/fetch logic — `saveItems()`, `togglePin()`,
+  `moveUp()`/`moveDown()`, the picker fetch in `openPicker()` — untouched.
+- **Collection** (`/member/collection`) — different case: it already had real
+  `.collection-*` CSS classes, not inline styles, so `CollectionTabs.tsx` itself needed
+  no rebuild, only two fixes: (1) `.collection-grid`/`.collection-card` were still on the
+  old flush "1px-gap, no radius, hairline-border" grid pattern the site-wide
+  border-radius convention retired — bumped to individual `radius-xl`/`shadow-card` cards
+  matching every other rebuilt grid in this file (Discover, related-stories, etc.);
+  (2) **found and fixed a real bug**: three `.collection-*` rules referenced
+  `font-family: 'Overpass Mono'`, which is not loaded anywhere in `apps/connect` (no
+  `@font-face`, no `next/font` import) — confirmed via repo-wide grep before touching it.
+  It had been silently falling back to the browser's default monospace this whole time,
+  quietly off-brand from the `JetBrains Mono` used everywhere else. Fixed to
+  `'JetBrains Mono'`. Also removed a redundant `maxWidth: 900, margin: "0 auto"` inline
+  wrapper in `CollectionTabs.tsx` — content now flows left-aligned inside `.acct-wrap`
+  like every other rebuilt page in this initiative, rather than auto-centering inside it
+  (which read inconsistently once the two-column `.mem-body` shell was gone).
+- **`AccountNav.tsx` gained two new entries** (`packages/shared/components/`) — Portfolio
+  (🎨) and Collection (🔖), inserted after Referrals and before Settings. Neither existed
+  in the nav before this phase; both pages were previously only reachable via the old
+  `MemberNavSelect` link lists on `/member/settings` and `/member` (both already removed
+  in earlier phases), meaning **Portfolio and Collection had no navigational path to them
+  at all going into this phase** — a real gap, not just a visual one, closed here.
+  Portfolio has no Pro/rep gating at the nav-item level (`PortfolioManager.tsx` shows its
+  own locked-state message inline when reputation is below 500, same as before); neither
+  entry is filtered by `isPatron` the way `events` is.
+- **This closes the initiative** — all 12 account-area destinations (Overview, Wallet,
+  Coupons, Perks, Settings' 6 tabs, Notifications, Analytics, My Events, Referrals,
+  Portfolio, Collection) now share the same `.acct-*` shell and `AccountNav`. If a future
+  account-area page is added, follow this same pattern from the start rather than
+  reintroducing `.mem-hero`/a bespoke side-rail.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (545/545).
 
 ### Member Settings — visual rebuild (§10, June 2026)
 

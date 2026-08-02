@@ -26,6 +26,8 @@ const NAV: NavEntry[] = [
   { key: "analytics", label: "Analytics", emoji: "📊", href: "/member/analytics" },
   { key: "events", label: "My Events", emoji: "📅", href: "/member/events" },
   { key: "referrals", label: "Referrals", emoji: "🤝", href: "/member/referrals" },
+  { key: "portfolio", label: "Portfolio", emoji: "🎨", href: "/member/portfolio" },
+  { key: "collection", label: "Collection", emoji: "🔖", href: "/member/collection" },
   { key: "settings", label: "Settings", emoji: "⚙️", href: "/member/settings" },
 ];
 

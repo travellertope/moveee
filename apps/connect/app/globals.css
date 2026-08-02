@@ -210,9 +210,6 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(circle at 20% 10%, rgba(197, 73, 31, 0.04), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
 }
 
 /* App shell — lays the left rail beside page content at >=860px; below

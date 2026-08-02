@@ -72,19 +72,20 @@
   z-index: 1;
 }
 
-/* featured-image panel — framed, bleeding to the hero's right edge (rounded
-   only on the inner/left side) rather than replacing the hero background */
+/* featured-image panel — a fully-framed inset (rounded on all corners,
+   inset from the edge rather than flush) so the crop reads as a deliberate
+   photo frame instead of an accidental clip against the viewport edge */
 .ar-hero-photo {
   position: absolute;
   top: 48px;
   bottom: 48px;
-  right: 0;
-  width: clamp(280px, 34vw, 560px);
+  right: 48px;
+  width: clamp(260px, 30vw, 520px);
   z-index: 2;
-  border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
-  box-shadow: -24px 0 56px rgba(0,0,0,.45);
-  border-left: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 24px 56px rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.1);
   background: var(--ar-ghost-light);
 }
 
@@ -92,7 +93,7 @@
   position: relative;
   z-index: 2;
   padding: 0 64px 64px;
-  max-width: 640px;
+  max-width: 760px;
 }
 .ar-hero-eyebrow {
   font-family: 'JetBrains Mono', monospace;
@@ -963,8 +964,8 @@
 @media (max-width: 1024px) {
   .ar-breadcrumb { padding: 16px 32px; }
   .ar-breadcrumb--overlay { padding: 16px 32px; }
-  .ar-hero-text { padding: 0 32px 48px; max-width: 480px; }
-  .ar-hero-photo { width: clamp(240px, 36vw, 400px); }
+  .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
+  .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
   .ar-standard-hero { padding: 40px 32px 32px; }
   .ar-wrap {
     grid-template-columns: 1fr 260px;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 
 interface CreditDay {
   day: string;
@@ -205,18 +204,12 @@ function LineChart({
 
 // ── Stat Card ────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, valueColor }: { label: string; value: string | number; sub?: string; valueColor?: string }) {
   return (
-    <div style={{
-      background: "#fff",
-      border: "1px solid rgba(42,36,28,.1)",
-      borderRadius: 12,
-      padding: 20,
-      boxShadow: "0 1px 2px rgba(20,17,13,.05)",
-    }}>
-      <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--mute)", textTransform: "uppercase", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: 4 }}>{sub}</div>}
+    <div className="an-stat">
+      <div className="an-stat-label">{label}</div>
+      <div className="an-stat-value" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
+      {sub && <div className="an-stat-sub">{sub}</div>}
     </div>
   );
 }
@@ -257,21 +250,20 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
   const totalSpent  = data.credit_days.reduce((s, d) => s + parseFloat(d.spent ?? "0"), 0);
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto" }}>
-
+    <>
       {/* ── Stat summary ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 32 }}>
+      <div className="an-stats">
         <StatCard label="Credit Balance" value={data.balance} sub="spendable credits" />
         <StatCard label="Points" value={data.reputation} sub="all-time points" />
         <StatCard label="Posts" value={data.posts_published} sub={data.posts_pending ? `+${data.posts_pending} pending` : "published"} />
         <StatCard label="Badges" value={data.badge_count} sub="earned badges" />
-        <StatCard label="Earned (30d)" value={Math.round(totalEarned)} sub="credits earned" />
-        <StatCard label="Spent (30d)" value={Math.round(totalSpent)} sub="credits spent" />
+        <StatCard label="Earned (30d)" value={Math.round(totalEarned)} sub="credits earned" valueColor="var(--success)" />
+        <StatCard label="Spent (30d)" value={Math.round(totalSpent)} sub="credits spent" valueColor="var(--error)" />
       </div>
 
       {/* ── Credits chart ── */}
-      <section className="mem-card" style={{ marginBottom: 24 }}>
-        <div className="mem-card-label">Credits — Last 30 Days</div>
+      <section className="acct-card" style={{ marginBottom: 20 }}>
+        <div className="an-chart-title">Credits — Last 30 Days</div>
         {data.credit_days.length === 0 ? (
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No credit activity in the last 30 days.</p>
         ) : (
@@ -285,8 +277,8 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
       </section>
 
       {/* ── Points chart ── */}
-      <section className="mem-card" style={{ marginBottom: 24 }}>
-        <div className="mem-card-label">Points Earned — Last 6 Months</div>
+      <section className="acct-card" style={{ marginBottom: 20 }}>
+        <div className="an-chart-title">Points Earned — Last 6 Months</div>
         {data.rep_months.length === 0 ? (
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No points activity yet.</p>
         ) : (
@@ -295,75 +287,31 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
       </section>
 
       {/* ── Top posts ── */}
-      <section style={{
-        marginBottom: 32,
-        background: "#fff",
-        border: "1px solid rgba(42,36,28,.1)",
-        borderRadius: 12,
-        boxShadow: "0 1px 2px rgba(20,17,13,.05)",
-        overflow: "hidden",
-      }}>
-        <div className="mem-card-label" style={{ padding: "16px 20px 0" }}>Top Posts — Last 90 Days</div>
+      <section className="acct-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="an-chart-title" style={{ padding: "18px 22px 0", marginBottom: 8 }}>Top Posts — Last 90 Days</div>
         {data.top_posts.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", padding: 20 }}>No published posts yet.</p>
+          <p style={{ fontSize: "0.78rem", color: "var(--mute)", padding: "0 22px 20px" }}>No published posts yet.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {data.top_posts.map((p, i) => {
-              const engagement = parseInt(p.reactions ?? "0") + parseInt(p.comment_count ?? "0");
-              return (
-                <div
-                  key={p.ID}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: 20,
-                    borderBottom: i < data.top_posts.length - 1 ? "1px solid rgba(42,36,28,.08)" : "none",
-                  }}
-                >
-                  <div style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: "50%",
-                    background: i === 0 ? "#c5491f" : "var(--paper-deep)",
-                    color: i === 0 ? "#fff" : "var(--mute)",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}>
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {p.post_title || "Untitled"}
-                    </div>
-                    <div style={{ fontSize: "0.68rem", color: "var(--mute)", marginTop: 2 }}>
-                      {new Date(p.post_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
-                    <div style={{ display: "flex", gap: 10, fontSize: "0.78rem", color: "var(--ink-soft)" }}>
-                      <span>❤️ {p.reactions ?? 0}</span>
-                      <span>💬 {p.comment_count ?? 0}</span>
-                    </div>
-                    <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--ink)" }}>{engagement} Eng</div>
+          data.top_posts.map((p, i) => {
+            const engagement = parseInt(p.reactions ?? "0") + parseInt(p.comment_count ?? "0");
+            return (
+              <div key={p.ID} className="an-post-row">
+                <div className={`an-rank${i === 0 ? " an-rank--1" : ""}`}>{i + 1}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="an-post-title">{p.post_title || "Untitled"}</div>
+                  <div className="an-post-date">
+                    {new Date(p.post_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{ flexShrink: 0 }}>
+                  <div className="an-post-eng"><span>❤️ {p.reactions ?? 0}</span><span>💬 {p.comment_count ?? 0}</span></div>
+                  <div className="an-post-total">{engagement} Eng</div>
+                </div>
+              </div>
+            );
+          })
         )}
       </section>
-
-      {/* ── Back link ── */}
-      <div style={{ marginBottom: 32 }}>
-        <Link href="/member" style={{ fontSize: "0.78rem", color: "var(--ochre)", textDecoration: "none" }}>
-          ← Back to Dashboard
-        </Link>
-      </div>
-    </div>
+    </>
   );
 }

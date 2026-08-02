@@ -67,84 +67,67 @@ export default function EventsClient({ events }: { events: OrganiserEvent[] }) {
   }
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Your Events</div>
+    <section className="acct-card">
+      <div className="acct-card-header"><span className="acct-card-title">Your Events</span></div>
       {events.length === 0 ? (
         <p style={{ fontSize: "0.82rem", color: "var(--mute)", fontStyle: "italic" }}>
           You haven't organised any events yet.
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "rgba(42,36,28,.06)", border: "1px solid rgba(42,36,28,.08)" }}>
-          {events.map((event) => {
-            const isOpen = openId === event.postId;
-            const attendees = attendeesByEvent[event.postId] ?? [];
-            return (
-              <div key={event.postId} style={{ background: "var(--paper)" }}>
-                <button
-                  type="button"
-                  onClick={() => event.rsvpEnabled && toggleEvent(event)}
-                  disabled={!event.rsvpEnabled}
-                  style={{
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                    width: "100%", padding: "10px 14px", background: "transparent",
-                    border: "none", cursor: event.rsvpEnabled ? "pointer" : "default", textAlign: "left",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--ink)", fontWeight: 500 }}>
-                      {event.title}
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".06em" }}>
-                      {formatDate(event.eventDate)} · {event.status}
-                      {!event.rsvpEnabled && " · RSVP not enabled"}
-                    </div>
+        events.map((event) => {
+          const isOpen = openId === event.postId;
+          const attendees = attendeesByEvent[event.postId] ?? [];
+          return (
+            <div key={event.postId} className="evt-row">
+              <button
+                type="button"
+                onClick={() => event.rsvpEnabled && toggleEvent(event)}
+                disabled={!event.rsvpEnabled}
+                className="evt-row-head"
+              >
+                <div>
+                  <div className="evt-title">{event.title}</div>
+                  <div className="evt-meta">
+                    {formatDate(event.eventDate)} · {event.status}
+                    {!event.rsvpEnabled && " · RSVP not enabled"}
                   </div>
-                  {event.rsvpEnabled && (
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.82rem", fontWeight: 700, color: "var(--ochre)" }}>
-                      {event.rsvpCount}{event.rsvpCapacity > 0 ? ` / ${event.rsvpCapacity}` : ""} going {isOpen ? "▲" : "▼"}
-                    </span>
-                  )}
-                </button>
-
-                {isOpen && (
-                  <div style={{ padding: "0 14px 14px" }}>
-                    {loadingId === event.postId ? (
-                      <p style={{ fontSize: "0.78rem", color: "var(--mute)" }}>Loading attendees…</p>
-                    ) : attendees.length === 0 ? (
-                      <p style={{ fontSize: "0.78rem", color: "var(--mute)", fontStyle: "italic" }}>No RSVPs yet.</p>
-                    ) : (
-                      <>
-                        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                          <button
-                            type="button"
-                            onClick={() => downloadCsv(event, attendees)}
-                            className="mem-settings-back-link"
-                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                          >
-                            Export CSV ↓
-                          </button>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "rgba(42,36,28,.06)", border: "1px solid rgba(42,36,28,.08)" }}>
-                          {attendees.map((a) => (
-                            <div key={a.userId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--paper-deep)" }}>
-                              <div>
-                                <div style={{ fontSize: "0.78rem", color: "var(--ink)" }}>{a.displayName}</div>
-                                <div style={{ fontSize: "0.68rem", color: "var(--mute)" }}>{a.email}</div>
-                              </div>
-                              <span style={{ fontSize: "0.68rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace" }}>
-                                {formatDate(a.rsvpAt)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                </div>
+                {event.rsvpEnabled && (
+                  <span className="evt-count">
+                    {event.rsvpCount}{event.rsvpCapacity > 0 ? ` / ${event.rsvpCapacity}` : ""} going {isOpen ? "▲" : "▼"}
+                  </span>
                 )}
-              </div>
-            );
-          })}
-        </div>
+              </button>
+
+              {isOpen && (
+                <div className="evt-attendees">
+                  {loadingId === event.postId ? (
+                    <p style={{ fontSize: "0.78rem", color: "var(--mute)" }}>Loading attendees…</p>
+                  ) : attendees.length === 0 ? (
+                    <p style={{ fontSize: "0.78rem", color: "var(--mute)", fontStyle: "italic" }}>No RSVPs yet.</p>
+                  ) : (
+                    <>
+                      <div className="evt-export">
+                        <button type="button" onClick={() => downloadCsv(event, attendees)} className="evt-export-btn">
+                          Export CSV ↓
+                        </button>
+                      </div>
+                      {attendees.map((a) => (
+                        <div key={a.userId} className="evt-attendee-row">
+                          <div>
+                            <div className="evt-attendee-name">{a.displayName}</div>
+                            <div className="evt-attendee-email">{a.email}</div>
+                          </div>
+                          <span className="evt-attendee-date">{formatDate(a.rsvpAt)}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
     </section>
   );

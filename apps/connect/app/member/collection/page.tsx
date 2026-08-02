@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import CollectionTabs from "./CollectionTabs";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -21,31 +21,24 @@ export default async function CollectionPage() {
   const isPatron = user.tier === "patron";
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar">{initial}</div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">The Moveee &mdash; My Collection</div>
-            <h1 className="mem-name">{displayName}</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Patron" : "Citizen"}
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar">{initial}</div>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">My Collection</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
+                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member" className="mem-settings-back-link">
-            ← Back to Dashboard
-          </Link>
-        </div>
+        <AccountNav isPatron={isPatron} />
 
         <CollectionTabs />
       </div>
-    </>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import ReferralsClient from "./ReferralsClient";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -31,29 +31,34 @@ export default async function ReferralsPage() {
   const session = await getServerSession(authOptions as any) as any;
   if (!session?.user) redirect("/login?callbackUrl=/member/referrals");
 
-  const userId = Number(session.user.id);
+  const user = session.user as any;
+  const userId = Number(user.id);
+  const isPatron = user.tier === "patron";
+  const displayName = user.displayName || user.name || user.username || "Member";
+  const initial = displayName.charAt(0).toUpperCase();
   const data = await fetchReferrals(userId);
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">
-              <Link href="/member" style={{ color: "inherit", textDecoration: "none" }}>
-                Dashboard
-              </Link>{" "}&rsaquo;{" "}Refer a Friend
-            </div>
-            <h1 className="mem-name">Refer a Friend</h1>
-            <div className="mem-meta">
-              Earn credits &amp; points every time someone you invite joins Moveee.
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+            ) : initial}
+          </div>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">Refer a Friend</h1>
+            <div className="acct-meta">
+              <span className="acct-meta-text">Earn credits &amp; points every time someone you invite joins Moveee.</span>
             </div>
           </div>
         </div>
-      </div>
-      <div className="mem-body">
+
+        <AccountNav isPatron={isPatron} />
+
         <ReferralsClient initialData={data} />
       </div>
-    </>
+    </div>
   );
 }

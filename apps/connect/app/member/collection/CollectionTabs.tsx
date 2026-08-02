@@ -52,7 +52,7 @@ export default function CollectionTabs() {
   const bookmarkedCount = data?.bookmarked?.length ?? 0;
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div>
       {/* Tab bar */}
       <div className="collection-tab-bar">
         <button
