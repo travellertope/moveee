@@ -1,26 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import SettingsTabs from "./SettingsTabs";
-import MemberNavSelect from "@/components/MemberNavSelect";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const metadata = {
   title: { absolute: "Settings | The Moveee" },
 };
-
-const NAV_ITEMS = [
-  { label: "Dashboard",          href: "/member" },
-  { label: "My Wallet",          href: "/member/wallet" },
-  { label: "My Coupons",         href: "/member/coupons" },
-  { label: "My Collection",      href: "/member/collection" },
-  { label: "Creative Portfolio", href: "/member/portfolio" },
-  { label: "Newsletters",        href: "https://themoveee.com/newsletter" },
-  { label: "Upcoming Events",    href: "/events" },
-  { label: "Magazine",           href: "https://themoveee.com/magazine" },
-  { label: "Sign out",           href: "/api/auth/signout", muted: true },
-];
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -32,54 +19,34 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const initial = displayName.charAt(0).toUpperCase();
   const email = user.email as string;
 
-  const navItems = user.username
-    ? [
-        ...NAV_ITEMS.slice(0, 4),
-        { label: "Public Profile", href: `/connect/${user.username}` },
-        ...NAV_ITEMS.slice(4),
-      ]
-    : NAV_ITEMS;
-
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             ) : initial}
           </div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">The Moveee &mdash; Account Settings</div>
-            <h1 className="mem-name">{displayName}</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">Settings</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
-              <span className="mem-sep">·</span>
-              <span>{email}</span>
+              <span className="acct-meta-text">{email}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member" className="mem-settings-back-link">← Back to Dashboard</Link>
-        </div>
+        <AccountNav isPatron={isPatron} />
 
         <SettingsTabs />
 
-        <div className="mem-settings-grid">
-          <div className="mem-col-main">
-            {children}
-          </div>
-
-          <div className="mem-col-side">
-            <MemberNavSelect items={navItems} />
-          </div>
+        <div style={{ maxWidth: 640, display: "flex", flexDirection: "column", gap: 24 }}>
+          {children}
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -2081,4 +2081,340 @@ select.mem-field-input { cursor: pointer; }
 }
 .acct-explore-link:hover { background: var(--paper-deep); }
 .acct-explore-link--muted { color: var(--mute); }
+
+/* ═══════════════════════════════════════════════════
+   ACCOUNT DASHBOARD — PHASE 2: WALLET + COUPONS
+   Same .acct-* language as Phase 1 (Overview) — full-width single
+   column, white radius-xl/shadow-card cards. Perks keeps its own
+   perks.css card system (already close to this language) and only
+   gains AccountNav + shell spacing, so it has no CSS block here.
+   ═══════════════════════════════════════════════════ */
+
+/* ── Wallet: stat row ── */
+.wal-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media (max-width: 640px) { .wal-stats { grid-template-columns: 1fr; } }
+
+.wal-stat-card {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+}
+.wal-stat-card--balance {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.wal-stat-card--balance .wal-stat-label { color: color-mix(in srgb, var(--paper) 55%, transparent); }
+.wal-stat-card--balance .wal-stat-value { color: var(--paper); }
+.wal-stat-card--balance .wal-stat-unit { color: var(--gold); }
+
+.wal-stat-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 8px;
+}
+.wal-stat-value {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.wal-stat-unit {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-left: 6px;
+}
+.wal-stat-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  color: var(--mute);
+  margin-top: 6px;
+}
+
+/* ── Wallet: tab switcher (reuses .prf-tab, unchanged) ── */
+
+/* ── Wallet: transaction list ── */
+.wal-txn-list { display: flex; flex-direction: column; }
+.wal-txn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.wal-txn:last-child { border-bottom: none; }
+.wal-txn-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.wal-txn-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  margin-top: 2px;
+}
+.wal-txn-amt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wal-txn-amt--pos { color: var(--success); }
+.wal-txn-amt--neg { color: var(--error); }
+
+/* ── Wallet: cash out ── */
+.wal-cashout-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 860px) { .wal-cashout-grid { grid-template-columns: 1fr; } }
+
+.wal-passkey-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+
+.wal-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.wal-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.wal-input {
+  width: 100%;
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-md);
+  padding: 11px 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--paper);
+  box-sizing: border-box;
+}
+.wal-input:focus { outline: none; border-color: var(--ochre); }
+.wal-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--mute);
+  letter-spacing: .04em;
+}
+
+.wal-fee-box {
+  background: var(--paper-deep);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin: 4px 0 4px;
+}
+.wal-fee-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--mute);
+  padding: 3px 0;
+}
+
+.wal-upsell {
+  background: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: 24px 22px;
+  margin-top: 8px;
+}
+.wal-upsell-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+.wal-upsell-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0 0 8px;
+}
+.wal-upsell-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+.wal-upsell-btn {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+}
+.wal-upsell-btn:hover { opacity: .9; }
+
+.wal-submit-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wal-submit-btn:hover:not(:disabled) { background: var(--ochre); }
+.wal-submit-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Coupons ── */
+.cpn-section-header {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 12px;
+}
+.cpn-section-header:not(:first-child) { margin-top: 28px; }
+
+.cpn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.cpn-card {
+  background: var(--paper);
+  border: 1.5px solid color-mix(in srgb, var(--success) 30%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+.cpn-card--warn { border-color: color-mix(in srgb, var(--warning) 45%, transparent); }
+.cpn-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.cpn-card--warn .cpn-badge { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning-dark); }
+.cpn-card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 10px 0 16px;
+  line-height: 1.3;
+}
+.cpn-card-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  margin-top: 10px;
+}
+.cpn-card-expiry {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.cpn-card-expiry--warn { color: var(--warning-dark); }
+.cpn-card-expiry--ok { color: var(--success); }
+
+.cpn-row-list { display: flex; flex-direction: column; gap: 12px; }
+.cpn-row {
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.cpn-row--used { opacity: .6; }
+.cpn-row--expired { opacity: .4; }
+.cpn-row-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.cpn-row--expired .cpn-row-title { text-decoration: line-through; }
+.cpn-row-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  margin-top: 4px;
+}
+.cpn-row-status {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.cpn-row-status--used { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink-soft); }
+.cpn-row-status--expired { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); border: 1px solid color-mix(in srgb, var(--error) 20%, transparent); }
 .acct-explore-arrow { color: var(--mute); font-size: 11px; }

@@ -241,15 +241,18 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
             <span className="ar-breadcrumb-current">{post.title}</span>
           </nav>
-          <Image
-            src={post.featuredImage.node.sourceUrl}
-            alt={post.featuredImage.node.altText || post.title}
-            fill
-            style={{ objectFit: "cover" }}
-            priority
-            className="ar-hero-img"
-          />
+          <div className="ar-hero-wash" />
           <div className="ar-hero-vignette" />
+          <div className="ar-hero-photo">
+            <Image
+              src={post.featuredImage.node.sourceUrl}
+              alt={post.featuredImage.node.altText || post.title}
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+              className="ar-hero-img"
+            />
+          </div>
           <div className="ar-hero-text">
             <div className="ar-hero-eyebrow">
               <span>★ {categoryName}</span>

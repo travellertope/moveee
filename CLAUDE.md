@@ -1183,6 +1183,68 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 `MagazineArchiveWrapper.tsx`) is capped at 2 articles, not 6 — `.mg-op-grid` is already a
 2-column grid so this needs no CSS change if the cap changes again.
 
+### Magazine article page — hero rebuild: gradient bg + right-bleed image panel (August 2026)
+
+`apps/site/app/magazine/[slug]/page.tsx` + `apps/site/app/editorial.css` (`ar-*`
+namespace). Mockup-first as usual, including an explicit follow-up question about mobile
+behavior before building for real (see below). Two related changes shipped together:
+
+**Hero — the featured image moved from a full-bleed background to a framed panel.**
+Previously `hasFeaturedImage` rendered the actual `post.featuredImage` as a `fill`
+background image spanning the entire `.ar-hero` (`opacity: 0.7`, with `.ar-hero-vignette`
+darkening the bottom for text legibility). Per explicit user direction ("keep the
+gradient background... focus the featured image in the empty space on the right hand
+side instead of across the entire hero"), the hero's background is now a fixed gradient
+wash (`linear-gradient(160deg, #3d3020, #14110d 60%)` + a new `.ar-hero-wash` radial
+ochre/gold overlay, `opacity: .55`) — the same atmosphere as before, just not
+photo-driven — and the real featured image now renders inside `.ar-hero-photo`, a framed
+panel that bleeds to the hero's right edge: `position: absolute; right: 0`, rounded only
+on the inner/left corners (`var(--radius-2xl) 0 0 var(--radius-2xl)`), full opacity (was
+0.7), `width: clamp(280px, 34vw, 560px)`. `.ar-hero-text`'s `max-width` was narrowed from
+900px to 640px so it doesn't run into the panel. `.ar-hero-vignette` is unchanged — still
+darkens the gradient toward the bottom behind the text, same as before.
+**`object-fit: cover` already handled the "what if the source image is landscape, not
+portrait" question with zero extra code** — every WP featured image is fetched the same
+way regardless of orientation, and `cover` center-crops whichever shape comes back to
+fill the panel; there is no per-orientation branching anywhere in this change.
+
+**Mobile (≤768px) — stacks instead of bleeding.** The right-bleed panel has nowhere to go
+under ~768px, so `.ar-hero-photo` switches from `position: absolute` to a full-width,
+`aspect-ratio: 4/3` block via the existing 768px media query, and `.ar-hero { min-height:
+0; justify-content: flex-start }` (was `min-height: 50vh`) so the hero sizes to its actual
+stacked content (image + text) instead of an artificial viewport-relative minimum that
+would leave dead gradient space above the image. Because `.ar-hero-photo` sits before
+`.ar-hero-text` in the DOM and both are normal-flow children of the flex-column hero once
+the panel loses `position: absolute`, this reorders the layout automatically — no JS,
+no duplicate markup. Text renders **below** the image as a normal gradient block, not
+overlaid on the photo — legibility never depends on where a given image happens to be
+busy or plain. This mobile treatment was previewed as its own mockup frame (390px) before
+being built, at the user's request, since the two-column desktop layout obviously
+couldn't just reflow as-is.
+
+**Convention pass — same visit, same file.** The TOC (`.ar-toc`, previously bare sticky
+text with only a border-left active-state indicator) gained real card chrome
+(`background: #fff`, `border`, `var(--radius-xl)`, `var(--shadow-card, ...)` fallback,
+padding) — no JSX changes needed, the existing `.ar-toc a:hover/.active` border-left
+treatment was left as-is rather than replaced. `.ar-sidebar-card` bumped from a flat 8px
+radius + one-off `--ar-shadow` to `var(--radius-xl)` + the same `--shadow-card` fallback
+token used elsewhere in this file (see `.ar-gate`'s pre-existing precedent for the
+`var(--token, <fallback>)` pattern — `--shadow-card` isn't a literal variable anywhere in
+`apps/site`, same as `--shadow-tooltip` on the Connect side). `.ar-author` (previously a
+flush strip with only top/bottom borders) became a proper white radius-xl/shadow-card
+card with real top margin. `.ar-rc` (related-story cards) gained the same white
+card/border/shadow/radius wrapper with inner padding (`.ar-rf`'s own radius bumped 4px →
+`var(--radius-lg)`) plus a hover shadow-lift, replacing the previous bare
+image-then-text-with-no-chrome layout.
+
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other Figma/mockup rebuild pass in this file, and true here in particular
+  for the mobile stacked hero (no exact source photo to test crop/legibility against).
+  Verified via `tsc --noEmit` (clean) on `apps/site` and a CSS brace-balance check on
+  `editorial.css` (190/190). Re-check pixel fidelity — especially the mobile hero and the
+  `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
+  considering this fully closed.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
@@ -1471,13 +1533,84 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **Next phases (not yet started, in rough priority order)**: Wallet + Coupons + Perks
-  (thematically adjacent, likely worth a shared visual pass together), Settings (6 tabs —
-  wire in `AccountNav` above `SettingsTabs`' existing sub-tab row), Notifications +
-  Analytics, then Events/Referrals/Portfolio/Collection. Each phase should: swap that page's
-  own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
-  page's own content the same `.acct-card` white-card treatment this phase established —
+- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2, Settings as Phase 3 (see
+  below for both). Remaining: Notifications + Analytics, then
+  Events/Referrals/Portfolio/Collection. Each phase should: swap that page's own
+  back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
+  page's own content the same `.acct-card` white-card treatment Phase 1 established —
   don't invent a third visual language.
+
+### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
+
+Mockup-first as usual — built as an Artifact, corrected once for a stale detail (the mockup
+used the old cream `#f3ece0` hex directly instead of the actual `--paper` token, which is
+`#ffffff` now per the earlier cream-removal pass — always pull the live token value, don't
+hardcode a remembered hex), then approved and built for real.
+
+- **Wallet** (`/member/wallet`) — full rebuild. `page.tsx` swapped `.mem-hero` +
+  `MemberNavSelect` for `.acct-page`/`.acct-wrap` + `<AccountNav isPatron={...} />`, same
+  shape as Phase 1. `WalletClient.tsx` gained a new stat row above the tab switcher (`.wal-stats`
+  — dark `.wal-stat-card--balance` tile leading, plus Earned (30d)/Spent (30d) tiles computed
+  client-side from the existing `entries` ledger prop, no new API call). Every inline
+  `style={{}}` in the transaction list and cash-out form was replaced with new `.wal-*`
+  classes (`apps/connect/app/member.css`) — transaction rows, field/label/input, the fee
+  breakdown box (`.wal-fee-box`), the passkey-required banner, and the non-Pro upsell card
+  (`.wal-upsell`, dark card matching `.acct-card--upgrade`'s visual role). **Zero business-logic
+  changes** — `doStepUp()`, `handleCashout()`, per-currency (GBP/USD/NGN) field validation, and
+  the 40% flat fee calculation are all untouched, only the rendering layer changed.
+- **Coupons** (`/member/coupons`) — full rebuild, same shell swap. `CouponsClient.tsx`'s
+  Active/Used/Expired sections moved from ad hoc inline styles to `.cpn-*` classes: Active
+  renders as a `.cpn-grid` of `.cpn-card`s (success-tinted border, flips to
+  `.cpn-card--warn` when `daysUntil(expires_at) <= 3`, matching Phase 1's Wallet visual
+  language), Used/Expired render as `.cpn-row-list` rows with opacity-reduced
+  `.cpn-row--used`/`--expired` states and a trailing `.cpn-row-status` pill. Fetch logic
+  (`/api/wallet/redemptions`) untouched.
+- **Perks** (`/connect/perks`) — deliberately light touch, per the mockup. `perks.css`
+  already had its own well-developed card language (radius-xl/shadow-card, JetBrains
+  Mono labels, Fraunces titles) close to the `.acct-*` convention, so it was **not**
+  rebuilt — only `<AccountNav isPatron={isPatron} />` was inserted above the existing hero,
+  shown only when `session.user` exists (Perks stays publicly browsable for logged-out
+  visitors, unlike Wallet/Coupons which both redirect to login — the nav simply doesn't
+  render for them). No CSS block needed for this page; `member.css`'s `.acct-nav-*` rules
+  are already loaded globally via `apps/connect/app/layout.tsx`.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (425/425).
+
+### Account Dashboard redesign — Phase 3: Settings (August 2026)
+
+Shell-only, per the mockup and the same "light touch" reasoning used for Perks in Phase 2
+— the 6 tab-content components (`ProfileEditor.tsx`, `DirectoryProfile.tsx`,
+`InterestEditor.tsx`, `NewsletterPreferences.tsx`, `NotificationPreferences.tsx`,
+`PasskeyManager.tsx`) already render into `.mem-card`/`.mem-card--editable` (12px radius +
+shadow, ochre-tinted border on editable cards) and `.mem-field-*`/`.mem-toggle` classes
+from the June §10 rebuild directly below — that styling is **already** visually
+equivalent to the `.acct-card` language (same radius, same shadow weight, just a
+different literal shadow value), so none of it was touched. Only `settings/layout.tsx`
+changed.
+
+- **`settings/layout.tsx`** — swapped the dark `.mem-hero` + `.mem-settings-back` link +
+  `.mem-settings-grid` two-column split (main content + a `MemberNavSelect` side-rail
+  duplicating ~9 links, several of them not even account destinations) for the same
+  `.acct-page`/`.acct-wrap`/`.acct-profile` + `<AccountNav isPatron={...} />` shell every
+  other Phase 1–3 page now uses. `SettingsTabs.tsx` itself is **unchanged** — it already
+  used the existing `.prf-tab` underline convention (the same one `WalletClient.tsx`'s
+  History/Cash Out switcher uses), which reads correctly as a second, subordinate level of
+  navigation sitting right below `AccountNav` without needing a new tab style invented for
+  it. (An earlier mockup draft for this phase sketched a plain-sans tab style for
+  `SettingsTabs` before the real `.prf-tab` CSS was re-checked — reusing the existing
+  convention was the right call once it was clear `.prf-tab` already does this job
+  elsewhere in the same shell.)
+- **Tab content is now wrapped in a `maxWidth: 640` flex column** (inline style in
+  `layout.tsx`, not a new CSS class) instead of the old grid's `minmax(0,1fr)` main column
+  — needed because `.mem-card` has no max-width of its own (by design, since e.g.
+  Wallet's cash-out grid wants it to stretch), so rendering the six settings pages
+  directly into the full 1100px `.acct-wrap` without this wrapper would have stretched
+  every field-list/toggle-row card edge-to-edge, which reads badly for a form.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site` — no CSS changes in this pass, so no brace-balance check
+  was needed.
 
 ### Member Settings — visual rebuild (§10, June 2026)
 
