@@ -1,9 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import WalletClient from "./WalletClient";
-import MemberNavSelect from "@/components/MemberNavSelect";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -57,62 +56,34 @@ export default async function WalletPage() {
   ]);
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             ) : initial}
           </div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">My Wallet</div>
-            <h1 className="mem-name">{balance?.credits ?? 0} Credits</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">Wallet</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
-              <span className="mem-sep">·</span>
-              <span>≈ £{((balance?.credit_value_gbp ?? 0) / 100).toFixed(2)}</span>
+              <span className="acct-meta-text">≈ £{((balance?.credit_value_gbp ?? 0) / 100).toFixed(2)} available</span>
             </div>
           </div>
         </div>
+
+        <AccountNav isPatron={isPatron} />
+
+        <WalletClient
+          credits={balance?.credits ?? 0}
+          creditsPerGbp={balance?.credits_per_gbp ?? 10}
+          entries={history.entries ?? []}
+          isPro={isPatron}
+        />
       </div>
-
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member" className="mem-settings-back-link">← Back to Dashboard</Link>
-        </div>
-
-        <div className="mem-settings-grid">
-          <div className="mem-col-main">
-            <WalletClient
-              credits={balance?.credits ?? 0}
-              creditsPerGbp={balance?.credits_per_gbp ?? 10}
-              entries={history.entries ?? []}
-              isPro={isPatron}
-            />
-          </div>
-
-          <div className="mem-col-side">
-            <MemberNavSelect items={[
-              { label: "Browse Perks", href: "/connect/perks" },
-              { label: "My Coupons",   href: "/member/coupons" },
-              { label: "Dashboard",    href: "/member" },
-              { label: "Settings",     href: "/member/settings" },
-            ]} />
-
-            <section className="mem-card">
-              <div className="mem-card-label">How Credits Work</div>
-              <div style={{ fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.6 }}>
-                <p style={{ margin: "0 0 8px" }}>Earn credits by posting, reviewing, and engaging with the community. Up to 50 credits per day.</p>
-                <p style={{ margin: "0 0 8px" }}><strong>Route A:</strong> Redeem at partner venues — 0% fee.</p>
-                <p style={{ margin: 0 }}><strong>Route B:</strong> Cash out to your bank — flat 40% fee.</p>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

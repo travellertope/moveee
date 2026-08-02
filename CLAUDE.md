@@ -1471,13 +1471,49 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
   as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
   `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **Next phases (not yet started, in rough priority order)**: Wallet + Coupons + Perks
-  (thematically adjacent, likely worth a shared visual pass together), Settings (6 tabs —
-  wire in `AccountNav` above `SettingsTabs`' existing sub-tab row), Notifications +
-  Analytics, then Events/Referrals/Portfolio/Collection. Each phase should: swap that page's
-  own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
-  page's own content the same `.acct-card` white-card treatment this phase established —
-  don't invent a third visual language.
+- **Next phases**: Wallet + Coupons + Perks shipped as Phase 2 (see below). Remaining:
+  Settings (6 tabs — wire in `AccountNav` above `SettingsTabs`' existing sub-tab row),
+  Notifications + Analytics, then Events/Referrals/Portfolio/Collection. Each phase should:
+  swap that page's own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...}
+  />`, and give the page's own content the same `.acct-card` white-card treatment Phase 1
+  established — don't invent a third visual language.
+
+### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
+
+Mockup-first as usual — built as an Artifact, corrected once for a stale detail (the mockup
+used the old cream `#f3ece0` hex directly instead of the actual `--paper` token, which is
+`#ffffff` now per the earlier cream-removal pass — always pull the live token value, don't
+hardcode a remembered hex), then approved and built for real.
+
+- **Wallet** (`/member/wallet`) — full rebuild. `page.tsx` swapped `.mem-hero` +
+  `MemberNavSelect` for `.acct-page`/`.acct-wrap` + `<AccountNav isPatron={...} />`, same
+  shape as Phase 1. `WalletClient.tsx` gained a new stat row above the tab switcher (`.wal-stats`
+  — dark `.wal-stat-card--balance` tile leading, plus Earned (30d)/Spent (30d) tiles computed
+  client-side from the existing `entries` ledger prop, no new API call). Every inline
+  `style={{}}` in the transaction list and cash-out form was replaced with new `.wal-*`
+  classes (`apps/connect/app/member.css`) — transaction rows, field/label/input, the fee
+  breakdown box (`.wal-fee-box`), the passkey-required banner, and the non-Pro upsell card
+  (`.wal-upsell`, dark card matching `.acct-card--upgrade`'s visual role). **Zero business-logic
+  changes** — `doStepUp()`, `handleCashout()`, per-currency (GBP/USD/NGN) field validation, and
+  the 40% flat fee calculation are all untouched, only the rendering layer changed.
+- **Coupons** (`/member/coupons`) — full rebuild, same shell swap. `CouponsClient.tsx`'s
+  Active/Used/Expired sections moved from ad hoc inline styles to `.cpn-*` classes: Active
+  renders as a `.cpn-grid` of `.cpn-card`s (success-tinted border, flips to
+  `.cpn-card--warn` when `daysUntil(expires_at) <= 3`, matching Phase 1's Wallet visual
+  language), Used/Expired render as `.cpn-row-list` rows with opacity-reduced
+  `.cpn-row--used`/`--expired` states and a trailing `.cpn-row-status` pill. Fetch logic
+  (`/api/wallet/redemptions`) untouched.
+- **Perks** (`/connect/perks`) — deliberately light touch, per the mockup. `perks.css`
+  already had its own well-developed card language (radius-xl/shadow-card, JetBrains
+  Mono labels, Fraunces titles) close to the `.acct-*` convention, so it was **not**
+  rebuilt — only `<AccountNav isPatron={isPatron} />` was inserted above the existing hero,
+  shown only when `session.user` exists (Perks stays publicly browsable for logged-out
+  visitors, unlike Wallet/Coupons which both redirect to login — the nav simply doesn't
+  render for them). No CSS block needed for this page; `member.css`'s `.acct-nav-*` rules
+  are already loaded globally via `apps/connect/app/layout.tsx`.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (425/425).
 
 ### Member Settings — visual rebuild (§10, June 2026)
 

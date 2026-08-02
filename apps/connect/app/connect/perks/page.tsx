@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import PerksClient from "./PerksClient";
+import AccountNav from "@/components/AccountNav";
 import "./perks.css";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export default async function PerksPage() {
   const session = await getServerSession(authOptions as any) as any;
   const user = session?.user;
   const userId = user?.id ? Number(user.id) : 0;
+  const isPatron = user?.tier === "patron";
 
   const [perks, balance] = await Promise.all([
     fetchPerks(),
@@ -65,6 +67,12 @@ export default async function PerksPage() {
 
   return (
     <div className="perks-page">
+      {user && (
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 24px 0" }}>
+          <AccountNav isPatron={isPatron} />
+        </div>
+      )}
+
       <section className="perks-hero">
         <div className="perks-hero-inner">
           <p className="perks-eyebrow">Moveee Credits</p>

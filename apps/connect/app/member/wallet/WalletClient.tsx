@@ -40,28 +40,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid rgba(42,36,28,.15)",
-  borderRadius: 3,
-  fontSize: "0.85rem",
-  fontFamily: "inherit",
-  background: "var(--paper)",
-  color: "var(--ink)",
-  boxSizing: "border-box",
-};
-
-const fieldStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 6 };
-const labelStyle: React.CSSProperties = {
-  fontSize: "8px", fontFamily: "'JetBrains Mono', monospace",
-  letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ochre)",
-};
-const hintStyle: React.CSSProperties = {
-  fontSize: "0.7rem", color: "var(--mute)",
-  fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".04em",
-};
-
 export default function WalletClient({
   credits,
   creditsPerGbp,
@@ -112,6 +90,12 @@ export default function WalletClient({
   // Approximate conversion — server will use live rate for non-GBP
   const cashAmount  = (netCredits / creditsPerGbp).toFixed(2);
 
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - THIRTY_DAYS_MS;
+  const recent = entries.filter(e => new Date(e.created_at).getTime() >= cutoff);
+  const earned30d = recent.filter(e => e.amount > 0).reduce((sum, e) => sum + e.amount, 0);
+  const spent30d  = recent.filter(e => e.amount < 0).reduce((sum, e) => sum + e.amount, 0);
+
   // Per-currency validation
   const gbpValid  = currency !== "GBP"  || (sortCode.trim().length > 0 && accountNumber.trim().length > 0);
   const usdValid  = currency !== "USD"  || (bankName.trim().length > 0 && routingNumber.trim().length > 0 && accountNumber.trim().length > 0);
@@ -160,8 +144,24 @@ export default function WalletClient({
 
   return (
     <>
+      {/* Stat row */}
+      <div className="wal-stats">
+        <div className="wal-stat-card wal-stat-card--balance">
+          <div className="wal-stat-label">Balance</div>
+          <div><span className="wal-stat-value">{credits}</span><span className="wal-stat-unit">Cr</span></div>
+        </div>
+        <div className="wal-stat-card">
+          <div className="wal-stat-label">Earned (30d)</div>
+          <div className="wal-stat-value" style={{ color: "var(--success)" }}>+{earned30d}</div>
+        </div>
+        <div className="wal-stat-card">
+          <div className="wal-stat-label">Spent (30d)</div>
+          <div className="wal-stat-value" style={{ color: "var(--error)" }}>{spent30d}</div>
+        </div>
+      </div>
+
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(42,36,28,.1)", marginBottom: "24px" }}>
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--rule)", marginBottom: "24px" }}>
         <button type="button" onClick={() => setTab("history")} className={`prf-tab${tab === "history" ? " prf-tab--active" : ""}`}>
           Transaction History
         </button>
@@ -172,28 +172,19 @@ export default function WalletClient({
 
       {/* History */}
       {tab === "history" && (
-        <section className="mem-card">
-          <div className="mem-card-label">Recent Transactions</div>
+        <section className="acct-card">
+          <div className="acct-card-header"><span className="acct-card-title">Recent Transactions</span></div>
           {entries.length === 0 ? (
             <p style={{ fontSize: "0.82rem", color: "var(--mute)", fontStyle: "italic" }}>No transactions yet.</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "rgba(42,36,28,.06)", border: "1px solid rgba(42,36,28,.08)" }}>
+            <div className="wal-txn-list">
               {entries.map(e => (
-                <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--paper)" }}>
+                <div key={e.id} className="wal-txn">
                   <div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--ink)", fontWeight: 500 }}>
-                      {SOURCE_LABELS[e.source] ?? e.source.replace(/_/g, " ")}
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--mute)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".06em" }}>
-                      {formatDate(e.created_at)}
-                    </div>
+                    <div className="wal-txn-title">{SOURCE_LABELS[e.source] ?? e.source.replace(/_/g, " ")}</div>
+                    <div className="wal-txn-date">{formatDate(e.created_at)}</div>
                   </div>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: "0.82rem",
-                    fontWeight: 700,
-                    color: e.amount > 0 ? "var(--success)" : "var(--error)",
-                  }}>
+                  <span className={`wal-txn-amt ${e.amount > 0 ? "wal-txn-amt--pos" : "wal-txn-amt--neg"}`}>
                     {e.amount > 0 ? "+" : ""}{e.amount}
                   </span>
                 </div>
@@ -205,172 +196,179 @@ export default function WalletClient({
 
       {/* Cashout */}
       {tab === "cashout" && (
-        <section className="mem-card">
-          <div className="mem-card-label">Cash Out Credits</div>
-          {!isPro ? (
-            <div style={{ border: "1px solid var(--ochre)", borderRadius: 8, padding: "20px 16px", marginTop: 8 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--ochre)", color: "#fff", fontSize: "0.7rem", fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 10px", borderRadius: 20, marginBottom: 12 }}>
-                Moveee Pro
-              </div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 6px" }}>
-                Cash out your credits
-              </p>
-              <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", margin: "0 0 16px", lineHeight: 1.6 }}>
+        !isPro ? (
+          <div className="wal-cashout-grid">
+            <div className="wal-upsell">
+              <span className="wal-upsell-badge">Moveee Pro</span>
+              <h3 className="wal-upsell-title">Cash out your credits</h3>
+              <p className="wal-upsell-desc">
                 Convert your earned credits to real money — a Moveee Pro exclusive. Upgrade to start cashing out.
               </p>
-              <a href="/connect/membership" style={{ display: "inline-block", background: "var(--ink)", color: "var(--paper)", padding: "10px 20px", borderRadius: 4, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
-                Upgrade to Moveee Pro →
-              </a>
+              <a href="/connect/membership" className="wal-upsell-btn">Become a Moveee Pro →</a>
             </div>
-          ) : (
-          <>
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 8px", lineHeight: 1.5 }}>
-            Minimum 100 credits. A flat 40% fee applies.
-            Partner perks are fee-free —{" "}
-            <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browse perks</a> instead.
-          </p>
-          <p style={{ fontSize: "0.76rem", color: "var(--mute)", margin: "0 0 20px" }}>
-            🔑 Passkey verification required at checkout.
-          </p>
+            <div />
+          </div>
+        ) : (
+          <div className="wal-cashout-grid">
+            <section className="acct-card">
+              <div className="acct-card-header"><span className="acct-card-title">Cash Out Credits</span></div>
 
-          {stepUpError && (
-            <div style={{ padding: "10px 14px", background: "rgba(198,40,40,.06)", border: "1px solid rgba(198,40,40,.2)", borderRadius: 3, fontSize: "0.8rem", color: "var(--error)", marginBottom: 12 }}>
-              {stepUpError}
-            </div>
-          )}
-
-          {cashResult ? (
-            <div style={{
-              padding: "16px",
-              background: cashResult.success ? "rgba(45,106,79,.06)" : "rgba(198,40,40,.06)",
-              border: `1px solid ${cashResult.success ? "rgba(45,106,79,.2)" : "rgba(198,40,40,.2)"}`,
-              fontSize: "0.82rem",
-              color: cashResult.success ? "var(--success)" : "var(--error)",
-              lineHeight: 1.5,
-            }}>
-              {cashResult.message}
-            </div>
-          ) : (
-            <form onSubmit={handleCashout} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-              {/* Amount */}
-              <div style={fieldStyle}>
-                <div style={labelStyle}>Credits to cash out</div>
-                <input
-                  type="number" min={100} max={credits}
-                  value={cashCredits} onChange={e => setCashCredits(e.target.value)}
-                  placeholder="Min 100" style={inputStyle} required
-                />
-                {creditsNum >= 100 && (
-                  <div style={hintStyle}>
-                    Fee: {feePercent}% ({feeCredits} cr) · You receive: {symbol}{cashAmount}
-                  </div>
-                )}
+              <div className="wal-passkey-banner">
+                🔒 Passkey verification required to confirm a cash out.
               </div>
 
-              {/* Currency */}
-              <div style={fieldStyle}>
-                <div style={labelStyle}>Currency</div>
-                <select
-                  value={currency}
-                  onChange={e => { setCurrency(e.target.value); setSortCode(""); setRoutingNumber(""); setBankName(""); setAccountNumber(""); }}
-                  style={inputStyle}
-                >
-                  <option value="GBP">GBP — British Pound (£)</option>
-                  <option value="USD">USD — US Dollar ($)</option>
-                  <option value="NGN">NGN — Nigerian Naira (₦)</option>
-                </select>
-              </div>
-
-              {/* Account holder name — always shown */}
-              <div style={fieldStyle}>
-                <div style={labelStyle}>Account holder name</div>
-                <input
-                  type="text" value={accountName} onChange={e => setAccountName(e.target.value)}
-                  placeholder="Full name as on your bank account" style={inputStyle} required
-                />
-              </div>
-
-              {/* GBP fields */}
-              {currency === "GBP" && (
-                <>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Sort code</div>
-                    <input
-                      type="text" value={sortCode} onChange={e => setSortCode(e.target.value)}
-                      placeholder="00-00-00" maxLength={8} style={inputStyle} required
-                    />
-                  </div>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Account number</div>
-                    <input
-                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
-                      placeholder="8 digits" maxLength={8} style={inputStyle} required
-                    />
-                  </div>
-                </>
+              {stepUpError && (
+                <div style={{ padding: "10px 14px", background: "color-mix(in srgb, var(--error) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--error) 20%, transparent)", borderRadius: "var(--radius-md)", fontSize: "0.8rem", color: "var(--error)", marginBottom: 16 }}>
+                  {stepUpError}
+                </div>
               )}
 
-              {/* USD fields */}
-              {currency === "USD" && (
-                <>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Bank name</div>
-                    <input
-                      type="text" value={bankName} onChange={e => setBankName(e.target.value)}
-                      placeholder="e.g. Chase, Bank of America" style={inputStyle} required
-                    />
-                  </div>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Routing number (ABA)</div>
-                    <input
-                      type="text" value={routingNumber} onChange={e => setRoutingNumber(e.target.value)}
-                      placeholder="9-digit ABA routing number" maxLength={9} style={inputStyle} required
-                    />
-                  </div>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Account number</div>
-                    <input
-                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
-                      placeholder="Your bank account number" style={inputStyle} required
-                    />
-                  </div>
-                </>
-              )}
+              {cashResult ? (
+                <div style={{
+                  padding: "16px",
+                  background: cashResult.success ? "color-mix(in srgb, var(--success) 8%, transparent)" : "color-mix(in srgb, var(--error) 8%, transparent)",
+                  border: `1px solid ${cashResult.success ? "color-mix(in srgb, var(--success) 20%, transparent)" : "color-mix(in srgb, var(--error) 20%, transparent)"}`,
+                  borderRadius: "var(--radius-lg)",
+                  fontSize: "0.82rem",
+                  color: cashResult.success ? "var(--success)" : "var(--error)",
+                  lineHeight: 1.5,
+                }}>
+                  {cashResult.message}
+                </div>
+              ) : (
+                <form onSubmit={handleCashout}>
 
-              {/* NGN fields */}
-              {currency === "NGN" && (
-                <>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Bank name</div>
-                    <select value={bankName} onChange={e => setBankName(e.target.value)} style={inputStyle} required>
-                      <option value="">Select your bank…</option>
-                      {NGN_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+                  {/* Amount */}
+                  <div className="wal-field">
+                    <div className="wal-label">Credits to cash out</div>
+                    <input
+                      type="number" min={100} max={credits}
+                      value={cashCredits} onChange={e => setCashCredits(e.target.value)}
+                      placeholder="Min 100" className="wal-input" required
+                    />
+                    {creditsNum >= 100 && (
+                      <div className="wal-fee-box">
+                        <div className="wal-fee-row"><span>{creditsNum} Cr</span><span>{symbol}{(creditsNum / creditsPerGbp).toFixed(2)}</span></div>
+                        <div className="wal-fee-row"><span>Platform fee ({feePercent}%)</span><span>−{feeCredits} Cr</span></div>
+                        <div className="wal-fee-row" style={{ fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--rule-dark)", marginTop: 4, paddingTop: 8 }}>
+                          <span>You receive</span><span>{symbol}{cashAmount}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Currency */}
+                  <div className="wal-field">
+                    <div className="wal-label">Currency</div>
+                    <select
+                      value={currency}
+                      onChange={e => { setCurrency(e.target.value); setSortCode(""); setRoutingNumber(""); setBankName(""); setAccountNumber(""); }}
+                      className="wal-input"
+                    >
+                      <option value="GBP">GBP — British Pound (£)</option>
+                      <option value="USD">USD — US Dollar ($)</option>
+                      <option value="NGN">NGN — Nigerian Naira (₦)</option>
                     </select>
                   </div>
-                  <div style={fieldStyle}>
-                    <div style={labelStyle}>Account number (NUBAN)</div>
-                    <input
-                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
-                      placeholder="10-digit NUBAN" maxLength={10} style={inputStyle} required
-                    />
-                    <div style={hintStyle}>10-digit number — same for all Nigerian banks</div>
-                  </div>
-                </>
-              )}
 
-              <button
-                type="submit"
-                disabled={submitting || !formValid}
-                className="mem-action-btn"
-              >
-                {submitting ? "Submitting…" : "Request Cash Out"}
-              </button>
-            </form>
-          )}
-          </>
-          )}
-        </section>
+                  {/* Account holder name — always shown */}
+                  <div className="wal-field">
+                    <div className="wal-label">Account holder name</div>
+                    <input
+                      type="text" value={accountName} onChange={e => setAccountName(e.target.value)}
+                      placeholder="Full name as on your bank account" className="wal-input" required
+                    />
+                  </div>
+
+                  {/* GBP fields */}
+                  {currency === "GBP" && (
+                    <>
+                      <div className="wal-field">
+                        <div className="wal-label">Sort code</div>
+                        <input
+                          type="text" value={sortCode} onChange={e => setSortCode(e.target.value)}
+                          placeholder="00-00-00" maxLength={8} className="wal-input" required
+                        />
+                      </div>
+                      <div className="wal-field">
+                        <div className="wal-label">Account number</div>
+                        <input
+                          type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                          placeholder="8 digits" maxLength={8} className="wal-input" required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* USD fields */}
+                  {currency === "USD" && (
+                    <>
+                      <div className="wal-field">
+                        <div className="wal-label">Bank name</div>
+                        <input
+                          type="text" value={bankName} onChange={e => setBankName(e.target.value)}
+                          placeholder="e.g. Chase, Bank of America" className="wal-input" required
+                        />
+                      </div>
+                      <div className="wal-field">
+                        <div className="wal-label">Routing number (ABA)</div>
+                        <input
+                          type="text" value={routingNumber} onChange={e => setRoutingNumber(e.target.value)}
+                          placeholder="9-digit ABA routing number" maxLength={9} className="wal-input" required
+                        />
+                      </div>
+                      <div className="wal-field">
+                        <div className="wal-label">Account number</div>
+                        <input
+                          type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                          placeholder="Your bank account number" className="wal-input" required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* NGN fields */}
+                  {currency === "NGN" && (
+                    <>
+                      <div className="wal-field">
+                        <div className="wal-label">Bank name</div>
+                        <select value={bankName} onChange={e => setBankName(e.target.value)} className="wal-input" required>
+                          <option value="">Select your bank…</option>
+                          {NGN_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </div>
+                      <div className="wal-field">
+                        <div className="wal-label">Account number (NUBAN)</div>
+                        <input
+                          type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                          placeholder="10-digit NUBAN" maxLength={10} className="wal-input" required
+                        />
+                        <div className="wal-hint">10-digit number — same for all Nigerian banks</div>
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !formValid}
+                    className="wal-submit-btn"
+                  >
+                    {submitting ? "Submitting…" : "Request Cash Out"}
+                  </button>
+                </form>
+              )}
+            </section>
+
+            <div className="acct-card">
+              <div className="acct-card-header"><span className="acct-card-title">How Cash Out Works</span></div>
+              <p className="acct-card-desc">
+                Minimum 100 credits. A flat 40% platform fee applies. Partner perks are fee-free —{" "}
+                <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browse perks</a> instead. Payouts
+                are sent within 5 business days of admin approval (48hr hold).
+              </p>
+            </div>
+          </div>
+        )
       )}
     </>
   );

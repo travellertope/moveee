@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import CouponsClient from "./CouponsClient";
+import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -21,45 +21,28 @@ export default async function CouponsPage() {
   const isPatron = user.tier === "patron";
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             ) : initial}
           </div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">My Coupons</div>
-            <h1 className="mem-name">{displayName}</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">My Coupons</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/member" className="mem-settings-back-link">← Back to Dashboard</Link>
-        </div>
+        <AccountNav isPatron={isPatron} />
 
-        <div className="mem-settings-grid">
-          <div className="mem-col-main">
-            <CouponsClient />
-          </div>
-          <div className="mem-col-side">
-            <section className="mem-card mem-links-card">
-              <Link href="/connect/perks" className="mem-link">Browse Perks →</Link>
-              <Link href="/member/wallet" className="mem-link">My Wallet →</Link>
-              <Link href="/member" className="mem-link">Dashboard →</Link>
-              <Link href="/member/settings" className="mem-link">Settings →</Link>
-            </section>
-          </div>
-        </div>
+        <CouponsClient />
       </div>
-    </>
+    </div>
   );
 }
