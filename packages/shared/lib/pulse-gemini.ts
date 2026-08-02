@@ -94,11 +94,11 @@ function buildPrompt(items: FeedItem[]): string {
     })
     .join("\n\n");
 
-  return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering culture.
+  return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering culture, with a core focus on African, Caribbean, and Black diaspora culture.
 
 Below are ${items.length} real news items fetched from culture media. Your job:
 
-1. SELECT the 5–8 items most relevant to culture — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Skip politics, sport results, or crime unless strongly cultural.
+1. SELECT the 5–8 items most relevant to our audience — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Favour African, Caribbean, and Black diaspora stories, but include other cultures when they're strong. Skip politics, sport results, or crime unless strongly cultural.
 
 2. REWRITE each item in the Moveee editorial voice — smart, warm, specific.
 

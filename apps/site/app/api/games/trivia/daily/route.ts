@@ -180,8 +180,8 @@ const TOPIC_POOL = [
   "Africa's 2010 FIFA World Cup: Shakira, vuvuzelas, history",
   "Usain Bolt and Jamaican sprinting dominance",
   "Africa at the Olympics: gold medalists and milestones",
-  // ── Other regions & cultures (currently ≈30% of the pool — see CLAUDE.md
-  //    follow-up note on rebalancing this pool toward genuinely even coverage) ──
+  // ── Other regions & cultures (≈30% of the pool, by design — the other
+  //    ≈70% above favours African, Caribbean, and Black diaspora topics) ──
   // Global Music
   "The British Invasion: The Beatles, Rolling Stones, and their global impact",
   "K-pop: BTS, BLACKPINK, and South Korea's cultural export machine",
@@ -279,7 +279,7 @@ function buildDailyPrompt(seedKey: string, seed: number): string {
   const topicList = topics.map((t, i) => `${i + 1}. ${t}`).join("\n");
   const displayDate = seedKey.slice(0, 10);
 
-  return `You are the question writer for Culture Games — a daily trivia game on The Moveee, celebrating culture.
+  return `You are the question writer for Culture Games — a daily trivia game on The Moveee, celebrating culture with a strong focus on African, Caribbean, and Black diaspora culture.
 
 Today is ${displayDate}. Generate exactly 10 trivia questions — one for each topic assigned below. You MUST write one question per topic, in order.
 

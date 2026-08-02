@@ -251,7 +251,7 @@ The JSON must match this exact structure:
   }
 }
 
-Draw from every region, country, and community — none should be treated as the default or the exception. Be factual, culturally respectful, and celebratory in tone. For infobox data, only include values you are confident are accurate — leave a field out entirely rather than guessing.`;
+Favour African, Black, and Caribbean diaspora subjects, without excluding other regions and traditions. Be factual, culturally respectful, and celebratory in tone. For infobox data, only include values you are confident are accurate — leave a field out entirely rather than guessing.`;
 
 /**
  * Extract the first complete JSON value (object or array) from a string.
@@ -331,7 +331,7 @@ function classifyTemplateType(
   return "scene";
 }
 
-const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates culture.
+const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates culture with a core focus on the African, Caribbean, and Black diaspora experience.
 
 Given a directory entry, write a single illustration brief (2–4 sentences) describing WHAT TO DRAW. Be highly specific to this exact subject — extract concrete visual elements from the content: specific objects, garments, architecture, instruments, landscapes, gestures, cultural symbols, time period, geography. No generic descriptions.
 
@@ -575,7 +575,7 @@ Suggest 20 NEW topics not yet covered. Prioritise:
 - Foods, textiles, crafts, and fashion traditions
 - Films, novels, or artworks of lasting cultural importance
 
-Aim for genuine geographic and cultural diversity — draw evenly from every continent and tradition rather than clustering around any one region. The Moveee audience is culturally curious, internationally minded, and broadly aged 25-40.
+Favour African, Caribbean, and Black diaspora topics, with room for other regions and traditions too. The Moveee audience is culturally curious, internationally minded, and broadly aged 25-40.
 
 Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
 ["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
@@ -606,7 +606,7 @@ export async function generateSeedQuotes(
 ): Promise<Array<{ text: string; author: string; source: string }>> {
   const prompt = `You are a curator for The Moveee's Quote Archive — a place for wisdom, creativity, and cultural reflection.
 
-Generate ${count} unique, high-impact quotes from notable figures (writers, musicians, leaders, artists, activists), drawn from a genuinely broad mix of cultures and regions.
+Generate ${count} unique, high-impact quotes, favouring African, Caribbean, and Black diaspora figures (writers, musicians, leaders, artists, activists), with room for other cultures and regions too.
 
 Focus on themes of:
 - Heritage and Identity
@@ -883,7 +883,7 @@ You have been given ${results.length} web search results about events in ${city}
 1. FILTER: Only include events that are:
    - Genuinely upcoming (start date is after ${currentDate}) — skip past events
    - Actually a discrete event (not a listicle, news article, venue homepage, or general "things to do" guide)
-   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Draw from every region and tradition — no particular culture or geography should be treated as the default.
+   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Favour African, Caribbean, and Black diaspora events, but include other cultures and traditions too.
 
 2. EXTRACT DATES — this is the most critical step:
    The \`article_published\` field is when the web page was crawled by Google — it is NEVER the event date. Ignore it for date purposes.

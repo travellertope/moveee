@@ -32,42 +32,42 @@ INCLUDE_GLOBS=(--include="*.ts" --include="*.tsx" --include="*.php" --include="*
 # explaining why, same discipline as the rest of this file. A broad entry
 # here is exactly how this kind of language creeps back in unnoticed.
 ALLOWLIST=(
-  # pulse_region is a real, already-seeded WordPress taxonomy (Africa /
-  # Caribbean / Diaspora UK / Diaspora US / Diaspora Europe / Global) —
-  # renaming the *values* needs a data migration, not a code edit, so these
-  # files intentionally still say "Diaspora UK" etc. Only the *messaging*
-  # wrapped around them (prompts, page copy) was in scope for this pass.
-  'class-culture-pulse\.php:.*pulse_region taxonomy'
-  'pulse-wordpress\.ts:.*"Diaspora (UK|US|Europe)"'
-  'pulse-gemini\.ts:.*(Diaspora (UK|US|Europe)|region:.*Africa)'
-  'pulse-rss\.ts:6:.*skews heavily'                # deliberate self-flag, see CLAUDE.md follow-up note
-  'pulse-rss\.ts:.*Diaspora (UK|US)'                # RSS feed-source section comments, same taxonomy tie-in
-  'pulse-rss\.ts:.*UK & US diaspora'
-
-  # Seed-topic lists: one specific item among many, or a section-header
-  # comment for the list — not brand-messaging prose. (The list's overall
-  # regional balance is a separate, larger follow-up — see CLAUDE.md.)
-  'quotes-seeder\.ts:.*// Literature — Diaspora'
-  'directory-tools\.php:.*Diaspora aesthetics'
-  'auto-populate/route\.ts:.*Diaspora aesthetics'
-  'auto-populate/route\.ts:.*Other African & Diaspora'
+  # ── Layer 1: seeded/generated-content instructions — these SHOULD favour
+  #    African, Caribbean, and Black diaspora subjects (see CLAUDE.md's
+  #    "Brand language" section, point 1). Never neutralize these back to
+  #    "draw evenly from everywhere" — that was a real over-correction,
+  #    caught and reverted in August 2026. Allowlisted by file, since these
+  #    files are entirely AI-prompt/seed-data content with nothing else in
+  #    them that this script needs to catch.
+  'packages/shared/lib/gemini\.ts:'
+  'packages/shared/lib/pulse-gemini\.ts:'
+  'packages/shared/lib/crossword-gemini\.ts:'
+  'packages/shared/lib/pulse-rss\.ts:'
+  'packages/shared/lib/pulse-wordpress\.ts:'
+  'packages/shared/lib/quotes-seeder\.ts:'
+  'packages/shared/lib/events-seeder\.ts:'
+  'class-culture-pulse\.php:'
+  'class-culture-directory-tools\.php:.*(Diaspora aesthetics|favouring African)'
+  'auto-populate/route\.ts:.*(Diaspora aesthetics|Other African & Diaspora)'
   'auto-populate/data\.ts:.*Cultural Identity and Diaspora'   # a real quote's attributed source title
+
+  # trivia/crossword daily routes mix real page metadata (must stay neutral,
+  # NOT allowlisted) with the prompt-building functions and the pre-built
+  # topic pool / puzzle bank (SHOULD favour, per layer 1 above) — allowlist
+  # only those specific shapes, not the whole file.
+  'trivia/daily/route\.ts:.*celebrating culture with a strong focus on African'  # buildDailyPrompt()
+  'trivia/daily/route\.ts:.*favours African, Caribbean, and Black diaspora topics'  # TOPIC_POOL section comment
+  'trivia/daily/route\.ts:.*explanation:'      # factual answer explanations, not brand framing
+  'trivia/daily/route\.ts:.*question:'         # factual trivia questions, not brand framing
+  'trivia/daily/route\.ts:159:.*// Diaspora, Identity'
+  'trivia/daily/route\.ts:.*"[A-Z][a-z]+ .*(diaspora|diasporic|worldwide)[^"]*",?$'  # single topic-pool entries
+  'crossword/daily/route\.ts:.*clue:'                  # factual crossword clues, not brand framing
+  'crossword/daily/route\.ts:.*Pre-built puzzle bank'  # describes existing content, matches layer-1 favouring
 
   # Africa edition pages, deliberately symmetric with the UK edition's
   # "rooted in Britain" / US edition's "American lens" copy — not a default.
   'EditionNewsletterHub\.tsx:.*diasporic lens'
   'magazine/africa/page\.tsx:.*diasporic lens'
-
-  # Trivia/crossword content: factual questions, answers, explanations, and
-  # clues about specific real people/places/works — not brand framing.
-  # (The topic *pool*'s overall regional balance is a separate, larger
-  # follow-up — see CLAUDE.md.)
-  'trivia/daily/route\.ts:.*explanation:'
-  'trivia/daily/route\.ts:.*question:'
-  'trivia/daily/route\.ts:159:.*// Diaspora, Identity'
-  'trivia/daily/route\.ts:.*"[A-Z][a-z]+ .*(diaspora|diasporic|worldwide)[^"]*",?$'  # single topic-pool entries
-  'crossword/daily/route\.ts:.*clue:'
-  'crossword/daily/route\.ts:.*Pre-built puzzle bank'          # describes existing (already-flagged) content, not new copy
 
   # Standard IP-license legal boilerplate — unrelated to brand scope.
   'terms/page\.tsx:.*worldwide licen[cs]e'

@@ -2,9 +2,10 @@
  * pulse-rss.ts
  *
  * Fetches and parses RSS/Atom feeds from 25+ music, fashion, and culture
- * publications (see the FEEDS registry below — current source list still
- * skews heavily toward African and Black-British/American outlets; flagged
- * as a follow-up to broaden with more globally-representative sources).
+ * publications (see the FEEDS registry below — sources are deliberately
+ * weighted toward African and Black-British/American outlets, matching the
+ * platform's core content focus; see CLAUDE.md's "Brand language" section
+ * for the distinction between that content focus and public-facing copy).
  * Each feed has a 6-second timeout;
  * failures are silent so one broken feed never kills the whole refresh.
  *

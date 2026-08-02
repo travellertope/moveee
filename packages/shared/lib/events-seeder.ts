@@ -78,9 +78,9 @@ export type SeedResult = { cities: string[]; submitted: number; detail: Record<s
 
 export function buildQueries(city: string, monthYear: string, nextMonthYear: string): string[] {
   return [
-    `cultural events ${city} ${monthYear} OR ${nextMonthYear}`,
+    `African diaspora cultural events ${city} ${monthYear} OR ${nextMonthYear}`,
     `art exhibition music film events ${city} ${monthYear} OR ${nextMonthYear}`,
-    `culture events ${city} ${monthYear} site:eventbrite.com OR site:dice.fm OR site:ra.co`,
+    `Black culture events ${city} ${monthYear} site:eventbrite.com OR site:dice.fm OR site:ra.co`,
   ];
 }
 
