@@ -39,26 +39,31 @@
 .ar-breadcrumb--overlay .sep { color: var(--ar-gold); }
 .ar-breadcrumb--overlay .ar-breadcrumb-current { color: rgba(255,255,255,0.85); }
 
-/* ── HERO — cinematic full-bleed ── */
+/* ── HERO — gradient wash + a real featured-image panel bleeding to the
+   right edge, rather than the image itself spanning the full hero (see
+   "Magazine article hero — gradient bg + right-bleed image panel" below) ── */
 .ar-hero {
   position: relative;
   width: 100%;
   min-height: 60vh;
   min-height: max(60vh, 500px);
   overflow: hidden;
-  background: var(--ink);
+  background: linear-gradient(160deg, #3d3020, #14110d 60%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
 }
-.ar-hero-img {
+.ar-hero-wash {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  opacity: 0.55;
+  background:
+    radial-gradient(circle at 30% 20%, var(--ar-ochre) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, var(--ar-gold) 0%, transparent 50%);
+}
+.ar-hero-img {
   object-fit: cover;
-  object-position: center top;
-  opacity: 0.7;
+  object-position: center;
 }
 .ar-hero-vignette {
   position: absolute;
@@ -66,11 +71,28 @@
   background: linear-gradient(to top, rgba(20,17,13,0.9) 0%, rgba(20,17,13,0.4) 40%, transparent 70%);
   z-index: 1;
 }
+
+/* featured-image panel — framed, bleeding to the hero's right edge (rounded
+   only on the inner/left side) rather than replacing the hero background */
+.ar-hero-photo {
+  position: absolute;
+  top: 48px;
+  bottom: 48px;
+  right: 0;
+  width: clamp(280px, 34vw, 560px);
+  z-index: 2;
+  border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: -24px 0 56px rgba(0,0,0,.45);
+  border-left: 1px solid rgba(255,255,255,.1);
+  background: var(--ar-ghost-light);
+}
+
 .ar-hero-text {
   position: relative;
   z-index: 2;
   padding: 0 64px 64px;
-  max-width: 900px;
+  max-width: 640px;
 }
 .ar-hero-eyebrow {
   font-family: 'JetBrains Mono', monospace;
@@ -235,6 +257,11 @@
   top: 40px;
   font-size: 12px;
   color: var(--mute);
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
+  padding: 18px;
 }
 .ar-toc-heading {
   font-family: 'JetBrains Mono', monospace;
@@ -404,10 +431,10 @@
   gap: 20px;
 }
 .ar-sidebar-card {
-  border-radius: 8px;
+  border-radius: var(--radius-xl);
   padding: 18px 20px;
   background: #ffffff;
-  box-shadow: var(--ar-shadow);
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
   border: 1px solid var(--ar-ghost-light);
 }
 .ar-sidebar-label {
@@ -634,11 +661,13 @@
   display: flex;
   align-items: flex-start;
   gap: 32px;
-  padding: 32px 64px;
-  border-top: 1px solid var(--ar-ghost-light);
-  border-bottom: 1px solid var(--ar-ghost-light);
+  padding: 28px 32px;
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 48px auto 0;
 }
 .ar-author-avatar {
   width: 120px;
@@ -720,12 +749,19 @@
   display: flex;
   flex-direction: column;
   text-decoration: none;
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
+  padding: 14px 14px 18px;
+  transition: box-shadow .2s;
 }
+.ar-rc:hover { box-shadow: 0 4px 20px -2px rgba(20,17,13,0.14); }
 .ar-rf {
   width: 100%;
   aspect-ratio: 4/3;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: var(--radius-lg);
   margin-bottom: 14px;
   background: var(--ar-ghost-light);
 }
@@ -927,7 +963,8 @@
 @media (max-width: 1024px) {
   .ar-breadcrumb { padding: 16px 32px; }
   .ar-breadcrumb--overlay { padding: 16px 32px; }
-  .ar-hero-text { padding: 0 32px 48px; }
+  .ar-hero-text { padding: 0 32px 48px; max-width: 480px; }
+  .ar-hero-photo { width: clamp(240px, 36vw, 400px); }
   .ar-standard-hero { padding: 40px 32px 32px; }
   .ar-wrap {
     grid-template-columns: 1fr 260px;
@@ -942,8 +979,23 @@
 }
 
 @media (max-width: 768px) {
-  .ar-hero { min-height: 50vh; }
-  .ar-hero-text { padding: 0 20px 36px; }
+  /* the right-bleed photo panel has nowhere to go under ~768px, so the hero
+     stacks instead: full-width image on top, gradient text block below —
+     not overlaid on the photo, so legibility never depends on the crop */
+  .ar-hero { min-height: 0; justify-content: flex-start; }
+  .ar-hero-photo {
+    position: relative;
+    inset: auto;
+    top: auto; right: auto; bottom: auto;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+    box-shadow: none;
+    border-left: none;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .ar-hero-wash { opacity: 0.4; }
+  .ar-hero-text { padding: 20px 20px 36px; max-width: none; }
   .ar-hero-title { font-size: clamp(24px, 6vw, 36px); }
   .ar-standfirst { font-size: 16px; }
   .ar-byline { gap: 14px; flex-direction: column; align-items: flex-start; }

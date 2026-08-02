@@ -1183,6 +1183,68 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 `MagazineArchiveWrapper.tsx`) is capped at 2 articles, not 6 — `.mg-op-grid` is already a
 2-column grid so this needs no CSS change if the cap changes again.
 
+### Magazine article page — hero rebuild: gradient bg + right-bleed image panel (August 2026)
+
+`apps/site/app/magazine/[slug]/page.tsx` + `apps/site/app/editorial.css` (`ar-*`
+namespace). Mockup-first as usual, including an explicit follow-up question about mobile
+behavior before building for real (see below). Two related changes shipped together:
+
+**Hero — the featured image moved from a full-bleed background to a framed panel.**
+Previously `hasFeaturedImage` rendered the actual `post.featuredImage` as a `fill`
+background image spanning the entire `.ar-hero` (`opacity: 0.7`, with `.ar-hero-vignette`
+darkening the bottom for text legibility). Per explicit user direction ("keep the
+gradient background... focus the featured image in the empty space on the right hand
+side instead of across the entire hero"), the hero's background is now a fixed gradient
+wash (`linear-gradient(160deg, #3d3020, #14110d 60%)` + a new `.ar-hero-wash` radial
+ochre/gold overlay, `opacity: .55`) — the same atmosphere as before, just not
+photo-driven — and the real featured image now renders inside `.ar-hero-photo`, a framed
+panel that bleeds to the hero's right edge: `position: absolute; right: 0`, rounded only
+on the inner/left corners (`var(--radius-2xl) 0 0 var(--radius-2xl)`), full opacity (was
+0.7), `width: clamp(280px, 34vw, 560px)`. `.ar-hero-text`'s `max-width` was narrowed from
+900px to 640px so it doesn't run into the panel. `.ar-hero-vignette` is unchanged — still
+darkens the gradient toward the bottom behind the text, same as before.
+**`object-fit: cover` already handled the "what if the source image is landscape, not
+portrait" question with zero extra code** — every WP featured image is fetched the same
+way regardless of orientation, and `cover` center-crops whichever shape comes back to
+fill the panel; there is no per-orientation branching anywhere in this change.
+
+**Mobile (≤768px) — stacks instead of bleeding.** The right-bleed panel has nowhere to go
+under ~768px, so `.ar-hero-photo` switches from `position: absolute` to a full-width,
+`aspect-ratio: 4/3` block via the existing 768px media query, and `.ar-hero { min-height:
+0; justify-content: flex-start }` (was `min-height: 50vh`) so the hero sizes to its actual
+stacked content (image + text) instead of an artificial viewport-relative minimum that
+would leave dead gradient space above the image. Because `.ar-hero-photo` sits before
+`.ar-hero-text` in the DOM and both are normal-flow children of the flex-column hero once
+the panel loses `position: absolute`, this reorders the layout automatically — no JS,
+no duplicate markup. Text renders **below** the image as a normal gradient block, not
+overlaid on the photo — legibility never depends on where a given image happens to be
+busy or plain. This mobile treatment was previewed as its own mockup frame (390px) before
+being built, at the user's request, since the two-column desktop layout obviously
+couldn't just reflow as-is.
+
+**Convention pass — same visit, same file.** The TOC (`.ar-toc`, previously bare sticky
+text with only a border-left active-state indicator) gained real card chrome
+(`background: #fff`, `border`, `var(--radius-xl)`, `var(--shadow-card, ...)` fallback,
+padding) — no JSX changes needed, the existing `.ar-toc a:hover/.active` border-left
+treatment was left as-is rather than replaced. `.ar-sidebar-card` bumped from a flat 8px
+radius + one-off `--ar-shadow` to `var(--radius-xl)` + the same `--shadow-card` fallback
+token used elsewhere in this file (see `.ar-gate`'s pre-existing precedent for the
+`var(--token, <fallback>)` pattern — `--shadow-card` isn't a literal variable anywhere in
+`apps/site`, same as `--shadow-tooltip` on the Connect side). `.ar-author` (previously a
+flush strip with only top/bottom borders) became a proper white radius-xl/shadow-card
+card with real top margin. `.ar-rc` (related-story cards) gained the same white
+card/border/shadow/radius wrapper with inner padding (`.ar-rf`'s own radius bumped 4px →
+`var(--radius-lg)`) plus a hover shadow-lift, replacing the previous bare
+image-then-text-with-no-chrome layout.
+
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other Figma/mockup rebuild pass in this file, and true here in particular
+  for the mobile stacked hero (no exact source photo to test crop/legibility against).
+  Verified via `tsc --noEmit` (clean) on `apps/site` and a CSS brace-balance check on
+  `editorial.css` (190/190). Re-check pixel fidelity — especially the mobile hero and the
+  `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
+  considering this fully closed.
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
