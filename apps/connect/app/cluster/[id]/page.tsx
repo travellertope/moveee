@@ -3,9 +3,12 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClusterActions from "./ClusterActions";
+import ClusterLeaveButton from "./ClusterLeaveButton";
 import ClusterElection from "./ClusterElection";
 import ClusterCheckin from "./ClusterCheckin";
 import ClusterShareButton from "./ClusterShareButton";
+import ClusterMembers from "./ClusterMembers";
+import "../../stoop.css";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +31,8 @@ interface Cluster {
   meetingDay: string;
   meetingTime: string;
   locationNote: string;
+  venueType: string;
+  accessible: boolean;
 }
 
 interface ClusterStatus {
@@ -48,6 +53,14 @@ interface ClusterElectionStatus {
   candidates: ClusterElectionCandidate[];
   myVote: number | null;
   totalVotes: number;
+}
+
+interface ClusterMember {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  role: string;
+  joinedAt: string;
 }
 
 async function fetchCluster(id: string): Promise<Cluster | null> {
@@ -89,8 +102,43 @@ async function fetchElection(id: string, userId: number): Promise<ClusterElectio
   }
 }
 
+async function fetchMembers(id: string): Promise<ClusterMember[]> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/cluster/${id}/members`, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.members ?? [];
+  } catch {
+    return [];
+  }
+}
+
 function capitalize(s: string) {
   return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+const VENUE_LABEL: Record<string, string> = {
+  home: "🏠 Home", cafe: "☕ Café", coworking: "🏢 Coworking", other: "📍 Venue",
+};
+
+const HOST_MECHANISM_LABEL: Record<string, string> = {
+  appointed: "Appointed host",
+  self_nominated: "Self-nominated host",
+  elected: "Elected host",
+};
+
+function capacityInfo(memberCount: number, capacity: number) {
+  if (capacity <= 0) return { pct: 0 };
+  return { pct: Math.min(100, (memberCount / capacity) * 100) };
+}
+
+const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+function meetsToday(meetingDay: string): boolean {
+  if (!meetingDay) return false;
+  return DAY_NAMES[new Date().getDay()] === meetingDay.toLowerCase();
 }
 
 export default async function ClusterPage({ params }: { params: Promise<{ id: string }> }) {
@@ -101,117 +149,122 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
   const cluster = await fetchCluster(id);
   if (!cluster) {
     return (
-      <div className="mem-body">
-        <section className="mem-card">
-          <div className="mem-card-label">Not found</div>
-          <p className="mem-card-desc">This Stoop doesn't exist or has been removed.</p>
-          <Link href="/connect/people" className="mem-settings-back-link">← Back to People Near Me</Link>
-        </section>
+      <div className="stoop-page-bg">
+        <div className="stoop-detail-wrap">
+          <p className="stoop-detail-note" style={{ marginTop: 32 }}>This Stoop doesn't exist or has been removed.</p>
+          <Link href="/connect/stoop" className="stoop-detail-back">← Back to Stoop</Link>
+        </div>
       </div>
     );
   }
 
   const status = await fetchStatus(id, Number(session.user.id));
-  const election = cluster.status === "active" && status.isMember
-    ? await fetchElection(id, Number(session.user.id))
-    : null;
+  const isHost = cluster.hostId === Number(session.user.id);
+  const [election, members] = await Promise.all([
+    cluster.status === "active" && status.isMember ? fetchElection(id, Number(session.user.id)) : Promise.resolve(null),
+    status.isMember ? fetchMembers(id) : Promise.resolve([]),
+  ]);
+
+  const { pct } = capacityInfo(cluster.memberCount, cluster.capacity);
+  const visibleMembers = members.slice(0, 6);
 
   return (
-    <>
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">
-              <Link href="/connect/people" style={{ color: "inherit", textDecoration: "none" }}>People Near Me</Link>
-              {" "}&rsaquo;{" "}Stoop
-            </div>
-            <h1 className="mem-name">{cluster.name}</h1>
-            <div className="mem-meta">
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(243,236,224,.6)" }}>
-                {[cluster.street, cluster.city, cluster.country].filter(Boolean).join(", ")}
-              </span>
-            </div>
+    <div className="stoop-page-bg">
+      <div className="stoop-detail-wrap">
+        <Link href="/connect/stoop" className="stoop-detail-back">← Back to Stoop</Link>
+
+        {cluster.status === "active" && meetsToday(cluster.meetingDay) && (
+          <div className="stoop-detail-status-row">
+            <span className="stoop-detail-live"><span className="stoop-detail-live-dot" />Meets today</span>
           </div>
-        </div>
-      </div>
-
-      <div className="mem-body">
-        <div className="mem-settings-back">
-          <Link href="/connect/people" className="mem-settings-back-link">← Back to People Near Me</Link>
-        </div>
-
-        {cluster.hostName && (
-          <section className="mem-card" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span className="mem-card-desc" style={{ margin: 0, fontWeight: 600 }}>Host: {cluster.hostName}</span>
-            {cluster.hostMechanism && (
-              <span
-                style={{
-                  background: "var(--ochre)", color: "var(--paper)", borderRadius: 999,
-                  padding: "2px 8px", fontSize: "0.65rem", textTransform: "uppercase",
-                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.04em",
-                }}
-              >
-                {cluster.hostMechanism.replace("_", " ")}
-              </span>
-            )}
-          </section>
         )}
 
-        {cluster.status !== "active" && cluster.hostId === Number(session.user.id) && (
-          <section className="mem-card">
-            <ClusterShareButton
-              clusterId={cluster.id}
-              clusterName={cluster.name}
-              variant="banner"
-            />
-          </section>
-        )}
-
-        <section className="mem-card">
-          <div className="mem-card-label">Meeting</div>
-          <p className="mem-card-desc" style={{ margin: 0 }}>
-            {cluster.meetingDay && cluster.meetingTime
-              ? `${capitalize(cluster.meetingDay)}s, ${cluster.meetingTime}`
-              : "Meeting time not set yet."}
-          </p>
-          {status.isMember && cluster.locationNote && (
-            <p className="mem-card-desc" style={{ marginTop: 12 }}>
-              <strong>Location note:</strong> {cluster.locationNote}
-            </p>
+        <h1 className="stoop-detail-name">{cluster.name}</h1>
+        <div className="stoop-detail-badges">
+          {cluster.hostMechanism && (
+            <span className="stoop-d-badge stoop-d-badge--host">
+              {HOST_MECHANISM_LABEL[cluster.hostMechanism] ?? cluster.hostMechanism.replace(/_/g, " ")}
+            </span>
           )}
-          <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>
-              {cluster.memberCount}{cluster.capacity > 0 ? ` / ${cluster.capacity}` : ""} members
+          {cluster.venueType && (
+            <span className="stoop-d-badge stoop-d-badge--venue">{VENUE_LABEL[cluster.venueType] ?? cluster.venueType}</span>
+          )}
+          {cluster.accessible && (
+            <span className="stoop-d-badge stoop-d-badge--access">♿ Step-free access</span>
+          )}
+        </div>
+
+        <div className="stoop-detail-cap-card">
+          <div className="stoop-detail-cap-left">
+            <p className="stoop-detail-cap-when">
+              {cluster.meetingDay && cluster.meetingTime
+                ? `Every ${capitalize(cluster.meetingDay)}, ${cluster.meetingTime}`
+                : "Meeting time not set yet."}
             </p>
-            {status.isMember && (
-              <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} />
+            <p className="stoop-detail-cap-where">
+              {status.isMember
+                ? [cluster.street, cluster.city].filter(Boolean).join(", ") || "Location not set yet."
+                : `${cluster.city || "Location"} — exact address shown after joining`}
+            </p>
+          </div>
+          <div className="stoop-detail-cap-count">
+            <span className="stoop-detail-cap-num">{cluster.memberCount}</span>
+            {cluster.capacity > 0 && <span style={{ color: "var(--mute)", fontSize: 13 }}> / {cluster.capacity}</span>}
+            <div className="stoop-detail-cap-label">members</div>
+            {cluster.capacity > 0 && (
+              <div className="stoop-detail-cap-track"><div className="stoop-detail-cap-fill" style={{ width: `${pct}%` }} /></div>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="mem-card">
-          <ClusterActions clusterId={cluster.id} initialIsMember={status.isMember} />
-        </section>
+        {status.isMember && cluster.locationNote && (
+          <p className="stoop-detail-note"><strong>Location note:</strong> {cluster.locationNote}</p>
+        )}
 
-        {cluster.status === "active" && status.isMember && (
-          <section className="mem-card">
-            <ClusterCheckin
-              clusterId={cluster.id}
-              isHost={cluster.hostId === Number(session.user.id)}
-            />
-          </section>
+        {cluster.status !== "active" && isHost && (
+          <div style={{ marginBottom: 24 }}>
+            <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} variant="banner" />
+          </div>
+        )}
+
+        {!status.isMember && <ClusterActions clusterId={cluster.id} />}
+
+        {status.isMember && (
+          <div style={{ margin: "0 0 24px", textAlign: "right" }}>
+            <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} />
+          </div>
         )}
 
         {cluster.status === "active" && status.isMember && (
-          <section className="mem-card">
-            <ClusterElection
-              clusterId={cluster.id}
-              myUserId={Number(session.user.id)}
-              initialElection={election}
-            />
-          </section>
+          <div className="stoop-detail-section">
+            <p className="stoop-detail-sec-title">Check-in</p>
+            <p className="stoop-detail-sec-sub">Scan your host's code with the Moveee app when you arrive.</p>
+            <ClusterCheckin clusterId={cluster.id} isHost={isHost} />
+          </div>
+        )}
+
+        {status.isMember && (
+          <div className="stoop-detail-section">
+            <p className="stoop-detail-sec-title">
+              Members <span className="stoop-detail-sec-count">{members.length}</span>
+            </p>
+            <ClusterMembers members={visibleMembers} totalCount={members.length} clusterId={cluster.id} />
+          </div>
+        )}
+
+        {cluster.status === "active" && status.isMember && (
+          <div className="stoop-detail-section">
+            <p className="stoop-detail-sec-title">Host Election</p>
+            <ClusterElection clusterId={cluster.id} myUserId={Number(session.user.id)} initialElection={election} />
+          </div>
+        )}
+
+        {status.isMember && (
+          <div className="stoop-detail-leave">
+            <ClusterLeaveButton clusterId={cluster.id} />
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

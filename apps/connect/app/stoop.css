@@ -1,0 +1,659 @@
+/* ═══════════════════════════════════════════════════
+   STOOP — stoop = Stoop namespace
+   Follows the Feed/Discover/People/Events conventions (search-modal
+   trigger button, chip-driven filters via stoopFiltersBus, white
+   feed-card visual language). Full-width, single-column layout for the
+   browse page — same as .disc-wrap/.ppl-wrap — plus a narrower
+   single-column layout for the individual Stoop detail page (fewer facts
+   to show than Directory's 3-column entry page).
+   ═══════════════════════════════════════════════════ */
+
+.stoop-page-bg {
+  background: var(--paper, #fff);
+  min-height: 100vh;
+}
+
+.stoop-wrap {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.stoop-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 0 16px;
+  flex-wrap: wrap;
+}
+.stoop-header-text { max-width: 620px; }
+.stoop-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+.stoop-title em { font-style: italic; color: var(--ochre); }
+.stoop-lede {
+  font-size: 13.5px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Same "opens the shared SearchModal" pill button as .disc-search-btn /
+   .ppl-search-btn / .evt-search-btn — kept visually identical across every
+   surface that uses this pattern. */
+.stoop-search-btn {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 4px 0 4px;
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-family: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.stoop-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
+.stoop-search-btn svg { flex-shrink: 0; }
+
+/* Active-filter chip — the only on-page trace of City once applied via
+   SearchModal (same "chip is the only trace, modal always resets to
+   defaults on open" pattern Discover/People established). */
+.stoop-active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.stoop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+}
+.stoop-chip-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 16%, transparent);
+  border: none;
+  color: var(--paper);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.stoop-chip-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
+
+/* ── "How Stoop Works" compact 3-step band — the discoverability/onboarding
+   explainer, kept brief since the full 4-step version already lives on the
+   /connect marketing landing page. Shown only in the browse (non-member)
+   state. ── */
+.stoop-how-band {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  background: var(--paper-warm);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 22px 26px;
+  margin: 18px 0 34px;
+}
+.stoop-how-step { display: flex; gap: 12px; align-items: flex-start; }
+.stoop-how-num {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--paper);
+  background: var(--ochre);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.stoop-how-copy h4 { margin: 0 0 3px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.stoop-how-copy p { margin: 0; font-size: 12px; color: var(--mute); line-height: 1.45; }
+
+/* ── "Your Stoop" hero card (member state) ── */
+.your-stoop {
+  background: linear-gradient(135deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 80%, var(--ochre) 20%) 100%);
+  border-radius: var(--radius-xl, 12px);
+  padding: 30px 32px;
+  color: var(--paper);
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+}
+.your-stoop::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ochre) 35%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ys-eyebrow {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ochre) 60%, var(--paper) 40%);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ys-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent);
+}
+.ys-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+.ys-name { font-family: 'Fraunces', Georgia, serif; font-size: 27px; font-weight: 400; margin: 0 0 8px; }
+.ys-meta { font-size: 13px; color: color-mix(in srgb, var(--paper) 72%, transparent); margin: 0 0 4px; }
+.ys-meta b { color: var(--paper); font-weight: 600; }
+.ys-host { font-size: 12px; color: color-mix(in srgb, var(--paper) 55%, transparent); margin: 10px 0 0; }
+.ys-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.ys-btn-primary {
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ys-btn-ghost {
+  background: color-mix(in srgb, var(--paper) 8%, transparent);
+  color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--paper) 20%, transparent);
+  padding: 12px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ys-members { display: flex; align-items: center; margin-top: 18px; position: relative; z-index: 1; }
+.ys-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  margin-left: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Fraunces', Georgia, serif;
+}
+.ys-avatar:first-child { margin-left: 0; }
+.ys-members-count { font-size: 11.5px; color: color-mix(in srgb, var(--paper) 60%, transparent); margin-left: 10px; }
+
+.stoop-sec-heading { font-size: 16px; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+.stoop-sec-sub { font-size: 12px; color: var(--mute); margin: 0 0 14px; }
+
+/* ── Rails: compact cards for Near You / More overflow ── */
+.stoop-rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 38px;
+  scrollbar-width: none;
+}
+.stoop-rail::-webkit-scrollbar { display: none; }
+
+.stoop-rail-card {
+  flex: 0 0 260px;
+  width: 260px;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper, #fff);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.stoop-rail-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+.stoop-rail-badge--filling { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
+.stoop-rail-day {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.stoop-rail-name { font-family: 'Fraunces', Georgia, serif; font-size: 17px; font-weight: 400; margin: 0 0 6px; color: var(--ink); }
+.stoop-rail-loc { font-size: 12px; color: var(--ink-soft); margin: 0 0 12px; }
+.stoop-rail-loc svg { vertical-align: -2px; margin-right: 3px; }
+
+.stoop-cap-wrap { margin-bottom: 12px; }
+.stoop-cap-track { height: 4px; background: var(--rule); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
+.stoop-cap-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+.stoop-cap-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); }
+
+.stoop-rail-join {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 9px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-rail-join:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Explore grid ── */
+.stoop-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.stoop-sort-select {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 7px 10px;
+  border-radius: var(--radius-lg, 6px);
+}
+.stoop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.stoop-g-card {
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper, #fff);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.stoop-g-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.stoop-g-name { font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 400; margin: 0; color: var(--ink); }
+.stoop-g-venue {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.stoop-g-meta-row { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--ink-soft); }
+.stoop-g-meta-row span { display: flex; align-items: center; gap: 5px; }
+.stoop-g-note { font-size: 12.5px; color: var(--mute); line-height: 1.5; margin: 0; }
+.stoop-g-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--rule); }
+.stoop-g-host { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); }
+.stoop-g-host-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', Georgia, serif;
+}
+.stoop-g-join {
+  background: transparent;
+  color: var(--ochre);
+  border: 1px solid var(--ochre);
+  padding: 7px 16px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-g-join:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-load-more {
+  display: block;
+  margin: 8px auto 32px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-full, 999px);
+  padding: 10px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stoop-count {
+  text-align: center;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 8px 0 24px;
+}
+
+/* ── Empty state ── */
+.stoop-empty {
+  text-align: center;
+  padding: 48px 24px;
+  border: 2px dashed var(--ghost, var(--rule));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper-deep) 60%, transparent);
+  margin-bottom: 40px;
+}
+.stoop-empty-icon { font-size: 30px; filter: grayscale(1); opacity: 0.5; margin-bottom: 8px; }
+.stoop-empty h4 { font-family: 'Fraunces', Georgia, serif; font-size: 19px; font-weight: 300; font-style: italic; margin: 0 0 8px; color: var(--ink); }
+.stoop-empty p { font-size: 13px; color: var(--mute); max-width: 380px; margin: 0 auto 18px; line-height: 1.6; }
+.stoop-loading { text-align: center; color: var(--mute); padding: 24px 0; font-size: 13px; }
+
+/* ── Bottom "Start a Stoop" CTA band ── */
+.stoop-start-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 26px 30px;
+  margin-top: 12px;
+  background: var(--paper-warm);
+}
+.stoop-start-band h4 { font-family: 'Fraunces', Georgia, serif; font-size: 19px; font-weight: 400; margin: 0 0 4px; color: var(--ink); }
+.stoop-start-band p { font-size: 12.5px; color: var(--mute); margin: 0; max-width: 420px; }
+.stoop-start-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .stoop-wrap { padding: 0 16px 32px; }
+  .stoop-header { flex-direction: column; align-items: flex-start; }
+  .stoop-how-band { grid-template-columns: 1fr; gap: 18px; padding: 20px; }
+  .stoop-grid { grid-template-columns: 1fr; }
+  .stoop-start-band { flex-direction: column; align-items: flex-start; }
+  .stoop-start-btn { width: 100%; text-align: center; }
+  .ys-body { flex-direction: column; align-items: flex-start; }
+}
+
+/* ═══════════════════════════════════════════════════
+   Individual Stoop detail page (/cluster/[id])
+   Single-column — mirrors the Directory Entry Detail page's simplicity,
+   not its 3-column layout (a Stoop has far fewer facts to show).
+   ═══════════════════════════════════════════════════ */
+
+.stoop-detail-wrap { max-width: 880px; margin: 0 auto; padding: 0 24px 56px; }
+.stoop-detail-back {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-decoration: none;
+  display: inline-block;
+  margin: 22px 0 18px;
+}
+.stoop-detail-back:hover { color: var(--ochre); }
+
+.stoop-detail-status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.stoop-detail-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+.stoop-detail-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+
+.stoop-detail-name { font-family: 'Fraunces', Georgia, serif; font-size: 32px; font-weight: 400; margin: 0 0 12px; line-height: 1.1; color: var(--ink); }
+.stoop-detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.stoop-d-badge {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  white-space: nowrap;
+}
+.stoop-d-badge--host { background: color-mix(in srgb, var(--gold) 12%, transparent); color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); }
+.stoop-d-badge--venue { background: var(--paper-deep); color: var(--ink-soft); border: 1px solid var(--rule); }
+.stoop-d-badge--access { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+
+.stoop-detail-cap-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  background: var(--paper-warm);
+}
+.stoop-detail-cap-left { flex: 1; }
+.stoop-detail-cap-when { font-size: 14px; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+.stoop-detail-cap-where { font-size: 12.5px; color: var(--mute); margin: 0; }
+.stoop-detail-cap-count { text-align: right; }
+.stoop-detail-cap-num { font-family: var(--font-jetbrains-mono), monospace; font-size: 20px; font-weight: 700; color: var(--ink); }
+.stoop-detail-cap-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
+.stoop-detail-cap-track { width: 140px; height: 5px; background: var(--rule); border-radius: 999px; overflow: hidden; margin-top: 8px; margin-left: auto; }
+.stoop-detail-cap-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+
+.stoop-detail-primary-cta {
+  width: 100%;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 15px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 28px;
+}
+.stoop-detail-primary-cta:disabled { opacity: .55; cursor: not-allowed; }
+
+.stoop-detail-note { font-size: 12.5px; color: var(--mute); line-height: 1.55; margin: 0 0 14px; }
+
+.stoop-detail-section { border-top: 1px solid var(--rule); padding: 26px 0; }
+.stoop-detail-section:first-of-type { border-top: none; padding-top: 0; }
+.stoop-detail-sec-title { font-size: 14px; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; justify-content: space-between; color: var(--ink); }
+.stoop-detail-sec-count { font-family: var(--font-jetbrains-mono), monospace; font-weight: 400; color: var(--mute); font-size: 11px; }
+.stoop-detail-sec-sub { font-size: 12px; color: var(--mute); margin: 0 0 16px; }
+.stoop-detail-link-btn {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.stoop-detail-link-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-member-list { display: flex; flex-direction: column; gap: 2px; }
+.stoop-member-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.stoop-member-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.stoop-member-av img { width: 100%; height: 100%; object-fit: cover; }
+.stoop-member-name { font-size: 13px; font-weight: 600; flex: 1; color: var(--ink); }
+.stoop-member-role {
+  color: var(--gold);
+  font-size: 10.5px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+.stoop-member-joined { font-size: 11px; color: var(--mute); font-family: var(--font-jetbrains-mono), monospace; }
+.stoop-member-more { font-size: 12px; color: var(--ochre); margin-top: 8px; }
+
+.stoop-checkin-stats { display: flex; gap: 32px; margin-bottom: 16px; }
+.stoop-stat-num { font-family: var(--font-jetbrains-mono), monospace; font-size: 22px; font-weight: 700; color: var(--ink); }
+.stoop-stat-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.stoop-checkin-host-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.stoop-btn-secondary {
+  background: transparent;
+  color: var(--ochre);
+  border: 1px solid var(--ochre);
+  padding: 9px 18px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-btn-secondary--muted { color: var(--ink-soft); border-color: var(--rule); }
+.stoop-btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-qr-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px 18px;
+  margin-top: 14px;
+  background: var(--paper-deep);
+}
+.stoop-qr-copy p { margin: 0; font-size: 12px; color: var(--mute); line-height: 1.5; }
+.stoop-qr-copy p b { color: var(--ink); }
+
+.stoop-election-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.stoop-election-name { font-size: 13px; font-weight: 600; width: 100px; flex-shrink: 0; color: var(--ink); }
+.stoop-election-bar-track { flex: 1; height: 20px; background: var(--paper-deep); border-radius: var(--radius-lg, 6px); overflow: hidden; position: relative; }
+.stoop-election-bar-fill { height: 100%; background: color-mix(in srgb, var(--gold) 35%, transparent); border-radius: var(--radius-lg, 6px); }
+.stoop-election-votes { position: absolute; right: 8px; top: 2px; font-family: var(--font-jetbrains-mono), monospace; font-size: 10.5px; color: var(--ink-soft); }
+.stoop-election-vote-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre);
+  background: none;
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-full, 999px);
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.stoop-election-vote-btn:disabled { opacity: .5; cursor: not-allowed; }
+.stoop-election-vote-btn--voted { background: var(--ochre); color: #fff; }
+.stoop-election-run-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 12px;
+  color: var(--ochre);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.stoop-detail-leave { text-align: center; margin-top: 8px; }
+.stoop-detail-leave button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  text-decoration: underline;
+}
+.stoop-detail-leave button:hover { color: var(--error, #c62828); }
+
+.stoop-detail-error { font-size: 0.78rem; color: var(--error, #c0392b); margin: 8px 0 0; }
+
+@media (max-width: 640px) {
+  .stoop-detail-wrap { padding: 0 16px 40px; }
+  .stoop-detail-cap-card { flex-direction: column; align-items: stretch; gap: 14px; }
+  .stoop-detail-cap-count { text-align: left; }
+  .stoop-detail-cap-track { width: 100%; margin-left: 0; }
+}

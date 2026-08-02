@@ -3933,6 +3933,74 @@ member cards (`.ppl-card`, rounded + `shadow-card`, Pro-tier border tint) replac
   `packages/shared/` as some other app's problem without checking whether `next build`'s own
   type-check (not just a manual `tsc --noEmit` run scoped to one app) would actually hit it.
 
+### Stoop — full rebuild on the Discover/People/Events design system (`stoop-*`, July 2026)
+
+`/connect/stoop` and `/cluster/[id]` rebuilt from an approved Artifact mockup, following the same
+conventions established for Discover/People Near Me/Events — full-width single-column layout,
+the shared search-modal trigger button (a new "Stoop" `SearchModal` context with a City chip
+group, immediate-apply via a new `stoopFiltersBus.ts`), and white feed-card visual language.
+Both pages previously used the old `.mco-*`/`.con-btn-*`/`.mem-*` treatments (`/connect/stoop`'s
+plain dark hero + inline `Stoop.tsx` list card; `/cluster/[id]`'s dark `mem-hero` + flat white
+`mem-card` stack) — this was the last major Connect surface still on that older system.
+
+- **New CSS namespace**: `apps/connect/app/stoop.css` — `.stoop-*` for the browse page (search
+  btn, active-filter chip, "How Stoop Works" 3-step band, rails, grid, capacity bar, empty/start
+  states), `.your-stoop`/`.ys-*` for the member-state hero card, `.stoop-detail-*` for the
+  individual Stoop page. All colors route through the existing `--paper`/`--ink`/`--ochre`/
+  `--gold`/`--success`/`--mute`/`--rule` tokens (`color-mix(in srgb, var(--token) X%,
+  transparent)` for tinted overlays, same convention as the dark-mode sweep above) — no new
+  literals, so this inherits full dark-mode support automatically.
+- **`packages/shared/components/connect/StoopBrowser.tsx`** (new, replaces the deleted
+  `Stoop.tsx`) — mirrors `MemberDirectory.tsx`'s shape exactly: subscribes to
+  `stoopFiltersBus`'s City filter (never renders its own filter UI, same as People's
+  industry/region), resolves membership via `/api/cluster/my-clusters` once on mount, then
+  branches:
+  - **Browse state** (not a member): "How Stoop Works" 3-step band, a "Near You" rail
+    (`/api/cluster/discover` scoped to city/country), and a paginated "Explore More" grid with a
+    Fewest-members/Newest sort dropdown (maps directly to the backend's existing
+    `nearest_capacity`/`newest` sort param — no new backend work needed).
+  - **Member state**: a full-bleed dark "Your Stoop" hero (meeting cadence, host, a live member
+    avatar strip via `/api/cluster/{id}/members`) plus a "More in {city}" overflow rail —
+    **joining a second Stoop is just a normal `join()` call** (confirmed by reading
+    `Culture_Clusters::join()` — it only checks capacity and this cluster's own existing-member
+    row, nothing prevents a second membership), so "Join as Overflow" is UI framing only, no new
+    endpoint.
+  - Every card shows a **capacity badge** derived from `memberCount`/`capacity`
+    (`capacityBadge()`: <60% "Open", 60–79% "Filling up", ≥80% "N spot(s) left", 100% "Full",
+    join disabled) — this data was already fetched everywhere but never surfaced before.
+- **Privacy fix, not just a redesign**: the old pages showed a cluster's exact `street` to
+  *everyone*, member or not, regardless of the `_cluster_address_visible` setting (which defaults
+  to `members_only` at creation — see the Host Onboarding Flow entry above). That field is set
+  but was never actually read anywhere in the frontend. Fixed by withholding `street` from every
+  browse-context card (rail, grid, overflow — anywhere a Join button appears) down to city-level
+  only; the full address now only ever renders once you're actually a member (the "Your Stoop"
+  hero, and the detail page's capacity card when `status.isMember`).
+- **`/cluster/[id]/page.tsx`** rebuilt onto `stoop-detail-*`: host-mechanism/venue-type/
+  accessibility badges, a real capacity gauge, and — new — an actual **rendered member list**
+  (`ClusterMembers.tsx`, new, server-rendered from the same `/culture/v1/cluster/{id}/members`
+  endpoint `ClusterCheckin.tsx`'s manual check-in modal already used) where the old page only
+  ever showed a bare count even though the per-member data already existed server-side.
+  `ClusterActions.tsx` was split into join-only; a new `ClusterLeaveButton.tsx` handles leaving
+  separately (previously one component did both, toggling on local state) — this made the
+  top-of-page primary CTA (`.stoop-detail-primary-cta`, shown only when not a member) and the
+  low-emphasis bottom "Leave this Stoop" link (shown only when a member) cleanly independent,
+  server-truth-driven via conditional rendering rather than client-side toggling.
+  `ClusterCheckin.tsx`/`ClusterElection.tsx` kept their exact existing logic (QR code, manual
+  check-in, streak counter, candidate voting/starting an election) — only the JSX/classnames
+  changed, no behavior changes. `ClusterShareButton.tsx` (invite-link banner for pre-active
+  clusters gathering their first 4 members) was left untouched — still pulls its `.clu-share-*`
+  styles from `member.css`, which `page.tsx` now imports alongside the new `stoop.css`.
+- **Deleted**: `packages/shared/components/connect/Stoop.tsx` (the old inline list-card, fully
+  superseded by `StoopBrowser.tsx` — confirmed via grep it had exactly one importer, the page
+  being rebuilt). Its `.mco-fellowship-*` CSS in `feed.css` was left in place (kept in case
+  needed again, same convention as other superseded CSS blocks noted elsewhere in this file).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site` (the latter to confirm the new `packages/shared/` files —
+  `StoopBrowser.tsx`, `stoopFiltersBus.ts` — don't hit the tsconfig-glob trap documented in the
+  production-build-fix entry above), and a brace/paren-balance check on `stoop.css` (153/153,
+  220/220).
+
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
 same as Hidden Gem (place) and Food Review (food) — they were **not** before this fix.
