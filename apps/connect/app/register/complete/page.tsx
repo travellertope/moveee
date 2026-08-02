@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 import { INTERESTS } from "@/lib/interest-mappings";
+import "../../auth.css";
 
 type Step = "verify" | "about" | "interests" | "membership" | "done";
 
@@ -173,21 +174,21 @@ function CompleteProfileForm() {
   // ── Verifying screen ──────────────────────────────────────────────────────
   if (step === "verify") {
     return (
-      <div style={styles.page}>
-        <div style={{ ...styles.card, textAlign: "center" }}>
+      <div className="auth-page">
+        <div className="auth-card auth-card--center">
           {verifyError ? (
             <>
               <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
-              <h1 style={{ ...styles.heading, fontSize: 22, marginBottom: 12 }}>Link problem</h1>
-              <p style={{ fontSize: 15, color: "#7a6f5c", lineHeight: 1.7, marginBottom: 24 }}>{verifyError}</p>
-              <Link href="/register" style={{ ...styles.btnPrimary, display: "inline-block", textDecoration: "none" }}>
+              <h1 className="auth-heading auth-heading--sm" style={{ marginBottom: 12 }}>Link problem</h1>
+              <p className="auth-sub" style={{ marginBottom: 24 }}>{verifyError}</p>
+              <Link href="/register" className="auth-btn-primary" style={{ display: "inline-flex" }}>
                 Back to register
               </Link>
             </>
           ) : (
             <>
               <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
-              <p style={{ fontSize: 15, color: "#7a6f5c" }}>Verifying your email…</p>
+              <p className="auth-sub" style={{ marginBottom: 0 }}>Verifying your email…</p>
             </>
           )}
         </div>
@@ -202,20 +203,19 @@ function CompleteProfileForm() {
   // ── About You (Step 2) ────────────────────────────────────────────────────
   if (step === "about") {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-          <h1 style={styles.heading}>Welcome, {displayName || username}!</h1>
+      <div className="auth-page">
+        <div className="auth-card auth-card--wide">
+          <h1 className="auth-heading">Welcome, {displayName || username}!</h1>
 
           <ProgressBar labels={stepLabels} currentIdx={currentStepIdx} percent={progressPercent} />
 
           <form onSubmit={handleAboutSubmit} noValidate>
-            <h2 style={styles.stepHeading}>A little about you</h2>
+            <h2 className="auth-step-heading">A little about you</h2>
 
-            <div style={styles.row}>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label} htmlFor="dob">
-                  Date of Birth <span style={{ color: "#c5491f" }}>*</span>
+            <div className="auth-row">
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="dob">
+                  Date of Birth <span className="auth-label-required">*</span>
                 </label>
                 <input
                   id="dob"
@@ -223,39 +223,39 @@ function CompleteProfileForm() {
                   required
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
-                  style={styles.input}
+                  className="auth-input"
                 />
               </div>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label} htmlFor="country">
-                  Country of Residence <span style={{ color: "#c5491f" }}>*</span>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="country">
+                  Country of Residence <span className="auth-label-required">*</span>
                 </label>
                 <CountrySelect
                   id="country"
                   value={countryOfResidence}
                   onChange={setCountryOfResidence}
-                  inputStyle={styles.input}
+                  inputClassName="auth-input"
                   placeholder="Search countries…"
                 />
               </div>
             </div>
 
-            <div style={styles.row}>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label} htmlFor="city">
-                  City <span style={{ color: "#c5491f" }}>*</span>
+            <div className="auth-row">
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="city">
+                  City <span className="auth-label-required">*</span>
                 </label>
                 <CitySelect
                   id="city"
                   country={countryOfResidence}
                   value={city}
                   onChange={setCity}
-                  inputStyle={styles.input}
+                  inputClassName="auth-input"
                 />
               </div>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label} htmlFor="occupation">
-                  Occupation <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="occupation">
+                  Occupation <span className="auth-label-optional">(optional)</span>
                 </label>
                 <input
                   id="occupation"
@@ -263,20 +263,20 @@ function CompleteProfileForm() {
                   placeholder="e.g. Filmmaker, Designer"
                   value={occupation}
                   onChange={(e) => setOccupation(e.target.value)}
-                  style={styles.input}
+                  className="auth-input"
                 />
               </div>
             </div>
 
-            <p style={{ fontSize: 12, color: "#7a6f5c", lineHeight: 1.6, marginTop: 4 }}>
+            <p className="auth-hint" style={{ marginTop: 4 }}>
               You can add your bio, disciplines, and social links from profile settings after joining.
             </p>
 
-            {error && <p style={styles.error}>{error}</p>}
+            {error && <p className="auth-error">{error}</p>}
 
-            <div style={styles.nav}>
+            <div className="auth-nav">
               <span />
-              <button type="submit" style={styles.btnPrimary}>
+              <button type="submit" className="auth-btn-primary" style={{ width: "auto" }}>
                 Continue →
               </button>
             </div>
@@ -289,20 +289,19 @@ function CompleteProfileForm() {
   // ── Interests (Step 2) ───────────────────────────────────────────────────
   if (step === "interests") {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-          <h1 style={styles.heading}>What moves you?</h1>
+      <div className="auth-page">
+        <div className="auth-card auth-card--wide">
+          <h1 className="auth-heading">What moves you?</h1>
 
           <ProgressBar labels={stepLabels} currentIdx={currentStepIdx} percent={progressPercent} />
 
           <form onSubmit={handleInterestsSubmit} noValidate>
-            <h2 style={styles.stepHeading}>Pick your interests</h2>
-            <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: -12, marginBottom: 20, lineHeight: 1.6 }}>
+            <h2 className="auth-step-heading">Pick your interests</h2>
+            <p className="auth-sub" style={{ marginTop: -12, marginBottom: 20 }}>
               Select at least 3. This shapes your feed and connects you with the right community.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 8 }}>
+            <div className="auth-chip-grid">
               {INTERESTS.map(({ slug, label, emoji }) => {
                 const active = interests.includes(slug);
                 return (
@@ -310,40 +309,29 @@ function CompleteProfileForm() {
                     key={slug}
                     type="button"
                     onClick={() => toggleInterest(slug)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "14px 8px",
-                      border: active ? "2px solid #14110d" : "2px solid #d4cbbf",
-                      borderRadius: 4,
-                      background: active ? "#14110d" : "#fff",
-                      cursor: "pointer",
-                      transition: "border-color 0.15s, background 0.15s",
-                      fontFamily: "inherit",
-                    }}
+                    className={`auth-chip${active ? " auth-chip--active" : ""}`}
                   >
-                    <span style={{ fontSize: 22 }}>{emoji}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? "#fff" : "#14110d", textAlign: "center", lineHeight: 1.3 }}>{label}</span>
+                    <span className="auth-chip-emoji">{emoji}</span>
+                    <span className="auth-chip-label">{label}</span>
                   </button>
                 );
               })}
             </div>
 
-            <p style={{ fontSize: 12, color: interests.length >= 3 ? "#2e7d32" : "#7a6f5c", marginBottom: 4 }}>
+            <p className={`auth-chip-count${interests.length >= 3 ? " auth-chip-count--ok" : ""}`}>
               {interests.length} selected {interests.length < 3 ? `— ${3 - interests.length} more needed` : "✓"}
             </p>
 
-            {error && <p style={styles.error}>{error}</p>}
+            {error && <p className="auth-error">{error}</p>}
 
-            <div style={styles.nav}>
-              <button type="button" onClick={() => setStep("about")} style={styles.btnSecondary}>
+            <div className="auth-nav">
+              <button type="button" onClick={() => setStep("about")} className="auth-btn-secondary auth-btn-secondary--nav">
                 ← Back
               </button>
               <button
                 type="submit"
-                style={{ ...styles.btnPrimary, opacity: interests.length < 3 ? 0.5 : 1 }}
+                className="auth-btn-primary"
+                style={{ width: "auto" }}
                 disabled={interests.length < 3}
               >
                 Continue →
@@ -357,35 +345,34 @@ function CompleteProfileForm() {
 
   // ── Membership (Step 3) ───────────────────────────────────────────────────
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Moveee Pro" : "Choose your membership"}</h1>
+    <div className="auth-page">
+      <div className="auth-card auth-card--wide">
+        <h1 className="auth-heading">{isUpgrade ? "Upgrade to Moveee Pro" : "Choose your membership"}</h1>
 
         {!isUpgrade && (
           <ProgressBar labels={stepLabels} currentIdx={2} percent={100} />
         )}
 
         <form onSubmit={handleMembershipSubmit} noValidate>
-          <h2 style={styles.stepHeading}>Your membership tier</h2>
+          <h2 className="auth-step-heading">Your membership tier</h2>
 
-          <div style={{ ...styles.billingToggle, opacity: tier === "patron" ? 1 : 0.5 }}>
+          <div className="auth-billing-toggle" style={{ opacity: tier === "patron" ? 1 : 0.5 }}>
             <button
               type="button"
               onClick={() => setBillingCycle("monthly")}
-              style={{ ...styles.cycleBtn, background: billingCycle === "monthly" ? "#fff" : "transparent", color: billingCycle === "monthly" ? "#14110d" : "#7a6f5c", boxShadow: billingCycle === "monthly" ? "0 1px 3px rgba(20,17,13,.12)" : "none" }}
+              className={`auth-cycle-btn${billingCycle === "monthly" ? " auth-cycle-btn--active" : ""}`}
               disabled={tier !== "patron"}
             >Monthly</button>
             <button
               type="button"
               onClick={() => setBillingCycle("yearly")}
-              style={{ ...styles.cycleBtn, background: billingCycle === "yearly" ? "#fff" : "transparent", color: billingCycle === "yearly" ? "#14110d" : "#7a6f5c", boxShadow: billingCycle === "yearly" ? "0 1px 3px rgba(20,17,13,.12)" : "none" }}
+              className={`auth-cycle-btn${billingCycle === "yearly" ? " auth-cycle-btn--active" : ""}`}
               disabled={tier !== "patron"}
             >Annually</button>
-            <div style={styles.savingsTag}>{currency === "NGN" ? "Save ₦9,000" : "Save $8"}</div>
+            <div className="auth-savings-tag">{currency === "NGN" ? "Save ₦9,000" : "Save $8"}</div>
           </div>
 
-          <div style={styles.tierGrid}>
+          <div className="auth-tier-grid">
             {(
               [
                 {
@@ -405,38 +392,41 @@ function CompleteProfileForm() {
             ).map(({ value, label, price, perks, ...rest }) => (
               <label
                 key={value}
-                style={{ ...styles.tierCard, borderColor: tier === value ? "#14110d" : "#d4cbbf", background: tier === value ? "rgba(20,17,13,.04)" : "#fff", boxShadow: tier === value ? "0 0 0 2px #14110d" : "none" }}
+                className={`auth-tier-card${tier === value ? " auth-tier-card--active" : ""}`}
               >
-                <input type="radio" name="tier" value={value} checked={tier === value} onChange={() => setTier(value)} style={{ position: "absolute", opacity: 0, pointerEvents: "none" }} />
-                <h3 style={styles.tierLabel}>{label}</h3>
-                <div style={styles.priceContainer}>
-                  <span style={styles.tierPrice}>{price}</span>
-                  {"period" in rest && <span style={styles.pricePeriod}>{rest.period}</span>}
+                <input
+                  type="radio"
+                  name="tier"
+                  value={value}
+                  checked={tier === value}
+                  onChange={() => setTier(value)}
+                  className="auth-tier-radio-input"
+                />
+                <h3 className="auth-tier-label">{label}</h3>
+                <div className="auth-tier-price-row">
+                  <span className="auth-tier-price">{price}</span>
+                  {"period" in rest && <span className="auth-tier-period">{rest.period}</span>}
                 </div>
-                <ul style={styles.tierPerks}>{perks.map((p) => <li key={p}>{p}</li>)}</ul>
+                <ul className="auth-tier-perks">{perks.map((p) => <li key={p}>{p}</li>)}</ul>
               </label>
             ))}
           </div>
 
-          <div style={styles.currencyNotice}>
+          <div className="auth-currency-notice">
             Pricing based on residence: <strong>{currency}</strong>.
-            <button type="button" onClick={() => setCurrency(c => c === "NGN" ? "USD" : "NGN")} style={styles.currencySwitch}>Switch</button>
+            <button type="button" onClick={() => setCurrency(c => c === "NGN" ? "USD" : "NGN")} className="auth-currency-switch">Switch</button>
           </div>
 
-          {error && <p style={styles.error}>{error}</p>}
+          {error && <p className="auth-error">{error}</p>}
 
-          <div style={styles.nav}>
+          <div className="auth-nav">
             {!isUpgrade && (
-              <button type="button" onClick={() => setStep("interests")} style={styles.btnSecondary}>
+              <button type="button" onClick={() => setStep("interests")} className="auth-btn-secondary auth-btn-secondary--nav">
                 ← Back
               </button>
             )}
             {isUpgrade && <span />}
-            <button
-              type="submit"
-              style={{ ...styles.btnPrimary, opacity: loading ? 0.7 : 1 }}
-              disabled={loading}
-            >
+            <button type="submit" className="auth-btn-primary" style={{ width: "auto" }} disabled={loading}>
               {loading ? "Please wait…" : tier === "patron" ? "Continue to payment →" : "Complete registration →"}
             </button>
           </div>
@@ -448,19 +438,19 @@ function CompleteProfileForm() {
 
 function ProgressBar({ labels, currentIdx, percent }: { labels: readonly string[]; currentIdx: number; percent: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 0, marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid #e8e0d4", position: "relative" }}>
+    <div className="auth-steps">
       {labels.map((label, i) => (
-        <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1, position: "relative", zIndex: 1 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, background: currentIdx > i ? "#14110d" : currentIdx === i ? "#14110d" : "#d4cbbf", color: currentIdx >= i ? "#fff" : "#7a6f5c", border: currentIdx === i ? "2px solid #14110d" : "2px solid transparent" }}>
+        <div key={label} className="auth-step">
+          <div className={`auth-step-circle${currentIdx > i ? " auth-step-circle--done" : currentIdx === i ? " auth-step-circle--active" : ""}`}>
             {currentIdx > i ? "✓" : i + 1}
           </div>
-          <span style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: currentIdx >= i ? "#14110d" : "#7a6f5c", fontWeight: currentIdx === i ? 600 : 400 }}>
+          <span className={`auth-step-label${currentIdx === i ? " auth-step-label--current" : ""}`}>
             {label}
           </span>
         </div>
       ))}
-      <div style={{ position: "absolute", top: 15, left: `${Math.round(50 / labels.length)}%`, right: `${Math.round(50 / labels.length)}%`, height: 2, background: "#e8e0d4", zIndex: 0 }}>
-        <div style={{ height: "100%", background: "#14110d", width: `${percent}%`, transition: "width 0.3s ease" }} />
+      <div className="auth-steps-track">
+        <div className="auth-steps-fill" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );
@@ -473,31 +463,3 @@ export default function CompleteProfilePage() {
     </Suspense>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff", padding: "60px 24px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
-  card: { maxWidth: 580, width: "100%", background: "#fffdf8", borderRadius: 4, border: "1px solid #e8e0d4", padding: "40px 40px 32px", color: "#14110d" },
-  eyebrow: { fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "#7a6f5c", margin: "0 0 16px" },
-  heading: { fontSize: 28, fontWeight: 300, fontFamily: "Georgia, serif", margin: "0 0 28px", color: "#14110d" },
-  stepHeading: { fontSize: 18, fontWeight: 600, margin: "0 0 20px", color: "#14110d" },
-  row: { display: "flex", gap: 16 },
-  field: { marginBottom: 18 },
-  label: { display: "block", fontSize: 11, fontWeight: 400, color: "#7a6f5c", marginBottom: 6, letterSpacing: "0.02em" },
-  input: { display: "block", width: "100%", padding: "10px 14px", border: "1px solid #d4cbbf", borderRadius: 3, fontSize: 15, color: "#14110d", background: "#fff", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" },
-  billingToggle: { display: "flex", alignItems: "center", gap: 8, marginBottom: 20, background: "#f0ede6", padding: 4, borderRadius: 6, width: "fit-content", transition: "opacity 0.2s" },
-  cycleBtn: { padding: "6px 16px", border: "none", borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" },
-  savingsTag: { fontSize: 11, fontWeight: 700, color: "#27ae60", background: "#e6f4ea", padding: "2px 8px", borderRadius: 10, marginLeft: 4 },
-  tierGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 8 },
-  tierCard: { cursor: "pointer", padding: "20px 18px", border: "2px solid #d4cbbf", borderRadius: 4, transition: "border-color 0.2s, box-shadow 0.2s", display: "block", position: "relative" as const },
-  tierLabel: { margin: "0 0 4px", fontSize: 11, fontWeight: 400, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "#7a6f5c" },
-  tierPrice: { display: "inline-block", fontWeight: 300, color: "#14110d", fontSize: 28, fontFamily: "Georgia, serif" },
-  priceContainer: { display: "flex", alignItems: "baseline", gap: 4, marginBottom: 12 },
-  pricePeriod: { fontSize: 13, color: "#7a6f5c", fontWeight: 400 },
-  tierPerks: { margin: 0, padding: "0 0 0 16px", fontSize: 13, color: "#7a6f5c", lineHeight: 1.7 },
-  currencyNotice: { marginTop: 20, fontSize: 12, color: "#7a6f5c", borderTop: "1px dashed #e8e0d4", paddingTop: 12, display: "flex", alignItems: "center", gap: 8 },
-  currencySwitch: { background: "none", border: "none", padding: 0, color: "#14110d", textDecoration: "underline", fontSize: 11, cursor: "pointer", textTransform: "uppercase" as const, letterSpacing: "0.05em", fontWeight: 600 },
-  nav: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 20, borderTop: "1px solid #e8e0d4" },
-  btnPrimary: { padding: "11px 24px", background: "#14110d", color: "#ffffff", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer", fontFamily: "inherit" },
-  btnSecondary: { padding: "11px 20px", background: "transparent", color: "#7a6f5c", border: "1px solid #d4cbbf", borderRadius: 3, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  error: { fontSize: 14, color: "#c0392b", background: "#fef2f2", border: "1px solid rgba(192,57,43,.15)", borderRadius: 3, padding: "10px 14px", margin: "12px 0 0" },
-};

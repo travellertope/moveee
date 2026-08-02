@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: { absolute: 'Quotes | The Moveee' },
-  description: 'Words that define the culture. A growing archive of quotes from African and diaspora thinkers, artists, writers, and leaders — submitted and verified by the community.',
+  description: 'Words that define the culture. A growing archive of quotes from thinkers, artists, writers, and leaders — submitted and verified by the community.',
 };
 
 const WP_GRAPHQL_URL =

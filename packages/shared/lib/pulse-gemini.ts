@@ -94,11 +94,11 @@ function buildPrompt(items: FeedItem[]): string {
     })
     .join("\n\n");
 
-  return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering African and Black diasporan culture.
+  return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering culture, with a core focus on African, Caribbean, and Black diaspora culture.
 
-Below are ${items.length} real news items fetched from African and diaspora media. Your job:
+Below are ${items.length} real news items fetched from culture media. Your job:
 
-1. SELECT the 5–8 items most relevant to African/Black diaspora culture — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Skip politics, sport results, or crime unless strongly cultural.
+1. SELECT the 5–8 items most relevant to our audience — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Favour African, Caribbean, and Black diaspora stories, but include other cultures when they're strong. Skip politics, sport results, or crime unless strongly cultural.
 
 2. REWRITE each item in the Moveee editorial voice — smart, warm, specific.
 
@@ -109,10 +109,10 @@ Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
 Each object must have:
 - "title": sharp headline, max 10 words, sentence case
 - "summary": 1–2 sentences, max 30 words, Moveee voice, name the real artist/place/event
-- "body": 2 short paragraphs, 80–120 words total, separated by \\n\\n. (1) what happened and why it matters, (2) significance for African/diaspora audiences.
+- "body": 2 short paragraphs, 80–120 words total, separated by \\n\\n. (1) what happened and why it matters, (2) why it matters to our culture audience.
 - "arm": one of: "lifestyle" | "origins" | "happenings" | "magazine"
     • "lifestyle"  — fashion, beauty, food, travel, wellness, style, everyday culture
-    • "origins"    — history, heritage, identity, diaspora roots, language, tradition, social justice
+    • "origins"    — history, heritage, identity, roots, language, tradition, social justice
     • "happenings" — new music releases, film/TV drops, events, shows, album announcements, what's on right now
     • "magazine"   — in-depth profiles, interviews, essays, longform analysis, business/entrepreneurship stories
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"

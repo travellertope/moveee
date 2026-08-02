@@ -64,12 +64,12 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   alternates: { canonical: "https://themoveee.com/newsletter" },
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
@@ -81,7 +81,7 @@ export const metadata = {
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into global culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   },
 };
 
@@ -133,7 +133,7 @@ export default async function NewsletterArchive({
       <section className="nl-masthead">
         <div className="nl-masthead-inner">
           <h1 className="nl-masthead-title">
-            Your Daily Pulse on <em>Global Culture</em>
+            Your Daily Pulse on <em>Culture</em>
           </h1>
           <p className="nl-masthead-sub">
             We curate the cultural narratives that matter most. Subscribe to
@@ -160,7 +160,7 @@ export default async function NewsletterArchive({
           <div className="nl-card nl-card--culturedrop">
             <div className="nl-card-bar" />
             <span className="nl-card-eyebrow">★ Culture Drop · Every Tuesday</span>
-            <h2 className="nl-card-title">The weekly dispatch on contemporary global culture.</h2>
+            <h2 className="nl-card-title">The weekly dispatch on contemporary culture.</h2>
             <p className="nl-card-desc">
               One deep essay, curated picks, a music dispatch, and
               what&apos;s happening across Lagos, London, New York, and Accra.

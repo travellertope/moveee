@@ -39,9 +39,84 @@ stale history.
 - Never use "Moveee Connect" as a product name.
 - Site tagline (Moveee Magazine): **"Best in Culture"**
 - App tagline (Moveee): **"Connect to Culture"**
-- Brand description framing: universal/global — do not describe the brand as specifically
-  African or Nigerian in metadata or SEO copy. The content and community speak for themselves.
+- Brand description framing: universal — do not describe the brand as specifically African,
+  Black, Nigerian, or "diaspora" in metadata, SEO copy, AI prompts, or any other user-facing
+  text. The content and community speak for themselves.
   Use language like: *"an independent magazine and community for people who live for culture."*
+  **Read the "Brand language" section immediately below before writing or copying ANY
+  copy** — this one-line rule is not enough on its own; it has been violated repeatedly
+  (see that section for why and how to actually not repeat it).
+
+---
+
+## Brand language — content favours African/Black/Caribbean diaspora; public copy does not announce it
+
+**This is a recurring failure mode, not a one-time fix — read this section fully before
+writing or copying any user-facing string, AI prompt, or example/placeholder text,
+anywhere in this repo (web, mobile, PHP, docs, mockups).** As of August 2026 a full-repo
+sweep found and fixed ~90 files where copy, AI prompts, seed data, and example placeholders
+loudly announced Moveee as an African/Black-diaspora product — including inside a
+brand-new Games-hub mockup built in the *same session* that had already read an earlier
+version of this rule. A first pass at fixing it then over-corrected: it stripped the
+African/Caribbean/Black-diaspora *content favouring* out of the AI generation prompts
+themselves, not just the public messaging. **That was wrong and was reverted.** The
+platform's actual content — what the AI curates, generates, and seeds — is meant to keep
+favouring African, Caribbean, and Black diaspora subjects. What changes is only whether the
+platform *announces* that scope to the public as its defining identity.
+
+**Two different layers — keep them straight:**
+
+1. **Seeded/generated content (AI prompts, seed-topic lists, RSS source lists) — KEEP the
+   favouring.** These are internal instructions the AI reads, never rendered to a user
+   verbatim. `packages/shared/lib/gemini.ts` (directory entries, quotes, event curation),
+   `pulse-gemini.ts` (Moveee Pulse story selection), `crossword-gemini.ts` and the daily
+   trivia/crossword routes' prompts, `class-culture-directory-tools.php`'s seed topic list
+   (mirrored in `apps/*/app/api/directory/auto-populate/route.ts`), and
+   `packages/shared/lib/pulse-rss.ts`'s `FEEDS` registry should all continue to say
+   something like *"favour African, Caribbean, and Black diaspora subjects, with room for
+   other regions too"* — don't neutralize these into "draw evenly from everywhere." That
+   was the August 2026 over-correction; it's reverted and should stay reverted. If you're
+   asked to touch any of these files for an unrelated reason, don't "fix" the favouring
+   language you find there — it's intentional, not a leftover bug.
+2. **Public-facing copy (page titles, meta descriptions, taglines, UI labels, region
+   filter chips, form placeholder examples, marketing/partnership copy) — stays universal,
+   never announces the African/diaspora focus as the platform's defining scope.** This is
+   the layer the original sweep was actually about, and the fix here stands:
+   - Never frame the brand, its audience, or its content scope as African, Black, or
+     "diaspora" in anything a visitor reads — not "African and diaspora culture," not
+     "Black diaspora," not "African audience" (except the one deliberately symmetric
+     exception below). Use language like *"an independent magazine and community for
+     people who live for culture."*
+   - Never reach for "worldwide," "global culture," "around the world," or similar
+     geography-emphasizing qualifiers as the "safe" replacement either — that's a tell,
+     not neutral. The house style is plain, unqualified **"culture."** Don't say
+     *"celebrating culture worldwide"* — say *"celebrating culture."* If a sentence reads
+     fine with the qualifier deleted outright, delete it; don't reach for a synonym.
+   - Illustrative "e.g. …" placeholder text and UI copy should be genuinely diverse, not
+     default to one region every time (see `DirectorySubmitScreen.tsx`'s
+     `EXCERPT_PLACEHOLDERS` for the pattern: Japan, Morocco, Korea, Brazil, Mexico, India,
+     South Africa, NY — this is about UI copy variety, unrelated to the content-favouring
+     rule in point 1 above).
+
+**The one legitimate exception to point 2:** the `/uk`, `/us`, and `/africa` edition pages
+(`apps/site/app/[edition]/page.tsx`, `EditionNewsletterHub.tsx`, `magazine/africa/page.tsx`,
+etc.) are *deliberately* region-scoped — a member who navigates to the Africa edition should
+see Africa-focused framing, exactly as the UK edition says "rooted in Britain" and the US
+edition says "through an American lens." This is symmetric, chosen scoping for a page whose
+whole purpose is regional content. If you ever touch one of these edition pages, check that
+whatever you write is symmetric with its UK/US siblings.
+
+**Before considering any copy-writing task done, run:**
+```bash
+bash scripts/check-brand-language.sh
+```
+This greps the repo for the point-2 violating patterns and prints file:line hits for review
+(it is a review tool, not a hard CI gate). Its `ALLOWLIST` deliberately excludes the AI
+prompt/seed-list files described in point 1 above — those are supposed to contain this
+language now, so the script doesn't flag them. If it reports a new hit outside the
+allowlist, that's a real public-copy bug — fix it. If you find a genuinely new legitimate
+exception, add a narrow entry to the script's `ALLOWLIST` **and** a note here explaining
+why, the same way every existing entry is documented.
 
 ---
 
@@ -1339,6 +1414,70 @@ rebuilt against `mockups/web/moveee_dashboard_web.html`:
   cross-referencing. If this matters, re-check pixel fidelity against
   `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
   fully closed.
+
+### Account Dashboard redesign — Phase 1: Overview + shared AccountNav (July 2026)
+
+**Supersedes the "Full-bleed band pattern" from the §9 rebuild directly above** — that
+dark/light-band structure is gone from `/member`; this pass moved the page onto the same
+full-width single-column convention as Discover/Events/Stoop/Games (see those sections),
+built from a user-approved Artifact mockup after an explicit scope conversation: the user
+wants the *entire* account area (Overview, Settings' 6 tabs, Wallet, Coupons, Perks,
+Notifications, Analytics, My Events, Referrals, Portfolio, Collection) redesigned for a
+"sleek, simple, easily navigable" account section, shipped **phase by phase** rather than
+all at once. This is Phase 1: the Overview landing page plus the shared navigation piece
+every later phase will plug into. `.mem-*` classes are **deliberately left untouched** —
+Settings/Wallet/Perks/Coupons/Notifications/Analytics/Events/Referrals/Portfolio/Collection
+still render with them until each gets its own phase; only `/member` itself and its
+Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touched.
+
+- **New: `AccountNav.tsx`** (`packages/shared/components/`) — the reusable piece. A
+  horizontally-scrollable pill/tab row (`.acct-nav-*`, underline-active style matching
+  `SettingsTabs.tsx`'s `.prf-tab` convention) listing every top-level account destination:
+  Overview · Wallet · Coupons · Perks · Notifications · Analytics · My Events (Pro-only,
+  filtered by an `isPatron` prop) · Referrals · Settings. Active state is `usePathname()`-
+  derived (exact match for Overview since every other `/member/*` route would otherwise
+  also match it as a prefix; prefix match for the rest, so `/member/settings/profile` etc.
+  still highlight "Settings"). **This replaces `MemberNavSelect`'s navigational role on
+  `/member` specifically** — `MemberNavSelect` itself is untouched and still used by
+  `/member/wallet`, `/member/events`, and `/member/settings/layout.tsx` until those get
+  their own phases and adopt `AccountNav` too.
+- **New `.acct-*` CSS namespace** (`apps/connect/app/member.css`, appended at the end,
+  ~350 lines) — full-width `.acct-page`/`.acct-wrap` (max-width 1100px, no more full-bleed
+  bands), `.acct-profile` (lighter avatar+name+tier-pill strip, replaces the old `.mem-hero`
+  *on this page only* — `.mem-hero` itself is untouched since 8 other pages still use it),
+  `.acct-stats` (5 individual white `radius-xl`/`shadow-card` stat tiles replacing the old
+  single flat `.mem-stats-band`), `.acct-card`/`.acct-badges`/`.acct-earn-*` (Achievements
+  and How-to-Earn restyled onto the same card language), `.acct-card--upgrade` (dark side
+  card, same visual role as the old `.mem-card--dark`).
+- **`MemberDashboard.tsx` and `MemberBadges.tsx` rewritten** (both confirmed single-use —
+  only `/member/page.tsx` imports either, so no risk to other pages) to render into the new
+  `.acct-stat-card`/`.acct-badge` markup instead of the old flat band/grid. `MemberBadges.tsx`
+  also gained a "Show all 18" / "Show fewer" toggle (previously always rendered all 18
+  badges unconditionally, which was dense) — collapses to 6 by default, sorted
+  earned-first as before.
+- **`PasskeyBanner.tsx` and `MemberReferralCopy.tsx` kept as-is (component logic
+  untouched)** — both are also single-use on this page, so their existing CSS classes
+  (`.mem-passkey-banner`, `.mem-referral-*`) were restyled in place (rounded `radius-xl`
+  card instead of a full-bleed edge-to-edge band; subtle corner-rounding on the referral
+  URL/copy-button pair) rather than given new class names — no JSX changes needed.
+- **The old flat ~15-item `MemberNavSelect` dropdown/list is gone from this page** — its
+  navigational entries are now `AccountNav`; the handful of genuinely non-account links it
+  also carried (Newsletters, Upcoming Events, Magazine, Discover, Quotes Archive, Sign out)
+  moved into a small new "Explore Moveee" card in the side column, kept deliberately
+  separate from the account nav since they're not account destinations.
+- **New "Stoop" card** in the side column — the `myCluster` lookup (already fetched
+  server-side, previously only surfaced as one line inside the giant nav list) now gets its
+  own small card, same pattern as the Upgrade/Referral cards.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
+- **Next phases (not yet started, in rough priority order)**: Wallet + Coupons + Perks
+  (thematically adjacent, likely worth a shared visual pass together), Settings (6 tabs —
+  wire in `AccountNav` above `SettingsTabs`' existing sub-tab row), Notifications +
+  Analytics, then Events/Referrals/Portfolio/Collection. Each phase should: swap that page's
+  own back-link/`MemberNavSelect` usage for `<AccountNav isPatron={...} />`, and give the
+  page's own content the same `.acct-card` white-card treatment this phase established —
+  don't invent a third visual language.
 
 ### Member Settings — visual rebuild (§10, June 2026)
 
@@ -4225,6 +4364,60 @@ host-only and a domain-scoped clear, with `secure: true` added whenever the name
 — `__Secure-`/`__Host-` cookies need this exact treatment, plain-named ones don't.
 
 ---
+
+## Auth flow — full visual rebuild onto the composer design system (`auth-*`, July 2026)
+
+All 5 auth pages in `apps/connect` — `login/page.tsx`, `register/page.tsx`,
+`register/complete/page.tsx`, `forgot-password/page.tsx`, `reset-password/page.tsx` — were
+rebuilt from a user-approved Artifact mockup, replacing five separate hardcoded-hex inline
+`style={{...}}`/`StyleSheet`-style objects (zero dark-mode support, one-off colors not shared
+with any other surface) with a single new CSS file, `apps/connect/app/auth.css` (`auth-*`
+namespace), styled explicitly off the **composer's own form tokens**
+(`.composer-input`/`.composer-field-label`/`.composer-submit` in `globals.css`) per an explicit
+user request to match "form styles like used in the post creation page" — ochre focus borders on
+inputs, ochre primary buttons, uppercase DM Sans field labels, `var(--radius-md)` (4px) inputs, a
+`--shadow-card`-elevated card floating on `--paper-warm`. Same "mockup first, then build exactly
+what was approved" process as the Stoop rebuild above — the user explicitly corrected an early
+attempt to skip straight to code with "mockup first perhaps," and the approved mockup dropped a
+"The Moveee — Culture Community" eyebrow that was in an earlier draft ("no need for the eyebrow").
+
+- **This was a pure visual rebuild — zero business-logic changes.** All auth logic (passkey
+  sign-in via `@simplewebauthn/browser`, Google OAuth, NextAuth credentials sign-in, the
+  honeypot-plus-timestamp anti-bot pair on `/register`, the 5-step `register/complete` state
+  machine — verify/about/interests/membership/done — token verification, `/api/complete-profile`
+  and `/api/membership/upgrade-init` calls, the `?next=`/`?upgrade=patron` redirect handling) was
+  preserved verbatim; only the render/JSX/className layer changed on all 5 files.
+- **Key `auth-*` class groups** (all in `auth.css`, all token-driven — no hardcoded hex except
+  documented `var(--token, #fallback)` pairs): `.auth-page`/`.auth-card`(`--wide`/`--center`) for
+  page/card chrome; `.auth-field`/`.auth-label`(`-required`/`-optional`)/`.auth-input`(`--error`)
+  for form fields; `.auth-btn-primary`/`.auth-btn-secondary`(`--nav`) for buttons;
+  `.auth-error`/`.auth-success` for status messages; `.auth-divider*` for the login page's
+  "or" rule between password and passkey/Google; `.auth-footer*`/`.auth-link` for the
+  below-form links. `register/complete`'s multi-step UI got its own sub-families:
+  `.auth-steps`/`.auth-step`/`.auth-step-circle`(`--done`/`--active`)/`.auth-step-label`
+  (`--current`)/`.auth-steps-track`/`.auth-steps-fill` for the 3-step progress bar (replaces a
+  fully inline-styled `ProgressBar` component — the component itself is unchanged in structure,
+  only its render swapped from inline styles to these classes); `.auth-chip*` for the interest
+  picker grid (`.auth-chip`(`--active`)/`.auth-chip-emoji`/`.auth-chip-label`/`.auth-chip-count`
+  (`--ok`)); `.auth-billing-toggle`/`.auth-cycle-btn`(`--active`)/`.auth-savings-tag` for the
+  Monthly/Annually toggle; `.auth-tier-*` for the Citizen/Moveee Pro membership cards
+  (`.auth-tier-grid`/`.auth-tier-card`(`--active`)/`.auth-tier-radio-input`/`.auth-tier-label`/
+  `.auth-tier-price-row`/`.auth-tier-price`/`.auth-tier-period`/`.auth-tier-perks`);
+  `.auth-currency-notice`/`.auth-currency-switch` for the NGN/USD toggle; `.auth-nav` for the
+  Back/Continue footer row shared by all 3 register/complete steps.
+- `CountrySelect`/`CitySelect` (`packages/shared/components/LocationSelect.tsx`) already
+  supported an `inputClassName` prop (in addition to `inputStyle`) going into this pass — switched
+  from `inputStyle={styles.input}` to `inputClassName="auth-input"`, no component changes needed.
+- The `/register` honeypot field (`website`, off-screen absolute positioning, `aria-hidden`,
+  paired with a `formLoadedAt` timestamp checked server-side) was deliberately kept as a raw
+  inline `style` object rather than converted to a CSS class — it's a functional anti-bot
+  mechanism, not decorative chrome, and its off-screen positioning technique is unrelated to the
+  visual system being rebuilt here.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on both
+  `apps/connect` and `apps/site`, a CSS brace/paren-balance check on `auth.css` (79/79, 94/94),
+  and a grep confirming no leftover references to the old inline `styles`/`StyleSheet` objects or
+  the removed "Culture Community" eyebrow text across all 5 files.
 
 ## Registration flow (redesigned)
 

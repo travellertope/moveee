@@ -1,54 +1,135 @@
-/* ── GAMES HUB ─────────────────────────────────────────────────── */
+/* ── GAMES HUB (full-width single column — matches Discover/Events/Stoop
+   convention, no right rail, no dark hero) ──────────────────────────── */
 
 .games-hub {
   background: var(--paper);
   min-height: 100vh;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
 }
 
 .games-hub__header {
-  border-bottom: 1px solid var(--rule);
-  padding: 72px 0 56px;
-  background: var(--paper);
-}
-
-.games-hub__eyebrow {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  margin-bottom: 20px;
+  padding: 32px 0 28px;
 }
 
 .games-hub__title {
   font-family: 'Fraunces', serif;
-  font-size: clamp(48px, 6vw, 80px);
+  font-size: clamp(34px, 5vw, 52px);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.02;
   color: var(--ink);
-  margin-bottom: 20px;
+  margin: 0 0 12px;
+  text-wrap: balance;
 }
 
 .games-hub__subtitle {
   font-family: 'DM Sans', sans-serif;
-  font-size: 17px;
+  font-size: 15.5px;
   line-height: 1.6;
   color: var(--mute);
   max-width: 540px;
+  margin: 0;
 }
+
+/* ── Today's progress strip ──────────────────────────────────────── */
+
+.games-hub__progress {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--paper-warm);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
+  margin-bottom: 32px;
+}
+
+.games-hub__progress-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.games-hub__progress-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.games-hub__progress-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.games-hub__progress-label b { color: var(--ochre); }
+
+.games-hub__progress-track {
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--rule-dark);
+  overflow: hidden;
+}
+
+.games-hub__progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--ochre);
+  transition: width .3s ease;
+}
+
+.games-hub__progress-count {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.games-hub__progress-count span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+/* ── Grid ─────────────────────────────────────────────────────────── */
 
 .games-hub__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0;
+  gap: 20px;
 }
 
 @media (max-width: 720px) {
   .games-hub__grid { grid-template-columns: 1fr; }
 }
+
+/* ── Info band ────────────────────────────────────────────────────── */
+
+.games-hub__info-band {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 32px;
+  padding: 20px 24px;
+  border: 1px dashed var(--rule-dark);
+  border-radius: var(--radius-xl);
+}
+
+.games-hub__info-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.games-hub__info-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.6;
+  margin: 0;
+}
+.games-hub__info-text strong { color: var(--ink); }
 
 /* ── GAME CARD ─────────────────────────────────────────────────── */
 
@@ -69,8 +150,12 @@
 }
 
 .game-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-modal, var(--shadow-card));
+}
+
+.game-card--done {
+  background: var(--paper-warm);
 }
 
 .game-card__accent {
@@ -78,44 +163,90 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 12px;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  height: 6px;
+}
+
+.game-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 18px;
+}
+
+.game-card__icon {
+  font-size: 34px;
+  line-height: 1;
 }
 
 .game-card__badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  letter-spacing: .18em;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: var(--radius-full);
   border: 1px solid currentColor;
-  display: inline-block;
-  margin-bottom: 20px;
-  margin-top: 16px;
 }
 
-.game-card__icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-  line-height: 1;
+.game-card__done-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
 }
 
 .game-card__name {
   font-family: 'Fraunces', serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--ink);
-  margin-bottom: 12px;
+  margin: 0 0 10px;
 }
 
 .game-card__tagline {
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
   color: var(--mute);
-  margin-bottom: 24px;
+  margin: 0 0 22px;
+  flex: 1;
+}
+
+.game-card__result {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.game-card__result-score {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.game-card__result-total {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.game-card__result-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  color: var(--mute);
+  margin: 0 0 22px;
   flex: 1;
 }
 
@@ -124,19 +255,19 @@
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--rule);
-  padding-top: 16px;
+  padding-top: 14px;
 }
 
 .game-card__meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .game-card__meta-item {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  letter-spacing: .14em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--mute);
 }
@@ -144,14 +275,15 @@
 .game-card__cta {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  letter-spacing: .14em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
 }
+.game-card--done .game-card__cta { color: var(--mute); font-weight: 600; }
 
 .game-card__cta-arrow {
   transition: transform .2s ease;

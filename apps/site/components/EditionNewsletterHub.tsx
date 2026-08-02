@@ -45,21 +45,21 @@ const EDITION_CONFIG: Record<RegionalSlug, {
     calendarDesc:
       "What's happening this week and next across Lagos, Accra, Nairobi, Johannesburg, and Cape Town — openings, screenings, readings, dinners. The events worth leaving the house for.",
     cdDesc:
-      "The weekly dispatch on contemporary global culture — viewed through an African and diasporic lens. One deep essay, curated picks, a music dispatch, and what's happening across Lagos, Accra, Nairobi, Johannesburg, and Cape Town.",
+      "The weekly dispatch on contemporary culture — viewed through an African and diasporic lens. One deep essay, curated picks, a music dispatch, and what's happening across Lagos, Accra, Nairobi, Johannesburg, and Cape Town.",
   },
   uk: {
     calendarCities: "London, Manchester, and Edinburgh",
     calendarDesc:
       "What's happening this week and next across London, Manchester, and Edinburgh — openings, screenings, readings, dinners. The events worth leaving the house for.",
     cdDesc:
-      "The weekly dispatch on contemporary global culture — rooted in Britain. One deep essay, curated picks, a music dispatch, and what's happening across London, Manchester, and Edinburgh.",
+      "The weekly dispatch on contemporary culture — rooted in Britain. One deep essay, curated picks, a music dispatch, and what's happening across London, Manchester, and Edinburgh.",
   },
   us: {
     calendarCities: "New York, Atlanta, and Los Angeles",
     calendarDesc:
       "What's happening this week and next across New York, Atlanta, and Los Angeles — openings, screenings, readings, dinners. The events worth leaving the house for.",
     cdDesc:
-      "The weekly dispatch on contemporary global culture — through an American lens. One deep essay, curated picks, a music dispatch, and what's happening across New York, Atlanta, and Los Angeles.",
+      "The weekly dispatch on contemporary culture — through an American lens. One deep essay, curated picks, a music dispatch, and what's happening across New York, Atlanta, and Los Angeles.",
   },
 };
 
@@ -124,7 +124,7 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
           <div className="nl-card nl-card--culturedrop">
             <div className="nl-card-bar" />
             <span className="nl-card-eyebrow">★ Culture Drop · Every Tuesday</span>
-            <h2 className="nl-card-title">The weekly dispatch on contemporary global culture.</h2>
+            <h2 className="nl-card-title">The weekly dispatch on contemporary culture.</h2>
             <p className="nl-card-desc">{cfg.cdDesc}</p>
             <div className="nl-card-form">
               <GmlCTAForm

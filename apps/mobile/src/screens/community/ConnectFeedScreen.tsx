@@ -134,9 +134,9 @@ export default function ConnectFeedScreen() {
     const map: Record<string, string> = {
       nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
       kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
-      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
-      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
-      france: "Diaspora Europe", germany: "Diaspora Europe",
+      "united kingdom": "UK", uk: "UK", gb: "UK",
+      "united states": "US", us: "US", canada: "US",
+      france: "Europe", germany: "Europe",
     };
     return map[c] ?? "All";
   });
@@ -181,9 +181,9 @@ export default function ConnectFeedScreen() {
     const map: Record<string, string> = {
       nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
       kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
-      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
-      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
-      france: "Diaspora Europe", germany: "Diaspora Europe",
+      "united kingdom": "UK", uk: "UK", gb: "UK",
+      "united states": "US", us: "US", canada: "US",
+      france: "Europe", germany: "Europe",
     };
     return map[c] ?? undefined;
   }, [user?.countryOfResidence]);
@@ -222,8 +222,6 @@ export default function ConnectFeedScreen() {
       }
     })();
   }, [user?.id, forYou]);
-
-  const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
 
   const visibleItems = useMemo(() => {
     let filtered = filterQuotes

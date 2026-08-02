@@ -23,7 +23,7 @@ const typeStyles: Array<{
     size: 28,
     weight: 700,
     lineHeight: 1.2,
-    sample: "Diaspora Stories",
+    sample: "Culture Stories",
   },
   {
     label: "Display / Subtitle",
@@ -39,7 +39,7 @@ const typeStyles: Array<{
     size: 17,
     weight: 400,
     lineHeight: 1.5,
-    sample: "Explore events, voices, and hidden gems from the African diaspora.",
+    sample: "Explore events, voices, and hidden gems in culture.",
   },
   {
     label: "Body / Medium",

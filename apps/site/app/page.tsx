@@ -9,7 +9,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Moveee — Culture. Discover and Engage.",
   description:
-    "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
+    "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine, our editorial arm, covers the best of culture.",
   alternates: {
     canonical: "https://themoveee.com/",
     languages: {
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Moveee — Culture. Discover and Engage.",
     description:
-      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture.",
     url: "https://themoveee.com/",
     siteName: "Moveee",
     locale: "en_GB",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     creator: "@moveeemedia",
     title: "Moveee — Culture. Discover and Engage.",
     description:
-      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture worldwide.",
+      "A community that rewards you for being an active part of culture. Moveee Magazine, our editorial arm, covers the best of culture.",
   },
 };
 

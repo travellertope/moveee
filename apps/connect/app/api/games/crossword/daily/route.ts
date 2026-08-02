@@ -104,7 +104,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Voices",
+    title: "African Landmarks",
     grid: [
       "GHANA..",
       "R.BATIK",

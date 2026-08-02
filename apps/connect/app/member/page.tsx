@@ -6,7 +6,7 @@ import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
 import MemberBadges from "@/components/MemberBadges";
 import PasskeyBanner from "@/components/PasskeyBanner";
-import MemberNavSelect from "@/components/MemberNavSelect";
+import AccountNav from "@/components/AccountNav";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,14 @@ export const metadata = {
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
+const EXPLORE_LINKS = [
+  { label: "Newsletters", href: "https://themoveee.com/newsletter" },
+  { label: "Upcoming Events", href: "/events" },
+  { label: "Magazine", href: "https://themoveee.com/magazine" },
+  { label: "Discover", href: "/discover" },
+  { label: "Quotes Archive", href: "/quotes" },
+];
 
 async function fetchLiveStats(userId: string) {
   const secret = process.env.CULTURE_API_SECRET ?? "";
@@ -64,64 +72,56 @@ export default async function MemberPage() {
     : null;
 
   return (
-    <>
-      {/* ── PROFILE HERO ── */}
-      <div className="mem-hero">
-        <div className="mem-hero-inner">
-          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+    <div className="acct-page">
+      <div className="acct-wrap">
+        {/* ── Profile strip ── */}
+        <div className="acct-profile">
+          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             ) : initial}
           </div>
-          <div className="mem-hero-body">
-            <div className="mem-eyebrow">The Moveee &mdash; Culture Community</div>
-            <h1 className="mem-name">{displayName}</h1>
-            <div className="mem-meta">
-              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+          <div className="acct-profile-body">
+            <h1 className="acct-name">{displayName}</h1>
+            <div className="acct-meta">
+              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
-              {user.city && (
-                <>
-                  <span className="mem-sep">·</span>
-                  <span>{user.city}</span>
-                </>
-              )}
+              {user.city && <span className="acct-meta-text">{user.city}</span>}
             </div>
           </div>
         </div>
-      </div>
 
-      {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
-      {/* ── STATS (live data) ── */}
-      <MemberDashboard
-        initialPoints={liveReputation}
-        initialBadges={liveBadges}
-        referralCount={user.referralCount ?? 0}
-        membership={isPatron ? "Moveee Pro" : "Moveee Citizen"}
-        initialCredits={liveCredits}
-        initialReputation={liveReputation}
-        reputationTier={liveReputationTier}
-        dailyCreditsRemaining={liveDailyCreditsRemaining}
-      />
+        {/* ── Account nav — carries across Wallet/Perks/Notifications/etc. ── */}
+        <AccountNav isPatron={isPatron} />
 
-      <div className="mem-body">
-        <div className="mem-grid">
+        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
+
+        {/* ── Stats ── */}
+        <MemberDashboard
+          initialPoints={liveReputation}
+          initialBadges={liveBadges}
+          referralCount={user.referralCount ?? 0}
+          membership={isPatron ? "Moveee Pro" : "Moveee Citizen"}
+          initialCredits={liveCredits}
+          initialReputation={liveReputation}
+          reputationTier={liveReputationTier}
+          dailyCreditsRemaining={liveDailyCreditsRemaining}
+        />
+
+        <div className="acct-body">
           {/* ── MAIN COLUMN ── */}
-          <div className="mem-col-main">
-
-            {/* Badges (live data) */}
+          <div>
             <MemberBadges initialBadges={liveBadges} />
 
-            {/* How to earn */}
-            <section className="mem-card">
-              <div className="mem-card-label">How to Earn</div>
-              <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 12px", lineHeight: 1.5 }}>
+            <section className="acct-card">
+              <div className="acct-card-header">
+                <span className="acct-card-title">How to Earn</span>
+              </div>
+              <p className="acct-earn-intro">
                 Credits are spendable (capped at 50/day). Points are permanent and unlock status.
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--mute)", marginBottom: 6, paddingBottom: 6, borderBottom: "1px solid var(--rule)" }}>
-                <span>Action</span><span>Credits</span><span>Points</span>
-              </div>
-              <div className="mem-points-list">
+              <div className="acct-earn-list">
                 {[
                   ["Post validated (5 reactions or 3 comments)", "+10 cr", "+5"],
                   ["Place or Food Review validated",              "+15 cr", "+10"],
@@ -136,10 +136,10 @@ export default async function MemberPage() {
                   ["Directory entry submitted",   "+2 cr",  "+15"],
                   ["Game completed",              "+1 cr",  "+5"],
                 ].map(([action, cr, rep]) => (
-                  <div key={action} className="mem-points-row" style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px" }}>
+                  <div key={action} className="acct-earn-row">
                     <span>{action}</span>
-                    <span className="mem-points-val" style={{ color: "var(--ochre)" }}>{cr}</span>
-                    <span className="mem-points-val">{rep}</span>
+                    <span className="acct-earn-cr">{cr}</span>
+                    <span className="acct-earn-pt">{rep}</span>
                   </div>
                 ))}
               </div>
@@ -147,72 +147,78 @@ export default async function MemberPage() {
           </div>
 
           {/* ── SIDE COLUMN ── */}
-          <div className="mem-col-side">
-
+          <div>
             {/* Upgrade CTA — Citizens only */}
             {!isPatron && (
-              <section className="mem-card mem-card--dark">
-                <div className="mem-card-label" style={{ color: "var(--ochre)" }}>
-                  Upgrade to Moveee Pro
-                </div>
-                <h3 className="mem-upgrade-title">
-                  Unlock the full experience.
-                </h3>
-                <ul className="mem-upgrade-perks">
+              <section className="acct-card acct-card--upgrade">
+                <span className="acct-card-title">Upgrade to Moveee Pro</span>
+                <h3 className="acct-upgrade-title">Unlock the full experience.</h3>
+                <ul className="acct-upgrade-perks">
                   <li>Moveee Pro badge on your Pulse posts</li>
                   <li>Exclusive gated content &amp; editorials</li>
                   <li>10% Moveee Shop discount</li>
                   <li>Early access to new features</li>
                 </ul>
-                <Link href="/connect/membership" className="mem-upgrade-btn">
+                <Link href="/connect/membership" className="acct-upgrade-btn">
                   Become a Moveee Pro →
                 </Link>
               </section>
             )}
 
+            {/* Stoop */}
+            <section className="acct-card">
+              <span className="acct-card-title">Stoop</span>
+              <p className="acct-card-desc">
+                {myCluster
+                  ? "You're part of a local Stoop — meet up, check in, earn rewards."
+                  : "Join a local Stoop to meet other members near you."}
+              </p>
+              <Link
+                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/people"}
+                className="acct-card-link"
+              >
+                {myCluster ? "View my Stoop →" : "Find your Stoop →"}
+              </Link>
+            </section>
+
             {/* Referral */}
             {referralUrl && (
-              <section className="mem-card">
-                <div className="mem-card-label">Invite a Friend</div>
-                <p className="mem-card-desc">
+              <section className="acct-card">
+                <span className="acct-card-title">Invite a Friend</span>
+                <p className="acct-card-desc">
                   Share your link. Earn +30 reputation and +5 credits for every member who joins.
                 </p>
                 <MemberReferralCopy url={referralUrl} />
-                <div className="mem-referral-count">
+                <div className="acct-referral-count">
                   {user.referralCount ?? 0} successful referral
                   {(user.referralCount ?? 0) !== 1 ? "s" : ""}
                   {" — "}
-                  <Link href="/member/referrals" style={{ color: "var(--ochre)", textDecoration: "none" }}>
+                  <Link href="/member/referrals" className="acct-card-link acct-card-link--inline">
                     View details →
                   </Link>
                 </div>
               </section>
             )}
 
-            {/* Quick links */}
-            <MemberNavSelect items={[
-              { label: "My Wallet",        href: "/member/wallet" },
-              { label: "My Coupons",       href: "/member/coupons" },
-              { label: "Notifications",    href: "/member/notifications" },
-              { label: "My Analytics",     href: "/member/analytics" },
-              ...(isPatron ? [{ label: "My Events", href: "/member/events" }] : []),
-              myCluster
-                ? { label: "My Stoop", href: `/cluster/${myCluster.id}` }
-                : { label: "Find your Stoop", href: "/connect/people" },
-              { label: "Refer a Friend",   href: "/member/referrals" },
-              { label: "Browse Perks",     href: "/connect/perks" },
-              { label: "My Collection",    href: "/member/collection" },
-              { label: "Account Settings", href: "/member/settings" },
-              { label: "Newsletters",      href: "https://themoveee.com/newsletter" },
-              { label: "Upcoming Events",  href: "/events" },
-              { label: "Magazine",         href: "https://themoveee.com/magazine" },
-              { label: "Discover",         href: "/discover" },
-              { label: "Quotes Archive",   href: "/quotes" },
-              { label: "Sign out",         href: "/api/auth/signout", muted: true },
-            ]} />
+            {/* Explore — general site links, not account nav */}
+            <section className="acct-card">
+              <span className="acct-card-title">Explore Moveee</span>
+              <div className="acct-explore-list">
+                {EXPLORE_LINKS.map((link) => (
+                  <Link key={link.href} href={link.href} className="acct-explore-link">
+                    <span>{link.label}</span>
+                    <span className="acct-explore-arrow">→</span>
+                  </Link>
+                ))}
+                <Link href="/api/auth/signout" className="acct-explore-link acct-explore-link--muted">
+                  <span>Sign out</span>
+                  <span />
+                </Link>
+              </div>
+            </section>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

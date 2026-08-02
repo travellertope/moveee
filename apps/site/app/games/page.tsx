@@ -5,7 +5,7 @@ import "@/app/games.css";
 export const metadata: Metadata = {
   title: { absolute: "Culture Games — The Moveee" },
   description:
-    "Test your knowledge of African and diaspora culture through trivia, quotes, and daily challenges.",
+    "Test your knowledge of culture through trivia, quotes, and daily challenges.",
 };
 
 const GAMES = [
@@ -26,7 +26,7 @@ const GAMES = [
     href:        "/games/trivia",
     name:        "Culture Trivia",
     tagline:
-      "10 daily questions spanning Afrobeats, Nollywood, literature, history, and African art. Fresh questions every day.",
+      "10 daily questions spanning music, film, literature, history, and art. Fresh questions every day.",
     icon:        "🧠",
     badge:       "Daily",
     accentColor: "#3d4a2a",
@@ -39,7 +39,7 @@ const GAMES = [
     href:        "/games/sudoku",
     name:        "Daily Sudoku",
     tagline:
-      "One 9×9 grid a day — same puzzle for every player worldwide. No luck, pure logic.",
+      "One 9×9 grid a day — same puzzle for every player. No luck, pure logic.",
     icon:        "🔢",
     badge:       "Puzzle",
     accentColor: "#1a3a5c",
@@ -52,7 +52,7 @@ const GAMES = [
     href:        "/games/crossword",
     name:        "Daily Crossword",
     tagline:
-      "A new African culture mini-crossword every day. Test your knowledge of people, places, and traditions.",
+      "A new culture mini-crossword every day. Test your knowledge of people, places, and traditions.",
     icon:        "✏️",
     badge:       "Culture",
     accentColor: "#5c3a1a",
@@ -67,14 +67,11 @@ export default function GamesHub() {
   return (
     <div className="games-hub">
       <header className="games-hub__header">
-        <div className="container-custom">
-          <p className="games-hub__eyebrow">Culture Games</p>
-          <h1 className="games-hub__title">Play. Learn.&nbsp;Connect.</h1>
-          <p className="games-hub__subtitle">
-            Test your knowledge of African and diaspora culture — music, film,
-            literature, history, and everything in between.
-          </p>
-        </div>
+        <h1 className="games-hub__title">Culture Games</h1>
+        <p className="games-hub__subtitle">
+          Test your knowledge of culture — music, film, literature, history,
+          and everything in between.
+        </p>
       </header>
 
       <div className="games-hub__grid">

@@ -4,6 +4,7 @@ import { useState, FormEvent, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import "../auth.css";
 
 type ViewState = "form" | "check-email";
 
@@ -87,28 +88,19 @@ function RegisterForm() {
 
   if (view === "check-email") {
     return (
-      <div style={styles.page}>
-        <div style={{ ...styles.card, textAlign: "center" }}>
-          <div style={styles.checkIcon}>✉</div>
-          <p style={styles.eyebrow}>One more step</p>
-          <h1 style={{ ...styles.heading, fontSize: 24, marginBottom: 12 }}>Check your inbox</h1>
-          <p style={{ fontSize: 15, color: "#3d3d3d", lineHeight: 1.7, margin: "0 0 8px" }}>
-            We sent a verification link to
-          </p>
-          <p style={{ fontSize: 16, fontWeight: 600, color: "#14110d", margin: "0 0 20px" }}>
-            {email}
-          </p>
-          <p style={{ fontSize: 14, color: "#7a6f5c", lineHeight: 1.7, margin: "0 0 28px" }}>
+      <div className="auth-page">
+        <div className="auth-card auth-card--center">
+          <span className="auth-check-icon">✉</span>
+          <h1 className="auth-heading auth-heading--sm">Check your inbox</h1>
+          <p className="auth-sub" style={{ marginBottom: 8 }}>We sent a verification link to</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", margin: "0 0 20px" }}>{email}</p>
+          <p className="auth-sub">
             Click the link in that email to verify your address and continue setting up your profile.
             The link expires in 24 hours.
           </p>
-          <p style={{ fontSize: 13, color: "#9e9589" }}>
+          <p style={{ fontSize: 13, color: "var(--mute)" }}>
             Wrong address?{" "}
-            <button
-              type="button"
-              onClick={() => setView("form")}
-              style={{ background: "none", border: "none", color: "#14110d", textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: 0 }}
-            >
+            <button type="button" onClick={() => setView("form")} className="auth-footer-btn">
               Go back
             </button>
           </p>
@@ -118,11 +110,10 @@ function RegisterForm() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-        <h1 style={styles.heading}>Join the Community</h1>
-        <p style={{ fontSize: 14, color: "#7a6f5c", margin: "-12px 0 28px", lineHeight: 1.6 }}>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-heading">Join the Community</h1>
+        <p className="auth-sub auth-sub--tight">
           Free to join. Enter a few details and we&apos;ll send you a verification link.
         </p>
 
@@ -143,9 +134,9 @@ function RegisterForm() {
             />
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label} htmlFor="email">
-              Email <span style={{ color: "#c5491f" }}>*</span>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="email">
+              Email <span className="auth-label-required">*</span>
             </label>
             <input
               id="email"
@@ -154,14 +145,14 @@ function RegisterForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
+              className="auth-input"
               placeholder="you@example.com"
             />
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label} htmlFor="username">
-              Username <span style={{ color: "#c5491f" }}>*</span>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="username">
+              Username <span className="auth-label-required">*</span>
             </label>
             <input
               id="username"
@@ -171,13 +162,13 @@ function RegisterForm() {
               placeholder="@handle"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
+              className="auth-input"
             />
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label} htmlFor="password">
-              Password <span style={{ color: "#c5491f" }}>*</span>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="password">
+              Password <span className="auth-label-required">*</span>
             </label>
             <input
               id="password"
@@ -187,32 +178,25 @@ function RegisterForm() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              className="auth-input"
             />
-            <span style={styles.hint}>At least 8 characters</span>
+            <span className="auth-hint">At least 8 characters</span>
           </div>
 
-          {error && <p style={styles.error}>{error}</p>}
+          {error && <p className="auth-error">{error}</p>}
 
-          <button
-            type="submit"
-            style={{ ...styles.btnPrimary, width: "100%", marginTop: 8, opacity: loading ? 0.7 : 1 }}
-            disabled={loading}
-          >
+          <button type="submit" className="auth-btn-primary" disabled={loading}>
             {loading ? "Creating account…" : "Create account →"}
           </button>
         </form>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20 }}>
-          <p style={{ fontSize: 13, color: "#7a6f5c", margin: 0, textAlign: "center" }}>
-            Already have an account?{" "}
-            <Link href="/login" style={styles.link}>Sign in</Link>
-          </p>
-          <p style={{ fontSize: 13, color: "#7a6f5c", margin: 0, textAlign: "center" }}>
+        <div className="auth-footer">
+          <p>Already have an account? <Link href="/login" className="auth-link">Sign in</Link></p>
+          <p>
             Want Moveee Pro?{" "}
             <Link
               href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}
-              style={styles.link}
+              className="auth-link"
             >
               Upgrade after joining
             </Link>
@@ -230,99 +214,3 @@ export default function RegisterPage() {
     </Suspense>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#ffffff",
-    padding: "60px 24px",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  },
-  card: {
-    maxWidth: 480,
-    width: "100%",
-    background: "#fffdf8",
-    borderRadius: 4,
-    border: "1px solid #e8e0d4",
-    padding: "40px 40px 32px",
-    color: "#14110d",
-  },
-  checkIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-    display: "block",
-  },
-  eyebrow: {
-    fontSize: 11,
-    letterSpacing: "0.2em",
-    textTransform: "uppercase" as const,
-    color: "#7a6f5c",
-    margin: "0 0 12px",
-  },
-  heading: {
-    fontSize: 28,
-    fontWeight: 300,
-    fontFamily: "Georgia, serif",
-    margin: "0 0 28px",
-    color: "#14110d",
-  },
-  field: {
-    marginBottom: 18,
-  },
-  label: {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 400,
-    color: "#7a6f5c",
-    marginBottom: 6,
-    letterSpacing: "0.02em",
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "10px 14px",
-    border: "1px solid #d4cbbf",
-    borderRadius: 3,
-    fontSize: 15,
-    color: "#14110d",
-    background: "#fff",
-    outline: "none",
-    boxSizing: "border-box" as const,
-    fontFamily: "inherit",
-  },
-  hint: {
-    display: "block",
-    fontSize: 12,
-    color: "#7a6f5c",
-    marginTop: 4,
-  },
-  btnPrimary: {
-    padding: "12px 24px",
-    background: "#14110d",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: 3,
-    fontSize: 13,
-    fontWeight: 600,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
-    cursor: "pointer",
-    fontFamily: "inherit",
-  },
-  error: {
-    fontSize: 14,
-    color: "#c0392b",
-    background: "#fef2f2",
-    border: "1px solid rgba(192,57,43,.15)",
-    borderRadius: 3,
-    padding: "10px 14px",
-    margin: "12px 0 0",
-  },
-  link: {
-    color: "#14110d",
-    textDecoration: "underline",
-  },
-};

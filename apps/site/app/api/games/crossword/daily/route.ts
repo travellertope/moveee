@@ -102,7 +102,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Voices",
+    title: "African Landmarks",
     grid: [
       "GHANA..",
       "R.BATIK",
@@ -211,7 +211,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Dreams",
+    title: "Afrobeats Rising",
     grid: [
       "BURNA..",
       "I.NAIJA",
@@ -962,7 +962,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Hubs",
+    title: "Cultural Capitals",
     grid: [
       "HARLEM.",
       "A....O.",
@@ -1833,7 +1833,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Cities I",
+    title: "Global Cities I",
     grid: [
       ".M.H.B.",
       ".I.A.A.",
@@ -1852,7 +1852,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     ],
   },
   {
-    title: "Diaspora Cities II",
+    title: "Global Cities II",
     grid: [
       "P.A.L.A",
       "A.C.A.T",

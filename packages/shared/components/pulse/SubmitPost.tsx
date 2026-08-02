@@ -12,17 +12,17 @@ import ItineraryBuilder, { type ItineraryStop } from "@/components/composer/Itin
 const URL_RE = /https?:\/\/[^\s]+/i;
 
 const EDITION_TO_REGION: Record<string, string> = {
-  uk: "Diaspora UK", us: "Diaspora US", africa: "Africa",
+  uk: "UK", us: "US", africa: "Africa",
 };
 const COUNTRY_TO_REGION: Record<string, string> = {
   ng: "Africa", ghana: "Africa", ke: "Africa", za: "Africa",
   nigeria: "Africa", kenya: "Africa", "south africa": "Africa",
   ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
-  gb: "Diaspora UK", uk: "Diaspora UK", "united kingdom": "Diaspora UK",
-  us: "Diaspora US", "united states": "Diaspora US",
-  fr: "Diaspora Europe", de: "Diaspora Europe", nl: "Diaspora Europe",
-  france: "Diaspora Europe", germany: "Diaspora Europe", netherlands: "Diaspora Europe",
-  belgium: "Diaspora Europe", italy: "Diaspora Europe", spain: "Diaspora Europe",
+  gb: "UK", uk: "UK", "united kingdom": "UK",
+  us: "US", "united states": "US",
+  fr: "Europe", de: "Europe", nl: "Europe",
+  france: "Europe", germany: "Europe", netherlands: "Europe",
+  belgium: "Europe", italy: "Europe", spain: "Europe",
   jamaica: "Caribbean", trinidad: "Caribbean", barbados: "Caribbean",
   guyana: "Caribbean", haiti: "Caribbean",
 };
