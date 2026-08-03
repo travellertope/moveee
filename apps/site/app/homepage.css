@@ -912,8 +912,12 @@
   }
   .mobile-menu-signout:hover { background: #fef2f2; }
 
-  /* Compact header responsive */
-  @media (max-width: 1100px) {
+  /* Compact header responsive.
+     Breakpoint bumped 1100px -> 1280px (Aug 2026) when the nav grew from
+     3 items (Feed/Discover/Editorials) to 6 (+ Events/Shop/Newsletter) —
+     the ticker is absolutely centered independent of nav width, so a wider
+     left zone risks colliding with it at medium desktop widths. */
+  @media (max-width: 1280px) {
     .compact-ticker { display: none; }
   }
   @media (max-width: 768px) {

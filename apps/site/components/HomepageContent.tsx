@@ -66,10 +66,13 @@ const EDITION_BAND_LABEL: Record<EditionSlug, string> = {
 export default function HomepageContent({ coverStory, stories, edition, latestIssue }: Props) {
   return (
     <>
-      {/* ===== MOVEEE ZONE: HERO + WHAT IS MOVEEE + FEATURE GRID + MEMBERSHIP + DOWNLOAD ===== */}
+      {/* ===== MOVEEE ZONE: HERO + WHAT IS MOVEEE + FEATURE GRID + DOWNLOAD ===== */}
       <MoveeeZone />
 
-      {/* ===== FROM THE MAGAZINE — edition-scoped via the country taxonomy ===== */}
+      {/* ===== FROM THE MAGAZINE — edition-scoped via the country taxonomy =====
+          id="magazine" is the anchor target for MoveeeZone.tsx's hero
+          "Read the Magazine" CTA. */}
+      <div id="magazine">
       {coverStory && (
         <section className="mg-hero">
           <div className="mg-hero-main">
@@ -114,6 +117,7 @@ export default function HomepageContent({ coverStory, stories, edition, latestIs
           </div>
         </section>
       )}
+      </div>
 
       {/* ===== MOVEEE MAGAZINE SPOTLIGHT — last section on the page ===== */}
       <MagazineSpotlight latestIssue={latestIssue} />

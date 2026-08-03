@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import PatronPrice from "@/components/PatronPrice";
 import WaitlistModal from "@/components/WaitlistModal";
 
 const FEATURES = [
@@ -69,25 +68,23 @@ export default function MoveeeZone() {
       <section className="mz-hero">
         <div className="mz-hero-inner">
         <div className="mz-hero-text">
-          <p className="mz-eyebrow">A community that rewards you for being an active part of culture</p>
-          <h1 className="mz-h1">Moveee for culture. <em>Discover and engage.</em></h1>
+          <h1 className="mz-h1">Culture doesn&apos;t happen <em>to</em> you. It happens because of you.</h1>
           <p className="mz-subhead">
-            Post the spot before it&apos;s cool. Call the next big thing. Rate, react, debate —
-            every contribution builds your standing and earns you real rewards. Moveee is where
-            culture happens with you in it, not just in front of you.
+            Post the spot before it&apos;s cool. Rate the meal. Call the next big thing. Every
+            contribution builds your standing and earns real rewards.
           </p>
           {/*
             DEV: 'Join Moveee' routes to a new /app or /download landing route (does not exist
             yet) that should detect OS via user-agent and deep-link to the correct store; fall
-            back to a simple page with both badges + QR for desktop. 'See how it works' anchors
-            to the 'What is Moveee' intro block on this same page (#what-is-moveee). Linking to
-            /register pragmatically until that route is built.
+            back to a simple page with both badges + QR for desktop. 'Read the Magazine' anchors
+            to the "From The Magazine" editorial section further down this same page
+            (#magazine, set in HomepageContent.tsx). Linking to /register pragmatically until
+            the /app or /download route is built.
           */}
           <div className="mz-hero-cta">
             <Link href="/register" className="mz-btn-primary">Join Moveee</Link>
-            <Link href="#what-is-moveee" className="mz-btn-secondary">See how it works</Link>
+            <Link href="#magazine" className="mz-btn-secondary">Read the Magazine</Link>
           </div>
-          <p className="mz-trust">Free to join · iOS &amp; Android · No spam, ever</p>
         </div>
         <div className="mz-hero-visual" aria-hidden="true">
           <div className="mz-hero-visual-bg" />
@@ -153,51 +150,9 @@ export default function MoveeeZone() {
         </div>
       </section>
 
-      {/* ===== MEMBERSHIP TEASER ===== */}
+      {/* ===== JOIN MOVEEE DOWNLOAD STRIP ===== */}
       <section className="mz-section mz-section--bordered">
         <div className="mz-section-inner">
-        <div className="mz-intro">
-          <h2 className="mz-h2">Free to join. More for the obsessed.</h2>
-        </div>
-        <div className="mz-membership-cards">
-          <div className="mz-tier-card">
-            <div className="mz-tier-head">
-              <span className="mz-tier-name">Moveee Citizen</span>
-              <span className="mz-tier-pill">Free</span>
-            </div>
-            <p className="mz-tier-body">
-              Post to the feed, browse Discover, RSVP to events, and get our newsletters —
-              GetMeLit and Culture Drop — straight to your inbox.
-            </p>
-            <Link href="/connect/membership" className="mz-btn-ghost">Compare plans</Link>
-          </div>
-          <div
-            className="mz-tier-card mz-tier-card--pro"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(20,17,13,0.86), rgba(20,17,13,0.92)), url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=900&q=80&auto=format&fit=crop')",
-            }}
-          >
-            <div className="mz-tier-head">
-              <span className="mz-tier-name mz-tier-name--white">Moveee Pro</span>
-              {/*
-                DEV: Do not hardcode the Pro price — reuse the existing <PatronPrice />
-                component (apps/site/components, already used in the current Connect CTA block)
-                so currency/locale logic stays centralised.
-              */}
-              <span className="mz-tier-pill mz-tier-pill--gold">
-                from <PatronPrice variant="monthly" />
-              </span>
-            </div>
-            <p className="mz-tier-body mz-tier-body--light">
-              Everything in Citizen, plus exclusive patron stories, 10% off the shop with early
-              access to every drop, and first access to new features before anyone else.
-            </p>
-            <Link href="/register?tier=patron" className="mz-btn-gold">Upgrade to Pro</Link>
-          </div>
-        </div>
-
-        {/* ===== JOIN MOVEEE DOWNLOAD STRIP ===== */}
         <div className="mz-download-strip" id="download">
           <img
             src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=640&q=80&auto=format&fit=crop"

@@ -75,7 +75,10 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <nav className="compact-nav">
             <a href={CONNECT_URL} className="compact-nav-link">Feed</a>
             <a href={`${CONNECT_URL}/discover`} className="compact-nav-link">Discover</a>
+            <a href={`${CONNECT_URL}/events`} className="compact-nav-link">Events</a>
             <Link href="/magazine" className="compact-nav-link" data-active={active("/magazine")}>Editorials</Link>
+            <Link href="/shop" className="compact-nav-link" data-active={active("/shop")}>Shop</Link>
+            <Link href="/newsletter" className="compact-nav-link" data-active={active("/newsletter")}>Newsletter</Link>
           </nav>
         </div>
 
@@ -290,7 +293,10 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <div className="mobile-menu-links">
           <a href={CONNECT_URL} onClick={() => setMobileMenuOpen(false)}>Feed</a>
           <a href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
+          <a href={`${CONNECT_URL}/events`} onClick={() => setMobileMenuOpen(false)}>Events</a>
           <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
+          <Link href="/shop" onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Shop</Link>
+          <Link href="/newsletter" onClick={() => setMobileMenuOpen(false)} data-active={active("/newsletter")}>Newsletter</Link>
         </div>
       </nav>
 
