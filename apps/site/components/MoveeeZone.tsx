@@ -123,9 +123,7 @@ export default function MoveeeZone() {
           <p className="mz-body mz-body--centred">
             Moveee is a community and discovery platform built for people who find the spot
             before it&apos;s cool, have a take on every new release, and want it to count for
-            something. Post a hidden gem. Rate the meal. Call the next big thing. Every
-            contribution builds your standing — and earns Culture Credits (Cr) you can spend on
-            real perks from brands that get it.
+            something. Post a hidden gem. Rate the meal.
           </p>
         </div>
 
