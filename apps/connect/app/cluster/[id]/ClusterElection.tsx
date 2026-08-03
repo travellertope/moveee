@@ -18,8 +18,8 @@ interface ClusterElectionStatus {
 }
 
 export default function ClusterElection({
-  clusterId, myUserId, initialElection,
-}: { clusterId: number; myUserId: number; initialElection: ClusterElectionStatus | null }) {
+  clusterId, myUserId, initialElection, hostName,
+}: { clusterId: number; myUserId: number; initialElection: ClusterElectionStatus | null; hostName?: string }) {
   const router = useRouter();
   const [election, setElection] = useState<ClusterElectionStatus | null>(initialElection);
   const [busy, setBusy] = useState(false);
@@ -117,7 +117,9 @@ export default function ClusterElection({
         </>
       ) : (
         <>
-          <p className="stoop-detail-sec-sub">No election open right now.</p>
+          <p className="stoop-detail-sec-sub">
+            No election open right now{hostName ? ` — ${hostName} is the current host.` : "."}
+          </p>
           <button type="button" onClick={startElection} disabled={busy} className="stoop-detail-link-btn">
             {busy ? "Starting…" : "Start a new election"}
           </button>

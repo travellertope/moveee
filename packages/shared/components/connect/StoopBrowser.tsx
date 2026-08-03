@@ -240,13 +240,14 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
 
       {myCluster ? (
         <>
-          <Link href={`/cluster/${myCluster.id}`} className="your-stoop">
+          <div className="your-stoop">
             <p className="ys-eyebrow"><span className="ys-live-dot" />Your Stoop</p>
             <div className="ys-body">
-              <div>
+              <Link href={`/cluster/${myCluster.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                 <h2 className="ys-name">{myCluster.name}</h2>
                 <p className="ys-meta">
                   📍 {[myCluster.street, myCluster.city].filter(Boolean).join(", ")}
+                  {" "}<span className="ys-meta-note">(exact address shown to members only)</span>
                 </p>
                 {myCluster.meetingDay && myCluster.meetingTime && (
                   <p className="ys-meta">
@@ -269,12 +270,13 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                     )}
                   </div>
                 )}
-              </div>
+              </Link>
               <div className="ys-actions">
-                <span className="ys-btn-ghost">View Stoop →</span>
+                <Link href={`/cluster/${myCluster.id}`} className="ys-btn-ghost">View Members</Link>
+                <Link href={`/cluster/${myCluster.id}#checkin`} className="ys-btn-primary">Open Check-in QR →</Link>
               </div>
             </div>
-          </Link>
+          </div>
 
           {overflow.length > 0 && (
             <>

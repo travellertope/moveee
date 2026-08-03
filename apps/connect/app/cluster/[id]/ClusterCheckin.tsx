@@ -112,7 +112,7 @@ export default function ClusterCheckin({
   };
 
   return (
-    <div>
+    <div id="checkin">
       {error && <p className="stoop-detail-error">{error}</p>}
 
       {attendance && (

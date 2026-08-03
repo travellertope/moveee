@@ -241,8 +241,25 @@ export default function DiscoverBrowser({
 
   return (
     <div>
-      <div className="disc-header">
-        <h1 className="disc-title">Discover</h1>
+      {/* Hero — was entirely missing (only the flat "Discover" title below
+          survived); rebuilt to match the approved mockup's eyebrow/title/sub.
+          Rendered inside the constrained .disc-wrap rather than full-bleed
+          edge-to-edge like the mockup, since making it full-bleed would need
+          restructuring app/discover/page.tsx's wrapper — a deliberate scope
+          reduction, not an oversight. The mockup's decorative photo collage
+          behind the hero copy (real entry photography, base64 in the mockup)
+          was also left out for the same reason — no plumbing exists yet to
+          source a handful of real entry images for a background collage.
+          Copy note: the mockup's subhead read "...living archive of African
+          & diaspora culture..." — rewritten to plain "culture" per this
+          repo's brand-language rule (public copy stays universal). */}
+      <div className="disc-hero">
+        <p className="disc-hero-eyebrow">✦ Discover</p>
+        <h1 className="disc-hero-title">Every corner of<br /><em>the culture</em>, in one place.</h1>
+        <p className="disc-hero-sub">
+          People, places, dishes, books, films, sounds — the whole living archive of
+          culture, added by the community, one entry at a time.
+        </p>
       </div>
 
       {/* Same "opens the shared SearchModal" pattern as /events — this
@@ -291,7 +308,7 @@ export default function DiscoverBrowser({
 
       {recommended.length > 0 && (
         <>
-          <div className="disc-rail-heading">Picked for You</div>
+          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Picked for You</div>
           <div className="disc-rail">
             {recommended.map((e) => (
               <DiscoverCard key={`recommended-${e.id}`} entry={e} rail />
@@ -300,20 +317,9 @@ export default function DiscoverBrowser({
         </>
       )}
 
-      {recent.length > 0 && (
-        <>
-          <div className="disc-rail-heading">Recently Added</div>
-          <div className="disc-rail">
-            {recent.map((e) => (
-              <DiscoverCard key={`recent-${e.id}`} entry={e} rail />
-            ))}
-          </div>
-        </>
-      )}
-
       {trending.length > 0 && (
         <>
-          <div className="disc-rail-heading">Trending in Community</div>
+          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Trending in Community</div>
           <div className="disc-rail">
             {trending.map((e) => (
               <DiscoverCard key={`trending-${e.id}`} entry={e} rail />
@@ -322,7 +328,18 @@ export default function DiscoverBrowser({
         </>
       )}
 
-      <div className="disc-grid-heading">Explore More</div>
+      {recent.length > 0 && (
+        <>
+          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Recently Added</div>
+          <div className="disc-rail">
+            {recent.map((e) => (
+              <DiscoverCard key={`recent-${e.id}`} entry={e} rail />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="disc-grid-heading"><span className="disc-spark">✦</span> Explore More</div>
 
       {loading ? (
         <div className="disc-loading">Loading…</div>

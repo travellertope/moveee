@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import PerksClient from "./PerksClient";
 import AccountNav from "@/components/AccountNav";
+import "../../member.css";
 import "./perks.css";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ export default async function PerksPage() {
   return (
     <div className="perks-page">
       {user && (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 24px 0" }}>
+        <div className="acct-wrap" style={{ paddingBottom: 0 }}>
           <AccountNav isPatron={isPatron} />
         </div>
       )}

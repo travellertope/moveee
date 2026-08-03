@@ -5704,6 +5704,8 @@ class Culture_REST_API {
                 $perk = Culture_Perks::get_perk( (int) $row['perk_id'] );
                 $row['perk_title'] = $perk ? $perk['title'] : '';
                 $row['perk_description'] = $perk ? $perk['description'] : '';
+                $partner_id = $perk ? (int) $perk['partner_directory_id'] : 0;
+                $row['perk_partner_name'] = $partner_id ? get_the_title( $partner_id ) : '';
             }
         }
         return rest_ensure_response( $rows );

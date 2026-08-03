@@ -311,61 +311,59 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: "20px", borderTop: "1px solid rgba(42,36,28,.1)", paddingTop: "20px" }}>
-      <div className="mem-field-list">
-        <div className="mem-field">
-          <label className="mem-field-label">Title *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value.slice(0, 120))}
-            required
-            placeholder="Project or piece title"
-            className="mem-input"
-          />
-        </div>
-        <div className="mem-field">
-          <label className="mem-field-label">Type</label>
-          <select value={type} onChange={e => setType(e.target.value)} className="mem-input">
-            {ITEM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-        </div>
-        <div className="mem-field">
-          <label className="mem-field-label">Description</label>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value.slice(0, 600))}
-            rows={3}
-            placeholder="Brief description of the work"
-            className="mem-input"
-          />
-        </div>
-        <div className="mem-field">
-          <label className="mem-field-label">Cover image URL</label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={e => setImageUrl(e.target.value)}
-            placeholder="https://..."
-            className="mem-input"
-          />
-        </div>
-        <div className="mem-field">
-          <label className="mem-field-label">External link</label>
-          <input
-            type="url"
-            value={externalUrl}
-            onChange={e => setExternalUrl(e.target.value)}
-            placeholder="https://..."
-            className="mem-input"
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="pf-form">
+      <div className="pf-field">
+        <label className="pf-label">Title *</label>
+        <input
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value.slice(0, 120))}
+          required
+          placeholder="Project or piece title"
+          className="pf-input"
+        />
       </div>
-      <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-        <button type="submit" disabled={saving || !title.trim()} className="mem-field-btn" style={{ background: "var(--ink)", color: "var(--paper)", border: "none" }}>
+      <div className="pf-field">
+        <label className="pf-label">Type</label>
+        <select value={type} onChange={e => setType(e.target.value)} className="pf-input">
+          {ITEM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </div>
+      <div className="pf-field">
+        <label className="pf-label">Description</label>
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value.slice(0, 600))}
+          rows={3}
+          placeholder="Brief description of the work"
+          className="pf-input"
+        />
+      </div>
+      <div className="pf-field">
+        <label className="pf-label">Cover image URL</label>
+        <input
+          type="url"
+          value={imageUrl}
+          onChange={e => setImageUrl(e.target.value)}
+          placeholder="https://..."
+          className="pf-input"
+        />
+      </div>
+      <div className="pf-field">
+        <label className="pf-label">External link</label>
+        <input
+          type="url"
+          value={externalUrl}
+          onChange={e => setExternalUrl(e.target.value)}
+          placeholder="https://..."
+          className="pf-input"
+        />
+      </div>
+      <div className="pf-form-actions">
+        <button type="submit" disabled={saving || !title.trim()} className="pf-submit-btn">
           {saving ? "Saving…" : initial ? "Update" : "Add"}
         </button>
-        <button type="button" onClick={onCancel} className="mem-field-btn">Cancel</button>
+        <button type="button" onClick={onCancel} className="pf-cancel-btn">Cancel</button>
       </div>
     </form>
   );

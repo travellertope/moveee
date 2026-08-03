@@ -149,9 +149,8 @@ function LoginForm() {
           type="button"
           onClick={() => signIn("google", { callbackUrl })}
           className="auth-btn-secondary"
-          style={{ marginTop: 10 }}
         >
-          <span style={{ fontWeight: "bold", fontFamily: "sans-serif", width: 16, textAlign: "center" }}>G</span>
+          <span className="auth-google-glyph">G</span>
           Continue with Google
         </button>
 

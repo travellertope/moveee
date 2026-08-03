@@ -402,6 +402,7 @@ function CompleteProfileForm() {
                   onChange={() => setTier(value)}
                   className="auth-tier-radio-input"
                 />
+                <span className="auth-tier-radio" aria-hidden="true" />
                 <h3 className="auth-tier-label">{label}</h3>
                 <div className="auth-tier-price-row">
                   <span className="auth-tier-price">{price}</span>

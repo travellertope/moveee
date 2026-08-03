@@ -161,11 +161,11 @@ export default function WalletClient({
       </div>
 
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--rule)", marginBottom: "24px" }}>
-        <button type="button" onClick={() => setTab("history")} className={`prf-tab${tab === "history" ? " prf-tab--active" : ""}`}>
+      <div className="wal-tabs">
+        <button type="button" onClick={() => setTab("history")} className={`wal-tab${tab === "history" ? " wal-tab--active" : ""}`}>
           Transaction History
         </button>
-        <button type="button" onClick={() => setTab("cashout")} className={`prf-tab${tab === "cashout" ? " prf-tab--active" : ""}`}>
+        <button type="button" onClick={() => setTab("cashout")} className={`wal-tab${tab === "cashout" ? " wal-tab--active" : ""}`}>
           Cash Out
         </button>
       </div>

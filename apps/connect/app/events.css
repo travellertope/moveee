@@ -259,16 +259,10 @@
 }
 
 .evt-day-rows {
-  border-left: 2px solid var(--evt-ghost-light);
-  margin-left: 4px;
-  padding-left: 20px;
-  /* Mirrors the left rail's total inset (4px margin + 2px border + 20px
-     padding = 26px) so rows don't sit flush against the column's right
-     edge while indented on the left — was asymmetric before this. */
-  padding-right: 26px;
+  /* Flat, border-bottom-separated rows (matches the approved mockup) — no
+     left rail/indent, which was a divergence from the mockup's design. */
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .evt-row {
@@ -278,9 +272,11 @@
   text-decoration: none;
   color: inherit;
   border-radius: 8px;
-  padding: 4px 8px;
-  margin: -4px -8px;
+  padding: 12px 8px;
+  margin: 0 -8px;
+  border-bottom: 1px solid var(--evt-ghost-light);
 }
+.evt-day-rows .evt-row:last-child { border-bottom: none; }
 
 /* Featured and Literati Connect events are just rows in the same timeline —
    distinguished by a tag (see .evt-tag below) plus this faint tint, rather
@@ -321,6 +317,7 @@
 }
 
 .evt-row-title {
+  font-family: var(--evt-font-serif);
   font-size: 15px;
   font-weight: 700;
   color: var(--evt-ink);
@@ -407,8 +404,8 @@
 
 .evt-sb-block {
   background: var(--evt-paper);
+  border: 1px solid var(--evt-ghost-light);
   border-radius: 12px;
-  box-shadow: var(--evt-shadow-card);
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -465,8 +462,8 @@
 
 .evt-literati-teaser {
   background: var(--evt-paper);
+  border: 1px solid var(--evt-ghost-light);
   border-radius: 12px;
-  box-shadow: var(--evt-shadow-card);
   padding: 20px;
 }
 
