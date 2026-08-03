@@ -370,86 +370,16 @@
   margin-top: 8px;
 }
 
-/* ---------- MEMBERSHIP ---------- */
-.mz-membership-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.mz-tier-card {
-  background: var(--mz-paper-warm);
-  border: 1px solid var(--mz-ghost);
-  border-radius: var(--mz-radius-xl);
-  box-shadow: var(--mz-shadow-card);
-  padding: 28px;
-}
-
-.mz-tier-card--pro {
-  background-color: var(--mz-ink);
-  background-size: cover;
-  background-position: center;
-  border: 2px solid var(--mz-gold);
-}
-
-.mz-tier-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.mz-tier-name {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--mz-ink);
-}
-
-.mz-tier-name--white {
-  color: #fff;
-}
-
-.mz-tier-pill {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--mz-ochre);
-  background: rgba(197, 73, 31, 0.1);
-  border-radius: var(--mz-radius-full);
-  padding: 4px 10px;
-}
-
-.mz-tier-pill--gold {
-  color: var(--mz-gold);
-  background: rgba(179, 130, 56, 0.15);
-}
-
-.mz-tier-body {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  color: var(--mz-ink-soft);
-  line-height: 1.5;
-  margin-top: 12px;
-}
-
-.mz-tier-body--light {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.mz-tier-card .mz-btn-ghost,
-.mz-tier-card .mz-btn-gold {
-  margin-top: 20px;
-}
-
-/* ---------- JOIN MOVEEE DOWNLOAD STRIP ---------- */
+/* ---------- JOIN MOVEEE DOWNLOAD STRIP ----------
+   (previously followed the Membership tier cards in the same section —
+   the Membership teaser was removed August 2026, per homepage rebuild
+   feedback, so this now stands alone in its own .mz-section and no
+   longer needs a top margin to separate it from the cards above.) */
 .mz-download-strip {
   background: var(--mz-paper-warm);
   border-radius: var(--mz-radius-2xl);
   box-shadow: var(--mz-shadow-card);
   padding: 36px 28px;
-  margin-top: 56px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -735,15 +665,6 @@
   .mz-feature-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-  }
-
-  .mz-membership-cards {
-    flex-direction: row;
-    justify-content: center;
-  }
-
-  .mz-tier-card {
-    width: 480px;
   }
 
   .mz-download-strip {

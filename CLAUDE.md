@@ -1264,6 +1264,44 @@ image-then-text-with-no-chrome layout.
   `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
   considering this fully closed.
 
+### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
+
+Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
+Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit
+feedback (removing the hero eyebrow badge and trust line, the "backed by Moveee Magazine…"
+subhead clause, both "Moveee Magazine" section eyebrows, and the entire Membership tier
+section), then approved and built for real. No token migration was needed — `moveee-zone.css`
+already ran on the same white/radius-xl/shadow-card system as the rest of the site going in;
+this was a composition-and-copy change only.
+
+- **Hero** (`MoveeeZone.tsx`) — new headline "Culture doesn't happen *to* you. It happens
+  because of you." and tightened subhead with no "backed by Moveee Magazine…" clause. The
+  `.mz-eyebrow` badge above the headline and the `.mz-trust` line below the CTAs are both
+  removed. The secondary CTA changed from "See how it works" (→ `#what-is-moveee`) to
+  **"Read the Magazine"**, anchored to a new `id="magazine"` wrapper div in
+  `HomepageContent.tsx` around the "From The Magazine" editorial sections (`mg-hero`/
+  `mg-band`) — since MoveeeZone and the editorial sections render on the same page/route, a
+  plain hash `Link` is enough, no route change.
+- **Feature grid / "What is Moveee"** — unchanged structurally (no eyebrow existed here to
+  begin with; the mockup's illustrative "What is Moveee" eyebrow line was mockup-only content
+  that was removed from the mockup itself, not something that needed removing from the real
+  component).
+- **Membership section — removed entirely** (the "Free to join. More for the obsessed."
+  intro + Citizen/Pro tier-card pair, `.mz-membership-cards`/`.mz-tier-card`/etc.) per explicit
+  feedback. The download strip (`.mz-download-strip`, `id="download"`) that used to sit inside
+  the same `<section>` now stands alone in its own `mz-section mz-section--bordered` —
+  `PatronPrice` import removed from `MoveeeZone.tsx` since it was only used inside the removed
+  Pro tier card. `.mz-download-strip`'s `margin-top: 56px` (previously separating it from the
+  tier cards above) was zeroed out since it's now the section's only child. The now-dead
+  `.mz-tier-card`/`.mz-membership-cards` desktop-breakpoint rules in `moveee-zone.css` were
+  removed; the base (non-breakpoint) `.mz-tier-*`/`.mz-btn-ghost`/`.mz-btn-gold` rules were
+  **left in place** (dead CSS, consistent with this file's usual "kept in case needed again"
+  convention) since `.mz-btn-ghost`/`.mz-btn-gold` are generic button classes, not
+  membership-specific, even though nothing in this component uses them anymore.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
+  and a CSS brace-balance check on `moveee-zone.css` (94/94).
+
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
 stories, products, latest issue, interviews, series batch.
