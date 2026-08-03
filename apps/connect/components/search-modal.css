@@ -115,6 +115,25 @@
   font-weight: 600;
 }
 
+/* Signals a content-type chip that's the default/current context (e.g. the
+   Event chip when the modal is opened while already filtering by Events) —
+   ochre instead of ink, distinct from a plain active selection. */
+.sm-chip.active.locked {
+  background: var(--ochre);
+  border-color: var(--ochre);
+}
+
+.sm-new-badge {
+  background: var(--ochre);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  letter-spacing: .04em;
+  margin-left: 6px;
+}
+
 /* Industry chips (People context) — colored bullet instead of an emoji,
    matching the approved Discover Type-tab convention. */
 .sm-chip { display: inline-flex; align-items: center; gap: 6px; }

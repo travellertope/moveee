@@ -23,6 +23,43 @@
   color: var(--ink);
 }
 
+/* ── Hero — see the "was entirely missing" comment at its JSX call site.
+   Contained within .disc-wrap's max-width rather than full-bleed (see that
+   comment for why); no photo collage behind the copy for the same reason. */
+.disc-hero {
+  position: relative;
+  padding: 32px 0 8px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(197,73,31,.14), transparent 45%),
+    radial-gradient(circle at 85% 0%, rgba(179,130,56,.16), transparent 50%),
+    radial-gradient(circle at 60% 90%, rgba(107,72,168,.12), transparent 45%);
+}
+.disc-hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.disc-hero-title {
+  font-family: var(--font-fraunces, Georgia, serif);
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: .98;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.disc-hero-title em { font-style: italic; color: var(--ochre); }
+.disc-hero-sub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--mute);
+  max-width: 480px;
+  margin: 0;
+}
+
 /* Same "opens the shared SearchModal" pill button as .evt-search-btn
    (apps/connect/app/events.css) — kept visually identical across every
    surface that uses this pattern (feed rail, /events, /discover). */
@@ -123,10 +160,19 @@
 
 .disc-rail-heading,
 .disc-grid-heading {
-  font-size: 16px;
+  font-family: var(--font-fraunces, Georgia, serif);
+  font-size: 24px;
   font-weight: 700;
   color: var(--ink);
   margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.disc-spark {
+  color: var(--ochre);
+  font-size: 20px;
 }
 
 .disc-rail {
@@ -157,9 +203,9 @@
 }
 
 .disc-card--rail {
-  flex: 0 0 180px;
-  width: 180px;
-  height: 230px;
+  flex: 0 0 230px;
+  width: 230px;
+  height: 290px;
 }
 
 .disc-card-art {
@@ -194,7 +240,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px;
+  padding: 14px;
 }
 
 .disc-card-badge {
@@ -227,7 +273,7 @@
 .disc-card-title {
   font-family: var(--font-fraunces, Georgia, serif);
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 19px;
   line-height: 1.2;
   margin-bottom: 3px;
   text-shadow: 0 2px 8px rgba(0,0,0,.5);
@@ -247,7 +293,7 @@
   text-shadow: 0 1px 4px rgba(0,0,0,.5);
 }
 
-.disc-card-rating { letter-spacing: 1px; }
+.disc-card-rating { letter-spacing: 1px; color: #ffd77a; }
 
 .disc-card-subtype-pill {
   border: 1px solid rgba(255,255,255,.5);

@@ -30,7 +30,7 @@ export default async function CouponsPage() {
             ) : initial}
           </div>
           <div className="acct-profile-body">
-            <h1 className="acct-name">My Coupons</h1>
+            <h1 className="acct-name">{displayName}</h1>
             <div className="acct-meta">
               <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
@@ -40,6 +40,12 @@ export default async function CouponsPage() {
         </div>
 
         <AccountNav isPatron={isPatron} />
+
+        <div className="acct-page-head">
+          <p className="acct-page-eyebrow">Redeemed Perks</p>
+          <h2 className="acct-page-title">My Coupons</h2>
+          <p className="acct-page-sub">Show the QR code at checkout to redeem — coupons expire 14 days after redemption.</p>
+        </div>
 
         <CouponsClient />
       </div>

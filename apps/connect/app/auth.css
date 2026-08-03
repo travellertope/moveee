@@ -153,13 +153,23 @@
 .auth-btn-secondary:hover:not(:disabled) { border-color: var(--ochre); color: var(--ochre); }
 .auth-btn-secondary:disabled { opacity: .6; cursor: not-allowed; }
 .auth-btn-secondary--nav { width: auto; height: auto; padding: 11px 20px; }
+/* Spacing between two consecutive secondary buttons (Passkey, then Google) —
+   an adjacent-sibling rule instead of a blanket margin-top so it doesn't add
+   unwanted space before the first one, which already sits below .auth-divider. */
+.auth-btn-secondary + .auth-btn-secondary { margin-top: 10px; }
+
+.auth-google-glyph { font-weight: 700; font-family: sans-serif; width: 16px; text-align: center; }
 
 .auth-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
 .auth-divider-line { flex: 1; height: 1px; background: var(--rule); }
-.auth-divider-label { font-size: 11.5px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
+.auth-divider-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
 
 .auth-footer { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 .auth-footer p { font-size: 13px; color: var(--mute); text-align: center; margin: 0; }
+/* De-emphasizes a secondary footer line (e.g. the Pro-upsell prompt below
+   the primary "Sign in" line) — was rendering at the same size/weight as
+   the primary line, losing the mockup's intended subordination. */
+.auth-footer-sub { font-size: 12px; }
 .auth-footer a, .auth-link {
   color: var(--ochre);
   text-decoration: none;
@@ -301,8 +311,32 @@
 }
 .auth-tier-card--active { border-color: var(--ochre); background: color-mix(in srgb, var(--ochre) 6%, transparent); }
 .auth-tier-radio-input { position: absolute; opacity: 0; pointer-events: none; }
+/* Visible selection ring — the native radio input itself is hidden (above)
+   for custom styling, but no visible affordance existed to replace it with;
+   selection relied on border/background tint alone. */
+.auth-tier-radio {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--rule);
+  background: var(--paper);
+}
+.auth-tier-card--active .auth-tier-radio {
+  border-color: var(--ochre);
+}
+.auth-tier-card--active .auth-tier-radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--ochre);
+}
 .auth-tier-label {
   margin: 0 0 4px;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
   letter-spacing: .08em;

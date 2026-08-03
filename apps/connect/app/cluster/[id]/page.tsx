@@ -255,7 +255,7 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
         {cluster.status === "active" && status.isMember && (
           <div className="stoop-detail-section">
             <p className="stoop-detail-sec-title">Host Election</p>
-            <ClusterElection clusterId={cluster.id} myUserId={Number(session.user.id)} initialElection={election} />
+            <ClusterElection clusterId={cluster.id} myUserId={Number(session.user.id)} initialElection={election} hostName={cluster.hostName} />
           </div>
         )}
 

@@ -65,7 +65,7 @@ export default async function WalletPage() {
             ) : initial}
           </div>
           <div className="acct-profile-body">
-            <h1 className="acct-name">Wallet</h1>
+            <h1 className="acct-name">{displayName}</h1>
             <div className="acct-meta">
               <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
@@ -76,6 +76,12 @@ export default async function WalletPage() {
         </div>
 
         <AccountNav isPatron={isPatron} />
+
+        <div className="acct-page-head">
+          <p className="acct-page-eyebrow">Culture Credits</p>
+          <h2 className="acct-page-title">Wallet</h2>
+          <p className="acct-page-sub">Track what you&apos;ve earned, spend it on partner perks, or cash it out.</p>
+        </div>
 
         <WalletClient
           credits={balance?.credits ?? 0}

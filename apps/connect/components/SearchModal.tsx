@@ -379,7 +379,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
                 <button
                   key={t.value}
                   type="button"
-                  className={`sm-chip${contentType === t.value ? " active" : ""}`}
+                  className={`sm-chip${contentType === t.value ? " active" : ""}${t.value === "event" && contentType === "event" ? " locked" : ""}`}
                   onClick={() => setContentType(t.value)}
                 >
                   {t.label}
@@ -390,7 +390,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
 
           {isEvent && (
             <div className="sm-filter-group">
-              <p className="sm-filter-label">City</p>
+              <p className="sm-filter-label">City <span className="sm-new-badge">New</span></p>
               <div className="sm-filter-chips">
                 {EVENT_CITIES.map((c) => (
                   <button
@@ -409,7 +409,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
           {isEvent && (
             <div className="sm-filter-row">
               <div className="sm-filter-group">
-                <p className="sm-filter-label">Price</p>
+                <p className="sm-filter-label">Price <span className="sm-new-badge">New</span></p>
                 <div className="sm-filter-chips sm-filter-chips--nowrap">
                   {EVENT_PRICES.map((p) => (
                     <button
@@ -425,7 +425,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
               </div>
 
               <div className="sm-filter-group">
-                <p className="sm-filter-label">Format</p>
+                <p className="sm-filter-label">Format <span className="sm-new-badge">New</span></p>
                 <div className="sm-filter-chips sm-filter-chips--nowrap">
                   {EVENT_FORMATS.map((f) => (
                     <button

@@ -2099,6 +2099,36 @@ select.mem-field-input { cursor: pointer; }
    gains AccountNav + shell spacing, so it has no CSS block here.
    ═══════════════════════════════════════════════════ */
 
+/* ── Page head — sits below AccountNav, above a page's own content.
+   Previously missing entirely; Wallet/Coupons repurposed .acct-name (the
+   profile-name slot) to show the page title instead, which overwrote the
+   user's actual display name on those two pages. Fixed by giving each page
+   its own .acct-page-head block and restoring .acct-name to the real name. ── */
+.acct-page-head { padding: 4px 0 20px; }
+.acct-page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin: 0 0 8px;
+}
+.acct-page-title {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 6px;
+  letter-spacing: -.01em;
+}
+.acct-page-sub {
+  font-size: 13.5px;
+  color: var(--mute);
+  max-width: 520px;
+  line-height: 1.55;
+  margin: 0;
+}
+
 /* ── Wallet: stat row ── */
 .wal-stats {
   display: grid;
@@ -2107,6 +2137,32 @@ select.mem-field-input { cursor: pointer; }
   margin-bottom: 24px;
 }
 @media (max-width: 640px) { .wal-stats { grid-template-columns: 1fr; } }
+
+/* ── Wallet: tab switcher — was reusing .prf-tab (tiny uppercase mono caps),
+   which rendered "Transaction History"/"Cash Out" as small caption-style
+   labels instead of the mockup's larger semibold sans tabs. ── */
+.wal-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 18px;
+}
+.wal-tab {
+  padding: 10px 4px 12px;
+  margin-right: 26px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--mute);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+.wal-tab--active {
+  color: var(--ink);
+  border-bottom-color: var(--ochre);
+}
 
 .wal-stat-card {
   background: var(--paper);
@@ -2378,6 +2434,11 @@ select.mem-field-input { cursor: pointer; }
   font-size: 10.5px;
   color: var(--mute);
   margin-top: 10px;
+}
+.cpn-card-partner {
+  font-size: 11px;
+  color: var(--mute);
+  margin: 0 0 10px;
 }
 .cpn-card-expiry {
   font-family: 'DM Sans', sans-serif;
@@ -2827,6 +2888,19 @@ select.mem-field-input { cursor: pointer; }
 }
 .pf-submit-btn:hover:not(:disabled) { background: var(--ochre); }
 .pf-submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pf-cancel-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background: none;
+  color: var(--mute);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-lg);
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.pf-cancel-btn:hover { color: var(--ink); border-color: var(--ink); }
 .pf-status--success { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--success); margin-bottom: 12px; }
 .pf-status--error { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--error); margin-bottom: 12px; }
 .acct-explore-arrow { color: var(--mute); font-size: 11px; }

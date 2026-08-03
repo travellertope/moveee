@@ -1298,9 +1298,155 @@ this was a composition-and-copy change only.
   **left in place** (dead CSS, consistent with this file's usual "kept in case needed again"
   convention) since `.mz-btn-ghost`/`.mz-btn-gold` are generic button classes, not
   membership-specific, even though nothing in this component uses them anymore.
+- **Follow-up pass (same day): the first pass under-delivered — it was copy/section-removal
+  only, not the visual rebuild the mockup actually called for.** The user caught this directly
+  ("i can see some copy change but the homepage layout is still pretty much the same") and was
+  right — three real structural gaps were found and fixed:
+  1. **Hero visual was still the old rotated-photo-strip-over-a-gradient-blob collage**
+     (`.mz-hero-visual-bg` gradient blob + an 80%-width, `rotate(-2deg)`, 220–280px-tall photo
+     strip), not the mockup's single large framed portrait. Rebuilt `.mz-hero-photo-frame` as a
+     full-width `aspect-ratio: 4/5` frame with the real photo filling it via `object-fit:
+     cover`, removed `.mz-hero-visual-bg` entirely (JSX and CSS), and removed the rotation on
+     the floating quote card. Quote card/points-chip now overlap the frame's edges at fixed
+     pixel offsets (`-16px`/`-10px`, widening to `-24px`/`-16px` at the desktop breakpoint) —
+     intentionally less than the section's own side padding (24px mobile / 64px desktop) so
+     they can never cause horizontal overflow on narrow viewports.
+  2. **Feature grid had product name and tagline visually inverted**: `.mz-feature-title` (the
+     JSX element rendering the actual feature name, e.g. "Pulse Feed") was styled as a small
+     12px uppercase ochre caption, while `.mz-feature-hook` (the tagline, e.g. "Nine ways to
+     share") was styled as the big 18px serif heading — backwards from the mockup's intended
+     hierarchy (name = heading, tagline = small mono caption below it). Fixed by swapping the
+     CSS property blocks between the two selectors (JSX unchanged — each element already had
+     the semantically-correct class, only the class's own styling was wrong).
+  3. **`MagazineSpotlight.tsx`'s Latest Issue section still had a literal "Moveee Magazine"
+     eyebrow** (`<p className="ms-eyebrow">Moveee Magazine</p>`) — the first pass reasoned "the
+     real editorial sections don't say 'Moveee Magazine' anywhere" while only having checked
+     `HomepageContent.tsx`'s own JSX, missing that `MagazineSpotlight.tsx` (a separate component,
+     rendered last on the page) had exactly the eyebrow the user asked to remove from the
+     mockup. Removed.
+  4. **"From The Magazine" cover story was a stripped-down stacked image+title block** (reusing
+     `/magazine` archive's own `.mg-hero`/`.mg-hero-main` classes with no dek, no read-more
+     link, image on top of title rather than side-by-side) instead of the mockup's real
+     two-column grid (image left, kicker+title+dek+"Read the full story →" link on the right).
+     Rebuilt as a new, additive `.mg-cover-*` class family in `magazine.css` — **deliberately
+     not** a modification of `.mg-hero`/`.mg-hero-main`, since `MagazineArchiveWrapper.tsx` (the
+     real `/magazine` archive page) depends on those classes for its own hero-with-sidebar
+     layout; changing them would have broken that page. `HomepageContent.tsx`'s cover-story JSX
+     was rewritten to use the new classes and to surface `coverStory.excerpt`/date already
+     available on `STORY_FIELDS_FRAGMENT` but previously unused here.
+  - **Lesson for future mockup-to-real passes on this page specifically**: check every component
+    the page composes (`MoveeeZone.tsx` **and** `HomepageContent.tsx` **and**
+    `MagazineSpotlight.tsx`) against the mockup individually — reasoning about one file's JSX
+    isn't enough when the page is assembled from three separately-maintained components, and a
+    copy-only change to the top-level JSX without touching the underlying CSS produces exactly
+    the "still looks the same" result the user flagged.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
-  and a CSS brace-balance check on `moveee-zone.css` (94/94).
+  and CSS brace-balance checks on `moveee-zone.css` (93/93) and `magazine.css` (333/333).
+
+### Cross-page mockup-fidelity audit + fixes (August 2026)
+
+Triggered directly by the homepage incident above: once it was clear that a "rebuilt from
+mockup" claim could be wrong, the user asked to check every other page for the same gap. The
+first audit pass compared pages against the **wrong** mockups — the old, already-superseded
+`mockups/web/*.html` repo files — instead of the actual Artifact mockups built and approved
+*in this same chat session*, which live only in the ephemeral scratchpad
+(`account-dashboard-mockup.html`, `wallet-coupons-perks-mockup.html`, `settings-mockup.html`,
+`notifications-analytics-mockup.html`, `events-referrals-mockup.html`,
+`portfolio-collection-mockup.html`, `events-redesign-mockup.html`, `games-mockup.html`,
+`discover-mockup.html`, `people-near-me-mockup.html`, `stoop-mockup.html`, `auth-mockup.html`).
+**Lesson: when auditing a page against "the mockup," always check the session's own scratchpad
+first for a newer Artifact before falling back to the committed `mockups/web/` archive** — a
+page can have been rebuilt more than once, and the repo file is not automatically the latest
+source of truth.
+
+Re-run against the correct files, real mismatches were found and fixed:
+
+- **Culture Games** (`apps/connect/app/games.css`, `GamesHubClient.tsx`) — non-done badge
+  colors were the same dark value as the card's accent color instead of the mockup's lighter/
+  desaturated tint (Trivia `#7a9450`, Crossword `#a06a3a` — `badgeBg` was already correct, only
+  `badgeColor` was wrong); the "2/4" progress count was forced into Fraunces serif when the
+  mockup has no font-family override (inherits sans). **Not changed**: the hub title's 22px/700
+  plain-sans size — that's the user's own explicit fix from earlier in this session
+  (superseding the mockup's big serif hero treatment), not a bug to revert.
+- **Events** (`apps/connect/app/events.css`, `SearchModal.tsx`) — `.evt-row-title` had no
+  `font-family`, so it silently inherited sans instead of the intended serif (its sibling date
+  labels were already correctly serif); `.evt-day-rows` had a left-rail/indent treatment with no
+  mockup equivalent, replaced with flat `border-bottom`-separated rows; right-rail cards
+  (`.evt-sb-block`/`.evt-literati-teaser`) used shadow-with-no-border instead of the mockup's
+  border-with-no-shadow; the Event content-type chip and the new City/Price/Format filter groups
+  in `SearchModal` had no "locked"/"New" badge treatment (`.sm-chip.active.locked`,
+  `.sm-new-badge` added).
+- **Discover** (`apps/connect/app/discover.css`, `DiscoverBrowser.tsx`) — the entire hero section
+  (eyebrow/big-serif-title/subhead) had never been built, only a flat 22px "Discover" title
+  existed; rebuilt inside the existing `.disc-wrap` container (not full-bleed edge-to-edge like
+  the mockup, and without its decorative photo collage — both a deliberate scope reduction, see
+  the code comment at the JSX call site). **Copy fix while doing this**: the mockup's subhead
+  read "...living archive of African & diaspora culture..." — rewritten to plain "culture" per
+  this repo's own brand-language rule (public copy stays universal, see that section above).
+  Also fixed: "Recently Added"/"Trending in Community" rails were in swapped order; section
+  headings were 16px sans instead of 24px Georgia serif + an ochre "✦" spark icon; rail cards
+  were 180×230/10px padding/14.5px title instead of the mockup's 230×290/14px/19px; star ratings
+  rendered plain white instead of the mockup's gold (`#ffd77a`).
+- **Stoop** (`StoopBrowser.tsx`, `stoop.css`, `ClusterElection.tsx`, `ClusterCheckin.tsx`) — the
+  "Your Stoop" member hero rendered only one plain-text link ("View Stoop →") where the mockup
+  wants two real actions (ghost "View Members" + primary "Open Check-in QR →"); `.ys-btn-primary`
+  existed in CSS but was never referenced anywhere in the JSX. Restructured so the name/details
+  block is its own `Link` and `.ys-actions` holds two real `Link` buttons (the QR one points at
+  `#checkin`, a new `id="checkin"` added to `ClusterCheckin.tsx`'s wrapper). Host Election's
+  empty state now names the current host (`ClusterElection.tsx` gained a `hostName` prop, threaded
+  from `cluster/[id]/page.tsx`) — the mockup also wanted an election date, which isn't tracked
+  anywhere in the backend, so that part was deliberately left out rather than fabricated. Also
+  added the missing "(exact address shown to members only)" note to the member hero.
+- **Auth Flow** (`apps/connect/app/auth.css`, `login/page.tsx`, `register/page.tsx`,
+  `register/complete/page.tsx`) — removed two leftover inline styles (`marginTop` hack →
+  `.auth-btn-secondary + .auth-btn-secondary` sibling-spacing rule; the Google "G" glyph's raw
+  style object → `.auth-google-glyph` class); the membership tier-card's radio selector was
+  visually invisible (native input hidden for custom styling, but no replacement indicator was
+  ever added) — added a real ring/dot `.auth-tier-radio`; `.auth-divider-label`/`.auth-tier-label`
+  were missing the mockup's monospace font; the Pro-upsell footer line on `/register` was the same
+  size as the primary "Sign in" line instead of subordinate (`.auth-footer-sub`, 12px).
+  **Deliberately not changed** (larger, lower-priority redesigns, not simple property fixes):
+  the interest-picker chips are a 3-column grid with 2px borders where the mockup wants a
+  single-row pill list — a real layout difference, not just wrong tokens; and
+  `register/complete`'s step indicator is a custom circle-stepper rather than the mockup's
+  3-dot/eyebrow design — both work correctly today and would need a genuine rebuild, not a
+  property tweak, so they're flagged here rather than done in this pass.
+- **Account Dashboard Phase 2 (Wallet/Coupons/Perks)** — a real regression, not just a visual
+  miss: `wallet/page.tsx` and `coupons/page.tsx` were repurposing the `.acct-name` slot (meant
+  for the user's own display name, shown on every other account page) to render the page title
+  ("Wallet"/"My Coupons") instead — so a visitor's actual name silently disappeared on exactly
+  these two pages. Fixed by restoring `.acct-name` to `{displayName}` and adding the
+  `.acct-page-head`/`.acct-page-eyebrow`/`.acct-page-title`/`.acct-page-sub` block the mockup
+  always specified for the actual page title (CSS for these already existed, unused, in
+  `member.css`). Also fixed: the Wallet History/Cash Out tab switcher was reusing `.prf-tab`
+  (tiny uppercase mono caption styling) instead of a dedicated `.wal-tab` (larger semibold sans,
+  now added); the Coupons active-card dropped the partner/venue name entirely (showed a
+  cost/date meta line instead) — fixed by adding `perk_partner_name` to the
+  `GET /culture/v1/user/redemptions` PHP response (resolves `partner_directory_id` →
+  `get_the_title()`) and rendering it in the mockup's field order (badge → QR → title → partner
+  → expiry); the Perks page wrapped `AccountNav` in a hand-duplicated inline style instead of the
+  shared `.acct-wrap` class (didn't even import `member.css`) — fixed to match Wallet/Coupons/
+  Overview.
+- **Account Dashboard Phase 6 (Portfolio)** — confirmed via two independent audits: the
+  add/edit `ItemForm` inside `PortfolioManager.tsx` still rendered with the old
+  `.mem-field-list`/`.mem-field-label`/`.mem-input`/`.mem-field-btn` classes and a raw inline
+  `style={{}}` on its submit button, even though a full set of `.pf-form`/`.pf-field`/`.pf-label`/
+  `.pf-input`/`.pf-submit-btn` rules already existed in `member.css`, unused — the CSS had been
+  written for this exact form and never wired in. Fixed; added a new `.pf-cancel-btn` (the
+  mockup's form has no Cancel button at all, so this one was authored fresh, matching the
+  existing `.pf-submit-btn`'s visual language).
+- **Confirmed already correct, no changes needed**: Account Dashboard Phases 1, 3, 4, 5
+  (Overview, Settings, Notifications/Analytics, My Events/Referrals), Directory Entry Detail,
+  Member Directory/People Near Me. Two "mismatches" from the first (wrong-mockup) audit pass
+  turned out to be non-issues once re-checked against the right file: Discover's photo-card/
+  scrim treatment and masonry Explore-More grid are exactly what the correct mockup specifies,
+  not a deviation from it.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via `tsc --noEmit` (clean) on both `apps/connect` and
+  `apps/site`, `php -l` (clean) on `class-culture-rest-api.php`, and CSS brace-balance checks on
+  every touched CSS file (`member.css` 555/555, `games.css` 249/249, `events.css` 316/316,
+  `search-modal.css` 33/33, `stoop.css` 154/154, `discover.css` 50/50, `auth.css` 85/85).
 
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):

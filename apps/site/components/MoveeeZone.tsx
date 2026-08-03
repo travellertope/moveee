@@ -87,7 +87,6 @@ export default function MoveeeZone() {
           </div>
         </div>
         <div className="mz-hero-visual" aria-hidden="true">
-          <div className="mz-hero-visual-bg" />
           <div className="mz-hero-photo-frame">
             <img
               src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=900&q=80&auto=format&fit=crop"

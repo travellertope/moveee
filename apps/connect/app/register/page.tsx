@@ -192,7 +192,7 @@ function RegisterForm() {
 
         <div className="auth-footer">
           <p>Already have an account? <Link href="/login" className="auth-link">Sign in</Link></p>
-          <p>
+          <p className="auth-footer-sub">
             Want Moveee Pro?{" "}
             <Link
               href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}

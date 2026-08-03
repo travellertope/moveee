@@ -13,6 +13,7 @@ interface Redemption {
   created_at: string;
   perk_title?: string;
   perk_description?: string;
+  perk_partner_name?: string;
 }
 
 function formatDate(iso: string) {
@@ -104,9 +105,9 @@ export default function CouponsClient() {
             return (
               <div key={r.id} className={`cpn-card${expiringSoon ? " cpn-card--warn" : ""}`}>
                 <span className="cpn-badge">Active</span>
-                <h3 className="cpn-card-title">{r.perk_title || `Perk #${r.perk_id}`}</h3>
                 <img src={qrUrl} alt="QR" width={120} height={120} style={{ flexShrink: 0 }} />
-                <span className="cpn-card-meta">{r.credits_spent} credits · Redeemed {formatDate(r.created_at)}</span>
+                <h3 className="cpn-card-title">{r.perk_title || `Perk #${r.perk_id}`}</h3>
+                {r.perk_partner_name && <span className="cpn-card-partner">{r.perk_partner_name}</span>}
                 <span className={`cpn-card-expiry ${expiringSoon ? "cpn-card-expiry--warn" : "cpn-card-expiry--ok"}`}>
                   {days === 0 ? "Expires today" : `Expires in ${days} day${days !== 1 ? "s" : ""}`}
                 </span>
