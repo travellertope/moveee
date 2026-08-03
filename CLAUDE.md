@@ -1011,6 +1011,25 @@ Two Vercel projects, one monorepo:
 
 Both share `cms.themoveee.com` (WordPress) as the backend.
 
+### Site A header nav — Shop/Newsletter/Events added (August 2026)
+
+`apps/site/components/Header.tsx`'s desktop nav (`.compact-nav`) and mobile menu previously
+only linked **Feed**, **Discover** (both cross-domain to Connect), and **Editorials**
+(`/magazine`) — leaving `/shop` and `/newsletter` (both real Site A sections) completely
+unreachable from the header despite the header already showing shopping-cart UI with nowhere
+for it to lead. Added, in both the desktop nav and mobile menu: **Events** (cross-domain
+`${CONNECT_URL}/events`, same pattern as Feed/Discover), **Shop** (`Link href="/shop"`), and
+**Newsletter** (`Link href="/newsletter"`) — nav order is now Feed → Discover → Events →
+Editorials → Shop → Newsletter. Journeys/Makers/Visuals were deliberately left off the nav —
+they read as sub-sections of Editorial/Shop rather than primary destinations.
+
+**Ticker breakpoint bumped 1100px → 1280px** (`apps/site/app/homepage.css`) as a consequence —
+`.compact-ticker` is absolutely centered independent of nav width
+(`position: absolute; left: 50%`), so the wider 6-item nav risked colliding with it at medium
+desktop widths that used to be wide enough for the old 3-item nav. If the nav ever grows
+again, re-check this breakpoint (and consider whether the ticker should just move out of the
+centered-absolute pattern instead of chasing the breakpoint each time).
+
 ## Connect App build phases
 
 | Phase | Status | Scope |
