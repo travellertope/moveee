@@ -1298,9 +1298,51 @@ this was a composition-and-copy change only.
   **left in place** (dead CSS, consistent with this file's usual "kept in case needed again"
   convention) since `.mz-btn-ghost`/`.mz-btn-gold` are generic button classes, not
   membership-specific, even though nothing in this component uses them anymore.
+- **Follow-up pass (same day): the first pass under-delivered — it was copy/section-removal
+  only, not the visual rebuild the mockup actually called for.** The user caught this directly
+  ("i can see some copy change but the homepage layout is still pretty much the same") and was
+  right — three real structural gaps were found and fixed:
+  1. **Hero visual was still the old rotated-photo-strip-over-a-gradient-blob collage**
+     (`.mz-hero-visual-bg` gradient blob + an 80%-width, `rotate(-2deg)`, 220–280px-tall photo
+     strip), not the mockup's single large framed portrait. Rebuilt `.mz-hero-photo-frame` as a
+     full-width `aspect-ratio: 4/5` frame with the real photo filling it via `object-fit:
+     cover`, removed `.mz-hero-visual-bg` entirely (JSX and CSS), and removed the rotation on
+     the floating quote card. Quote card/points-chip now overlap the frame's edges at fixed
+     pixel offsets (`-16px`/`-10px`, widening to `-24px`/`-16px` at the desktop breakpoint) —
+     intentionally less than the section's own side padding (24px mobile / 64px desktop) so
+     they can never cause horizontal overflow on narrow viewports.
+  2. **Feature grid had product name and tagline visually inverted**: `.mz-feature-title` (the
+     JSX element rendering the actual feature name, e.g. "Pulse Feed") was styled as a small
+     12px uppercase ochre caption, while `.mz-feature-hook` (the tagline, e.g. "Nine ways to
+     share") was styled as the big 18px serif heading — backwards from the mockup's intended
+     hierarchy (name = heading, tagline = small mono caption below it). Fixed by swapping the
+     CSS property blocks between the two selectors (JSX unchanged — each element already had
+     the semantically-correct class, only the class's own styling was wrong).
+  3. **`MagazineSpotlight.tsx`'s Latest Issue section still had a literal "Moveee Magazine"
+     eyebrow** (`<p className="ms-eyebrow">Moveee Magazine</p>`) — the first pass reasoned "the
+     real editorial sections don't say 'Moveee Magazine' anywhere" while only having checked
+     `HomepageContent.tsx`'s own JSX, missing that `MagazineSpotlight.tsx` (a separate component,
+     rendered last on the page) had exactly the eyebrow the user asked to remove from the
+     mockup. Removed.
+  4. **"From The Magazine" cover story was a stripped-down stacked image+title block** (reusing
+     `/magazine` archive's own `.mg-hero`/`.mg-hero-main` classes with no dek, no read-more
+     link, image on top of title rather than side-by-side) instead of the mockup's real
+     two-column grid (image left, kicker+title+dek+"Read the full story →" link on the right).
+     Rebuilt as a new, additive `.mg-cover-*` class family in `magazine.css` — **deliberately
+     not** a modification of `.mg-hero`/`.mg-hero-main`, since `MagazineArchiveWrapper.tsx` (the
+     real `/magazine` archive page) depends on those classes for its own hero-with-sidebar
+     layout; changing them would have broken that page. `HomepageContent.tsx`'s cover-story JSX
+     was rewritten to use the new classes and to surface `coverStory.excerpt`/date already
+     available on `STORY_FIELDS_FRAGMENT` but previously unused here.
+  - **Lesson for future mockup-to-real passes on this page specifically**: check every component
+    the page composes (`MoveeeZone.tsx` **and** `HomepageContent.tsx` **and**
+    `MagazineSpotlight.tsx`) against the mockup individually — reasoning about one file's JSX
+    isn't enough when the page is assembled from three separately-maintained components, and a
+    copy-only change to the top-level JSX without touching the underlying CSS produces exactly
+    the "still looks the same" result the user flagged.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
-  and a CSS brace-balance check on `moveee-zone.css` (94/94).
+  and CSS brace-balance checks on `moveee-zone.css` (93/93) and `magazine.css` (333/333).
 
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):

@@ -25,7 +25,6 @@ export default function MagazineSpotlight({ latestIssue }: Props) {
     <section className="ms-section">
       <div className="ms-section-inner">
       <div className="ms-intro">
-        <p className="ms-eyebrow">Moveee Magazine</p>
         <h2 className="ms-h2">The reporting behind the community.</h2>
         <p className="ms-body">
           Everything Moveee&apos;s community surfaces starts somewhere — Moveee Magazine is our

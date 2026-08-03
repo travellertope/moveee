@@ -74,29 +74,42 @@ export default function HomepageContent({ coverStory, stories, edition, latestIs
           "Read the Magazine" CTA. */}
       <div id="magazine">
       {coverStory && (
-        <section className="mg-hero">
-          <div className="mg-hero-main">
-            <div className="mg-hero-eyebrow">
-              {decodeHtml(coverStory.categories?.nodes?.[0]?.name || "Featured")}
-            </div>
-            <Link href={`/magazine/${coverStory.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
-              <div className="mg-hero-img">
-                {coverStory.featuredImage?.node?.sourceUrl ? (
-                  <Image
-                    src={coverStory.featuredImage.node.sourceUrl}
-                    alt={coverStory.featuredImage.node.altText || ""}
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
-                ) : (
-                  <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                )}
-              </div>
-              <h2
-                className="mg-hero-title"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(coverStory.title) }}
-              />
+        <section className="mg-cover-section">
+          <div className="mg-cover-grid">
+            <Link href={`/magazine/${coverStory.slug}`} className="mg-cover-img">
+              {coverStory.featuredImage?.node?.sourceUrl ? (
+                <Image
+                  src={coverStory.featuredImage.node.sourceUrl}
+                  alt={coverStory.featuredImage.node.altText || ""}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              ) : (
+                <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+              )}
             </Link>
+            <div>
+              <p className="mg-cover-kicker">
+                {decodeHtml(coverStory.categories?.nodes?.[0]?.name || "Featured")}
+              </p>
+              <Link href={`/magazine/${coverStory.slug}`} className="mg-cover-title-link">
+                <h2
+                  className="mg-cover-title"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(coverStory.title) }}
+                />
+              </Link>
+              {coverStory.excerpt && (
+                <p
+                  className="mg-cover-dek"
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(coverStory.excerpt.replace(/<[^>]*>/g, "")),
+                  }}
+                />
+              )}
+              <Link href={`/magazine/${coverStory.slug}`} className="mg-cover-link">
+                Read the full story →
+              </Link>
+            </div>
           </div>
         </section>
       )}

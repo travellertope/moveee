@@ -143,51 +143,41 @@
   margin-top: 12px;
 }
 
+/* Single large framed portrait (matches the approved mockup) — replaces the
+   previous rotated-photo-strip-over-a-gradient-blob collage treatment. The
+   quote card and points chip overlap the frame's edges as accent details,
+   offset just short of the section's own side padding so they never cause
+   horizontal overflow on narrow viewports. */
 .mz-hero-visual {
   position: relative;
-  min-height: 380px;
   margin-top: 8px;
 }
 
-.mz-hero-visual-bg {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--mz-radius-2xl);
-  overflow: hidden;
-  background:
-    repeating-radial-gradient(circle, rgba(255, 255, 255, 0.45) 0 1px, transparent 1px 13px),
-    linear-gradient(125deg, var(--mz-paper-warm) 0%, var(--mz-paper-warm) 36%, #e8632c 44%, #c5316b 68%, #6c3fa3 100%);
-}
-
 .mz-hero-photo-frame {
-  position: absolute;
-  left: 4%;
-  bottom: -6%;
-  width: 80%;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
   border-radius: var(--mz-radius-2xl);
-  border: 6px solid var(--mz-white);
-  box-shadow: var(--mz-shadow-card);
-  transform: rotate(-2deg);
   overflow: hidden;
+  box-shadow: 0 20px 48px rgba(20, 17, 13, 0.18);
 }
 
 .mz-hero-photo {
   display: block;
   width: 100%;
-  height: 220px;
+  height: 100%;
   object-fit: cover;
 }
 
 .mz-hero-quote-card {
   position: absolute;
-  top: 6%;
-  right: 4%;
-  width: min(74%, 270px);
+  left: -16px;
+  bottom: 44px;
+  width: min(74%, 250px);
   background: var(--mz-white);
   border-radius: var(--mz-radius-xl);
   box-shadow: var(--mz-shadow-card);
   padding: 16px 18px;
-  transform: rotate(-3deg);
 }
 
 .mz-hero-quote-head {
@@ -246,8 +236,8 @@
 
 .mz-hero-points-chip {
   position: absolute;
-  top: 44%;
-  right: 0;
+  top: 28px;
+  right: -10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -345,20 +335,26 @@
   display: block;
 }
 
+/* .mz-feature-title is the feature's actual name (e.g. "Pulse Feed") — it should
+   read as the card's heading, not a caption. .mz-feature-hook is the short
+   tagline underneath it — a small mono/uppercase label. These two were
+   previously swapped (title styled as a tiny ochre caption, hook styled as the
+   big serif heading), which inverted the intended visual hierarchy. */
 .mz-feature-title {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--mz-ochre);
-  text-transform: uppercase;
-  margin-top: 16px;
-}
-
-.mz-feature-hook {
   font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 700;
   color: var(--mz-ink);
+  margin-top: 16px;
+}
+
+.mz-feature-hook {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--mz-ochre);
+  text-transform: uppercase;
   margin-top: 6px;
 }
 
@@ -679,12 +675,14 @@
     align-items: center;
   }
 
-  .mz-hero-visual {
-    min-height: 460px;
+  .mz-hero-quote-card {
+    left: -24px;
+    bottom: 56px;
   }
 
-  .mz-hero-photo {
-    height: 280px;
+  .mz-hero-points-chip {
+    right: -16px;
+    top: 36px;
   }
 
   .mz-download-strip {

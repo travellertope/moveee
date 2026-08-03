@@ -355,6 +355,80 @@
   margin-top: auto;
 }
 
+/* ── HOMEPAGE COVER STORY (August 2026) ──
+   Used only by HomepageContent.tsx's "From The Magazine" section (homepage +
+   /uk /us /africa edition pages) — a simpler two-column grid (image, then
+   kicker/title/dek/read-link), distinct from the /magazine archive page's own
+   .mg-hero (which also renders a secondary-story sidebar via .mg-hero-sidebar/
+   .mg-sf-card). Kept as its own class family so this can evolve independently
+   without touching MagazineArchiveWrapper.tsx's usage of .mg-hero/.mg-hero-main. */
+.mg-cover-section {
+  background: #fff;
+  padding: 56px 24px;
+  max-width: calc(1200px + 48px);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.mg-cover-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: center;
+}
+.mg-cover-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--ink);
+}
+.mg-cover-img img { transition: transform .5s; }
+.mg-cover-img:hover img { transform: scale(1.04); }
+.mg-cover-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #C5491F;
+  margin: 0 0 12px;
+}
+.mg-cover-title-link { text-decoration: none; color: inherit; }
+.mg-cover-title {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 0 0 14px;
+  transition: color .15s;
+}
+.mg-cover-title-link:hover .mg-cover-title { color: #C5491F; }
+.mg-cover-dek {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px;
+  color: #3A342B;
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+.mg-cover-link {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 2px solid #C5491F;
+  padding-bottom: 2px;
+}
+.mg-cover-link:hover { color: #C5491F; }
+
+@media (min-width: 900px) {
+  .mg-cover-grid { grid-template-columns: 1.2fr 1fr; gap: 40px; }
+  .mg-cover-section { padding: 80px 64px; }
+}
+
 /* ── PORTRAIT SCROLL: In Focus ── */
 .mg-portrait {
   border-top: 1px solid rgba(200,191,176,.4);
