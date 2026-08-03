@@ -848,17 +848,22 @@
   padding: 80px 0;
 }
 
-/* ── ISSUES ARCHIVE ── */
-.mg-issues {
+/* ── ISSUES ARCHIVE ──
+   Class names below fixed to mag-issues-* (was mg-issues-*, a typo that
+   never matched app/magazine/issues/page.tsx's actual className props) —
+   the mismatch meant this entire block was dead CSS: no container padding/
+   max-width, no grid, no header typography, so the page rendered as
+   full-bleed stacked images with an unstyled title. */
+.mag-issues-archive {
   padding: 80px 64px;
   max-width: calc(1200px + 128px);
   margin: 0 auto;
   box-sizing: border-box;
 }
-.mg-issues-header {
+.mag-issues-header {
   margin-bottom: 64px;
 }
-.mg-issues-eyebrow {
+.mag-issues-eyebrow {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
@@ -868,7 +873,7 @@
   display: block;
   margin-bottom: 8px;
 }
-.mg-issues-header h1 {
+.mag-issues-header h1 {
   font-family: 'Fraunces', serif;
   font-size: 40px;
   font-weight: 700;
@@ -876,7 +881,7 @@
   line-height: 1.2;
   margin: 0;
 }
-.mg-issues-grid {
+.mag-issues-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 32px;
@@ -1046,8 +1051,8 @@
   .mg-cta-right { padding-left: 0; }
   .mg-filtered { padding: 64px 32px 120px; }
   .mg-filtered-grid { grid-template-columns: repeat(2, 1fr); }
-  .mg-issues { padding: 64px 32px; }
-  .mg-issues-grid { grid-template-columns: repeat(3, 1fr); }
+  .mag-issues-archive { padding: 64px 32px; }
+  .mag-issues-grid { grid-template-columns: repeat(3, 1fr); }
   .mg-head { padding: 48px 32px 0; }
 }
 
@@ -1075,8 +1080,8 @@
   .mg-cta-right { padding-left: 0; }
   .mg-filtered { padding: 40px 16px 80px; }
   .mg-filtered-grid { grid-template-columns: 1fr; }
-  .mg-issues { padding: 40px 16px; }
-  .mg-issues-grid { grid-template-columns: repeat(2, 1fr); }
+  .mag-issues-archive { padding: 40px 16px; }
+  .mag-issues-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ── SINGLE ISSUE DETAIL PAGE ── */
