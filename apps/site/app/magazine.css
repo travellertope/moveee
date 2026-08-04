@@ -4,7 +4,6 @@
 
 /* ── HEAD (nav-only — masthead title/desc removed) ── */
 .mg-head {
-  background: #fff;
   padding: 32px 64px 0;
 }
 
@@ -87,7 +86,6 @@
 
 /* ── HERO FEATURE (2-col cover + "More This Week" row) ── */
 .mg-hero {
-  background: #fff;
   padding: 64px;
   max-width: calc(1200px + 128px);
   margin: 0 auto;
@@ -343,7 +341,6 @@
    .mg-week-card). Kept as its own class family so this can evolve independently
    without touching MagazineArchiveWrapper.tsx's usage of .mg-hero/.mg-hero-grid. */
 .mg-cover-section {
-  background: #fff;
   padding: 56px 24px;
   max-width: calc(1200px + 48px);
   margin: 0 auto;
