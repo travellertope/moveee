@@ -10,7 +10,7 @@ import {
 } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
-import { ShopFilterProvider } from "./components/ShopFilterContext";
+import { ShopFilterProvider, formatGBP, parsePrice } from "./components/ShopFilterContext";
 import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
@@ -67,13 +67,6 @@ const FALLBACK_VENDORS: VendorCard[] = [
 function isNew(p: any): boolean {
   return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
 }
-
-const TICKER_ITEMS = [
-  "Vetted Makers", "★", "Ethical Production", "★",
-  "Free Returns", "★", "Moveee Pro Members Save 10%", "★",
-  "Vetted Makers", "★", "Ethical Production", "★",
-  "Free Returns", "★", "Moveee Pro Members Save 10%", "★",
-];
 
 const FALLBACK_CATEGORIES = [
   { name: "Ceramics",   slug: "ceramics",   count: 0, image: null },
@@ -149,197 +142,166 @@ export default async function ShopArchiveWrapper({
   const isFiltered = !!(category || tag || brand);
   const activeLabel = category || tag || brand || "Lifestyle";
 
-  // Featured = first 5 (1 large + 2×2 grid)
-  const featured = products.slice(0, 5);
+  // Featured = first 4 (1 hero pick + 3 companions in "More From The Edit")
+  const featured = products.slice(0, 4);
+  const heroPick = featured[0];
+  const companionPicks = featured.slice(1);
+  const heroLede = heroPick?.shortDescription
+    ? heroPick.shortDescription.replace(/<[^>]*>/g, "").trim()
+    : "";
+  const heroProPrice = heroPick?.price
+    ? formatGBP(parsePrice(heroPick.price) * 0.9)
+    : "";
 
   const display = makers.length >= 1 ? makers : FALLBACK_VENDORS;
   const isFallback = display === FALLBACK_VENDORS;
 
   return (
     <>
-      {/* ── 1. MASTHEAD ── */}
-      <section className="sl-masthead">
-        <div className="sl-masthead-inner">
-          <h1>
-            {isFiltered ? (
-              <em>{activeLabel}</em>
-            ) : (
-              <>Moveee <em>Lifestyle</em></>
-            )}
-          </h1>
-          <div className="sl-masthead-rule" aria-hidden />
-          <p className="sl-masthead-desc">
+      {/* ── 1. COMPACT SHOP HEAD (replaces the old centered masthead) ── */}
+      <section className="sl-head">
+        <div className="sl-head-inner">
+          <div>
+            <span className="sl-head-eyebrow">The Shop</span>
+            <h1>
+              {isFiltered ? (
+                <em>{activeLabel}</em>
+              ) : (
+                <>Moveee <em>Lifestyle</em></>
+              )}
+            </h1>
+          </div>
+          <p className="sl-head-desc">
             {isFiltered
               ? `A curated collection of ${activeLabel} goods from vetted makers.`
-              : "Every piece chosen for craft, longevity, and the story behind it. Every maker on Moveee is personally vetted for craft integrity, fair production, and lasting quality."}
+              : "Every piece chosen for craft, longevity, and the story behind it — from makers personally vetted for craft integrity and fair production."}
           </p>
         </div>
       </section>
 
-      {/* ── 2. TRUST STRIP ── */}
-      <section className="sl-trust">
-        <div className="sl-trust-inner">
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">✓</span>
-            <div>
-              <div className="sl-trust-title">Vetted Makers</div>
-              <div className="sl-trust-desc">Every maker personally reviewed before listing.</div>
+      {/* ── 2. HERO PICK + "MORE FROM THE EDIT" ── */}
+      {heroPick && (
+        <section className="sl-picks">
+          <div className="sl-picks-inner">
+            <div className="sl-picks-header">
+              <h2>Editorial <em>Picks</em></h2>
+              <Link href="/shop/edit" className="sl-picks-all">
+                The Moveee Edit →
+              </Link>
             </div>
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">★</span>
-            <div>
-              <div className="sl-trust-title">4.8 average rating</div>
-              <div className="sl-trust-desc">Across 1,200+ verified buyer reviews.</div>
-            </div>
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">↺</span>
-            <div>
-              <div className="sl-trust-title">Free Returns</div>
-              <div className="sl-trust-desc">30 days, no questions asked.</div>
-            </div>
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">◇</span>
-            <div>
-              <div className="sl-trust-title">Moveee Pro saves 10%</div>
-              <div className="sl-trust-desc">Automatically applied at checkout for members.</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <ShopFilterProvider products={products}>
-        {/* ── 3. FILTER BAR ── */}
-        <ShopFilterBar categories={categories.slice(0, 8)} activeCategorySlug={category} />
-
-        {/* ── 3b. TICKER ── */}
-        <div className="ticker-wrap">
-          <div className="ticker-track" aria-hidden>
-            {TICKER_ITEMS.map((item, i) => (
-              <span key={i} className={item === "★" ? "a" : undefined}>
-                {item}
-              </span>
-            ))}
-            {TICKER_ITEMS.map((item, i) => (
-              <span key={`b${i}`} className={item === "★" ? "a" : undefined}>
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── 4. FEATURED EDITORIAL PICKS ── */}
-        {featured.length > 0 && (
-          <section className="sl-picks">
-            <div className="sl-picks-inner">
-              <div className="sl-picks-header">
-                <h2>Editorial <em>Picks</em></h2>
-                <Link href="/shop/edit" className="sl-picks-all">
-                  The Moveee Edit →
+            <div className="sl-hero-grid">
+              <Link href={`/shop/${heroPick.slug}`} className="sl-hero-img-link">
+                <div className="sl-hero-img">
+                  {heroPick.image?.sourceUrl ? (
+                    <Image
+                      src={heroPick.image.sourceUrl}
+                      alt={heroPick.image.altText || heroPick.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                  )}
+                  <div className="sl-pip">
+                    <span className="sl-pip-star">★</span> Vetted Maker
+                  </div>
+                  {isNew(heroPick) && <div className="sl-pip-new">New</div>}
+                </div>
+              </Link>
+              <div className="sl-hero-body">
+                <span className="sl-hero-kicker">Editor&rsquo;s Pick</span>
+                {vendorName(heroPick) && (
+                  <span className="sl-hero-vendor">{vendorName(heroPick)}</span>
+                )}
+                <Link href={`/shop/${heroPick.slug}`}>
+                  <h3 className="sl-hero-name">{heroPick.name}</h3>
+                </Link>
+                {heroLede && <p className="sl-hero-desc">{heroLede}</p>}
+                {heroPick.price && (
+                  <div className="sl-hero-price-row">
+                    <span className="sl-hero-price">{heroPick.price}</span>
+                    <span className="sl-hero-pro-price">{heroProPrice} with Pro</span>
+                  </div>
+                )}
+                <Link href={`/shop/${heroPick.slug}`} className="sl-hero-cta">
+                  Shop this piece →
                 </Link>
               </div>
-              <div className="sl-picks-grid">
-                {/* Large hero card */}
-                {featured[0] && (
-                  <Link href={`/shop/${featured[0].slug}`} className="sl-pick-card">
-                    <div className="sl-pick-large-img">
-                      {featured[0].image?.sourceUrl ? (
+            </div>
+
+            {companionPicks.length > 0 && (
+              <div className="sl-week-row">
+                {companionPicks.map((p) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="sl-week-card">
+                    <div className="sl-week-thumb">
+                      {p.image?.sourceUrl ? (
                         <Image
-                          src={featured[0].image.sourceUrl}
-                          alt={featured[0].image.altText || featured[0].name}
+                          src={p.image.sourceUrl}
+                          alt={p.image.altText || p.name}
                           fill
                           style={{ objectFit: "cover" }}
                         />
                       ) : (
                         <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                       )}
-                      <div className="sl-pip">
-                        <span className="sl-pip-star">★</span> Vetted
-                      </div>
-                      {isNew(featured[0]) && <div className="sl-pip-new">New</div>}
+                      {isNew(p) && <div className="sl-week-new">New</div>}
                     </div>
-                    <div className="sl-pick-info">
-                      {vendorName(featured[0]) && (
-                        <span className="sl-pick-vendor">{vendorName(featured[0])}</span>
-                      )}
-                      <div className="sl-pick-name-price">
-                        <span className="sl-pick-name">{featured[0].name}</span>
-                        {featured[0].price && (
-                          <span className="sl-pick-price">{featured[0].price}</span>
-                        )}
-                      </div>
+                    <div className="sl-week-body">
+                      {vendorName(p) && <span className="sl-week-vendor">{vendorName(p)}</span>}
+                      <span className="sl-week-title">{p.name}</span>
+                      {p.price && <span className="sl-week-price">{p.price}</span>}
                     </div>
                   </Link>
-                )}
-
-                {/* 2×2 sub-grid */}
-                <div className="sl-pick-sub-grid">
-                  {featured.slice(1, 5).map((p) => (
-                    <Link key={p.id} href={`/shop/${p.slug}`} className="sl-pick-card">
-                      <div className="sl-pick-small-img">
-                        {p.image?.sourceUrl ? (
-                          <Image
-                            src={p.image.sourceUrl}
-                            alt={p.image.altText || p.name}
-                            fill
-                            style={{ objectFit: "cover" }}
-                          />
-                        ) : (
-                          <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                        )}
-                        {isNew(p) && <div className="sl-pip-new">New</div>}
-                      </div>
-                      <div className="sl-pick-info">
-                        {vendorName(p) && (
-                          <span className="sl-pick-vendor">{vendorName(p)}</span>
-                        )}
-                        <div className="sl-pick-name-price">
-                          <span className="sl-pick-name">{p.name}</span>
-                          {p.price && <span className="sl-pick-price">{p.price}</span>}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                ))}
               </div>
-            </div>
-          </section>
-        )}
+            )}
+          </div>
+        </section>
+      )}
 
-        {/* ── 5. EDITORIAL BRIDGE — Magazine ── */}
+      {/* ── 3. TRUST BAR — single slim line, replaces trust-strip + scrolling ticker ── */}
+      <section className="sl-trust">
+        <div className="sl-trust-inner">
+          <div className="sl-trust-item">
+            <span className="sl-trust-icon">✓</span> <strong>Vetted Makers</strong> — reviewed before listing
+          </div>
+          <div className="sl-trust-item">
+            <span className="sl-trust-icon">★</span> <strong>4.8 average rating</strong> — 1,200+ reviews
+          </div>
+          <div className="sl-trust-item">
+            <span className="sl-trust-icon">↺</span> <strong>Free Returns</strong> — 30 days
+          </div>
+          <div className="sl-trust-item">
+            <span className="sl-trust-icon">◇</span> <strong>Moveee Pro saves 10%</strong> — applied at checkout
+          </div>
+        </div>
+      </section>
+
+      <ShopFilterProvider products={products}>
+        {/* ── 4. FILTER BAR ── */}
+        <ShopFilterBar categories={categories.slice(0, 8)} activeCategorySlug={category} />
+
+        {/* ── 5. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
         <div className="sl-bridge">
           <div className="sl-bridge-inner">
-            <div className="sl-bridge-label">As Seen In</div>
-            <div className="sl-bridge-sep" aria-hidden />
-            <div className="sl-bridge-title">
-              <em>The Moveee Edit</em>
-              <span className="sl-bridge-meta">Issue 014 · Craft &amp; Makers</span>
+            <div className="sl-bridge-left">
+              <span className="sl-bridge-label">From The Magazine</span>
+              <span className="sl-bridge-title">Issue 014 · Craft &amp; Makers</span>
             </div>
-            <Link href="/magazine" className="sl-bridge-cta">
-              Read the Issue →
-            </Link>
+            <div className="sl-bridge-links">
+              <Link href="/magazine" className="sl-bridge-cta">
+                Read The Moveee Edit →
+              </Link>
+              <Link href="/journeys" className="sl-bridge-cta">
+                Explore Origins Journal →
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* ── 6. MAIN PRODUCT GRID ── */}
         <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
-
-        {/* ── 7. EDITORIAL BRIDGE — Origins ── */}
-        <div className="sl-bridge">
-          <div className="sl-bridge-inner">
-            <div className="sl-bridge-label">Origins Journal</div>
-            <div className="sl-bridge-sep" aria-hidden />
-            <div className="sl-bridge-title">
-              Where things <em>come from</em>
-              <span className="sl-bridge-meta">Stories from the makers behind the objects</span>
-            </div>
-            <Link href="/journeys" className="sl-bridge-cta">
-              Explore Origins →
-            </Link>
-          </div>
-        </div>
       </ShopFilterProvider>
 
       {/* ── 8. CATEGORY GRID ── */}
@@ -416,40 +378,42 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 10. MOVEEE PRO MEMBER BAND ── */}
-      <section className="sl-member">
-        <div className="sl-member-left">
-          <div className="sl-member-eyebrow">Moveee Pro</div>
-          <h3>Shop smarter, <em>save more</em></h3>
-          <p>
-            Upgrade to Moveee Pro for early access to new makers, exclusive
-            editions, and 10% off every purchase in the shop.
-          </p>
-          <div className="sl-member-perks">
-            {[
-              { icon: "◈", title: "Early Access",    desc: "First look at new makers and limited drops." },
-              { icon: "◇", title: "10% Off",         desc: "Applied automatically to every shop order." },
-              { icon: "○", title: "Patron Stories",  desc: "Exclusive maker interviews and behind-the-scenes." },
-              { icon: "△", title: "Maker Events",    desc: "Invitations to studio visits and openings." },
-            ].map((perk) => (
-              <div key={perk.title} className="sl-mperk">
-                <div className="sl-mperk-icon">{perk.icon}</div>
-                <div className="sl-mperk-title">{perk.title}</div>
-                <p className="sl-mperk-desc">{perk.desc}</p>
-              </div>
-            ))}
+      {/* ── 10. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
+      <div className="sl-member-wrap">
+        <section className="sl-member">
+          <div className="sl-member-left">
+            <div className="sl-member-eyebrow">Moveee Pro</div>
+            <h3>Shop smarter, <em>save more</em></h3>
+            <p>
+              Upgrade to Moveee Pro for early access to new makers, exclusive
+              editions, and 10% off every purchase in the shop.
+            </p>
+            <div className="sl-member-perks">
+              {[
+                { icon: "◈", title: "Early Access",    desc: "First look at new makers and limited drops." },
+                { icon: "◇", title: "10% Off",         desc: "Applied automatically to every shop order." },
+                { icon: "○", title: "Patron Stories",  desc: "Exclusive maker interviews and behind-the-scenes." },
+                { icon: "△", title: "Maker Events",    desc: "Invitations to studio visits and openings." },
+              ].map((perk) => (
+                <div key={perk.title} className="sl-mperk">
+                  <div className="sl-mperk-icon">{perk.icon}</div>
+                  <div className="sl-mperk-title">{perk.title}</div>
+                  <p className="sl-mperk-desc">{perk.desc}</p>
+                </div>
+              ))}
+            </div>
+            <Link href="/register?tier=patron" className="sl-member-cta">
+              Join Moveee Pro →
+            </Link>
           </div>
-          <Link href="/register?tier=patron" className="sl-member-cta">
-            Join Moveee Pro →
-          </Link>
-        </div>
-        <div className="sl-member-right">
-          <div className="sl-member-stat">
-            <div className="sl-member-stat-num">2,400</div>
-            <div className="sl-member-stat-label">Members &amp; growing</div>
+          <div className="sl-member-right">
+            <div className="sl-member-stat">
+              <div className="sl-member-stat-num">2,400</div>
+              <div className="sl-member-stat-label">Members &amp; growing</div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* ── 11. ORIGINS CLOSING BRIDGE ── */}
       <section className="sl-origins">

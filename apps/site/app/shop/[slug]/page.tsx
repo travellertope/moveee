@@ -289,22 +289,20 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ── AS SEEN IN — only when a linked magazine post is set ── */}
+      {/* ── AS SEEN IN — slim tinted bridge, only when a linked magazine post is set ── */}
       {asSeenInPost && (
-        <section className="sp-seen-in">
-          <div className="sp-seen-in-inner">
-            <div className="sp-seen-in-label">As Seen In</div>
-            <div>
-              <div className="sp-seen-in-title">
+        <section className="sp-seen">
+          <div className="sp-seen-inner">
+            <div className="sp-seen-left">
+              <span className="sp-seen-label">As Seen In</span>
+              <span className="sp-seen-title">
                 <em>{asSeenInPost.title}</em>
                 {asSeenInPost.categories?.nodes?.[0] && (
-                  <span className="sp-seen-in-meta">
-                    {asSeenInPost.categories.nodes[0].name}
-                  </span>
+                  <> — {asSeenInPost.categories.nodes[0].name}</>
                 )}
-              </div>
+              </span>
             </div>
-            <Link href={`/magazine/${asSeenInPost.slug}`} className="sp-seen-in-cta">
+            <Link href={`/magazine/${asSeenInPost.slug}`} className="sp-seen-cta">
               Read the Feature →
             </Link>
           </div>
@@ -315,14 +313,13 @@ export default async function ProductPage({
       {(makerStory || vname) && (
         <section className="sp-story">
           <div className="sp-story-header">
-            <div className="sp-story-num">01</div>
             <div>
+              <span className="sp-story-eyebrow">Origins Journal</span>
               <h2>The <em>maker</em> behind it</h2>
               {vname && (
                 <p>A portrait of {vname} — their process, their place, their obsession with craft.</p>
               )}
             </div>
-            <div className="sp-story-meta">Origins Journal</div>
           </div>
           <div className="sp-story-body">
             {(vendorAvatarUrl || mainImage?.sourceUrl) && (
@@ -350,20 +347,18 @@ export default async function ProductPage({
         </section>
       )}
 
-      {/* ── PROCESS — only when process_steps is set in WordPress ── */}
+      {/* ── PROCESS — only when process_steps is set in WordPress; numbering is a real sequence ── */}
       {processSteps.length > 0 && (
         <section className="sp-process">
           <div className="sp-process-header">
-            <div className="sp-process-label">How It&rsquo;s Made</div>
+            <span className="sp-process-label">How It&rsquo;s Made</span>
             <h2>From raw material <em>to your door</em></h2>
             <p>A {processSteps.length}-stage process — each step overseen by the maker themselves.</p>
           </div>
           <div className="sp-process-grid">
             {processSteps.map((step, i) => (
               <div key={step.title} className="sp-process-step">
-                <div className="step-img">
-                  <div className="step-num">0{i + 1}</div>
-                </div>
+                <span className="sp-process-step-num">0{i + 1}</span>
                 <h4>{step.title}</h4>
                 <p>{step.desc}</p>
                 {step.duration && <span className="duration">{step.duration}</span>}
@@ -376,7 +371,7 @@ export default async function ProductPage({
       {/* ── VENDOR PROFILE — only when the vendor has a name in WCFM ── */}
       {vname && (
         <section className="sp-vendor-profile">
-          <div className="sp-vendor-inner">
+          <div className="sp-vendor-card">
             <div className="sp-vendor-visual">
               {(vendorAvatarUrl || mainImage?.sourceUrl) && (
                 <Image
@@ -387,12 +382,12 @@ export default async function ProductPage({
                 />
               )}
             </div>
-            <div>
+            <div className="sp-vendor-body">
               <div className="sp-vendor-tag">
                 Vetted Maker{vendorCity && ` · ${vendorCity}`}
               </div>
               <h2>{vname}</h2>
-              {vendorDesc && <p className="sp-vendor-body">{vendorDesc}</p>}
+              {vendorDesc && <p className="sp-vendor-desc">{vendorDesc}</p>}
               <div className="sp-vendor-stats">
                 {vendorYears && (
                   <div className="sp-vendor-stat">
@@ -455,11 +450,13 @@ export default async function ProductPage({
                     <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                   )}
                 </div>
-                {p.vendorProfile?.storeName && (
-                  <div className="vendor-tag">{p.vendorProfile.storeName}</div>
-                )}
-                <div className="name">{p.name}</div>
-                {p.price && <div className="price">{p.price}</div>}
+                <div className="mini-product-body">
+                  {p.vendorProfile?.storeName && (
+                    <div className="vendor-tag">{p.vendorProfile.storeName}</div>
+                  )}
+                  <div className="name">{p.name}</div>
+                  {p.price && <div className="price">{p.price}</div>}
+                </div>
               </Link>
             ))}
           </div>
