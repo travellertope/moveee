@@ -37,6 +37,7 @@ export default function ProductSelectors({
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize]   = useState(0);
   const [saved, setSaved]                 = useState(false);
+  const [quantity, setQuantity]           = useState(1);
 
   const colorAttrs = extractAttr(variations, "color");
   const sizeAttrs  = extractAttr(variations, "size");
@@ -135,6 +136,13 @@ export default function ProductSelectors({
       )}
 
       {/* CTA */}
+      {!isGated && (
+        <div className="sp-qty">
+          <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">–</button>
+          <span>{quantity}</span>
+          <button type="button" onClick={() => setQuantity((q) => q + 1)} aria-label="Increase quantity">+</button>
+        </div>
+      )}
       <div className="sp-cta-row">
         {isGated ? (
           // Early access gate — show upgrade CTA instead of add-to-cart
@@ -144,7 +152,7 @@ export default function ProductSelectors({
         ) : (
           <button
             className="sp-btn-add"
-            onClick={() => addItem(productId)}
+            onClick={() => addItem(productId, quantity)}
             disabled={isLoading}
             style={{ opacity: isLoading ? 0.7 : 1 }}
           >
@@ -161,15 +169,34 @@ export default function ProductSelectors({
         </button>
       </div>
 
-      <div className="sp-delivery-note">
-        <div>
-          <span className="label">Delivery</span>
-          <strong>3–5 working days</strong>
+      <div className="sp-buy-notes">
+        <div className="sp-buy-note"><span className="ic">↺</span> Free returns within 30 days</div>
+        <div className="sp-buy-note"><span className="ic">◇</span> Ships in 3–5 working days</div>
+      </div>
+
+      {/* Mobile-only sticky bar — mirrors the buy box, hidden ≥640px via CSS */}
+      <div className="sp-mobile-bar">
+        <div className="sp-mobile-bar-price">
+          {showMemberPrice ? (
+            <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(memberPrice!) }} />
+          ) : (
+            <span>{price ?? "—"}</span>
+          )}
+          {showMemberPriceTeaser && <span className="sub">Pro price available</span>}
         </div>
-        <div style={{ textAlign: "right" }}>
-          <span className="label">Returns</span>
-          <strong>Free within 30 days</strong>
-        </div>
+        {isGated ? (
+          <Link href="/connect/membership" className="sp-mobile-bar-cta">
+            Get early access
+          </Link>
+        ) : (
+          <button
+            className="sp-mobile-bar-cta"
+            onClick={() => addItem(productId, quantity)}
+            disabled={isLoading}
+          >
+            {isLoading ? "Adding…" : "Add to Cart"}
+          </button>
+        )}
       </div>
     </>
   );

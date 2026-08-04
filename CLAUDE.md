@@ -1042,13 +1042,16 @@ centered-absolute pattern instead of chasing the breakpoint each time).
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
 `products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
-page in this exact order: 1. Shop Head, 2. Trust Strip, [inside
-`ShopFilterProvider`] 3. `ShopFilterBar`, 3b. Ticker, 4. Featured Editorial
-Picks, 5. Editorial Bridge (Magazine), 6. `ShopProductGrid`, 7. Editorial
-Bridge (Origins, `.ed-bridge--origins`), [outside provider] 8. Category Grid,
-9. Vendor Strip ("Meet the Makers"), 10. Member Band (Moveee Pro), 11. Origins
-Bridge Closing (full image+copy block, `.ob-*` classes — visually distinct
-from the compact text-only `.ed-bridge` banners in steps 5/7).
+page in this order (rebuilt August 2026 — see the dated entry below for the
+full rationale): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
+"More From The Edit" 3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`),
+3. Trust Bar (single slim line, `.sl-trust`), [inside `ShopFilterProvider`]
+4. `ShopFilterBar`, 5. Slim Magazine Bridge (`.sl-bridge`, merges what used to
+be two separate Magazine/Origins bridges), 6. `ShopProductGrid`,
+[outside provider] 8. Category Grid (`.sl-cat`), 9. Vendor Strip
+("Meet the Makers", `.sl-makers`), 10. Member Band (Moveee Pro, rounded dark
+card — `.sl-member-wrap` > `.sl-member`), 11. Origins Bridge Closing
+(`.sl-origins`).
 
 **Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
 mockup's filter bar and product grid aren't adjacent (other sections sit
@@ -1119,6 +1122,126 @@ none;` inside the mobile override so the button is visible by default on
 mobile. **If you add a hover-revealed element anywhere in the shop UI, check
 whether it also needs a mobile always-visible override** — touch devices never
 trigger `:hover`.
+
+### Shop archive + product detail — full visual rebuild (Site A, August 2026)
+
+Mockup-first as usual (two Artifacts, approved before building: `shop-redesign-mockup.html`
+then `shop-product-detail-mockup.html`, both continuing the same product photo actually used
+on both pages — Studio Fern's "Terracotta Vessel No. 4" — as the running example) — this
+brought both `/shop` and `/shop/[slug]` onto the site-wide `--radius-xl`/`--radius-2xl`/
+`--shadow-card` card convention (see "Border-radius convention" above). The archive page was
+already fairly close to that system going in (product/maker cards already used rounded
+corners and `--shadow-card`-style shadows); the product detail page was not — it still had
+the old flush, zero-radius, hairline-rule "editorial" aesthetic across its gallery, maker
+story image, process-step squares, vendor visual, and related-product thumbnails.
+
+**Archive (`ShopArchiveWrapper.tsx` + `shop.css`)**:
+- **Masthead → compact head** (`.sl-masthead` → `.sl-head`) — dropped the big centered
+  serif title block for a slim left-aligned eyebrow ("The Shop") + h1 + one-line description,
+  same move as the earlier `/magazine` archive rebuild.
+- **"Editorial Picks" 2×2 sub-grid → hero pick + 3-across "More From The Edit" row**
+  (`.sl-picks-grid`/`.sl-pick-sub-grid`/`.sl-pick-card` deleted, replaced by `.sl-hero-grid`
+  + `.sl-week-row`/`.sl-week-card`) — one large `--radius-2xl`/`--shadow-lift` framed hero
+  image with an "Editor's Pick" eyebrow, vendor name, title, short description (from the
+  already-fetched `shortDescription` field, HTML-stripped), price + 10%-off Pro price, and a
+  pill CTA, plus 3 compact companion cards below. `heroPick`/`companionPicks` derived from
+  `products.slice(0, 4)` in the wrapper (was `products.slice(0, 5)` feeding a 1-hero+4-small
+  layout before).
+- **Trust strip (4-item grid with descriptions) + scrolling ticker marquee → one slim single
+  line** (`.sl-trust`) — the ticker repeated the same 4 claims already in the trust strip, so
+  it was dropped from this page's JSX entirely (the shared `.ticker-wrap`/`.ticker-track` CSS
+  in `globals.css` is untouched — still used by `/journeys`, `/events`, and `ShopArchiveWrapper`
+  no longer imports it, but other pages still do).
+- **Two separate flush `.sl-bridge` sections (Magazine, then Origins, on either side of the
+  product grid) → one merged slim tinted band** with both CTAs side by side
+  (`.sl-bridge-left`/`.sl-bridge-links`), positioned once between the filter bar and the grid.
+- **Member band (Moveee Pro) → rounded dark card with a radial gold glow**, inset inside a
+  padded `.sl-member-wrap` wrapper instead of a flush full-bleed two-column strip — matches
+  the homepage/magazine CTA-band visual language. The right-side stat block also changed from
+  its own purple/ochre gradient panel + dot pattern to a simple bordered translucent card
+  floating on the shared dark gradient (`.sl-member-stat`, white text).
+  Category-grid tiles and maker cards got the same `--radius-xl` + persistent `--shadow-card`
+  treatment (previously `--shadow-card` on maker cards only appeared on hover); the closing
+  Origins-journal image bumped from an 8px-radius flush rectangle to `--radius-2xl` +
+  `--shadow-lift`.
+
+**Product detail (`page.tsx` + its 5 subcomponents + `shop.css`)** — this page needed the
+bigger lift, since it still had the pre-radius-convention flush aesthetic everywhere:
+- **Gallery** (`ProductGallery.tsx`, JSX untouched) — main image bumped to `--radius-2xl` +
+  `--shadow-lift`; thumbnails bumped to 8px radius with an `outline` (not `border`) for the
+  active/hover ring, since outline doesn't affect box size the way changing border-width would.
+- **Buy box** (`ProductSelectors.tsx`) — price row/selector labels restyled onto the mono-pill
+  language already established on the archive page; the color swatch and size-chip selectors
+  (`.sp-swatches`/`.sp-sizes`) changed from square/rectangular to `--radius-full` pills; the
+  Add to Cart button became a full pill (`.sp-btn-add`, ochre hover, matches every other
+  primary CTA on the site) instead of a flush rectangle; delivery/returns info moved from a
+  flat two-column grey box to a simple icon+text note list (`.sp-buy-notes`). **New: a
+  quantity stepper** (`.sp-qty`, local `quantity` state) was added ahead of the Add to Cart
+  button — previously there was no way to buy more than 1 unit from this page at all;
+  `useCart()`'s `addItem(productId, quantity)` already supported a quantity param, it just
+  wasn't wired up here.
+- **New: mobile sticky buy bar** (`.sp-mobile-bar`, rendered unconditionally in
+  `ProductSelectors.tsx` but `display: none` until the `max-width: 640px` media query flips it
+  to `display: flex; position: fixed; bottom: 0`) — mirrors price (or the Pro member price)
+  + an Add to Cart / "Get early access" button, staying pinned while the rest of the page
+  scrolls underneath. The in-flow `.sp-qty`/`.sp-cta-row` are hidden on that same breakpoint so
+  there's exactly one buy control visible at a time, not two competing ones.
+- **Accordion** (`ProductAccordion.tsx`) — header label switched from uppercase JetBrains Mono
+  to a plain serif title (matches the mockup), and the expand indicator switched from a static
+  "+" that rotates 45° into an "×" to literally swapping the character between "+"/"−" based on
+  `isOpen` — simpler and clearer than the rotation trick.
+- **"As Seen In"** (`page.tsx`) — was a large dark full-bleed 3-column box (60px padding, a
+  38px serif title, a radial-gradient decoration) that only ever fires when a magazine feature
+  post is actually linked; rebuilt into the same slim tinted single-line bridge pattern as the
+  archive page's `.sl-bridge` (`.sp-seen`/`.sp-seen-inner`/`.sp-seen-left`/`.sp-seen-cta`).
+- **Maker Story** — dropped the giant italic "01" section-numeral + 3-column header grid for a
+  compact eyebrow ("Origins Journal") + heading + subhead, matching the archive/process
+  sections' header language; the portrait image bumped from a flush square to `--radius-2xl` +
+  `--shadow-lift` (asymmetric 4:5 framing). The rich-text `makerStory` body's existing drop-cap
+  first-letter and pull-quote (`blockquote`) treatment was kept as-is — still a nice touch,
+  unrelated to the header simplification.
+- **Process ("How It's Made")** — rebuilt from oversized flush black squares with a huge
+  italic gold number overlaid on each (there's no per-step image data in `processSteps` at all,
+  so those squares were always just decorative) into plain white `--radius-lg`/`--shadow-card`
+  cards with a small mono "01"–"04" tag, heading, description, and duration — **the numbering
+  is kept and is legitimate here**, since this is a real ordered production sequence (clay prep
+  → coiling → firing → finishing), unlike a decorative numbered-step pattern elsewhere that
+  wouldn't carry real information.
+- **Vendor profile** — was a 2-column layout (flush square image, giant serif heading, a
+  3-stat row boxed in hairline top/bottom rules, separate outline/filled buttons) sitting loose
+  on the page; rebuilt as **one wide rounded card** (`.sp-vendor-card`, `--radius-2xl` +
+  `--shadow-lift`, `overflow: hidden`) with the image as the card's own left half and a white
+  body on the right — stats and CTAs now sit inside the same card rather than floating below it.
+- **Reviews** (`ProductReviews.tsx`, the biggest functional change) — was a narrow 720px
+  centered column with a plain average+count line, a flat list of reviews with no card chrome,
+  and an always-visible review form pinned to the bottom. Rebuilt into a full-width tinted
+  section (matches the archive page's tinted bands) containing: a summary card
+  (`.sp-reviews-summary`) with the average/stars/count on the left and a **real 5-star
+  distribution bar chart on the right** — computed client-side via a `useMemo` over the
+  already-fetched `reviews` array (`Math.round(r.rating)` bucketed into 5 counts, no new
+  backend endpoint needed, since individual review ratings were already being fetched, just
+  never aggregated into a breakdown before); a **"Write a review" button that toggles the form
+  open/closed** (`formOpen` state) instead of the form always rendering at the bottom, whether
+  or not anyone was going to use it; and a 3-across grid of white `--shadow-card` review cards
+  (avatar — real image or a deterministic color-hashed initial circle when none is set — name,
+  relative "time ago" date computed from the raw ISO date, star rating, review text) replacing
+  the old flat bordered-row list. Login-gating and the post-submit success state are unchanged.
+- **More From This Category** (`page.tsx` + `.mini-product`) — product thumbnails were flush
+  squares with plain text below, no card boundary at all; wrapped in the same `--radius-xl`/
+  `--shadow-card` mini-card treatment as everywhere else on the site, with a new
+  `.mini-product-body` div for the padded vendor/name/price text block.
+- **Byproduct bug fix**: `.sp-story-header h3`/`.sp-process-header h3`/`.sp-vendor-profile h3`/
+  `.sp-more-from-header h3` were the CSS selectors for those section headings, but the actual
+  JSX in `page.tsx` has always rendered them as `<h2>` — a pre-existing mismatch, so none of
+  that intended heading styling was ever actually applying. Fixed as part of rewriting each of
+  these sections (new CSS now targets `h2`, matching the real markup). **If a heading anywhere
+  on this page still looks like unstyled browser-default text, check for this same tag/selector
+  mismatch before assuming the CSS is missing.**
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
+  and a CSS brace-balance check on `shop.css` (580/580, balanced). Re-check pixel fidelity —
+  especially the mobile sticky buy bar and the review-card avatar fallback colors — in a real
+  environment before considering this fully closed.
 
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 

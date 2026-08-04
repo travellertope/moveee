@@ -26,8 +26,8 @@ export default function ProductAccordion({ items }: ProductAccordionProps) {
               onClick={() => setOpenIdx(isOpen ? null : i)}
               aria-expanded={isOpen}
             >
-              {item.title}
-              <span className="plus">+</span>
+              <span className="title">{item.title}</span>
+              <span className="plus">{isOpen ? "−" : "+"}</span>
             </button>
             <div className="sp-acc-body">
               <div className="sp-acc-body-inner">{item.content}</div>
