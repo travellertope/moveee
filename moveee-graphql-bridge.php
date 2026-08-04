@@ -225,6 +225,17 @@ add_action( 'graphql_register_types', function () {
                 return is_wp_error( $terms ) ? [] : array_values( $terms );
             },
         ] );
+
+        register_graphql_field( $type, 'featured', [
+            'type'        => 'Boolean',
+            'description' => 'Whether this product is marked Featured in WooCommerce (Products → Catalog visibility)',
+            'resolve'     => function ( $product ) {
+                $pid = absint( $product->databaseId ?? 0 );
+                if ( ! $pid ) return false;
+                $wc_product = wc_get_product( $pid );
+                return $wc_product ? (bool) $wc_product->is_featured() : false;
+            },
+        ] );
     }
 
 }, 99 ); // ← after WPGraphQL WooCommerce (which runs at default priority 10)

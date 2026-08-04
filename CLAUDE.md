@@ -1243,6 +1243,38 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
   especially the mobile sticky buy bar and the review-card avatar fallback colors — in a real
   environment before considering this fully closed.
 
+**Follow-up fixes (same pass, August 2026):**
+- **Filter bar controls were never actually restyled** — the summary above claimed the pills
+  matched the mockup's pill language, but `.sl-fpill`/`.sl-sort-select`/`.sl-view-toggle` were
+  still the pre-rebuild DM-Sans boxed style (13px, `border-radius: 6px` on sort/view-toggle,
+  no uppercase). Fixed to match `.sl-hero-kicker`/bridge-label treatment exactly: JetBrains
+  Mono, 10.5px, 700 weight, `.06em` letter-spacing, uppercase, `border-radius: 100px`.
+  "In Stock Only" filled state changed from ochre to ink (matches the mockup's `--radius-full`
+  filled-pill convention used elsewhere). `.sl-view-toggle` is now one pill-shaped container
+  with the active button filling ink, not two separately bordered squares.
+- **Compact head**: dropped the "The Shop" eyebrow entirely (kept the CSS rule, unused, per
+  this file's usual "leave dead CSS in case needed again" convention) and reworded the title
+  to "*Lifestyle* Shop". `.sl-head-desc` widened from `max-width: 440px` to `560px` so the
+  description wraps to 2 lines instead of 3.
+- **Editor's Pick curation (was purely positional)** — `heroPick`/`companionPicks` used to be
+  nothing more than `products.slice(0, 4)`, i.e. whichever products WPGraphQL happened to
+  return first (`GET_PRODUCTS` has no `orderby`) — not a real editorial choice. Wired up
+  WooCommerce's native "Featured" flag instead:
+  - `moveee-graphql-bridge.php` — new `featured: Boolean` field registered on the same
+    `$product_types` loop as `averageRating`/`reviewCount`/`productMaterials`, resolved via
+    `wc_get_product($pid)->is_featured()` (the standard WooCommerce API, reflects the
+    Products → Catalog visibility → **Featured** checkbox in WP Admin).
+  - Per the established bridge-plugin-isolation rule (see `GET_PRODUCTS_EXTRA`'s own comment),
+    `featured` was added to `GET_PRODUCTS_EXTRA`/`GET_PRODUCTS_BY_VENDOR_EXTRA` — **not** the
+    main `PRODUCT_FIELDS_FRAGMENT`/`GET_PRODUCTS` — so a bridge-plugin outage still degrades to
+    "no featured flag" rather than breaking the whole grid.
+  - `ShopArchiveWrapper.tsx`: `heroPick`/`companionPicks` now come from
+    `products.filter(p => p.featured)`, falling back to the original `products.slice(0, 4)`
+    positional behavior when nothing is marked Featured yet (so the section never goes empty
+    on a store that hasn't been curated). To set the Editor's Pick, mark a product Featured in
+    WP Admin — the first Featured product (in catalog order) becomes the hero, the next 3
+    become "More From The Edit".
+
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
 Built on top of the existing WooCommerce **native** comment-based review
