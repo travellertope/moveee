@@ -1,6 +1,3 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -15,59 +12,72 @@ interface Story {
 }
 
 export default function EditorialSection({ stories }: { stories: Story[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-
   if (!stories.length) return null;
 
+  const [lead, ...rest] = stories;
+
   return (
-    <section className="editorial">
-      <div className="editorial-inner">
-        <div className="ed-left">
+    <section className="mg-edit">
+      <div className="mg-edit-inner">
+        <div className="mg-sec-label">Curated</div>
+        <div className="mg-sec-header">
           <h3>The <em>Edit</em></h3>
-          <p>Curated perspectives on the most important cultural moments happening right now.</p>
-          <div className="ed-grid">
-            {stories.map((story, i) => (
-              <Link
-                key={story.id}
-                href={`/magazine/${story.slug}`}
-                className={`ed-item${activeIdx === i ? ' ed-item--active' : ''}`}
-                onMouseEnter={() => setActiveIdx(i)}
-              >
-                <div className="ek">{story.categories?.nodes?.[0]?.name || 'Opinion'}</div>
-                <h4 dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }} />
-                <div className="em">
-                  {new Date(story.date).toLocaleDateString('en-GB')}
-                </div>
-              </Link>
-            ))}
-          </div>
         </div>
 
-        <div className="ed-visual">
-          {stories.map((story, i) => (
-            story.featuredImage?.node?.sourceUrl ? (
-              <Image
-                key={story.id}
-                src={story.featuredImage.node.sourceUrl}
-                alt={story.featuredImage.node.altText || story.title}
-                fill
-                style={{
-                  objectFit: 'cover',
-                  opacity: activeIdx === i ? 1 : 0,
-                  transition: 'opacity 0.45s ease',
-                }}
+        <div className="edit-mosaic">
+          <Link href={`/magazine/${lead.slug}`} className="edit-lead">
+            <div className="edit-lead-img">
+              {lead.featuredImage?.node?.sourceUrl ? (
+                <Image
+                  src={lead.featuredImage.node.sourceUrl}
+                  alt={lead.featuredImage.node.altText || lead.title}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', background: 'var(--ink)' }} />
+              )}
+            </div>
+            <div className="edit-lead-body">
+              <p className="edit-lead-kicker">{lead.categories?.nodes?.[0]?.name || 'Opinion'}</p>
+              <h4
+                className="edit-lead-title"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(lead.title) }}
               />
-            ) : null
-          ))}
-          {/* Fallback tint shown when no story has an image */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'var(--ochre)',
-              zIndex: -1,
-            }}
-          />
+              <p className="edit-lead-date">
+                {new Date(lead.date).toLocaleDateString('en-GB')}
+              </p>
+            </div>
+          </Link>
+
+          {rest.length > 0 && (
+            <div className="edit-stack">
+              {rest.map((story) => (
+                <Link key={story.id} href={`/magazine/${story.slug}`} className="edit-row">
+                  <div className="edit-row-thumb">
+                    {story.featuredImage?.node?.sourceUrl && (
+                      <Image
+                        src={story.featuredImage.node.sourceUrl}
+                        alt={story.featuredImage.node.altText || story.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
+                  <div className="edit-row-body">
+                    <p className="edit-row-kicker">{story.categories?.nodes?.[0]?.name || 'Opinion'}</p>
+                    <h4
+                      className="edit-row-title"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                    />
+                    <span className="edit-row-date">
+                      {new Date(story.date).toLocaleDateString('en-GB')}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -93,15 +93,8 @@ export default async function MagazineArchiveWrapper({
 
   return (
     <>
-      {/* ── MAGAZINE HEAD ── */}
+      {/* ── MAGAZINE NAV ── */}
       <section className="mg-head">
-        <div className="mg-head-inner">
-          <h1 className="mg-head-title">Moveee <em>Editorials</em></h1>
-          <p className="mg-head-desc">
-            Long-form essays, interviews, and cultural commentary. The editorial heart of The Moveee.
-          </p>
-        </div>
-
         <nav className="mg-nav">
           <CategoryNav
             categories={topCategories}
@@ -157,21 +150,23 @@ export default async function MagazineArchiveWrapper({
                         <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                       )}
                     </div>
-                    <div className="mg-card-kicker">
-                      {decodeHtml(story.categories?.nodes[0]?.name || "Article")}
-                    </div>
-                    <h4
-                      className="mg-card-title"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                    />
-                    <div
-                      className="mg-card-desc"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
-                      }}
-                    />
-                    <div className="mg-card-date">
-                      {new Date(story.date).toLocaleDateString("en-GB")}
+                    <div className="mg-card-body">
+                      <div className="mg-card-kicker">
+                        {decodeHtml(story.categories?.nodes[0]?.name || "Article")}
+                      </div>
+                      <h4
+                        className="mg-card-title"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                      />
+                      <div
+                        className="mg-card-desc"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
+                        }}
+                      />
+                      <div className="mg-card-date">
+                        {new Date(story.date).toLocaleDateString("en-GB")}
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -182,27 +177,11 @@ export default async function MagazineArchiveWrapper({
         </section>
       ) : (
         <>
-          {/* ── TICKER ── */}
-          <div className="ticker-wrap">
-            <div className="ticker-track">
-              {[...Array(2)].map((_, i) => (
-                <span key={i}>
-                  Visual Art <span className="a">✦</span> Film <span className="a">✦</span>{" "}
-                  Literature <span className="a">✦</span> Music <span className="a">✦</span>{" "}
-                  Fashion <span className="a">✦</span> Food <span className="a">✦</span>{" "}
-                </span>
-              ))}
-            </div>
-          </div>
-
           {/* ── HERO ── */}
           {heroStory && (
             <section className="mg-hero">
-              <div className="mg-hero-main">
-                <div className="mg-hero-eyebrow">
-                  {decodeHtml(heroStory.categories?.nodes?.[0]?.name || "Featured")}
-                </div>
-                <Link href={`/magazine/${heroStory.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <div className="mg-hero-grid">
+                <Link href={`/magazine/${heroStory.slug}`} className="mg-hero-img-link">
                   <div className="mg-hero-img">
                     {heroStory.featuredImage?.node?.sourceUrl ? (
                       <Image
@@ -216,42 +195,44 @@ export default async function MagazineArchiveWrapper({
                       <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                     )}
                   </div>
-                  <h2
-                    className="mg-hero-title"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(heroStory.title) }}
-                  />
                 </Link>
-                <div
-                  className="mg-hero-desc"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(heroStory.excerpt?.replace(/<[^>]*>/g, "") || ""),
-                  }}
-                />
-                <div className="mg-hero-meta">
-                  <span>
-                    {new Date(heroStory.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <Link href={`/magazine/${heroStory.slug}`} className="mg-hero-read">
-                    Read Full Story ↗
+
+                <div className="mg-hero-text">
+                  <div className="mg-hero-eyebrow">
+                    ★ {decodeHtml(heroStory.categories?.nodes?.[0]?.name || "Featured")}
+                  </div>
+                  <Link href={`/magazine/${heroStory.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    <h2
+                      className="mg-hero-title"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(heroStory.title) }}
+                    />
                   </Link>
+                  <div
+                    className="mg-hero-desc"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(heroStory.excerpt?.replace(/<[^>]*>/g, "") || ""),
+                    }}
+                  />
+                  <div className="mg-hero-meta">
+                    <span className="mg-hero-date">
+                      {new Date(heroStory.date).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </span>
+                    <Link href={`/magazine/${heroStory.slug}`} className="mg-hero-read">
+                      Read Full Story →
+                    </Link>
+                  </div>
                 </div>
               </div>
 
-              <div className="mg-hero-divider" />
-
               {sidebarStories.length > 0 && (
-                <div className="mg-hero-sidebar">
+                <div className="mg-week-row">
                   {sidebarStories.map((story) => (
-                    <Link
-                      key={story.id}
-                      href={`/magazine/${story.slug}`}
-                      className="mg-sf-card"
-                    >
-                      <div className="mg-sf-thumb">
+                    <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-week-card">
+                      <div className="mg-week-thumb">
                         {story.featuredImage?.node?.sourceUrl && (
                           <Image
                             src={story.featuredImage.node.sourceUrl}
@@ -261,21 +242,19 @@ export default async function MagazineArchiveWrapper({
                           />
                         )}
                       </div>
-                      <div className="mg-sf-body">
-                        <div className="mg-sf-kicker">
-                          {decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}
-                        </div>
-                        <h3
-                          className="mg-sf-title"
-                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                        />
-                        <div className="mg-sf-date">
-                          {new Date(story.date).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </div>
+                      <div className="mg-week-kicker">
+                        {decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}
+                      </div>
+                      <h4
+                        className="mg-week-title"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                      />
+                      <div className="mg-week-date">
+                        {new Date(story.date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </div>
                     </Link>
                   ))}
@@ -287,42 +266,46 @@ export default async function MagazineArchiveWrapper({
           {/* ── FEATURED BAND ── */}
           {sectionBandStories.length > 0 && (
             <section className="mg-band">
-              <div className="mg-sec-label">Selected</div>
-              <div className="mg-sec-header">
-                <h3>Featured <em>Stories</em></h3>
-                <Link href="/magazine" className="mg-sec-all">View all →</Link>
-              </div>
-              <div className="mg-band-grid">
-                {sectionBandStories.map((story) => (
-                  <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-card">
-                    <div className="mg-card-img">
-                      {story.featuredImage?.node?.sourceUrl && (
-                        <Image
-                          src={story.featuredImage.node.sourceUrl}
-                          alt={story.title}
-                          fill
-                          style={{ objectFit: "cover" }}
+              <div className="mg-band-inner">
+                <div className="mg-sec-label">Selected</div>
+                <div className="mg-sec-header">
+                  <h3>Featured <em>Stories</em></h3>
+                  <Link href="/magazine" className="mg-sec-all">View all →</Link>
+                </div>
+                <div className="mg-band-grid">
+                  {sectionBandStories.map((story) => (
+                    <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-card">
+                      <div className="mg-card-img">
+                        {story.featuredImage?.node?.sourceUrl && (
+                          <Image
+                            src={story.featuredImage.node.sourceUrl}
+                            alt={story.title}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        )}
+                      </div>
+                      <div className="mg-card-body">
+                        <div className="mg-card-kicker">
+                          {story.categories?.nodes?.[0]?.name || "Article"}
+                        </div>
+                        <h4
+                          className="mg-card-title"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
                         />
-                      )}
-                    </div>
-                    <div className="mg-card-kicker">
-                      {story.categories?.nodes?.[0]?.name || "Article"}
-                    </div>
-                    <h4
-                      className="mg-card-title"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                    />
-                    <div
-                      className="mg-card-desc"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
-                      }}
-                    />
-                    <div className="mg-card-date">
-                      {new Date(story.date).toLocaleDateString("en-GB")}
-                    </div>
-                  </Link>
-                ))}
+                        <div
+                          className="mg-card-desc"
+                          dangerouslySetInnerHTML={{
+                            __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
+                          }}
+                        />
+                        <div className="mg-card-date">
+                          {new Date(story.date).toLocaleDateString("en-GB")}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </section>
           )}
@@ -370,35 +353,37 @@ export default async function MagazineArchiveWrapper({
           {/* ── DIGEST ── */}
           {digestStories.length > 0 && (
             <section className="mg-digest">
-              <div className="mg-sec-label">Digest</div>
-              <div className="mg-sec-header">
-                <h3>Quick <em>Reads</em></h3>
-              </div>
-              <div className="mg-digest-grid">
-                {digestStories.map((story) => (
-                  <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-ditem">
-                    <div className="mg-ditem-img">
-                      {story.featuredImage?.node?.sourceUrl && (
-                        <Image
-                          src={story.featuredImage.node.sourceUrl}
-                          alt={story.title}
-                          fill
-                          style={{ objectFit: "cover" }}
-                        />
-                      )}
-                    </div>
-                    <div className="mg-ditem-kicker">
-                      {decodeHtml(story.categories?.nodes?.[0]?.name || "News")}
-                    </div>
-                    <div
-                      className="mg-ditem-title"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                    />
-                    <div className="mg-ditem-date">
-                      {new Date(story.date).toLocaleDateString("en-GB")}
-                    </div>
-                  </Link>
-                ))}
+              <div className="mg-digest-inner">
+                <div className="mg-sec-label">Digest</div>
+                <div className="mg-sec-header">
+                  <h3>Quick <em>Reads</em></h3>
+                </div>
+                <div className="mg-digest-grid">
+                  {digestStories.map((story) => (
+                    <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-ditem">
+                      <div className="mg-ditem-img">
+                        {story.featuredImage?.node?.sourceUrl && (
+                          <Image
+                            src={story.featuredImage.node.sourceUrl}
+                            alt={story.title}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        )}
+                      </div>
+                      <div className="mg-ditem-kicker">
+                        {decodeHtml(story.categories?.nodes?.[0]?.name || "News")}
+                      </div>
+                      <div
+                        className="mg-ditem-title"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                      />
+                      <div className="mg-ditem-date">
+                        {new Date(story.date).toLocaleDateString("en-GB")}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </section>
           )}
@@ -412,25 +397,35 @@ export default async function MagazineArchiveWrapper({
                   <h3><em>Opinions</em> &amp; Essays</h3>
                 </div>
                 <div className="mg-op-grid">
-                  {opinionStories.map((story) => (
-                    <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-op-card">
-                      <div
-                        className="mg-op-quote"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                      />
-                      <div className="mg-op-author">
-                        {story.author?.node?.name || "The Moveee"}
+                  {opinionStories.map((story, i) => (
+                    <Link
+                      key={story.id}
+                      href={`/magazine/${story.slug}`}
+                      className={`mg-op-card${i === 0 ? " mg-op-card--lead" : ""}`}
+                    >
+                      <div className="mg-op-img">
+                        {story.featuredImage?.node?.sourceUrl ? (
+                          <Image
+                            src={story.featuredImage.node.sourceUrl}
+                            alt={story.title}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                        )}
                       </div>
-                      <div
-                        className="mg-op-desc"
-                        dangerouslySetInnerHTML={{
-                          __html: sanitizeHtml(
-                            (story.excerpt?.replace(/<[^>]*>/g, "").slice(0, 100) || "") + "..."
-                          ),
-                        }}
-                      />
-                      <div className="mg-op-kicker">
-                        {decodeHtml(story.categories?.nodes?.[0]?.name || "Essay")}
+                      <div className="mg-op-body">
+                        <div className="mg-op-kicker">
+                          {decodeHtml(story.categories?.nodes?.[0]?.name || "Essay")}
+                        </div>
+                        <h4
+                          className="mg-op-title"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                        />
+                        <div className="mg-op-author">
+                          By {story.author?.node?.name || "The Moveee"}
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -440,13 +435,11 @@ export default async function MagazineArchiveWrapper({
           )}
 
           {/* ── CTA BAND ── */}
-          <section className="mg-cta">
-            <div className="mg-cta-inner">
+          <section className="mg-cta-section">
+            <div className="mg-cta-band">
               <div className="mg-cta-left">
                 <div className="mg-cta-label">Weekly Dispatch</div>
                 <h3>The Moveee <em>Newsletter</em></h3>
-              </div>
-              <div className="mg-cta-mid">
                 <p>
                   Culture, art, heritage, and the stories worth reading — curated from Lagos, London,
                   Accra, and beyond. In your inbox every Friday.

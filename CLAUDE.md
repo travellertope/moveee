@@ -1202,6 +1202,101 @@ same way. The Opinions & Essays section (`opinionStories` slice in
 `MagazineArchiveWrapper.tsx`) is capped at 2 articles, not 6 — `.mg-op-grid` is already a
 2-column grid so this needs no CSS change if the cap changes again.
 
+**Superseded by the full archive redesign below (August 2026)** — `.editorial`/
+`.editorial-inner`/`.ed-left`/`.ed-grid`/`.ed-item`/`.ed-visual`/`.ek`/`.em` no longer exist
+anywhere in the codebase; "The Edit" is now `.mg-edit`/`.edit-mosaic`/`.edit-lead`/
+`.edit-stack`/`.edit-row` (light, always-visible, no hover-swap). The rest of this entry
+(the `position: relative` lesson, the `--ochre-deep` fix, the `.mg-nav-tabs` flex fix) is
+still accurate and still applies.
+
+### `/magazine` archive page — full redesign (August 2026)
+
+Mockup-first (Artifact), iterated through two rounds of explicit feedback before being built
+for real — first "i dont like the design concept of these sections" (The Edit + Opinions,
+no direction given, so a clarifying question was asked before revising), then two structural
+asks mid-build ("remove this section" re: the masthead, "remove the category ticker") that
+were folded directly into the real implementation before any of it was committed. Touches
+`apps/site/app/magazine/MagazineArchiveWrapper.tsx`, `apps/site/components/
+EditorialSection.tsx`, and `apps/site/app/magazine.css` — brings the whole page onto the
+site-wide `--radius-xl`/`--radius-2xl`/`--shadow-card` card convention (see "Border-radius
+convention" above), which this page predated entirely (flush 8px radii, no shadows, image
+directly followed by unwrapped text with no card chrome).
+
+- **Masthead removed entirely** — no more "Moveee Editorials" h1/eyebrow/desc block, per
+  explicit user direction. `.mg-head` is now just the wrapping section for `.mg-nav`
+  (category tabs + filter pills), not a big centered title block — `text-align: center` and
+  the large top padding were dropped along with it. `.mg-head-inner`/`.mg-head-title`/
+  `.mg-head-desc` CSS deleted (confirmed zero other usages before removing).
+- **Ticker removed entirely** from this page — the `<div className="ticker-wrap">` JSX block
+  was deleted from `MagazineArchiveWrapper.tsx`'s non-filtered branch. **The shared
+  `.ticker-wrap`/`.ticker-track` CSS in `globals.css` was left untouched** — it's still used
+  by `/journeys`, `/events`, `/events/[slug]`, and `apps/site/app/shop/ShopArchiveWrapper.tsx`.
+  If you ever need the ticker back on `/magazine`, the CSS is still there; only this page's
+  JSX usage was removed.
+- **Hero restructured** from a flex row (image+title+desc on the left, a divider, then a
+  320px `.mg-hero-sidebar` list of 3 stories on the right) into a proper 2-column cover
+  layout (`.mg-hero-grid`: image left, kicker/title/dek/meta right, `1.15fr 1fr` at
+  `min-width: 900px`) with the same 3 `sidebarStories` promoted into their own full-width
+  **"More This Week"** 3-card row (`.mg-week-row`/`.mg-week-card`) below the hero instead of
+  a cramped sidebar list. `.mg-hero-sidebar`/`.mg-hero-divider`/`.mg-sf-*` CSS deleted
+  (confirmed only ever used by this one file before removing).
+- **Featured Stories, In Focus, and the filtered-view grid** all now render `.mg-card` as a
+  real white card (`background: var(--paper)`, `border-radius: var(--radius-xl)`,
+  `box-shadow: var(--shadow-card, ...)`, `overflow: hidden`) instead of a flush image
+  directly followed by unwrapped text — required wrapping the kicker/title/desc/date block
+  in a new `<div className="mg-card-body">` (padding: 18px 20px 22px) in **both** places
+  `.mg-card` is used (`mg-band-grid` and `mg-filtered-grid` — they share the one class, so
+  both needed the same JSX wrapper added). `.mg-portrait-img` (In Focus) bumped from flush
+  8px to `radius-xl` + `shadow-card`, aspect-ratio unchanged (4/5, intentionally portrait —
+  this is a photography-forward section, don't "fix" it to 4/3).
+- **"The Edit" rebuilt from a dark hover-swap panel to an always-visible light mosaic** —
+  the old design needed `useState`/`onMouseEnter` to reveal anything in the visual panel (a
+  static render showed nothing but an empty gradient), which read as dated once actually
+  looked at without hovering. `EditorialSection.tsx` is no longer a client component (no
+  `'use client'`, no `useState`) — it's a plain server-renderable function that splits
+  `stories` into `[lead, ...rest]` and renders one large `.edit-lead` feature card (image +
+  title) beside a `.edit-stack` of up to 3 compact `.edit-row` items (76×76 thumb + kicker +
+  title + date), `1.3fr 1fr` at `min-width: 900px`. Wrapped in `.mg-edit`/`.mg-edit-inner`
+  following the same full-bleed-background + max-width-inner split every other tinted
+  section in this file already uses (see `.mg-opinions`/`.mg-opinions-inner` for the
+  pre-existing precedent) — **do not put a background directly on a section that also
+  carries its own `max-width`/`margin: 0 auto`, or the tint won't span full viewport
+  width**; this file now has three of these split pairs (`.mg-band`/`.mg-band-inner`,
+  `.mg-edit`/`.mg-edit-inner`, `.mg-digest`/`.mg-digest-inner`) plus the pre-existing
+  `.mg-opinions`/`.mg-opinions-inner` — follow this shape for any future tinted section here.
+- **Alternating tint rhythm, adjacent-tint seam divider**: Featured Stories (`.mg-band`) and
+  Quick Reads (`.mg-digest`) both gained a `#F2F2F2` tint they didn't have before; Opinions
+  & Essays (`.mg-opinions`) had its tint **removed** (now plain white) — the new order is
+  Featured Stories (tint) → In Focus (white) → The Edit (tint) → Quick Reads (tint) →
+  Opinions (white) → CTA. Since The Edit and Quick Reads are adjacent tinted sections, both
+  carry their own `border-top: 1px solid rgba(200,191,176,.3)` so they don't visually merge
+  into one undifferentiated grey block — this exact same "two same-background sections
+  butted together with no divider" bug was caught and fixed in the mockup stage first (via a
+  `.sec--tint + .sec--tint` sibling-border rule there) before the real build ever happened.
+- **Opinions & Essays rebuilt** from a giant italic pull-quote extracted from the post title
+  (`.mg-op-quote`, `border-left: 4px solid #C5491F`) into an image-led feature card
+  (`.mg-op-img` 16/9 + `.mg-op-body` with kicker/title/byline) matching Featured Stories'
+  visual language — asymmetric `1.4fr 1fr` at `min-width: 900px` via a `.mg-op-card--lead`
+  modifier on the first of the 2 `opinionStories`, so two cards don't read as sparse/
+  identical. The description excerpt clamp (`.mg-op-desc`) is gone — kicker/title/byline
+  only, no body copy on the card.
+- **Newsletter CTA restructured** from a flush full-bleed dark 3-column section
+  (`.mg-cta`/`.mg-cta-inner`) into a rounded `radius-2xl` dark band with a radial gold
+  accent overlay (`.mg-cta-section`/`.mg-cta-band`, matches the homepage `.mz-download-strip`
+  visual language) sitting inset inside a padded white page section — 2-column at
+  `min-width: 900px` (was 3-column always) with the description/tags now living in the same
+  left column as the title (there is no more separate "mid" column). `.mg-cta-title` was
+  replaced by using `.mg-cta-left h3` directly (font-weight dropped 700→400, size now
+  `clamp(24px, 2.6vw, 32px)`, em color switched from `--ochre` to `--gold`) — if you're
+  looking for where the CTA heading style lives, it's `.mg-cta-left h3`, not a dedicated
+  `.mg-cta-title` class (that class name is gone).
+- Filter pills (`MagazineFilterPills.tsx`, unchanged component logic) restyled from small
+  bordered rectangular pills to full `radius-full` JetBrains-Mono uppercase chips, matching
+  Discover/People's filter language — CSS-only change, no JSX touched.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  as every other mockup-first rebuild in this file. Verified via `tsc --noEmit` (clean) on
+  `apps/site` and a CSS brace-balance check on `magazine.css` (344/344).
+
 ### Magazine article page — hero rebuild: gradient bg + right-bleed image panel (August 2026)
 
 `apps/site/app/magazine/[slug]/page.tsx` + `apps/site/app/editorial.css` (`ar-*`
