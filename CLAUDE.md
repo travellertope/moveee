@@ -1274,6 +1274,16 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
     on a store that hasn't been curated). To set the Editor's Pick, mark a product Featured in
     WP Admin — the first Featured product (in catalog order) becomes the hero, the next 3
     become "More From The Edit".
+  - **Same fix applied to the product detail page's "More From This Category"**
+    (`page.tsx`'s `relatedProducts`) — this had the identical bug (`GET_PRODUCTS` with no
+    `orderby`, first 4 after excluding the current product). Now fetches an 8-product pool per
+    category via `GET_PRODUCTS` + `GET_PRODUCTS_EXTRA` in parallel (the latter wrapped in its
+    own `.catch(() => null)` so a bridge-plugin failure only drops the featured signal, not the
+    whole related-products fetch), merges `featured` by `databaseId`, and prefers
+    Featured-within-category products before falling back to positional order. The rest of the
+    page's sections (As Seen In, Maker Story, Process, Vendor Profile, Reviews) were already
+    backed by real editorial fields or genuine per-product data — not positional luck — so they
+    didn't need this treatment.
 
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
