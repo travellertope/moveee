@@ -1953,7 +1953,7 @@
   @media (max-width: 640px) {
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 16px; padding-right: 16px; }
     .masthead-mobile-actions { gap: 6px; }
-    .masthead-mobile-actions .masthead-icon-btn { padding: 5px; }
+    .masthead-mobile-actions .masthead-icon-btn:not(.mobile-avatar-btn) { padding: 5px; }
     .mobile-header-signin { padding: 5px 10px; font-size: 11px; }
     .mobile-header-join { padding: 5px 10px; font-size: 11px; }
     .masthead { padding: 12px 16px; }
