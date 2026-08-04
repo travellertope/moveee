@@ -13,8 +13,8 @@
   position: relative;
   padding: 22px 64px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--mute);
   z-index: 10;
