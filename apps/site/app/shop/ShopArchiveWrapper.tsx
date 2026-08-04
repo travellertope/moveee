@@ -162,12 +162,11 @@ export default async function ShopArchiveWrapper({
       <section className="sl-head">
         <div className="sl-head-inner">
           <div>
-            <span className="sl-head-eyebrow">The Shop</span>
             <h1>
               {isFiltered ? (
                 <em>{activeLabel}</em>
               ) : (
-                <>Moveee <em>Lifestyle</em></>
+                <><em>Lifestyle</em> Shop</>
               )}
             </h1>
           </div>
