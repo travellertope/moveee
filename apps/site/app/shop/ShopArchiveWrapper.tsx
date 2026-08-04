@@ -117,6 +117,7 @@ export default async function ShopArchiveWrapper({
             averageRating: extra.averageRating,
             reviewCount: extra.reviewCount,
             productMaterials: extra.productMaterials,
+            featured: extra.featured,
           }
         : p;
     });
@@ -142,10 +143,15 @@ export default async function ShopArchiveWrapper({
   const isFiltered = !!(category || tag || brand);
   const activeLabel = category || tag || brand || "Lifestyle";
 
-  // Featured = first 4 (1 hero pick + 3 companions in "More From The Edit")
-  const featured = products.slice(0, 4);
-  const heroPick = featured[0];
-  const companionPicks = featured.slice(1);
+  // Editorial Picks = 1 hero + 3 companions in "More From The Edit". Prefers
+  // WooCommerce-Featured products (Products → Catalog visibility → Featured);
+  // falls back to the first 4 in default catalog order when nothing is
+  // marked Featured, so the section never goes empty just because no one
+  // has curated it yet.
+  const featuredProducts = products.filter((p: any) => p.featured);
+  const editorialPicks = (featuredProducts.length > 0 ? featuredProducts : products).slice(0, 4);
+  const heroPick = editorialPicks[0];
+  const companionPicks = editorialPicks.slice(1);
   const heroLede = heroPick?.shortDescription
     ? heroPick.shortDescription.replace(/<[^>]*>/g, "").trim()
     : "";

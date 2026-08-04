@@ -1551,6 +1551,7 @@ export const GET_PRODUCTS_EXTRA = `
         averageRating
         reviewCount
         productMaterials
+        featured
       }
     }
   }
@@ -1566,6 +1567,7 @@ export const GET_PRODUCTS_BY_VENDOR_EXTRA = `
         averageRating
         reviewCount
         productMaterials
+        featured
       }
     }
   }

@@ -1,4 +1,4 @@
-import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_POST_BY_ID } from "@/lib/wp";
+import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_EXTRA, GET_POST_BY_ID } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -84,14 +84,28 @@ export default async function ProductPage({
 
   if (!product) notFound();
 
-  // Fetch related products from same category
+  // Fetch related products from same category — prefer WooCommerce-Featured
+  // products within the category (same signal as the archive page's Editor's
+  // Pick), falling back to positional order when nothing in-category is
+  // Featured so the section never goes empty on an uncurated store.
   const firstCategory = product.productCategories?.nodes?.[0]?.slug;
   try {
     if (firstCategory) {
-      const rel = await getWPData(GET_PRODUCTS, { first: 6, category: firstCategory });
-      relatedProducts = (rel?.products?.nodes ?? [])
-        .filter((p: any) => p.slug !== slug)
-        .slice(0, 4);
+      const [rel, relExtra] = await Promise.all([
+        getWPData(GET_PRODUCTS, { first: 8, category: firstCategory }),
+        getWPData(GET_PRODUCTS_EXTRA, { first: 8, category: firstCategory }).catch(() => null),
+      ]);
+      let pool = (rel?.products?.nodes ?? []).filter((p: any) => p.slug !== slug);
+      const extraNodes = relExtra?.products?.nodes ?? [];
+      if (extraNodes.length) {
+        const extraById = new Map<number, any>(extraNodes.map((n: any) => [n.databaseId, n]));
+        pool = pool.map((p: any) => {
+          const extra = extraById.get(p.databaseId);
+          return extra ? { ...p, featured: extra.featured } : p;
+        });
+      }
+      const featuredPool = pool.filter((p: any) => p.featured);
+      relatedProducts = (featuredPool.length > 0 ? featuredPool : pool).slice(0, 4);
     }
   } catch { /* CMS unreachable */ }
 
