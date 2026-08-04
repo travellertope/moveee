@@ -254,12 +254,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             />
           </div>
           <div className="ar-hero-text">
-            <div className="ar-hero-eyebrow">
-              <span>★ {categoryName}</span>
-              {post.countries?.nodes?.[0]?.name && (
-                <> · <Link href={`/magazine/country/${post.countries.nodes[0].slug}`}>{post.countries.nodes[0].name}</Link></>
-              )}
-            </div>
             <h1 className="ar-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
             {post.excerpt && (
               <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
