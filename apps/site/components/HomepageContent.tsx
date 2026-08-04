@@ -36,22 +36,24 @@ function StoryCard({ story }: { story: any }) {
           <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
         )}
       </div>
-      <div className="mg-card-kicker">
-        {decodeHtml(story.categories?.nodes?.[0]?.name || "Article")}
+      <div className="mg-card-body">
+        <div className="mg-card-kicker">
+          {decodeHtml(story.categories?.nodes?.[0]?.name || "Article")}
+        </div>
+        <h4
+          className="mg-card-title"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+        />
+        <div
+          className="mg-card-desc"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
+          }}
+        />
+        {story.date && (
+          <div className="mg-card-date">{new Date(story.date).toLocaleDateString("en-GB")}</div>
+        )}
       </div>
-      <h4
-        className="mg-card-title"
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-      />
-      <div
-        className="mg-card-desc"
-        dangerouslySetInnerHTML={{
-          __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
-        }}
-      />
-      {story.date && (
-        <div className="mg-card-date">{new Date(story.date).toLocaleDateString("en-GB")}</div>
-      )}
     </Link>
   );
 }
@@ -116,17 +118,19 @@ export default function HomepageContent({ coverStory, stories, edition, latestIs
 
       {stories?.length > 0 && (
         <section className="mg-band">
-          <div className="mg-band-header">
-            <div className="mg-band-heading">
-              <p className="mg-band-eyebrow">Editorial</p>
-              <h3 className="mg-band-title">{EDITION_BAND_LABEL[edition]}</h3>
+          <div className="mg-band-inner">
+            <div className="mg-band-header">
+              <div className="mg-band-heading">
+                <p className="mg-band-eyebrow">Editorial</p>
+                <h3 className="mg-band-title">{EDITION_BAND_LABEL[edition]}</h3>
+              </div>
+              <Link href="/magazine" className="mg-band-view-all">See all →</Link>
             </div>
-            <Link href="/magazine" className="mg-band-view-all">See all →</Link>
-          </div>
-          <div className="mg-filtered-grid">
-            {stories.slice(0, 6).map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
+            <div className="mg-filtered-grid">
+              {stories.slice(0, 6).map((story) => (
+                <StoryCard key={story.id} story={story} />
+              ))}
+            </div>
           </div>
         </section>
       )}

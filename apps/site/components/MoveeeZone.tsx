@@ -123,7 +123,7 @@ export default function MoveeeZone() {
           <p className="mz-body mz-body--centred">
             Moveee is a community and discovery platform built for people who find the spot
             before it&apos;s cool, have a take on every new release, and want it to count for
-            something. Post a hidden gem. Rate the meal.
+            something.
           </p>
         </div>
 
