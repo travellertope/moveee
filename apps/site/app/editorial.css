@@ -85,7 +85,6 @@
   border-radius: var(--radius-2xl);
   overflow: hidden;
   box-shadow: 0 24px 56px rgba(0,0,0,.45);
-  border: 1px solid rgba(255,255,255,.1);
   background: var(--ar-ghost-light);
 }
 
@@ -992,8 +991,6 @@
     aspect-ratio: 4 / 3;
     border-radius: 0;
     box-shadow: none;
-    border-left: none;
-    border-bottom: 1px solid rgba(255,255,255,.08);
   }
   .ar-hero-wash { opacity: 0.4; }
   .ar-hero-text { padding: 20px 20px 36px; max-width: none; }
@@ -1006,7 +1003,7 @@
   .ar-breadcrumb--overlay { padding: 14px 20px; }
   .ar-wrap {
     grid-template-columns: 1fr;
-    padding: 0 0 40px;
+    padding: 0 20px 40px;
     margin-top: 28px;
     gap: 24px;
   }
