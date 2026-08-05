@@ -1712,9 +1712,7 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
 - **"Opinions & Essays" pulled from a positional slice too** (`stories.slice(20, 22)`) — same
   bug class as News, fixed the same way: now its own fetch, `GET_STORIES` with
   `categoryName: "viewpoints"` (`first: 4`), run in the same `Promise.all` as the main pool and
-  "The Edit"'s. The main `stories` filter now excludes both `news` and `viewpoints` slugs, so
-  neither category leaks into the hero/sidebar/featured-band/in-focus/quick-reads sections.
-  Layout changed from a 2-up grid with an oversized "lead" first card
+  "The Edit"'s. Layout changed from a 2-up grid with an oversized "lead" first card
   (`.mg-op-card--lead`, `1.4fr 1fr`) to 4 equal columns (`repeat(4, 1fr)` at ≥900px,
   `repeat(2, 1fr)` at ≥640px, 1 column below that) — the lead-card modifier class and its CSS
   were removed entirely (not left as dead code) since nothing references it anymore.
@@ -1728,20 +1726,27 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   decorative section label, so it's a different thing even though it visually sits in a similar
   spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
   other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
-- **"In Focus" pulled from a positional slice too** (`stories.slice(7, 12)`) — same bug class
-  as News/Viewpoints, fixed the same way but against a different taxonomy: the section is
-  pinned to **The Lane** (`series`, not `category`), fetched via `GET_SERIES_STORIES` with
-  `series: "the-lane"` (slug confirmed from the existing `GET_SERIES_STORIES_BATCH` query,
-  which already had `theLane: seriesItem(id: "the-lane", ...)` for the `/magazine/series/*`
-  landing page) in the same `Promise.all` as the other three fetches, then sliced to 5 client
-  side since `GET_SERIES_STORIES` always fetches `posts(first: 48)` with no `first` variable.
-  The main `stories` exclusion filter now also drops any post whose `series.nodes` includes
-  the `the-lane` slug (`STORY_FIELDS_FRAGMENT` already carries `series { nodes { slug } }`,
-  no query changes needed there) — same reasoning as the category exclusions: a Lane post could
-  otherwise also carry a normal category and leak into the hero/sidebar/band/quick-reads
-  sections. If a future section needs to pin to a *series* rather than a *category*, this is the
-  pattern — `GET_SERIES_STORIES({ series: "<slug>" })` + a `series.nodes` exclusion, not
-  `categoryName`.
+- **"The Lane" (formerly "In Focus") and "Quick Reads" pulled from positional slices too**
+  (`stories.slice(7, 12)` and `stories.slice(16, 20)`) — same bug class as News/Viewpoints, but
+  against a *series* rather than a *category*: pinned to the **The Lane** series
+  (`GET_SERIES_STORIES({ series: "the-lane" })`, sliced to 5 client-side) and the **The Free
+  Critics** series (`GET_SERIES_STORIES({ series: "the-free-critics" })`, sliced to 4) — both
+  slugs confirmed from the existing `GET_SERIES_STORIES_BATCH` query's `theLane: seriesItem(id:
+  "the-lane", ...)` entry and the analogous WP admin term lookup. Section heading for the
+  ex-"In Focus" block is now **"The Lane"**, matching its content.
+- **Cross-section duplicate handling is by-id dedupe, not a category/series-wide exclusion**
+  (explicit correction — an earlier version of this fix wholesale-excluded `viewpoints` and
+  `the-lane` from the rest of the page, which was wrong and has been reverted). **Only News is
+  excluded wholesale** — the entire category is kept out of every other section, not just the 7
+  posts picked for "The Edit" (a standing, explicit request). Viewpoints, The Lane, and The Free
+  Critics are **not** excluded wholesale: a post from any of those taxonomies that wasn't picked
+  for Opinions/The Lane/Quick Reads can still surface normally in the hero/sidebar/band sections.
+  What's actually deduped is narrower and simpler — a `usedElsewhereIds` `Set` built from the
+  exact post ids already placed into `opinionStories`/`portraitStories`/`digestStories`, and the
+  main `stories` pool filters out only those specific ids (plus the whole News category). If a
+  future pinned section needs the same treatment, follow this pattern: fetch its own pool, add
+  its ids to `usedElsewhereIds`, and do **not** add a `categories.nodes.some(...)`/
+  `series.nodes.some(...)` blanket exclusion for its taxonomy.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
