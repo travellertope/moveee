@@ -2,6 +2,15 @@
    MAGAZINE ARCHIVE  —  mg-* namespace
    ======================================== */
 
+/* Sits above the sitewide body grain/colour-wash (globals.css body::before,
+   z-index: 100) so every /magazine page reads as plain white. See
+   app/magazine/layout.tsx, which wraps this route tree in the class. */
+.mg-page-white {
+  position: relative;
+  z-index: 101;
+  background: var(--paper, #fff);
+}
+
 /* ── HEAD (nav-only — masthead title/desc removed) ── */
 .mg-head {
   padding: 32px 64px 0;
@@ -495,7 +504,8 @@
   gap: 24px;
 }
 .edit-lead {
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
   background: var(--paper, #fff);
@@ -510,10 +520,18 @@
   width: 100%;
   aspect-ratio: 16/10;
   background: var(--ink);
+  flex-shrink: 0;
 }
 .edit-lead-img img { transition: transform .5s; }
 .edit-lead:hover .edit-lead-img img { transform: scale(1.04); }
-.edit-lead-body { padding: 22px 24px 26px; }
+.edit-lead-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 26px;
+}
 .edit-lead-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;

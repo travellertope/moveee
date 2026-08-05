@@ -25,6 +25,7 @@ export default async function MagazineArchiveWrapper({
   tag,
 }: MagazineArchiveProps) {
   let stories: any[] = [];
+  let editorialStories: any[] = [];
   let filters: any = null;
   let termName = "";
   let termDescription = "";
@@ -67,8 +68,16 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      const data = await getWPData(GET_STORIES, { first: 27 });
+      // "The Edit" is fetched separately from the main story pool so it can
+      // stay pinned to the News category regardless of what else is on the
+      // page — a plain positional slice of `stories` would mix in whatever
+      // category happened to land in that range.
+      const [data, editData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 27 }),
+        getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
+      ]);
       stories = data?.posts?.nodes || [];
+      editorialStories = editData?.posts?.nodes || [];
     }
   } catch {
     // CMS unreachable
@@ -86,7 +95,6 @@ export default async function MagazineArchiveWrapper({
   const sidebarStories = stories.slice(1, 4);
   const sectionBandStories = stories.slice(4, 7);
   const portraitStories = stories.slice(7, 12);
-  const editorialStories = stories.slice(12, 16);
   const digestStories = stories.slice(16, 20);
   const opinionStories = stories.slice(20, 22);
   const isFiltered = !!(category || industry || country || series || tag);

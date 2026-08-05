@@ -1604,6 +1604,39 @@ this was a composition-and-copy change only.
   every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
   and CSS brace-balance checks on `moveee-zone.css` (93/93) and `magazine.css` (333/333).
 
+### "The Edit" pinned to News category + plain-white magazine background (August 2026)
+
+Two small, unrelated fixes requested together against `/magazine` and its edition pages
+(`/magazine/africa`, `/uk`, `/us` all render the same `MagazineArchiveWrapper` with no props).
+
+- **"The Edit" was mixing categories** — `editorialStories` used to be `stories.slice(12, 16)`,
+  a positional slice of the same generic 27-post pool every other section on the page slices
+  from, so it showed whatever category happened to land in that range (News, Interviews,
+  Reviews all mixed together in the screenshot that prompted this). Fixed: `editorialStories`
+  is now its own fetch, `getWPData(GET_STORIES, { first: 7, categoryName: "news" })`, run in
+  parallel with the main `stories` fetch inside `MagazineArchiveWrapper.tsx`'s unfiltered
+  branch — `GET_STORIES` already supported a `categoryName` where-arg (used elsewhere for
+  `/magazine/category/[slug]`), so no new query was needed. Bumped from 4 items (1 lead + 3
+  rows) to 7 (1 lead + 6 rows) to close up the whitespace below the shorter old 3-row stack —
+  `.edit-lead`/`.edit-lead-body` in `magazine.css` were changed from block to a flex column
+  (`.edit-lead-body` gets `flex:1; justify-content:space-between`) so that if the taller
+  `.edit-stack` column ever stretches the lead card (via `.edit-mosaic`'s existing
+  `align-items: stretch`), the lead's text block distributes into the extra space instead of
+  leaving dead space at its own bottom.
+- **Magazine background wasn't pure white** — root cause is sitewide, not magazine-specific:
+  `globals.css`'s `body` has two 4%-opacity radial-gradient colour washes plus a fixed,
+  full-viewport `body::before` SVG fractal-noise "paper grain" texture (`opacity: .35;
+  mix-blend-mode: multiply; z-index: 100`) that sits above all normal-flow page content and
+  visibly dulls/tints anything under it, including sections already on `var(--paper)` (#fff).
+  This grain is intentional sitewide texture (kept for the homepage/shop/etc.), so it wasn't
+  removed globally — instead `apps/site/app/magazine/layout.tsx` (new file) wraps every route
+  under `/magazine/*` in a `.mg-page-white` div (`position: relative; z-index: 101; background:
+  var(--paper)`), which paints solid white above the z-index:100 grain layer for that whole
+  route tree only. Since Next.js layouts nest, this covers the archive, the single article page,
+  and every category/series/tag/country/industry/issues sub-route with one file — no per-page
+  changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, Quick Reads)
+  still render correctly since they set their own explicit background on top.
+
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
 Triggered directly by the homepage incident above: once it was clear that a "rebuilt from
