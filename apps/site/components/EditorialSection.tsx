@@ -19,7 +19,6 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
   return (
     <section className="mg-edit">
       <div className="mg-edit-inner">
-        <div className="mg-sec-label">Curated</div>
         <div className="mg-sec-header">
           <h3>Culture <em>News</em></h3>
         </div>

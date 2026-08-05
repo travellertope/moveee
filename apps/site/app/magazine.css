@@ -746,9 +746,12 @@
   color: #7A6F5C;
   margin: 0;
 }
+@media (min-width: 640px) {
+  .mg-op-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (min-width: 900px) {
-  .mg-op-grid { grid-template-columns: 1.4fr 1fr; }
-  .mg-op-card:not(.mg-op-card--lead) .mg-op-title { font-size: 17px; }
+  .mg-op-grid { grid-template-columns: repeat(4, 1fr); }
+  .mg-op-title { font-size: 16px; }
 }
 
 /* ── CTA BAND (rounded dark band, matches homepage download-strip language) ── */

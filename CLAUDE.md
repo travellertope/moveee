@@ -1644,6 +1644,27 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, Quick Reads)
   still render correctly since they set their own explicit background on top.
 
+**Follow-up, same session:**
+- **"Opinions & Essays" pulled from a positional slice too** (`stories.slice(20, 22)`) — same
+  bug class as News, fixed the same way: now its own fetch, `GET_STORIES` with
+  `categoryName: "viewpoints"` (`first: 4`), run in the same `Promise.all` as the main pool and
+  "The Edit"'s. The main `stories` filter now excludes both `news` and `viewpoints` slugs, so
+  neither category leaks into the hero/sidebar/featured-band/in-focus/quick-reads sections.
+  Layout changed from a 2-up grid with an oversized "lead" first card
+  (`.mg-op-card--lead`, `1.4fr 1fr`) to 4 equal columns (`repeat(4, 1fr)` at ≥900px,
+  `repeat(2, 1fr)` at ≥640px, 1 column below that) — the lead-card modifier class and its CSS
+  were removed entirely (not left as dead code) since nothing references it anymore.
+- **All decorative section eyebrows removed from `/magazine`** — the small monospace kicker
+  labels above each section heading ("Curated", "Selected", "Visual", "Digest", "Voices",
+  "Filtered Results") were dropped from `MagazineArchiveWrapper.tsx` and `EditorialSection.tsx`;
+  each section now leads straight with its `<h3>` title. The `.mg-sec-label` CSS rule itself is
+  left in `magazine.css`, unused, per this file's usual "kept in case needed again" convention.
+  **Deliberately not touched**: `.mg-hero-eyebrow` (the "★ {Category}" badge on the hero story)
+  — that's live per-article metadata (which category the story belongs to), not a static
+  decorative section label, so it's a different thing even though it visually sits in a similar
+  spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
+  other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
+
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
 Triggered directly by the homepage incident above: once it was clear that a "rebuilt from

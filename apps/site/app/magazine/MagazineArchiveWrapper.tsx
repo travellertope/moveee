@@ -26,6 +26,7 @@ export default async function MagazineArchiveWrapper({
 }: MagazineArchiveProps) {
   let stories: any[] = [];
   let editorialStories: any[] = [];
+  let opinionStories: any[] = [];
   let filters: any = null;
   let termName = "";
   let termDescription = "";
@@ -68,24 +69,29 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      // "The Edit" is fetched separately from the main story pool so it can
-      // stay pinned to the News category regardless of what else is on the
-      // page — a plain positional slice of `stories` would mix in whatever
-      // category happened to land in that range. Fetches a larger pool
-      // (40, not 27) since News stories are filtered back out of it below —
-      // otherwise sections further down the page (Opinions, in particular)
-      // could come up short if enough of the top 27 happened to be News.
-      const [data, editData] = await Promise.all([
+      // "The Edit" and "Opinions & Essays" are both fetched separately from
+      // the main story pool so they stay pinned to their own categories
+      // (News, Viewpoints) regardless of what else is on the page — a plain
+      // positional slice of `stories` would mix in whatever category
+      // happened to land in that range. Fetches a larger main pool (40, not
+      // 27) since both categories are filtered back out of it below —
+      // otherwise later sections could come up short.
+      const [data, editData, opinionData] = await Promise.all([
         getWPData(GET_STORIES, { first: 40 }),
         getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
+        getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
       ]);
-      // News stories live exclusively in "The Edit" now — excluded here so
-      // they never also show up in the hero, sidebar, featured band, in
-      // focus, quick reads, or opinions sections below.
+      // News and Viewpoints stories live exclusively in their own sections
+      // now — excluded here so they never also show up in the hero,
+      // sidebar, featured band, in focus, or quick reads sections below.
       stories = (data?.posts?.nodes || []).filter(
-        (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+        (p: any) =>
+          !p.categories?.nodes?.some(
+            (c: any) => c.slug === "news" || c.slug === "viewpoints"
+          )
       );
       editorialStories = editData?.posts?.nodes || [];
+      opinionStories = opinionData?.posts?.nodes || [];
     }
   } catch {
     // CMS unreachable
@@ -104,7 +110,6 @@ export default async function MagazineArchiveWrapper({
   const sectionBandStories = stories.slice(4, 7);
   const portraitStories = stories.slice(7, 12);
   const digestStories = stories.slice(16, 20);
-  const opinionStories = stories.slice(20, 22);
   const isFiltered = !!(category || industry || country || series || tag);
 
   return (
@@ -139,7 +144,6 @@ export default async function MagazineArchiveWrapper({
       ) : isFiltered ? (
         /* ── FILTERED VIEW ── */
         <section className="mg-filtered">
-          <div className="mg-sec-label">Filtered Results</div>
           <div className="mg-sec-header">
             <h3>Stories from <em>{termName}</em></h3>
             <Link href="/magazine" className="mg-sec-all">Clear Filters ✕</Link>
@@ -283,7 +287,6 @@ export default async function MagazineArchiveWrapper({
           {sectionBandStories.length > 0 && (
             <section className="mg-band">
               <div className="mg-band-inner">
-                <div className="mg-sec-label">Selected</div>
                 <div className="mg-sec-header">
                   <h3>Featured <em>Stories</em></h3>
                   <Link href="/magazine" className="mg-sec-all">View all →</Link>
@@ -330,7 +333,6 @@ export default async function MagazineArchiveWrapper({
           {portraitStories.length > 0 && (
             <section className="mg-portrait">
               <div className="mg-portrait-header">
-                <div className="mg-sec-label">Visual</div>
                 <div className="mg-sec-header">
                   <h3>In <em>Focus</em></h3>
                 </div>
@@ -370,7 +372,6 @@ export default async function MagazineArchiveWrapper({
           {digestStories.length > 0 && (
             <section className="mg-digest">
               <div className="mg-digest-inner">
-                <div className="mg-sec-label">Digest</div>
                 <div className="mg-sec-header">
                   <h3>Quick <em>Reads</em></h3>
                 </div>
@@ -408,16 +409,15 @@ export default async function MagazineArchiveWrapper({
           {opinionStories.length > 0 && (
             <section className="mg-opinions">
               <div className="mg-opinions-inner">
-                <div className="mg-sec-label">Voices</div>
                 <div className="mg-sec-header">
                   <h3><em>Opinions</em> &amp; Essays</h3>
                 </div>
                 <div className="mg-op-grid">
-                  {opinionStories.map((story, i) => (
+                  {opinionStories.map((story) => (
                     <Link
                       key={story.id}
                       href={`/magazine/${story.slug}`}
-                      className={`mg-op-card${i === 0 ? " mg-op-card--lead" : ""}`}
+                      className="mg-op-card"
                     >
                       <div className="mg-op-img">
                         {story.featuredImage?.node?.sourceUrl ? (
