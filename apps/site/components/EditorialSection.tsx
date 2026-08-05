@@ -45,19 +45,19 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
               )}
             </div>
             <div className="edit-lead-body">
-              <div className="edit-lead-text">
-                <p className="edit-lead-kicker">{lead.categories?.nodes?.[0]?.name || 'Opinion'}</p>
-                <h4
-                  className="edit-lead-title"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(lead.title) }}
-                />
-                {plainExcerpt(lead.excerpt) && (
-                  <p className="edit-lead-excerpt">{plainExcerpt(lead.excerpt)}</p>
-                )}
+              <div className="edit-lead-meta">
+                <span className="edit-lead-kicker">{lead.categories?.nodes?.[0]?.name || 'Opinion'}</span>
+                <span className="edit-lead-date">
+                  {new Date(lead.date).toLocaleDateString('en-GB')}
+                </span>
               </div>
-              <p className="edit-lead-date">
-                {new Date(lead.date).toLocaleDateString('en-GB')}
-              </p>
+              <h4
+                className="edit-lead-title"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(lead.title) }}
+              />
+              {plainExcerpt(lead.excerpt) && (
+                <p className="edit-lead-excerpt">{plainExcerpt(lead.excerpt)}</p>
+              )}
             </div>
           </Link>
 

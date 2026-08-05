@@ -1822,6 +1822,23 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are only acceptable
   for buttons/hover-states/single-issue-page-components" rule elsewhere in this file), not a
   generic section tint, so it's a different kind of color choice than what this request was about.
+- **"Culture News" lead card had its card chrome removed entirely (explicit request, same
+  session)** — this **supersedes** the "large dead gap below the title" fix earlier in this
+  section (the one that added `.edit-lead-text` + kept `justify-content: space-between` on
+  `.edit-lead-body`): `.edit-lead` had a white `background`/`border-radius`/`box-shadow`
+  wrapping the whole image+text block; the user wanted no card container at all — just the image
+  (still rounded, `border-radius` moved onto `.edit-lead-img` itself), then text flowing directly
+  underneath with no border/shadow/fill. Removed `background`/`border-radius`/`box-shadow`/
+  `overflow`/the hover box-shadow transition from `.edit-lead`. Also **moved the date next to the
+  category** instead of pinned to the bottom of the card (`.edit-lead-meta`, a new flex row
+  wrapping `.edit-lead-kicker` + `.edit-lead-date` side by side) — since there's no more card box
+  to visually anchor a bottom-pinned date against, and the request was explicit ("let the date
+  come beside the category"). This also made the earlier `.edit-lead-text` grouping div and its
+  `justify-content: space-between` stretch-fix **moot** — without card chrome, invisible leftover
+  flex height at the bottom of `.edit-lead` is harmless (nothing renders there to look broken), so
+  `.edit-lead-body` is back to a plain top-down flex column (`gap: 10px`, no `flex: 1`, no
+  `justify-content`) and `.edit-lead-text` was removed. If a future pass ever reintroduces card
+  chrome here, re-check whether the space-between stretch-fix needs to come back too.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

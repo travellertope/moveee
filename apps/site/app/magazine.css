@@ -524,33 +524,28 @@
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  background: var(--paper, #fff);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card, 0 1px 3px rgba(20,17,13,.08), 0 1px 2px rgba(20,17,13,.04));
-  overflow: hidden;
-  transition: box-shadow .2s;
 }
-.edit-lead:hover { box-shadow: 0 4px 16px rgba(20,17,13,.14), 0 1px 3px rgba(20,17,13,.08); }
 .edit-lead-img {
   position: relative;
   width: 100%;
   aspect-ratio: 16/10;
   background: var(--ink);
   flex-shrink: 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 .edit-lead-img img { transition: transform .5s; }
 .edit-lead:hover .edit-lead-img img { transform: scale(1.04); }
 .edit-lead-body {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 24px 26px;
+  gap: 10px;
+  padding: 18px 0 0;
 }
-.edit-lead-text {
+.edit-lead-meta {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 .edit-lead-kicker {
   font-family: 'JetBrains Mono', monospace;
@@ -559,7 +554,6 @@
   color: #C5491F;
   text-transform: uppercase;
   letter-spacing: .1em;
-  margin: 0 0 10px;
 }
 .edit-lead-title {
   font-family: 'Fraunces', serif;
@@ -567,7 +561,7 @@
   font-weight: 700;
   color: var(--ink);
   line-height: 1.28;
-  margin: 0 0 10px;
+  margin: 0;
   transition: color .15s;
 }
 .edit-lead:hover .edit-lead-title { color: #C5491F; }
@@ -582,7 +576,6 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   color: #C8BFB0;
-  margin: 0;
 }
 .edit-stack {
   display: flex;
