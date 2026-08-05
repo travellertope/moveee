@@ -1778,6 +1778,49 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   equivalent, but the split shape is what every *tinted-background* section here uses, and mixing
   the two shapes is exactly what caused this bug) — and always verify it against `.mg-head`'s
   edges at a wide (≥1600px) viewport before considering it done.
+- **Follow-up, same session: "The Lane" was still misaligned** — its section had a *third*,
+  previously-unnoticed variant of the same bug. `.mg-portrait-header` (just the "The Lane" title)
+  had `max-width`/`margin: 0 auto`, but its sibling `.mg-portrait-scroll` (the actual horizontally-
+  scrolling row of card images — a separate element, not nested inside the header div) only had
+  `padding: 0 64px` with **no** `max-width`/`margin: 0 auto` at all, so on a wide viewport the
+  cards sat flush at 64px from the true viewport edge while the title above them sat inset at the
+  shared column's position — visibly misaligned title vs. content. Fixed by adding the same
+  `max-width: calc(1200px + 128px); margin: 0 auto; box-sizing: border-box;` to
+  `.mg-portrait-scroll`, matching `.mg-portrait-header`. **This is a third variant of the same
+  class of bug** (missing `max-width`/`margin: 0 auto` on one part of a section while a sibling
+  part has it) — if any other section on this page still looks misaligned, check every element
+  that renders visible content for this section (not just its header/title wrapper) for the same
+  gap, the same way `.mg-portrait-scroll` was missed in the first pass.
+- **"Culture News" lead card had a large dead gap below the title (fixed same session)** — the
+  `.edit-lead-body` flex column (`flex:1; justify-content:space-between`) previously had 3 direct
+  children (kicker, title, date), so `justify-content: space-between` distributed the lead card's
+  extra stretch height (from being shorter than the taller `.edit-stack` column next to it) as two
+  separate large gaps — one between kicker and title, one between title and date — which read as
+  broken whitespace, not a deliberate layout. Two changes fix it: (1) the right column was trimmed
+  from 6 items to **5** (`first: 7` → `first: 6` in `MagazineArchiveWrapper.tsx`'s editorial
+  fetch — 1 lead + 5 rows), shrinking how much taller the stack column is than the lead card in
+  the first place; (2) `EditorialSection.tsx` now renders a real excerpt (`plainExcerpt()`,
+  HTML-stripped + truncated to 140 chars — `excerpt` was already on
+  `STORY_FIELDS_FRAGMENT`/`GET_STORIES`, no query change needed) between the title and the date,
+  and the kicker/title/excerpt are wrapped in a new `.edit-lead-text` group div so
+  `.edit-lead-body`'s `justify-content: space-between` now only has **two** children (the text
+  group and the date) — any leftover stretch space collapses into one gap right above the date
+  line at the bottom of the card instead of scattered mid-content.
+- **All `#F2F2F2` section tints removed, page is now plain white throughout (explicit request,
+  same session)** — this **reverses** the "Alternating tint rhythm" design decision documented
+  above: Featured Stories (`.mg-band`), Culture News (`.mg-edit`), and The Free Critics
+  (`.mg-digest`) all had `background: #F2F2F2`; all three are now `background: var(--paper,
+  #fff)`. The `border-top` divider rules between sections (added at the same time as the tints,
+  to separate two adjacent tinted sections from merging into one grey block) were **left in
+  place** — they still read as normal, subtle section dividers on an all-white page and don't
+  depend on the tint to make sense, so there was no reason to remove them along with the color.
+  **Deliberately not touched**: `.mg-filter-pill`'s `background: var(--paper-deep, #f2f2f2)` — a
+  small filter-bar chip, not a page section, and it also has its own border so removing the fill
+  would just make it read as non-interactive text; and `.mg-cta-band`'s dark `var(--ink)`
+  background — a deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are
+  only acceptable for buttons/hover-states/single-issue-page-components" rule elsewhere in this
+  file), not a generic section tint, so it's a different kind of color choice than what this
+  request was about.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

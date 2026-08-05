@@ -234,7 +234,7 @@
 
 /* ── SECTION BAND: Featured Stories ── */
 .mg-band {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   padding: 64px 0 80px;
   border-top: 1px solid rgba(200,191,176,.4);
 }
@@ -439,7 +439,10 @@
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
   padding: 0 64px 8px;
+  box-sizing: border-box;
 }
 .mg-portrait-scroll::-webkit-scrollbar { display: none; }
 .mg-portrait-card {
@@ -501,7 +504,7 @@
    section, which centers the same max-width column against the full,
    unpadded viewport). Vertical padding stays on the outer div. */
 .mg-edit {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
   padding: 80px 0;
 }
@@ -545,6 +548,10 @@
   gap: 16px;
   padding: 22px 24px 26px;
 }
+.edit-lead-text {
+  display: flex;
+  flex-direction: column;
+}
 .edit-lead-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -564,6 +571,13 @@
   transition: color .15s;
 }
 .edit-lead:hover .edit-lead-title { color: #C5491F; }
+.edit-lead-excerpt {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mute, #7a6f5c);
+  margin: 0;
+}
 .edit-lead-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
@@ -627,9 +641,9 @@
   .edit-mosaic { grid-template-columns: 1.3fr 1fr; align-items: stretch; }
 }
 
-/* ── DIGEST: Quick Reads ── */
+/* ── DIGEST: The Free Critics ── */
 .mg-digest {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
   padding: 80px 0;
 }

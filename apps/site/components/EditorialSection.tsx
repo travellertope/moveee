@@ -7,8 +7,15 @@ interface Story {
   slug: string;
   title: string;
   date: string;
+  excerpt?: string;
   categories?: { nodes: { name: string }[] };
   featuredImage?: { node: { sourceUrl: string; altText?: string } };
+}
+
+function plainExcerpt(html?: string, max = 140): string {
+  if (!html) return "";
+  const text = html.replace(/<[^>]*>/g, "").trim();
+  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
 }
 
 export default function EditorialSection({ stories }: { stories: Story[] }) {
@@ -38,11 +45,16 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
               )}
             </div>
             <div className="edit-lead-body">
-              <p className="edit-lead-kicker">{lead.categories?.nodes?.[0]?.name || 'Opinion'}</p>
-              <h4
-                className="edit-lead-title"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(lead.title) }}
-              />
+              <div className="edit-lead-text">
+                <p className="edit-lead-kicker">{lead.categories?.nodes?.[0]?.name || 'Opinion'}</p>
+                <h4
+                  className="edit-lead-title"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(lead.title) }}
+                />
+                {plainExcerpt(lead.excerpt) && (
+                  <p className="edit-lead-excerpt">{plainExcerpt(lead.excerpt)}</p>
+                )}
+              </div>
               <p className="edit-lead-date">
                 {new Date(lead.date).toLocaleDateString('en-GB')}
               </p>
