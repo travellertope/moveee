@@ -1348,6 +1348,18 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
     page's sections (As Seen In, Maker Story, Process, Vendor Profile, Reviews) were already
     backed by real editorial fields or genuine per-product data — not positional luck — so they
     didn't need this treatment.
+- **Search box missing its icon (user-reported, same session)** — `shop-redesign-mockup.html`'s
+  `.sh-search` is a wrapper div (`position: relative`) holding both a `.sh-search-icon` span
+  (absolutely positioned into a left-padding gap reserved on the input) and the `<input>` itself
+  — and `shop.css`'s `.sl-search`/`.sl-search input`/`.sl-search-icon` rules already matched that
+  shape exactly (`padding: 0 16px 0 34px` on the input, reserving the 34px for the icon). But
+  `ShopFilterBar.tsx`'s JSX put `className="sl-search"` directly on the `<input>` itself and
+  never rendered an `.sl-search-icon` span at all — so the CSS's reserved icon gap just sat empty,
+  making the input look unstyled/oddly indented. Fixed by wrapping the input in a
+  `<div className="sl-search">` with a `<span className="sl-search-icon">⚲</span>` sibling,
+  matching what the CSS was already built for. **If a mockup-matched CSS block looks unstyled
+  in the browser, check whether the JSX actually has the wrapper/child structure the CSS
+  assumes** — the CSS itself was correct here, only the markup was missing a piece of it.
 
 ### Product editorial fields — rich text (Bold/Italic) for Care Instructions + Delivery Info (August 2026)
 
