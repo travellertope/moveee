@@ -1390,6 +1390,68 @@ delivery on orders over £75...") — they were never wired to `care_instruction
 at all, on either platform's mobile fetch. That's a separate, pre-existing "wire up the real
 field" gap unrelated to rich-text support, out of scope for this pass.
 
+### Setting Featured Products — two distinct mechanisms (August 2026, docs-only)
+
+User asked how to mark a product Featured; investigation turned up two unrelated features that
+both use the word "featured," easy to conflate:
+
+1. **Shop-wide "Editor's Pick"** (drives `/shop`'s hero + "More From The Edit" row, and boosts
+   ranking in a product page's "More From This Category" — see "Editor's Pick curation" in the
+   "Shop archive + product detail" section above) — WooCommerce's own **native** Featured flag.
+   Set via WP Admin → Products → open a product → "Product data" box header → "Catalog
+   visibility: Edit" link → check **"This is a featured product"** → Update. No custom code;
+   `wc_get_product($id)->is_featured()` reads it directly.
+2. **"Shop the Edit — Featured Products"** (`moveee-graphql-bridge.php`, §6) — a *different*,
+   per-article mechanism: up to 6 WooCommerce products attached to one **magazine post** (not
+   shop-wide), rendered as a "Shop the Edit" strip on that article. Set via a sidebar meta box
+   titled **"Shop the Edit — Featured Products"** on the post's own WP Admin edit screen
+   (multi-select, Ctrl/Cmd+click, up to 6). Backend: `_culture_featured_products` postmeta (JSON
+   array of product IDs) on the `post`, exposed via GraphQL as `Post.featuredProducts`.
+
+These are independent — marking a product Featured (1) doesn't add it to any article's Shop the
+Edit list (2), and vice versa.
+
+### Product page variation-attribute selectors made generic (August 2026)
+
+User-reported gap, found while answering "does the product page properly display attributes?":
+`ProductSelectors.tsx` only recognized **two hardcoded attribute names** for variation selection
+— `extractAttr(variations, "color")` and `extractAttr(variations, "size")` (exact, case-
+insensitive match). Any other WooCommerce variation attribute (Material, Finish, Scent, Pattern,
+etc.) was silently invisible — no selector rendered for it at all, so a buyer had no way to pick
+a value for it even though WooCommerce still requires one to identify a specific variation.
+
+Fixed by replacing the two hardcoded calls with a generic `extractAttrGroups()` that walks every
+variation's `attributes.nodes` once and returns **one group per distinct attribute name actually
+present** (in first-seen order), each with its own list of distinct values. Selection state
+changed from two `useState<number>` (`selectedColor`/`selectedSize`) to a single
+`useState<Record<string, number>>` keyed by attribute name, so an arbitrary number of attribute
+groups can each track their own selected index. Render logic loops `attrGroups` and picks a
+swatch UI (`.sp-swatches`/`.sp-swatch`) only for a group literally named "color"/"colour";
+everything else renders as pill chips (`.sp-sizes`/`.sp-size-btn` — reused as-is, since that
+class's padding-based sizing already accommodates arbitrary-length values like "Extra Firm" or
+"Lavender Fields", not just short size codes). No new CSS was needed.
+
+**Bonus fix, same code block**: color swatches previously rendered as an empty bordered circle
+with no actual color shown (`style={{ border: ... }}`, no `background`) — now sets
+`background: val.toLowerCase()`, which works directly as a CSS `background` value for any
+variation value that happens to be a standard CSS color keyword (Red, Blue, Black, Navy, etc.,
+which is how most WooCommerce color attributes are named in practice). A non-keyword value (e.g.
+"Rust", "Ochre") just silently keeps a transparent swatch — a graceful no-worse-than-before
+fallback, not a new failure mode.
+
+**Related, deeper gap found but *not* fixed in this pass (flagged, needs a decision)**:
+`ProductSelectors.tsx`'s "Add to Cart" (`addItem(productId, quantity)`) never passes a variation
+ID — `CartContext.tsx`'s `addItem` signature is `(productId: number, quantity?: number) =>
+Promise<void>`, with no variation parameter at all, and `PRODUCT_FIELDS_FRAGMENT`'s
+`VariableProduct.variations` doesn't even fetch a `databaseId`/`id` per variation node. This
+means **selecting a Colour/Size/etc. swatch is currently purely cosmetic — it has no effect on
+what actually gets added to the cart**, regardless of how many attribute groups render. Fixing
+this properly requires: fetching variation IDs in the GraphQL fragment, matching the full set of
+selected attribute values against a variation to resolve its ID, extending `CartContext.addItem`
+to accept an optional variation ID, and threading it through both the desktop and mobile-sticky
+Add to Cart buttons here. Out of scope for the "handle any attribute name generically" ask this
+pass addressed — revisit if/when asked to make variation selection functionally correct.
+
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
 Built on top of the existing WooCommerce **native** comment-based review
