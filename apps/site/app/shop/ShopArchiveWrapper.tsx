@@ -191,7 +191,7 @@ export default async function ShopArchiveWrapper({
             <div className="sl-picks-header">
               <h2>Editorial <em>Picks</em></h2>
               <Link href="/shop/edit" className="sl-picks-all">
-                The Moveee Edit →
+                The Edit →
               </Link>
             </div>
 
@@ -296,7 +296,7 @@ export default async function ShopArchiveWrapper({
             </div>
             <div className="sl-bridge-links">
               <Link href="/magazine" className="sl-bridge-cta">
-                Read The Moveee Edit →
+                Read The Edit →
               </Link>
               <Link href="/journeys" className="sl-bridge-cta">
                 Explore Origins Journal →

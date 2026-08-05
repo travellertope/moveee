@@ -65,30 +65,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (CITY_SLUGS[slug]) {
     const c = CITY_SLUGS[slug];
     return {
-      title: { absolute: `Happenings in ${c.name} | The Moveee` },
+      title: { absolute: `Happenings in ${c.name} | Moveee` },
       description: `Upcoming cultural events in ${c.name}, ${c.country} — music, art, film, food and community happenings.`,
     };
   }
   if (CATEGORY_SLUGS[slug]) {
     const c = CATEGORY_SLUGS[slug];
     return {
-      title: { absolute: `${c.name} Events | Moveee Happenings` },
+      title: { absolute: `${c.name} Events | Moveee` },
       description: `${c.desc} — curated for our global community.`,
     };
   }
 
   let event: any = null;
   try { event = await getEventBySlugWithFallback(slug, { revalidate: 300 }); } catch { /* CMS unreachable */ }
-  if (!event) return { title: { absolute: "Event Not Found | The Moveee" }, description: "This event could not be found." };
+  if (!event) return { title: { absolute: "Event Not Found | Moveee" }, description: "This event could not be found." };
 
   const dateRaw = event.eventDate || event.date || new Date().toISOString();
   const dateObj = new Date(dateRaw);
   const dateFormatted = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "TBA";
   const location = event.location || "Venue TBA";
-  const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || event.tagline || "A curated cultural event from The Moveee";
+  const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || event.tagline || "A curated cultural event from Moveee";
 
   return {
-    title: { absolute: `${event.title} · ${dateFormatted} · ${location} | Moveee Happenings` },
+    title: { absolute: `${event.title} · ${dateFormatted} · ${location} | Moveee` },
     description: excerpt,
     openGraph: {
       title: event.title, description: excerpt,

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: { absolute: "Contact | The Moveee" },
-  description: "Get in touch with The Moveee — editorial enquiries, media partnerships, events, community, or just to say hello.",
+  title: { absolute: "Contact | Moveee" },
+  description: "Get in touch with Moveee — editorial enquiries, media partnerships, events, community, or just to say hello.",
 };
 
 export default function ContactPage() {

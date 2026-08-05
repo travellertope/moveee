@@ -3,7 +3,7 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Unsubscribe | The Moveee" },
+  title: { absolute: "Unsubscribe | Moveee" },
   robots: { index: false, follow: false },
 };
 

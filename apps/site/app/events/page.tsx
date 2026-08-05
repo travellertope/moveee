@@ -10,7 +10,7 @@ export const revalidate = 300;
 export const dynamicParams = true;
 
 export const metadata = {
-  title: { absolute: "Happenings | The Moveee" },
+  title: { absolute: "Happenings | Moveee" },
   description: "Curated cultural events — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
 };
 

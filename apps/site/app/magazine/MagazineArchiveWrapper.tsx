@@ -25,6 +25,10 @@ export default async function MagazineArchiveWrapper({
   tag,
 }: MagazineArchiveProps) {
   let stories: any[] = [];
+  let editorialStories: any[] = [];
+  let opinionStories: any[] = [];
+  let portraitStories: any[] = [];
+  let digestStories: any[] = [];
   let filters: any = null;
   let termName = "";
   let termDescription = "";
@@ -67,8 +71,41 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      const data = await getWPData(GET_STORIES, { first: 27 });
-      stories = data?.posts?.nodes || [];
+      // "The Edit", "Opinions & Essays", "The Lane", and "The Free Critics" are all
+      // fetched separately from the main story pool so they stay pinned to
+      // their own taxonomy term (News category, Viewpoints category, The Lane
+      // series, The Free Critics series) regardless of what else is on the
+      // page — a plain positional slice of `stories` would mix in whatever
+      // content happened to land in that range. Fetches a larger main pool
+      // (40, not 27) to leave headroom for the dedupe below.
+      const [data, editData, opinionData, portraitData, digestData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 40 }),
+        getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
+        getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
+        getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
+        getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
+      ]);
+      editorialStories = editData?.posts?.nodes || [];
+      opinionStories = opinionData?.posts?.nodes || [];
+      portraitStories = (portraitData?.seriesItem?.posts?.nodes || []).slice(0, 5);
+      digestStories = (digestData?.seriesItem?.posts?.nodes || []).slice(0, 4);
+      // News is fully excluded from every other section — the whole category,
+      // not just the 7 picked posts (an explicit, standing request). Viewpoints,
+      // The Lane, and The Free Critics are NOT excluded wholesale — a post from
+      // any of those that wasn't picked for Opinions/The Lane/The Free Critics can
+      // still surface naturally in the hero/sidebar/band sections. Only the
+      // exact posts already used for those pinned sections are deduped out by
+      // id, so nothing repeats.
+      const usedElsewhereIds = new Set([
+        ...opinionStories.map((p: any) => p.id),
+        ...portraitStories.map((p: any) => p.id),
+        ...digestStories.map((p: any) => p.id),
+      ]);
+      stories = (data?.posts?.nodes || []).filter(
+        (p: any) =>
+          !p.categories?.nodes?.some((c: any) => c.slug === "news") &&
+          !usedElsewhereIds.has(p.id)
+      );
     }
   } catch {
     // CMS unreachable
@@ -85,10 +122,6 @@ export default async function MagazineArchiveWrapper({
   const heroStory = stories[0] || null;
   const sidebarStories = stories.slice(1, 4);
   const sectionBandStories = stories.slice(4, 7);
-  const portraitStories = stories.slice(7, 12);
-  const editorialStories = stories.slice(12, 16);
-  const digestStories = stories.slice(16, 20);
-  const opinionStories = stories.slice(20, 22);
   const isFiltered = !!(category || industry || country || series || tag);
 
   return (
@@ -123,7 +156,6 @@ export default async function MagazineArchiveWrapper({
       ) : isFiltered ? (
         /* ── FILTERED VIEW ── */
         <section className="mg-filtered">
-          <div className="mg-sec-label">Filtered Results</div>
           <div className="mg-sec-header">
             <h3>Stories from <em>{termName}</em></h3>
             <Link href="/magazine" className="mg-sec-all">Clear Filters ✕</Link>
@@ -267,7 +299,6 @@ export default async function MagazineArchiveWrapper({
           {sectionBandStories.length > 0 && (
             <section className="mg-band">
               <div className="mg-band-inner">
-                <div className="mg-sec-label">Selected</div>
                 <div className="mg-sec-header">
                   <h3>Featured <em>Stories</em></h3>
                   <Link href="/magazine" className="mg-sec-all">View all →</Link>
@@ -314,9 +345,8 @@ export default async function MagazineArchiveWrapper({
           {portraitStories.length > 0 && (
             <section className="mg-portrait">
               <div className="mg-portrait-header">
-                <div className="mg-sec-label">Visual</div>
                 <div className="mg-sec-header">
-                  <h3>In <em>Focus</em></h3>
+                  <h3>The <em>Lane</em></h3>
                 </div>
               </div>
               <div className="mg-portrait-scroll">
@@ -354,9 +384,8 @@ export default async function MagazineArchiveWrapper({
           {digestStories.length > 0 && (
             <section className="mg-digest">
               <div className="mg-digest-inner">
-                <div className="mg-sec-label">Digest</div>
                 <div className="mg-sec-header">
-                  <h3>Quick <em>Reads</em></h3>
+                  <h3>The Free <em>Critics</em></h3>
                 </div>
                 <div className="mg-digest-grid">
                   {digestStories.map((story) => (
@@ -392,16 +421,15 @@ export default async function MagazineArchiveWrapper({
           {opinionStories.length > 0 && (
             <section className="mg-opinions">
               <div className="mg-opinions-inner">
-                <div className="mg-sec-label">Voices</div>
                 <div className="mg-sec-header">
                   <h3><em>Opinions</em> &amp; Essays</h3>
                 </div>
                 <div className="mg-op-grid">
-                  {opinionStories.map((story, i) => (
+                  {opinionStories.map((story) => (
                     <Link
                       key={story.id}
                       href={`/magazine/${story.slug}`}
-                      className={`mg-op-card${i === 0 ? " mg-op-card--lead" : ""}`}
+                      className="mg-op-card"
                     >
                       <div className="mg-op-img">
                         {story.featuredImage?.node?.sourceUrl ? (

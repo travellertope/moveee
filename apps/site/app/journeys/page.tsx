@@ -8,11 +8,11 @@ import "@/app/origins.css";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Origins · Curated Journeys · The Moveee" },
+  title: { absolute: "Origins · Curated Journeys | Moveee" },
   description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
   alternates: { canonical: "https://themoveee.com/journeys" },
   openGraph: {
-    title: "Origins · Curated Journeys · The Moveee",
+    title: "Origins · Curated Journeys | Moveee",
     description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
     url: "https://themoveee.com/journeys",
     siteName: "Moveee",
@@ -23,7 +23,7 @@ export const metadata = {
     card: "summary_large_image" as const,
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Origins · Curated Journeys · The Moveee",
+    title: "Origins · Curated Journeys | Moveee",
     description: "Curated cultural journeys. Not tours. Slow, deep, culturally anchored experiences.",
   },
 };

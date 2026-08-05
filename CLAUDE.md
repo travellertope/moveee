@@ -834,6 +834,70 @@ results.
 
 ---
 
+## Site A (`apps/site`) SEO title/description brand-suffix cleanup (August 2026)
+
+User-reported: browser-tab/SERP titles across the site read "weird," e.g. `/magazine/africa`
+showed **"Magazine — Africa Edition · Moveee Magazine"** — the word "Magazine" appearing twice
+in one title. A full sweep of every `title:`/`description:` field in `apps/site/app/**/page.tsx`
+(~55 files) turned up two separate, unrelated bugs stacked on top of each other:
+
+1. **`"The Moveee"` — a phrase that appears nowhere in the brand table above — was hardcoded
+   into dozens of page titles/descriptions** (`"Contact | The Moveee"`, `"Article · The Moveee"`,
+   `"Quote by ${author} — The Moveee"`, etc.), including the **per-article fallback title
+   resolver** in `app/magazine/[slug]/page.tsx` (`resolveAioseoTitle()`'s `#site_title` token and
+   the no-SEO-title fallback `` `${post.title} · The Moveee` ``) — meaning most individual
+   magazine articles rendered this exact bug, not just the handful of static pages initially
+   spotted. Fixed by dropping "The" everywhere and, per each page's own content, using either
+   bare **"Moveee"** (platform/cross-surface pages: games, quotes, directory, events, journeys,
+   services, legal/utility pages, the `/uk`/`/us`/`/africa` **root-`/` edition variants** at
+   `app/[edition]/page.tsx` — this route is the home-page family, not `/magazine/*`, and mirrors
+   `app/page.tsx`'s own siteName, which is deliberately bare "Moveee" per the brand-architecture
+   section above) or **"Moveee Magazine"** (actual editorial/shop content: `/magazine/*` incl.
+   the single-article resolver, `/newsletter/*`, `/shop/*`, `/visuals/*`, `/makers/*`, author
+   archive — chosen because each of those sections' own root page already set
+   `openGraph.siteName: "Moveee Magazine"` explicitly, so the fix makes every page in that
+   section agree with its own section's siteName rather than inventing a third convention).
+   Also fixed two invented, undocumented sub-brand qualifiers in the same sweep: `"Moveee
+   Happenings"` (events pages) and `"Moveee Visuals"` (visuals article page) both collapsed to
+   the plain brand name per their section's rule above, `app/[edition]/page.tsx`'s three
+   EDITION_META titles (`"The British Moveee — Culture in Britain"`, `"The Moveee America —
+   ..."`, `"The Moveee Africa — ..."`) were rewritten to mirror the root homepage's own
+   `"Moveee — Culture. Discover and Engage."` pattern (`"Moveee — Culture in Britain"` etc.),
+   and `shop/edit/page.tsx`'s `"The Moveee Edit — Curated Shop"` title/H1 and its two "The Moveee
+   Edit →" link labels in `ShopArchiveWrapper.tsx` were shortened to **"The Edit"** (no
+   documented "Moveee Edit" sub-brand exists — this was the same bug, not an intentional name).
+   **Deliberately left alone**: `"The Moveee"` occurrences inside actual body copy/UI eyebrows
+   (`register`/`login`/`reset-password`'s `"The Moveee — Culture Community"` eyebrow labels) and
+   inside `terms`/`privacy`'s legal defined-term usage (`Moveee Media Ltd ("The Moveee", "we",
+   "us")`) — both are UI/legal-content decisions distinct from SEO metadata and out of scope for
+   this pass; only `title`/`description` fields (the two visible in a search result or browser
+   tab) were touched.
+2. **Redundant doubled words on the magazine/newsletter root + edition pages** — the actual bug
+   the user flagged. `/magazine`, `/magazine/{africa,uk,us}`, and `/newsletter/{africa,uk,us}`
+   all prefixed a generic `"Magazine —"`/`"Newsletters —"` label onto a title that *already*
+   ends in the brand suffix, which itself contains the word "Magazine"/"Newsletters" — e.g.
+   "Magazine — Africa Edition · Moveee **Magazine**". Fixed by dropping the redundant generic
+   prefix: `/magazine/africa` is now `"Africa Edition | Moveee Magazine"` (same pattern for
+   `/uk`, `/us`, and the three `/newsletter/*` editions → `"{Edition} Edition | Moveee
+   Magazine"`). The root `/magazine` page had no edition-specific words to lean on, so it was
+   changed to use the documented Moveee Magazine tagline instead: `"Moveee Magazine — Best in
+   Culture"` (was `"Magazine — Moveee Magazine"`).
+3. **Suffix separator standardized to `" | "`** wherever a bug fix touched a line — the site had
+   `"|"`, `"·"`, and `"—"` all used interchangeably as the final title/brand-suffix joiner across
+   different pages, which is part of what read as "weird" alongside the doubled words. Titles
+   that were already correct (no "The Moveee" bug, no doubled word) were left as-is even where
+   they still use `·`/`—` internally — this pass fixed genuine bugs, not a full site-wide
+   separator relint, to keep the change reviewable.
+
+**If you add a new page under `apps/site`**: default the title/description brand suffix to
+**`"Moveee Magazine"`** per the brand table's "always called Moveee Magazine in user-facing
+copy" rule — reach for bare `"Moveee"` only for pages that are clearly platform/cross-surface
+(games, journeys, quotes, events, directory, legal/utility, or anything mirroring the root `/`
+homepage), matching whatever `openGraph.siteName` the page/its section root already declares.
+Never write `"The Moveee"` — that string is not the brand name.
+
+---
+
 ## Figma Make prompt files (split into mobile vs. web, June 2026)
 
 Two separate catalogs of structured Figma Make / First Draft prompts, **do not merge them
@@ -1430,10 +1494,12 @@ directly followed by unwrapped text with no card chrome).
   `.mg-edit`/`.mg-edit-inner`, `.mg-digest`/`.mg-digest-inner`) plus the pre-existing
   `.mg-opinions`/`.mg-opinions-inner` — follow this shape for any future tinted section here.
 - **Alternating tint rhythm, adjacent-tint seam divider**: Featured Stories (`.mg-band`) and
-  Quick Reads (`.mg-digest`) both gained a `#F2F2F2` tint they didn't have before; Opinions
+  The Free Critics (`.mg-digest` — renamed from "Quick Reads", see the follow-up entry below)
+  both gained a `#F2F2F2` tint they didn't have before; Opinions
   & Essays (`.mg-opinions`) had its tint **removed** (now plain white) — the new order is
-  Featured Stories (tint) → In Focus (white) → The Edit (tint) → Quick Reads (tint) →
-  Opinions (white) → CTA. Since The Edit and Quick Reads are adjacent tinted sections, both
+  Featured Stories (tint) → The Lane (white — renamed from "In Focus") → The Edit (tint) →
+  The Free Critics (tint) → Opinions (white) → CTA. Since The Edit and The Free Critics are
+  adjacent tinted sections, both
   carry their own `border-top: 1px solid rgba(200,191,176,.3)` so they don't visually merge
   into one undifferentiated grey block — this exact same "two same-background sections
   butted together with no divider" bug was caught and fixed in the mockup stage first (via a
@@ -1603,6 +1669,115 @@ this was a composition-and-copy change only.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
   and CSS brace-balance checks on `moveee-zone.css` (93/93) and `magazine.css` (333/333).
+
+### "The Edit" pinned to News category + plain-white magazine background (August 2026)
+
+Two small, unrelated fixes requested together against `/magazine` and its edition pages
+(`/magazine/africa`, `/uk`, `/us` all render the same `MagazineArchiveWrapper` with no props).
+
+- **"The Edit" was mixing categories** — `editorialStories` used to be `stories.slice(12, 16)`,
+  a positional slice of the same generic 27-post pool every other section on the page slices
+  from, so it showed whatever category happened to land in that range (News, Interviews,
+  Reviews all mixed together in the screenshot that prompted this). Fixed: `editorialStories`
+  is now its own fetch, `getWPData(GET_STORIES, { first: 7, categoryName: "news" })`, run in
+  parallel with the main `stories` fetch inside `MagazineArchiveWrapper.tsx`'s unfiltered
+  branch — `GET_STORIES` already supported a `categoryName` where-arg (used elsewhere for
+  `/magazine/category/[slug]`), so no new query was needed. Bumped from 4 items (1 lead + 3
+  rows) to 7 (1 lead + 6 rows) to close up the whitespace below the shorter old 3-row stack —
+  `.edit-lead`/`.edit-lead-body` in `magazine.css` were changed from block to a flex column
+  (`.edit-lead-body` gets `flex:1; justify-content:space-between`) so that if the taller
+  `.edit-stack` column ever stretches the lead card (via `.edit-mosaic`'s existing
+  `align-items: stretch`), the lead's text block distributes into the extra space instead of
+  leaving dead space at its own bottom. **Follow-up, same pass**: News stories were still also
+  showing up in the hero/sidebar/featured-band/in-focus/quick-reads/opinions sections, since
+  those all slice from the same generic `stories` pool independent of "The Edit"'s own fetch —
+  News is now exclusive to "The Edit": `stories` is filtered to drop any post whose
+  `categories.nodes` includes the `news` slug, right after the main fetch and before any of the
+  positional slices are derived. The main fetch was bumped from `first: 27` to `first: 40` to
+  leave enough headroom post-filter — otherwise a News-heavy top-40 could starve the later
+  sections (Opinions in particular, which only takes 2).
+- **Magazine background wasn't pure white** — root cause is sitewide, not magazine-specific:
+  `globals.css`'s `body` has two 4%-opacity radial-gradient colour washes plus a fixed,
+  full-viewport `body::before` SVG fractal-noise "paper grain" texture (`opacity: .35;
+  mix-blend-mode: multiply; z-index: 100`) that sits above all normal-flow page content and
+  visibly dulls/tints anything under it, including sections already on `var(--paper)` (#fff).
+  This grain is intentional sitewide texture (kept for the homepage/shop/etc.), so it wasn't
+  removed globally — instead `apps/site/app/magazine/layout.tsx` (new file) wraps every route
+  under `/magazine/*` in a `.mg-page-white` div (`position: relative; z-index: 101; background:
+  var(--paper)`), which paints solid white above the z-index:100 grain layer for that whole
+  route tree only. Since Next.js layouts nest, this covers the archive, the single article page,
+  and every category/series/tag/country/industry/issues sub-route with one file — no per-page
+  changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, The Free Critics)
+  still render correctly since they set their own explicit background on top.
+
+**Follow-up, same session:**
+- **"Opinions & Essays" pulled from a positional slice too** (`stories.slice(20, 22)`) — same
+  bug class as News, fixed the same way: now its own fetch, `GET_STORIES` with
+  `categoryName: "viewpoints"` (`first: 4`), run in the same `Promise.all` as the main pool and
+  "The Edit"'s. Layout changed from a 2-up grid with an oversized "lead" first card
+  (`.mg-op-card--lead`, `1.4fr 1fr`) to 4 equal columns (`repeat(4, 1fr)` at ≥900px,
+  `repeat(2, 1fr)` at ≥640px, 1 column below that) — the lead-card modifier class and its CSS
+  were removed entirely (not left as dead code) since nothing references it anymore.
+- **All decorative section eyebrows removed from `/magazine`** — the small monospace kicker
+  labels above each section heading ("Curated", "Selected", "Visual", "Digest", "Voices",
+  "Filtered Results") were dropped from `MagazineArchiveWrapper.tsx` and `EditorialSection.tsx`;
+  each section now leads straight with its `<h3>` title. The `.mg-sec-label` CSS rule itself is
+  left in `magazine.css`, unused, per this file's usual "kept in case needed again" convention.
+  **Deliberately not touched**: `.mg-hero-eyebrow` (the "★ {Category}" badge on the hero story)
+  — that's live per-article metadata (which category the story belongs to), not a static
+  decorative section label, so it's a different thing even though it visually sits in a similar
+  spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
+  other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
+- **"The Lane" (formerly "In Focus") and "The Free Critics" (formerly "Quick Reads") pulled from
+  positional slices too** (`stories.slice(7, 12)` and `stories.slice(16, 20)`) — same bug class
+  as News/Viewpoints, but against a *series* rather than a *category*: pinned to the **The Lane**
+  series (`GET_SERIES_STORIES({ series: "the-lane" })`, sliced to 5 client-side) and the **The
+  Free Critics** series (`GET_SERIES_STORIES({ series: "the-free-critics" })`, sliced to 4) —
+  both slugs confirmed from the existing `GET_SERIES_STORIES_BATCH` query's `theLane:
+  seriesItem(id: "the-lane", ...)` entry and the analogous WP admin term lookup. Section headings
+  are now **"The Lane"** (was "In Focus") and **"The Free Critics"** (was "Quick Reads") —
+  `digestStories`/`.mg-digest`/`.mg-digest-inner`/`.mg-digest-grid` class names are unchanged,
+  only the `<h3>` text and the taxonomy source changed.
+- **Cross-section duplicate handling is by-id dedupe, not a category/series-wide exclusion**
+  (explicit correction — an earlier version of this fix wholesale-excluded `viewpoints` and
+  `the-lane` from the rest of the page, which was wrong and has been reverted). **Only News is
+  excluded wholesale** — the entire category is kept out of every other section, not just the 7
+  posts picked for "The Edit" (a standing, explicit request). Viewpoints, The Lane, and The Free
+  Critics are **not** excluded wholesale: a post from any of those taxonomies that wasn't picked
+  for Opinions/The Lane/Quick Reads can still surface normally in the hero/sidebar/band sections.
+  What's actually deduped is narrower and simpler — a `usedElsewhereIds` `Set` built from the
+  exact post ids already placed into `opinionStories`/`portraitStories`/`digestStories`, and the
+  main `stories` pool filters out only those specific ids (plus the whole News category). If a
+  future pinned section needs the same treatment, follow this pattern: fetch its own pool, add
+  its ids to `usedElsewhereIds`, and do **not** add a `categories.nodes.some(...)`/
+  `series.nodes.some(...)` blanket exclusion for its taxonomy.
+- **Cross-section horizontal alignment fix** — user-reported: sections had visibly inconsistent
+  left/right margins on wide viewports. Root cause was two separate bugs in `magazine.css`, both
+  against the shared `max-width: calc(1200px + 128px)` (1328px) centered-column convention every
+  section on this page is supposed to share:
+  1. **`.mg-head`** (the nav-tabs/filter-bar row) had no `max-width`/`margin: 0 auto` at all —
+     just `padding: 32px 64px 0` — so on a wide viewport it stretched to fill the *entire*
+     available width instead of stopping at the same 1328px column as every section below it.
+     Added the same `max-width`/`margin: 0 auto`/`box-sizing: border-box` triplet every other
+     section already uses.
+  2. **`.mg-edit`** ("The Edit") put its horizontal `64px` padding on the **outer** tinted div,
+     ahead of `.mg-edit-inner`'s own `max-width`/`margin: 0 auto` centering — every sibling
+     section (`.mg-band`, `.mg-portrait`, `.mg-digest`, `.mg-opinions`) does the opposite: the
+     outer div carries *no* horizontal padding, and the *inner* div does both the max-width
+     centering **and** the 64px padding together. Because `.mg-edit`'s outer padding shrank the
+     available width *before* the inner div's max-width got a chance to center within the full
+     viewport, its content sat consistently ~64px further inward than every other section on wide
+     screens. Fixed by moving the horizontal padding off `.mg-edit` (now vertical-only, `80px 0`)
+     and onto `.mg-edit-inner` (`padding: 0 64px`, joining its existing `max-width`/`margin: 0
+     auto`) — now byte-for-byte the same shape as `.mg-band-inner`/`.mg-digest-inner`/
+     `.mg-opinions-inner`.
+  **If a future section is added to this page, use the `.mg-band`/`.mg-digest` split shape**
+  (outer: background/border/vertical-padding only; inner: `max-width: calc(1200px + 128px);
+  margin: 0 auto; padding: 0 64px; box-sizing: border-box;`) rather than putting both padding
+  and max-width on the same div (`.mg-hero`/`.mg-cta-section` do this and are mathematically
+  equivalent, but the split shape is what every *tinted-background* section here uses, and mixing
+  the two shapes is exactly what caused this bug) — and always verify it against `.mg-head`'s
+  edges at a wide (≥1600px) viewport before considering it done.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

@@ -6,11 +6,11 @@ import type { Visual } from "@/components/VisualsGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Visuals | The Moveee" },
+  title: { absolute: "Visuals | Moveee Magazine" },
   description: "A curated library of illustrations documenting culture — people, places, movements, and moments. Free for creative use.",
   alternates: { canonical: "https://themoveee.com/visuals" },
   openGraph: {
-    title: "Visuals | The Moveee",
+    title: "Visuals | Moveee Magazine",
     description: "A curated library of illustrations documenting culture — people, places, movements, and moments. Free for creative use.",
     url: "https://themoveee.com/visuals",
     siteName: "Moveee Magazine",
@@ -21,7 +21,7 @@ export const metadata = {
     card: "summary_large_image" as const,
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Visuals | The Moveee",
+    title: "Visuals | Moveee Magazine",
     description: "A curated library of illustrations documenting culture — people, places, movements, and moments. Free for creative use.",
   },
 };

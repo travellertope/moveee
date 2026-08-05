@@ -39,9 +39,9 @@ export async function generateMetadata({
   const { market, slug } = await params;
   const content = getServicePage(market, slug);
   const marketData = getMarket(market);
-  if (!content || !marketData) return { title: { absolute: "Media Services | The Moveee" } };
+  if (!content || !marketData) return { title: { absolute: "Media Services | Moveee" } };
   return {
-    title: { absolute: `${content.headline} — ${marketData.name} | The Moveee` },
+    title: { absolute: `${content.headline} — ${marketData.name} | Moveee` },
     description: content.tagline,
   };
 }

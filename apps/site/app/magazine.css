@@ -2,9 +2,24 @@
    MAGAZINE ARCHIVE  —  mg-* namespace
    ======================================== */
 
-/* ── HEAD (nav-only — masthead title/desc removed) ── */
+/* Sits above the sitewide body grain/colour-wash (globals.css body::before,
+   z-index: 100) so every /magazine page reads as plain white. See
+   app/magazine/layout.tsx, which wraps this route tree in the class. */
+.mg-page-white {
+  position: relative;
+  z-index: 101;
+  background: var(--paper, #fff);
+}
+
+/* ── HEAD (nav-only — masthead title/desc removed) ──
+   max-width/margin match every section below (the shared calc(1200px + 128px)
+   column) so the nav/filter row lines up with the hero, bands, and every
+   other section instead of stretching edge-to-edge on wide viewports. */
 .mg-head {
   padding: 32px 64px 0;
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ── NAV ROW (tabs + filters) ── */
@@ -478,15 +493,22 @@
   margin-top: auto;
 }
 
-/* ── THE EDIT (asymmetric mosaic: lead feature + compact stack, light) ── */
+/* ── THE EDIT (asymmetric mosaic: lead feature + compact stack, light) ──
+   Horizontal padding moved from the outer tinted div to .mg-edit-inner (was
+   applied on both — the outer's own 64px padding was carving into the
+   available width *before* .mg-edit-inner's max-width centered within it,
+   shifting this section's content ~64px further inward than every sibling
+   section, which centers the same max-width column against the full,
+   unpadded viewport). Vertical padding stays on the outer div. */
 .mg-edit {
   background: #F2F2F2;
   border-top: 1px solid rgba(200,191,176,.3);
-  padding: 80px 64px;
+  padding: 80px 0;
 }
 .mg-edit-inner {
   max-width: calc(1200px + 128px);
   margin: 0 auto;
+  padding: 0 64px;
   box-sizing: border-box;
 }
 .edit-mosaic {
@@ -495,7 +517,8 @@
   gap: 24px;
 }
 .edit-lead {
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
   background: var(--paper, #fff);
@@ -510,10 +533,18 @@
   width: 100%;
   aspect-ratio: 16/10;
   background: var(--ink);
+  flex-shrink: 0;
 }
 .edit-lead-img img { transition: transform .5s; }
 .edit-lead:hover .edit-lead-img img { transform: scale(1.04); }
-.edit-lead-body { padding: 22px 24px 26px; }
+.edit-lead-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 26px;
+}
 .edit-lead-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -728,9 +759,12 @@
   color: #7A6F5C;
   margin: 0;
 }
+@media (min-width: 640px) {
+  .mg-op-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (min-width: 900px) {
-  .mg-op-grid { grid-template-columns: 1.4fr 1fr; }
-  .mg-op-card:not(.mg-op-card--lead) .mg-op-title { font-size: 17px; }
+  .mg-op-grid { grid-template-columns: repeat(4, 1fr); }
+  .mg-op-title { font-size: 16px; }
 }
 
 /* ── CTA BAND (rounded dark band, matches homepage download-strip language) ── */

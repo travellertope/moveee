@@ -5,7 +5,7 @@ import FeatureCTA from "@/components/FeatureCTA";
 export const metadata: Metadata = {
   title: "Lifestyle Shop — Style, Sourced by the Community | Moveee",
   description:
-    "The Moveee Lifestyle Shop features independent makers and curated drops from across the community. Moveee Pro members get 10% off everything and early access to new releases.",
+    "The Moveee lifestyle shop features independent makers and curated drops from across the community. Moveee Pro members get 10% off everything and early access to new releases.",
   alternates: { canonical: "https://themoveee.com/features/shop" },
   openGraph: {
     title: "Lifestyle Shop — Style, Sourced by the Community | Moveee",

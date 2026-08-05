@@ -4,12 +4,12 @@ import type { Metadata } from "next";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: { absolute: "Newsletters — Africa Edition · Moveee Magazine" },
+  title: { absolute: "Africa Edition | Moveee Magazine" },
   description:
     "Culture Drop and GetMeLit — the Moveee newsletter programme, Africa edition. Weekly cultural commentary across Lagos, Accra, Nairobi, Johannesburg, and Cape Town.",
   alternates: { canonical: "https://themoveee.com/newsletter/africa" },
   openGraph: {
-    title: "Newsletters — Africa Edition · Moveee Magazine",
+    title: "Africa Edition | Moveee Magazine",
     description:
       "Culture Drop and GetMeLit — the Moveee newsletter programme, Africa edition.",
     url: "https://themoveee.com/newsletter/africa",

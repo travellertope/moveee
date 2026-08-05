@@ -16,9 +16,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { market } = await params;
   const data = getMarket(market);
-  if (!data) return { title: { absolute: "Media Partnership | The Moveee" } };
+  if (!data) return { title: { absolute: "Media Partnership | Moveee" } };
   return {
-    title: { absolute: `Media Partnership — ${data.name} | The Moveee` },
+    title: { absolute: `Media Partnership — ${data.name} | Moveee` },
     description:
       "A sustained editorial partnership for African cultural organisations — book publishers, art galleries, and filmmakers.",
   };
@@ -63,7 +63,7 @@ export default async function PartnershipHubPage({
           </p>
           <div className="slug-intro">
             <p>
-              The Moveee Media Partnership is a three-month editorial programme designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
+              The Moveee media partnership is a three-month editorial programme designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
             </p>
             <p>
               We cover all three. Same programme structure, tailored to each discipline: reviews, interviews, news releases, and social content — sustained over three months, renewable around your programme calendar.
@@ -102,7 +102,7 @@ export default async function PartnershipHubPage({
               { title: "Profile Interviews", body: "In-depth interviews with authors, artists, or filmmakers. Written and edited for publication, not just transcribed." },
               { title: "News Releases", body: "Professionally written press releases for launches, events, milestones, and announcements." },
               { title: "GetMeLit Distribution", body: "All editorial content distributes through GetMeLit, our newsletter read by professionals across Lagos, Abuja, London, and New York." },
-              { title: "Social Amplification", body: "Social posts across The Moveee's channels for every piece of published content. Multimedia posts on higher tiers." },
+              { title: "Social Amplification", body: "Social posts across Moveee's channels for every piece of published content. Multimedia posts on higher tiers." },
               { title: "Three-Month Partnership Window", body: "Enough time to cover a launch properly, sustain a programme, and build a meaningful media record." },
             ].map((f) => (
               <div key={f.title} className="partnership-hub-feature">

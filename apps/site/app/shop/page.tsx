@@ -5,11 +5,11 @@ import { Metadata } from "next";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Shop | The Moveee" },
+  title: { absolute: "Shop | Moveee Magazine" },
   description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
   alternates: { canonical: "https://themoveee.com/shop" },
   openGraph: {
-    title: "Shop | The Moveee",
+    title: "Shop | Moveee Magazine",
     description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
     url: "https://themoveee.com/shop",
     siteName: "Moveee Magazine",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Shop | The Moveee",
+    title: "Shop | Moveee Magazine",
     description: "Curated lifestyle goods from vetted makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
   },
 };

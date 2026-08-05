@@ -17,9 +17,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { market } = await params;
   const data = getMarket(market);
-  if (!data) return { title: { absolute: "Media Services | The Moveee" } };
+  if (!data) return { title: { absolute: "Media Services | Moveee" } };
   return {
-    title: { absolute: `${data.name} — Media Services | The Moveee` },
+    title: { absolute: `${data.name} — Media Services | Moveee` },
     description: data.tagline,
   };
 }

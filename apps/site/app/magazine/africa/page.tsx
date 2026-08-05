@@ -5,12 +5,12 @@ import MagazineArchiveWrapper from "../MagazineArchiveWrapper";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Magazine — Africa Edition · Moveee Magazine" },
+  title: { absolute: "Africa Edition | Moveee Magazine" },
   description:
     "Long-form essays, interviews, and cultural commentary — through an African and diasporic lens. Writing about music, film, art, food, travel, and ideas from Lagos, Accra, Nairobi, and beyond.",
   alternates: { canonical: "https://themoveee.com/magazine/africa" },
   openGraph: {
-    title: "Magazine — Africa Edition · Moveee Magazine",
+    title: "Africa Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — through an African and diasporic lens.",
     url: "https://themoveee.com/magazine/africa",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Magazine — Africa Edition · Moveee Magazine",
+    title: "Africa Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — through an African and diasporic lens.",
   },
