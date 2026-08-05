@@ -1622,7 +1622,14 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   (`.edit-lead-body` gets `flex:1; justify-content:space-between`) so that if the taller
   `.edit-stack` column ever stretches the lead card (via `.edit-mosaic`'s existing
   `align-items: stretch`), the lead's text block distributes into the extra space instead of
-  leaving dead space at its own bottom.
+  leaving dead space at its own bottom. **Follow-up, same pass**: News stories were still also
+  showing up in the hero/sidebar/featured-band/in-focus/quick-reads/opinions sections, since
+  those all slice from the same generic `stories` pool independent of "The Edit"'s own fetch —
+  News is now exclusive to "The Edit": `stories` is filtered to drop any post whose
+  `categories.nodes` includes the `news` slug, right after the main fetch and before any of the
+  positional slices are derived. The main fetch was bumped from `first: 27` to `first: 40` to
+  leave enough headroom post-filter — otherwise a News-heavy top-40 could starve the later
+  sections (Opinions in particular, which only takes 2).
 - **Magazine background wasn't pure white** — root cause is sitewide, not magazine-specific:
   `globals.css`'s `body` has two 4%-opacity radial-gradient colour washes plus a fixed,
   full-viewport `body::before` SVG fractal-noise "paper grain" texture (`opacity: .35;

@@ -71,12 +71,20 @@ export default async function MagazineArchiveWrapper({
       // "The Edit" is fetched separately from the main story pool so it can
       // stay pinned to the News category regardless of what else is on the
       // page — a plain positional slice of `stories` would mix in whatever
-      // category happened to land in that range.
+      // category happened to land in that range. Fetches a larger pool
+      // (40, not 27) since News stories are filtered back out of it below —
+      // otherwise sections further down the page (Opinions, in particular)
+      // could come up short if enough of the top 27 happened to be News.
       const [data, editData] = await Promise.all([
-        getWPData(GET_STORIES, { first: 27 }),
+        getWPData(GET_STORIES, { first: 40 }),
         getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
       ]);
-      stories = data?.posts?.nodes || [];
+      // News stories live exclusively in "The Edit" now — excluded here so
+      // they never also show up in the hero, sidebar, featured band, in
+      // focus, quick reads, or opinions sections below.
+      stories = (data?.posts?.nodes || []).filter(
+        (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+      );
       editorialStories = editData?.posts?.nodes || [];
     }
   } catch {
