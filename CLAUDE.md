@@ -1452,6 +1452,33 @@ to accept an optional variation ID, and threading it through both the desktop an
 Add to Cart buttons here. Out of scope for the "handle any attribute name generically" ask this
 pass addressed — revisit if/when asked to make variation selection functionally correct.
 
+### Maker Story falls back to the vendor's WCFM bio instead of repeating per product (August 2026)
+
+User-reported UX gap, found while testing the rich-text fix above: the per-product `Maker
+Story` ACF field (§"Product editorial fields" above) had no fallback to anything maker-specific
+when left blank — it fell straight through to a generic hardcoded sentence ("{vendor} is a
+vetted Moveee partner…"), even though **a real, maker-level bio already exists** —
+`vendorProfile.bio` (WCFM vendor profile, entered once per maker account, not per product) —
+and is already reused automatically elsewhere on the same page (the "About the Maker" accordion
+tab, and the separate "Vendor Profile" section). The `sp-story`/"Origins Journal" section just
+never consulted it, so a maker with the same story across their whole catalogue had no choice
+but to paste the identical text into every single product's Maker Story field — exactly the
+duplication the user flagged.
+
+Fixed in `apps/site/app/shop/[slug]/page.tsx`'s Maker Story render: the fallback chain is now
+per-product `makerStory` (rich HTML, rendered via `sanitizeHtml`) → vendor's own
+`vendorDesc`/`vp.bio` (plain text, same as the "About the Maker" tab already renders it) →
+the generic hardcoded sentence only if neither exists. **Net effect**: a maker only needs to
+write their story once, on their WCFM vendor profile, and it now shows on every one of their
+products automatically. The per-product ACF field becomes a genuine *override* — fill it in
+only when one specific piece has its own story worth telling separately from the maker's usual
+bio (a limited-run piece, a collaboration, etc.), not a mandatory per-product chore.
+
+Checked mobile for the same gap: `apps/mobile/src/screens/shop/ProductDetailScreen.tsx` never
+fetches or renders the per-product `makerStory` field at all — it only ever uses the
+vendor-level `makerBio`, so mobile never had this duplication problem in the first place; no
+mobile change needed.
+
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
 Built on top of the existing WooCommerce **native** comment-based review

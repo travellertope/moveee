@@ -348,7 +348,13 @@ export default async function ProductPage({
             )}
             <div className="sp-story-text">
               {makerStory ? (
+                // Per-product override — only needed when this specific piece has its
+                // own story worth telling separately from the maker's usual bio.
                 <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(makerStory) }} />
+              ) : vendorDesc ? (
+                // Falls back to the vendor's own bio (set once on their WCFM profile)
+                // so a maker never has to retype the same story on every product.
+                <p>{vendorDesc}</p>
               ) : (
                 <p>
                   {vname} is a vetted Moveee partner — personally reviewed for craft
