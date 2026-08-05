@@ -82,7 +82,7 @@
   padding: 7px 14px;
   border-radius: var(--radius-full);
   cursor: pointer;
-  background: var(--paper-deep, #f2f2f2);
+  background: var(--paper, #fff);
   transition: border-color .15s;
   white-space: nowrap;
 }
