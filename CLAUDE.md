@@ -1814,13 +1814,31 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   to separate two adjacent tinted sections from merging into one grey block) were **left in
   place** — they still read as normal, subtle section dividers on an all-white page and don't
   depend on the tint to make sense, so there was no reason to remove them along with the color.
-  **Deliberately not touched**: `.mg-filter-pill`'s `background: var(--paper-deep, #f2f2f2)` — a
-  small filter-bar chip, not a page section, and it also has its own border so removing the fill
-  would just make it read as non-interactive text; and `.mg-cta-band`'s dark `var(--ink)`
-  background — a deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are
-  only acceptable for buttons/hover-states/single-issue-page-components" rule elsewhere in this
-  file), not a generic section tint, so it's a different kind of color choice than what this
-  request was about.
+  **Follow-up, same session**: `.mg-filter-pill`'s `background: var(--paper-deep, #f2f2f2)` was
+  initially left as-is (reasoned as a small filter-bar chip, not a page section) but the user
+  wanted it flattened too — changed to `background: var(--paper, #fff)`, keeping its existing
+  `1px solid #C8BFB0` border for affordance so it still reads as clickable against the now-white
+  page. **Deliberately still not touched**: `.mg-cta-band`'s dark `var(--ink)` background — a
+  deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are only acceptable
+  for buttons/hover-states/single-issue-page-components" rule elsewhere in this file), not a
+  generic section tint, so it's a different kind of color choice than what this request was about.
+- **"Culture News" lead card had its card chrome removed entirely (explicit request, same
+  session)** — this **supersedes** the "large dead gap below the title" fix earlier in this
+  section (the one that added `.edit-lead-text` + kept `justify-content: space-between` on
+  `.edit-lead-body`): `.edit-lead` had a white `background`/`border-radius`/`box-shadow`
+  wrapping the whole image+text block; the user wanted no card container at all — just the image
+  (still rounded, `border-radius` moved onto `.edit-lead-img` itself), then text flowing directly
+  underneath with no border/shadow/fill. Removed `background`/`border-radius`/`box-shadow`/
+  `overflow`/the hover box-shadow transition from `.edit-lead`. Also **moved the date next to the
+  category** instead of pinned to the bottom of the card (`.edit-lead-meta`, a new flex row
+  wrapping `.edit-lead-kicker` + `.edit-lead-date` side by side) — since there's no more card box
+  to visually anchor a bottom-pinned date against, and the request was explicit ("let the date
+  come beside the category"). This also made the earlier `.edit-lead-text` grouping div and its
+  `justify-content: space-between` stretch-fix **moot** — without card chrome, invisible leftover
+  flex height at the bottom of `.edit-lead` is harmless (nothing renders there to look broken), so
+  `.edit-lead-body` is back to a plain top-down flex column (`gap: 10px`, no `flex: 1`, no
+  `justify-content`) and `.edit-lead-text` was removed. If a future pass ever reintroduces card
+  chrome here, re-check whether the space-between stretch-fix needs to come back too.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
