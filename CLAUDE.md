@@ -1105,16 +1105,16 @@ centered-absolute pattern instead of chasing the breakpoint each time).
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
-`products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
-page in this order (rebuilt August 2026 — see the dated entry below for the
-full rationale): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
+`products`/`categories` via `getWPData`) renders the page in this order
+(rebuilt August 2026 — see the dated entry below for the full rationale;
+Category Grid and Vendor Strip removed August 2026, see the entry further
+below): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
 "More From The Edit" 3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`),
 3. Trust Bar (single slim line, `.sl-trust`), [inside `ShopFilterProvider`]
 4. `ShopFilterBar`, 5. Slim Magazine Bridge (`.sl-bridge`, merges what used to
 be two separate Magazine/Origins bridges), 6. `ShopProductGrid`,
-[outside provider] 8. Category Grid (`.sl-cat`), 9. Vendor Strip
-("Meet the Makers", `.sl-makers`), 10. Member Band (Moveee Pro, rounded dark
-card — `.sl-member-wrap` > `.sl-member`), 11. Origins Bridge Closing
+[outside provider] 7. Member Band (Moveee Pro, rounded dark
+card — `.sl-member-wrap` > `.sl-member`), 8. Origins Bridge Closing
 (`.sl-origins`).
 
 **Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
@@ -1186,6 +1186,80 @@ none;` inside the mobile override so the button is visible by default on
 mobile. **If you add a hover-revealed element anywhere in the shop UI, check
 whether it also needs a mobile always-visible override** — touch devices never
 trigger `:hover`.
+
+### Shop by Category + Meet the Makers sections removed (Site A, August 2026)
+
+Per explicit user request, `ShopArchiveWrapper.tsx`'s "Shop by Category" (`.sl-cat`) and
+"Meet the Makers" (`.sl-makers`) sections were removed from `/shop` entirely — not hidden,
+deleted from the JSX. The remaining sections were renumbered (Member Band and Origins
+Closing Bridge are now 7 and 8, was 10 and 11 — see the updated ordering list above).
+
+Removed along with the JSX, since they had no other consumer: the `GET_ALL_MAKERS` GraphQL
+fetch (and its `makersResult`/`makers` handling in the `Promise.allSettled` call), the
+`CMS` const + REST fallback fetch (`wp-json/moveee/v1/vendors`) that populated `makers` when
+GraphQL came back empty, the `FALLBACK_VENDORS` hardcoded array, and the derived
+`display`/`isFallback` variables. `categories` itself is **kept** — it's still consumed by
+`ShopFilterBar`'s category filter dropdown, only the dedicated category-grid section is gone.
+
+**Deliberately left alone**: `extractVendors()` and the `VendorCard` interface — this was
+already dead code (zero call sites) before this change, unrelated to the sections being
+removed here, so removing it was out of scope. The `.sl-cat-*`/`.sl-makers-*` CSS in
+`shop.css` was also left in place, unused, per this file's usual "kept in case needed again"
+convention.
+
+Verified via `tsc --noEmit` (clean) and a CSS brace-balance check on `shop.css` (580/580,
+unchanged — no CSS was touched by this pass).
+
+### `/shop` grid has no `orderby` and a hard 24-item cap with no pagination (fixed August 2026)
+
+User-reported: "i have published products, how come they are not showing in the shop page?"
+Root cause found in `packages/shared/lib/wp.ts`: `GET_PRODUCTS`/`GET_PRODUCTS_EXTRA`/
+`GET_PRODUCTS_BY_VENDOR`/`GET_PRODUCTS_BY_VENDOR_EXTRA` all fetch `products(first: $first,
+where: {...})` with **no `orderby` clause at all**, and `ShopArchiveWrapper.tsx` calls them
+with a hard `first: 24` and no pagination anywhere in `ShopProductGrid.tsx` (no "Load more",
+no offset param) — the grid only ever renders whatever 24 products WPGraphQL/WooGraphQL's
+*default* ordering happens to return. With no explicit `orderby`, WooGraphQL's product
+resolver falls back to WooCommerce's own catalog default sort (`menu_order` — effectively
+random/by-ID among products that all share `menu_order = 0`, which is nearly every product
+that was never manually reordered in WP Admin's drag-and-drop sorting screen), **not**
+newest-first. A freshly published product has no reason to land inside that first-24 window
+once a store has more than ~24 products, so it can be fully published, in-stock, and visible
+in every other respect, and still never appear on `/shop`.
+
+Fixed by adding `orderby: { field: DATE, order: DESC }` to all four queries' `where` clause
+— same shape already used and confirmed working against the live schema by
+`GET_NEWSLETTERS`/`GET_STORIES_BY_TAG` elsewhere in this file. This guarantees newly
+published products always sort to the front, so they're inside the `first: 24` window
+immediately after publish (subject to the KV cache flush below) regardless of total catalog
+size — it does **not** add pagination/a "Load more" control, so a store with 25+ products
+still only ever shows the newest 24 on `/shop` itself (individual products are still fully
+reachable via `/shop/{slug}`, category pages, and search). If a full catalog needs to be
+browsable beyond 24, that's a separate, larger pagination feature — out of scope for this fix.
+
+**Other things to verify on the WordPress/Vercel side if a product still doesn't show after
+this fix** (none of these are checkable from the codebase alone):
+- **Product status is actually `publish`**, not `draft`/`pending` — WPGraphQL's `products`
+  connection only returns `publish`-status products to unauthenticated requests, same as
+  `posts`.
+- **Catalog visibility isn't set to "Hidden"** (Publish box → "Catalog visibility: Edit" on
+  the product edit screen) — a hidden product is real WooCommerce data but intentionally
+  excluded from shop/search listings.
+- **KV cache flush is actually configured and firing.** `product` is already in
+  `class-culture-community.php`'s `flush_on_publish()`/`flush_vercel_kv_cache()`
+  `$cacheable_types` list (see "Plugin DB table auto-upgrade"-adjacent caching docs above),
+  so publishing a product should POST to `{site}/api/revalidate-kv` and clear every cached
+  `wp:*` key. But `flush_vercel_kv_cache()` silently no-ops if
+  `culture_vercel_site_url`/`culture_vercel_revalidate_secret` (WP options) aren't set, or if
+  they don't match `WP_REVALIDATE_SECRET` on the target Vercel project — if that flush isn't
+  actually reaching `/api/revalidate-kv`, a product published inside the last hour could still
+  be served from a stale KV-cached empty/partial result (`getWPData()`'s default TTL is 3600s
+  when no `options.revalidate` is passed, which is the case for every product query here).
+  Confirm in WP Admin → Culture Community → General that both options are set and match the
+  Vercel env vars, and check the Vercel function logs for `[kv-revalidate]` after a test
+  publish.
+
+Verified via `tsc --noEmit` (clean) on both `apps/site` and `apps/connect` (this file is
+`packages/shared`, consumed by both).
 
 ### Shop archive + product detail — full visual rebuild (Site A, August 2026)
 
@@ -1348,6 +1422,148 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
     page's sections (As Seen In, Maker Story, Process, Vendor Profile, Reviews) were already
     backed by real editorial fields or genuine per-product data — not positional luck — so they
     didn't need this treatment.
+- **Search box missing its icon (user-reported, same session)** — `shop-redesign-mockup.html`'s
+  `.sh-search` is a wrapper div (`position: relative`) holding both a `.sh-search-icon` span
+  (absolutely positioned into a left-padding gap reserved on the input) and the `<input>` itself
+  — and `shop.css`'s `.sl-search`/`.sl-search input`/`.sl-search-icon` rules already matched that
+  shape exactly (`padding: 0 16px 0 34px` on the input, reserving the 34px for the icon). But
+  `ShopFilterBar.tsx`'s JSX put `className="sl-search"` directly on the `<input>` itself and
+  never rendered an `.sl-search-icon` span at all — so the CSS's reserved icon gap just sat empty,
+  making the input look unstyled/oddly indented. Fixed by wrapping the input in a
+  `<div className="sl-search">` with a `<span className="sl-search-icon">⚲</span>` sibling,
+  matching what the CSS was already built for. **If a mockup-matched CSS block looks unstyled
+  in the browser, check whether the JSX actually has the wrapper/child structure the CSS
+  assumes** — the CSS itself was correct here, only the markup was missing a piece of it.
+
+### Product editorial fields — rich text (Bold/Italic) for Care Instructions + Delivery Info (August 2026)
+
+The product-creation "backend" for these fields is **not** the custom Next.js vendor dashboard
+(`packages/shared/components/vendor/ProductForm.tsx`, used by `apps/connect/app/vendor/products/
+{new,[id]}/page.tsx`) — that form only has name/price/sale_price/stock/description/short_description/
+categories/tags/status and has never had Maker Story/Care Instructions/Delivery Info fields.
+(There's also a stale, unreachable copy at `apps/site/components/vendor/ProductForm.tsx` — dead
+code, since `apps/site` has no `/vendor` route at all anymore, per "Site architecture — split
+complete" above; every `/vendor/*` path 308-redirects to Site B. Don't edit that copy.)
+
+These three fields are actually an **ACF ("Moveee Product Details") field group** registered in
+`moveee-graphql-bridge.php` (`acf/init` hook), shown as a metabox on the **WordPress Admin native
+product edit screen** — `maker_story`, `care_instructions`, `delivery_info` postmeta, exposed via
+GraphQL as `moveeeMeta.{makerStory,careInstructions,deliveryInfo}` and rendered on
+`apps/site/app/shop/[slug]/page.tsx`'s accordion (Maker Story / Materials & Care / Delivery &
+Returns tabs). User-reported: no way to add Bold/Italic to Materials & Care or Delivery & Returns
+when editing a product in WP Admin.
+
+Root cause: `maker_story` was already an ACF `wysiwyg` field (`toolbar: 'basic'` — the standard
+WordPress/TinyMCE bold/italic/link/list toolbar), but `care_instructions` and `delivery_info`
+were both plain ACF `textarea` fields — no formatting toolbar exists for a plain textarea, so
+there was genuinely no way to bold or italicize anything in those two fields. Fixed by changing
+both from `'type' => 'textarea'` to `'type' => 'wysiwyg', 'toolbar' => 'basic', 'media_upload' =>
+0`, matching `maker_story`'s existing config exactly. ACF wysiwyg fields still save as a plain
+HTML string in postmeta (same storage shape as textarea), so `get_post_meta()` on the PHP read
+side needed no changes.
+
+**Frontend read-side bug found and fixed in the same pass**: `deliveryInfo` and `makerStory`
+already rendered via `dangerouslySetInnerHTML` + `sanitizeHtml()` (ready for HTML), but
+`careInstructions` rendered as plain escaped text — `<p>{careInstructions}</p>` — so switching
+its WP field to `wysiwyg` alone would have made literal `<strong>`/`<em>` tags print onscreen
+instead of rendering as bold/italic. Fixed to match the other two:
+`<div dangerouslySetInnerHTML={{ __html: sanitizeHtml(careInstructions) }} />`.
+
+**Known gap, deliberately not touched in this pass**: `apps/mobile/src/screens/shop/
+ProductDetailScreen.tsx`'s "Materials & Care" and "Delivery & Returns" accordion items are
+hardcoded generic placeholder copy ("Details about materials and care instructions.", "Free
+delivery on orders over £75...") — they were never wired to `care_instructions`/`delivery_info`
+at all, on either platform's mobile fetch. That's a separate, pre-existing "wire up the real
+field" gap unrelated to rich-text support, out of scope for this pass.
+
+### Setting Featured Products — two distinct mechanisms (August 2026, docs-only)
+
+User asked how to mark a product Featured; investigation turned up two unrelated features that
+both use the word "featured," easy to conflate:
+
+1. **Shop-wide "Editor's Pick"** (drives `/shop`'s hero + "More From The Edit" row, and boosts
+   ranking in a product page's "More From This Category" — see "Editor's Pick curation" in the
+   "Shop archive + product detail" section above) — WooCommerce's own **native** Featured flag.
+   Set via WP Admin → Products → open a product → "Product data" box header → "Catalog
+   visibility: Edit" link → check **"This is a featured product"** → Update. No custom code;
+   `wc_get_product($id)->is_featured()` reads it directly.
+2. **"Shop the Edit — Featured Products"** (`moveee-graphql-bridge.php`, §6) — a *different*,
+   per-article mechanism: up to 6 WooCommerce products attached to one **magazine post** (not
+   shop-wide), rendered as a "Shop the Edit" strip on that article. Set via a sidebar meta box
+   titled **"Shop the Edit — Featured Products"** on the post's own WP Admin edit screen
+   (multi-select, Ctrl/Cmd+click, up to 6). Backend: `_culture_featured_products` postmeta (JSON
+   array of product IDs) on the `post`, exposed via GraphQL as `Post.featuredProducts`.
+
+These are independent — marking a product Featured (1) doesn't add it to any article's Shop the
+Edit list (2), and vice versa.
+
+### Product page variation-attribute selectors made generic (August 2026)
+
+User-reported gap, found while answering "does the product page properly display attributes?":
+`ProductSelectors.tsx` only recognized **two hardcoded attribute names** for variation selection
+— `extractAttr(variations, "color")` and `extractAttr(variations, "size")` (exact, case-
+insensitive match). Any other WooCommerce variation attribute (Material, Finish, Scent, Pattern,
+etc.) was silently invisible — no selector rendered for it at all, so a buyer had no way to pick
+a value for it even though WooCommerce still requires one to identify a specific variation.
+
+Fixed by replacing the two hardcoded calls with a generic `extractAttrGroups()` that walks every
+variation's `attributes.nodes` once and returns **one group per distinct attribute name actually
+present** (in first-seen order), each with its own list of distinct values. Selection state
+changed from two `useState<number>` (`selectedColor`/`selectedSize`) to a single
+`useState<Record<string, number>>` keyed by attribute name, so an arbitrary number of attribute
+groups can each track their own selected index. Render logic loops `attrGroups` and picks a
+swatch UI (`.sp-swatches`/`.sp-swatch`) only for a group literally named "color"/"colour";
+everything else renders as pill chips (`.sp-sizes`/`.sp-size-btn` — reused as-is, since that
+class's padding-based sizing already accommodates arbitrary-length values like "Extra Firm" or
+"Lavender Fields", not just short size codes). No new CSS was needed.
+
+**Bonus fix, same code block**: color swatches previously rendered as an empty bordered circle
+with no actual color shown (`style={{ border: ... }}`, no `background`) — now sets
+`background: val.toLowerCase()`, which works directly as a CSS `background` value for any
+variation value that happens to be a standard CSS color keyword (Red, Blue, Black, Navy, etc.,
+which is how most WooCommerce color attributes are named in practice). A non-keyword value (e.g.
+"Rust", "Ochre") just silently keeps a transparent swatch — a graceful no-worse-than-before
+fallback, not a new failure mode.
+
+**Related, deeper gap found but *not* fixed in this pass (flagged, needs a decision)**:
+`ProductSelectors.tsx`'s "Add to Cart" (`addItem(productId, quantity)`) never passes a variation
+ID — `CartContext.tsx`'s `addItem` signature is `(productId: number, quantity?: number) =>
+Promise<void>`, with no variation parameter at all, and `PRODUCT_FIELDS_FRAGMENT`'s
+`VariableProduct.variations` doesn't even fetch a `databaseId`/`id` per variation node. This
+means **selecting a Colour/Size/etc. swatch is currently purely cosmetic — it has no effect on
+what actually gets added to the cart**, regardless of how many attribute groups render. Fixing
+this properly requires: fetching variation IDs in the GraphQL fragment, matching the full set of
+selected attribute values against a variation to resolve its ID, extending `CartContext.addItem`
+to accept an optional variation ID, and threading it through both the desktop and mobile-sticky
+Add to Cart buttons here. Out of scope for the "handle any attribute name generically" ask this
+pass addressed — revisit if/when asked to make variation selection functionally correct.
+
+### Maker Story falls back to the vendor's WCFM bio instead of repeating per product (August 2026)
+
+User-reported UX gap, found while testing the rich-text fix above: the per-product `Maker
+Story` ACF field (§"Product editorial fields" above) had no fallback to anything maker-specific
+when left blank — it fell straight through to a generic hardcoded sentence ("{vendor} is a
+vetted Moveee partner…"), even though **a real, maker-level bio already exists** —
+`vendorProfile.bio` (WCFM vendor profile, entered once per maker account, not per product) —
+and is already reused automatically elsewhere on the same page (the "About the Maker" accordion
+tab, and the separate "Vendor Profile" section). The `sp-story`/"Origins Journal" section just
+never consulted it, so a maker with the same story across their whole catalogue had no choice
+but to paste the identical text into every single product's Maker Story field — exactly the
+duplication the user flagged.
+
+Fixed in `apps/site/app/shop/[slug]/page.tsx`'s Maker Story render: the fallback chain is now
+per-product `makerStory` (rich HTML, rendered via `sanitizeHtml`) → vendor's own
+`vendorDesc`/`vp.bio` (plain text, same as the "About the Maker" tab already renders it) →
+the generic hardcoded sentence only if neither exists. **Net effect**: a maker only needs to
+write their story once, on their WCFM vendor profile, and it now shows on every one of their
+products automatically. The per-product ACF field becomes a genuine *override* — fill it in
+only when one specific piece has its own story worth telling separately from the maker's usual
+bio (a limited-run piece, a collaboration, etc.), not a mandatory per-product chore.
+
+Checked mobile for the same gap: `apps/mobile/src/screens/shop/ProductDetailScreen.tsx` never
+fetches or renders the per-product `makerStory` field at all — it only ever uses the
+vendor-level `makerBio`, so mobile never had this duplication problem in the first place; no
+mobile change needed.
 
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 

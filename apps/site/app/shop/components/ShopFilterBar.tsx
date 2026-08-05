@@ -45,14 +45,16 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
       {/* Row 1 — search + pills + right controls */}
       <div className="sl-filter-row1">
         {/* Always-visible search */}
-        <input
-          type="text"
-          className="sl-search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search makers & products…"
-          aria-label="Search products"
-        />
+        <div className="sl-search">
+          <span className="sl-search-icon">⚲</span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search makers & products…"
+            aria-label="Search products"
+          />
+        </div>
 
         {/* Filter pills */}
         <div className="sl-filter-pills">

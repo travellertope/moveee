@@ -34,13 +34,13 @@ export default function ProductSelectors({
   isGated,
 }: ProductSelectorsProps) {
   const { addItem, isLoading } = useCart();
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize]   = useState(0);
+  const [selected, setSelected] = useState<Record<string, number>>({});
   const [saved, setSaved]                 = useState(false);
   const [quantity, setQuantity]           = useState(1);
 
-  const colorAttrs = extractAttr(variations, "color");
-  const sizeAttrs  = extractAttr(variations, "size");
+  const attrGroups = extractAttrGroups(variations);
+  const selectAttr = (name: string, index: number) =>
+    setSelected((prev) => ({ ...prev, [name]: index }));
 
   const showMemberPrice = memberPrice && isPro;
   const showMemberPriceTeaser = memberPrice && !isPro;
@@ -93,47 +93,43 @@ export default function ProductSelectors({
         ) : null}
       </div>
 
-      {/* Colour selector — only rendered when WooCommerce has colour variations */}
-      {colorAttrs.length > 0 && (
-        <div className="sp-selector-group">
-          <div className="sp-selector-label">
-            <span className="label">Colour</span>
-            <span className="value">{colorAttrs[selectedColor]}</span>
+      {/* Attribute selectors — one group per distinct variation attribute
+          WooCommerce reports (Colour, Size, or anything else a vendor sets
+          up, e.g. Material/Finish/Scent). Colour-named groups render as
+          swatches; everything else renders as pill chips. */}
+      {attrGroups.map((group) => {
+        const activeIndex = selected[group.key] ?? 0;
+        const isColor = group.key === "color" || group.key === "colour";
+        return (
+          <div className="sp-selector-group" key={group.key}>
+            <div className="sp-selector-label">
+              <span className="label">{group.label}</span>
+              <span className="value">{group.values[activeIndex]}</span>
+            </div>
+            <div className={isColor ? "sp-swatches" : "sp-sizes"}>
+              {group.values.map((val, i) =>
+                isColor ? (
+                  <button
+                    key={i}
+                    className={`sp-swatch${i === activeIndex ? " active" : ""}`}
+                    onClick={() => selectAttr(group.key, i)}
+                    aria-label={val}
+                    style={{ background: val.toLowerCase(), border: "1px solid var(--rule)", cursor: "pointer" }}
+                  />
+                ) : (
+                  <button
+                    key={i}
+                    className={`sp-size-btn${i === activeIndex ? " active" : ""}`}
+                    onClick={() => selectAttr(group.key, i)}
+                  >
+                    {val}
+                  </button>
+                )
+              )}
+            </div>
           </div>
-          <div className="sp-swatches">
-            {colorAttrs.map((c, i) => (
-              <button
-                key={i}
-                className={`sp-swatch${i === selectedColor ? " active" : ""}`}
-                onClick={() => setSelectedColor(i)}
-                aria-label={c}
-                style={{ border: "1px solid var(--rule)", cursor: "pointer" }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Size selector — only rendered when WooCommerce has size variations */}
-      {sizeAttrs.length > 0 && (
-        <div className="sp-selector-group">
-          <div className="sp-selector-label">
-            <span className="label">Size</span>
-            <span className="value">{sizeAttrs[selectedSize]}</span>
-          </div>
-          <div className="sp-sizes">
-            {sizeAttrs.map((s, i) => (
-              <button
-                key={i}
-                className={`sp-size-btn${i === selectedSize ? " active" : ""}`}
-                onClick={() => setSelectedSize(i)}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        );
+      })}
 
       {/* CTA */}
       {!isGated && (
@@ -202,13 +198,27 @@ export default function ProductSelectors({
   );
 }
 
-function extractAttr(variations: Variation[] | undefined, name: string): string[] {
+interface AttrGroup { key: string; label: string; values: string[]; }
+
+function extractAttrGroups(variations: Variation[] | undefined): AttrGroup[] {
   if (!variations?.length) return [];
-  const seen = new Set<string>();
+  const order: string[] = [];
+  const labels = new Map<string, string>();
+  const values = new Map<string, Set<string>>();
   for (const v of variations) {
     for (const attr of v.attributes?.nodes ?? []) {
-      if (attr.name.toLowerCase() === name) seen.add(attr.value);
+      const key = attr.name.toLowerCase();
+      if (!values.has(key)) {
+        values.set(key, new Set());
+        labels.set(key, attr.name);
+        order.push(key);
+      }
+      values.get(key)!.add(attr.value);
     }
   }
-  return [...seen];
+  return order.map((key) => ({
+    key,
+    label: labels.get(key) ?? key,
+    values: [...values.get(key)!],
+  }));
 }

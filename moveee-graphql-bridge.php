@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.8
+ * Version: 1.4.9
  * Author: Antigravity
  */
 
@@ -433,19 +433,21 @@ add_action( 'acf/init', function () {
                 'key'          => 'field_moveee_care_instructions',
                 'label'        => 'Materials & Care Instructions',
                 'name'         => 'care_instructions',
-                'type'         => 'textarea',
+                'type'         => 'wysiwyg',
                 'instructions' => 'E.g. "Made from 100% organic linen. Hand wash cold." Shown in the Materials & Care accordion tab.',
                 'required'     => 0,
-                'rows'         => 4,
+                'toolbar'      => 'basic',
+                'media_upload' => 0,
             ],
             [
                 'key'          => 'field_moveee_delivery_info',
                 'label'        => 'Delivery & Returns Info',
                 'name'         => 'delivery_info',
-                'type'         => 'textarea',
+                'type'         => 'wysiwyg',
                 'instructions' => 'Custom delivery/returns text for this product. Replaces the default text in the Delivery & Returns tab.',
                 'required'     => 0,
-                'rows'         => 4,
+                'toolbar'      => 'basic',
+                'media_upload' => 0,
             ],
             [
                 'key'          => 'field_moveee_as_seen_in_post_id',

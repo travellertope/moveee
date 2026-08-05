@@ -1484,7 +1484,7 @@ export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
 export const GET_PRODUCTS = `
   query GetProducts($first: Int, $category: String, $tag: String) {
-    products(first: $first, where: { category: $category, tag: $tag }) {
+    products(first: $first, where: { category: $category, tag: $tag, orderby: { field: DATE, order: DESC } }) {
       nodes {
         ...ProductFields
       }
@@ -1543,7 +1543,7 @@ export const GET_PRODUCT_EXTRA = `
 // GET_PRODUCTS so the result set lines up, then the caller merges by id.
 export const GET_PRODUCTS_EXTRA = `
   query GetProductsExtra($first: Int, $category: String, $tag: String) {
-    products(first: $first, where: { category: $category, tag: $tag }) {
+    products(first: $first, where: { category: $category, tag: $tag, orderby: { field: DATE, order: DESC } }) {
       nodes {
         databaseId
         slug
@@ -1559,7 +1559,7 @@ export const GET_PRODUCTS_EXTRA = `
 
 export const GET_PRODUCTS_BY_VENDOR_EXTRA = `
   query GetProductsByVendorExtra($first: Int, $vendor: String) {
-    products(first: $first, where: { authorName: $vendor }) {
+    products(first: $first, where: { authorName: $vendor, orderby: { field: DATE, order: DESC } }) {
       nodes {
         databaseId
         slug
@@ -1600,7 +1600,7 @@ export const GET_POST_BY_ID = `
 
 export const GET_PRODUCTS_BY_VENDOR = `
   query GetProductsByVendor($first: Int, $vendor: String) {
-    products(first: $first, where: { authorName: $vendor }) {
+    products(first: $first, where: { authorName: $vendor, orderby: { field: DATE, order: DESC } }) {
       nodes {
         ...ProductFields
       }
