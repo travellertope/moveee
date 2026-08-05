@@ -11,9 +11,15 @@
   background: var(--paper, #fff);
 }
 
-/* ── HEAD (nav-only — masthead title/desc removed) ── */
+/* ── HEAD (nav-only — masthead title/desc removed) ──
+   max-width/margin match every section below (the shared calc(1200px + 128px)
+   column) so the nav/filter row lines up with the hero, bands, and every
+   other section instead of stretching edge-to-edge on wide viewports. */
 .mg-head {
   padding: 32px 64px 0;
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ── NAV ROW (tabs + filters) ── */
@@ -487,15 +493,22 @@
   margin-top: auto;
 }
 
-/* ── THE EDIT (asymmetric mosaic: lead feature + compact stack, light) ── */
+/* ── THE EDIT (asymmetric mosaic: lead feature + compact stack, light) ──
+   Horizontal padding moved from the outer tinted div to .mg-edit-inner (was
+   applied on both — the outer's own 64px padding was carving into the
+   available width *before* .mg-edit-inner's max-width centered within it,
+   shifting this section's content ~64px further inward than every sibling
+   section, which centers the same max-width column against the full,
+   unpadded viewport). Vertical padding stays on the outer div. */
 .mg-edit {
   background: #F2F2F2;
   border-top: 1px solid rgba(200,191,176,.3);
-  padding: 80px 64px;
+  padding: 80px 0;
 }
 .mg-edit-inner {
   max-width: calc(1200px + 128px);
   margin: 0 auto;
+  padding: 0 64px;
   box-sizing: border-box;
 }
 .edit-mosaic {

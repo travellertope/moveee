@@ -1751,6 +1751,33 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   future pinned section needs the same treatment, follow this pattern: fetch its own pool, add
   its ids to `usedElsewhereIds`, and do **not** add a `categories.nodes.some(...)`/
   `series.nodes.some(...)` blanket exclusion for its taxonomy.
+- **Cross-section horizontal alignment fix** — user-reported: sections had visibly inconsistent
+  left/right margins on wide viewports. Root cause was two separate bugs in `magazine.css`, both
+  against the shared `max-width: calc(1200px + 128px)` (1328px) centered-column convention every
+  section on this page is supposed to share:
+  1. **`.mg-head`** (the nav-tabs/filter-bar row) had no `max-width`/`margin: 0 auto` at all —
+     just `padding: 32px 64px 0` — so on a wide viewport it stretched to fill the *entire*
+     available width instead of stopping at the same 1328px column as every section below it.
+     Added the same `max-width`/`margin: 0 auto`/`box-sizing: border-box` triplet every other
+     section already uses.
+  2. **`.mg-edit`** ("The Edit") put its horizontal `64px` padding on the **outer** tinted div,
+     ahead of `.mg-edit-inner`'s own `max-width`/`margin: 0 auto` centering — every sibling
+     section (`.mg-band`, `.mg-portrait`, `.mg-digest`, `.mg-opinions`) does the opposite: the
+     outer div carries *no* horizontal padding, and the *inner* div does both the max-width
+     centering **and** the 64px padding together. Because `.mg-edit`'s outer padding shrank the
+     available width *before* the inner div's max-width got a chance to center within the full
+     viewport, its content sat consistently ~64px further inward than every other section on wide
+     screens. Fixed by moving the horizontal padding off `.mg-edit` (now vertical-only, `80px 0`)
+     and onto `.mg-edit-inner` (`padding: 0 64px`, joining its existing `max-width`/`margin: 0
+     auto`) — now byte-for-byte the same shape as `.mg-band-inner`/`.mg-digest-inner`/
+     `.mg-opinions-inner`.
+  **If a future section is added to this page, use the `.mg-band`/`.mg-digest` split shape**
+  (outer: background/border/vertical-padding only; inner: `max-width: calc(1200px + 128px);
+  margin: 0 auto; padding: 0 64px; box-sizing: border-box;`) rather than putting both padding
+  and max-width on the same div (`.mg-hero`/`.mg-cta-section` do this and are mathematically
+  equivalent, but the split shape is what every *tinted-background* section here uses, and mixing
+  the two shapes is exactly what caused this bug) — and always verify it against `.mg-head`'s
+  edges at a wide (≥1600px) viewport before considering it done.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
