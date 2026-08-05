@@ -234,7 +234,7 @@
 
 /* ── SECTION BAND: Featured Stories ── */
 .mg-band {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   padding: 64px 0 80px;
   border-top: 1px solid rgba(200,191,176,.4);
 }
@@ -504,7 +504,7 @@
    section, which centers the same max-width column against the full,
    unpadded viewport). Vertical padding stays on the outer div. */
 .mg-edit {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
   padding: 80px 0;
 }
@@ -641,9 +641,9 @@
   .edit-mosaic { grid-template-columns: 1.3fr 1fr; align-items: stretch; }
 }
 
-/* ── DIGEST: Quick Reads ── */
+/* ── DIGEST: The Free Critics ── */
 .mg-digest {
-  background: #F2F2F2;
+  background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
   padding: 80px 0;
 }

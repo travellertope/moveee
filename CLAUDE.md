@@ -1806,6 +1806,21 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   `.edit-lead-body`'s `justify-content: space-between` now only has **two** children (the text
   group and the date) — any leftover stretch space collapses into one gap right above the date
   line at the bottom of the card instead of scattered mid-content.
+- **All `#F2F2F2` section tints removed, page is now plain white throughout (explicit request,
+  same session)** — this **reverses** the "Alternating tint rhythm" design decision documented
+  above: Featured Stories (`.mg-band`), Culture News (`.mg-edit`), and The Free Critics
+  (`.mg-digest`) all had `background: #F2F2F2`; all three are now `background: var(--paper,
+  #fff)`. The `border-top` divider rules between sections (added at the same time as the tints,
+  to separate two adjacent tinted sections from merging into one grey block) were **left in
+  place** — they still read as normal, subtle section dividers on an all-white page and don't
+  depend on the tint to make sense, so there was no reason to remove them along with the color.
+  **Deliberately not touched**: `.mg-filter-pill`'s `background: var(--paper-deep, #f2f2f2)` — a
+  small filter-bar chip, not a page section, and it also has its own border so removing the fill
+  would just make it read as non-interactive text; and `.mg-cta-band`'s dark `var(--ink)`
+  background — a deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are
+  only acceptable for buttons/hover-states/single-issue-page-components" rule elsewhere in this
+  file), not a generic section tint, so it's a different kind of color choice than what this
+  request was about.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
