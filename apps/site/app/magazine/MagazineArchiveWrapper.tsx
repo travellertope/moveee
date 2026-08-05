@@ -80,7 +80,7 @@ export default async function MagazineArchiveWrapper({
       // (40, not 27) to leave headroom for the dedupe below.
       const [data, editData, opinionData, portraitData, digestData] = await Promise.all([
         getWPData(GET_STORIES, { first: 40 }),
-        getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
+        getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
         getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
         getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
         getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),

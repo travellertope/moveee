@@ -1791,6 +1791,21 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   part has it) — if any other section on this page still looks misaligned, check every element
   that renders visible content for this section (not just its header/title wrapper) for the same
   gap, the same way `.mg-portrait-scroll` was missed in the first pass.
+- **"Culture News" lead card had a large dead gap below the title (fixed same session)** — the
+  `.edit-lead-body` flex column (`flex:1; justify-content:space-between`) previously had 3 direct
+  children (kicker, title, date), so `justify-content: space-between` distributed the lead card's
+  extra stretch height (from being shorter than the taller `.edit-stack` column next to it) as two
+  separate large gaps — one between kicker and title, one between title and date — which read as
+  broken whitespace, not a deliberate layout. Two changes fix it: (1) the right column was trimmed
+  from 6 items to **5** (`first: 7` → `first: 6` in `MagazineArchiveWrapper.tsx`'s editorial
+  fetch — 1 lead + 5 rows), shrinking how much taller the stack column is than the lead card in
+  the first place; (2) `EditorialSection.tsx` now renders a real excerpt (`plainExcerpt()`,
+  HTML-stripped + truncated to 140 chars — `excerpt` was already on
+  `STORY_FIELDS_FRAGMENT`/`GET_STORIES`, no query change needed) between the title and the date,
+  and the kicker/title/excerpt are wrapped in a new `.edit-lead-text` group div so
+  `.edit-lead-body`'s `justify-content: space-between` now only has **two** children (the text
+  group and the date) — any leftover stretch space collapses into one gap right above the date
+  line at the bottom of the card instead of scattered mid-content.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

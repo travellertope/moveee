@@ -548,6 +548,10 @@
   gap: 16px;
   padding: 22px 24px 26px;
 }
+.edit-lead-text {
+  display: flex;
+  flex-direction: column;
+}
 .edit-lead-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -567,6 +571,13 @@
   transition: color .15s;
 }
 .edit-lead:hover .edit-lead-title { color: #C5491F; }
+.edit-lead-excerpt {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mute, #7a6f5c);
+  margin: 0;
+}
 .edit-lead-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
