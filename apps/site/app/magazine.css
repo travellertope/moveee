@@ -27,7 +27,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #EEE8DF;
 }
 .mg-nav-tabs {
   display: flex;
@@ -1081,7 +1080,8 @@
   .mg-band-inner { padding: 0 32px; }
   .mg-band-grid { grid-template-columns: repeat(2, 1fr); }
   .mg-week-row { grid-template-columns: repeat(2, 1fr); }
-  .mg-edit { padding: 48px 32px; }
+  .mg-edit { padding: 48px 0; }
+  .mg-edit-inner { padding: 0 32px; }
   .mg-portrait-scroll { padding: 0 32px 8px; }
   .mg-portrait-header { padding: 0 32px; }
   .mg-digest { padding: 64px 0; }
@@ -1106,7 +1106,8 @@
   .mg-band-inner { padding: 0 16px; }
   .mg-band-grid { grid-template-columns: 1fr; }
   .mg-week-row { grid-template-columns: 1fr; }
-  .mg-edit { padding: 40px 16px; }
+  .mg-edit { padding: 40px 0; }
+  .mg-edit-inner { padding: 0 16px; }
   .mg-portrait-scroll { padding: 0 16px 8px; }
   .mg-portrait-header { padding: 0 16px; }
   .mg-digest { padding: 48px 0; }
