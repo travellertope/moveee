@@ -1728,6 +1728,20 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   decorative section label, so it's a different thing even though it visually sits in a similar
   spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
   other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
+- **"In Focus" pulled from a positional slice too** (`stories.slice(7, 12)`) — same bug class
+  as News/Viewpoints, fixed the same way but against a different taxonomy: the section is
+  pinned to **The Lane** (`series`, not `category`), fetched via `GET_SERIES_STORIES` with
+  `series: "the-lane"` (slug confirmed from the existing `GET_SERIES_STORIES_BATCH` query,
+  which already had `theLane: seriesItem(id: "the-lane", ...)` for the `/magazine/series/*`
+  landing page) in the same `Promise.all` as the other three fetches, then sliced to 5 client
+  side since `GET_SERIES_STORIES` always fetches `posts(first: 48)` with no `first` variable.
+  The main `stories` exclusion filter now also drops any post whose `series.nodes` includes
+  the `the-lane` slug (`STORY_FIELDS_FRAGMENT` already carries `series { nodes { slug } }`,
+  no query changes needed there) — same reasoning as the category exclusions: a Lane post could
+  otherwise also carry a normal category and leak into the hero/sidebar/band/quick-reads
+  sections. If a future section needs to pin to a *series* rather than a *category*, this is the
+  pattern — `GET_SERIES_STORIES({ series: "<slug>" })` + a `series.nodes` exclusion, not
+  `categoryName`.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

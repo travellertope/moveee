@@ -27,6 +27,7 @@ export default async function MagazineArchiveWrapper({
   let stories: any[] = [];
   let editorialStories: any[] = [];
   let opinionStories: any[] = [];
+  let portraitStories: any[] = [];
   let filters: any = null;
   let termName = "";
   let termDescription = "";
@@ -69,29 +70,32 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      // "The Edit" and "Opinions & Essays" are both fetched separately from
-      // the main story pool so they stay pinned to their own categories
-      // (News, Viewpoints) regardless of what else is on the page — a plain
-      // positional slice of `stories` would mix in whatever category
-      // happened to land in that range. Fetches a larger main pool (40, not
-      // 27) since both categories are filtered back out of it below —
-      // otherwise later sections could come up short.
-      const [data, editData, opinionData] = await Promise.all([
+      // "The Edit", "Opinions & Essays", and "In Focus" are all fetched
+      // separately from the main story pool so they stay pinned to their own
+      // taxonomy term (News category, Viewpoints category, The Lane series)
+      // regardless of what else is on the page — a plain positional slice of
+      // `stories` would mix in whatever content happened to land in that
+      // range. Fetches a larger main pool (40, not 27) since all three are
+      // filtered back out of it below — otherwise later sections could come
+      // up short.
+      const [data, editData, opinionData, portraitData] = await Promise.all([
         getWPData(GET_STORIES, { first: 40 }),
         getWPData(GET_STORIES, { first: 7, categoryName: "news" }),
         getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
+        getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       ]);
-      // News and Viewpoints stories live exclusively in their own sections
-      // now — excluded here so they never also show up in the hero,
-      // sidebar, featured band, in focus, or quick reads sections below.
+      // News, Viewpoints, and The Lane stories live exclusively in their own
+      // sections now — excluded here so they never also show up in the hero,
+      // sidebar, featured band, quick reads, or opinions sections below.
       stories = (data?.posts?.nodes || []).filter(
         (p: any) =>
           !p.categories?.nodes?.some(
             (c: any) => c.slug === "news" || c.slug === "viewpoints"
-          )
+          ) && !p.series?.nodes?.some((s: any) => s.slug === "the-lane")
       );
       editorialStories = editData?.posts?.nodes || [];
       opinionStories = opinionData?.posts?.nodes || [];
+      portraitStories = (portraitData?.seriesItem?.posts?.nodes || []).slice(0, 5);
     }
   } catch {
     // CMS unreachable
@@ -108,7 +112,6 @@ export default async function MagazineArchiveWrapper({
   const heroStory = stories[0] || null;
   const sidebarStories = stories.slice(1, 4);
   const sectionBandStories = stories.slice(4, 7);
-  const portraitStories = stories.slice(7, 12);
   const digestStories = stories.slice(16, 20);
   const isFiltered = !!(category || industry || country || series || tag);
 
