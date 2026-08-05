@@ -21,7 +21,7 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
       <div className="mg-edit-inner">
         <div className="mg-sec-label">Curated</div>
         <div className="mg-sec-header">
-          <h3>The <em>Edit</em></h3>
+          <h3>Culture <em>News</em></h3>
         </div>
 
         <div className="edit-mosaic">
