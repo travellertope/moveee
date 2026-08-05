@@ -1105,16 +1105,16 @@ centered-absolute pattern instead of chasing the breakpoint each time).
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
-`products`/`categories`/`makers` via `getWPData`/REST fallback) renders the
-page in this order (rebuilt August 2026 — see the dated entry below for the
-full rationale): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
+`products`/`categories` via `getWPData`) renders the page in this order
+(rebuilt August 2026 — see the dated entry below for the full rationale;
+Category Grid and Vendor Strip removed August 2026, see the entry further
+below): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
 "More From The Edit" 3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`),
 3. Trust Bar (single slim line, `.sl-trust`), [inside `ShopFilterProvider`]
 4. `ShopFilterBar`, 5. Slim Magazine Bridge (`.sl-bridge`, merges what used to
 be two separate Magazine/Origins bridges), 6. `ShopProductGrid`,
-[outside provider] 8. Category Grid (`.sl-cat`), 9. Vendor Strip
-("Meet the Makers", `.sl-makers`), 10. Member Band (Moveee Pro, rounded dark
-card — `.sl-member-wrap` > `.sl-member`), 11. Origins Bridge Closing
+[outside provider] 7. Member Band (Moveee Pro, rounded dark
+card — `.sl-member-wrap` > `.sl-member`), 8. Origins Bridge Closing
 (`.sl-origins`).
 
 **Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
@@ -1186,6 +1186,29 @@ none;` inside the mobile override so the button is visible by default on
 mobile. **If you add a hover-revealed element anywhere in the shop UI, check
 whether it also needs a mobile always-visible override** — touch devices never
 trigger `:hover`.
+
+### Shop by Category + Meet the Makers sections removed (Site A, August 2026)
+
+Per explicit user request, `ShopArchiveWrapper.tsx`'s "Shop by Category" (`.sl-cat`) and
+"Meet the Makers" (`.sl-makers`) sections were removed from `/shop` entirely — not hidden,
+deleted from the JSX. The remaining sections were renumbered (Member Band and Origins
+Closing Bridge are now 7 and 8, was 10 and 11 — see the updated ordering list above).
+
+Removed along with the JSX, since they had no other consumer: the `GET_ALL_MAKERS` GraphQL
+fetch (and its `makersResult`/`makers` handling in the `Promise.allSettled` call), the
+`CMS` const + REST fallback fetch (`wp-json/moveee/v1/vendors`) that populated `makers` when
+GraphQL came back empty, the `FALLBACK_VENDORS` hardcoded array, and the derived
+`display`/`isFallback` variables. `categories` itself is **kept** — it's still consumed by
+`ShopFilterBar`'s category filter dropdown, only the dedicated category-grid section is gone.
+
+**Deliberately left alone**: `extractVendors()` and the `VendorCard` interface — this was
+already dead code (zero call sites) before this change, unrelated to the sections being
+removed here, so removing it was out of scope. The `.sl-cat-*`/`.sl-makers-*` CSS in
+`shop.css` was also left in place, unused, per this file's usual "kept in case needed again"
+convention.
+
+Verified via `tsc --noEmit` (clean) and a CSS brace-balance check on `shop.css` (580/580,
+unchanged — no CSS was touched by this pass).
 
 ### Shop archive + product detail — full visual rebuild (Site A, August 2026)
 
