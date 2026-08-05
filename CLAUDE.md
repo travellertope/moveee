@@ -1778,6 +1778,19 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   equivalent, but the split shape is what every *tinted-background* section here uses, and mixing
   the two shapes is exactly what caused this bug) — and always verify it against `.mg-head`'s
   edges at a wide (≥1600px) viewport before considering it done.
+- **Follow-up, same session: "The Lane" was still misaligned** — its section had a *third*,
+  previously-unnoticed variant of the same bug. `.mg-portrait-header` (just the "The Lane" title)
+  had `max-width`/`margin: 0 auto`, but its sibling `.mg-portrait-scroll` (the actual horizontally-
+  scrolling row of card images — a separate element, not nested inside the header div) only had
+  `padding: 0 64px` with **no** `max-width`/`margin: 0 auto` at all, so on a wide viewport the
+  cards sat flush at 64px from the true viewport edge while the title above them sat inset at the
+  shared column's position — visibly misaligned title vs. content. Fixed by adding the same
+  `max-width: calc(1200px + 128px); margin: 0 auto; box-sizing: border-box;` to
+  `.mg-portrait-scroll`, matching `.mg-portrait-header`. **This is a third variant of the same
+  class of bug** (missing `max-width`/`margin: 0 auto` on one part of a section while a sibling
+  part has it) — if any other section on this page still looks misaligned, check every element
+  that renders visible content for this section (not just its header/title wrapper) for the same
+  gap, the same way `.mg-portrait-scroll` was missed in the first pass.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

@@ -439,7 +439,10 @@
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
   padding: 0 64px 8px;
+  box-sizing: border-box;
 }
 .mg-portrait-scroll::-webkit-scrollbar { display: none; }
 .mg-portrait-card {
