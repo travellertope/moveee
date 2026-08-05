@@ -71,7 +71,7 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      // "The Edit", "Opinions & Essays", "The Lane", and "Quick Reads" are all
+      // "The Edit", "Opinions & Essays", "The Lane", and "The Free Critics" are all
       // fetched separately from the main story pool so they stay pinned to
       // their own taxonomy term (News category, Viewpoints category, The Lane
       // series, The Free Critics series) regardless of what else is on the
@@ -92,7 +92,7 @@ export default async function MagazineArchiveWrapper({
       // News is fully excluded from every other section — the whole category,
       // not just the 7 picked posts (an explicit, standing request). Viewpoints,
       // The Lane, and The Free Critics are NOT excluded wholesale — a post from
-      // any of those that wasn't picked for Opinions/The Lane/Quick Reads can
+      // any of those that wasn't picked for Opinions/The Lane/The Free Critics can
       // still surface naturally in the hero/sidebar/band sections. Only the
       // exact posts already used for those pinned sections are deduped out by
       // id, so nothing repeats.
@@ -385,7 +385,7 @@ export default async function MagazineArchiveWrapper({
             <section className="mg-digest">
               <div className="mg-digest-inner">
                 <div className="mg-sec-header">
-                  <h3>Quick <em>Reads</em></h3>
+                  <h3>The Free <em>Critics</em></h3>
                 </div>
                 <div className="mg-digest-grid">
                   {digestStories.map((story) => (

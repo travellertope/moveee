@@ -1494,10 +1494,12 @@ directly followed by unwrapped text with no card chrome).
   `.mg-edit`/`.mg-edit-inner`, `.mg-digest`/`.mg-digest-inner`) plus the pre-existing
   `.mg-opinions`/`.mg-opinions-inner` — follow this shape for any future tinted section here.
 - **Alternating tint rhythm, adjacent-tint seam divider**: Featured Stories (`.mg-band`) and
-  Quick Reads (`.mg-digest`) both gained a `#F2F2F2` tint they didn't have before; Opinions
+  The Free Critics (`.mg-digest` — renamed from "Quick Reads", see the follow-up entry below)
+  both gained a `#F2F2F2` tint they didn't have before; Opinions
   & Essays (`.mg-opinions`) had its tint **removed** (now plain white) — the new order is
-  Featured Stories (tint) → In Focus (white) → The Edit (tint) → Quick Reads (tint) →
-  Opinions (white) → CTA. Since The Edit and Quick Reads are adjacent tinted sections, both
+  Featured Stories (tint) → The Lane (white — renamed from "In Focus") → The Edit (tint) →
+  The Free Critics (tint) → Opinions (white) → CTA. Since The Edit and The Free Critics are
+  adjacent tinted sections, both
   carry their own `border-top: 1px solid rgba(200,191,176,.3)` so they don't visually merge
   into one undifferentiated grey block — this exact same "two same-background sections
   butted together with no divider" bug was caught and fixed in the mockup stage first (via a
@@ -1705,7 +1707,7 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   var(--paper)`), which paints solid white above the z-index:100 grain layer for that whole
   route tree only. Since Next.js layouts nest, this covers the archive, the single article page,
   and every category/series/tag/country/industry/issues sub-route with one file — no per-page
-  changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, Quick Reads)
+  changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, The Free Critics)
   still render correctly since they set their own explicit background on top.
 
 **Follow-up, same session:**
@@ -1726,14 +1728,16 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   decorative section label, so it's a different thing even though it visually sits in a similar
   spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
   other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
-- **"The Lane" (formerly "In Focus") and "Quick Reads" pulled from positional slices too**
-  (`stories.slice(7, 12)` and `stories.slice(16, 20)`) — same bug class as News/Viewpoints, but
-  against a *series* rather than a *category*: pinned to the **The Lane** series
-  (`GET_SERIES_STORIES({ series: "the-lane" })`, sliced to 5 client-side) and the **The Free
-  Critics** series (`GET_SERIES_STORIES({ series: "the-free-critics" })`, sliced to 4) — both
-  slugs confirmed from the existing `GET_SERIES_STORIES_BATCH` query's `theLane: seriesItem(id:
-  "the-lane", ...)` entry and the analogous WP admin term lookup. Section heading for the
-  ex-"In Focus" block is now **"The Lane"**, matching its content.
+- **"The Lane" (formerly "In Focus") and "The Free Critics" (formerly "Quick Reads") pulled from
+  positional slices too** (`stories.slice(7, 12)` and `stories.slice(16, 20)`) — same bug class
+  as News/Viewpoints, but against a *series* rather than a *category*: pinned to the **The Lane**
+  series (`GET_SERIES_STORIES({ series: "the-lane" })`, sliced to 5 client-side) and the **The
+  Free Critics** series (`GET_SERIES_STORIES({ series: "the-free-critics" })`, sliced to 4) —
+  both slugs confirmed from the existing `GET_SERIES_STORIES_BATCH` query's `theLane:
+  seriesItem(id: "the-lane", ...)` entry and the analogous WP admin term lookup. Section headings
+  are now **"The Lane"** (was "In Focus") and **"The Free Critics"** (was "Quick Reads") —
+  `digestStories`/`.mg-digest`/`.mg-digest-inner`/`.mg-digest-grid` class names are unchanged,
+  only the `<h3>` text and the taxonomy source changed.
 - **Cross-section duplicate handling is by-id dedupe, not a category/series-wide exclusion**
   (explicit correction — an earlier version of this fix wholesale-excluded `viewpoints` and
   `the-lane` from the rest of the page, which was wrong and has been reverted). **Only News is
