@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: { absolute: "AI Use Policy · The Moveee" },
+  title: { absolute: "AI Use Policy | Moveee" },
   description: "How Moveee Media uses Generative AI tools in our journalism and editorial processes.",
 };
 

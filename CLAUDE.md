@@ -834,6 +834,70 @@ results.
 
 ---
 
+## Site A (`apps/site`) SEO title/description brand-suffix cleanup (August 2026)
+
+User-reported: browser-tab/SERP titles across the site read "weird," e.g. `/magazine/africa`
+showed **"Magazine — Africa Edition · Moveee Magazine"** — the word "Magazine" appearing twice
+in one title. A full sweep of every `title:`/`description:` field in `apps/site/app/**/page.tsx`
+(~55 files) turned up two separate, unrelated bugs stacked on top of each other:
+
+1. **`"The Moveee"` — a phrase that appears nowhere in the brand table above — was hardcoded
+   into dozens of page titles/descriptions** (`"Contact | The Moveee"`, `"Article · The Moveee"`,
+   `"Quote by ${author} — The Moveee"`, etc.), including the **per-article fallback title
+   resolver** in `app/magazine/[slug]/page.tsx` (`resolveAioseoTitle()`'s `#site_title` token and
+   the no-SEO-title fallback `` `${post.title} · The Moveee` ``) — meaning most individual
+   magazine articles rendered this exact bug, not just the handful of static pages initially
+   spotted. Fixed by dropping "The" everywhere and, per each page's own content, using either
+   bare **"Moveee"** (platform/cross-surface pages: games, quotes, directory, events, journeys,
+   services, legal/utility pages, the `/uk`/`/us`/`/africa` **root-`/` edition variants** at
+   `app/[edition]/page.tsx` — this route is the home-page family, not `/magazine/*`, and mirrors
+   `app/page.tsx`'s own siteName, which is deliberately bare "Moveee" per the brand-architecture
+   section above) or **"Moveee Magazine"** (actual editorial/shop content: `/magazine/*` incl.
+   the single-article resolver, `/newsletter/*`, `/shop/*`, `/visuals/*`, `/makers/*`, author
+   archive — chosen because each of those sections' own root page already set
+   `openGraph.siteName: "Moveee Magazine"` explicitly, so the fix makes every page in that
+   section agree with its own section's siteName rather than inventing a third convention).
+   Also fixed two invented, undocumented sub-brand qualifiers in the same sweep: `"Moveee
+   Happenings"` (events pages) and `"Moveee Visuals"` (visuals article page) both collapsed to
+   the plain brand name per their section's rule above, `app/[edition]/page.tsx`'s three
+   EDITION_META titles (`"The British Moveee — Culture in Britain"`, `"The Moveee America —
+   ..."`, `"The Moveee Africa — ..."`) were rewritten to mirror the root homepage's own
+   `"Moveee — Culture. Discover and Engage."` pattern (`"Moveee — Culture in Britain"` etc.),
+   and `shop/edit/page.tsx`'s `"The Moveee Edit — Curated Shop"` title/H1 and its two "The Moveee
+   Edit →" link labels in `ShopArchiveWrapper.tsx` were shortened to **"The Edit"** (no
+   documented "Moveee Edit" sub-brand exists — this was the same bug, not an intentional name).
+   **Deliberately left alone**: `"The Moveee"` occurrences inside actual body copy/UI eyebrows
+   (`register`/`login`/`reset-password`'s `"The Moveee — Culture Community"` eyebrow labels) and
+   inside `terms`/`privacy`'s legal defined-term usage (`Moveee Media Ltd ("The Moveee", "we",
+   "us")`) — both are UI/legal-content decisions distinct from SEO metadata and out of scope for
+   this pass; only `title`/`description` fields (the two visible in a search result or browser
+   tab) were touched.
+2. **Redundant doubled words on the magazine/newsletter root + edition pages** — the actual bug
+   the user flagged. `/magazine`, `/magazine/{africa,uk,us}`, and `/newsletter/{africa,uk,us}`
+   all prefixed a generic `"Magazine —"`/`"Newsletters —"` label onto a title that *already*
+   ends in the brand suffix, which itself contains the word "Magazine"/"Newsletters" — e.g.
+   "Magazine — Africa Edition · Moveee **Magazine**". Fixed by dropping the redundant generic
+   prefix: `/magazine/africa` is now `"Africa Edition | Moveee Magazine"` (same pattern for
+   `/uk`, `/us`, and the three `/newsletter/*` editions → `"{Edition} Edition | Moveee
+   Magazine"`). The root `/magazine` page had no edition-specific words to lean on, so it was
+   changed to use the documented Moveee Magazine tagline instead: `"Moveee Magazine — Best in
+   Culture"` (was `"Magazine — Moveee Magazine"`).
+3. **Suffix separator standardized to `" | "`** wherever a bug fix touched a line — the site had
+   `"|"`, `"·"`, and `"—"` all used interchangeably as the final title/brand-suffix joiner across
+   different pages, which is part of what read as "weird" alongside the doubled words. Titles
+   that were already correct (no "The Moveee" bug, no doubled word) were left as-is even where
+   they still use `·`/`—` internally — this pass fixed genuine bugs, not a full site-wide
+   separator relint, to keep the change reviewable.
+
+**If you add a new page under `apps/site`**: default the title/description brand suffix to
+**`"Moveee Magazine"`** per the brand table's "always called Moveee Magazine in user-facing
+copy" rule — reach for bare `"Moveee"` only for pages that are clearly platform/cross-surface
+(games, journeys, quotes, events, directory, legal/utility, or anything mirroring the root `/`
+homepage), matching whatever `openGraph.siteName` the page/its section root already declares.
+Never write `"The Moveee"` — that string is not the brand name.
+
+---
+
 ## Figma Make prompt files (split into mobile vs. web, June 2026)
 
 Two separate catalogs of structured Figma Make / First Draft prompts, **do not merge them

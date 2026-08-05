@@ -11,10 +11,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name: string = data?.category?.name || slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
   const description: string = data?.category?.description || `Browse all Moveee Magazine stories in ${name} — essays, interviews, and cultural commentary.`;
   return {
-    title: `${name} | The Moveee Magazine`,
+    title: `${name} | Moveee Magazine`,
     description,
     openGraph: {
-      title: `${name} | The Moveee Magazine`,
+      title: `${name} | Moveee Magazine`,
       description,
     },
   };

@@ -55,11 +55,11 @@ async function fetchEditorialCoverage(vendorUserId: number): Promise<any[]> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const maker = await fetchMaker(slug);
-  if (!maker) return { title: { absolute: "Maker Not Found | The Moveee" } };
+  if (!maker) return { title: { absolute: "Maker Not Found | Moveee Magazine" } };
   const name = maker.storeName || maker.store_name || maker.display_name || "Maker";
   return {
-    title: { absolute: `${name} | Makers | The Moveee` },
-    description: maker.bio || maker.shop_description || `Discover handcrafted pieces by ${name} on The Moveee.`,
+    title: { absolute: `${name} | Makers | Moveee Magazine` },
+    description: maker.bio || maker.shop_description || `Discover handcrafted pieces by ${name} on Moveee Magazine.`,
   };
 }
 

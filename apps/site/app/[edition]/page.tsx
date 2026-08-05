@@ -18,21 +18,21 @@ interface Props {
 
 const EDITION_META: Record<RegionalSlug, { title: string; description: string; locale: string }> = {
   uk: {
-    title: "The British Moveee — Culture in Britain",
+    title: "Moveee — Culture in Britain",
     description:
-      "The British Moveee: the best of culture, community, events, and style in Britain.",
+      "Moveee: the best of culture, community, events, and style in Britain.",
     locale: "en_GB",
   },
   us: {
-    title: "The Moveee America — Culture in America",
+    title: "Moveee — Culture in America",
     description:
-      "The Moveee America: the best of culture, community, events, and lifestyle in North America.",
+      "Moveee: the best of culture, community, events, and lifestyle in North America.",
     locale: "en_US",
   },
   africa: {
-    title: "The Moveee Africa — Culture in Africa",
+    title: "Moveee — Culture in Africa",
     description:
-      "The Moveee Africa edition: editorials, happenings, travel, lifestyle, and community from across the continent.",
+      "Moveee Africa edition: editorials, happenings, travel, lifestyle, and community from across the continent.",
     locale: "en_GB",
   },
 };
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: root,
-      siteName: "The Moveee",
+      siteName: "Moveee",
       locale,
       type: "website",
       images: [
@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png",
           width: 920,
           height: 144,
-          alt: "The Moveee",
+          alt: "Moveee",
         },
       ],
     },

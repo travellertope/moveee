@@ -64,12 +64,12 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+    "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   alternates: { canonical: "https://themoveee.com/newsletter" },
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
@@ -81,7 +81,7 @@ export const metadata = {
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
   },
 };
 

@@ -38,11 +38,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   } catch {}
 
   const author = data?.user;
-  if (!author) return { title: { absolute: "Author Archive · The Moveee" } };
+  if (!author) return { title: { absolute: "Author Archive | Moveee Magazine" } };
 
   return {
-    title: { absolute: `${author.name} · The Moveee` },
-    description: author.description || `Articles by ${author.name} on The Moveee.`,
+    title: { absolute: `${author.name} | Moveee Magazine` },
+    description: author.description || `Articles by ${author.name} on Moveee Magazine.`,
   };
 }
 

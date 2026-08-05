@@ -4,12 +4,12 @@ import Link from "next/link";
 import "./makers.css";
 
 export const metadata = {
-  title: { absolute: "Meet the Makers — Moveee Magazine" },
+  title: { absolute: "Meet the Makers | Moveee Magazine" },
   description:
     "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
   alternates: { canonical: "https://themoveee.com/makers" },
   openGraph: {
-    title: "Meet the Makers — Moveee Magazine",
+    title: "Meet the Makers | Moveee Magazine",
     description: "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
     url: "https://themoveee.com/makers",
     siteName: "Moveee Magazine",
@@ -20,7 +20,7 @@ export const metadata = {
     card: "summary_large_image" as const,
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Meet the Makers — Moveee Magazine",
+    title: "Meet the Makers | Moveee Magazine",
     description: "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
   },
 };

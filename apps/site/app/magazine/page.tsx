@@ -5,11 +5,11 @@ import { Metadata } from "next";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Magazine — Moveee Magazine" },
+  title: { absolute: "Moveee Magazine — Best in Culture" },
   description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
   alternates: { canonical: "https://themoveee.com/magazine" },
   openGraph: {
-    title: "Magazine — Moveee Magazine",
+    title: "Moveee Magazine — Best in Culture",
     description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
     url: "https://themoveee.com/magazine",
     siteName: "Moveee Magazine",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Magazine — Moveee Magazine",
+    title: "Moveee Magazine — Best in Culture",
     description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
   },
 };

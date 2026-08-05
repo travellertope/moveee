@@ -5,12 +5,12 @@ import MagazineArchiveWrapper from "../MagazineArchiveWrapper";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Magazine — US Edition · Moveee Magazine" },
+  title: { absolute: "US Edition | Moveee Magazine" },
   description:
     "Long-form essays, interviews, and cultural commentary — through an American lens. Writing about music, film, art, food, travel, and ideas from New York, Atlanta, Los Angeles, and across the US.",
   alternates: { canonical: "https://themoveee.com/magazine/us" },
   openGraph: {
-    title: "Magazine — US Edition · Moveee Magazine",
+    title: "US Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — through an American lens.",
     url: "https://themoveee.com/magazine/us",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Magazine — US Edition · Moveee Magazine",
+    title: "US Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — through an American lens.",
   },

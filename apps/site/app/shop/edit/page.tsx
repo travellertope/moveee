@@ -7,7 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 export const revalidate = 1800;
 
 export const metadata = {
-  title: "The Moveee Edit — Curated Shop",
+  title: "The Edit — Curated Shop | Moveee Magazine",
   description: "Products handpicked by the Moveee editorial team — straight from the stories we love.",
 };
 
@@ -32,7 +32,7 @@ export default async function MoveeeEditPage() {
       <section className="edit-hero">
         <div className="edit-hero-inner">
           <p className="edit-eyebrow">Moveee Lifestyle · The Edit</p>
-          <h1 className="edit-headline">The Moveee Edit</h1>
+          <h1 className="edit-headline">The Edit</h1>
           <p className="edit-lede">
             Products picked by our writers and editors — straight from the stories we tell.
             Every item is connected to a piece of culture.

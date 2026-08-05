@@ -5,12 +5,12 @@ import MagazineArchiveWrapper from "../MagazineArchiveWrapper";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Magazine — UK Edition · Moveee Magazine" },
+  title: { absolute: "UK Edition | Moveee Magazine" },
   description:
     "Long-form essays, interviews, and cultural commentary — rooted in Britain. Writing about music, film, art, food, travel, and ideas from London, Manchester, Edinburgh, and the wider UK.",
   alternates: { canonical: "https://themoveee.com/magazine/uk" },
   openGraph: {
-    title: "Magazine — UK Edition · Moveee Magazine",
+    title: "UK Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — rooted in Britain.",
     url: "https://themoveee.com/magazine/uk",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Magazine — UK Edition · Moveee Magazine",
+    title: "UK Edition | Moveee Magazine",
     description:
       "Long-form essays, interviews, and cultural commentary — rooted in Britain.",
   },

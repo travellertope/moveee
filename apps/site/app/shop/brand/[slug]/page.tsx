@@ -40,11 +40,11 @@ async function fetchVendorProducts(slug: string): Promise<any[]> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const vendor = await fetchVendor(slug);
-  if (!vendor) return { title: { absolute: "Brand Not Found | The Moveee" } };
+  if (!vendor) return { title: { absolute: "Brand Not Found | Moveee Magazine" } };
   const name = vendor.storeName || vendor.store_name || vendor.display_name || "Brand";
   return {
-    title: { absolute: `${name} | Shop | The Moveee` },
-    description: vendor.bio || vendor.shop_description || `Shop all products by ${name} on The Moveee.`,
+    title: { absolute: `${name} | Shop | Moveee Magazine` },
+    description: vendor.bio || vendor.shop_description || `Shop all products by ${name} on Moveee Magazine.`,
   };
 }
 

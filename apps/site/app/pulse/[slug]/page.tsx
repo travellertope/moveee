@@ -46,7 +46,7 @@ export async function generateMetadata({
       title,
       description,
       url,
-      siteName: "The Moveee",
+      siteName: "Moveee",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
       type: "article",
       publishedTime: story.date,
@@ -123,7 +123,7 @@ export default async function PulseStoryPage({
     dateModified: story.modified,
     publisher: {
       "@type": "Organization",
-      name: "The Moveee",
+      name: "Moveee",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",

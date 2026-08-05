@@ -6,7 +6,7 @@ import DirectoryGrid from "@/components/DirectoryGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Culture Directory | The Moveee" },
+  title: { absolute: "Culture Directory | Moveee" },
   description: "A living reference of culture — creatives, institutions, movements, genres, cities, and more. Discover and add to the canon.",
 };
 

@@ -32,7 +32,7 @@ function resolveAioseoTitle(raw: string, postTitle: string): string {
   return raw
     .replace(/#post_title/g, postTitle)
     .replace(/#separator_sa/g, "|")
-    .replace(/#site_title/g, "The Moveee")
+    .replace(/#site_title/g, "Moveee Magazine")
     .replace(/#[a-z_]+/g, "")
     .trim();
 }
@@ -44,14 +44,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     data = await getWPData(GET_STORY_BY_SLUG, { slug: resolvedParams.slug });
   } catch {}
   const post = data?.post;
-  if (!post) return { title: { absolute: "Article · The Moveee" } };
+  if (!post) return { title: { absolute: "Article | Moveee Magazine" } };
 
   const imageUrl = post.featuredImage?.node?.sourceUrl || "/og-fallback.png";
   const plainExcerpt = post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || "";
 
   const metaTitle = post.seoTitle
     ? resolveAioseoTitle(post.seoTitle, post.title)
-    : `${post.title} · The Moveee`;
+    : `${post.title} | Moveee Magazine`;
   const metaDescription = post.seoDescription?.trim() || plainExcerpt;
 
   return {
