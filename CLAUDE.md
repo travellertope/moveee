@@ -1839,6 +1839,19 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   `.edit-lead-body` is back to a plain top-down flex column (`gap: 10px`, no `flex: 1`, no
   `justify-content`) and `.edit-lead-text` was removed. If a future pass ever reintroduces card
   chrome here, re-check whether the space-between stretch-fix needs to come back too.
+- **Mobile "Culture News" had double horizontal padding (user-reported, same session)** — the
+  earlier "Cross-section horizontal alignment fix" pass (above) split `.mg-edit`'s padding onto
+  `.mg-edit-inner` for the *base/desktop* rule, but missed the two mobile media-query overrides
+  at `max-width: 1024px` and `max-width: 768px`, which still set horizontal padding directly on
+  the outer `.mg-edit` (`padding: 48px 32px` / `padding: 40px 16px`) — stacking with
+  `.mg-edit-inner`'s own unchanged `padding: 0 64px` (no override existed for the inner element
+  at those breakpoints) for a combined ~48–80px of horizontal inset on mobile, visibly more than
+  every sibling section. Fixed by making both overrides vertical-only on `.mg-edit`
+  (`padding: 48px 0` / `padding: 40px 0`) and adding matching `.mg-edit-inner { padding: 0 32px;
+  }` / `{ padding: 0 16px; }` overrides, mirroring `.mg-band`/`.mg-band-inner`'s existing
+  responsive pattern exactly. **Lesson: when splitting a section's padding across an outer/inner
+  pair (per the shape documented above), grep for *every* existing media-query override of the
+  old single-div rule — not just the base rule — before considering the split complete.**
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
