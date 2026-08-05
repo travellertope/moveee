@@ -1349,6 +1349,47 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
     backed by real editorial fields or genuine per-product data — not positional luck — so they
     didn't need this treatment.
 
+### Product editorial fields — rich text (Bold/Italic) for Care Instructions + Delivery Info (August 2026)
+
+The product-creation "backend" for these fields is **not** the custom Next.js vendor dashboard
+(`packages/shared/components/vendor/ProductForm.tsx`, used by `apps/connect/app/vendor/products/
+{new,[id]}/page.tsx`) — that form only has name/price/sale_price/stock/description/short_description/
+categories/tags/status and has never had Maker Story/Care Instructions/Delivery Info fields.
+(There's also a stale, unreachable copy at `apps/site/components/vendor/ProductForm.tsx` — dead
+code, since `apps/site` has no `/vendor` route at all anymore, per "Site architecture — split
+complete" above; every `/vendor/*` path 308-redirects to Site B. Don't edit that copy.)
+
+These three fields are actually an **ACF ("Moveee Product Details") field group** registered in
+`moveee-graphql-bridge.php` (`acf/init` hook), shown as a metabox on the **WordPress Admin native
+product edit screen** — `maker_story`, `care_instructions`, `delivery_info` postmeta, exposed via
+GraphQL as `moveeeMeta.{makerStory,careInstructions,deliveryInfo}` and rendered on
+`apps/site/app/shop/[slug]/page.tsx`'s accordion (Maker Story / Materials & Care / Delivery &
+Returns tabs). User-reported: no way to add Bold/Italic to Materials & Care or Delivery & Returns
+when editing a product in WP Admin.
+
+Root cause: `maker_story` was already an ACF `wysiwyg` field (`toolbar: 'basic'` — the standard
+WordPress/TinyMCE bold/italic/link/list toolbar), but `care_instructions` and `delivery_info`
+were both plain ACF `textarea` fields — no formatting toolbar exists for a plain textarea, so
+there was genuinely no way to bold or italicize anything in those two fields. Fixed by changing
+both from `'type' => 'textarea'` to `'type' => 'wysiwyg', 'toolbar' => 'basic', 'media_upload' =>
+0`, matching `maker_story`'s existing config exactly. ACF wysiwyg fields still save as a plain
+HTML string in postmeta (same storage shape as textarea), so `get_post_meta()` on the PHP read
+side needed no changes.
+
+**Frontend read-side bug found and fixed in the same pass**: `deliveryInfo` and `makerStory`
+already rendered via `dangerouslySetInnerHTML` + `sanitizeHtml()` (ready for HTML), but
+`careInstructions` rendered as plain escaped text — `<p>{careInstructions}</p>` — so switching
+its WP field to `wysiwyg` alone would have made literal `<strong>`/`<em>` tags print onscreen
+instead of rendering as bold/italic. Fixed to match the other two:
+`<div dangerouslySetInnerHTML={{ __html: sanitizeHtml(careInstructions) }} />`.
+
+**Known gap, deliberately not touched in this pass**: `apps/mobile/src/screens/shop/
+ProductDetailScreen.tsx`'s "Materials & Care" and "Delivery & Returns" accordion items are
+hardcoded generic placeholder copy ("Details about materials and care instructions.", "Free
+delivery on orders over £75...") — they were never wired to `care_instructions`/`delivery_info`
+at all, on either platform's mobile fetch. That's a separate, pre-existing "wire up the real
+field" gap unrelated to rich-text support, out of scope for this pass.
+
 ### Lifestyle Shop product reviews + Material/Location facets (June 2026)
 
 Built on top of the existing WooCommerce **native** comment-based review

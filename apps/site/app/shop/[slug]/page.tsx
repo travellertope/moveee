@@ -172,7 +172,7 @@ export default async function ProductPage({
     // Materials & Care — only shown when the field is filled in WordPress
     ...(careInstructions ? [{
       title: "Materials & Care",
-      content: <p>{careInstructions}</p>,
+      content: <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(careInstructions) }} />,
     }] : []),
     // Delivery & Returns — only shown when the field is filled in WordPress
     ...(deliveryInfo ? [{
