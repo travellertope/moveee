@@ -1852,6 +1852,10 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   responsive pattern exactly. **Lesson: when splitting a section's padding across an outer/inner
   pair (per the shape documented above), grep for *every* existing media-query override of the
   old single-div rule — not just the base rule — before considering the split complete.**
+- **Nav/filter row border removed (explicit request, same session)** — `.mg-nav`'s
+  `border-bottom: 1px solid #EEE8DF` (the full-width rule under the category tabs + Series/
+  Industry/Country dropdowns) was dropped. The active-tab underline (`.mg-nav-tab--active`'s own
+  `border-bottom-color: #C5491F`) is a separate, per-tab rule and was left untouched.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 

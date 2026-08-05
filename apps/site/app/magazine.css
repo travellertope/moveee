@@ -27,7 +27,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #EEE8DF;
 }
 .mg-nav-tabs {
   display: flex;
