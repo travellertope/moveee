@@ -1210,6 +1210,57 @@ convention.
 Verified via `tsc --noEmit` (clean) and a CSS brace-balance check on `shop.css` (580/580,
 unchanged — no CSS was touched by this pass).
 
+### `/shop` grid has no `orderby` and a hard 24-item cap with no pagination (fixed August 2026)
+
+User-reported: "i have published products, how come they are not showing in the shop page?"
+Root cause found in `packages/shared/lib/wp.ts`: `GET_PRODUCTS`/`GET_PRODUCTS_EXTRA`/
+`GET_PRODUCTS_BY_VENDOR`/`GET_PRODUCTS_BY_VENDOR_EXTRA` all fetch `products(first: $first,
+where: {...})` with **no `orderby` clause at all**, and `ShopArchiveWrapper.tsx` calls them
+with a hard `first: 24` and no pagination anywhere in `ShopProductGrid.tsx` (no "Load more",
+no offset param) — the grid only ever renders whatever 24 products WPGraphQL/WooGraphQL's
+*default* ordering happens to return. With no explicit `orderby`, WooGraphQL's product
+resolver falls back to WooCommerce's own catalog default sort (`menu_order` — effectively
+random/by-ID among products that all share `menu_order = 0`, which is nearly every product
+that was never manually reordered in WP Admin's drag-and-drop sorting screen), **not**
+newest-first. A freshly published product has no reason to land inside that first-24 window
+once a store has more than ~24 products, so it can be fully published, in-stock, and visible
+in every other respect, and still never appear on `/shop`.
+
+Fixed by adding `orderby: { field: DATE, order: DESC }` to all four queries' `where` clause
+— same shape already used and confirmed working against the live schema by
+`GET_NEWSLETTERS`/`GET_STORIES_BY_TAG` elsewhere in this file. This guarantees newly
+published products always sort to the front, so they're inside the `first: 24` window
+immediately after publish (subject to the KV cache flush below) regardless of total catalog
+size — it does **not** add pagination/a "Load more" control, so a store with 25+ products
+still only ever shows the newest 24 on `/shop` itself (individual products are still fully
+reachable via `/shop/{slug}`, category pages, and search). If a full catalog needs to be
+browsable beyond 24, that's a separate, larger pagination feature — out of scope for this fix.
+
+**Other things to verify on the WordPress/Vercel side if a product still doesn't show after
+this fix** (none of these are checkable from the codebase alone):
+- **Product status is actually `publish`**, not `draft`/`pending` — WPGraphQL's `products`
+  connection only returns `publish`-status products to unauthenticated requests, same as
+  `posts`.
+- **Catalog visibility isn't set to "Hidden"** (Publish box → "Catalog visibility: Edit" on
+  the product edit screen) — a hidden product is real WooCommerce data but intentionally
+  excluded from shop/search listings.
+- **KV cache flush is actually configured and firing.** `product` is already in
+  `class-culture-community.php`'s `flush_on_publish()`/`flush_vercel_kv_cache()`
+  `$cacheable_types` list (see "Plugin DB table auto-upgrade"-adjacent caching docs above),
+  so publishing a product should POST to `{site}/api/revalidate-kv` and clear every cached
+  `wp:*` key. But `flush_vercel_kv_cache()` silently no-ops if
+  `culture_vercel_site_url`/`culture_vercel_revalidate_secret` (WP options) aren't set, or if
+  they don't match `WP_REVALIDATE_SECRET` on the target Vercel project — if that flush isn't
+  actually reaching `/api/revalidate-kv`, a product published inside the last hour could still
+  be served from a stale KV-cached empty/partial result (`getWPData()`'s default TTL is 3600s
+  when no `options.revalidate` is passed, which is the case for every product query here).
+  Confirm in WP Admin → Culture Community → General that both options are set and match the
+  Vercel env vars, and check the Vercel function logs for `[kv-revalidate]` after a test
+  publish.
+
+Verified via `tsc --noEmit` (clean) on both `apps/site` and `apps/connect` (this file is
+`packages/shared`, consumed by both).
+
 ### Shop archive + product detail — full visual rebuild (Site A, August 2026)
 
 Mockup-first as usual (two Artifacts, approved before building: `shop-redesign-mockup.html`
