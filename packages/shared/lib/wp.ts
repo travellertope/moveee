@@ -1541,6 +1541,66 @@ export async function getProductsWithFallback(
   return data ?? fallback;
 }
 
+/**
+ * Diagnostic for the "/shop is empty but GraphQL works fine" case (August 2026).
+ *
+ * A raw fetch() against the CMS proves the GraphQL API itself is healthy, but
+ * ShopArchiveWrapper never calls the CMS directly — it goes through getWPData,
+ * which sits behind a Vercel-KV cache AND a KV-backed circuit breaker, both of
+ * which are private to this module. A raw-fetch probe can look completely
+ * healthy while the real page keeps serving a stale cached empty result, or
+ * gets short-circuited by a still-open circuit breaker, and there was
+ * previously no way to see either of those states from outside this file.
+ *
+ * `bust: true` deletes the two cache keys this checks (ordered + unordered,
+ * default/no-filter shop listing) before reading them, so a caller can force
+ * a genuinely fresh read through the real code path without waiting out the
+ * TTL. Only ever touches those two keys — never a blanket cache flush.
+ */
+export async function __shopDebugState(opts: { first?: number; bust?: boolean } = {}) {
+  const first = opts.first ?? 24;
+  const kv = await getKV();
+  const vars = { first, category: null, tag: null };
+  const keyOrdered = kvKey(GET_PRODUCTS, vars);
+  const keyUnordered = kvKey(GET_PRODUCTS_UNORDERED, vars);
+
+  if (opts.bust && kv) {
+    await Promise.allSettled([kv.del(keyOrdered), kv.del(keyUnordered)]);
+  }
+
+  const [cbState, cachedOrdered, cachedUnordered] = kv
+    ? await Promise.all([
+        kv.get(CB_KEY).catch(() => null),
+        kv.get(keyOrdered).catch(() => null),
+        kv.get(keyUnordered).catch(() => null),
+      ])
+    : [null, null, null];
+
+  // The exact call ShopArchiveWrapper makes for the default (no brand/category/
+  // tag) listing — this is the real code path, cache and circuit breaker included.
+  const liveResult = await getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, vars);
+
+  return {
+    kvConfigured: !!kv,
+    cacheBusted: !!(opts.bust && kv),
+    circuitBreaker: {
+      raw: cbState,
+      currentlyOpen: !!(cbState && (cbState as any).openUntil > Date.now()),
+    },
+    cache: {
+      keyOrdered,
+      hasCachedOrdered: cachedOrdered !== null && cachedOrdered !== undefined,
+      cachedOrderedProductCount: (cachedOrdered as any)?.products?.nodes?.length ?? null,
+      keyUnordered,
+      hasCachedUnordered: cachedUnordered !== null && cachedUnordered !== undefined,
+      cachedUnorderedProductCount: (cachedUnordered as any)?.products?.nodes?.length ?? null,
+    },
+    // What ShopArchiveWrapper would actually receive right now, from this exact call.
+    liveProductCount: liveResult?.products?.nodes?.length ?? null,
+    liveSample: (liveResult?.products?.nodes ?? []).slice(0, 3).map((n: any) => n?.slug ?? null),
+  };
+}
+
 
 export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {
