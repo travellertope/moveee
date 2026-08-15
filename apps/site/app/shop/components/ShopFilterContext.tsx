@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 import {
-  PRICE_BANDS,
+  getPriceBands,
+  PriceBand,
   vendorName,
   vendorLocation,
   averageRating,
@@ -21,7 +22,6 @@ import {
 // directly — importing pure functions from a "use client" file makes every
 // export a client-only reference, which a server component can't invoke.
 export {
-  PRICE_BANDS,
   vendorName,
   vendorLocation,
   averageRating,
@@ -33,6 +33,7 @@ export {
   getCurrencyCode,
   formatPrice,
 };
+export type { PriceBand };
 
 interface Chip {
   id: string;
@@ -61,6 +62,7 @@ interface ShopFilterContextValue {
   setView: (v: "grid" | "list") => void;
   availableMaterials: string[];
   availableLocations: string[];
+  priceBands: PriceBand[];
   activeChips: Chip[];
   clearAll: () => void;
 }
@@ -94,6 +96,10 @@ export function ShopFilterProvider({ products, children }: { products: any[]; ch
     return [...set].slice(0, 8);
   }, [products]);
 
+  // Derived from the real fetched products (currency + price range), not a
+  // fixed GBP scale — see shopHelpers.ts's getPriceBands() for why.
+  const priceBands = useMemo(() => getPriceBands(products), [products]);
+
   const filtered = useMemo(() => {
     let list = products;
     if (query.trim()) {
@@ -103,7 +109,7 @@ export function ShopFilterProvider({ products, children }: { products: any[]; ch
       );
     }
     if (priceBand) {
-      const band = PRICE_BANDS.find((b) => b.id === priceBand);
+      const band = priceBands.find((b) => b.id === priceBand);
       if (band) list = list.filter((p) => band.test(parsePrice(p.price)));
     }
     if (material) {
@@ -124,12 +130,12 @@ export function ShopFilterProvider({ products, children }: { products: any[]; ch
       sorted.sort((a, b) => reviewCount(b) - reviewCount(a) || averageRating(b) - averageRating(a));
     }
     return sorted;
-  }, [products, query, priceBand, material, location, inStockOnly, sort]);
+  }, [products, query, priceBand, priceBands, material, location, inStockOnly, sort]);
 
   const activeChips: Chip[] = [];
   if (query.trim()) activeChips.push({ id: "q", label: `"${query.trim()}"`, clear: () => setQuery("") });
   if (priceBand) {
-    const band = PRICE_BANDS.find((b) => b.id === priceBand);
+    const band = priceBands.find((b) => b.id === priceBand);
     if (band) activeChips.push({ id: "price", label: band.label, clear: () => setPriceBand(null) });
   }
   if (material) activeChips.push({ id: "material", label: material, clear: () => setMaterial(null) });
@@ -165,6 +171,7 @@ export function ShopFilterProvider({ products, children }: { products: any[]; ch
     setView,
     availableMaterials,
     availableLocations,
+    priceBands,
     activeChips,
     clearAll,
   };
