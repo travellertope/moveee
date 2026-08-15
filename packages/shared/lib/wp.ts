@@ -1482,9 +1482,26 @@ const PRODUCT_FIELDS_FRAGMENT = `
 
 export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
-export const GET_PRODUCTS = `
-  query GetProducts($first: Int, $category: String, $tag: String) {
-    products(first: $first, where: { category: $category, tag: $tag, orderby: { field: DATE, order: DESC } }) {
+// Newest-first ordering for the products connection.
+//
+// IMPORTANT: unlike WPGraphQL core's `posts`/`cultureNewsletters` connections
+// (which use this exact shape elsewhere in this file and are proven against the
+// live schema), `orderby` inside the *products* where-args is WooGraphQL
+// territory and its support is version-dependent. If the running WooGraphQL
+// rejects it, the query fails validation, WPGraphQL returns `data: null`, and
+// getWPData() hands back null — which the shop renders as a completely empty
+// grid with no error anywhere on the page. Every products query therefore ships
+// in an ordered and an unordered form; fetch them via getProductsWithFallback()
+// rather than calling getWPData() with the ordered query directly.
+//
+// The two forms MUST keep distinct GraphQL operation names — getCacheKey()
+// derives the KV cache key from the operation name, so reusing one name would
+// make the fallback read (and overwrite) the failing query's cached result.
+const PRODUCTS_ORDER_NEWEST = ", orderby: { field: DATE, order: DESC }";
+
+const buildGetProducts = (opName: string, order: string) => `
+  query ${opName}($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag${order} }) {
       nodes {
         ...ProductFields
       }
@@ -1492,6 +1509,37 @@ export const GET_PRODUCTS = `
   }
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
+export const GET_PRODUCTS = buildGetProducts("GetProducts", PRODUCTS_ORDER_NEWEST);
+export const GET_PRODUCTS_UNORDERED = buildGetProducts("GetProductsUnordered", "");
+
+/**
+ * Fetch a products connection, falling back to the unordered form of the same
+ * query when the ordered one comes back empty.
+ *
+ * A genuinely empty result is cheap to double-check (it only happens on an
+ * empty catalogue or a broken query), so this costs one extra request in
+ * exactly the case where the page would otherwise be blank.
+ */
+export async function getProductsWithFallback(
+  ordered: string,
+  unordered: string,
+  variables: Record<string, any> = {},
+  options: any = {}
+) {
+  const data = await getWPData(ordered, variables, options);
+  if (data?.products?.nodes?.length) return data;
+
+  const fallback = await getWPData(unordered, variables, options);
+  if (fallback?.products?.nodes?.length) {
+    console.warn(
+      "[shop] The ordered products query returned nothing but the unordered one " +
+        "returned results — this WooGraphQL version is rejecting `orderby` inside " +
+        "the products where-args. Serving unordered results."
+    );
+    return fallback;
+  }
+  return data ?? fallback;
+}
 
 
 export const GET_PRODUCT_BY_SLUG = `
@@ -1541,10 +1589,7 @@ export const GET_PRODUCT_EXTRA = `
 // PRODUCT_FIELDS_FRAGMENT/GET_PRODUCTS, or a bridge-plugin outage would take
 // down the whole grid query). Re-issues the same first/category/tag args as
 // GET_PRODUCTS so the result set lines up, then the caller merges by id.
-export const GET_PRODUCTS_EXTRA = `
-  query GetProductsExtra($first: Int, $category: String, $tag: String) {
-    products(first: $first, where: { category: $category, tag: $tag, orderby: { field: DATE, order: DESC } }) {
-      nodes {
+const PRODUCT_EXTRA_NODE_FIELDS = `
         databaseId
         slug
         vendorProfile { storeName city country }
@@ -1552,26 +1597,27 @@ export const GET_PRODUCTS_EXTRA = `
         reviewCount
         productMaterials
         featured
-      }
-    }
-  }
 `;
 
-export const GET_PRODUCTS_BY_VENDOR_EXTRA = `
-  query GetProductsByVendorExtra($first: Int, $vendor: String) {
-    products(first: $first, where: { authorName: $vendor, orderby: { field: DATE, order: DESC } }) {
-      nodes {
-        databaseId
-        slug
-        vendorProfile { storeName city country }
-        averageRating
-        reviewCount
-        productMaterials
-        featured
-      }
+const buildGetProductsExtra = (opName: string, order: string) => `
+  query ${opName}($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag${order} }) {
+      nodes {${PRODUCT_EXTRA_NODE_FIELDS}}
     }
   }
 `;
+export const GET_PRODUCTS_EXTRA = buildGetProductsExtra("GetProductsExtra", PRODUCTS_ORDER_NEWEST);
+export const GET_PRODUCTS_EXTRA_UNORDERED = buildGetProductsExtra("GetProductsExtraUnordered", "");
+
+const buildGetProductsByVendorExtra = (opName: string, order: string) => `
+  query ${opName}($first: Int, $vendor: String) {
+    products(first: $first, where: { authorName: $vendor${order} }) {
+      nodes {${PRODUCT_EXTRA_NODE_FIELDS}}
+    }
+  }
+`;
+export const GET_PRODUCTS_BY_VENDOR_EXTRA = buildGetProductsByVendorExtra("GetProductsByVendorExtra", PRODUCTS_ORDER_NEWEST);
+export const GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED = buildGetProductsByVendorExtra("GetProductsByVendorExtraUnordered", "");
 
 export const GET_PRODUCT_CATEGORIES = `
   query GetProductCategories {
@@ -1598,9 +1644,9 @@ export const GET_POST_BY_ID = `
   }
 `;
 
-export const GET_PRODUCTS_BY_VENDOR = `
-  query GetProductsByVendor($first: Int, $vendor: String) {
-    products(first: $first, where: { authorName: $vendor, orderby: { field: DATE, order: DESC } }) {
+const buildGetProductsByVendor = (opName: string, order: string) => `
+  query ${opName}($first: Int, $vendor: String) {
+    products(first: $first, where: { authorName: $vendor${order} }) {
       nodes {
         ...ProductFields
       }
@@ -1608,6 +1654,8 @@ export const GET_PRODUCTS_BY_VENDOR = `
   }
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
+export const GET_PRODUCTS_BY_VENDOR = buildGetProductsByVendor("GetProductsByVendor", PRODUCTS_ORDER_NEWEST);
+export const GET_PRODUCTS_BY_VENDOR_UNORDERED = buildGetProductsByVendor("GetProductsByVendorUnordered", "");
 
 const VENDOR_PROFILE_FIELDS = `
   slug storeName bio city country avatarUrl bannerUrl yearsActive rating productCount
