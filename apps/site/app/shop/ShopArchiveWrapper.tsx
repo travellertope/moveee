@@ -14,7 +14,8 @@ import {
 } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
-import { ShopFilterProvider, formatGBP, parsePrice } from "./components/ShopFilterContext";
+import { ShopFilterProvider } from "./components/ShopFilterContext";
+import { formatGBP, parsePrice } from "./components/shopHelpers";
 import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
