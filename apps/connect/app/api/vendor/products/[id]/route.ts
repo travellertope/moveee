@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { resolveTermIds } from "../wcTerms";
 
 const CMS       = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WC_KEY    = process.env.WC_CONSUMER_KEY    ?? "";
@@ -54,6 +55,12 @@ export async function GET(
     const meta = (key: string) =>
       p.meta_data?.find((m: any) => m.key === key)?.value ?? "";
 
+    let processSteps: { title: string; desc: string; duration: string }[] = [];
+    try {
+      const raw = meta("process_steps");
+      if (raw) processSteps = JSON.parse(raw);
+    } catch { /* malformed JSON — treat as no steps */ }
+
     return NextResponse.json({
       id:               p.id,
       name:             p.name,
@@ -67,12 +74,19 @@ export async function GET(
       stockQty:         p.stock_quantity,
       stockStatus:      p.stock_status,
       type:             p.type,
-      categories:       (p.categories ?? []).map((c: any) => ({ id: c.id, name: c.name })),
-      images:           (p.images ?? []).map((img: any) => img.src),
+      // Comma-separated names, matching the form's free-text fields (no
+      // category/tag picker UI) — the API resolves names back to term IDs
+      // on save, see wcTerms.ts.
+      categories: (p.categories ?? []).map((c: any) => c.name).join(", "),
+      tags:       (p.tags ?? []).map((t: any) => t.name).join(", "),
+      images:     (p.images ?? []).map((img: any) => img.src),
+      attributes: (p.attributes ?? [])
+        .filter((a: any) => a.variation === false || a.variation === undefined)
+        .map((a: any) => ({ name: a.name, values: (a.options ?? []).join(", ") })),
       makerStory:       meta("maker_story"),
       careInstructions: meta("care_instructions"),
       deliveryInfo:     meta("delivery_info"),
-      processSteps:     meta("process_steps"),
+      processSteps,
     });
   } catch {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
@@ -108,14 +122,36 @@ export async function PATCH(
   if (body.manageStock      != null) payload.manage_stock      = body.manageStock;
   if (body.stockQty         != null) payload.stock_quantity    = Number(body.stockQty);
   if (body.stockStatus      != null) payload.stock_status      = body.stockStatus;
-  if (body.categories       != null) payload.categories        = body.categories.map((id: number) => ({ id }));
   if (body.images           != null) payload.images            = body.images.map((src: string) => ({ src }));
+
+  // categories/tags arrive as free-text comma-separated names (no picker UI)
+  // — resolve to WooCommerce term IDs, creating any that don't exist yet.
+  if (typeof body.categories === "string") {
+    payload.categories = (await resolveTermIds("categories", body.categories)).map((tid) => ({ id: tid }));
+  }
+  if (typeof body.tags === "string") {
+    payload.tags = (await resolveTermIds("tags", body.tags)).map((tid) => ({ id: tid }));
+  }
+
+  // attributes arrives as an array of {name, values: "a, b, c"} rows.
+  if (Array.isArray(body.attributes)) {
+    payload.attributes = body.attributes
+      .filter((a: any) => a?.name?.trim() && a?.values?.trim())
+      .map((a: any) => ({
+        name: a.name.trim(),
+        options: a.values.split(",").map((v: string) => v.trim()).filter(Boolean),
+        visible: true,
+        variation: false,
+      }));
+  }
 
   const extraMeta: any[] = [];
   if (body.makerStory       != null) extraMeta.push({ key: "maker_story",        value: body.makerStory       });
   if (body.careInstructions != null) extraMeta.push({ key: "care_instructions",  value: body.careInstructions });
   if (body.deliveryInfo     != null) extraMeta.push({ key: "delivery_info",      value: body.deliveryInfo     });
-  if (body.processSteps     != null) extraMeta.push({ key: "process_steps",      value: body.processSteps     });
+  if (Array.isArray(body.processSteps)) {
+    extraMeta.push({ key: "process_steps", value: body.processSteps.length ? JSON.stringify(body.processSteps) : "" });
+  }
   if (extraMeta.length > 0) payload.meta_data = extraMeta;
 
   try {

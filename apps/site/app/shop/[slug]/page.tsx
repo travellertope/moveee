@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { getWPData, getProductsWithFallback, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_UNORDERED, GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, GET_POST_BY_ID } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -161,6 +162,14 @@ export default async function ProductPage({
 
   const variations = product.variations?.nodes ?? [];
 
+  // Plain/informational product attributes (WooCommerce's native "Attributes"
+  // tab, set independently of variations) — e.g. Material, Dimensions. Only
+  // non-variation attributes: attributes that generate variations already
+  // render as the interactive swatches/selectors in ProductSelectors.
+  const specAttributes: { name: string; options: string[] }[] = (product.attributes?.nodes ?? [])
+    .filter((a: any) => !a.variation && a.options?.length)
+    .map((a: any) => ({ name: a.name, options: a.options }));
+
   // Process steps — only use if genuinely set in WordPress; never show generic fallback
   interface ProcessStep { title: string; desc: string; duration?: string }
   let processSteps: ProcessStep[] = [];
@@ -189,6 +198,21 @@ export default async function ProductPage({
         />
       ),
     },
+    // Specifications — WooCommerce's native product Attributes, only shown
+    // when at least one non-variation attribute is set
+    ...(specAttributes.length > 0 ? [{
+      title: "Specifications",
+      content: (
+        <dl>
+          {specAttributes.map((a) => (
+            <Fragment key={a.name}>
+              <dt>{a.name}</dt>
+              <dd>{a.options.join(", ")}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      ),
+    }] : []),
     // Materials & Care — only shown when the field is filled in WordPress
     ...(careInstructions ? [{
       title: "Materials & Care",

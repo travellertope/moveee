@@ -1464,11 +1464,13 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
+      attributes { nodes { name options variation } }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
+      attributes { nodes { name options variation } }
       variations(first: 12) {
         nodes {
           price
