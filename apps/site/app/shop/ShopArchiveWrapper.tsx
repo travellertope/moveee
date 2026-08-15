@@ -311,19 +311,19 @@ export default async function ShopArchiveWrapper({
         </section>
       </div>
 
-      {/* ── 9. ORIGINS CLOSING BRIDGE ── */}
+      {/* ── 9. LIFESTYLE EDIT CLOSING BRIDGE ── */}
       <section className="sl-origins">
         <div className="sl-origins-inner">
           <div className="sl-origins-img" />
           <div className="sl-origins-content">
-            <div className="sl-origins-label">Origins Journal</div>
+            <div className="sl-origins-label">The Lifestyle Edit</div>
             <h3>The stories <em>behind</em> the objects</h3>
             <p>
               Every maker in the shop has a story. We travel to document them —
               from mountain workshops to coastal studios.
             </p>
-            <Link href="/journeys" className="sl-origins-cta">
-              Read Origins →
+            <Link href="/shop/edit" className="sl-origins-cta">
+              Read The Edit →
             </Link>
           </div>
         </div>
