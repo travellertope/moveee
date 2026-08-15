@@ -11,6 +11,7 @@
 .sl-head {
   background: #fff;
   padding: 32px 64px 20px;
+  border-bottom: 1px solid var(--rule);
 }
 .sl-head-inner {
   max-width: 1440px;
@@ -50,31 +51,22 @@
   margin: 0;
 }
 
-/* ── 3. TRUST BAR — single slim line, replaces trust-strip + scrolling ticker ── */
+/* ── 4. TRUST LINE — single slim mono line under the pick/featured sections ── */
 .sl-trust {
-  border-top: 1px solid var(--rule);
+  background: #fff;
   border-bottom: 1px solid var(--rule);
 }
-.sl-trust-inner {
+.sl-trust-line {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 18px 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 32px;
-}
-.sl-trust-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  padding: 14px 64px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .02em;
   color: var(--mute);
 }
-.sl-trust-icon { color: var(--ochre); font-size: 14px; line-height: 1; }
-.sl-trust-item strong { color: var(--ink); font-weight: 600; }
+.sl-trust-line strong { color: var(--ink); font-weight: 700; }
 
 /* ── 3. STICKY FILTER BAR ── */
 .sl-filter {
@@ -282,68 +274,22 @@
   text-underline-offset: 3px;
 }
 
-/* ── 5. FEATURED EDITORIAL PICKS ── */
-.sl-picks {
+/* ── 2. EDITOR'S PICK — single split strip, hairline rules, no shadow ── */
+.sl-pick {
   background: #fff;
-  padding: 80px 0;
+  border-bottom: 1px solid var(--rule);
 }
-.sl-picks-inner {
+.sl-pick-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 64px;
-}
-.sl-picks-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 40px;
-}
-.sl-picks-header h2 {
-  font-family: 'Fraunces', serif;
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 0;
-}
-.sl-picks-header h2 em { font-style: italic; font-weight: 400; color: var(--ochre); }
-.sl-picks-all {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--ink);
-  border-bottom: 1px solid currentColor;
-  padding-bottom: 2px;
-  transition: color .2s;
-  text-decoration: none;
-}
-.sl-picks-all:hover { color: var(--ochre); }
-
-/* Hero pick — large framed image left, story/price/CTA right */
-.sl-hero-grid {
+  padding: 56px 64px;
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 48px;
-  align-items: stretch;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 56px;
+  align-items: center;
 }
-.sl-hero-img-link { display: block; text-decoration: none; }
-.sl-hero-img {
-  position: relative;
-  aspect-ratio: 4 / 3.1;
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--paper-deep, #f2f2f2);
-  box-shadow: 0 14px 32px -8px rgba(20,17,13,.16), 0 4px 12px -2px rgba(20,17,13,.08);
-}
-.sl-hero-img img { transition: transform .4s ease; }
-.sl-hero-img-link:hover .sl-hero-img img { transform: scale(1.03); }
-.sl-hero-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-}
-.sl-hero-kicker {
+.sl-pick-body { display: flex; flex-direction: column; gap: 14px; }
+.sl-pick-eyebrow {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
@@ -351,22 +297,16 @@
   text-transform: uppercase;
   color: var(--ochre);
 }
-.sl-hero-vendor {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var(--mute);
-  letter-spacing: .02em;
-  margin-top: -6px;
-}
-.sl-hero-name {
+.sl-pick-title {
   font-family: 'Fraunces', serif;
+  font-weight: 400;
   font-size: clamp(28px, 3vw, 38px);
-  font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.1;
   color: var(--ink);
   margin: 0;
 }
-.sl-hero-desc {
+.sl-pick-title:hover { color: var(--ochre); }
+.sl-pick-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   color: var(--mute);
@@ -374,19 +314,19 @@
   max-width: 420px;
   margin: 0;
 }
-.sl-hero-price-row { display: flex; align-items: baseline; gap: 14px; margin-top: 2px; }
-.sl-hero-price {
+.sl-pick-price-row { display: flex; align-items: baseline; gap: 14px; margin-top: 2px; }
+.sl-pick-price {
   font-family: 'JetBrains Mono', monospace;
   font-size: 20px;
   font-weight: 700;
   color: var(--ink);
 }
-.sl-hero-pro-price {
+.sl-pick-pro-price {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: var(--gold);
 }
-.sl-hero-cta {
+.sl-pick-cta {
   margin-top: 6px;
   display: inline-flex;
   align-items: center;
@@ -402,12 +342,20 @@
   text-decoration: none;
   transition: background .2s, transform .2s;
 }
-.sl-hero-cta:hover { background: var(--ochre); transform: translateY(-1px); }
-
-/* Pips on the hero image */
-.sl-pip {
+.sl-pick-cta:hover { background: var(--ochre); transform: translateY(-1px); }
+.sl-pick-media-link { display: block; text-decoration: none; }
+.sl-pick-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--paper-deep, #f2f2f2);
+}
+.sl-pick-media img { transition: transform .4s ease; }
+.sl-pick-media-link:hover .sl-pick-media img { transform: scale(1.03); }
+.sl-pick-media-tag {
   position: absolute;
-  top: 16px;
+  bottom: 16px;
   left: 16px;
   background: rgba(255,255,255,.94);
   backdrop-filter: blur(4px);
@@ -419,14 +367,8 @@
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 2;
-  pointer-events: none;
 }
-.sl-pip-star { color: var(--ochre); }
-.sl-pip-new {
+.sl-pick-media-new {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -439,73 +381,94 @@
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  z-index: 2;
-  pointer-events: none;
 }
 
-/* "More From The Edit" — 3-across companion row below the hero pick */
-.sl-week-row {
-  margin-top: 44px;
-  padding-top: 32px;
-  border-top: 1px solid var(--rule);
+/* ── 3. FEATURED PRODUCTS — flush 2-up grid, no card chrome ── */
+.sl-featured {
+  background: #fff;
+  padding: 48px 0;
+}
+.sl-featured-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 64px;
+}
+.sl-featured-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
 }
-.sl-week-card {
-  display: flex;
-  gap: 14px;
-  text-decoration: none;
-  color: inherit;
-}
-.sl-week-thumb {
+.sl-featured-card { display: block; text-decoration: none; color: inherit; }
+.sl-featured-img {
   position: relative;
-  width: 76px;
-  height: 76px;
-  flex: none;
-  border-radius: 8px;
+  aspect-ratio: 4 / 5;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--paper-deep, #f2f2f2);
+  margin-bottom: 14px;
 }
-.sl-week-new {
+.sl-featured-img img { transition: transform .4s ease; }
+.sl-featured-card:hover .sl-featured-img img { transform: scale(1.03); }
+.sl-featured-new {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
-  background: var(--ochre);
-  color: #fff;
+  top: 12px;
+  right: 12px;
+  background: var(--ink);
+  color: var(--paper);
   border-radius: 100px;
-  padding: 2px 6px;
+  padding: 4px 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-size: 9px;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
-.sl-week-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  justify-content: center;
-  min-width: 0;
-}
-.sl-week-vendor {
+.sl-featured-kicker {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--ochre);
-  text-transform: uppercase;
+  font-size: 10px;
   letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin: 0 0 5px;
 }
-.sl-week-title {
+.sl-featured-name {
   font-family: 'Fraunces', serif;
-  font-size: 15px;
-  line-height: 1.25;
+  font-size: 18px;
+  font-weight: 500;
   color: var(--ink);
+  margin: 0 0 6px;
+  line-height: 1.3;
 }
-.sl-week-card:hover .sl-week-title { color: var(--ochre); }
-.sl-week-price {
+.sl-featured-card:hover .sl-featured-name { color: var(--ochre); }
+.sl-featured-price {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 14px;
+  color: var(--ink);
+  margin: 0;
+}
+.sl-featured-pro { color: var(--gold); font-size: 12px; }
+
+/* Shared slim section header — mono label + count, hairline rule underneath.
+   Used by Featured Products and (via .sl-grid-header) the main grid. */
+.sl-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule-strong, var(--rule));
+  margin-bottom: 28px;
+}
+.sl-sec-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+}
+.sl-sec-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
   color: var(--mute);
 }
 
@@ -568,7 +531,9 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 40px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule-strong, var(--rule));
+  margin-bottom: 32px;
 }
 .sl-grid-label {
   font-family: 'Fraunces', serif;
@@ -584,11 +549,11 @@
   color: var(--mute);
 }
 
-/* Product grid / list layout */
+/* Product grid / list layout — flush caption-stack cards, Monocle-style */
 .sl-product-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  gap: 32px 26px;
 }
 .sl-product-list {
   display: flex;
@@ -596,70 +561,38 @@
   gap: 16px;
 }
 
-/* Product card */
+/* Product card — no background/shadow/fixed height; just image + caption */
 .sl-pcard {
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  overflow: hidden;
+  display: block;
   text-decoration: none;
   color: inherit;
-  background: #fff;
-  position: relative;
-  height: 460px;
-  box-shadow: 0 1px 3px rgba(20,17,13,.08), 0 1px 2px rgba(20,17,13,.04);
-  transition: box-shadow .3s, transform .3s;
 }
-.sl-pcard:hover {
-  box-shadow: 0 8px 24px -4px rgba(20,17,13,.12), 0 4px 12px -2px rgba(20,17,13,.08);
-  transform: translateY(-2px);
-}
-.sl-pcard--sold { opacity: .65; }
 
-/* Product image area */
+/* Product image area — this is where the signature rounded corners live */
 .sl-pcard-img {
   position: relative;
-  height: 280px;
-  flex-shrink: 0;
-  background: var(--paper-deep, #f2f2f2);
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
   overflow: hidden;
+  background: var(--paper-deep, #f2f2f2);
+  margin-bottom: 12px;
 }
 .sl-pcard-img img { transition: transform .4s ease; }
-.sl-pcard:hover .sl-pcard-img img { transform: scale(1.04); }
-
-/* Vetted pip */
-.sl-pcard-vetted {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(243,236,224,.92);
-  backdrop-filter: blur(4px);
-  border-radius: 100px;
-  padding: 4px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--ink);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  z-index: 2;
-  pointer-events: none;
-}
-.sl-pcard-vetted-star { color: var(--ochre); }
+.sl-pcard:hover .sl-pcard-img img { transform: scale(1.03); }
+.sl-pcard--sold .sl-pcard-img { opacity: .6; }
 
 /* New pip */
 .sl-pcard-new-pip {
   position: absolute;
   top: 10px;
-  right: 10px;
-  background: var(--ink);
-  color: var(--paper);
+  left: 10px;
+  background: var(--paper);
+  color: var(--ink);
   border-radius: 100px;
-  padding: 3px 9px;
+  padding: 4px 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
+  font-size: 9px;
+  font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
   z-index: 2;
@@ -683,104 +616,79 @@
   pointer-events: none;
 }
 
-/* Card body */
+/* Card body — plain caption stack, no padding box */
 .sl-pcard-body {
-  flex: 1;
-  padding: 14px 16px 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  min-height: 0;
-  overflow: hidden;
 }
 .sl-pcard-body--muted { opacity: .55; }
 .sl-pcard-vendor {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .12em;
+  font-size: 9.5px;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--ochre);
+  color: var(--mute);
+  margin: 0;
 }
 .sl-pcard-name {
   font-family: 'Fraunces', serif;
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--ink);
-  line-height: 1.2;
+  line-height: 1.3;
+  margin: 2px 0 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.sl-pcard-prices {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
-}
+.sl-pcard:hover .sl-pcard-name { color: var(--ochre); }
 .sl-pcard-price {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12.5px;
   color: var(--ink);
+  margin: 0;
 }
 .sl-pcard-price * { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; }
-.sl-pcard-pro-price {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  color: var(--ochre);
-}
+.sl-pcard-pro-price { color: var(--gold); }
 .sl-pcard-rating {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--mute);
-  margin-top: 2px;
+  margin: 3px 0 0;
 }
 
-/* Add to bag — hidden until hover (touch gets it always-visible via mobile override) */
-.sl-pcard-add {
-  margin-top: auto;
-  flex-shrink: 0;
-}
+/* Add to bag — plain text-style control, always visible (no hover-reveal overlay) */
+.sl-pcard-add { margin-top: 8px; }
 .sl-pcard-add button {
-  display: block;
-  width: 100%;
-  padding: 13px 16px;
-  background: var(--ink);
-  color: var(--paper);
+  display: inline-block;
+  padding: 0;
+  background: none;
   border: none;
+  color: var(--mute);
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   cursor: pointer;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .25s, transform .25s, background .2s;
-  text-align: center;
+  transition: color .15s;
 }
-.sl-pcard:hover .sl-pcard-add button {
-  opacity: 1;
-  transform: translateY(0);
-}
-.sl-pcard-add button:hover { background: var(--ochre); }
+.sl-pcard-add button:hover { color: var(--ochre); }
 
 /* Sold-out button */
 .sl-pcard-sold-btn {
-  display: block;
-  width: 100%;
-  padding: 13px 16px;
-  background: var(--paper-deep, #f2f2f2);
+  display: inline-block;
+  padding: 0;
+  background: none;
   color: var(--mute);
   border: none;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  text-align: center;
   cursor: not-allowed;
-  margin-top: auto;
-  flex-shrink: 0;
+  margin-top: 8px;
 }
 
 /* Empty state */
@@ -1216,8 +1124,9 @@
 }
 
 @media (max-width: 900px) {
-  .sl-hero-grid { grid-template-columns: 1fr; }
-  .sl-week-row { grid-template-columns: 1fr 1fr; }
+  .sl-pick-inner { grid-template-columns: 1fr; gap: 24px; }
+  .sl-pick-media-link { order: -1; }
+  .sl-featured-grid { grid-template-columns: 1fr 1fr; }
   .sl-product-grid { grid-template-columns: 1fr 1fr; }
   .sl-cat-grid { grid-template-columns: repeat(2, 1fr); }
   .sl-makers-grid { grid-template-columns: 1fr 1fr; }
@@ -1229,13 +1138,14 @@
   .sl-origins-img { flex: none; min-height: 280px; }
   .sl-origins-content { flex: none; padding: 56px 40px; }
   .sl-head-inner,
-  .sl-picks-inner,
+  .sl-pick-inner,
+  .sl-featured-inner,
   .sl-grid-inner,
   .sl-cat-inner,
   .sl-makers-inner { padding-left: 24px; padding-right: 24px; }
   .sl-head { padding-left: 0; padding-right: 0; }
   .sl-member-wrap { padding: 56px 24px; }
-  .sl-trust-inner,
+  .sl-trust-line,
   .sl-bridge-inner { padding-left: 24px; padding-right: 24px; }
   .sl-filter-row1,
   .sl-filter-row2 { padding-left: 24px; padding-right: 24px; }
@@ -1246,11 +1156,10 @@
   .sl-head-inner { padding-left: 0; padding-right: 0; flex-direction: column; align-items: flex-start; gap: 10px; }
   .sl-head-inner h1 { font-size: 26px; }
   .sl-head-desc { font-size: 13px; }
-  .sl-trust-inner { padding: 14px 20px; gap: 10px 20px; justify-content: flex-start; }
-  .sl-trust-item { font-size: 11.5px; }
+  .sl-trust-line { padding: 12px 20px; font-size: 10px; }
 
-  .sl-hero-name { font-size: 26px; }
-  .sl-week-row { grid-template-columns: 1fr; gap: 16px; margin-top: 28px; padding-top: 24px; }
+  .sl-pick-title { font-size: 26px; }
+  .sl-featured-grid { grid-template-columns: 1fr; gap: 24px; }
 
   /* Filter bar: horizontal scroll on mobile */
   .sl-filter-row1 {
@@ -1271,13 +1180,9 @@
   .sl-filter-count { display: none; }
 
   /* Product grid — 2-up on mobile */
-  .sl-product-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .sl-pcard { height: 320px; }
-  .sl-pcard-img { height: 160px; }
-  .sl-pcard-name { font-size: 13px; }
-  .sl-pcard-price { font-size: 12px; }
-  /* Always show add button on touch */
-  .sl-pcard-add button { opacity: 1; transform: none; font-size: 9px; padding: 10px; }
+  .sl-product-grid { grid-template-columns: 1fr 1fr; gap: 22px 14px; }
+  .sl-pcard-name { font-size: 13.5px; }
+  .sl-pcard-price { font-size: 11.5px; }
 
   /* Category grid — 2-up */
   .sl-cat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -1306,8 +1211,9 @@
   .sl-bridge-links { flex-direction: column; gap: 12px; }
 
   /* Section padding */
-  .sl-picks { padding: 40px 0; }
-  .sl-picks-inner { padding: 0 20px; }
+  .sl-pick-inner { padding: 32px 20px; }
+  .sl-featured { padding: 32px 0; }
+  .sl-featured-inner { padding: 0 20px; }
   .sl-grid { padding: 48px 0; }
   .sl-grid-inner { padding: 0 20px; }
   .sl-cat { padding: 48px 0; }

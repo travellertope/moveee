@@ -61,11 +61,8 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
                         style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                      <div style={{ width: "100%", height: "100%", background: "var(--paper-deep)" }} />
                     )}
-                    <div className="sl-pcard-vetted">
-                      <span className="sl-pcard-vetted-star">★</span> Vetted
-                    </div>
                     {!outOfStock && isNew(p) && (
                       <div className="sl-pcard-new-pip">New</div>
                     )}
@@ -77,21 +74,21 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
                   </div>
 
                   <div className={`sl-pcard-body${outOfStock ? " sl-pcard-body--muted" : ""}`}>
-                    {vname && <div className="sl-pcard-vendor">{vname}</div>}
-                    <div className="sl-pcard-name">{p.name}</div>
+                    {vname && <p className="sl-pcard-vendor">{vname}</p>}
+                    <p className="sl-pcard-name">{p.name}</p>
                     {p.price && (
-                      <div className="sl-pcard-prices">
-                        <span className="sl-pcard-price">{p.price}</span>
+                      <p className="sl-pcard-price">
+                        {p.price}
                         {!outOfStock && (
-                          <span className="sl-pcard-pro-price">{proPrice} with Pro</span>
+                          <span className="sl-pcard-pro-price"> · {proPrice} Pro</span>
                         )}
-                      </div>
+                      </p>
                     )}
-                    <div className="sl-pcard-rating">
-                      {hasReviews
-                        ? `★ ${averageRating(p).toFixed(1)} (${reviewCount(p)})`
-                        : "New listing"}
-                    </div>
+                    {hasReviews && (
+                      <p className="sl-pcard-rating">
+                        ★ {averageRating(p).toFixed(1)} ({reviewCount(p)})
+                      </p>
+                    )}
                   </div>
 
                   {outOfStock ? (
