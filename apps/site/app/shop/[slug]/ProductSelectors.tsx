@@ -1,5 +1,4 @@
 "use client";
-import { sanitizeHtml } from "@/lib/sanitize";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -18,7 +17,11 @@ interface ProductSelectorsProps {
   price?: string;
   regularPrice?: string;
   variations?: Variation[];
-  memberPrice?: string;   // HTML price string for patron members
+  // Plain formatted price string (e.g. "£40.50"/"₦42,750") — computed
+  // server-side as base price × the effective Moveee Pro discount %, never
+  // a separately maintained absolute number. See displayPrice.proPrice in
+  // moveee-graphql-bridge.php.
+  proPrice?: string;
   isPro?: boolean;
   isLoggedIn?: boolean;
   isGated?: boolean;      // true = early access active and user is not Pro
@@ -29,7 +32,7 @@ export default function ProductSelectors({
   price,
   regularPrice,
   variations,
-  memberPrice,
+  proPrice,
   isPro,
   isLoggedIn,
   isGated,
@@ -43,19 +46,19 @@ export default function ProductSelectors({
   const selectAttr = (name: string, index: number) =>
     setSelected((prev) => ({ ...prev, [name]: index }));
 
-  const showMemberPrice = memberPrice && isPro;
-  const showMemberPriceTeaser = memberPrice && !isPro;
+  const showProPrice = !!proPrice && isPro;
+  const showProPriceTeaser = !!proPrice && !isPro;
   // WooCommerce's price string already carries the store's actual currency
   // symbol (which is not reliably GBP — see shopHelpers.ts) — derive the
   // code label from it instead of assuming.
-  const currencyCode = getCurrencyCode(showMemberPrice ? memberPrice : price);
+  const currencyCode = getCurrencyCode(showProPrice ? proPrice : price);
 
   return (
     <>
       {/* Price */}
       <div className="sp-price-row">
         <div className="sp-price-stack">
-          {showMemberPrice ? (
+          {showProPrice ? (
             // Pro member sees the discounted price prominently
             <>
               <div className="sp-price-pro-label">★ Your Pro price</div>
@@ -65,10 +68,7 @@ export default function ProductSelectors({
                     {price}
                   </span>
                 )}
-                <span
-                  className="sp-price"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(memberPrice) }}
-                />
+                <span className="sp-price">{proPrice}</span>
               </div>
             </>
           ) : (
@@ -83,15 +83,15 @@ export default function ProductSelectors({
           )}
         </div>
         <span className="sp-price-sub">{currencyCode}</span>
-        {showMemberPriceTeaser ? (
-          // Non-Pro user: show teaser for the member price
+        {showProPriceTeaser ? (
+          // Non-Pro user: show teaser for the Pro price
           <div className="sp-price-member sp-price-member--teaser">
             <span>Pro member price available</span>
             <Link href="/connect/membership" className="sp-price-member-link">
               {isLoggedIn ? "Upgrade →" : "Join Pro →"}
             </Link>
           </div>
-        ) : !showMemberPrice ? (
+        ) : !showProPrice ? (
           <div className="sp-price-member">
             Moveee Pro members get exclusive pricing
           </div>
@@ -178,12 +178,12 @@ export default function ProductSelectors({
       {/* Mobile-only sticky bar — mirrors the buy box, hidden ≥640px via CSS */}
       <div className="sp-mobile-bar">
         <div className="sp-mobile-bar-price">
-          {showMemberPrice ? (
-            <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(memberPrice!) }} />
+          {showProPrice ? (
+            <span>{proPrice}</span>
           ) : (
             <span>{price ?? "—"}</span>
           )}
-          {showMemberPriceTeaser && <span className="sub">Pro price available</span>}
+          {showProPriceTeaser && <span className="sub">Pro price available</span>}
         </div>
         {isGated ? (
           <Link href="/connect/membership" className="sp-mobile-bar-cta">

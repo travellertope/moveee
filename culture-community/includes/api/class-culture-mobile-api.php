@@ -4072,6 +4072,27 @@ class Culture_Mobile_API {
         return (string) round( $converted, $fx['rate'] > 1 ? 0 : 2 );
     }
 
+    /**
+     * Effective Moveee Pro discount percentage for a product: a per-product
+     * override (_culture_pro_discount_percent postmeta, set via the "Moveee
+     * Product Details" ACF field — registered by moveee-graphql-bridge.php,
+     * not this plugin, but postmeta is shared data any plugin can read) if
+     * present, else the sitewide default (culture_shop_pro_discount_percent
+     * option, WP Admin → Culture Community → Payment tab → Lifestyle Shop,
+     * default 10). Mirrors moveee_resolve_pro_discount_percent() in
+     * moveee-graphql-bridge.php exactly — kept as a separate implementation
+     * since this plugin doesn't depend on that plugin's functions (same
+     * isolation convention as resolve_shop_currency() above).
+     */
+    public static function resolve_pro_discount_percent( $product_id ) {
+        $override = get_post_meta( $product_id, '_culture_pro_discount_percent', true );
+        if ( '' !== $override && is_numeric( $override ) ) {
+            return max( 0.0, min( 100.0, (float) $override ) );
+        }
+        $default = (float) get_option( 'culture_shop_pro_discount_percent', 10 );
+        return max( 0.0, min( 100.0, $default ) );
+    }
+
     public static function handle_shop_products( $request ) {
         global $wpdb;
 
@@ -4131,7 +4152,7 @@ class Culture_Mobile_API {
             $regular = $wc->get_regular_price();
             $sale    = $wc->get_sale_price();
 
-            $pro_price     = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
+            $pro_price     = ( $is_pro && $price ) ? round( (float) $price * ( 1 - self::resolve_pro_discount_percent( $post->ID ) / 100 ), 2 ) : null;
             $created_days  = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
             $stock_qty     = $wc->get_stock_quantity();
             $pro_early     = get_post_meta( $post->ID, '_pro_early_access', true );
@@ -4197,7 +4218,7 @@ class Culture_Mobile_API {
         $price   = $wc->get_price();
         $regular = $wc->get_regular_price();
         $sale    = $wc->get_sale_price();
-        $pro_price = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
+        $pro_price = ( $is_pro && $price ) ? round( (float) $price * ( 1 - self::resolve_pro_discount_percent( $id ) / 100 ), 2 ) : null;
 
         // Gallery images (main + gallery)
         $image_ids   = array_merge(
@@ -5080,7 +5101,7 @@ class Culture_Mobile_API {
                     'brand'          => get_post_meta( $pid, '_maker_name', true ) ?: '',
                     'city'           => get_post_meta( $pid, '_maker_city', true ) ?: '',
                     'price'          => (float) self::convert_shop_price( $reg_price, $fx ),
-                    'proPrice'       => $reg_price > 0 ? (float) self::convert_shop_price( round( $reg_price * 0.9, 2 ), $fx ) : null,
+                    'proPrice'       => $reg_price > 0 ? (float) self::convert_shop_price( round( $reg_price * ( 1 - self::resolve_pro_discount_percent( $pid ) / 100 ), 2 ), $fx ) : null,
                     'originalPrice'  => $sale_price > 0 ? (float) self::convert_shop_price( $reg_price, $fx ) : null,
                     'currency'       => $currency,
                     'currencySymbol' => $currency_symbol,
@@ -5144,7 +5165,7 @@ class Culture_Mobile_API {
                 'brand'     => get_post_meta( $pid, '_maker_name', true ) ?: '',
                 'price'     => html_entity_decode( strip_tags( wc_price( $price_raw ) ) ),
                 'pro_price' => $price_raw > 0
-                    ? html_entity_decode( strip_tags( wc_price( $price_raw * 0.9 ) ) )
+                    ? html_entity_decode( strip_tags( wc_price( $price_raw * ( 1 - self::resolve_pro_discount_percent( $pid ) / 100 ) ) ) )
                     : '',
                 'image'     => $image_url ?: '',
             );

@@ -103,6 +103,23 @@ function moveee_format_shop_price( $gbp_price, array $fx ) {
     return $fx['symbol'] . number_format( $converted, $decimals );
 }
 
+// Effective Moveee Pro discount percentage for a product: a per-product
+// override (_culture_pro_discount_percent postmeta, set via the "Moveee
+// Product Details" ACF field on the product edit screen) if present, else
+// the sitewide default (WP Admin → Culture Community → Payment tab →
+// Lifestyle Shop → "Moveee Pro discount", culture_shop_pro_discount_percent
+// option, default 10). This is the ONE place "Pro members save X%" is
+// computed — Pro pricing is always base price × (1 − percent/100), never a
+// separately maintained absolute number that can drift out of sync.
+function moveee_resolve_pro_discount_percent( int $product_id ): float {
+    $override = get_post_meta( $product_id, '_culture_pro_discount_percent', true );
+    if ( '' !== $override && is_numeric( $override ) ) {
+        return max( 0.0, min( 100.0, (float) $override ) );
+    }
+    $default = (float) get_option( 'culture_shop_pro_discount_percent', 10 );
+    return max( 0.0, min( 100.0, $default ) );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. Register custom GraphQL types + fields
 //    Priority 99 — runs after WPGraphQL WooCommerce has registered its types.
@@ -205,6 +222,18 @@ add_action( 'graphql_register_types', function () {
         },
     ] );
 
+    // Sitewide default Moveee Pro discount percentage — for page-level copy
+    // ("Moveee Pro saves X%") that isn't tied to any single product. A given
+    // product's *effective* percent (which may differ via a per-product
+    // override) is on that product's own displayPrice.proDiscountPercent.
+    register_graphql_field( 'RootQuery', 'moveeeShopProDiscountPercent', [
+        'type'        => 'Int',
+        'description' => 'Sitewide default Moveee Pro shop discount percentage (see culture_shop_pro_discount_percent option)',
+        'resolve'     => function () {
+            return (int) round( (float) get_option( 'culture_shop_pro_discount_percent', 10 ) );
+        },
+    ] );
+
     // ── MoveeeProductMeta ─────────────────────────────────────────────────────
     register_graphql_object_type( 'MoveeeProductMeta', [
         'description' => 'Moveee editorial / craft metadata for a product',
@@ -214,8 +243,9 @@ add_action( 'graphql_register_types', function () {
             'processSteps'      => [ 'type' => 'String' ],
             'asSeenInPostId'    => [ 'type' => 'String' ],
             'deliveryInfo'      => [ 'type' => 'String' ],
-            // Pro member perks
-            'memberPrice'       => [ 'type' => 'String' ],  // HTML price for patron members
+            // Pro member perks. Pro pricing itself is NOT here — it's computed
+            // percentage-off-base-price on the displayPrice field (proPrice/
+            // proDiscountPercent below), not a manually-entered absolute price.
             'earlyAccessUntil'  => [ 'type' => 'String' ],  // ISO datetime; patron-only until this passes
         ],
     ] );
@@ -224,10 +254,16 @@ add_action( 'graphql_register_types', function () {
     register_graphql_object_type( 'MoveeeDisplayPrice', [
         'description' => "Product price converted to the shopper's local display currency (see displayPrice field's country arg)",
         'fields'      => [
-            'price'        => [ 'type' => 'String' ],
-            'regularPrice' => [ 'type' => 'String' ],
-            'salePrice'    => [ 'type' => 'String' ],
-            'currencyCode' => [ 'type' => 'String' ],
+            'price'              => [ 'type' => 'String' ],
+            'regularPrice'       => [ 'type' => 'String' ],
+            'salePrice'          => [ 'type' => 'String' ],
+            'currencyCode'       => [ 'type' => 'String' ],
+            // Moveee Pro price = price × (1 − proDiscountPercent / 100), computed
+            // fresh from the (already currency-converted) base price — never a
+            // separately maintained absolute number, so it can't drift out of
+            // sync with the regular price. See moveee_resolve_pro_discount_percent().
+            'proPrice'           => [ 'type' => 'String' ],
+            'proDiscountPercent' => [ 'type' => 'Int' ],
         ],
     ] );
 
@@ -300,7 +336,7 @@ add_action( 'graphql_register_types', function () {
 
         register_graphql_field( $type, 'displayPrice', [
             'type'        => 'MoveeeDisplayPrice',
-            'description' => 'Price converted to the shopper\'s local currency — pass country: "nigeria" (case-insensitive) to convert, any other value (or omitted) returns the store\'s base GBP price',
+            'description' => 'Price converted to the shopper\'s local currency — pass country: "nigeria" (case-insensitive) to convert, any other value (or omitted) returns the store\'s base GBP price. Also includes the computed Moveee Pro price.',
             'args'        => [ 'country' => [ 'type' => 'String' ] ],
             'resolve'     => function ( $product, $args ) {
                 $pid = absint( $product->databaseId ?? 0 );
@@ -311,11 +347,17 @@ add_action( 'graphql_register_types', function () {
                 $fx = moveee_resolve_shop_currency( $args['country'] ?? '' );
                 $sale = $wc_product->get_sale_price();
 
+                $base_price = (float) $wc_product->get_price();
+                $percent    = moveee_resolve_pro_discount_percent( $pid );
+                $pro_price  = $base_price > 0 ? $base_price * ( 1 - $percent / 100 ) : 0;
+
                 return [
-                    'price'        => moveee_format_shop_price( $wc_product->get_price(), $fx ),
-                    'regularPrice' => moveee_format_shop_price( $wc_product->get_regular_price(), $fx ),
-                    'salePrice'    => '' !== $sale ? moveee_format_shop_price( $sale, $fx ) : null,
-                    'currencyCode' => $fx['code'],
+                    'price'              => moveee_format_shop_price( $wc_product->get_price(), $fx ),
+                    'regularPrice'       => moveee_format_shop_price( $wc_product->get_regular_price(), $fx ),
+                    'salePrice'          => '' !== $sale ? moveee_format_shop_price( $sale, $fx ) : null,
+                    'proPrice'           => $base_price > 0 ? moveee_format_shop_price( $pro_price, $fx ) : null,
+                    'proDiscountPercent' => (int) round( $percent ),
+                    'currencyCode'       => $fx['code'],
                 ];
             },
         ] );
@@ -452,20 +494,12 @@ function moveee_product_meta( int $product_id ): array {
         $steps_raw = (string) get_post_meta( $product_id, 'process_steps', true );
     }
 
-    // Member price: stored as a raw decimal; return as formatted WC price HTML.
-    $member_price_raw = (string) get_post_meta( $product_id, '_culture_member_price', true );
-    $member_price_html = '';
-    if ( $member_price_raw !== '' && is_numeric( $member_price_raw ) ) {
-        $member_price_html = wc_price( (float) $member_price_raw );
-    }
-
     return [
         'makerStory'       => (string) get_post_meta( $product_id, 'maker_story',              true ),
         'careInstructions' => (string) get_post_meta( $product_id, 'care_instructions',        true ),
         'processSteps'     => $steps_raw,
         'asSeenInPostId'   => (string) get_post_meta( $product_id, 'as_seen_in_post_id',       true ),
         'deliveryInfo'     => (string) get_post_meta( $product_id, 'delivery_info',            true ),
-        'memberPrice'      => $member_price_html,
         'earlyAccessUntil' => (string) get_post_meta( $product_id, '_culture_early_access_until', true ),
     ];
 }
@@ -478,8 +512,8 @@ add_action( 'init', function () {
         'show_in_rest'  => true,
         'auth_callback' => '__return_true',
     ];
-    register_post_meta( 'product', '_culture_member_price',       $args );
-    register_post_meta( 'product', '_culture_early_access_until', $args );
+    register_post_meta( 'product', '_culture_pro_discount_percent', $args );
+    register_post_meta( 'product', '_culture_early_access_until',  $args );
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -543,15 +577,16 @@ add_action( 'acf/init', function () {
                 'step'         => 1,
             ],
             [
-                'key'          => 'field_moveee_member_price',
-                'label'        => 'Pro Member Price',
-                'name'         => '_culture_member_price',
+                'key'          => 'field_moveee_pro_discount_percent',
+                'label'        => 'Moveee Pro Discount (%)',
+                'name'         => '_culture_pro_discount_percent',
                 'type'         => 'number',
-                'instructions' => 'Optional discounted price for Moveee Pro members. Leave blank to use the standard price.',
+                'instructions' => 'Optional per-product override for the Moveee Pro discount. Leave blank to use the sitewide default (WP Admin → Culture Community → Payment tab → Lifestyle Shop).',
                 'required'     => 0,
                 'min'          => 0,
-                'step'         => 0.01,
-                'prepend'      => '£',
+                'max'          => 100,
+                'step'         => 1,
+                'append'       => '%',
             ],
             [
                 'key'          => 'field_moveee_early_access_until',

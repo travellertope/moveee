@@ -11,15 +11,17 @@ import {
   GET_PRODUCTS_EXTRA_UNORDERED,
   GET_PRODUCTS_BY_VENDOR_EXTRA,
   GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED,
+  GET_SHOP_PRO_DISCOUNT_PERCENT,
 } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import { ShopFilterProvider } from "./components/ShopFilterContext";
-import { formatPrice, parsePrice, getCurrencySymbol } from "./components/shopHelpers";
 import { getShopCountryParam } from "./components/shopCountry";
 import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
+
+const DEFAULT_PRO_DISCOUNT_PERCENT = 10;
 
 interface ShopArchiveProps {
   category?: string;
@@ -87,18 +89,21 @@ export default async function ShopArchiveWrapper({
   // so displayPrice comes back already converted to the shopper's currency.
   const shopCountry = await getShopCountryParam();
 
-  const [prodResult, catResult, extraResult] = await Promise.allSettled([
+  const [prodResult, catResult, extraResult, percentResult] = await Promise.allSettled([
     brand
       ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR, GET_PRODUCTS_BY_VENDOR_UNORDERED, { first: 24, vendor: brand })
       : getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 24, category: category || null, tag: tag || null }),
     getWPData(GET_PRODUCT_CATEGORIES, {}),
     // Separate, isolated fetch for moveee-graphql-bridge-dependent fields
-    // (vendor location, ratings, materials, currency-converted displayPrice)
-    // — see GET_PRODUCTS_EXTRA's own comment for why this must never be
-    // merged into the main products query.
+    // (vendor location, ratings, materials, currency-converted displayPrice
+    // incl. the computed Pro price) — see GET_PRODUCTS_EXTRA's own comment
+    // for why this must never be merged into the main products query.
     brand
       ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR_EXTRA, GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED, { first: 24, vendor: brand, country: shopCountry })
       : getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 24, category: category || null, tag: tag || null, country: shopCountry }),
+    // Sitewide default, for page-level "Moveee Pro saves X%" copy that isn't
+    // about one specific product.
+    getWPData(GET_SHOP_PRO_DISCOUNT_PERCENT, {}),
   ]);
 
   if (prodResult.status === "fulfilled") products = prodResult.value?.products?.nodes ?? [];
@@ -112,6 +117,8 @@ export default async function ShopArchiveWrapper({
       // displayPrice is only present when the bridge plugin resolved it —
       // fall back to the raw (GBP) price/regularPrice/salePrice otherwise,
       // same degrade-gracefully pattern as every other extra field here.
+      // proPrice is precomputed server-side (base price × the effective
+      // Pro discount %) — never derived client-side anymore.
       const dp = extra.displayPrice;
       return {
         ...p,
@@ -123,9 +130,16 @@ export default async function ShopArchiveWrapper({
         price: dp?.price ?? p.price,
         regularPrice: dp?.regularPrice ?? p.regularPrice,
         salePrice: dp?.salePrice ?? p.salePrice,
+        proPrice: dp?.proPrice ?? null,
+        proDiscountPercent: dp?.proDiscountPercent ?? null,
       };
     });
   }
+
+  const proDiscountPercent =
+    percentResult.status === "fulfilled" && typeof percentResult.value?.moveeeShopProDiscountPercent === "number"
+      ? percentResult.value.moveeeShopProDiscountPercent
+      : DEFAULT_PRO_DISCOUNT_PERCENT;
 
   if (!categories.length) categories = FALLBACK_CATEGORIES;
 
@@ -144,9 +158,7 @@ export default async function ShopArchiveWrapper({
   const heroLede = heroPick?.shortDescription
     ? heroPick.shortDescription.replace(/<[^>]*>/g, "").trim()
     : "";
-  const heroProPrice = heroPick?.price
-    ? formatPrice(parsePrice(heroPick.price) * 0.9, getCurrencySymbol(heroPick.price))
-    : "";
+  const heroProPrice: string = heroPick?.proPrice ?? "";
 
   return (
     <>
@@ -183,7 +195,7 @@ export default async function ShopArchiveWrapper({
               {heroPick.price && (
                 <div className="sl-pick-price-row">
                   <span className="sl-pick-price">{heroPick.price}</span>
-                  <span className="sl-pick-pro-price">{heroProPrice} with Pro</span>
+                  {heroProPrice && <span className="sl-pick-pro-price">{heroProPrice} with Pro</span>}
                 </div>
               )}
               <Link href={`/shop/${heroPick.slug}`} className="sl-pick-cta">
@@ -222,7 +234,7 @@ export default async function ShopArchiveWrapper({
             </div>
             <div className="sl-featured-grid">
               {companionPicks.map((p) => {
-                const proPrice = p.price ? formatPrice(parsePrice(p.price) * 0.9, getCurrencySymbol(p.price)) : "";
+                const proPrice: string = p.proPrice ?? "";
                 return (
                   <Link key={p.id} href={`/shop/${p.slug}`} className="sl-featured-card">
                     <div className="sl-featured-img">
@@ -257,7 +269,7 @@ export default async function ShopArchiveWrapper({
       {/* ── 4. TRUST LINE — single slim mono line ── */}
       <section className="sl-trust">
         <p className="sl-trust-line">
-          <strong>Vetted Makers</strong> · <strong>4.8 average rating</strong> · <strong>Free Returns</strong> in 30 days · <strong>Moveee Pro</strong> saves 10%
+          <strong>Vetted Makers</strong> · <strong>4.8 average rating</strong> · <strong>Free Returns</strong> in 30 days · <strong>Moveee Pro</strong> saves {proDiscountPercent}%
         </p>
       </section>
 
@@ -295,12 +307,12 @@ export default async function ShopArchiveWrapper({
             <h3>Shop smarter, <em>save more</em></h3>
             <p>
               Upgrade to Moveee Pro for early access to new makers, exclusive
-              editions, and 10% off every purchase in the shop.
+              editions, and {proDiscountPercent}% off every purchase in the shop.
             </p>
             <div className="sl-member-perks">
               {[
                 { icon: "◈", title: "Early Access",    desc: "First look at new makers and limited drops." },
-                { icon: "◇", title: "10% Off",         desc: "Applied automatically to every shop order." },
+                { icon: "◇", title: `${proDiscountPercent}% Off`, desc: "Applied automatically to every shop order." },
                 { icon: "○", title: "Patron Stories",  desc: "Exclusive maker interviews and behind-the-scenes." },
                 { icon: "△", title: "Maker Events",    desc: "Invitations to studio visits and openings." },
               ].map((perk) => (

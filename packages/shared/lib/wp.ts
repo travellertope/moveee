@@ -1637,7 +1637,6 @@ export const GET_PRODUCT_EXTRA = `
         processSteps
         asSeenInPostId
         deliveryInfo
-        memberPrice
         earlyAccessUntil
       }
       averageRating
@@ -1647,6 +1646,8 @@ export const GET_PRODUCT_EXTRA = `
         price
         regularPrice
         salePrice
+        proPrice
+        proDiscountPercent
         currencyCode
       }
     }
@@ -1673,6 +1674,8 @@ const PRODUCT_EXTRA_NODE_FIELDS = `
           price
           regularPrice
           salePrice
+          proPrice
+          proDiscountPercent
           currencyCode
         }
 `;
@@ -1696,6 +1699,16 @@ const buildGetProductsByVendorExtra = (opName: string, order: string) => `
 `;
 export const GET_PRODUCTS_BY_VENDOR_EXTRA = buildGetProductsByVendorExtra("GetProductsByVendorExtra", PRODUCTS_ORDER_NEWEST);
 export const GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED = buildGetProductsByVendorExtra("GetProductsByVendorExtraUnordered", "");
+
+// Sitewide default Moveee Pro discount percentage, for page-level copy
+// ("Moveee Pro saves X%") that isn't about one specific product — a given
+// product's own effective percent (which may differ via a per-product
+// override) is on that product's displayPrice.proDiscountPercent instead.
+export const GET_SHOP_PRO_DISCOUNT_PERCENT = `
+  query GetShopProDiscountPercent {
+    moveeeShopProDiscountPercent
+  }
+`;
 
 export const GET_PRODUCT_CATEGORIES = `
   query GetProductCategories {

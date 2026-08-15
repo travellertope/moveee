@@ -89,9 +89,11 @@ export default async function ProductPage({
       product.productMaterials = extraData.product.productMaterials ?? [];
       const dp = extraData.product.displayPrice;
       if (dp) {
-        product.price        = dp.price        ?? product.price;
-        product.regularPrice = dp.regularPrice  ?? product.regularPrice;
-        product.salePrice    = dp.salePrice     ?? product.salePrice;
+        product.price              = dp.price              ?? product.price;
+        product.regularPrice       = dp.regularPrice        ?? product.regularPrice;
+        product.salePrice          = dp.salePrice           ?? product.salePrice;
+        product.proPrice           = dp.proPrice             ?? null;
+        product.proDiscountPercent = dp.proDiscountPercent   ?? null;
       }
     }
   } catch { /* CMS unreachable */ }
@@ -148,7 +150,9 @@ export default async function ProductPage({
   const deliveryInfo: string     = pm.deliveryInfo     || "";
 
   // ── Pro member perks ──────────────────────────────────────────────────────
-  const memberPriceHtml: string  = pm.memberPrice      || "";
+  // proPrice is computed server-side (base price × the effective Pro
+  // discount %) — see displayPrice.proPrice, merged onto `product` above.
+  const proPrice: string         = product.proPrice    || "";
   const earlyAccessUntil: string = pm.earlyAccessUntil || "";
   const isEarlyAccessActive = earlyAccessUntil
     ? new Date(earlyAccessUntil) > new Date()
@@ -310,7 +314,7 @@ export default async function ProductPage({
             price={product.price}
             regularPrice={product.regularPrice}
             variations={variations}
-            memberPrice={memberPriceHtml}
+            proPrice={proPrice}
             isEarlyAccessActive={isEarlyAccessActive}
             earlyAccessUntil={earlyAccessUntil}
           />
