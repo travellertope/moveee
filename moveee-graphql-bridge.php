@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.9
+ * Version: 1.5.0
  * Author: Antigravity
  */
 
@@ -147,7 +147,13 @@ add_action( 'graphql_register_types', function () {
     register_graphql_field( 'RootQuery', 'moveeeVendorBySlug', [
         'type'        => 'MoveeeVendorProfile',
         'description' => 'Single WCFM vendor profile by WordPress user nicename (URL slug)',
-        'args'        => [ 'slug' => [ 'type' => 'String!' ] ],
+        // Non-null MUST be declared as [ 'non_null' => 'String' ]. WPGraphQL's
+        // type registry does not parse SDL syntax, so 'String!' is looked up as
+        // a literal type name, found to not exist, and the ENTIRE schema fails
+        // to build — every GraphQL request returns HTTP 500, not just this one
+        // field. Same convention as the [ 'list_of' => … ] declarations
+        // elsewhere in this file.
+        'args'        => [ 'slug' => [ 'type' => [ 'non_null' => 'String' ] ] ],
         'resolve'     => function ( $root, $args ) {
             $user = get_user_by( 'slug', sanitize_title( $args['slug'] ?? '' ) );
             if ( ! $user ) return null;
