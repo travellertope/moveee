@@ -38,6 +38,7 @@ class Culture_Settings {
         // Shop.
         'culture_shop_fx_ngn_per_gbp'          => 1900,
         'culture_shop_flat_shipping_gbp'       => 4.99,
+        'culture_shop_pro_discount_percent'    => 10,
 
         // Gamification – point values. Every action awards both points and
         // credits — keep these in sync with Culture_Gamification::POINTS.
@@ -225,9 +226,10 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
 
-        // Shop (multi-currency + flat-rate fallback shipping).
+        // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
         register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_shop_pro_discount_percent', array( 'sanitize_callback' => 'floatval' ) );
 
         // Credits – per action bonuses. Every action awards both credits and
         // reputation, so this list mirrors the Reputation tab's action list.
@@ -532,6 +534,14 @@ class Culture_Settings {
                     <input type="number" step="0.01" id="culture_shop_flat_shipping_gbp" name="culture_shop_flat_shipping_gbp"
                            value="<?php echo esc_attr( self::get( 'culture_shop_flat_shipping_gbp' ) ); ?>" class="small-text" />
                     <p class="description"><?php esc_html_e( 'Used only for a package if no WooCommerce shipping zone matches the destination address.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_shop_pro_discount_percent"><?php esc_html_e( 'Moveee Pro discount (%)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="1" min="0" max="100" id="culture_shop_pro_discount_percent" name="culture_shop_pro_discount_percent"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_pro_discount_percent' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Sitewide default percentage Moveee Pro members save off the shop price. Computed fresh from the current price, not a separately maintained number — a product can override this individually via its "Moveee Pro Discount (%)" field on the product edit screen.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

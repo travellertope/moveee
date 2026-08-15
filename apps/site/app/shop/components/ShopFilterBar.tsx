@@ -1,6 +1,6 @@
 "use client";
 
-import { PRICE_BANDS, useShopFilter } from "./ShopFilterContext";
+import { useShopFilter } from "./ShopFilterContext";
 
 interface Category {
   name: string;
@@ -32,6 +32,7 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
     setView,
     availableMaterials,
     availableLocations,
+    priceBands,
     activeChips,
     clearAll,
   } = useShopFilter();
@@ -80,14 +81,14 @@ export default function ShopFilterBar({ categories, activeCategorySlug }: Props)
 
           {/* Price */}
           <div className={`sl-fpill${priceBand ? " sl-fpill--active" : ""}`}>
-            <span>{priceBand ? PRICE_BANDS.find((b) => b.id === priceBand)?.label : "Price"}</span>
+            <span>{priceBand ? priceBands.find((b) => b.id === priceBand)?.label : "Price"}</span>
             <select
               aria-label="Filter by price"
               value={priceBand ?? ""}
               onChange={(e) => setPriceBand(e.target.value || null)}
             >
               <option value="">Any Price</option>
-              {PRICE_BANDS.map((b) => (
+              {priceBands.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.label}
                 </option>

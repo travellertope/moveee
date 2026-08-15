@@ -5,10 +5,8 @@ import Image from "next/image";
 import AddToCartButton from "@/components/AddToCartButton";
 import {
   averageRating,
-  formatGBP,
   isNew,
   isOutOfStock,
-  parsePrice,
   reviewCount,
   vendorName,
 } from "./ShopFilterContext";
@@ -44,7 +42,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
             {filtered.map((p: any) => {
               const vname = vendorName(p);
               const outOfStock = isOutOfStock(p);
-              const proPrice = formatGBP(parsePrice(p.price) * 0.9);
+              const proPrice: string = p.proPrice ?? "";
               const hasReviews = reviewCount(p) > 0;
               return (
                 <Link
@@ -79,7 +77,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
                     {p.price && (
                       <p className="sl-pcard-price">
                         {p.price}
-                        {!outOfStock && (
+                        {!outOfStock && proPrice && (
                           <span className="sl-pcard-pro-price"> · {proPrice} Pro</span>
                         )}
                       </p>

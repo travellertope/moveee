@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { resolveTermIds } from "./wcTerms";
 
 const CMS     = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WC_KEY    = process.env.WC_CONSUMER_KEY    ?? "";
@@ -86,6 +87,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  // categories/tags arrive as free-text comma-separated names from the form
+  // (no picker UI) — resolve to WooCommerce term IDs, creating any that don't
+  // exist yet.
+  const [categoryIds, tagIds] = await Promise.all([
+    typeof body.categories === "string" ? resolveTermIds("categories", body.categories) : [],
+    typeof body.tags === "string" ? resolveTermIds("tags", body.tags) : [],
+  ]);
+
+  // processSteps arrives as an array of {title, desc, duration} rows from the
+  // form — stored as the same JSON string shape the frontend already parses
+  // (see ProcessStep in apps/site/app/shop/[slug]/page.tsx).
+  const processStepsJson = Array.isArray(body.processSteps) && body.processSteps.length
+    ? JSON.stringify(body.processSteps)
+    : "";
+
+  // attributes arrives as an array of {name, values: "a, b, c"} rows —
+  // WooCommerce wants { name, options: string[], visible, variation }.
+  const wcAttributes = Array.isArray(body.attributes)
+    ? body.attributes
+        .filter((a: any) => a?.name?.trim() && a?.values?.trim())
+        .map((a: any) => ({
+          name: a.name.trim(),
+          options: a.values.split(",").map((v: string) => v.trim()).filter(Boolean),
+          visible: true,
+          variation: false,
+        }))
+    : [];
+
   // Build WC product payload — only allow safe fields
   const payload: Record<string, any> = {
     name:          body.name        ?? "",
@@ -95,16 +124,18 @@ export async function POST(req: NextRequest) {
     regular_price: String(body.regularPrice ?? ""),
     sale_price:    body.salePrice ? String(body.salePrice) : "",
     manage_stock:  body.manageStock ?? false,
-    stock_quantity: body.stockQty != null ? Number(body.stockQty) : null,
+    stock_quantity: body.stockQty ? Number(body.stockQty) : null,
     stock_status:  body.stockStatus ?? "instock",
-    categories:    (body.categories ?? []).map((id: number) => ({ id })),
+    categories:    categoryIds.map((id) => ({ id })),
+    tags:          tagIds.map((id) => ({ id })),
+    attributes:    wcAttributes,
     images:        (body.images ?? []).map((src: string) => ({ src })),
     meta_data: [
       { key: "_wcfm_product_author", value: String(user.id) },
       ...(body.makerStory       ? [{ key: "maker_story",        value: body.makerStory       }] : []),
       ...(body.careInstructions ? [{ key: "care_instructions",  value: body.careInstructions }] : []),
       ...(body.deliveryInfo     ? [{ key: "delivery_info",      value: body.deliveryInfo     }] : []),
-      ...(body.processSteps     ? [{ key: "process_steps",      value: body.processSteps     }] : []),
+      ...(processStepsJson      ? [{ key: "process_steps",      value: processStepsJson      }] : []),
     ],
   };
 

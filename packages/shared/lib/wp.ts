@@ -1464,11 +1464,13 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
+      attributes { nodes { name options variation } }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
+      attributes { nodes { name options variation } }
       variations(first: 12) {
         nodes {
           price
@@ -1613,8 +1615,12 @@ export const GET_PRODUCT_BY_SLUG = `
 
 // Fetched separately so the product page still renders if the
 // moveee-graphql-bridge plugin is not yet active.
+// $country: pass the shopper's country ("nigeria", case-insensitive — matches
+// the mobile app's own request-param convention, see moveee-graphql-bridge.php's
+// moveee_resolve_shop_currency()) to get displayPrice converted to their local
+// currency; omit/pass anything else to get the store's base GBP price back.
 export const GET_PRODUCT_EXTRA = `
-  query GetProductExtra($slug: ID!) {
+  query GetProductExtra($slug: ID!, $country: String) {
     product(id: $slug, idType: SLUG) {
       vendorProfile {
         slug
@@ -1633,12 +1639,19 @@ export const GET_PRODUCT_EXTRA = `
         processSteps
         asSeenInPostId
         deliveryInfo
-        memberPrice
         earlyAccessUntil
       }
       averageRating
       reviewCount
       productMaterials
+      displayPrice(country: $country) {
+        price
+        regularPrice
+        salePrice
+        proPrice
+        proDiscountPercent
+        currencyCode
+      }
     }
   }
 `;
@@ -1649,6 +1662,8 @@ export const GET_PRODUCT_EXTRA = `
 // PRODUCT_FIELDS_FRAGMENT/GET_PRODUCTS, or a bridge-plugin outage would take
 // down the whole grid query). Re-issues the same first/category/tag args as
 // GET_PRODUCTS so the result set lines up, then the caller merges by id.
+// displayPrice(country: $country) — see GET_PRODUCT_EXTRA's comment above for
+// the $country value convention ("nigeria", not an ISO code).
 const PRODUCT_EXTRA_NODE_FIELDS = `
         databaseId
         slug
@@ -1657,10 +1672,18 @@ const PRODUCT_EXTRA_NODE_FIELDS = `
         reviewCount
         productMaterials
         featured
+        displayPrice(country: $country) {
+          price
+          regularPrice
+          salePrice
+          proPrice
+          proDiscountPercent
+          currencyCode
+        }
 `;
 
 const buildGetProductsExtra = (opName: string, order: string) => `
-  query ${opName}($first: Int, $category: String, $tag: String) {
+  query ${opName}($first: Int, $category: String, $tag: String, $country: String) {
     products(first: $first, where: { category: $category, tag: $tag${order} }) {
       nodes {${PRODUCT_EXTRA_NODE_FIELDS}}
     }
@@ -1670,7 +1693,7 @@ export const GET_PRODUCTS_EXTRA = buildGetProductsExtra("GetProductsExtra", PROD
 export const GET_PRODUCTS_EXTRA_UNORDERED = buildGetProductsExtra("GetProductsExtraUnordered", "");
 
 const buildGetProductsByVendorExtra = (opName: string, order: string) => `
-  query ${opName}($first: Int, $vendor: String) {
+  query ${opName}($first: Int, $vendor: String, $country: String) {
     products(first: $first, where: { authorName: $vendor${order} }) {
       nodes {${PRODUCT_EXTRA_NODE_FIELDS}}
     }
@@ -1678,6 +1701,16 @@ const buildGetProductsByVendorExtra = (opName: string, order: string) => `
 `;
 export const GET_PRODUCTS_BY_VENDOR_EXTRA = buildGetProductsByVendorExtra("GetProductsByVendorExtra", PRODUCTS_ORDER_NEWEST);
 export const GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED = buildGetProductsByVendorExtra("GetProductsByVendorExtraUnordered", "");
+
+// Sitewide default Moveee Pro discount percentage, for page-level copy
+// ("Moveee Pro saves X%") that isn't about one specific product — a given
+// product's own effective percent (which may differ via a per-product
+// override) is on that product's displayPrice.proDiscountPercent instead.
+export const GET_SHOP_PRO_DISCOUNT_PERCENT = `
+  query GetShopProDiscountPercent {
+    moveeeShopProDiscountPercent
+  }
+`;
 
 export const GET_PRODUCT_CATEGORIES = `
   query GetProductCategories {

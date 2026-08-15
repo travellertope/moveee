@@ -701,6 +701,15 @@ export default function ProductDetailScreen() {
   const images = detail?.images ?? (seed?.imageUrl ? [seed.imageUrl] : []);
   const displayPrice = isPro && detail?.proPrice ? detail.proPrice : product?.price;
   const inStock = product?.stockStatus !== "outofstock";
+  // The Pro discount is an admin-configurable percentage (see shopHelpers.ts's
+  // getPriceBands equivalent on web) — never assume 10%, derive it from the
+  // actual base vs. Pro price the API already returned.
+  const proPercentOff = (() => {
+    const base = parseFloat(product?.price ?? "");
+    const pro = parseFloat(detail?.proPrice ?? "");
+    if (!base || !pro || pro >= base) return null;
+    return Math.round((1 - pro / base) * 100);
+  })();
 
   const colourName = detail?.colours?.[selectedColour]?.name;
   const sizeFallback = detail?.sizes?.length
@@ -839,7 +848,7 @@ export default function ProductDetailScreen() {
                           ★ Moveee Pro price: {product?.currencySymbol}{detail.proPrice}
                         </Text>
                         <Text style={s.proUpsellSub}>
-                          Moveee Pro members save 10% ·{" "}
+                          {proPercentOff ? `Moveee Pro members save ${proPercentOff}% · ` : "Moveee Pro members save · "}
                           <Text style={{ color: c.ochre }}>Upgrade →</Text>
                         </Text>
                       </View>

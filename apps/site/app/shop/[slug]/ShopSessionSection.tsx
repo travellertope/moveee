@@ -8,13 +8,13 @@ interface Props {
   price: string;
   regularPrice?: string;
   variations: any[];
-  memberPrice: string;
+  proPrice: string;
   isEarlyAccessActive: boolean;
   earlyAccessUntil: string;
 }
 
 export default function ShopSessionSection({
-  productId, price, regularPrice, variations, memberPrice,
+  productId, price, regularPrice, variations, proPrice,
   isEarlyAccessActive, earlyAccessUntil,
 }: Props) {
   const { data: session } = useSession();
@@ -50,7 +50,7 @@ export default function ShopSessionSection({
         price={price}
         regularPrice={regularPrice}
         variations={variations}
-        memberPrice={memberPrice}
+        proPrice={proPrice}
         isPro={isPro}
         isLoggedIn={isLoggedIn}
         isGated={isGated}
