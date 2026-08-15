@@ -16,6 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShopFilterProvider } from "./components/ShopFilterContext";
 import { formatPrice, parsePrice, getCurrencySymbol } from "./components/shopHelpers";
+import { getShopCountryParam } from "./components/shopCountry";
 import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
@@ -81,17 +82,23 @@ export default async function ShopArchiveWrapper({
   let products: any[] = [];
   let categories: any[] = [];
 
+  // "nigeria" (or null for everyone else) — see shopCountry.ts for why this
+  // exact string, not an ISO code. Threaded into the extra-data fetch below
+  // so displayPrice comes back already converted to the shopper's currency.
+  const shopCountry = await getShopCountryParam();
+
   const [prodResult, catResult, extraResult] = await Promise.allSettled([
     brand
       ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR, GET_PRODUCTS_BY_VENDOR_UNORDERED, { first: 24, vendor: brand })
       : getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 24, category: category || null, tag: tag || null }),
     getWPData(GET_PRODUCT_CATEGORIES, {}),
     // Separate, isolated fetch for moveee-graphql-bridge-dependent fields
-    // (vendor location, ratings, materials) — see GET_PRODUCTS_EXTRA's own
-    // comment for why this must never be merged into the main products query.
+    // (vendor location, ratings, materials, currency-converted displayPrice)
+    // — see GET_PRODUCTS_EXTRA's own comment for why this must never be
+    // merged into the main products query.
     brand
-      ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR_EXTRA, GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED, { first: 24, vendor: brand })
-      : getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 24, category: category || null, tag: tag || null }),
+      ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR_EXTRA, GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED, { first: 24, vendor: brand, country: shopCountry })
+      : getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 24, category: category || null, tag: tag || null, country: shopCountry }),
   ]);
 
   if (prodResult.status === "fulfilled") products = prodResult.value?.products?.nodes ?? [];
@@ -101,16 +108,22 @@ export default async function ShopArchiveWrapper({
     const extraById = new Map<number, any>(extraNodes.map((n: any) => [n.databaseId, n]));
     products = products.map((p: any) => {
       const extra = extraById.get(p.databaseId);
-      return extra
-        ? {
-            ...p,
-            vendorProfile: extra.vendorProfile,
-            averageRating: extra.averageRating,
-            reviewCount: extra.reviewCount,
-            productMaterials: extra.productMaterials,
-            featured: extra.featured,
-          }
-        : p;
+      if (!extra) return p;
+      // displayPrice is only present when the bridge plugin resolved it —
+      // fall back to the raw (GBP) price/regularPrice/salePrice otherwise,
+      // same degrade-gracefully pattern as every other extra field here.
+      const dp = extra.displayPrice;
+      return {
+        ...p,
+        vendorProfile: extra.vendorProfile,
+        averageRating: extra.averageRating,
+        reviewCount: extra.reviewCount,
+        productMaterials: extra.productMaterials,
+        featured: extra.featured,
+        price: dp?.price ?? p.price,
+        regularPrice: dp?.regularPrice ?? p.regularPrice,
+        salePrice: dp?.salePrice ?? p.salePrice,
+      };
     });
   }
 

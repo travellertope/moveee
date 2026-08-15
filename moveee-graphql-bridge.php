@@ -60,6 +60,50 @@ add_action( 'init', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 1c. Shop currency conversion — mirrors Culture_Mobile_API::resolve_shop_currency()/
+//     convert_shop_price() in culture-community's class-culture-mobile-api.php
+//     (the mobile app's shop REST endpoints), reimplemented locally here since
+//     this plugin doesn't depend on culture-community's classes — same reasoning
+//     as moveee_verify_api_secret() further down this file. Both read the same
+//     culture_shop_fx_ngn_per_gbp WP option, so mobile and web always convert at
+//     one admin-configured rate even though the two implementations are separate.
+//
+//     Unlike the mobile version (which returns a bare numeric string and lets
+//     the client assemble symbol/thousands-separators), this returns a fully
+//     formatted display string — apps/site already renders `price` fields raw,
+//     with the currency symbol baked in (see PRODUCT_FIELDS_FRAGMENT's `price`),
+//     so matching that shape means no extra client-side formatting is needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// $country is expected as the literal string "nigeria" (case-insensitive) —
+// NOT an ISO code. Callers on the Next.js side must map Vercel's ISO geo code
+// ("NG") to that string before sending it as the GraphQL variable, since this
+// mirrors the mobile app's own request-param convention exactly.
+function moveee_resolve_shop_currency( $country ) {
+    $country = strtolower( trim( (string) $country ) );
+    $base_currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+    $base_symbol   = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $base_currency ) ) : '£';
+
+    if ( 'nigeria' === $country && 'NGN' !== $base_currency ) {
+        $rate = (float) get_option( 'culture_shop_fx_ngn_per_gbp', 1900 );
+        return [ 'code' => 'NGN', 'symbol' => '₦', 'rate' => $rate > 0 ? $rate : 1900.0 ];
+    }
+
+    return [ 'code' => $base_currency, 'symbol' => $base_symbol, 'rate' => 1.0 ];
+}
+
+function moveee_format_shop_price( $gbp_price, array $fx ) {
+    if ( '' === $gbp_price || null === $gbp_price || false === $gbp_price ) {
+        return null;
+    }
+    $converted = (float) $gbp_price * $fx['rate'];
+    // 0 decimals once converted to NGN (rate > 1) — matches the mobile app's
+    // own rounding convention; 2 decimals for a GBP passthrough (rate === 1.0).
+    $decimals = $fx['rate'] > 1 ? 0 : 2;
+    return $fx['symbol'] . number_format( $converted, $decimals );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 2. Register custom GraphQL types + fields
 //    Priority 99 — runs after WPGraphQL WooCommerce has registered its types.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,6 +220,17 @@ add_action( 'graphql_register_types', function () {
         ],
     ] );
 
+    // ── MoveeeDisplayPrice ────────────────────────────────────────────────────
+    register_graphql_object_type( 'MoveeeDisplayPrice', [
+        'description' => "Product price converted to the shopper's local display currency (see displayPrice field's country arg)",
+        'fields'      => [
+            'price'        => [ 'type' => 'String' ],
+            'regularPrice' => [ 'type' => 'String' ],
+            'salePrice'    => [ 'type' => 'String' ],
+            'currencyCode' => [ 'type' => 'String' ],
+        ],
+    ] );
+
     // ── Attach to every concrete WooCommerce product type ────────────────────
     $product_types = [ 'SimpleProduct', 'VariableProduct', 'ExternalProduct', 'GroupProduct' ];
 
@@ -240,6 +295,28 @@ add_action( 'graphql_register_types', function () {
                 if ( ! $pid ) return false;
                 $wc_product = wc_get_product( $pid );
                 return $wc_product ? (bool) $wc_product->is_featured() : false;
+            },
+        ] );
+
+        register_graphql_field( $type, 'displayPrice', [
+            'type'        => 'MoveeeDisplayPrice',
+            'description' => 'Price converted to the shopper\'s local currency — pass country: "nigeria" (case-insensitive) to convert, any other value (or omitted) returns the store\'s base GBP price',
+            'args'        => [ 'country' => [ 'type' => 'String' ] ],
+            'resolve'     => function ( $product, $args ) {
+                $pid = absint( $product->databaseId ?? 0 );
+                if ( ! $pid ) return null;
+                $wc_product = wc_get_product( $pid );
+                if ( ! $wc_product ) return null;
+
+                $fx = moveee_resolve_shop_currency( $args['country'] ?? '' );
+                $sale = $wc_product->get_sale_price();
+
+                return [
+                    'price'        => moveee_format_shop_price( $wc_product->get_price(), $fx ),
+                    'regularPrice' => moveee_format_shop_price( $wc_product->get_regular_price(), $fx ),
+                    'salePrice'    => '' !== $sale ? moveee_format_shop_price( $sale, $fx ) : null,
+                    'currencyCode' => $fx['code'],
+                ];
             },
         ] );
     }

@@ -9,6 +9,7 @@ import ProductReviews from "./ProductReviews";
 import "../shop.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { getCurrencyCode } from "../components/shopHelpers";
+import { getShopCountryParam } from "../components/shopCountry";
 
 export const revalidate = 300;
 
@@ -65,13 +66,19 @@ export default async function ProductPage({
   let product: any = null;
   let relatedProducts: any[] = [];
 
+  // "nigeria" (or null for everyone else) — see shopCountry.ts. Threaded into
+  // every GET_PRODUCT(S)_EXTRA fetch below so displayPrice comes back already
+  // converted to the shopper's currency.
+  const shopCountry = await getShopCountryParam();
+
   try {
     // Fetch core product and extra vendor/meta in parallel.
     // GET_PRODUCT_EXTRA silently returns null if moveee-graphql-bridge
-    // is not yet active — the page still renders without vendor sections.
+    // is not yet active — the page still renders without vendor sections,
+    // falling back to the raw GBP price already on `product`.
     const [coreData, extraData] = await Promise.all([
       getWPData(GET_PRODUCT_BY_SLUG, { slug }),
-      getWPData(GET_PRODUCT_EXTRA, { slug }),
+      getWPData(GET_PRODUCT_EXTRA, { slug, country: shopCountry }),
     ]);
     product = coreData?.product ?? null;
     if (product && extraData?.product) {
@@ -80,6 +87,12 @@ export default async function ProductPage({
       product.averageRating    = extraData.product.averageRating ?? "0.0";
       product.reviewCount      = extraData.product.reviewCount   ?? 0;
       product.productMaterials = extraData.product.productMaterials ?? [];
+      const dp = extraData.product.displayPrice;
+      if (dp) {
+        product.price        = dp.price        ?? product.price;
+        product.regularPrice = dp.regularPrice  ?? product.regularPrice;
+        product.salePrice    = dp.salePrice     ?? product.salePrice;
+      }
     }
   } catch { /* CMS unreachable */ }
 
@@ -94,7 +107,7 @@ export default async function ProductPage({
     if (firstCategory) {
       const [rel, relExtra] = await Promise.all([
         getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 8, category: firstCategory }),
-        getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 8, category: firstCategory }).catch(() => null),
+        getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 8, category: firstCategory, country: shopCountry }).catch(() => null),
       ]);
       let pool = (rel?.products?.nodes ?? []).filter((p: any) => p.slug !== slug);
       const extraNodes = relExtra?.products?.nodes ?? [];
@@ -102,7 +115,9 @@ export default async function ProductPage({
         const extraById = new Map<number, any>(extraNodes.map((n: any) => [n.databaseId, n]));
         pool = pool.map((p: any) => {
           const extra = extraById.get(p.databaseId);
-          return extra ? { ...p, featured: extra.featured } : p;
+          if (!extra) return p;
+          const dp = extra.displayPrice;
+          return { ...p, featured: extra.featured, price: dp?.price ?? p.price };
         });
       }
       const featuredPool = pool.filter((p: any) => p.featured);
