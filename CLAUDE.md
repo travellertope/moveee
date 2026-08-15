@@ -872,12 +872,34 @@ to every viewport. `srcset` gets its own scheme check rather than reusing the `s
 — a candidate list is comma-separated, so a `javascript:` can sit anywhere in the value, not
 just at the start.
 
+3. **The mobile app** (fixed August 2026, same pass) — `useMagazine.ts` reads
+   `content.rendered` from WP REST, which also applies `the_content`, so mobile received the
+   identical placeholders and had **no** lazy-load handling anywhere in `apps/mobile/src`.
+   It fails differently from web, though: mobile never calls `sanitizeHtml`, so `src` keeps
+   the `data:image/svg+xml;base64,…` placeholder — and React Native's `<Image>` can't render
+   an SVG data URI at all, so the image is simply missing rather than a sized blank box.
+   Three surfaces were affected: `ArticleScreen.tsx`, `PulseDetailSheet.tsx`,
+   `PulseDetailScreen.tsx`.
+
+   Fixed with `apps/mobile/src/utils/unlazyImages.ts` — a **verbatim port** of the web
+   function (`apps/mobile` can't import `packages/shared`, RN vs DOM, same as
+   feed-recommendations/interest-mappings; **keep the two in sync**). The logic is pure regex
+   with no DOM dependency, so it ports cleanly. **One deliberate divergence**: the mobile copy
+   refuses to promote a `javascript:`/`vbscript:`/`data:` URL out of a data attribute, because
+   web has `sanitizeHtml`'s scheme check downstream to catch it and mobile has no sanitizer in
+   the pipeline at all. Every other case is byte-identical between the two (verified by
+   diffing their outputs).
+
+   Applied via a new `apps/mobile/src/components/ui/HtmlContent.tsx` — a thin wrapper over
+   `RenderHtml` that un-lazies `html` and passes every other prop through. **Import that,
+   never `react-native-render-html` directly** (it's the mobile equivalent of the web fix
+   living inside `sanitizeHtml()`: one funnel, so a new HTML surface can't reintroduce the
+   bug). `RenderHtml` now has exactly one importer in the whole app.
+
 **If images ever "disappear" on a new surface again, check this first** before debugging the
 CMS, the CDN, or the fetch layer: log the raw `post.content` and look for `data-opt-src`. And
 if you add a new consumer of WP content that isn't a browser page (a feed exporter, an AMP
-view, a PDF renderer, the mobile app's HTML renderer), assume it has this bug until proven
-otherwise. Note `apps/mobile` renders article HTML via `react-native-render-html` and was
-**not** audited for this in the August 2026 pass — it's a live suspect.
+view, a PDF renderer), assume it has this bug until proven otherwise.
 
 ---
 

@@ -9,7 +9,7 @@ import {
   Share,
   useWindowDimensions,
 } from "react-native";
-import RenderHtml from "react-native-render-html";
+import HtmlContent from "../ui/HtmlContent";
 import { Ionicons } from "@expo/vector-icons";
 import { openInApp } from "../../utils/openInApp";
 import BottomSheet from "../ui/BottomSheet";
@@ -118,9 +118,9 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
 
         {/* Body HTML or plain excerpt */}
         {item.body ? (
-          <RenderHtml
+          <HtmlContent
             contentWidth={width - 48}
-            source={{ html: item.body }}
+            html={item.body}
             tagsStyles={HTML_TAG_STYLES}
           />
         ) : item.excerpt ? (

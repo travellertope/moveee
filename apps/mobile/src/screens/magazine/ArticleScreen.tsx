@@ -19,7 +19,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
-import RenderHtml from "react-native-render-html";
+import HtmlContent from "../../components/ui/HtmlContent";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
 import { WP_URL, api, MOBILE_API, CULTURE_API } from "../../api/client";
@@ -224,10 +224,10 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
         seg.type === "table" ? (
           <HtmlTable key={i} html={seg.content} c={c} />
         ) : (
-          <RenderHtml
+          <HtmlContent
             key={i}
             contentWidth={contentWidth}
-            source={{ html: normalizeInlineBold(seg.content) }}
+            html={normalizeInlineBold(seg.content)}
             tagsStyles={HTML_TAG_STYLES}
             renderersProps={{ a: { onPress: handleLinkPress } }}
             ignoredDomTags={["table", "thead", "tbody", "tr", "td", "th"]}
