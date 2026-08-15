@@ -118,13 +118,13 @@ export default async function ShopArchiveWrapper({
   const isFiltered = !!(category || tag || brand);
   const activeLabel = category || tag || brand || "Lifestyle";
 
-  // Editorial Picks = 1 hero + 3 companions in "More From The Edit". Prefers
+  // Editor's Pick = 1 hero + 2 companions in "Featured Products". Prefers
   // WooCommerce-Featured products (Products → Catalog visibility → Featured);
-  // falls back to the first 4 in default catalog order when nothing is
+  // falls back to the first 3 in default catalog order when nothing is
   // marked Featured, so the section never goes empty just because no one
   // has curated it yet.
   const featuredProducts = products.filter((p: any) => p.featured);
-  const editorialPicks = (featuredProducts.length > 0 ? featuredProducts : products).slice(0, 4);
+  const editorialPicks = (featuredProducts.length > 0 ? featuredProducts : products).slice(0, 3);
   const heroPick = editorialPicks[0];
   const companionPicks = editorialPicks.slice(1);
   const heroLede = heroPick?.shortDescription
@@ -156,62 +156,62 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 2. HERO PICK + "MORE FROM THE EDIT" ── */}
+      {/* ── 2. EDITOR'S PICK — single split strip, hairline rules ── */}
       {heroPick && (
-        <section className="sl-picks">
-          <div className="sl-picks-inner">
-            <div className="sl-picks-header">
-              <h2>Editorial <em>Picks</em></h2>
-              <Link href="/shop/edit" className="sl-picks-all">
-                The Edit →
+        <section className="sl-pick">
+          <div className="sl-pick-inner">
+            <div className="sl-pick-body">
+              <span className="sl-pick-eyebrow">Editor&rsquo;s Pick</span>
+              <Link href={`/shop/${heroPick.slug}`}>
+                <h2 className="sl-pick-title">{heroPick.name}</h2>
               </Link>
-            </div>
-
-            <div className="sl-hero-grid">
-              <Link href={`/shop/${heroPick.slug}`} className="sl-hero-img-link">
-                <div className="sl-hero-img">
-                  {heroPick.image?.sourceUrl ? (
-                    <Image
-                      src={heroPick.image.sourceUrl}
-                      alt={heroPick.image.altText || heroPick.name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                  )}
-                  <div className="sl-pip">
-                    <span className="sl-pip-star">★</span> Vetted Maker
-                  </div>
-                  {isNew(heroPick) && <div className="sl-pip-new">New</div>}
+              {heroLede && <p className="sl-pick-desc">{heroLede}</p>}
+              {heroPick.price && (
+                <div className="sl-pick-price-row">
+                  <span className="sl-pick-price">{heroPick.price}</span>
+                  <span className="sl-pick-pro-price">{heroProPrice} with Pro</span>
                 </div>
+              )}
+              <Link href={`/shop/${heroPick.slug}`} className="sl-pick-cta">
+                Shop this piece →
               </Link>
-              <div className="sl-hero-body">
-                <span className="sl-hero-kicker">Editor&rsquo;s Pick</span>
-                {vendorName(heroPick) && (
-                  <span className="sl-hero-vendor">{vendorName(heroPick)}</span>
-                )}
-                <Link href={`/shop/${heroPick.slug}`}>
-                  <h3 className="sl-hero-name">{heroPick.name}</h3>
-                </Link>
-                {heroLede && <p className="sl-hero-desc">{heroLede}</p>}
-                {heroPick.price && (
-                  <div className="sl-hero-price-row">
-                    <span className="sl-hero-price">{heroPick.price}</span>
-                    <span className="sl-hero-pro-price">{heroProPrice} with Pro</span>
-                  </div>
-                )}
-                <Link href={`/shop/${heroPick.slug}`} className="sl-hero-cta">
-                  Shop this piece →
-                </Link>
-              </div>
             </div>
+            <Link href={`/shop/${heroPick.slug}`} className="sl-pick-media-link">
+              <div className="sl-pick-media">
+                {heroPick.image?.sourceUrl ? (
+                  <Image
+                    src={heroPick.image.sourceUrl}
+                    alt={heroPick.image.altText || heroPick.name}
+                    fill
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", background: "var(--paper-deep)" }} />
+                )}
+                {vendorName(heroPick) && (
+                  <span className="sl-pick-media-tag">{vendorName(heroPick)}</span>
+                )}
+                {isNew(heroPick) && <span className="sl-pick-media-new">New</span>}
+              </div>
+            </Link>
+          </div>
+        </section>
+      )}
 
-            {companionPicks.length > 0 && (
-              <div className="sl-week-row">
-                {companionPicks.map((p) => (
-                  <Link key={p.id} href={`/shop/${p.slug}`} className="sl-week-card">
-                    <div className="sl-week-thumb">
+      {/* ── 3. FEATURED PRODUCTS — flush 2-up grid, no card chrome ── */}
+      {companionPicks.length > 0 && (
+        <section className="sl-featured">
+          <div className="sl-featured-inner">
+            <div className="sl-sec-head">
+              <p className="sl-sec-title">Featured Products</p>
+              <span className="sl-sec-count">{companionPicks.length} pieces</span>
+            </div>
+            <div className="sl-featured-grid">
+              {companionPicks.map((p) => {
+                const proPrice = p.price ? formatGBP(parsePrice(p.price) * 0.9) : "";
+                return (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="sl-featured-card">
+                    <div className="sl-featured-img">
                       {p.image?.sourceUrl ? (
                         <Image
                           src={p.image.sourceUrl}
@@ -220,46 +220,38 @@ export default async function ShopArchiveWrapper({
                           style={{ objectFit: "cover" }}
                         />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                        <div style={{ width: "100%", height: "100%", background: "var(--paper-deep)" }} />
                       )}
-                      {isNew(p) && <div className="sl-week-new">New</div>}
+                      {isNew(p) && <span className="sl-featured-new">New</span>}
                     </div>
-                    <div className="sl-week-body">
-                      {vendorName(p) && <span className="sl-week-vendor">{vendorName(p)}</span>}
-                      <span className="sl-week-title">{p.name}</span>
-                      {p.price && <span className="sl-week-price">{p.price}</span>}
-                    </div>
+                    {vendorName(p) && <p className="sl-featured-kicker">{vendorName(p)}</p>}
+                    <p className="sl-featured-name">{p.name}</p>
+                    {p.price && (
+                      <p className="sl-featured-price">
+                        {p.price}
+                        {proPrice && <span className="sl-featured-pro"> · {proPrice} Pro</span>}
+                      </p>
+                    )}
                   </Link>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
         </section>
       )}
 
-      {/* ── 3. TRUST BAR — single slim line, replaces trust-strip + scrolling ticker ── */}
+      {/* ── 4. TRUST LINE — single slim mono line ── */}
       <section className="sl-trust">
-        <div className="sl-trust-inner">
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">✓</span> <strong>Vetted Makers</strong> — reviewed before listing
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">★</span> <strong>4.8 average rating</strong> — 1,200+ reviews
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">↺</span> <strong>Free Returns</strong> — 30 days
-          </div>
-          <div className="sl-trust-item">
-            <span className="sl-trust-icon">◇</span> <strong>Moveee Pro saves 10%</strong> — applied at checkout
-          </div>
-        </div>
+        <p className="sl-trust-line">
+          <strong>Vetted Makers</strong> · <strong>4.8 average rating</strong> · <strong>Free Returns</strong> in 30 days · <strong>Moveee Pro</strong> saves 10%
+        </p>
       </section>
 
       <ShopFilterProvider products={products}>
-        {/* ── 4. FILTER BAR ── */}
+        {/* ── 5. FILTER BAR ── */}
         <ShopFilterBar categories={categories.slice(0, 8)} activeCategorySlug={category} />
 
-        {/* ── 5. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
+        {/* ── 6. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
         <div className="sl-bridge">
           <div className="sl-bridge-inner">
             <div className="sl-bridge-left">
@@ -277,11 +269,11 @@ export default async function ShopArchiveWrapper({
           </div>
         </div>
 
-        {/* ── 6. MAIN PRODUCT GRID ── */}
+        {/* ── 7. MAIN PRODUCT GRID ── */}
         <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
       </ShopFilterProvider>
 
-      {/* ── 7. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
+      {/* ── 8. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
       <div className="sl-member-wrap">
         <section className="sl-member">
           <div className="sl-member-left">
@@ -318,7 +310,7 @@ export default async function ShopArchiveWrapper({
         </section>
       </div>
 
-      {/* ── 8. ORIGINS CLOSING BRIDGE ── */}
+      {/* ── 9. ORIGINS CLOSING BRIDGE ── */}
       <section className="sl-origins">
         <div className="sl-origins-inner">
           <div className="sl-origins-img" />
