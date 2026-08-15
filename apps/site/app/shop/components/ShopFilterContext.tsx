@@ -1,47 +1,34 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import {
+  PRICE_BANDS,
+  vendorName,
+  vendorLocation,
+  averageRating,
+  reviewCount,
+  isNew,
+  isOutOfStock,
+  parsePrice,
+  formatGBP,
+} from "./shopHelpers";
 
-export const PRICE_BANDS = [
-  { id: "under-50", label: "Under £50", test: (n: number) => n < 50 },
-  { id: "50-100", label: "£50–£100", test: (n: number) => n >= 50 && n < 100 },
-  { id: "100-200", label: "£100–£200", test: (n: number) => n >= 100 && n < 200 },
-  { id: "200-plus", label: "£200+", test: (n: number) => n >= 200 },
-];
-
-export function vendorName(p: any): string {
-  return p.vendorProfile?.storeName || "";
-}
-
-export function vendorLocation(p: any): string {
-  return p.vendorProfile?.city || p.vendorProfile?.country || "";
-}
-
-export function averageRating(p: any): number {
-  return parseFloat(p.averageRating) || 0;
-}
-
-export function reviewCount(p: any): number {
-  return p.reviewCount ?? 0;
-}
-
-export function isNew(p: any): boolean {
-  return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
-}
-
-export function isOutOfStock(p: any): boolean {
-  return p.stockStatus === "OUT_OF_STOCK";
-}
-
-export function parsePrice(price?: string): number {
-  if (!price) return 0;
-  const cleaned = price.replace(/<[^>]*>/g, "").replace(/[^0-9.]/g, "");
-  return parseFloat(cleaned) || 0;
-}
-
-export function formatGBP(n: number): string {
-  return `£${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2)}`;
-}
+// Re-exported for existing client consumers (ShopFilterBar.tsx, ShopProductGrid.tsx).
+// The real definitions live in ./shopHelpers.ts, which is deliberately NOT
+// "use client" so server components (ShopArchiveWrapper.tsx) can call them
+// directly — importing pure functions from a "use client" file makes every
+// export a client-only reference, which a server component can't invoke.
+export {
+  PRICE_BANDS,
+  vendorName,
+  vendorLocation,
+  averageRating,
+  reviewCount,
+  isNew,
+  isOutOfStock,
+  parsePrice,
+  formatGBP,
+};
 
 interface Chip {
   id: string;
