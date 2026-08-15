@@ -819,6 +819,68 @@ results.
 
 ---
 
+## Optimole lazy-load breaks CMS images on every non-browser consumer (fixed August 2026)
+
+**The single most important thing to know about images in this project: WordPress runs
+Optimole's `the_content` filter before any consumer sees a post body, and Optimole's
+lazy-load rewrites every in-body image into a placeholder whose real URL only lives in a
+`data-*` attribute.** Optimole's own JavaScript is what swaps it into `src` — and that script
+is enqueued by WordPress, so it **never runs** on the headless Next.js frontend, in email, or
+in the React Native app. Any consumer that isn't a WordPress-rendered page gets placeholders.
+
+This has now bitten twice, in two unrelated places, with the same root cause:
+
+1. **Newsletter email** (fixed earlier) — `Culture_Newsletter_Queue::render_content()`
+   suspends every Optimole/Smush/lazy-load `the_content` callback by keyword
+   (`suspend_image_filters()`/`restore_image_filters()`) before running the filter, then
+   restores them. See that method's own docblock.
+2. **Magazine article bodies** (fixed August 2026) — user-reported as *"not all the photos
+   show, only a few will show and the rest will just white out."* WPGraphQL's `Post.content`
+   applies `the_content`, so the frontend received:
+   ```html
+   <img src="data:image/svg+xml;base64,…" data-opt-src="https://….i.optimole.com/…">
+   <noscript><img src="https://….i.optimole.com/…"></noscript>
+   ```
+   `sanitizeHtml()` then made it strictly worse: `data-opt-src` isn't in `ALLOWED_ATTR` so the
+   real URL was **deleted**, and the `data:` placeholder was **also** dropped by the existing
+   `javascript:`/`data:`/`vbscript:` guard on `src`. Net result — `<img width="1024"
+   height="683" alt="…">` with no `src` at all, painting a **blank box at the reserved
+   dimensions**. That is the "white out". Only images Optimole *skips* still worked (it
+   excludes the first N above-the-fold images from lazy loading), which is exactly why *some*
+   images on a post rendered and the rest didn't — the symptom looks random but isn't.
+
+**The fix lives in `packages/shared/lib/sanitize.ts`** — a new exported `unlazyImages()` that
+promotes `data-opt-src`/`data-src`/`data-lazy-src`/`data-original` into `src` (and
+`data-opt-srcset`/`data-srcset` into `srcset`), called from **inside `sanitizeHtml()`** rather
+than at each call site, so no content surface can miss it — every place that renders CMS HTML
+already funnels through that one function. It must run **before** attribute filtering, since
+the real URL is in an attribute the allowlist drops. It also strips the plugin's `<noscript>`
+fallback copies, but **only when it actually promoted something** — `sanitizeHtml()` removes
+unknown *tags* while keeping their children, so a `<noscript><img></noscript>` would otherwise
+unwrap into a duplicate image next to the repaired one.
+
+**Why this was fixed on the frontend rather than by suspending Optimole in PHP** (the
+newsletter's approach): the promoted URL is still the Optimole CDN one, so images stay
+optimised and resized. Suspending the filter would serve unoptimised originals straight from
+`cms.themoveee.com` — losing the entire point of Optimole. **Don't "consolidate" these two
+fixes onto the PHP approach**; email genuinely needs the suspension (no CDN-vs-origin
+tradeoff matters there and the markup must be inert), the web genuinely wants the promotion.
+
+**Also fixed in the same pass**: `srcset`/`sizes` were never in `ALLOWED_ATTR`, so even
+non-lazy CMS images had their responsive candidates stripped and served the full-size original
+to every viewport. `srcset` gets its own scheme check rather than reusing the `src`/`href` one
+— a candidate list is comma-separated, so a `javascript:` can sit anywhere in the value, not
+just at the start.
+
+**If images ever "disappear" on a new surface again, check this first** before debugging the
+CMS, the CDN, or the fetch layer: log the raw `post.content` and look for `data-opt-src`. And
+if you add a new consumer of WP content that isn't a browser page (a feed exporter, an AMP
+view, a PDF renderer, the mobile app's HTML renderer), assume it has this bug until proven
+otherwise. Note `apps/mobile` renders article HTML via `react-native-render-html` and was
+**not** audited for this in the August 2026 pass — it's a live suspect.
+
+---
+
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
@@ -1805,6 +1867,66 @@ image-then-text-with-no-chrome layout.
   `editorial.css` (190/190). Re-check pixel fidelity — especially the mobile hero and the
   `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
   considering this fully closed.
+
+### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
+
+User request: "create more width for the post body area" by removing the left sidebar on the
+post page, making the table of contents "a floating icon just like in the mobile app," and
+moving "the other details" into a box on the right sidebar. Touches
+`apps/site/app/magazine/[slug]/page.tsx`, `apps/site/app/editorial.css`, and adds
+`apps/site/components/ArticleToc.tsx`.
+
+- **`.ar-wrap` is now a 2-column grid** — `minmax(0, 1fr) 300px` (was `160px 1fr 260px`).
+  Measured in a headless browser at 1440px: the prose column went **700px → 844px** (+20%).
+  `max-width` bumped 1200 → 1248 with `padding: 0 24px 80px` + `box-sizing: border-box`, so
+  the content column is still exactly 1200px at wide viewports. **This also fixed a
+  pre-existing edge-touching bug**: `.ar-wrap` had `padding: 0 0 60px` at the `max-width:
+  1024px` breakpoint, so between ~1024px and 1200px the grid ran flush to the viewport edges;
+  it's now `0 32px 60px`, matching every other section at that breakpoint.
+- **`.ar-prose` bumped to 17px/1.7** (was 16px/1.6) — a wider column needs a slightly larger
+  type size to keep the measure comfortable; this is the counterweight to the width gain, not
+  an unrelated typography change. Also added `scroll-margin-top: 24px` to `.ar-prose h2/h3`
+  and `.ar-prose p[id]` (the pseudo-heading pattern, see the heading-id injection comment in
+  `page.tsx`) so a TOC jump doesn't park the heading against the top of the viewport.
+- **`ArticleToc.tsx`** (new client component) — fixed 48px round FAB bottom-right
+  (`.ar-toc-fab`, 44px at ≤768px) opening a `.ar-toc-panel` contents list, mirroring
+  `apps/mobile/src/screens/magazine/ArticleScreen.tsx`'s `tocFab` + contents bottom sheet.
+  Desktop: a 320px panel anchored above the button, closed by outside-click/Escape/✕/picking
+  an item. **≤768px it becomes a real bottom sheet** (full-width, `border-radius: 20px 20px 0
+  0`, 70vh) with a tinted tap-catching `.ar-toc-scrim`. The scrim is `display: none` at
+  desktop **on purpose** — a full-viewport scrim there would swallow the first click on the
+  page, so desktop closes via the outside-click listener instead. Renders nothing at all when
+  the article has no headings (the old column's "Full article" single-item fallback is gone —
+  a FAB that opens a one-item list isn't worth the chrome).
+- **`TocScrollSpy.tsx` deleted**, its logic folded into `ArticleToc.tsx`. It worked by
+  toggling an `.active` class on `.ar-toc a[href^='#']` DOM nodes, which **cannot** work now
+  that those links only exist while the panel is open — active state is React state driven off
+  the `headings` prop instead, so it survives open/close cycles. Confirmed zero other
+  importers before removing. The `IntersectionObserver` config (`rootMargin: "0px 0px -70%
+  0px"`) and the "last heading above the viewport" fallback are carried over verbatim.
+- **Article meta moved to the right sidebar** as a new first card,
+  `.ar-sidebar-card--meta` ("Details") — Writer / Location / Section / Series / Industry,
+  built from an `articleMeta` array in `page.tsx` and rendered as label-left/value-right rows
+  (`.ar-meta-row`, hairline-divided, same shape as the mobile TOC sheet's `tocMetaRow`).
+  Deliberately **not** duplicating Published/Reading time, which the hero byline already
+  shows — only the fields that lived under the old TOC moved.
+- **Dead CSS removed rather than kept** (a deviation from this file's usual "leave it in case
+  it's needed again" convention, since these are directly superseded and reference a column
+  that no longer exists): `.ar-toc`, `.ar-toc-heading`, `.ar-toc-details`, `.ar-toc-summary`,
+  `.ar-toc-toggle-label`, `.ar-toc-chevron`, `.ar-toc-meta*`, and the `.ar-toc { display:
+  none; }` mobile override. Note `.ar-toc-*` names are now **reused** by the new floating
+  panel (`.ar-toc-fab`/`.ar-toc-panel`/`.ar-toc-list`/`.ar-toc-num`) — if you find a stale
+  `.ar-toc` reference somewhere, it means the old column, not the FAB.
+- **Verified in a real browser this time** (unlike most passes in this file): the live CMS is
+  unreachable from the sandbox (the agent proxy denies `cms.themoveee.com` at the network
+  policy level, so the page can't be server-rendered with real content), so the layout was
+  checked instead via a static harness loading the real `editorial.css` with representative
+  markup, screenshotted in the pre-installed Chromium at 1440/1024/390px. Confirmed: correct
+  column widths at each breakpoint, no horizontal overflow (`scrollWidth === viewport` at all
+  three), the desktop panel anchoring, and the mobile sheet + scrim. Also verified via
+  `tsc --noEmit` (clean) on `apps/site` and a CSS brace/paren-balance check on `editorial.css`
+  (213/213, 204/204). Still worth an eyes-on check against a real article — the harness has no
+  featured-image hero, gate, comments, or `Shop the Edit` card.
 
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 

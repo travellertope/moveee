@@ -11,7 +11,7 @@ import HideIfSubscribed from "@/components/HideIfSubscribed";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
-import TocScrollSpy from "@/components/TocScrollSpy";
+import ArticleToc from "@/components/ArticleToc";
 import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -226,6 +226,35 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     ],
   };
 
+  // Rendered as the "Details" card at the top of the right sidebar — this is
+  // the meta block that used to sit under the contents list in the (now
+  // removed) left TOC column.
+  const articleMeta: { label: string; value: React.ReactNode }[] = [
+    {
+      label: "Writer",
+      value: post.asToldTo ? (
+        <>
+          {post.asToldTo}
+          <span className="ar-meta-val-sub">
+            as told to {post.author?.node?.name || "The Moveee"}
+          </span>
+        </>
+      ) : (
+        post.author?.node?.name || "The Moveee"
+      ),
+    },
+    ...(post.countries?.nodes?.[0]?.name
+      ? [{ label: "Location", value: post.countries.nodes[0].name }]
+      : []),
+    { label: "Section", value: categoryName },
+    ...(post.series?.nodes?.[0]?.name
+      ? [{ label: "Series", value: post.series.nodes[0].name }]
+      : []),
+    ...(post.industries?.nodes?.[0]?.name
+      ? [{ label: "Industry", value: post.industries.nodes[0].name }]
+      : []),
+  ];
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
@@ -320,72 +349,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </>
       )}
 
-      {/* ── ARTICLE 3-COLUMN LAYOUT ── */}
+      {/* ── FLOATING TABLE OF CONTENTS ── */}
+      <ArticleToc headings={headings} />
+
+      {/* ── ARTICLE 2-COLUMN LAYOUT ── */}
       <ImageLightbox>
         <div className="ar-wrap">
 
-          {/* LEFT — TOC */}
-          <aside className="ar-toc">
-            <TocScrollSpy />
-            <details className="ar-toc-details" open>
-              <summary className="ar-toc-summary">
-                <span className="ar-toc-toggle-label">Contents</span>
-                <span className="ar-toc-chevron" aria-hidden>▾</span>
-              </summary>
-              {headings.length > 0 ? (
-                <ul>
-                  {headings.map((h, i) => (
-                    <li key={h.id}>
-                      <a href={`#${h.id}`}>
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, opacity: 0.5, marginRight: 6 }}>
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        {h.text}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <ul>
-                  <li><a href="#article-body">Full article</a></li>
-                </ul>
-              )}
-              <div className="ar-toc-meta">
-                <div className="ar-toc-meta-item">
-                  <div className="ar-toc-meta-label">Writer</div>
-                  <div className="ar-toc-meta-val">
-                    {post.asToldTo
-                      ? <>{post.asToldTo}<br /><span style={{ fontSize: "0.85em", opacity: 0.7 }}>as told to {post.author?.node?.name || "The Moveee"}</span></>
-                      : post.author?.node?.name || "The Moveee"}
-                  </div>
-                </div>
-                {post.countries?.nodes?.[0]?.name && (
-                  <div className="ar-toc-meta-item">
-                    <div className="ar-toc-meta-label">Location</div>
-                    <div className="ar-toc-meta-val">{post.countries.nodes[0].name}</div>
-                  </div>
-                )}
-                <div className="ar-toc-meta-item">
-                  <div className="ar-toc-meta-label">Section</div>
-                  <div className="ar-toc-meta-val">{categoryName}</div>
-                </div>
-                {post.series?.nodes?.[0]?.name && (
-                  <div className="ar-toc-meta-item">
-                    <div className="ar-toc-meta-label">Series</div>
-                    <div className="ar-toc-meta-val">{post.series.nodes[0].name}</div>
-                  </div>
-                )}
-                {post.industries?.nodes?.[0]?.name && (
-                  <div className="ar-toc-meta-item">
-                    <div className="ar-toc-meta-label">Industry</div>
-                    <div className="ar-toc-meta-val">{post.industries.nodes[0].name}</div>
-                  </div>
-                )}
-              </div>
-            </details>
-          </aside>
-
-          {/* CENTER — PROSE */}
+          {/* LEFT — PROSE */}
           <div className="ar-prose" id="article-body">
             <ArticleContentGate
               accessLevel={accessLevel}
@@ -409,6 +380,18 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
           {/* RIGHT — SIDEBAR */}
           <aside className="ar-sidebar">
+
+            <div className="ar-sidebar-card ar-sidebar-card--meta">
+              <span className="ar-sidebar-label">Details</span>
+              <div className="ar-meta-list">
+                {articleMeta.map((m) => (
+                  <div className="ar-meta-row" key={m.label}>
+                    <span className="ar-meta-label">{m.label}</span>
+                    <span className="ar-meta-val">{m.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {postIssue && (
               <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: "none" }}>
