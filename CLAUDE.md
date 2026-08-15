@@ -819,6 +819,68 @@ results.
 
 ---
 
+## Optimole lazy-load breaks CMS images on every non-browser consumer (fixed August 2026)
+
+**The single most important thing to know about images in this project: WordPress runs
+Optimole's `the_content` filter before any consumer sees a post body, and Optimole's
+lazy-load rewrites every in-body image into a placeholder whose real URL only lives in a
+`data-*` attribute.** Optimole's own JavaScript is what swaps it into `src` — and that script
+is enqueued by WordPress, so it **never runs** on the headless Next.js frontend, in email, or
+in the React Native app. Any consumer that isn't a WordPress-rendered page gets placeholders.
+
+This has now bitten twice, in two unrelated places, with the same root cause:
+
+1. **Newsletter email** (fixed earlier) — `Culture_Newsletter_Queue::render_content()`
+   suspends every Optimole/Smush/lazy-load `the_content` callback by keyword
+   (`suspend_image_filters()`/`restore_image_filters()`) before running the filter, then
+   restores them. See that method's own docblock.
+2. **Magazine article bodies** (fixed August 2026) — user-reported as *"not all the photos
+   show, only a few will show and the rest will just white out."* WPGraphQL's `Post.content`
+   applies `the_content`, so the frontend received:
+   ```html
+   <img src="data:image/svg+xml;base64,…" data-opt-src="https://….i.optimole.com/…">
+   <noscript><img src="https://….i.optimole.com/…"></noscript>
+   ```
+   `sanitizeHtml()` then made it strictly worse: `data-opt-src` isn't in `ALLOWED_ATTR` so the
+   real URL was **deleted**, and the `data:` placeholder was **also** dropped by the existing
+   `javascript:`/`data:`/`vbscript:` guard on `src`. Net result — `<img width="1024"
+   height="683" alt="…">` with no `src` at all, painting a **blank box at the reserved
+   dimensions**. That is the "white out". Only images Optimole *skips* still worked (it
+   excludes the first N above-the-fold images from lazy loading), which is exactly why *some*
+   images on a post rendered and the rest didn't — the symptom looks random but isn't.
+
+**The fix lives in `packages/shared/lib/sanitize.ts`** — a new exported `unlazyImages()` that
+promotes `data-opt-src`/`data-src`/`data-lazy-src`/`data-original` into `src` (and
+`data-opt-srcset`/`data-srcset` into `srcset`), called from **inside `sanitizeHtml()`** rather
+than at each call site, so no content surface can miss it — every place that renders CMS HTML
+already funnels through that one function. It must run **before** attribute filtering, since
+the real URL is in an attribute the allowlist drops. It also strips the plugin's `<noscript>`
+fallback copies, but **only when it actually promoted something** — `sanitizeHtml()` removes
+unknown *tags* while keeping their children, so a `<noscript><img></noscript>` would otherwise
+unwrap into a duplicate image next to the repaired one.
+
+**Why this was fixed on the frontend rather than by suspending Optimole in PHP** (the
+newsletter's approach): the promoted URL is still the Optimole CDN one, so images stay
+optimised and resized. Suspending the filter would serve unoptimised originals straight from
+`cms.themoveee.com` — losing the entire point of Optimole. **Don't "consolidate" these two
+fixes onto the PHP approach**; email genuinely needs the suspension (no CDN-vs-origin
+tradeoff matters there and the markup must be inert), the web genuinely wants the promotion.
+
+**Also fixed in the same pass**: `srcset`/`sizes` were never in `ALLOWED_ATTR`, so even
+non-lazy CMS images had their responsive candidates stripped and served the full-size original
+to every viewport. `srcset` gets its own scheme check rather than reusing the `src`/`href` one
+— a candidate list is comma-separated, so a `javascript:` can sit anywhere in the value, not
+just at the start.
+
+**If images ever "disappear" on a new surface again, check this first** before debugging the
+CMS, the CDN, or the fetch layer: log the raw `post.content` and look for `data-opt-src`. And
+if you add a new consumer of WP content that isn't a browser page (a feed exporter, an AMP
+view, a PDF renderer, the mobile app's HTML renderer), assume it has this bug until proven
+otherwise. Note `apps/mobile` renders article HTML via `react-native-render-html` and was
+**not** audited for this in the August 2026 pass — it's a live suspect.
+
+---
+
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
