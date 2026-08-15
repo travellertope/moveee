@@ -1905,6 +1905,18 @@
   color: var(--mute);
 }
 .sp-acc-body-inner p { margin-bottom: 10px; }
+/* CMS description content often uses a bold-only paragraph as a pseudo-heading
+   label (e.g. "Key Features:") ahead of a run of "Label: detail" paragraphs —
+   those aren't real <h*> tags, so they inherited the same flat 10px paragraph
+   spacing as everything else and read as glued to the next line. Give a
+   paragraph whose entire content is one <strong> real heading spacing instead. */
+.sp-acc-body-inner p:has(> strong:only-child) {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+.sp-acc-body-inner p:first-child:has(> strong:only-child) { margin-top: 0; }
 .sp-acc-body-inner dl {
   display: grid;
   grid-template-columns: auto 1fr;
