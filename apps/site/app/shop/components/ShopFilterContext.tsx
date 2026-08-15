@@ -10,7 +10,9 @@ import {
   isNew,
   isOutOfStock,
   parsePrice,
-  formatGBP,
+  getCurrencySymbol,
+  getCurrencyCode,
+  formatPrice,
 } from "./shopHelpers";
 
 // Re-exported for existing client consumers (ShopFilterBar.tsx, ShopProductGrid.tsx).
@@ -27,7 +29,9 @@ export {
   isNew,
   isOutOfStock,
   parsePrice,
-  formatGBP,
+  getCurrencySymbol,
+  getCurrencyCode,
+  formatPrice,
 };
 
 interface Chip {

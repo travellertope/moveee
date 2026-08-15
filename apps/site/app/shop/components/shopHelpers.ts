@@ -42,6 +42,44 @@ export function parsePrice(price?: string): number {
   return parseFloat(cleaned) || 0;
 }
 
-export function formatGBP(n: number): string {
-  return `£${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2)}`;
+// WooCommerce/WPGraphQL's `price` field is pre-formatted with whatever
+// currency the store is actually configured for (historically GBP, but the
+// store's currency setting is not something this app controls or can rely
+// on staying fixed — it has shown up as NGN in production). Never assume a
+// symbol; derive it from the real price string instead, so a computed price
+// (e.g. the 10%-off "Pro" price) always matches the currency the base price
+// is already showing.
+const ENTITY_TO_SYMBOL: Record<string, string> = {
+  "&pound;": "£",
+  "&#163;": "£",
+  "&euro;": "€",
+  "&#8364;": "€",
+  "&dollar;": "$",
+  "&#36;": "$",
+  "&#8358;": "₦",
+};
+
+const SYMBOL_TO_CODE: Record<string, string> = {
+  "£": "GBP",
+  "€": "EUR",
+  "$": "USD",
+  "₦": "NGN",
+};
+
+export function getCurrencySymbol(price?: string): string {
+  if (!price) return "£";
+  let cleaned = price.replace(/<[^>]*>/g, "");
+  for (const [entity, symbol] of Object.entries(ENTITY_TO_SYMBOL)) {
+    cleaned = cleaned.split(entity).join(symbol);
+  }
+  const match = cleaned.match(/[^\s0-9.,]+/);
+  return match ? match[0] : "£";
+}
+
+export function getCurrencyCode(price?: string): string {
+  return SYMBOL_TO_CODE[getCurrencySymbol(price)] ?? "GBP";
+}
+
+export function formatPrice(n: number, symbol = "£"): string {
+  return `${symbol}${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2)}`;
 }

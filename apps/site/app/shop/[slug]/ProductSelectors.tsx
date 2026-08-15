@@ -4,6 +4,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { getCurrencyCode } from "../components/shopHelpers";
 
 interface VariationAttribute { name: string; value: string; }
 interface Variation {
@@ -44,6 +45,10 @@ export default function ProductSelectors({
 
   const showMemberPrice = memberPrice && isPro;
   const showMemberPriceTeaser = memberPrice && !isPro;
+  // WooCommerce's price string already carries the store's actual currency
+  // symbol (which is not reliably GBP — see shopHelpers.ts) — derive the
+  // code label from it instead of assuming.
+  const currencyCode = getCurrencyCode(showMemberPrice ? memberPrice : price);
 
   return (
     <>
@@ -77,7 +82,7 @@ export default function ProductSelectors({
             </div>
           )}
         </div>
-        <span className="sp-price-sub">GBP</span>
+        <span className="sp-price-sub">{currencyCode}</span>
         {showMemberPriceTeaser ? (
           // Non-Pro user: show teaser for the member price
           <div className="sp-price-member sp-price-member--teaser">

@@ -8,6 +8,7 @@ import ProductAccordion from "./ProductAccordion";
 import ProductReviews from "./ProductReviews";
 import "../shop.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { getCurrencyCode } from "../components/shopHelpers";
 
 export const revalidate = 300;
 
@@ -208,7 +209,7 @@ export default async function ProductPage({
       offers: {
         "@type": "Offer",
         price: productPrice,
-        priceCurrency: "GBP",
+        priceCurrency: getCurrencyCode(product.price),
         availability: "https://schema.org/InStock",
         url: productUrl,
         seller: { "@type": "Organization", name: "Moveee Magazine" },

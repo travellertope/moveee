@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { ShopFilterProvider } from "./components/ShopFilterContext";
-import { formatGBP, parsePrice } from "./components/shopHelpers";
+import { formatPrice, parsePrice, getCurrencySymbol } from "./components/shopHelpers";
 import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
@@ -132,7 +132,7 @@ export default async function ShopArchiveWrapper({
     ? heroPick.shortDescription.replace(/<[^>]*>/g, "").trim()
     : "";
   const heroProPrice = heroPick?.price
-    ? formatGBP(parsePrice(heroPick.price) * 0.9)
+    ? formatPrice(parsePrice(heroPick.price) * 0.9, getCurrencySymbol(heroPick.price))
     : "";
 
   return (
@@ -209,7 +209,7 @@ export default async function ShopArchiveWrapper({
             </div>
             <div className="sl-featured-grid">
               {companionPicks.map((p) => {
-                const proPrice = p.price ? formatGBP(parsePrice(p.price) * 0.9) : "";
+                const proPrice = p.price ? formatPrice(parsePrice(p.price) * 0.9, getCurrencySymbol(p.price)) : "";
                 return (
                   <Link key={p.id} href={`/shop/${p.slug}`} className="sl-featured-card">
                     <div className="sl-featured-img">

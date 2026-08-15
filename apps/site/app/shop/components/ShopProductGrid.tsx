@@ -5,7 +5,8 @@ import Image from "next/image";
 import AddToCartButton from "@/components/AddToCartButton";
 import {
   averageRating,
-  formatGBP,
+  formatPrice,
+  getCurrencySymbol,
   isNew,
   isOutOfStock,
   parsePrice,
@@ -44,7 +45,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
             {filtered.map((p: any) => {
               const vname = vendorName(p);
               const outOfStock = isOutOfStock(p);
-              const proPrice = formatGBP(parsePrice(p.price) * 0.9);
+              const proPrice = formatPrice(parsePrice(p.price) * 0.9, getCurrencySymbol(p.price));
               const hasReviews = reviewCount(p) > 0;
               return (
                 <Link
