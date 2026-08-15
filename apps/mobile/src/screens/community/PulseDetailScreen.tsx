@@ -8,7 +8,7 @@ import { openInApp } from "../../utils/openInApp";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
-import RenderHtml from "react-native-render-html";
+import HtmlContent from "../../components/ui/HtmlContent";
 import type { FeedItem } from "../../types";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -103,7 +103,7 @@ export default function PulseDetailScreen() {
           ) : null}
 
           {item.body ? (
-            <RenderHtml contentWidth={width - 40} source={{ html: item.body }} tagsStyles={HTML_TAG_STYLES} />
+            <HtmlContent contentWidth={width - 40} html={item.body} tagsStyles={HTML_TAG_STYLES} />
           ) : item.excerpt ? (
             <Text style={styles.bodyText}>{item.excerpt}</Text>
           ) : null}

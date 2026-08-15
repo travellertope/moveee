@@ -1,11 +1,16 @@
 import React from "react";
 import {
   getWPData,
+  getProductsWithFallback,
   GET_PRODUCTS,
+  GET_PRODUCTS_UNORDERED,
   GET_PRODUCTS_BY_VENDOR,
+  GET_PRODUCTS_BY_VENDOR_UNORDERED,
   GET_PRODUCT_CATEGORIES,
   GET_PRODUCTS_EXTRA,
+  GET_PRODUCTS_EXTRA_UNORDERED,
   GET_PRODUCTS_BY_VENDOR_EXTRA,
+  GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED,
 } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
@@ -77,15 +82,15 @@ export default async function ShopArchiveWrapper({
 
   const [prodResult, catResult, extraResult] = await Promise.allSettled([
     brand
-      ? getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: brand })
-      : getWPData(GET_PRODUCTS, { first: 24, category: category || null, tag: tag || null }),
+      ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR, GET_PRODUCTS_BY_VENDOR_UNORDERED, { first: 24, vendor: brand })
+      : getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 24, category: category || null, tag: tag || null }),
     getWPData(GET_PRODUCT_CATEGORIES, {}),
     // Separate, isolated fetch for moveee-graphql-bridge-dependent fields
     // (vendor location, ratings, materials) — see GET_PRODUCTS_EXTRA's own
     // comment for why this must never be merged into the main products query.
     brand
-      ? getWPData(GET_PRODUCTS_BY_VENDOR_EXTRA, { first: 24, vendor: brand })
-      : getWPData(GET_PRODUCTS_EXTRA, { first: 24, category: category || null, tag: tag || null }),
+      ? getProductsWithFallback(GET_PRODUCTS_BY_VENDOR_EXTRA, GET_PRODUCTS_BY_VENDOR_EXTRA_UNORDERED, { first: 24, vendor: brand })
+      : getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 24, category: category || null, tag: tag || null }),
   ]);
 
   if (prodResult.status === "fulfilled") products = prodResult.value?.products?.nodes ?? [];

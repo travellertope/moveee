@@ -1,4 +1,4 @@
-import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_EXTRA, GET_POST_BY_ID } from "@/lib/wp";
+import { getWPData, getProductsWithFallback, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_UNORDERED, GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, GET_POST_BY_ID } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -92,8 +92,8 @@ export default async function ProductPage({
   try {
     if (firstCategory) {
       const [rel, relExtra] = await Promise.all([
-        getWPData(GET_PRODUCTS, { first: 8, category: firstCategory }),
-        getWPData(GET_PRODUCTS_EXTRA, { first: 8, category: firstCategory }).catch(() => null),
+        getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 8, category: firstCategory }),
+        getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 8, category: firstCategory }).catch(() => null),
       ]);
       let pool = (rel?.products?.nodes ?? []).filter((p: any) => p.slug !== slug);
       const extraNodes = relExtra?.products?.nodes ?? [];
