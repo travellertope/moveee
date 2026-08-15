@@ -1806,6 +1806,66 @@ image-then-text-with-no-chrome layout.
   `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
   considering this fully closed.
 
+### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
+
+User request: "create more width for the post body area" by removing the left sidebar on the
+post page, making the table of contents "a floating icon just like in the mobile app," and
+moving "the other details" into a box on the right sidebar. Touches
+`apps/site/app/magazine/[slug]/page.tsx`, `apps/site/app/editorial.css`, and adds
+`apps/site/components/ArticleToc.tsx`.
+
+- **`.ar-wrap` is now a 2-column grid** — `minmax(0, 1fr) 300px` (was `160px 1fr 260px`).
+  Measured in a headless browser at 1440px: the prose column went **700px → 844px** (+20%).
+  `max-width` bumped 1200 → 1248 with `padding: 0 24px 80px` + `box-sizing: border-box`, so
+  the content column is still exactly 1200px at wide viewports. **This also fixed a
+  pre-existing edge-touching bug**: `.ar-wrap` had `padding: 0 0 60px` at the `max-width:
+  1024px` breakpoint, so between ~1024px and 1200px the grid ran flush to the viewport edges;
+  it's now `0 32px 60px`, matching every other section at that breakpoint.
+- **`.ar-prose` bumped to 17px/1.7** (was 16px/1.6) — a wider column needs a slightly larger
+  type size to keep the measure comfortable; this is the counterweight to the width gain, not
+  an unrelated typography change. Also added `scroll-margin-top: 24px` to `.ar-prose h2/h3`
+  and `.ar-prose p[id]` (the pseudo-heading pattern, see the heading-id injection comment in
+  `page.tsx`) so a TOC jump doesn't park the heading against the top of the viewport.
+- **`ArticleToc.tsx`** (new client component) — fixed 48px round FAB bottom-right
+  (`.ar-toc-fab`, 44px at ≤768px) opening a `.ar-toc-panel` contents list, mirroring
+  `apps/mobile/src/screens/magazine/ArticleScreen.tsx`'s `tocFab` + contents bottom sheet.
+  Desktop: a 320px panel anchored above the button, closed by outside-click/Escape/✕/picking
+  an item. **≤768px it becomes a real bottom sheet** (full-width, `border-radius: 20px 20px 0
+  0`, 70vh) with a tinted tap-catching `.ar-toc-scrim`. The scrim is `display: none` at
+  desktop **on purpose** — a full-viewport scrim there would swallow the first click on the
+  page, so desktop closes via the outside-click listener instead. Renders nothing at all when
+  the article has no headings (the old column's "Full article" single-item fallback is gone —
+  a FAB that opens a one-item list isn't worth the chrome).
+- **`TocScrollSpy.tsx` deleted**, its logic folded into `ArticleToc.tsx`. It worked by
+  toggling an `.active` class on `.ar-toc a[href^='#']` DOM nodes, which **cannot** work now
+  that those links only exist while the panel is open — active state is React state driven off
+  the `headings` prop instead, so it survives open/close cycles. Confirmed zero other
+  importers before removing. The `IntersectionObserver` config (`rootMargin: "0px 0px -70%
+  0px"`) and the "last heading above the viewport" fallback are carried over verbatim.
+- **Article meta moved to the right sidebar** as a new first card,
+  `.ar-sidebar-card--meta` ("Details") — Writer / Location / Section / Series / Industry,
+  built from an `articleMeta` array in `page.tsx` and rendered as label-left/value-right rows
+  (`.ar-meta-row`, hairline-divided, same shape as the mobile TOC sheet's `tocMetaRow`).
+  Deliberately **not** duplicating Published/Reading time, which the hero byline already
+  shows — only the fields that lived under the old TOC moved.
+- **Dead CSS removed rather than kept** (a deviation from this file's usual "leave it in case
+  it's needed again" convention, since these are directly superseded and reference a column
+  that no longer exists): `.ar-toc`, `.ar-toc-heading`, `.ar-toc-details`, `.ar-toc-summary`,
+  `.ar-toc-toggle-label`, `.ar-toc-chevron`, `.ar-toc-meta*`, and the `.ar-toc { display:
+  none; }` mobile override. Note `.ar-toc-*` names are now **reused** by the new floating
+  panel (`.ar-toc-fab`/`.ar-toc-panel`/`.ar-toc-list`/`.ar-toc-num`) — if you find a stale
+  `.ar-toc` reference somewhere, it means the old column, not the FAB.
+- **Verified in a real browser this time** (unlike most passes in this file): the live CMS is
+  unreachable from the sandbox (the agent proxy denies `cms.themoveee.com` at the network
+  policy level, so the page can't be server-rendered with real content), so the layout was
+  checked instead via a static harness loading the real `editorial.css` with representative
+  markup, screenshotted in the pre-installed Chromium at 1440/1024/390px. Confirmed: correct
+  column widths at each breakpoint, no horizontal overflow (`scrollWidth === viewport` at all
+  three), the desktop panel anchoring, and the mobile sheet + scrim. Also verified via
+  `tsc --noEmit` (clean) on `apps/site` and a CSS brace/paren-balance check on `editorial.css`
+  (213/213, 204/204). Still worth an eyes-on check against a real article — the harness has no
+  featured-image hero, gate, comments, or `Shop the Edit` card.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an

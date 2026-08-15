@@ -240,112 +240,155 @@
   object-fit: cover;
 }
 
-/* ── MAIN LAYOUT — 3-column grid ── */
+/* ── MAIN LAYOUT — 2-column grid ──
+   The left TOC column was removed (Aug 2026) so the prose column takes that
+   width; contents now live in the floating `.ar-toc-fab` panel below, and the
+   article meta that sat under the old TOC moved to `.ar-sidebar-card--meta`. */
 .ar-wrap {
   display: grid;
-  grid-template-columns: 160px 1fr 260px;
-  gap: 40px;
-  max-width: 1200px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 56px;
+  max-width: 1248px; /* 1200px column + the 24px side padding on each edge */
   margin: 64px auto 0;
-  padding: 0 0 80px;
+  padding: 0 24px 80px;
+  box-sizing: border-box;
   align-items: start;
 }
 
-/* ── TABLE OF CONTENTS ── */
-.ar-toc {
-  position: sticky;
-  top: 40px;
-  font-size: 12px;
-  color: var(--mute);
+/* ── FLOATING TABLE OF CONTENTS ──
+   Mirrors the mobile app's TOC pattern (ArticleScreen.tsx's `tocFab` +
+   contents bottom sheet): a small fixed button that opens a contents panel.
+   Anchored bottom-right at desktop; becomes a bottom sheet under 768px. */
+.ar-toc-fab {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 60;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full, 9999px);
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 6px 20px -4px rgba(20,17,13,0.22);
+  transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+.ar-toc-fab:hover {
+  transform: translateY(-2px);
+  background: var(--ink);
+  color: var(--paper, #fff);
+}
+.ar-toc-fab--open {
+  background: var(--ink);
+  color: var(--paper, #fff);
+}
+
+/* Tap-catching scrim — mobile only (desktop closes via outside-click, so a
+   full-viewport scrim there would swallow the first click on the page). */
+.ar-toc-scrim { display: none; }
+
+.ar-toc-panel {
+  position: fixed;
+  right: 28px;
+  bottom: 88px;
+  z-index: 61;
+  width: 320px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
   background: #ffffff;
   border: 1px solid var(--ar-ghost-light);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
-  padding: 18px;
+  box-shadow: 0 12px 40px -8px rgba(20,17,13,0.28);
+  animation: ar-toc-in .18s ease;
 }
-.ar-toc-heading {
+@keyframes ar-toc-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ar-toc-panel-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--ar-ghost-light);
+}
+.ar-toc-panel-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--ar-ghost);
-  margin-bottom: 12px;
 }
-.ar-toc-details {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ar-toc-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ar-toc-toggle-label {
+.ar-toc-panel-close {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 4px 0;
-  font-size: 12px;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--paper-deep, #f2f2f2);
   color: var(--mute);
-  user-select: none;
+  cursor: pointer;
+  transition: color .15s, background .15s;
 }
-.ar-toc-chevron {
-  display: inline-block;
-  transition: transform 0.2s;
-  font-style: normal;
+.ar-toc-panel-close:hover { color: var(--ink); background: var(--ar-ghost-light); }
+.ar-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
 }
-.ar-toc a {
-  display: block;
-  padding: 4px 0;
+.ar-toc-list li { margin: 0; }
+.ar-toc-list a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 16px;
   color: var(--mute);
   text-decoration: none;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.45;
   border-left: 2px solid transparent;
-  padding-left: 8px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color .15s, border-color .15s, background .15s;
 }
-.ar-toc a:hover, .ar-toc a.active {
+.ar-toc-list a:hover {
+  color: var(--ink);
+  background: var(--paper-deep, #f2f2f2);
+}
+.ar-toc-list a.active {
   color: var(--ink);
   border-left-color: var(--ar-ochre);
+  font-weight: 600;
 }
-.ar-toc-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ar-ghost-light);
-}
-.ar-toc-meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ar-toc-meta-label {
+.ar-toc-num {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-ghost);
+  opacity: 0.5;
+  flex-shrink: 0;
 }
-.ar-toc-meta-val {
-  font-size: 12px;
-  color: var(--mute);
-}
+.ar-toc-list a.active .ar-toc-num { color: var(--ar-ochre); opacity: 1; }
+.ar-toc-text { min-width: 0; }
 
 /* ── PROSE ── */
 .ar-prose {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--ink-soft);
   min-width: 0;
 }
+/* keep an anchored heading clear of the top of the viewport when the
+   floating TOC jumps to it */
+.ar-prose h2,
+.ar-prose h3,
+.ar-prose p[id] { scroll-margin-top: 24px; }
 .ar-prose p { margin-bottom: 1.4em; }
 .ar-prose h1 {
   font-family: 'Fraunces', serif;
@@ -449,6 +492,45 @@
 .ar-sidebar-card--issue {
   border-left: 4px solid var(--ar-ochre);
   padding-left: 16px;
+}
+/* Article details — the meta block that used to sit under the old left-column
+   contents list (Writer / Location / Section / Series / Industry). */
+.ar-sidebar-card--meta { padding-bottom: 6px; }
+.ar-meta-list {
+  display: flex;
+  flex-direction: column;
+}
+.ar-meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--ar-ghost-light);
+}
+.ar-meta-row:first-child { border-top: none; padding-top: 2px; }
+.ar-meta-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ar-ghost);
+  flex-shrink: 0;
+}
+.ar-meta-val {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: right;
+  line-height: 1.4;
+  min-width: 0;
+}
+.ar-meta-val-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--mute);
+  margin-top: 2px;
 }
 .ar-sidebar-card--newsletter {
   background: var(--paper);
@@ -967,12 +1049,11 @@
   .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
   .ar-standard-hero { padding: 40px 32px 32px; }
   .ar-wrap {
-    grid-template-columns: 1fr 260px;
+    grid-template-columns: minmax(0, 1fr) 260px;
     gap: 32px;
-    padding: 0 0 60px;
+    padding: 0 32px 60px;
     margin-top: 48px;
   }
-  .ar-toc { display: none; }
   .ar-finish { padding: 24px 32px; }
   .ar-author { padding: 28px 32px; }
   .ar-related { padding: 0 32px 60px; }
@@ -1008,6 +1089,32 @@
     gap: 24px;
   }
   .ar-sidebar { position: static; }
+  /* TOC panel becomes a bottom sheet, with a real tap-catching scrim */
+  .ar-toc-fab { right: 16px; bottom: 16px; width: 44px; height: 44px; }
+  .ar-toc-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(20, 17, 13, 0.45);
+  }
+  .ar-toc-panel {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 70vh;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+  @keyframes ar-toc-in {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .ar-toc-list a { padding: 12px 20px; font-size: 14px; }
+  .ar-toc-panel-head { padding: 16px 20px; }
   .ste-section--mobile { display: block; }
   .ar-related-grid { grid-template-columns: 1fr; gap: 24px; }
   .ar-related { padding: 0 20px 40px; margin-top: 48px; }
