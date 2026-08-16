@@ -1619,9 +1619,16 @@ export const GET_PRODUCT_BY_SLUG = `
 // the mobile app's own request-param convention, see moveee-graphql-bridge.php's
 // moveee_resolve_shop_currency()) to get displayPrice converted to their local
 // currency; omit/pass anything else to get the store's base GBP price back.
-export const GET_PRODUCT_EXTRA = `
-  query GetProductExtra($slug: ID!, $country: String) {
-    product(id: $slug, idType: SLUG) {
+// vendorProfile/moveeeMeta/averageRating/reviewCount/productMaterials/
+// displayPrice are registered per concrete WooCommerce product type
+// (SimpleProduct/VariableProduct/ExternalProduct/GroupProduct) in
+// moveee-graphql-bridge.php, not on the Product interface itself — querying
+// them directly on `product { ... }` with no inline fragment is a GraphQL
+// validation error ("Cannot query field ... on type Product"), which
+// getWPData() swallows as a fetch failure, silently dropping vendor/maker
+// data with no visible error. Every one of these fields MUST stay inside an
+// `... on <ConcreteType>` block, same as PRODUCT_FIELDS_FRAGMENT above.
+const PRODUCT_EXTRA_TYPE_FIELDS = `
       vendorProfile {
         slug
         storeName
@@ -1652,6 +1659,15 @@ export const GET_PRODUCT_EXTRA = `
         proDiscountPercent
         currencyCode
       }
+`;
+
+export const GET_PRODUCT_EXTRA = `
+  query GetProductExtra($slug: ID!, $country: String) {
+    product(id: $slug, idType: SLUG) {
+      ... on SimpleProduct {${PRODUCT_EXTRA_TYPE_FIELDS}}
+      ... on VariableProduct {${PRODUCT_EXTRA_TYPE_FIELDS}}
+      ... on ExternalProduct {${PRODUCT_EXTRA_TYPE_FIELDS}}
+      ... on GroupProduct {${PRODUCT_EXTRA_TYPE_FIELDS}}
     }
   }
 `;
@@ -1664,9 +1680,11 @@ export const GET_PRODUCT_EXTRA = `
 // GET_PRODUCTS so the result set lines up, then the caller merges by id.
 // displayPrice(country: $country) — see GET_PRODUCT_EXTRA's comment above for
 // the $country value convention ("nigeria", not an ISO code).
-const PRODUCT_EXTRA_NODE_FIELDS = `
-        databaseId
-        slug
+// Same interface-vs-concrete-type fragment requirement as
+// PRODUCT_EXTRA_TYPE_FIELDS above — databaseId/slug are on the Product
+// interface itself and are safe unwrapped, but everything from the bridge
+// plugin is registered per concrete type and must stay inside `... on X`.
+const PRODUCT_EXTRA_GRID_FIELDS = `
         vendorProfile { storeName city country }
         averageRating
         reviewCount
@@ -1680,6 +1698,14 @@ const PRODUCT_EXTRA_NODE_FIELDS = `
           proDiscountPercent
           currencyCode
         }
+`;
+const PRODUCT_EXTRA_NODE_FIELDS = `
+        databaseId
+        slug
+        ... on SimpleProduct {${PRODUCT_EXTRA_GRID_FIELDS}}
+        ... on VariableProduct {${PRODUCT_EXTRA_GRID_FIELDS}}
+        ... on ExternalProduct {${PRODUCT_EXTRA_GRID_FIELDS}}
+        ... on GroupProduct {${PRODUCT_EXTRA_GRID_FIELDS}}
 `;
 
 const buildGetProductsExtra = (opName: string, order: string) => `
