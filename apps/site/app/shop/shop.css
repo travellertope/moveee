@@ -1933,6 +1933,18 @@
   padding-top: 2px;
 }
 .sp-acc-body-inner dd { color: var(--ink); }
+/* Tailwind's Preflight resets list-style to none globally — CMS body copy
+   (Description, Materials & Care, Delivery & Returns, etc.) needs real
+   markers restored explicitly, or bullets/numbers silently never render. */
+.sp-acc-body-inner ul, .sp-acc-body-inner ol { margin: 0 0 12px; padding-left: 20px; }
+.sp-acc-body-inner ul { list-style: disc outside; }
+.sp-acc-body-inner ol { list-style: decimal outside; }
+.sp-acc-body-inner ul ul { list-style: circle outside; }
+.sp-acc-body-inner ol ol { list-style: lower-alpha outside; }
+.sp-acc-body-inner li { margin-bottom: 6px; padding-left: 4px; }
+.sp-acc-body-inner li::marker { color: var(--ochre); }
+.sp-acc-body-inner li:last-child { margin-bottom: 0; }
+.sp-acc-body-inner li > ul, .sp-acc-body-inner li > ol { margin-top: 6px; margin-bottom: 0; }
 .sp-maker-profile-link {
   display: inline-block;
   margin-top: 6px;

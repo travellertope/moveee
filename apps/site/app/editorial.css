@@ -452,8 +452,18 @@
 }
 .ar-prose a { color: var(--ar-ochre); text-decoration: underline; text-underline-offset: 3px; }
 .ar-prose a:hover { color: var(--ink); }
-.ar-prose ul, .ar-prose ol { margin-bottom: 1.4em; padding-left: 1.5em; }
-.ar-prose li { margin-bottom: 0.5em; }
+/* Tailwind's Preflight resets list-style to none globally — CMS body copy
+   needs real markers restored explicitly, or bullets/numbers silently never
+   render despite the reserved padding-left. */
+.ar-prose ul, .ar-prose ol { margin-bottom: 1.4em; padding-left: 1.4em; }
+.ar-prose ul { list-style: disc outside; }
+.ar-prose ol { list-style: decimal outside; }
+.ar-prose ul ul { list-style: circle outside; }
+.ar-prose ul ul ul { list-style: square outside; }
+.ar-prose ol ol { list-style: lower-alpha outside; }
+.ar-prose li { margin-bottom: 0.5em; padding-left: 4px; }
+.ar-prose li::marker { color: var(--ar-ochre); }
+.ar-prose li > ul, .ar-prose li > ol { margin-top: 0.5em; margin-bottom: 0; }
 .ar-prose img { width: 100%; border-radius: 4px; margin: 2em 0; }
 .ar-prose hr { border: none; border-top: 1px solid var(--ar-ghost-light); margin: 3em 0; }
 .ar-prose figure { margin: 2em 0; }
