@@ -938,6 +938,23 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Vendor profile photo — set the store avatar or banner by WP attachment
+        // ID (uploaded separately via /api/vendor/upload on the Next.js side,
+        // which proxies to the WP media library and returns the attachment ID).
+        // Writes into the same _wcfm_vendor_data array WCFM's own dashboard and
+        // moveee_vendor_profile_by_id() (moveee-graphql-bridge.php) use, rather
+        // than guessing at WCFM's own REST payload shape for image fields.
+        register_rest_route( 'culture/v1', '/vendor/profile-image', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_vendor_profile_image' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'vendor_id'     => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'type'          => array( 'required' => true, 'type' => 'string', 'enum' => array( 'avatar', 'banner' ) ),
+                'attachment_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Vendor shipping-zone ownership — assign a vendor as the owner of a
         // newly created WooCommerce shipping zone.
         register_rest_route( 'culture/v1', '/vendor/shipping-zone-owner', array(
@@ -5133,6 +5150,39 @@ class Culture_REST_API {
     /**
      * Assign a vendor as the owner of a newly created shipping zone.
      */
+    /**
+     * Set a vendor's store avatar or banner by WP attachment ID. Merges into
+     * the existing _wcfm_vendor_data array (WCFM's own consolidated vendor
+     * settings) under the 'gravatar' / 'banner' keys, matching exactly what
+     * moveee_vendor_profile_by_id() in moveee-graphql-bridge.php reads and
+     * what WCFM's own native dashboard writes when a vendor uploads there.
+     */
+    public static function handle_set_vendor_profile_image( $request ) {
+        $vendor_id     = $request->get_param( 'vendor_id' );
+        $type          = $request->get_param( 'type' );
+        $attachment_id = $request->get_param( 'attachment_id' );
+
+        $user = get_userdata( $vendor_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Vendor not found.', array( 'status' => 404 ) );
+        }
+        if ( ! wp_attachment_is_image( $attachment_id ) ) {
+            return new WP_Error( 'invalid_attachment', 'Attachment is not an image.', array( 'status' => 422 ) );
+        }
+
+        $key = $type === 'avatar' ? 'gravatar' : 'banner';
+        $d   = get_user_meta( $vendor_id, '_wcfm_vendor_data', true );
+        if ( ! is_array( $d ) ) $d = array();
+        $d[ $key ] = $attachment_id;
+        update_user_meta( $vendor_id, '_wcfm_vendor_data', $d );
+
+        $size = $type === 'avatar' ? 'medium' : 'full';
+        return rest_ensure_response( array(
+            'success' => true,
+            'url'     => wp_get_attachment_image_url( $attachment_id, $size ),
+        ) );
+    }
+
     public static function handle_assign_shipping_zone_owner( $request ) {
         $zone_id   = $request->get_param( 'zone_id' );
         $vendor_id = $request->get_param( 'vendor_id' );

@@ -1824,6 +1824,48 @@
   color: var(--mute);
   text-align: right;
 }
+.vsp-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.vsp-avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper-deep, #ede6d9);
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.vsp-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.vsp-banner-preview {
+  width: 140px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--paper-deep, #ede6d9);
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.vsp-banner-preview img { width: 100%; height: 100%; object-fit: cover; }
+.vsp-photo-placeholder {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  color: var(--mute);
+  text-align: center;
+  padding: 0 6px;
+}
+.vsp-photo-btn {
+  cursor: pointer;
+  white-space: nowrap;
+}
 .vsp-input-prefix-wrap { position: relative; }
 .vsp-input-prefix {
   position: absolute;
