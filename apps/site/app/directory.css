@@ -674,14 +674,19 @@
   margin: 0 0 20px;
 }
 
-.dir-single-body ul {
+/* Tailwind's Preflight resets list-style to none globally — directory entry
+   body copy from WordPress needs real markers restored explicitly. */
+.dir-single-body ul, .dir-single-body ol {
   padding-left: 20px;
   margin: 0 0 20px;
 }
+.dir-single-body ul { list-style: disc outside; }
+.dir-single-body ol { list-style: decimal outside; }
 
 .dir-single-body li {
   margin-bottom: 6px;
 }
+.dir-single-body li::marker { color: var(--dir-ochre); }
 
 /* Tags section */
 .dir-single-tags {

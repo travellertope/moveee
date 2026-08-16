@@ -26,11 +26,12 @@ export default function VendorProfilePage() {
   const { data: session } = useSession();
   const user = session?.user as any;
 
-  const [form,    setForm]    = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
-  const [saved,   setSaved]   = useState(false);
-  const [error,   setError]   = useState("");
+  const [form,      setForm]      = useState<Profile | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [saving,    setSaving]    = useState(false);
+  const [saved,     setSaved]     = useState(false);
+  const [error,     setError]     = useState("");
+  const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
 
   useEffect(() => {
     fetch("/api/vendor/profile")
@@ -42,6 +43,36 @@ export default function VendorProfilePage() {
   function update(field: keyof Profile, value: string) {
     setForm((f) => f ? { ...f, [field]: value } : f);
     setSaved(false);
+  }
+
+  /** Upload a photo to the WP media library, then attach it as this vendor's
+   *  avatar or banner. Two calls by design: /api/vendor/upload handles the
+   *  raw file upload (shared with product image uploads), then
+   *  /api/vendor/profile-image records which attachment is the avatar/banner. */
+  async function uploadPhoto(type: "avatar" | "banner", file: File) {
+    setUploading(type);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const upRes  = await fetch("/api/vendor/upload", { method: "POST", body: fd });
+      const upData = await upRes.json();
+      if (!upRes.ok) throw new Error(upData.error ?? "Upload failed");
+
+      const attachRes  = await fetch("/api/vendor/profile-image", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ type, attachmentId: upData.id }),
+      });
+      const attachData = await attachRes.json();
+      if (!attachRes.ok) throw new Error(attachData.error ?? "Save failed");
+
+      setForm((f) => f ? { ...f, [type]: attachData.url || upData.url } : f);
+    } catch (e: any) {
+      setError(e?.message ?? "Upload failed. Please try again.");
+    } finally {
+      setUploading(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -111,6 +142,59 @@ export default function VendorProfilePage() {
           </Link>
         )}
       </div>
+
+      {error && <div className="vsp-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      {/* Photos — uploaded/attached immediately on file select, independent of the Save button below */}
+      <section className="vsp-section">
+        <div className="vsp-section-title">Photos</div>
+        <div className="vsp-row">
+          <div className="vsp-field-group">
+            <label className="vsp-label">Profile photo</label>
+            <div className="vsp-photo-row">
+              <div className="vsp-avatar-preview">
+                {form.avatar ? (
+                  <img src={form.avatar} alt="Store avatar" />
+                ) : (
+                  <span className="vsp-photo-placeholder">No photo</span>
+                )}
+              </div>
+              <label className="vd-btn-outline vsp-photo-btn">
+                {uploading === "avatar" ? "Uploading…" : form.avatar ? "Change photo" : "Upload photo"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  hidden
+                  disabled={uploading !== null}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto("avatar", f); e.target.value = ""; }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="vsp-field-group">
+            <label className="vsp-label">Store banner</label>
+            <div className="vsp-photo-row">
+              <div className="vsp-banner-preview">
+                {form.banner ? (
+                  <img src={form.banner} alt="Store banner" />
+                ) : (
+                  <span className="vsp-photo-placeholder">No banner</span>
+                )}
+              </div>
+              <label className="vd-btn-outline vsp-photo-btn">
+                {uploading === "banner" ? "Uploading…" : form.banner ? "Change banner" : "Upload banner"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  hidden
+                  disabled={uploading !== null}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto("banner", f); e.target.value = ""; }}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <form className="vsp-form" onSubmit={handleSubmit}>
 
@@ -238,8 +322,6 @@ export default function VendorProfilePage() {
             Open shipping settings in WCFM ↗
           </a>
         </section>
-
-        {error && <div className="vsp-error">{error}</div>}
 
         <div className="vsp-actions">
           <button className="vd-btn-primary" type="submit" disabled={saving}>

@@ -477,6 +477,91 @@ function moveee_vendor_profile( int $product_id ): ?array {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 3b. Maker story (store bio) — editable from the native WP Admin user profile
+//    screen, in addition to the Moveee vendor dashboard's own Store Profile
+//    page (which PUTs to WCFM's `wcfmmp/v1/store-vendors/{id}` REST route).
+//    Reads/writes the exact same storage moveee_vendor_profile_by_id() reads
+//    from (`_wcfm_vendor_data['shop_description']`, WCFM's own canonical
+//    field) so editing here and editing from the vendor dashboard always stay
+//    in sync — this deliberately does NOT introduce a second, disconnected
+//    meta key.
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'show_user_profile', 'moveee_render_vendor_bio_field' );
+add_action( 'edit_user_profile', 'moveee_render_vendor_bio_field' );
+function moveee_render_vendor_bio_field( WP_User $user ): void {
+    $is_vendor = in_array( 'wcfm_vendor', (array) $user->roles, true )
+        || (bool) get_user_meta( $user->ID, '_wcfm_vendor_data', true );
+    if ( ! $is_vendor ) return;
+
+    $d   = get_user_meta( $user->ID, '_wcfm_vendor_data', true );
+    $bio = ( is_array( $d ) ? ( $d['shop_description'] ?? '' ) : '' )
+        ?: get_user_meta( $user->ID, '_wcfmmp_profile_bio', true );
+
+    wp_nonce_field( 'moveee_vendor_bio', 'moveee_vendor_bio_nonce' );
+    ?>
+    <h2>Moveee Maker Story</h2>
+    <table class="form-table">
+        <tr>
+            <th><label for="moveee_vendor_bio">Store bio / maker story</label></th>
+            <td>
+                <textarea name="moveee_vendor_bio" id="moveee_vendor_bio" rows="6" cols="60" maxlength="800"><?php echo esc_textarea( (string) $bio ); ?></textarea>
+                <p class="description">
+                    Shown as this maker's profile everywhere on Moveee, and as the fallback
+                    "About the Maker" text on every one of their products (unless a specific
+                    product has its own override). This is the same field the vendor edits
+                    from their own Store Profile dashboard — editing it here updates the
+                    same value, not a separate copy.
+                </p>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+add_action( 'personal_options_update', 'moveee_save_vendor_bio_field' );
+add_action( 'edit_user_profile_update', 'moveee_save_vendor_bio_field' );
+function moveee_save_vendor_bio_field( int $user_id ): void {
+    if ( ! isset( $_POST['moveee_vendor_bio_nonce'] )
+        || ! wp_verify_nonce( $_POST['moveee_vendor_bio_nonce'], 'moveee_vendor_bio' ) ) {
+        return;
+    }
+    if ( ! current_user_can( 'edit_user', $user_id ) ) return;
+    if ( ! isset( $_POST['moveee_vendor_bio'] ) ) return;
+
+    $bio = sanitize_textarea_field( wp_unslash( $_POST['moveee_vendor_bio'] ) );
+    $d   = get_user_meta( $user_id, '_wcfm_vendor_data', true );
+    if ( ! is_array( $d ) ) $d = [];
+    $d['shop_description'] = $bio;
+    update_user_meta( $user_id, '_wcfm_vendor_data', $d );
+}
+
+// One-time backfill: handle_vendor_apply() (class-culture-rest-api.php) used to
+// write a new vendor's bio under '_wcfm_vendor_data[seller_info]' / '_seller_info'
+// instead of 'shop_description' / '_wcfmmp_profile_bio' — the keys everything else
+// (moveee_vendor_profile_by_id(), the vendor dashboard, the field above) actually
+// reads. Any vendor who applied before that mismatch was fixed has a bio that's
+// silently invisible everywhere. Copies it over once; never overwrites a bio a
+// vendor has since set correctly via the dashboard or the field above.
+add_action( 'init', 'moveee_maybe_backfill_vendor_bio_key' );
+function moveee_maybe_backfill_vendor_bio_key(): void {
+    if ( get_option( 'moveee_vendor_bio_key_backfilled' ) ) return;
+
+    $vendor_ids = get_users( [ 'role' => 'wcfm_vendor', 'fields' => 'ID' ] );
+    foreach ( $vendor_ids as $vendor_id ) {
+        $d = get_user_meta( $vendor_id, '_wcfm_vendor_data', true );
+        if ( ! is_array( $d ) || ! empty( $d['shop_description'] ) ) continue;
+
+        $legacy = $d['seller_info'] ?? get_user_meta( $vendor_id, '_seller_info', true );
+        if ( ! $legacy ) continue;
+
+        $d['shop_description'] = $legacy;
+        update_user_meta( $vendor_id, '_wcfm_vendor_data', $d );
+    }
+
+    update_option( 'moveee_vendor_bio_key_backfilled', 1 );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. Product editorial meta — reads from WooCommerce product custom fields.
 //    When ACF is active the Repeater field for process_steps is stored as an
 //    ACF Repeater; otherwise falls back to the raw JSON string.

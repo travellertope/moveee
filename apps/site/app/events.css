@@ -115,6 +115,14 @@ html {
 .about-text { font-family: var(--font-serif); font-size: 20px; font-weight: 300; line-height: 1.6; color: var(--ink-soft); margin-bottom: 24px; }
 .about-text p { margin-bottom: 1.4em; }
 .about-text p:last-child { margin-bottom: 0; }
+/* Tailwind's Preflight resets list-style to none globally — event
+   descriptions from WordPress need real markers restored explicitly. */
+.about-text ul, .about-text ol { margin: 0 0 1.4em; padding-left: 1.3em; }
+.about-text ul { list-style: disc outside; }
+.about-text ol { list-style: decimal outside; }
+.about-text li { margin-bottom: 0.5em; }
+.about-text li:last-child { margin-bottom: 0; }
+.about-text li::marker { color: var(--ochre); }
 
 /* Pull quote */
 .pull-quote { display: flex; gap: 24px; margin: 48px 0; }
