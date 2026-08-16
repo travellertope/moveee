@@ -535,6 +535,32 @@ function moveee_save_vendor_bio_field( int $user_id ): void {
     update_user_meta( $user_id, '_wcfm_vendor_data', $d );
 }
 
+// One-time backfill: handle_vendor_apply() (class-culture-rest-api.php) used to
+// write a new vendor's bio under '_wcfm_vendor_data[seller_info]' / '_seller_info'
+// instead of 'shop_description' / '_wcfmmp_profile_bio' — the keys everything else
+// (moveee_vendor_profile_by_id(), the vendor dashboard, the field above) actually
+// reads. Any vendor who applied before that mismatch was fixed has a bio that's
+// silently invisible everywhere. Copies it over once; never overwrites a bio a
+// vendor has since set correctly via the dashboard or the field above.
+add_action( 'init', 'moveee_maybe_backfill_vendor_bio_key' );
+function moveee_maybe_backfill_vendor_bio_key(): void {
+    if ( get_option( 'moveee_vendor_bio_key_backfilled' ) ) return;
+
+    $vendor_ids = get_users( [ 'role' => 'wcfm_vendor', 'fields' => 'ID' ] );
+    foreach ( $vendor_ids as $vendor_id ) {
+        $d = get_user_meta( $vendor_id, '_wcfm_vendor_data', true );
+        if ( ! is_array( $d ) || ! empty( $d['shop_description'] ) ) continue;
+
+        $legacy = $d['seller_info'] ?? get_user_meta( $vendor_id, '_seller_info', true );
+        if ( ! $legacy ) continue;
+
+        $d['shop_description'] = $legacy;
+        update_user_meta( $vendor_id, '_wcfm_vendor_data', $d );
+    }
+
+    update_option( 'moveee_vendor_bio_key_backfilled', 1 );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. Product editorial meta — reads from WooCommerce product custom fields.
 //    When ACF is active the Repeater field for process_steps is stored as an

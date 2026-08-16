@@ -5257,18 +5257,24 @@ class Culture_REST_API {
         // Assign vendor role.
         $user->add_role( 'wcfm_vendor' );
 
-        // Core WCFM vendor data.
+        // Core WCFM vendor data. 'shop_description' (not 'seller_info') is the
+        // key moveee_vendor_profile_by_id() (moveee-graphql-bridge.php) and the
+        // vendor dashboard's Store Profile page both read as the bio — using
+        // any other key here means a bio set at application time would never
+        // show up anywhere until the vendor re-saved it elsewhere.
         $wcfm_vendor_data = array(
-            'store_name'  => $store_name,
-            'store_url'   => $slug,
-            'seller_info' => $bio,
+            'store_name'       => $store_name,
+            'store_url'        => $slug,
+            'shop_description' => $bio,
         );
         update_user_meta( $user_id, '_wcfm_vendor_data', $wcfm_vendor_data );
         update_user_meta( $user_id, '_store_url',    $slug );
         update_user_meta( $user_id, '_store_name',   $store_name );
 
-        // WCFM profile extras.
-        if ( $bio )       update_user_meta( $user_id, '_seller_info',     $bio );
+        // WCFM profile extras. '_wcfmmp_profile_bio' is the standalone-meta
+        // fallback moveee_vendor_profile_by_id() checks when the array key
+        // above is empty — same reasoning as above, not '_seller_info'.
+        if ( $bio )       update_user_meta( $user_id, '_wcfmmp_profile_bio', $bio );
         if ( $country )   update_user_meta( $user_id, '_store_country',   $country );
         if ( $category )  update_user_meta( $user_id, '_store_category',  $category );
         if ( $instagram ) update_user_meta( $user_id, '_wcfm_instagram',  $instagram );
