@@ -76,7 +76,7 @@ export async function generateMetadata({
   const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
 
   return {
-    title: `${issue.title} · ${listLabel}`,
+    title: `${issue.title} · ${listLabel} | Moveee Magazine`,
     description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
     openGraph: {
       title: issue.title,
