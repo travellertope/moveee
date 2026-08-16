@@ -168,7 +168,18 @@ export default async function ProductPage({
   // render as the interactive swatches/selectors in ProductSelectors.
   const specAttributes: { name: string; options: string[] }[] = (product.attributes?.nodes ?? [])
     .filter((a: any) => !a.variation && a.options?.length)
-    .map((a: any) => ({ name: a.name, options: a.options }));
+    .map((a: any) => {
+      // Global (pa_-prefixed, taxonomy-backed) attributes: `options`/`name` are
+      // raw term/taxonomy slugs (e.g. "pa_capacity", "3-litres") — `label` and
+      // `terms.nodes[].name` carry the human-readable versions instead. Local
+      // (per-product, non-taxonomy) attributes have no `terms` at all, and
+      // their `name`/`options` are already plain text, so those fall through.
+      const terms = a.terms?.nodes;
+      return {
+        name: a.label || a.name,
+        options: terms?.length ? terms.map((t: any) => t.name) : a.options,
+      };
+    });
 
   // Process steps — only use if genuinely set in WordPress; never show generic fallback
   interface ProcessStep { title: string; desc: string; duration?: string }
