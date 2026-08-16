@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: QuotePageProps): Promise<Meta
   const data = await getWPQuoteById({ id });
   const quote = data?.cultureQuote;
 
-  if (!quote) return { title: 'Quote Not Found' };
+  if (!quote) return { title: { absolute: 'Quote Not Found | Moveee' } };
 
   const author = quote.quoteAuthors?.nodes[0]?.name || 'Unknown Author';
 

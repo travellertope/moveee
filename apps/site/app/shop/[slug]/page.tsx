@@ -133,14 +133,13 @@ export default async function ProductPage({
   const allImages = [...(mainImage ? [mainImage] : []), ...gallery].slice(0, 5);
 
   // ── Vendor profile (from WCFM via moveee-graphql-bridge) ──────────────────
+  // Only the maker's name/bio and a link to their profile are shown, inside
+  // the "About the Maker" accordion tab — the dedicated portrait/stats
+  // sections were removed as too heavy for this page (see /makers/[slug]
+  // for the full maker profile).
   const vp = product.vendorProfile ?? {};
-  const vname: string           = vp.storeName    || "";
-  const vendorDesc: string      = vp.bio          || "";
-  const vendorCity: string      = vp.city         || "";
-  const vendorYears: string     = vp.yearsActive  || "";
-  const vendorRating: string    = vp.rating       || "";
-  const vendorProductCount: string = vp.productCount ? String(vp.productCount) : "";
-  const vendorAvatarUrl: string = vp.avatarUrl    || "";
+  const vname: string      = vp.storeName || "";
+  const vendorDesc: string = vp.bio       || "";
 
   // Session-dependent Pro perks are rendered client-side in ShopSessionSection
 
@@ -168,7 +167,18 @@ export default async function ProductPage({
   // render as the interactive swatches/selectors in ProductSelectors.
   const specAttributes: { name: string; options: string[] }[] = (product.attributes?.nodes ?? [])
     .filter((a: any) => !a.variation && a.options?.length)
-    .map((a: any) => ({ name: a.name, options: a.options }));
+    .map((a: any) => {
+      // Global (pa_-prefixed, taxonomy-backed) attributes: `options`/`name` are
+      // raw term/taxonomy slugs (e.g. "pa_capacity", "3-litres") — `label` and
+      // `terms.nodes[].name` carry the human-readable versions instead. Local
+      // (per-product, non-taxonomy) attributes have no `terms` at all, and
+      // their `name`/`options` are already plain text, so those fall through.
+      const terms = a.terms?.nodes;
+      return {
+        name: a.label || a.name,
+        options: terms?.length ? terms.map((t: any) => t.name) : a.options,
+      };
+    });
 
   // Process steps — only use if genuinely set in WordPress; never show generic fallback
   interface ProcessStep { title: string; desc: string; duration?: string }
@@ -226,13 +236,20 @@ export default async function ProductPage({
     // About the Maker — only shown when vendor has a name or bio in WCFM
     ...(vname || vendorDesc ? [{
       title: "About the Maker",
-      content: vendorDesc ? (
-        <p>{vendorDesc}</p>
-      ) : (
-        <p>
-          {vname} is a vetted Moveee partner. Every maker is personally reviewed
-          for craft integrity, fair production practices, and lasting quality.
-        </p>
+      content: (
+        <>
+          {vendorDesc ? (
+            <p>{vendorDesc}</p>
+          ) : (
+            <p>
+              {vname} is a vetted Moveee partner. Every maker is personally reviewed
+              for craft integrity, fair production practices, and lasting quality.
+            </p>
+          )}
+          <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="sp-maker-profile-link">
+            View {vname ? `${vname}’s` : "maker"} profile →
+          </Link>
+        </>
       ),
     }] : []),
   ];
@@ -367,50 +384,6 @@ export default async function ProductPage({
         </section>
       )}
 
-      {/* ── MAKER STORY — only when maker story text or vendor name exists ── */}
-      {(makerStory || vname) && (
-        <section className="sp-story">
-          <div className="sp-story-header">
-            <div>
-              <span className="sp-story-eyebrow">Origins Journal</span>
-              <h2>The <em>maker</em> behind it</h2>
-              {vname && (
-                <p>A portrait of {vname} — their process, their place, their obsession with craft.</p>
-              )}
-            </div>
-          </div>
-          <div className="sp-story-body">
-            {(vendorAvatarUrl || mainImage?.sourceUrl) && (
-              <div className="sp-story-image">
-                <Image
-                  src={vendorAvatarUrl || mainImage.sourceUrl}
-                  alt={vname || product.name}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-              </div>
-            )}
-            <div className="sp-story-text">
-              {makerStory ? (
-                // Per-product override — only needed when this specific piece has its
-                // own story worth telling separately from the maker's usual bio.
-                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(makerStory) }} />
-              ) : vendorDesc ? (
-                // Falls back to the vendor's own bio (set once on their WCFM profile)
-                // so a maker never has to retype the same story on every product.
-                <p>{vendorDesc}</p>
-              ) : (
-                <p>
-                  {vname} is a vetted Moveee partner — personally reviewed for craft
-                  integrity, fair production practices, and lasting quality.
-                  {vendorCity && ` Based in ${vendorCity}.`}
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── PROCESS — only when process_steps is set in WordPress; numbering is a real sequence ── */}
       {processSteps.length > 0 && (
         <section className="sp-process">
@@ -428,57 +401,6 @@ export default async function ProductPage({
                 {step.duration && <span className="duration">{step.duration}</span>}
               </div>
             ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── VENDOR PROFILE — only when the vendor has a name in WCFM ── */}
-      {vname && (
-        <section className="sp-vendor-profile">
-          <div className="sp-vendor-card">
-            <div className="sp-vendor-visual">
-              {(vendorAvatarUrl || mainImage?.sourceUrl) && (
-                <Image
-                  src={vendorAvatarUrl || mainImage.sourceUrl}
-                  alt={vname}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-              )}
-            </div>
-            <div className="sp-vendor-body">
-              <div className="sp-vendor-tag">
-                Vetted Maker{vendorCity && ` · ${vendorCity}`}
-              </div>
-              <h2>{vname}</h2>
-              {vendorDesc && <p className="sp-vendor-desc">{vendorDesc}</p>}
-              <div className="sp-vendor-stats">
-                {vendorYears && (
-                  <div className="sp-vendor-stat">
-                    <div className="num">{vendorYears}</div>
-                    <span className="label">Years making</span>
-                  </div>
-                )}
-                <div className="sp-vendor-stat">
-                  <div className="num">{vendorProductCount || relatedProducts.length + 1}</div>
-                  <span className="label">Products in shop</span>
-                </div>
-                <div className="sp-vendor-stat">
-                  <div className="num">{vendorRating ? `★ ${vendorRating}` : "★ Vetted"}</div>
-                  <span className="label">Moveee rating</span>
-                </div>
-              </div>
-              <div className="sp-vendor-cta-row">
-                <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="btn-outline">
-                  View maker profile
-                </Link>
-                {firstCategory && (
-                  <Link href={`/shop/category/${firstCategory}`} className="btn-filled">
-                    More from {vname}
-                  </Link>
-                )}
-              </div>
-            </div>
           </div>
         </section>
       )}

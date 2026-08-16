@@ -42,9 +42,15 @@ export const metadata: Metadata = {
   verification: {
     google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
   },
+  // No `template` here on purpose — every page in this app already builds
+  // its own complete, final title (including the "| Moveee" / "| Moveee
+  // Magazine" brand suffix per the convention documented in CLAUDE.md).
+  // A parent template appends its suffix to whatever a page returns, so
+  // having one here double-suffixed almost every page site-wide (e.g.
+  // "Moveee — Culture in Britain | Moveee"). `default` alone is fine — it's
+  // used verbatim by any page that sets no title of its own, never templated.
   title: {
     default: "Moveee — Culture. Discover and Engage.",
-    template: "%s | Moveee",
   },
   description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
   alternates: {

@@ -1933,6 +1933,18 @@
   padding-top: 2px;
 }
 .sp-acc-body-inner dd { color: var(--ink); }
+.sp-maker-profile-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.sp-maker-profile-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── AS SEEN IN — slim tinted bridge, matches the archive page's .sl-bridge ── */
 .sp-seen {

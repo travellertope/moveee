@@ -1464,13 +1464,25 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
-      attributes { nodes { name options variation } }
+      attributes { nodes {
+        name
+        label
+        options
+        variation
+        ... on GlobalProductAttribute { terms { nodes { name } } }
+      } }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
-      attributes { nodes { name options variation } }
+      attributes { nodes {
+        name
+        label
+        options
+        variation
+        ... on GlobalProductAttribute { terms { nodes { name } } }
+      } }
       variations(first: 12) {
         nodes {
           price
