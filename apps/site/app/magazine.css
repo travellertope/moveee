@@ -234,7 +234,7 @@
 /* ── SECTION BAND: Featured Stories ── */
 .mg-band {
   background: var(--paper, #fff);
-  padding: 64px 0 80px;
+  padding: 48px 0 56px;
   border-top: 1px solid rgba(200,191,176,.4);
 }
 .mg-band-inner {
@@ -423,8 +423,8 @@
 /* ── PORTRAIT SCROLL: In Focus ── */
 .mg-portrait {
   border-top: 1px solid rgba(200,191,176,.4);
-  padding-top: 64px;
-  padding-bottom: 80px;
+  padding-top: 48px;
+  padding-bottom: 56px;
 }
 .mg-portrait-header {
   padding: 0 64px;
@@ -505,7 +505,7 @@
 .mg-edit {
   background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
-  padding: 80px 0;
+  padding: 56px 0;
 }
 .mg-edit-inner {
   max-width: calc(1200px + 128px);
@@ -637,7 +637,7 @@
 .mg-digest {
   background: var(--paper, #fff);
   border-top: 1px solid rgba(200,191,176,.3);
-  padding: 80px 0;
+  padding: 56px 0;
 }
 .mg-digest-inner {
   max-width: calc(1200px + 128px);
@@ -700,7 +700,7 @@
 /* ── OPINIONS & ESSAYS ── */
 .mg-opinions {
   border-top: 1px solid rgba(200,191,176,.3);
-  padding: 80px 0;
+  padding: 56px 0;
 }
 .mg-opinions-inner {
   max-width: calc(1200px + 128px);
@@ -1076,15 +1076,15 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .mg-hero { padding: 48px 32px; }
-  .mg-band { padding: 48px 0 64px; }
+  .mg-band { padding: 40px 0 48px; }
   .mg-band-inner { padding: 0 32px; }
   .mg-band-grid { grid-template-columns: repeat(2, 1fr); }
   .mg-week-row { grid-template-columns: repeat(2, 1fr); }
-  .mg-edit { padding: 48px 0; }
+  .mg-edit { padding: 40px 0; }
   .mg-edit-inner { padding: 0 32px; }
   .mg-portrait-scroll { padding: 0 32px 8px; }
   .mg-portrait-header { padding: 0 32px; }
-  .mg-digest { padding: 64px 0; }
+  .mg-digest { padding: 40px 0; }
   .mg-digest-inner { padding: 0 32px; }
   .mg-digest-grid { grid-template-columns: repeat(2, 1fr); }
   .mg-opinions-inner { padding: 0 32px; }
@@ -1102,18 +1102,18 @@
   .mg-nav-filters { padding-top: 8px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
   .mg-nav-filters::-webkit-scrollbar { display: none; }
   .mg-hero { padding: 32px 16px; }
-  .mg-band { padding: 32px 0 48px; }
+  .mg-band { padding: 32px 0 40px; }
   .mg-band-inner { padding: 0 16px; }
   .mg-band-grid { grid-template-columns: 1fr; }
   .mg-week-row { grid-template-columns: 1fr; }
-  .mg-edit { padding: 40px 0; }
+  .mg-edit { padding: 32px 0; }
   .mg-edit-inner { padding: 0 16px; }
   .mg-portrait-scroll { padding: 0 16px 8px; }
   .mg-portrait-header { padding: 0 16px; }
-  .mg-digest { padding: 48px 0; }
+  .mg-digest { padding: 32px 0; }
   .mg-digest-inner { padding: 0 16px; }
   .mg-digest-grid { grid-template-columns: repeat(2, 1fr); }
-  .mg-opinions { padding: 48px 0; }
+  .mg-opinions { padding: 32px 0; }
   .mg-opinions-inner { padding: 0 16px; }
   .mg-cta-section { padding: 40px 16px; }
   .mg-filtered { padding: 40px 16px 80px; }
