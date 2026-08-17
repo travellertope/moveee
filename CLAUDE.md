@@ -1187,6 +1187,29 @@ to `/magazine/app`.
 2. Delete `apps/site/app/app/` (or repurpose it).
 3. Uncomment the disabled `if (pathname === '/')` geo-redirect block in `proxy.ts`.
 4. `'app'` can stay in `APP_ROUTES` harmlessly, or be removed if the route no longer exists.
+5. Revert `MagazineArchiveWrapper`'s `edition` prop / `getMainPool()` helper if nothing else ends
+   up using them (see below — as of this entry, `/` is the only caller that passes `edition`).
+
+**Front page is edition-scoped, not just a flat swap (added same day).** Since the geo-redirect
+is off, `/` itself now does the edition detection that redirect used to do: `apps/site/app/page.tsx`
+reads the `moveee-edition` cookie (must stay in sync with `EDITION_COOKIE` in `proxy.ts` — not
+importable from there, so it's a duplicated literal) or, failing that, `x-vercel-ip-country` via
+`editionFromCountry()`, and passes the result as a new `edition` prop to `MagazineArchiveWrapper`.
+This makes the page dynamic (`export const dynamic = "force-dynamic"` — required because it reads
+`headers()`/`cookies()`; the underlying WP data is still Vercel-KV-cached per `getWPData`'s own TTL
+handling, same as `/newsletter`, so this doesn't mean an uncached WP hit on every request).
+
+`MagazineArchiveWrapper`'s `edition` prop only affects the **default, unfiltered view's main story
+pool** (hero + "More This Week" row + Featured Stories band) — when set to `uk`/`us`/`africa`, that
+pool is assembled via `getMainPool()`'s edition-scoped-posts-plus-universal-filler fetch (identical
+pattern to `fetchHomepageData.ts`'s `country`-taxonomy edition scoping — see "Homepage queries" /
+"Edition story-scoping migrated from Tags to the `country` taxonomy" above for the taxonomy
+background). The pinned sections (Culture News/News category, Opinions/Viewpoints, The Lane series,
+The Free Critics series) and every filtered view (`?category=`/`?series=`/etc.) stay global/unscoped
+— matches `fetchHomepageData.ts`'s own scope exactly (it only edition-scopes `stories`/`coverStory`,
+nothing else). `/magazine`, `/magazine/uk`, `/magazine/us`, `/magazine/africa` don't pass `edition`
+and are unaffected — this is additive, opt-in per caller, not a change to how `/magazine` itself
+renders.
 
 ### Site A header nav — Shop/Newsletter/Events added (August 2026)
 
