@@ -926,12 +926,30 @@
 }
 .sl-member {
   position: relative;
-  background: linear-gradient(160deg, #3d3020, #14110d 60%);
+  /* Photo: "Potter shaping clay on a traditional manual potter's wheel in
+     India 01" by Gannu03, CC BY-SA 4.0, via Wikimedia Commons — the tinted
+     gradient layer (kept semi-opaque rather than solid) both darkens the
+     photo enough for the white text to stay legible and preserves the
+     section's original warm-brown palette. */
+  background:
+    linear-gradient(160deg, rgba(61,48,32,.86), rgba(20,17,13,.92) 60%),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg/1920px-Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg') center/cover;
   border-radius: 20px;
   overflow: hidden;
   min-height: 460px;
   display: flex;
   align-items: stretch;
+}
+.sl-member-photo-credit {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  z-index: 2;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .02em;
+  color: rgba(243,236,224,.4);
+  pointer-events: none;
 }
 .sl-member::after {
   content: '';
@@ -1050,13 +1068,21 @@
   max-width: 1440px;
   margin: 0 auto;
   width: 100%;
+  padding: 0 64px;
+  box-sizing: border-box;
   display: flex;
   align-items: stretch;
 }
 .sl-origins-img {
   flex: 0 0 50%;
   min-height: 480px;
-  background: linear-gradient(135deg, #2a1a0e 0%, #5c3d1e 50%, #8a5a2a 100%);
+  /* Photo: "Woodworking workshop" by wengenroad on Unsplash, CC0, via
+     Wikimedia Commons. The gradient is a light tint (not a heavy overlay,
+     since there's no text on top of this box) to keep the warm palette
+     consistent with the rest of the page. */
+  background:
+    linear-gradient(135deg, rgba(42,26,14,.28) 0%, rgba(138,90,42,.12) 100%),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Woodworking_workshop_%28Unsplash%29.jpg/1920px-Woodworking_workshop_%28Unsplash%29.jpg') center/cover;
   margin: 24px;
   border-radius: 20px;
   overflow: hidden;
@@ -1134,7 +1160,7 @@
   .sl-member-left { flex: none; width: 100%; padding: 56px 40px; }
   .sl-member-right { flex: none; width: 100%; min-height: 200px; padding: 32px; }
   .sl-origins { flex-direction: column; min-height: auto; }
-  .sl-origins-inner { flex-direction: column; }
+  .sl-origins-inner { flex-direction: column; padding: 0 24px; }
   .sl-origins-img { flex: none; min-height: 280px; }
   .sl-origins-content { flex: none; padding: 56px 40px; }
   .sl-head-inner,
@@ -1202,7 +1228,8 @@
   .sl-member-cta { align-self: stretch; justify-content: center; }
 
   /* Origins bridge */
-  .sl-origins-img { margin: 12px 12px 0; border-radius: 14px; min-height: 220px; }
+  .sl-origins-inner { padding: 0 16px; }
+  .sl-origins-img { margin: 12px 0 0; border-radius: 14px; min-height: 220px; }
   .sl-origins-content { padding: 36px 20px; }
   .sl-origins-content h3 { font-size: 30px; }
 
