@@ -28,37 +28,66 @@ interface MagazineArchiveProps {
   edition?: EditionSlug;
 }
 
+async function getGlobalPool(): Promise<any[]> {
+  const data = await getWPData(GET_STORIES, { first: 40 });
+  return data?.posts?.nodes || [];
+}
+
 // Main-pool fetch for the default (unfiltered) view — edition-scoped by the
 // `country` taxonomy when a visitor's edition is known, otherwise the plain
 // latest-40 pool. Pulled out of the component so the edition/global branches
 // can run inside the same Promise.all as the pinned-section fetches below.
+//
+// Never throws and never resolves empty when the plain global pool has
+// content: any failure in the edition-scoped path (or a pool that ends up
+// empty — e.g. no posts currently tagged for that edition, or the REST
+// country-lookup failing independently of the main GraphQL fetch) falls
+// back to getGlobalPool() rather than leaving the whole front page blank.
+// The rest of MagazineArchiveWrapper's story fetches (pinned sections,
+// GET_FILTERS) have no equivalent edition-specific step and were already
+// resilient to this — this function is the one new failure surface the
+// `edition` prop introduced, so it gets its own explicit safety net rather
+// than relying on the outer try/catch (which would blank every section,
+// not just the main pool, if this ever threw uncaught).
 async function getMainPool(edition: EditionSlug | undefined): Promise<any[]> {
   if (!edition || edition === "global") {
-    const data = await getWPData(GET_STORIES, { first: 40 });
-    return data?.posts?.nodes || [];
+    return getGlobalPool();
   }
 
-  const countrySlugs = (EDITIONS[edition]?.countrySlugs ?? []) as unknown as string[];
-  const [editionPosts, latestData] = await Promise.all([
-    getStoriesByCountrySlugs(countrySlugs, 40, { revalidate: 300 }),
-    getWPData(GET_STORIES, { first: 40 }),
-  ]);
-  const latestPosts: any[] = latestData?.posts?.nodes || [];
+  try {
+    const countrySlugs = (EDITIONS[edition]?.countrySlugs ?? []) as unknown as string[];
+    const [editionPosts, latestData] = await Promise.all([
+      getStoriesByCountrySlugs(countrySlugs, 40, { revalidate: 300 }),
+      getWPData(GET_STORIES, { first: 40 }),
+    ]);
+    const latestPosts: any[] = latestData?.posts?.nodes || [];
 
-  // A post only counts as "universal" filler if it isn't tagged to ANY
-  // edition's countries — same rule fetchHomepageData.ts applies so a
-  // Nigeria-tagged post never shows as generic filler on the UK edition.
-  const allEditionCountrySlugs = new Set(
-    Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
-  );
-  const editionIds = new Set(editionPosts.map((p: any) => p.id));
-  const universalPosts = latestPosts.filter((p: any) => {
-    if (editionIds.has(p.id)) return false;
-    const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
-    return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
-  });
+    // A post only counts as "universal" filler if it isn't tagged to ANY
+    // edition's countries — same rule fetchHomepageData.ts applies so a
+    // Nigeria-tagged post never shows as generic filler on the UK edition.
+    const allEditionCountrySlugs = new Set(
+      Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
+    );
+    const editionIds = new Set(editionPosts.map((p: any) => p.id));
+    const universalPosts = latestPosts.filter((p: any) => {
+      if (editionIds.has(p.id)) return false;
+      const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
+      return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
+    });
 
-  return [...editionPosts, ...universalPosts];
+    const pool = [...editionPosts, ...universalPosts];
+    if (pool.length > 0) return pool;
+
+    // Both fetches came back empty (e.g. nothing tagged for this edition
+    // right now, or a transient failure on one side while the other still
+    // returned a well-formed empty result) — fall back rather than show
+    // an empty homepage for this edition.
+    console.warn(`[magazine-edition] empty pool for edition "${edition}", falling back to global`);
+    return getGlobalPool();
+  } catch (err: any) {
+    console.error(`[magazine-edition] getMainPool failed for edition "${edition}":`, err?.message || err);
+    return getGlobalPool();
+  }
 }
 
 export default async function MagazineArchiveWrapper({
@@ -152,8 +181,11 @@ export default async function MagazineArchiveWrapper({
           !usedElsewhereIds.has(p.id)
       );
     }
-  } catch {
-    // CMS unreachable
+  } catch (err: any) {
+    // CMS unreachable — was previously a silent no-op, which made a blank
+    // page here undiagnosable in Vercel logs. Now logged (still degrades
+    // to an empty archive rather than erroring the page).
+    console.error("[magazine-archive] story fetch failed:", err?.message || err);
   }
 
   const allFetchedCats =
