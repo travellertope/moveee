@@ -42,15 +42,18 @@ export const metadata: Metadata = {
   verification: {
     google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
   },
-  // No `template` here on purpose — every page in this app already builds
-  // its own complete, final title (including the "| Moveee" / "| Moveee
-  // Magazine" brand suffix per the convention documented in CLAUDE.md).
-  // A parent template appends its suffix to whatever a page returns, so
-  // having one here double-suffixed almost every page site-wide (e.g.
-  // "Moveee — Culture in Britain | Moveee"). A plain string is used verbatim
-  // by any page that sets no title of its own and is never templated — the
-  // `{ default }` object form requires a `template` field in Next's Metadata
-  // type, which is exactly what this must avoid.
+  // Plain string, not `{ default, template }` — every page in this app
+  // already builds its own complete, final title (including the "| Moveee" /
+  // "| Moveee Magazine" brand suffix per the convention documented in
+  // CLAUDE.md). A `template` here would append its suffix to whatever a page
+  // returns, which double-suffixed almost every page site-wide (e.g. "Moveee
+  // — Culture in Britain | Moveee"). A plain string is used verbatim as the
+  // default for any page that sets no title of its own, and — critically —
+  // is NOT combined with a child page's own title the way `template` is.
+  // (Next.js's `Metadata` type also requires `template` whenever `title` is
+  // an object with `default`, so `{ default: "..." }` alone doesn't even
+  // type-check — this plain-string form is the correct way to get
+  // default-without-template behavior.)
   title: "Moveee — Culture. Discover and Engage.",
   description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
   alternates: {

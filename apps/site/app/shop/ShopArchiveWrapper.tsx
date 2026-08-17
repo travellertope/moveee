@@ -333,12 +333,14 @@ export default async function ShopArchiveWrapper({
               <div className="sl-member-stat-label">Members &amp; growing</div>
             </div>
           </div>
+          <span className="sl-member-photo-credit">Photo: Gannu03 / Wikimedia Commons, CC BY-SA 4.0</span>
         </section>
       </div>
 
       {/* ── 9. LIFESTYLE EDIT CLOSING BRIDGE ── */}
       <section className="sl-origins">
         <div className="sl-origins-inner">
+          {/* Photo: "Woodworking workshop" by wengenroad on Unsplash, CC0, via Wikimedia Commons — no attribution required under CC0. */}
           <div className="sl-origins-img" />
           <div className="sl-origins-content">
             <div className="sl-origins-label">The Lifestyle Edit</div>
