@@ -64,6 +64,7 @@ async function getWPRedirects() {
 // Add to this set as you create new pages.
 // Site A routes only — community/auth routes live on web.themoveee.com
 const APP_ROUTES = new Set([
+  'app',
   'magazine',
   'journeys',
   'newsletter',
@@ -171,20 +172,27 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // On the exact homepage, geo-redirect first-time visitors to their edition
-  if (pathname === '/') {
-    const saved = request.cookies.get(EDITION_COOKIE)?.value
-    if (saved && isValidRegionalSlug(saved)) {
-      return NextResponse.redirect(new URL(`/${saved}`, request.url))
-    }
-    const country = request.headers.get('x-vercel-ip-country') ?? ''
-    const edition = editionFromCountry(country)
-    if (edition !== 'global') {
-      const res = NextResponse.redirect(new URL(`/${edition}`, request.url))
-      res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
-      return res
-    }
-  }
+  // TEMPORARILY DISABLED (see app/page.tsx): while /magazine is standing in
+  // as the front page, we don't want UK/US/Africa visitors geo-redirected
+  // away from "/" to the /uk /us /africa edition homepages (which still
+  // render the old HomepageContent, not the magazine front page) — that
+  // would defeat the point of the swap for most of the site's traffic.
+  // Re-enable this block (restore the code below) at the same time the
+  // homepage swap is reverted.
+  //
+  // if (pathname === '/') {
+  //   const saved = request.cookies.get(EDITION_COOKIE)?.value
+  //   if (saved && isValidRegionalSlug(saved)) {
+  //     return NextResponse.redirect(new URL(`/${saved}`, request.url))
+  //   }
+  //   const country = request.headers.get('x-vercel-ip-country') ?? ''
+  //   const edition = editionFromCountry(country)
+  //   if (edition !== 'global') {
+  //     const res = NextResponse.redirect(new URL(`/${edition}`, request.url))
+  //     res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+  //     return res
+  //   }
+  // }
 
   // ── Site B redirects — moved to web.themoveee.com ───────────
   const CONNECT = 'https://web.themoveee.com'
