@@ -35,6 +35,12 @@ class Culture_Settings {
         'culture_stripe_price_monthly_usd'     => '',
         'culture_stripe_price_yearly_usd'      => '',
 
+        // Payment (Google Play Billing — Android app Moveee Pro upgrade).
+        'culture_google_play_package_name'              => 'com.moveee.connect',
+        'culture_google_play_service_account_json'      => '',
+        'culture_google_play_product_monthly'           => 'moveee_pro_monthly',
+        'culture_google_play_product_annual'            => 'moveee_pro_annual',
+
         // Shop.
         'culture_shop_fx_ngn_per_gbp'          => 1900,
         'culture_shop_flat_shipping_gbp'       => 4.99,
@@ -225,6 +231,12 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_secret_key', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
+
+        // Google Play Billing (Android app Moveee Pro upgrade).
+        register_setting( 'culture_settings_payment', 'culture_google_play_package_name', $text );
+        register_setting( 'culture_settings_payment', 'culture_google_play_service_account_json', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+        register_setting( 'culture_settings_payment', 'culture_google_play_product_monthly', $text );
+        register_setting( 'culture_settings_payment', 'culture_google_play_product_annual', $text );
 
         // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
@@ -512,6 +524,44 @@ class Culture_Settings {
                     <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
                            value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
                     <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Google Play Billing (Android app)', 'culture-community' ); ?></h3>
+        <p class="description">
+            <?php esc_html_e( 'Powers the Moveee Pro upgrade purchased inside the Android app. Requires a subscription product created in Play Console (Monetize → Subscriptions) under this package name, and a service account with access to the Google Play Developer API (Play Console → Setup → API access) — paste that service account\'s downloaded JSON key below. The two Product ID fields must match the subscription IDs exactly as created in Play Console.', 'culture-community' ); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_google_play_package_name"><?php esc_html_e( 'Package Name', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_play_package_name" name="culture_google_play_package_name"
+                           value="<?php echo esc_attr( self::get( 'culture_google_play_package_name' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Must match the Android app\'s applicationId (app.config.ts → android.package).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_play_service_account_json"><?php esc_html_e( 'Service Account JSON', 'culture-community' ); ?></label></th>
+                <td>
+                    <textarea id="culture_google_play_service_account_json" name="culture_google_play_service_account_json"
+                              rows="6" class="large-text code"><?php echo esc_textarea( self::get( 'culture_google_play_service_account_json' ) ); ?></textarea>
+                    <p class="description"><?php esc_html_e( 'The full contents of the service account JSON key file downloaded from Google Cloud Console. Keep this private — it grants API access to your Play Console app.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_play_product_monthly"><?php esc_html_e( 'Monthly Subscription Product ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_play_product_monthly" name="culture_google_play_product_monthly"
+                           value="<?php echo esc_attr( self::get( 'culture_google_play_product_monthly' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_play_product_annual"><?php esc_html_e( 'Annual Subscription Product ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_play_product_annual" name="culture_google_play_product_annual"
+                           value="<?php echo esc_attr( self::get( 'culture_google_play_product_annual' ) ); ?>" class="regular-text" />
                 </td>
             </tr>
         </table>

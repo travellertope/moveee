@@ -5993,6 +5993,76 @@ forwarded/leaked link can't delete an account outright.
 
 ---
 
+## Google Play Billing — Moveee Pro upgrade on Android (August 2026)
+
+Moveee Pro's Android upgrade goes through real Google Play Billing now, not a web-
+checkout redirect — the redirect risked a Payments-policy rejection (an app unlocking
+in-app digital features via an external checkout), flagged during Play Store submission
+prep (see `docs/play-store-listing.md`). A client-reported purchase is never trusted on
+its own — every purchase token is verified against the Play Developer API server-side
+before Pro is granted, matching the existing Stripe/Paystack posture.
+
+**Restored, not new**: `react-native-iap` and its Android store-flavor config plugin
+(`apps/mobile/plugins/withAndroidIapStoreFlavor.js` — the file itself was never
+deleted, only unwired) had been deliberately stripped from `package.json`/`app.config.ts`
+to unblock early preview builds (see the "Production build checklist" table above,
+which is now stale on this point — both are back). Lockfile regenerated via the
+documented out-of-tree process.
+
+- **Client** (`apps/mobile`): `src/config/iap.ts` — the two subscription SKU constants
+  (`moveee_pro_monthly` / `moveee_pro_annual`) that must match Play Console and the WP
+  Admin setting below exactly. `src/features/billing/iap.ts` — `initIAP()`/`endIAP()`,
+  `getProSubscriptions()`, `purchaseProSubscription()` (wraps react-native-iap's
+  purchase-updated/error listeners into one promise that only resolves after our
+  backend verifies the purchase). Android's Billing Library v5+ requires an explicit
+  `offerToken` per SKU, not a bare SKU string — pulled from the live subscription's own
+  `subscriptionOfferDetails` rather than hardcoded, so a promotional offer added later
+  in Play Console keeps working with no code change.
+- **`MembershipScreen.tsx`**: on Android, fetches both subscriptions on mount and shows
+  Monthly/Annual buttons with live store-formatted prices — falls back to the original
+  "Upgrade on the web" button if Play Billing is unavailable (no Play Services, some
+  emulators). iOS is untouched, still redirects to web checkout — StoreKit wiring is
+  separate, out-of-scope work.
+- **Backend**: `culture-community/includes/core/class-culture-google-play-billing.php`
+  (`Culture_Google_Play_Billing::verify_and_grant()`) — signs its own OAuth2
+  service-account JWT with `openssl_sign()` (RS256) and calls the Play Developer API via
+  raw `wp_remote_request()`, no Google API client library / Composer dependency, same
+  "raw HTTP, no SDK" convention as `class-culture-r2.php`'s hand-rolled AWS SigV4
+  signer. Checks `paymentState`/`expiryTimeMillis` before granting anything; **rejects
+  any `product_id` that isn't one of the two configured subscription IDs** (so a valid
+  purchase token for some unrelated product under the same package could never grant
+  Pro on its own); acknowledges the purchase with Google if not already acknowledged
+  (required within 3 days or Google auto-refunds it); fires the same
+  `culture_payment_completed` action Stripe/Paystack already fire, so receipt emails
+  and analytics work unmodified. New REST route:
+  `POST /culture/v1/mobile/billing/verify-google-play` (JWT).
+- **WP Admin**: Payment tab → new "Google Play Billing (Android app)" section — package
+  name, service account JSON (textarea, mirrors the `culture_stripe_secret_key`-style
+  plaintext-option storage convention every other payment gateway here already uses),
+  monthly/annual product IDs.
+- **Human setup still required before this works end-to-end** (none of this is
+  something code alone can do): create the `moveee_pro_monthly`/`moveee_pro_annual`
+  subscription products in Play Console → Monetize → Subscriptions under this app's
+  package (or use different IDs and update the WP Admin fields to match); create a
+  service account with Play Developer API access (Play Console → Setup → API access)
+  and paste its downloaded JSON key into WP Admin; note the subscription products can't
+  go live/testable until a build has been uploaded to a Play Console testing track —
+  there's an unavoidable chicken-and-egg ordering with the rest of the submission
+  checklist.
+- **Known, deliberate scope limit — this only verifies at purchase time.** Renewals,
+  cancellations, refunds, and grace-period/account-hold transitions that happen later
+  are **not** reflected automatically — that needs Google Play Real-Time Developer
+  Notifications (a Cloud Pub/Sub subscription), which needs Google Cloud infrastructure
+  a human has to set up before any code could consume it. Until that's built: a
+  subscription that's been cancelled but hasn't reached its paid-through date still
+  correctly shows as Pro (right — they paid for the period), but a subscription that
+  silently lapses without the app ever calling this endpoint again won't auto-downgrade
+  to Citizen. If a future "why do cancelled users still have Pro" report comes in, this
+  is why — it's a scoped-out gap, not a bug, and closing it means building the RTDN
+  receiver, not re-debugging this class.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
@@ -6042,16 +6112,15 @@ WordPress.
 
 The app lives in `apps/mobile/` using Expo + React Navigation + Zustand + MMKV.
 
-### ⚠️ Production build checklist — items removed for preview builds
+### Production build checklist — react-native-iap restored (August 2026)
 
-These were stripped to unblock preview APK builds and **must be restored before production**:
-
-| Item | Where | Why removed | How to restore |
-|------|-------|-------------|----------------|
-| `react-native-iap` | `apps/mobile/package.json` dependencies | Has Amazon/Play store flavors — Gradle can't resolve without the store flavor plugin | Add back: `"react-native-iap": "^12.15.4"` |
-| `./plugins/withAndroidIapStoreFlavor` | `apps/mobile/app.json` plugins array | Required by react-native-iap to select Play vs Amazon flavor | Add back to plugins array |
-
-Before production build, also run `npm install` after restoring `react-native-iap`.
+`react-native-iap` and `./plugins/withAndroidIapStoreFlavor` were stripped in an
+earlier pass to unblock preview APK builds (Gradle couldn't resolve the Amazon/Play
+store flavor without the plugin) — **both are now restored**, since Moveee Pro's
+Android upgrade needs real Google Play Billing to be Payments-policy compliant. See
+"Google Play Billing — Moveee Pro upgrade on Android" above for the full
+implementation. Lockfile was regenerated via the documented out-of-tree process below
+after restoring the dependency.
 
 ### Architecture
 - `src/api/client.ts` — `api.get/post/put/delete/upload()` with Bearer token injection

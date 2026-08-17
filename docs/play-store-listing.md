@@ -153,23 +153,23 @@ requires one.
 
 Moveee has a real virtual-economy wallet: Culture Credits earned via engagement can be
 **cashed out for real money** (flat 40% fee, GBP/USD/NGN, per `Culture_Perks::cashout_fee_percent()`).
-Two things this touches that need a human legal/compliance sign-off before submission,
-not just a metadata answer:
+This needs a human legal/compliance sign-off before submission, not just a metadata
+answer — an app that lets users cash out real money almost certainly needs the
+"Financial features" declaration in Play Console filled in with details of the payout
+mechanism, and may draw extra review scrutiny (fraud/AML angle).
 
-1. **Google Play's Financial Services / Payments declarations** — an app that lets
-   users cash out real money almost certainly needs the "Financial features"
-   declaration filled in with details of the payout mechanism, and may draw extra
-   Play review scrutiny (fraud/AML angle).
-2. **Moveee Pro membership currently checks out via a web redirect**, not Google Play
-   Billing (`apps/mobile`'s IAP wiring is explicitly unfinished — see
-   `CLAUDE.md`'s "What is missing" list, `react-native-iap` was stripped for preview
-   builds). Google's Payments policy generally requires **digital goods/services
-   unlocked inside the app to be sold through Google Play's billing system**, with
-   narrow exceptions. If the Play Store build lets a user tap through to an external
-   checkout to unlock in-app Pro features, that's a plausible rejection/suspension
-   reason. Recommend resolving this — either wire up Google Play Billing for the Pro
-   upgrade, or scope what the Android build can/can't offer — before submitting, not
-   after a rejection.
+**Moveee Pro's checkout is now Google Play Billing on Android** (previously an
+external web redirect, which risked a Payments-policy rejection — see §11 below for
+what shipped). Three things still need a human to do in Play Console/Google Cloud
+before this actually works in production:
+1. Create the `moveee_pro_monthly` and `moveee_pro_annual` subscription products
+   under this app's package in Play Console → Monetize → Subscriptions (or use
+   different IDs and update WP Admin → Payment → Google Play Billing to match).
+2. Create a service account with Play Developer API access (Play Console → Setup →
+   API access) and paste its downloaded JSON key into that same WP Admin section.
+3. The subscription products can't go live/testable until the app has at least one
+   build uploaded to a Play Console testing track — chicken-and-egg with the rest of
+   this checklist, budget for it.
 
 ---
 
@@ -212,17 +212,13 @@ Status as of the last pass through this doc:
    and `mockups/store-assets/app-icon-512.png` (512×512, exported from the existing app
    icon). Edit `feature-graphic.html` in the same folder and re-render if you want a
    different look.
-4. **Moveee Pro's payment flow isn't Play Billing–compliant yet** (§7) — resolve or
-   scope before submitting, since Google flags this class of issue reliably. Not
-   touched in this pass — it's a product decision (build Play Billing vs. hide the
-   in-app upgrade path on Android), not something to silently pick for you.
+4. ~~Moveee Pro's payment flow isn't Play Billing–compliant~~ — **Built.** See §12
+   below. Still needs a human to create the subscription products in Play Console and
+   a service account with API access before it actually works end-to-end (§7).
 5. **Play Console org verification** (if this is a new developer account under Moveee
    Media Ltd) takes real calendar time — start it early, independent of app readiness.
-6. **`react-native-iap` and its Android store-flavor plugin were deliberately stripped**
-   for preview builds (see `CLAUDE.md`'s production-build checklist) — must be restored
-   in `package.json`/`app.config.ts` before a production build, then `npm install` rerun.
-   Tied to blocker 4 above — restoring this dependency is a prerequisite for the Play
-   Billing path, not needed if you choose to hide the upgrade path instead.
+6. ~~`react-native-iap` was stripped~~ — **Restored**, along with its Android
+   store-flavor plugin, in `package.json`/`app.config.ts`. Lockfile regenerated.
 
 ---
 
@@ -265,3 +261,60 @@ or a malicious link can't delete an account outright.
   deletion (mobile Settings) plus a public web page that can *complete* it without the
   app installed (`/account/delete/confirm`) — Play's own policy explicitly allows
   completion to happen via a follow-up step like this rather than a single in-app tap.
+
+---
+
+## 12. Google Play Billing — what was built
+
+Moveee Pro's Android upgrade now goes through real Google Play Billing instead of a
+web-checkout redirect. A client-reported purchase is never trusted on its own — every
+purchase token is verified against the Play Developer API server-side before Pro is
+granted, same posture as the existing Stripe/Paystack integrations.
+
+- **Restored**: `react-native-iap` (`^12.15.4`, installed `12.16.4`) back in
+  `package.json`, and its Android store-flavor config plugin
+  (`./plugins/withAndroidIapStoreFlavor`, the file itself was never deleted, just
+  unwired) back in `app.config.ts`'s plugins array, alongside a new `"react-native-iap"`
+  plugin entry. Lockfile regenerated via the documented out-of-tree process (see
+  CLAUDE.md's "Expo SDK version — critical").
+- **Client** (`apps/mobile`): `src/config/iap.ts` (the two subscription SKU constants —
+  `moveee_pro_monthly` / `moveee_pro_annual`, must match Play Console and the WP Admin
+  settings below exactly) and `src/features/billing/iap.ts` (`initIAP`/`endIAP`,
+  `getProSubscriptions`, `purchaseProSubscription` — wraps react-native-iap's
+  purchase-updated/error listeners into a single promise, resolves only after our
+  backend has verified the purchase). Android's Billing Library v5+ requires an
+  explicit `offerToken` per SKU (not just a bare SKU string) — pulled from the live
+  subscription's own `subscriptionOfferDetails`, not hardcoded, so this keeps working
+  if a promotional offer is ever added in Play Console.
+- **`MembershipScreen.tsx`**: on Android, fetches the two subscriptions on mount and
+  renders Monthly/Annual buttons with live store-formatted prices (falls back to the
+  original "Upgrade on the web" button if Play Billing is unavailable — e.g. no Play
+  Services, some emulators). iOS is untouched — still redirects to the web checkout,
+  since wiring up StoreKit is separate work not in scope here.
+- **Backend**: `culture-community/includes/core/class-culture-google-play-billing.php`
+  (`Culture_Google_Play_Billing::verify_and_grant()`) — signs its own OAuth2
+  service-account JWT with `openssl_sign()` (RS256) and calls the Play Developer API
+  via raw `wp_remote_request()`, no Google API client library / Composer dependency,
+  same "raw HTTP, no SDK" convention as `class-culture-r2.php`'s hand-rolled AWS SigV4
+  signer. Checks `paymentState`/`expiryTimeMillis` before granting anything, rejects
+  any `product_id` that isn't one of the two configured subscription IDs (so a valid
+  purchase token for some unrelated product under the same package could never grant
+  Pro), acknowledges the purchase with Google if not already acknowledged (required
+  within 3 days or Google auto-refunds it), then fires the same `culture_payment_completed`
+  action Stripe/Paystack fire — so receipt emails work unmodified. New REST route:
+  `POST /culture/v1/mobile/billing/verify-google-play` (JWT).
+- **WP Admin**: Payment tab → new "Google Play Billing (Android app)" section — package
+  name, service account JSON (textarea), monthly/annual product IDs. See §7 for what a
+  human still has to do in Play Console/Google Cloud before this is live.
+- **Known, deliberate scope limit — read before assuming this is "done" done**: this
+  only verifies **at purchase time**. Renewals, cancellations, refunds, and
+  grace-period/account-hold transitions that happen later are **not** reflected
+  automatically — that needs Google Play Real-Time Developer Notifications (a Cloud
+  Pub/Sub subscription), which needs Google Cloud infrastructure a human has to set up
+  before any code could consume it. Until that's built: a subscription that's been
+  cancelled but hasn't reached its paid-through date still correctly shows as Pro (that's
+  right — they paid for the period), but a subscription that silently lapses without the
+  app ever calling this endpoint again (e.g. the user never reopens the app around
+  renewal time) won't auto-downgrade to Citizen. Flagging this now rather than letting
+  it surface later as "why do cancelled users still have Pro" — it's a real, scoped-out
+  gap, not a bug.
