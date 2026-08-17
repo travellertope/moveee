@@ -83,6 +83,8 @@ import ReferralScreen from "../screens/member/ReferralScreen";
 import MyEventsScreen from "../screens/member/MyEventsScreen";
 import NewPortfolioItemScreen from "../screens/member/NewPortfolioItemScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
+import { useIsTablet } from "../hooks/useIsTablet";
+import TabletRail from "./TabletRail";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
 type FeedStackParams = {
@@ -242,9 +244,14 @@ function MemberStack() {
 
 function MainTabs() {
   const { unread } = useNotificationCount();
+  const isTablet = useIsTablet();
 
   return (
     <Tab.Navigator
+      // Tablet: persistent left rail instead of the bottom bar — same
+      // Tab.Navigator/route state either way, only the tabBar renderer
+      // changes. See TabletRail.tsx / useIsTablet.ts.
+      tabBar={isTablet ? (props) => <TabletRail {...props} /> : undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor:   colors.gold,

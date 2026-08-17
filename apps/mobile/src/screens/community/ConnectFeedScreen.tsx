@@ -18,6 +18,7 @@ import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
 import { useThemeStore } from "../../store/themeStore";
 import { useColorScheme } from "react-native";
+import { useIsTablet } from "../../hooks/useIsTablet";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
@@ -112,6 +113,7 @@ export default function ConnectFeedScreen() {
   const { mode } = useThemeStore();
   const systemScheme = useColorScheme();
   const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
+  const isTablet = useIsTablet();
   const {
     items,
     refreshing,
@@ -472,8 +474,8 @@ export default function ConnectFeedScreen() {
           </ScrollView>
         </View>
 
-        {/* ── Trending Strip ────────────────────────────────────── */}
-        {forYou && trending.length > 0 && (
+        {/* ── Trending Strip (phone only — tablet gets a right rail instead) ── */}
+        {!isTablet && forYou && trending.length > 0 && (
           <View style={styles.trendingStrip}>
             <View style={styles.trendingHeader}>
               <Text style={styles.trendingNowLabel}>TRENDING NOW</Text>
@@ -525,63 +527,88 @@ export default function ConnectFeedScreen() {
           </View>
         )}
 
-        {/* ── Feed ─────────────────────────────────────────────── */}
-        {error ? (
-          <View style={styles.center}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={refresh}>
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : visibleItems.length === 0 && loading ? (
-          <FeedSkeleton />
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={listData}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refresh}
-                tintColor={c.gold}
-              />
-            }
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.4}
-            ListEmptyComponent={
+        {/* ── Feed (+ right rail on tablet) ───────────────────────── */}
+        <View style={[styles.feedArea, isTablet && styles.feedAreaRow]}>
+          <View style={isTablet ? styles.feedMain : { flex: 1 }}>
+            {error ? (
               <View style={styles.center}>
-                <Ionicons
-                  name="people-outline"
-                  size={40}
-                  color={c.ghost}
-                />
-                <Text style={styles.emptyText}>
-                  No posts yet. Be the first to share something!
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity onPress={refresh}>
+                  <Text style={styles.retryText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : visibleItems.length === 0 && loading ? (
+              <FeedSkeleton />
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={listData}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={refresh}
+                    tintColor={c.gold}
+                  />
+                }
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.4}
+                ListEmptyComponent={
+                  <View style={styles.center}>
+                    <Ionicons
+                      name="people-outline"
+                      size={40}
+                      color={c.ghost}
+                    />
+                    <Text style={styles.emptyText}>
+                      No posts yet. Be the first to share something!
+                    </Text>
+                  </View>
+                }
+                ListFooterComponent={
+                  loading && hasMore ? (
+                    <ActivityIndicator
+                      style={styles.loader}
+                      color={c.gold}
+                    />
+                  ) : null
+                }
+                contentContainerStyle={[
+                  visibleItems.length === 0 ? styles.listEmpty : styles.listContent,
+                  isTablet && styles.listContentTablet,
+                ]}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
+
+          {isTablet && (
+            <ScrollView style={styles.rightRail} showsVerticalScrollIndicator={false}>
+              {trending.length > 0 && (
+                <View style={styles.rrCard}>
+                  <Text style={styles.rrTitle}>TRENDING</Text>
+                  {trending.slice(0, 5).map((item, index) => (
+                    <TouchableOpacity key={item.id} style={styles.rrRow} onPress={() => openItem(item)}>
+                      <Text style={styles.rrRank}>{index + 1}</Text>
+                      <Text style={styles.rrName} numberOfLines={1}>{item.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              <View style={styles.rrCard}>
+                <Text style={styles.rrTitle}>ABOUT MOVEEE</Text>
+                <Text style={styles.rrAboutText}>
+                  A community that rewards you for being an active part of culture — post, discover, and earn for your taste.
                 </Text>
               </View>
-            }
-            ListFooterComponent={
-              loading && hasMore ? (
-                <ActivityIndicator
-                  style={styles.loader}
-                  color={c.gold}
-                />
-              ) : null
-            }
-            contentContainerStyle={
-              visibleItems.length === 0
-                ? styles.listEmpty
-                : styles.listContent
-            }
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+            </ScrollView>
+          )}
+        </View>
 
         {/* ── FAB ───────────────────────────────────────────────── */}
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, isTablet && styles.fabTablet]}
           onPress={() => setPickerVisible(true)}
         >
           <Ionicons name="add" size={28} color="#fff" />
@@ -799,7 +826,46 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   // Feed
   listContent: { paddingTop: 12, paddingBottom: 80, gap: 12 },
   listEmpty: { flexGrow: 1 },
+  listContentTablet: { maxWidth: 620, width: "100%", alignSelf: "center", paddingHorizontal: space[4] },
   loader: { paddingVertical: space[5] },
+
+  // Tablet: feed column + right rail
+  feedArea: { flex: 1 },
+  feedAreaRow: { flexDirection: "row" },
+  feedMain: { flex: 1 },
+  rightRail: {
+    width: 288,
+    borderLeftWidth: 1,
+    borderLeftColor: c.rule,
+    padding: space[4],
+  },
+  rrCard: {
+    backgroundColor: c.paper,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: c.rule,
+    padding: space[4],
+    marginBottom: space[4],
+    ...shadows.card,
+  },
+  rrTitle: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 0.6,
+    color: c.mute,
+    marginBottom: space[3],
+  },
+  rrRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space[2],
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: c.rule,
+  },
+  rrRank: { fontFamily: fonts.serifBold, fontSize: fontSize.sm, color: c.ghost, width: 16 },
+  rrName: { flex: 1, fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+  rrAboutText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, lineHeight: 19 },
   center: {
     flex: 1,
     justifyContent: "center",
@@ -830,4 +896,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     alignItems: "center",
     ...shadows.fab,
   },
+  // Right rail (288 wide) would otherwise sit under the FAB — shift it back
+  // over the feed column instead of floating on top of the rail's cards.
+  fabTablet: { right: 288 + 16, bottom: 24 },
 }); }

@@ -6112,6 +6112,60 @@ WordPress.
 
 The app lives in `apps/mobile/` using Expo + React Navigation + Zustand + MMKV.
 
+### Tablet support — foundational shell (August 2026)
+
+Mockup-first as usual (Artifact, two frames — Feed and Discover at iPad-landscape width),
+iterated once (an early draft used the just-retired `paperWarm` cream background — caught
+and fixed before this was built) then approved. This is the **foundational shell** pass
+specifically — a real per-screen tablet layout audit across the other ~40 screens is a
+separate, larger follow-up, not done here.
+
+- **`ios.supportsTablet`** flipped to `true` in `app.config.ts` (was `false`, iPad was
+  explicitly opted out). Both iPad and Android tablets are in scope.
+- **`src/hooks/useIsTablet.ts`** — the one detection primitive everything else is built on.
+  Uses `Math.min(width, height) >= 600` (`useWindowDimensions`), matching Android's own
+  `sw600dp` tablet qualifier — shortest-side, not raw width, so a phone in landscape
+  doesn't misfire as "tablet."
+- **Left nav rail replaces the bottom tab bar on tablet** — `src/navigation/TabletRail.tsx`,
+  passed as the `tabBar` prop on the existing `Tab.Navigator` in `navigation/index.tsx`'s
+  `MainTabs()` only when `useIsTablet()` is true (`tabBar={isTablet ? (props) => <TabletRail
+  {...props} /> : undefined}`). This is the same `Tab.Navigator`/route state phones use —
+  no new navigator type, no `@react-navigation/drawer` dependency added — the rail is just a
+  custom renderer for the identical state, following React Navigation's own documented
+  custom-tab-bar pattern (`navigation.emit('tabPress', ...)` before navigating, so
+  `tabPress` listeners on individual screens still fire correctly). **If you add a 6th
+  top-level tab in the future, no rail changes are needed** — it maps over `state.routes`
+  generically; only the `TAB_ICONS`/`TAB_LABELS` lookup maps need a new entry (same
+  maintenance burden the old bottom-tab `screenOptions.tabBarIcon` already had).
+- **Feed** (`ConnectFeedScreen.tsx`) — on tablet, the feed column caps at 620px and centers
+  (`listContentTablet`) instead of stretching edge-to-edge, and a new 288px right rail
+  appears with Trending (reusing the same `getTrending()` data/component logic the phone's
+  horizontal "Trending Strip" already used — the strip itself is hidden on tablet via
+  `!isTablet &&`, so the same data isn't shown twice) and a static About card. Unlike the
+  phone strip (only shown in "For You" mode), the tablet rail's Trending card shows
+  regardless of feed mode — matches how the equivalent web sidebar behaves (see "Phase 8b —
+  Feed recommendations" above, web's trending sidebar is independent of the For You filter
+  too). The FAB shifts left on tablet (`fabTablet`) so it floats over the feed column, not
+  on top of the new right rail.
+- **Discover** (`DiscoverScreen.tsx`) — the "Explore More" grid's `numColumns` goes from a
+  hardcoded `2` to `isTablet ? 3 : 2`. **`FlatList.numColumns` can't change without a
+  remount** — `key={`grid-${numColumns}`}` forces one when the value flips (e.g. rotating an
+  iPad, or a Slide Over/Split View resize). Grid content also caps at 960px width and
+  centers on very wide screens (`gridContentTablet`) so a 4-up-equivalent grid on a 12.9"
+  iPad doesn't stretch absurdly wide. The horizontal "Picked for You"/"Recently Added"/
+  "Trending in Community" rails above the grid are untouched — still phone-sized cards,
+  out of scope for this pass.
+- **Not touched in this pass, still phone-only layout**: every screen besides Feed/
+  Discover, and the in-screen headers some screens carry (e.g. `ConnectFeedScreen.tsx`'s
+  own Hub/Stoop/Directory/Discover/Bell/Avatar icon row) — those provide real navigation the
+  rail doesn't cover and were deliberately left as-is rather than restructured into the rail
+  itself, to keep this pass scoped to the shell + two example screens the mockup covered.
+- **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
+  via `tsc --noEmit` (clean, same 35 pre-existing baseline errors as before this pass, all
+  unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
+  actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
+  renders identically to before) before considering this fully closed.
+
 ### Production build checklist — react-native-iap restored (August 2026)
 
 `react-native-iap` and `./plugins/withAndroidIapStoreFlavor` were stripped in an

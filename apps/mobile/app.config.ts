@@ -22,7 +22,7 @@ export default {
       backgroundColor: "#ffffff",
     },
     ios: {
-      supportsTablet: false,
+      supportsTablet: true,
       bundleIdentifier: "com.moveee.connect",
     },
     android: {
