@@ -1159,6 +1159,35 @@ Two Vercel projects, one monorepo:
 
 Both share `cms.themoveee.com` (WordPress) as the backend.
 
+### TEMPORARY: `/magazine` swapped onto the site root, old homepage moved to `/app` (August 2026)
+
+**Active as of this entry — reverse before considering Site A's routing "normal" again.** Until
+the Moveee app is accepted in the Play Store, `apps/site/app/page.tsx` (`/`) renders the Magazine
+archive (`MagazineArchiveWrapper`, same content as `/magazine`) instead of `HomepageContent`. The
+prior homepage moved to a new route, `apps/site/app/app/page.tsx` (`/app`) — same component/data
+fetch (`fetchHomepageData()` + `HomepageContent`), `robots: { index: false }` added since it's now
+a secondary/duplicate-content page rather than the canonical root. `/magazine` itself is untouched
+and still works as before (both routes render the same archive independently, not a redirect).
+
+**The `/` → `/uk` `/us` `/africa` geo-redirect in `proxy.ts` is also disabled for this same period**
+(commented out, not deleted) — it used to send most GB/US/CA/MX/African-country visitors away from
+"/" to an edition homepage that still ran the old `HomepageContent`, which would have defeated the
+swap for the majority of traffic. `/uk`/`/us`/`/africa` themselves are unchanged — still reachable
+directly, still render `HomepageContent` with regional copy — only the automatic redirect *into*
+them from a bare `/` visit is off.
+
+`'app'` was added to `proxy.ts`'s `APP_ROUTES` set — without it, a direct request to `/app` would
+have been misread by the legacy-WordPress-permalink catch-all as an old post slug and 301-redirected
+to `/magazine/app`.
+
+**To revert (once the app is live):**
+1. Restore `apps/site/app/page.tsx` to `apps/site/app/app/page.tsx`'s current contents (the
+   `HomepageContent` version — drop the `robots: index:false` and fix `alternates.canonical`/
+   `openGraph.url` back to `https://themoveee.com/`).
+2. Delete `apps/site/app/app/` (or repurpose it).
+3. Uncomment the disabled `if (pathname === '/')` geo-redirect block in `proxy.ts`.
+4. `'app'` can stay in `APP_ROUTES` harmlessly, or be removed if the route no longer exists.
+
 ### Site A header nav — Shop/Newsletter/Events added (August 2026)
 
 `apps/site/components/Header.tsx`'s desktop nav (`.compact-nav`) and mobile menu previously
