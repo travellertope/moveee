@@ -2,7 +2,15 @@ import { Platform } from 'react-native';
 
 export const lightColors = {
   // Backgrounds & surfaces
-  paperWarm:   '#F3ECE0',   // Primary background
+  // paperWarm used to be a cream tint (#F3ECE0) for the primary/screen
+  // background, distinct from `paper`'s white card surface — matches
+  // apps/connect's now-superseded --paper cream value. That cream has been
+  // removed sitewide (plain backgrounds only); paperWarm is now the same
+  // plain white as `paper` rather than a separate tint. Kept as its own
+  // token (not deleted/renamed) since ~110 call sites reference it — cards
+  // now differentiate from the screen background via shadow/border, not a
+  // background-color difference.
+  paperWarm:   '#FFFFFF',   // Primary background — same as `paper`, no tint
   paper:       '#FFFFFF',   // Card surface
   paperDeep:   '#F5F5F5',   // Elevated surface
   community:   '#EDF7ED',   // Community card bg
@@ -81,7 +89,8 @@ export const colors = lightColors;
 
 export const darkColors = {
   // Backgrounds & surfaces
-  paperWarm:   '#1A1612',
+  // Same "no tint, matches `paper`" convention as lightColors.paperWarm above.
+  paperWarm:   '#242018',
   paper:       '#242018',
   paperDeep:   '#2D2820',
   community:   '#1A2A1A',

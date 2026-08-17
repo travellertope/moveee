@@ -6374,6 +6374,42 @@ matching alone can't catch (e.g. `music` → `album`, `travel` → `place`, `des
 When adding a new filter chip, check whether it needs an alias entry — substring matching alone
 is enough for cases like "Food" ⊂ "Food & Drink".
 
+### `paperWarm` cream background removed — now plain white (August 2026)
+
+Mirrors `apps/connect`'s earlier "cream-removal pass" (`--paper` went from `#f3ece0` to
+`#ffffff`, see the `apps/site` shop-rebuild section above) — the mobile app had the same
+cream tone under a different name, `paperWarm` (`theme.ts` comment: "Primary background"),
+kept as a **separate token from `paper`** (`"Card surface"`, already white) rather than the
+single token web uses. `paperWarm` is used as a screen-level `backgroundColor` in **~110
+places** across `apps/mobile/src`.
+
+**Fixed by changing the token's value, not each call site** — same resolution shape as the
+web pass: `lightColors.paperWarm` and `darkColors.paperWarm` in `theme.ts` now equal
+`paper`'s value in each palette (`#FFFFFF` light, `#242018` dark) instead of their own cream/
+warm-black tone. Every screen using `c.paperWarm` picked this up automatically with a
+2-line diff — no risk of missing one of the ~110 call sites. Cards now differentiate from
+the screen background via `shadows.card`/borders alone, not a background-color contrast —
+already the dominant pattern (`shadows.card` was already used pervasively), so this didn't
+introduce a new visual language, just removed a tint.
+
+**Also fixed, since they bypassed the token entirely and wouldn't have picked up the
+above**: `app.config.ts`'s native splash screen (`backgroundColor: "#f3ece0"` → `"#ffffff"`
+— `assets/splash.png` itself turned out to be a **flat cream rectangle with no logo at
+all**, so it was safe to just regenerate as flat white rather than needing to preserve any
+artwork), and two **unreachable/dead screens** (`screens/member/MemberScreen.tsx`,
+`screens/member/SettingsScreen.tsx` — neither is registered in `navigation/index.tsx`;
+the real settings screen is `MemberSettingsScreen.tsx`) that had `"#f3ece0"` hardcoded
+directly rather than through the theme — fixed for hygiene even though nothing renders them.
+
+**Deliberately left alone** — confirmed these are foreground/decorative uses of the cream
+tone, not backgrounds, so flattening the token wouldn't have touched them anyway and they
+don't need a separate fix: `PostCard.tsx`/`QuoteShareCard.tsx`/`GameScoreCard.tsx`/
+`EventDetailScreen.tsx` (light-colored text/border on a dark card), `DirectoryDetailScreen.tsx`/
+`MemberProfileScreen.tsx` (gradient decoration endpoints), `ForgotPasswordScreen.tsx`/
+`OnboardingScreen.tsx` (illustrative SVG fill), `Avatar.tsx` (initials text color). If a
+future pass wants the cream tone fully gone from the app (not just as a background), revisit
+this list — it was out of scope for "no more paper background."
+
 ### theme.ts — available keys
 - `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
 - `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`

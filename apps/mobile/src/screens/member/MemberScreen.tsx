@@ -59,7 +59,7 @@ export default function MemberScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3ece0" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   hero: { alignItems: "center", padding: 28, gap: 8 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { fontSize: 22, fontWeight: "800", color: "#14110d" },
