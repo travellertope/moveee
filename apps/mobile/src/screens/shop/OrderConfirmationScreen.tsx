@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useCartStore } from "../../store/cartStore";
 
@@ -123,6 +124,7 @@ const PLACEHOLDER_GRADIENTS: [string, string][] = [
 export default function OrderConfirmationScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(600);
   const nav = useNav();
   const route = useRoute<RouteProp<OrderConfirmationParams, "OrderConfirmation">>();
   const { orderId, total, itemCount } = route.params;
@@ -138,7 +140,7 @@ export default function OrderConfirmationScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, tabletCap]} showsVerticalScrollIndicator={false}>
         <View style={styles.center}>
           <View style={styles.iconCircle}>
             <Ionicons name="checkmark-outline" size={40} color={c.paper} />

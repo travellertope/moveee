@@ -7,6 +7,7 @@ import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
@@ -281,6 +282,7 @@ export default function EventsScreen() {
   const { user } = useAuthStore() as any;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(760);
 
   const [events, setEvents]         = useState<EventItem[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -647,7 +649,7 @@ export default function EventsScreen() {
         </View>
       ) : view === "list" ? (
         <ScrollView
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, tabletCap]}
           stickyHeaderIndices={stickyIndices}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} tintColor={c.gold} />}
         >
@@ -659,7 +661,7 @@ export default function EventsScreen() {
         </ScrollView>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={[{ paddingBottom: 90 }, tabletCap]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} tintColor={c.gold} />}
         >
           {/* Month strip */}

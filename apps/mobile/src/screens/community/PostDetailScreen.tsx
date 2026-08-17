@@ -12,6 +12,7 @@ import { api, MOBILE_API } from "../../api/client";
 import type { FeedItem } from "../../types";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import CommentSection from "../../components/community/CommentSection";
 
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
@@ -113,6 +114,7 @@ export default function PostDetailScreen() {
   const postId = item?.wpId ?? params?.postId ?? "";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const goToAuthor = () => item?.communityAuthorId && nav.navigate("MemberProfile", { userId: item.communityAuthorId });
 
@@ -151,7 +153,7 @@ export default function PostDetailScreen() {
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.listContent}>
+        <ScrollView contentContainerStyle={[styles.listContent, tabletCap]}>
           <TouchableOpacity style={styles.authorRow} onPress={goToAuthor} disabled={!item.communityAuthorId}>
             {item.communityAuthorAvatar ? (
               <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />

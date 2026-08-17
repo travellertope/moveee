@@ -17,6 +17,7 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { decodeEntities, stripTags } from "../../features/magazine/useMagazine";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { Article } from "../../types";
 
 const CATEGORIES = ["All", "Fashion", "Music", "Film", "Food", "Interview", "Visuals", "Ideas"];
@@ -133,6 +134,7 @@ export default function MagazineSearchScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(720);
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -270,7 +272,7 @@ export default function MagazineSearchScreen() {
         data={results}
         keyExtractor={(a) => a.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, tabletCap]}
         ListHeaderComponent={
           <>
             {(query.trim() || activeCategory !== "All") && !loading ? (

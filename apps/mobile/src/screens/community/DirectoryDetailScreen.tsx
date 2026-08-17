@@ -18,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { fonts, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
 import { decodeHtml } from "../../utils/decodeHtml";
@@ -370,6 +371,7 @@ export default function DirectoryDetailScreen() {
   const { slug, id, title: routeTitle, entryType: routeType } = route.params ?? {};
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const insets = useSafeAreaInsets();
 
   const [entry, setEntry] = useState<DirectoryEntry | null>(null);
@@ -478,7 +480,7 @@ export default function DirectoryDetailScreen() {
     <View style={[styles.container, { paddingTop: 0 }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={[{ paddingBottom: insets.bottom + 24 }, tabletCap]}
       >
         {/* ── Hero ── */}
         <View style={styles.heroWrap}>

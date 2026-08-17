@@ -17,6 +17,7 @@ import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function MailIcon({ color = colors.ghost }: { color?: string }) {
@@ -182,6 +183,7 @@ export default function RegisterScreen() {
   // Accept optional referral code passed from a deep link or share-link tap.
   const { params } = useRoute<any>();
   const referralCode: string = (params as any)?.referralCode ?? "";
+  const tabletCap = useTabletContentStyle(440);
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -226,7 +228,7 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

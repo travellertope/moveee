@@ -17,6 +17,7 @@ import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
 
 const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function MailIcon({ color = colors.ghost }: { color?: string }) {
@@ -100,6 +101,7 @@ const envS = StyleSheet.create({
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function ForgotPasswordScreen() {
   const nav = useNav();
+  const tabletCap = useTabletContentStyle(440);
 
   const [email, setEmail] = useState("");
   const [focused, setFocused] = useState(false);
@@ -188,7 +190,7 @@ export default function ForgotPasswordScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

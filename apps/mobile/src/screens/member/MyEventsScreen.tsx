@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 
@@ -150,6 +151,7 @@ export default function MyEventsScreen() {
   const { user } = useAuthStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const isPro = user?.tier === "patron";
   const [events, setEvents] = useState<OrganiserEvent[]>([]);
@@ -198,7 +200,7 @@ export default function MyEventsScreen() {
           <ActivityIndicator color={c.ochre} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
           <View style={styles.card}>
             {events.length === 0 ? (
               <Text style={styles.emptyText}>You haven't organised any events yet.</Text>

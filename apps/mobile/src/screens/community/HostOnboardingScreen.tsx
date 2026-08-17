@@ -8,6 +8,7 @@ import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { useAuthStore } from "../../auth/authStore";
 
 const TOTAL_STEPS = 5;
@@ -225,6 +226,7 @@ export default function HostOnboardingScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const user = useAuthStore((s) => s.user);
 
   const [step, setStep] = useState(1);
@@ -310,7 +312,7 @@ export default function HostOnboardingScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

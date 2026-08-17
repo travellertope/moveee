@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem, Notification } from "../../types";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
@@ -227,6 +228,7 @@ export default function NotificationsScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const load = useCallback(async (reset = false) => {
     const nextOffset = reset ? 0 : offset;
@@ -353,7 +355,7 @@ export default function NotificationsScreen() {
               : null
           }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={[{ paddingBottom: 40 }, tabletCap]}
           stickySectionHeadersEnabled
         />
       )}

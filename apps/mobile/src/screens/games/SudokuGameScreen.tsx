@@ -10,6 +10,7 @@ import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const PROXY    = "https://themoveee.com/api";
 const KEY_DATE = "sudoku_last_played_date";
@@ -49,6 +50,7 @@ export default function SudokuGameScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(560);
 
   const [phase,    setPhase]    = useState<Phase>("loading");
   const [puzzle,   setPuzzle]   = useState<number[]>([]);
@@ -180,7 +182,7 @@ export default function SudokuGameScreen() {
     <SafeAreaView style={styles.container}>
       {headerRow}
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
         {/* Meta bar */}
         <View style={styles.metaBar}>
           <Text style={styles.metaText}>Mistakes: {mistakes}</Text>

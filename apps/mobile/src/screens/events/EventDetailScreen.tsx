@@ -10,6 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import type { EventItem } from "./EventsScreen";
 import { openInApp } from "../../utils/openInApp";
@@ -45,6 +46,7 @@ export default function EventDetailScreen() {
   const insets    = useSafeAreaInsets();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const isUpcoming = event.eventDate ? new Date(event.eventDate) >= new Date() : false;
   const isFree     = !event.admission || event.admission.toLowerCase().includes("free");
@@ -125,8 +127,8 @@ export default function EventDetailScreen() {
           </View>
         </View>
 
-        {/* ── Content sheet ── */}
-        <View style={styles.sheet}>
+        {/* ── Content sheet (capped to a reading-width column on tablet — hero stays full-bleed above it) ── */}
+        <View style={[styles.sheet, tabletCap]}>
 
           {/* Attendee count */}
           {event.attendeeCount ? (

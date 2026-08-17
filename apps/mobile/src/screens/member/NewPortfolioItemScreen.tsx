@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 
 const ITEM_TYPES = [
@@ -28,6 +29,7 @@ export default function NewPortfolioItemScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState<typeof ITEM_TYPES[number]["value"]>("lookbook");
@@ -102,7 +104,7 @@ export default function NewPortfolioItemScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
         <TouchableOpacity style={styles.coverPicker} onPress={pickCover}>
           {coverUri ? (
             <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />

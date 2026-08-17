@@ -10,6 +10,7 @@ import { useAuthorArchive } from "../../features/magazine/useMagazine";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { Article } from "../../types";
 
 function timeAgo(dateStr: string): string {
@@ -54,6 +55,7 @@ export default function AuthorArchiveScreen() {
   const { authorSlug, authorName: passedName, authorAvatar } = route.params ?? {};
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(720);
 
   const { author, articles, loading, loadingMore, hasMore, error, loadMore } = useAuthorArchive(authorSlug ?? "");
 
@@ -120,7 +122,7 @@ export default function AuthorArchiveScreen() {
             </TouchableOpacity>
           ) : null
         }
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, tabletCap]}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

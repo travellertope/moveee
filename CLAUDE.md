@@ -6166,6 +6166,64 @@ separate, larger follow-up, not done here.
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
 
+### Tablet support — remaining ~55 screens (August 2026, same day follow-up)
+
+Closes the "screen-by-screen tablet audit is a separate follow-up" gap left open by the
+foundational-shell pass above — every other screen in the app now gets the same
+cap-and-center treatment Feed/Discover proved out, rather than stretching edge-to-edge on
+an iPad/Android tablet.
+
+- **New: `src/hooks/useTabletContentStyle.ts`** — the shared primitive this pass is built
+  on. `useTabletContentStyle(maxWidth = 720)` returns `{ maxWidth, width: "100%", alignSelf:
+  "center" }` on tablet (per `useIsTablet()`) and `undefined` on phone, so spreading it into
+  a `contentContainerStyle` array (`[styles.scroll, tabletCap]`) is a no-op on phone and a
+  centered reading/form column on tablet. Every screen below calls this once and passes the
+  result into its outer `ScrollView`/`FlatList`'s `contentContainerStyle` (or, for the rare
+  screen with no scroll container, its outer `View`).
+- **Scope**: every screen under `src/screens/{magazine,shop,events,games,member,community,
+  auth}/` that wasn't already covered by the foundational-shell pass — roughly 55 screens.
+  Two screens were deliberately skipped: `MemberScreen.tsx`/`SettingsScreen.tsx` (confirmed
+  dead — not registered in `navigation/index.tsx`) and `OnboardingScreen.tsx` (a full-bleed
+  swipeable paging carousel sized directly off `Dimensions.get("window")` — capping it would
+  break the `pagingEnabled` snap math, so it stays full-bleed on tablet, same as the
+  full-bleed-hero exception below).
+- **Consistent `maxWidth` choices by content type** (not a single universal number): ~440px
+  for single-column auth forms (Login/Register/Forgot/Reset/VerifyEmail), ~520–620px for
+  puzzle/game screens (Sudoku/Crossword/Trivia/WhoSaidIt — narrower, since a stretched grid
+  or quiz card reads worse than a stretched article), ~680px for detail/settings/list pages
+  (the majority of the pass), ~760–900px for browse/grid pages (Shop home, Member Directory,
+  Perks — wider, since these want more of a tablet's horizontal space per the same reasoning
+  `gridContentTablet` used for Discover).
+- **Full-bleed hero exception, applied consistently**: any screen with a full-bleed
+  photo/gradient hero above a card-style body (`ArticleScreen.tsx`, `EventDetailScreen.tsx`)
+  caps only the body "sheet"/"content" card below the hero, not the hero itself — same
+  reasoning as `ArticleScreen.tsx`'s original tablet pass (the very first screen done in this
+  batch, before the rest were tackled): a capped-width hero on a wide iPad would look like a
+  mistake, not a design choice. Everywhere else (product pages, event listings, shop
+  screens with a hero banner inside the main scroll), the simpler "cap the whole scroll
+  content" treatment was used instead, accepting that a hero banner shrinks along with the
+  rest of the page — the same tradeoff already made for `ShopScreen.tsx`'s hero banner in the
+  foundational-shell pass's own reasoning, applied consistently rather than re-litigated
+  per screen.
+- **`FlatList numColumns` grids were *not* given the Discover-style column-bump treatment**
+  in this pass (2 columns stays 2 columns on tablet, e.g. `ShopListingScreen.tsx`,
+  `MemberDirectoryScreen.tsx`, `PerksScreen.tsx`) — only cap-and-center. Bumping column count
+  cleanly requires reworking each screen's own card-width math (several compute `colW` from
+  a module-level `Dimensions.get("window")` snapshot, not a reactive hook), which is real
+  per-screen work; Discover got it because it was one of the two screens the original mockup
+  covered. If a specific grid screen's tablet layout looks sparse, that's the known,
+  deliberate gap to revisit — not a bug.
+- **`MemberSettingsScreen.tsx`** (7 tabs — Profile/Directory/Interests/Newsletters/
+  Notifications/Appearance/Security) needed one `useTabletContentStyle()` call and one
+  `contentContainerStyle` wrap *per tab component*, since each tab is its own function
+  component with its own local styles/state, not a shared outer scroll container.
+- **Not visually verified on a real device or simulator** — same sandbox gap as the
+  foundational-shell pass above. Verified via `tsc --noEmit` after every batch (Magazine,
+  Shop, Events, Games, Member, Community, Auth) — stayed at exactly the same 35 pre-existing
+  baseline errors throughout, confirming none of the ~55 edits introduced a regression.
+  Re-check pixel fidelity on an actual iPad/Android tablet before considering this fully
+  closed, same as the foundational shell.
+
 ### Production build checklist — react-native-iap restored (August 2026)
 
 `react-native-iap` and `./plugins/withAndroidIapStoreFlavor` were stripped in an

@@ -14,6 +14,7 @@ import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type {
   ShopProduct, ShopProductDetail,
   ProductVariantColour, ProductVariantSize, ProductVariation, HowItsMadeStep,
@@ -678,6 +679,7 @@ export default function ProductDetailScreen() {
   const isPro = user?.tier === "patron";
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(760);
 
   const seed: ShopProduct | undefined = params?.product;
   const productId: number | undefined = seed?.id ?? params?.productId ?? params?.id;
@@ -783,7 +785,7 @@ export default function ProductDetailScreen() {
       <ScrollView
         style={s.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={s.scrollContent}
+        contentContainerStyle={[s.scrollContent, tabletCap]}
       >
         <ImageGallery
           images={images}

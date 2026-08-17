@@ -15,6 +15,7 @@ import { useIssues, type MagazineIssue } from "../../features/magazine/useMagazi
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const WP_URL = "https://cms.themoveee.com";
 
@@ -97,6 +98,7 @@ export default function IssuesArchiveScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(780);
 
   const latestIssue = issues[0] ?? null;
   const pastIssues = issues.slice(1);
@@ -132,7 +134,7 @@ export default function IssuesArchiveScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingBottom: 60 }, tabletCap]}>
         {/* Latest Issue Hero Card */}
         {latestIssue ? (
           <View style={styles.heroCard}>

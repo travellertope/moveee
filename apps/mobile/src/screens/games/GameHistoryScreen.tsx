@@ -9,6 +9,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { GameHistoryEntry } from "../../types";
 
 const GAME_LABELS: Record<GameHistoryEntry["game_type"], { name: string; icon: keyof typeof Ionicons.glyphMap }> = {
@@ -32,6 +33,7 @@ export default function GameHistoryScreen() {
   const nav    = useNav();
   const c      = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [entries, setEntries]   = useState<GameHistoryEntry[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -93,7 +95,7 @@ export default function GameHistoryScreen() {
       ) : (
         <ScrollView
           style={styles.scrollArea}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, tabletCap]}
           showsVerticalScrollIndicator={false}
           onScroll={({ nativeEvent }) => {
             const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;

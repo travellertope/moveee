@@ -9,6 +9,7 @@ import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Cluster } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
@@ -60,6 +61,7 @@ export default function StoopHomeScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = React.useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore() as any;
 
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,7 @@ export default function StoopHomeScreen() {
       {loading ? (
         <View style={styles.loadingWrap}><ActivityIndicator color={c.gold} /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
           <Text style={styles.title}>Stoop</Text>
           <Text style={styles.sub}>Weekly, area-level gatherings of Moveee members near you.</Text>
 

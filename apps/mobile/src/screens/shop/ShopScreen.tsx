@@ -12,6 +12,7 @@ import { useCartStore } from "../../store/cartStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ShopProduct, ShopCategory, ShopVendor } from "../../types";
 import { decodeHtml } from "../../utils/decodeHtml";
 
@@ -247,6 +248,7 @@ export default function ShopScreen() {
   const isPro = user?.tier === "patron";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
 
   const [activeCategory, setActiveCategory] = useState("");
   const [products, setProducts]       = useState<ShopProduct[]>([]);
@@ -356,7 +358,7 @@ export default function ShopScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, tabletCap]}
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 200) {

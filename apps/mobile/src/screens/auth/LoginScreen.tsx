@@ -36,6 +36,7 @@ try { Passkeys = require("react-native-passkeys"); } catch {}
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { User } from "../../types";
 
 const PROXY = "https://themoveee.com/api";
@@ -162,6 +163,7 @@ function Wordmark() {
 export default function LoginScreen() {
   const nav = useNav();
   const { login, loginWithToken, isLoading } = useAuthStore();
+  const tabletCap = useTabletContentStyle(440);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -273,7 +275,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

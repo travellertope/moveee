@@ -15,6 +15,7 @@ import { detectRegion } from "../../features/community/useFeedRecommendations";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import StarRating from "../../components/composer/StarRating";
 import MultiRating from "../../components/composer/MultiRating";
 import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
@@ -263,6 +264,7 @@ export default function NewPostScreen() {
   const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore();
   const userRegion = useMemo(() => detectRegion(user?.countryOfResidence) ?? undefined, [user?.countryOfResidence]);
 
@@ -2148,7 +2150,7 @@ const uploadImages = async (): Promise<string[]> => {
 
         {/* ── Scrollable body ── */}
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

@@ -10,6 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import { initIAP, endIAP, getProSubscriptions, purchaseProSubscription, formatSubscriptionPrice } from "../../features/billing/iap";
 import { MOVEEE_PRO_MONTHLY_SKU, MOVEEE_PRO_ANNUAL_SKU } from "../../config/iap";
@@ -44,6 +45,7 @@ export default function MembershipScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   // Android: real Google Play Billing purchase flow. iOS keeps directing to
   // the web checkout (see handleUpgrade below) — StoreKit isn't wired up.
@@ -109,7 +111,7 @@ export default function MembershipScreen() {
         <Text style={styles.headerTitle}>Membership</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.body, tabletCap]} showsVerticalScrollIndicator={false}>
         <Text style={styles.intro}>Choose the plan that works for you.</Text>
 
         <View style={styles.card}>

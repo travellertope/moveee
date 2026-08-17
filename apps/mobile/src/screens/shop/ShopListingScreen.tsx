@@ -13,6 +13,7 @@ import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ShopProduct, ShopCategory } from "../../types";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -242,6 +243,7 @@ export default function ShopListingScreen() {
   const isPro = user?.tier === "patron";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(960);
 
   const categoryName: string = params?.categoryName ?? "All Products";
   const categorySlug: string = params?.categorySlug ?? "";
@@ -429,7 +431,7 @@ export default function ShopListingScreen() {
           keyExtractor={(p) => String(p.id)}
           numColumns={viewMode === "grid" ? 2 : 1}
           columnWrapperStyle={viewMode === "grid" ? styles.gridRow : undefined}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, tabletCap]}
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}

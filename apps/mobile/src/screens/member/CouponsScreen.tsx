@@ -9,6 +9,7 @@ import QRCode from "react-native-qrcode-svg";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import type { Redemption } from "../../types";
 
@@ -107,6 +108,7 @@ export default function CouponsScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   useEffect(() => {
     api.get<Redemption[]>(`${MOBILE_API}/perks/redemptions`)
@@ -141,7 +143,7 @@ export default function CouponsScreen() {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, tabletCap]}
           showsVerticalScrollIndicator={false}
         >
           {redemptions.map((r) => <CouponCard key={r.id} redemption={r} styles={styles} c={c} />)}
