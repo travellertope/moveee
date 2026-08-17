@@ -1,4 +1,4 @@
-import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO, getStoriesByCountrySlugs } from "@/lib/wp";
 import { decodeHtml } from "@/lib/decode-html";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,6 +8,7 @@ import MagazineFilterPills from "@/components/MagazineFilterPills";
 import SeriesLandingPage from "@/components/SeriesLandingPage";
 import "../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { EDITIONS, type EditionSlug } from "@/lib/editions";
 
 interface MagazineArchiveProps {
   category?: string;
@@ -15,6 +16,49 @@ interface MagazineArchiveProps {
   country?: string;
   series?: string;
   tag?: string;
+  // Visitor's detected edition (UK/US/Africa/global) — only used to scope
+  // the default, unfiltered view's main story pool (hero/week-row/featured
+  // band) by the `country` taxonomy, same "edition + universal filler"
+  // pattern fetchHomepageData.ts uses for the /uk /us /africa homepages.
+  // The pinned sections (The Edit/News, Opinions/Viewpoints, The Lane,
+  // The Free Critics) stay global regardless — mirrors fetchHomepageData's
+  // own scope (only stories/coverStory are edition-scoped there too).
+  // Omitted entirely by every other consumer (/magazine, /magazine/africa,
+  // /magazine/uk, /magazine/us all render unscoped, exactly as before).
+  edition?: EditionSlug;
+}
+
+// Main-pool fetch for the default (unfiltered) view — edition-scoped by the
+// `country` taxonomy when a visitor's edition is known, otherwise the plain
+// latest-40 pool. Pulled out of the component so the edition/global branches
+// can run inside the same Promise.all as the pinned-section fetches below.
+async function getMainPool(edition: EditionSlug | undefined): Promise<any[]> {
+  if (!edition || edition === "global") {
+    const data = await getWPData(GET_STORIES, { first: 40 });
+    return data?.posts?.nodes || [];
+  }
+
+  const countrySlugs = (EDITIONS[edition]?.countrySlugs ?? []) as unknown as string[];
+  const [editionPosts, latestData] = await Promise.all([
+    getStoriesByCountrySlugs(countrySlugs, 40, { revalidate: 300 }),
+    getWPData(GET_STORIES, { first: 40 }),
+  ]);
+  const latestPosts: any[] = latestData?.posts?.nodes || [];
+
+  // A post only counts as "universal" filler if it isn't tagged to ANY
+  // edition's countries — same rule fetchHomepageData.ts applies so a
+  // Nigeria-tagged post never shows as generic filler on the UK edition.
+  const allEditionCountrySlugs = new Set(
+    Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
+  );
+  const editionIds = new Set(editionPosts.map((p: any) => p.id));
+  const universalPosts = latestPosts.filter((p: any) => {
+    if (editionIds.has(p.id)) return false;
+    const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
+    return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
+  });
+
+  return [...editionPosts, ...universalPosts];
 }
 
 export default async function MagazineArchiveWrapper({
@@ -23,6 +67,7 @@ export default async function MagazineArchiveWrapper({
   country,
   series,
   tag,
+  edition,
 }: MagazineArchiveProps) {
   let stories: any[] = [];
   let editorialStories: any[] = [];
@@ -78,8 +123,8 @@ export default async function MagazineArchiveWrapper({
       // page — a plain positional slice of `stories` would mix in whatever
       // content happened to land in that range. Fetches a larger main pool
       // (40, not 27) to leave headroom for the dedupe below.
-      const [data, editData, opinionData, portraitData, digestData] = await Promise.all([
-        getWPData(GET_STORIES, { first: 40 }),
+      const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
+        getMainPool(edition),
         getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
         getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
         getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
@@ -101,7 +146,7 @@ export default async function MagazineArchiveWrapper({
         ...portraitStories.map((p: any) => p.id),
         ...digestStories.map((p: any) => p.id),
       ]);
-      stories = (data?.posts?.nodes || []).filter(
+      stories = mainPool.filter(
         (p: any) =>
           !p.categories?.nodes?.some((c: any) => c.slug === "news") &&
           !usedElsewhereIds.has(p.id)
