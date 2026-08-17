@@ -5938,6 +5938,61 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ---
 
+## Account deletion (August 2026)
+
+Required by Google Play's account-deletion policy ahead of the Play Store submission
+(see `docs/play-store-listing.md` for the full submission-readiness doc this is part
+of) — an app that supports account creation must offer both an in-app path to
+*initiate* deletion and a public web page that can *complete* it without the app
+installed. Two-step request/confirm flow, mirroring the existing email-verification
+token pattern (`_culture_email_verify_token` in `class-culture-rest-api.php`) exactly:
+a random token, stored only as `wp_hash()`, emailed to the account's own address,
+expiring after 24 hours. Two steps rather than one in-app tap so a stray tap or a
+forwarded/leaked link can't delete an account outright.
+
+- **Backend**: `culture-community/includes/core/class-culture-account-deletion.php`
+  (`Culture_Account_Deletion::request_deletion()` / `::confirm_deletion()`). Wired into
+  `class-culture-rest-api.php` (web, API-key: `POST /culture/v1/account/delete-request`
+  takes an explicit `user_id`, `POST /culture/v1/account/delete-confirm` takes `uid`+
+  `token`) and `class-culture-mobile-api.php` (mobile, JWT: `POST
+  /mobile/account/delete-request` only — mobile never gets a confirm endpoint, since
+  confirmation always happens via the emailed web link, see below). Email template:
+  `Culture_Emails::send_account_deletion_email()`.
+- **Deletion mechanics**: on confirm, `wp_delete_user()` removes the WP user row and
+  every `wp_usermeta` row — which is where the actual PII lives (name, email, phone,
+  DOB, city, occupation, avatar/cover URLs, interests, directory bio). Authored
+  posts/comments are reassigned to a lazily-created "Deleted User" placeholder account
+  (`Culture_Account_Deletion::get_placeholder_user_id()`, cached in the
+  `culture_deleted_user_id` option) rather than left attributed to a vanished ID.
+- **Deliberate scope limit, not an oversight**: custom plugin tables keyed by user_id
+  (credit ledger, notifications, follows, RSVPs, hub/cluster membership, redemptions,
+  attendance, etc.) are **not** swept — their rows become orphaned references to a
+  user_id that no longer resolves via `get_userdata()`, which is harmless (nothing
+  renders for a nonexistent user) but isn't a full data purge. If a stricter
+  data-retention audit ever requires it, that's a real follow-up project (enumerate
+  every `wp_culture_*` table with a `user_id`/`author_id` column and write a proper
+  per-table cleanup pass) — don't assume it's already covered.
+- **Web** (`apps/connect` — auth/account pages live on Site B, per the site-split
+  rules above): `/account/delete` (public — shows the delete flow for a logged-in
+  visitor, or a login prompt + `privacy@themoveee.com` fallback for a logged-out one;
+  deliberately never redirects a logged-out visitor away, since Play requires this
+  page reachable without the app) and `/account/delete/confirm?uid=&token=` (public,
+  reads the emailed link — requires an explicit final button tap, not auto-triggered
+  on page load, so an email client's link-preview/security scanner prefetching the URL
+  can't fire a destructive action). Proxied through `/api/account/delete-request`
+  (session-based) and `/api/account/delete-confirm` (public — the token itself is the
+  credential, same trust model `/api/verify-email` already uses).
+- **Mobile**: `MemberSettingsScreen.tsx`'s Security tab has a "Delete Account" row in a
+  new Danger Zone card (`secStyles.dangerCard`/`dangerLabel`) below the passkeys card.
+  Confirms via `Alert`, calls the delete-request endpoint, then calls `logout()` —
+  nothing left to do in-app until the emailed link is confirmed.
+- **`apps/site` is untouched** — its own `/account/*` prefix already 308-redirects to
+  `web.themoveee.com` (see "Site architecture — split complete" above), so
+  `themoveee.com/account/delete` correctly reaches these new `apps/connect` pages with
+  no proxy changes needed there.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
