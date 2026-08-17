@@ -47,11 +47,11 @@ export const metadata: Metadata = {
   // Magazine" brand suffix per the convention documented in CLAUDE.md).
   // A parent template appends its suffix to whatever a page returns, so
   // having one here double-suffixed almost every page site-wide (e.g.
-  // "Moveee — Culture in Britain | Moveee"). `default` alone is fine — it's
-  // used verbatim by any page that sets no title of its own, never templated.
-  title: {
-    default: "Moveee — Culture. Discover and Engage.",
-  },
+  // "Moveee — Culture in Britain | Moveee"). A plain string is used verbatim
+  // by any page that sets no title of its own and is never templated — the
+  // `{ default }` object form requires a `template` field in Next's Metadata
+  // type, which is exactly what this must avoid.
+  title: "Moveee — Culture. Discover and Engage.",
   description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
   alternates: {
     canonical: "https://themoveee.com/",
