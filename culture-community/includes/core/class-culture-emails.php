@@ -145,6 +145,33 @@ class Culture_Emails {
     }
 
     /**
+     * Send account-deletion confirmation link. See class-culture-account-deletion.php
+     * for the request/confirm flow this is one step of.
+     *
+     * @param int    $user_id
+     * @param string $token Plain-text token (not the stored hash).
+     */
+    public static function send_account_deletion_email( $user_id, $token ) {
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return;
+        }
+
+        $base = self::get_frontend_url();
+        $link = $base . 'account/delete/confirm?uid=' . $user_id . '&token=' . rawurlencode( $token );
+
+        $subject = 'Confirm deletion of your Moveee account';
+
+        $body  = self::get_header( 'Confirm account deletion' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">We received a request to permanently delete the Moveee account for ' . esc_html( $user->display_name ) . ' (' . esc_html( $user->user_email ) . '). This cannot be undone — your profile, posts, and account data will be removed.</p>';
+        $body .= self::get_button( $link, 'Confirm deletion' );
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:20px 0 0;">This link expires in 24 hours. If you didn\'t request this, ignore this email and your account will stay exactly as it is.</p>';
+        $body .= self::get_footer();
+
+        self::send( $user->user_email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id

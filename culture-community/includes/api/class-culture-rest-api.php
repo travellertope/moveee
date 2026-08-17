@@ -546,6 +546,45 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Account deletion (web) — request step, called by the Next.js proxy on
+        // behalf of a logged-in NextAuth session (explicit user_id, same pattern
+        // as every other web-surface endpoint in this file).
+        register_rest_route( 'culture/v1', '/account/delete-request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_account_delete_request' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
+        // Account deletion — confirm step. Reachable from the public
+        // /account/delete/confirm page (no login required) since the token
+        // itself is the credential — same trust model as verify-email/
+        // complete-profile above. The Next.js route that calls this holds the
+        // api_key_permission secret server-side; the page itself is public.
+        register_rest_route( 'culture/v1', '/account/delete-confirm', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_account_delete_confirm' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'uid' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
         // Forgot-password — generates a reset key and emails it.
         register_rest_route( 'culture/v1', '/forgot-password', array(
             'methods'             => 'POST',
@@ -3145,6 +3184,33 @@ class Culture_REST_API {
             'requires_payment' => false,
             'username'         => $user->user_login,
         ) );
+    }
+
+    /**
+     * POST /culture/v1/account/delete-request
+     * Web-surface account deletion, step 1 — see class-culture-account-deletion.php.
+     */
+    public static function handle_account_delete_request( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $result  = Culture_Account_Deletion::request_deletion( $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * POST /culture/v1/account/delete-confirm
+     * Web-surface account deletion, step 2 — see class-culture-account-deletion.php.
+     */
+    public static function handle_account_delete_confirm( $request ) {
+        $user_id = (int) $request->get_param( 'uid' );
+        $token   = $request->get_param( 'token' );
+        $result  = Culture_Account_Deletion::confirm_deletion( $user_id, $token );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     /**

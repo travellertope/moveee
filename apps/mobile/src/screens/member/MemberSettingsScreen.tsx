@@ -1119,7 +1119,7 @@ function createApStyles(c: ColorPalette) {
 
 // ── Security Tab ──────────────────────────────────────────────────────────────
 function SecurityTab() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
   const c = useColors();
   const secStyles = useMemo(() => createSecStyles(c), [c]);
   const [passkeys,   setPasskeys]   = useState<Passkey[]>([]);
@@ -1128,6 +1128,7 @@ function SecurityTab() {
   const [changingPw, setChangingPw] = useState(false);
   const [supported,  setSupported]  = useState(true);
   const [trashHover, setTrashHover] = useState<string | null>(null);
+  const [deleting,   setDeleting]   = useState(false);
 
   useEffect(() => {
     setSupported(Passkeys.isSupported());
@@ -1208,6 +1209,38 @@ function SecurityTab() {
       else updateUser({ passkeyCount: remaining.length });
     } catch {
       Alert.alert("Error", "Could not delete passkey.");
+    }
+  };
+
+  // In-app initiation only — the actual deletion happens after the user taps
+  // the confirmation link we email them, on the public web page at
+  // /account/delete/confirm. Required by Google Play's account-deletion
+  // policy (an in-app path to *start* deletion), see
+  // culture-community/includes/core/class-culture-account-deletion.php.
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      "Delete your account",
+      "We'll email you a confirmation link. Your account won't be deleted until you tap it — the link expires in 24 hours.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Send confirmation email", style: "destructive", onPress: requestDeleteAccount },
+      ]
+    );
+  };
+
+  const requestDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.post(`${MOBILE_API}/account/delete-request`, {});
+      Alert.alert(
+        "Check your email",
+        "We've sent a confirmation link to your email address. You'll be signed out now — deletion only completes once you tap that link.",
+        [{ text: "OK", onPress: () => logout() }]
+      );
+    } catch {
+      Alert.alert("Error", "Could not send the confirmation email. Please try again.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1314,6 +1347,23 @@ function SecurityTab() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Danger Zone */}
+      <View style={[secStyles.card, shadows.card, secStyles.dangerCard]}>
+        <TouchableOpacity
+          style={secStyles.passwordRow}
+          activeOpacity={0.7}
+          disabled={deleting}
+          onPress={confirmDeleteAccount}
+        >
+          <Ionicons name="trash-outline" size={20} color={c.error} />
+          <Text style={secStyles.dangerLabel}>Delete Account</Text>
+          {deleting
+            ? <ActivityIndicator size="small" color={c.ghost} />
+            : <Ionicons name="chevron-forward" size={18} color={c.ghost} />}
+        </TouchableOpacity>
+        <Text style={secStyles.passwordSub}>Permanently delete your profile, posts, and data</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -1361,6 +1411,9 @@ function createSecStyles(c: ColorPalette) {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
     },
     addPasskeyText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+
+    dangerCard:  { marginTop: 16, borderWidth: 1, borderColor: c.error + "33" },
+    dangerLabel: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.error, flex: 1 },
   });
 }
 

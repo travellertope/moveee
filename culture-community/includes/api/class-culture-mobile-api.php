@@ -756,6 +756,15 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Account deletion — step 1 only (in-app initiation). Confirmation always
+        // happens via the emailed link on the public web page, per Google Play's
+        // account-deletion policy — see class-culture-account-deletion.php.
+        register_rest_route( 'culture/v1', '/mobile/account/delete-request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_account_delete_request' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/mobile/analytics', array(
             'methods'             => 'GET',
@@ -3710,6 +3719,15 @@ class Culture_Mobile_API {
             $prefs = array();
         }
         return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
+    }
+
+    public static function handle_account_delete_request( $request ) {
+        $user_id = get_current_user_id();
+        $result  = Culture_Account_Deletion::request_deletion( $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     public static function handle_analytics( $request ) {

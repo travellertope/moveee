@@ -75,9 +75,9 @@ qualifiers.
 
 | Asset | Spec | Status |
 |---|---|---|
-| App icon (Play Store listing) | 512×512 PNG, 32-bit with alpha | `apps/mobile/assets/icon.png` exists at 1080×1080 — **needs export/resize to 512×512** for the Play Console upload field specifically (separate from the in-app adaptive icon) |
-| Feature graphic | 1024×500 PNG/JPG, no alpha | **Missing — needs to be designed.** Say the word and I'll build one. |
-| Phone screenshots | Min 2, max 8 · JPEG/PNG · 16:9 or 9:16 · each side 320–3840px | **Missing — none exist in the repo.** These have to be real captures of the running app against live data; I can't generate them from this sandbox (no working build + live backend here). See blockers below. |
+| App icon (Play Store listing) | 512×512 PNG, no alpha | **Done** — `mockups/store-assets/app-icon-512.png` (resized from `apps/mobile/assets/icon.png`) |
+| Feature graphic | 1024×500 PNG/JPG, no alpha | **Done** — `mockups/store-assets/feature-graphic.png` (source: `feature-graphic.html` in the same folder, easy to tweak and re-render) |
+| Phone screenshots | Min 2, max 8 · JPEG/PNG · 16:9 or 9:16 · each side 320–3840px | **Still missing — this one I genuinely can't produce here.** They have to be real captures of the running app against live data (device/simulator + a working backend session); this sandbox has neither, and `cms.themoveee.com` is network-blocked from it anyway. Capture these from an EAS preview build on your own device. |
 | 7"/10" tablet screenshots | Optional but recommended if any tablet support is claimed | N/A — `ios.supportsTablet` is `false`; skip unless Android tablet support is added |
 | Promo video | Optional — YouTube URL | None; optional, skip for v1 |
 
@@ -200,24 +200,68 @@ audience answer in §5.
 
 ## 10. Blockers before you can actually submit
 
-Real gaps found while compiling this — not text you can paste around:
+Status as of the last pass through this doc:
 
-1. **No account-deletion flow exists anywhere in the codebase** (grepped `apps/mobile`,
-   `apps/connect`, `packages/shared`, `culture-community` — nothing). Google Play
-   requires both an in-app deletion path *and* a publicly reachable web page where
-   someone can request deletion without installing the app, for any app that supports
-   account creation. This will block the "App content" questionnaire and likely block
-   review. Want me to build this? It's a real feature (a REST endpoint + a settings
-   screen + a public `/account/delete` web page), not a metadata fix.
+1. ~~No account-deletion flow~~ — **Built.** See §11 below for exactly what shipped and
+   where.
 2. **No screenshots exist.** These need to come from a real build against live data —
    I can't produce them from this sandbox (no device, and `cms.themoveee.com` is
    blocked by this environment's network policy). You'll need to capture these from an
    EAS preview/dev build.
-3. **No feature graphic (1024×500) exists.** I can design one if you want — just say so.
+3. ~~No feature graphic~~ — **Built.** `mockups/store-assets/feature-graphic.png` (1024×500)
+   and `mockups/store-assets/app-icon-512.png` (512×512, exported from the existing app
+   icon). Edit `feature-graphic.html` in the same folder and re-render if you want a
+   different look.
 4. **Moveee Pro's payment flow isn't Play Billing–compliant yet** (§7) — resolve or
-   scope before submitting, since Google. flags this class of issue reliably.
+   scope before submitting, since Google flags this class of issue reliably. Not
+   touched in this pass — it's a product decision (build Play Billing vs. hide the
+   in-app upgrade path on Android), not something to silently pick for you.
 5. **Play Console org verification** (if this is a new developer account under Moveee
    Media Ltd) takes real calendar time — start it early, independent of app readiness.
 6. **`react-native-iap` and its Android store-flavor plugin were deliberately stripped**
    for preview builds (see `CLAUDE.md`'s production-build checklist) — must be restored
    in `package.json`/`app.config.ts` before a production build, then `npm install` rerun.
+   Tied to blocker 4 above — restoring this dependency is a prerequisite for the Play
+   Billing path, not needed if you choose to hide the upgrade path instead.
+
+---
+
+## 11. Account deletion — what was built
+
+Mirrors the existing email-verification token pattern (`_culture_email_verify_token`
+in `class-culture-rest-api.php`) exactly: a random token, stored only as a `wp_hash()`,
+emailed to the account's own address, expiring after 24 hours. Two-step, so a stray tap
+or a malicious link can't delete an account outright.
+
+- **Backend**: `culture-community/includes/core/class-culture-account-deletion.php`
+  (`Culture_Account_Deletion::request_deletion()` / `::confirm_deletion()`), wired into
+  `class-culture-rest-api.php` (web: `POST /culture/v1/account/delete-request`,
+  `POST /culture/v1/account/delete-confirm`) and `class-culture-mobile-api.php`
+  (mobile: `POST /mobile/account/delete-request`, JWT). Email template added to
+  `class-culture-emails.php` (`send_account_deletion_email()`).
+- **Deletion mechanics**: on confirm, `wp_delete_user()` removes the WP user row and
+  every `wp_usermeta` row — which is where all the real PII actually lives (name,
+  email, phone, DOB, city, occupation, avatar/cover URLs, interests, directory bio).
+  Authored posts/comments are reassigned to a lazily-created "Deleted User" placeholder
+  account rather than left attributed to a vanished ID.
+- **Known, deliberate scope limit**: custom plugin tables keyed by user_id (credit
+  ledger, notifications, follows, RSVPs, hub/cluster membership, redemptions, etc.)
+  are *not* swept — their rows become orphaned references to a user_id that no longer
+  resolves, which is harmless (nothing renders for a nonexistent user) but isn't a full
+  data purge. Revisit with a proper per-table cleanup pass if a stricter data-retention
+  audit ever requires it.
+- **Web** (`apps/connect`, since auth/account pages live on Site B):
+  `/account/delete` — public page; shows a "Delete my account" flow for a logged-in
+  visitor, or a login prompt + support-email fallback for a logged-out one (never
+  redirects a logged-out visitor away, since Play requires this page to be reachable
+  without the app installed). `/account/delete/confirm?uid=&token=` — public, reads the
+  emailed link, requires an explicit final tap (not auto-triggered on page load, so an
+  email client's link-preview scanner can't fire it).
+- **Mobile** (`apps/mobile`): Settings → Security tab has a "Delete Account" row in a
+  new Danger Zone card. Taps through a confirm alert, calls the delete-request
+  endpoint, then signs the user out — completion happens via the emailed link, same as
+  web.
+- **This satisfies Google Play's requirement directly**: an in-app path to *initiate*
+  deletion (mobile Settings) plus a public web page that can *complete* it without the
+  app installed (`/account/delete/confirm`) — Play's own policy explicitly allows
+  completion to happen via a follow-up step like this rather than a single in-app tap.
