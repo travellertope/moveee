@@ -151,35 +151,48 @@ export default async function MagazineArchiveWrapper({
       // series, The Free Critics series) regardless of what else is on the
       // page — a plain positional slice of `stories` would mix in whatever
       // content happened to land in that range. Fetches a larger main pool
-      // (40, not 27) to leave headroom for the dedupe below.
+      // (40, not 27) to leave headroom for the dedupe below. Opinions is now
+      // fetched with a buffer (12, not the 4 actually used) for the same
+      // reason Lane/Free Critics already get one via GET_SERIES_STORIES'
+      // built-in first:48 — see the dedupe-direction note below.
       const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
         getMainPool(edition),
         getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
-        getWPData(GET_STORIES, { first: 4, categoryName: "viewpoints" }),
+        getWPData(GET_STORIES, { first: 12, categoryName: "viewpoints" }),
         getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
         getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
       ]);
       editorialStories = editData?.posts?.nodes || [];
-      opinionStories = opinionData?.posts?.nodes || [];
-      portraitStories = (portraitData?.seriesItem?.posts?.nodes || []).slice(0, 5);
-      digestStories = (digestData?.seriesItem?.posts?.nodes || []).slice(0, 4);
+
       // News is fully excluded from every other section — the whole category,
-      // not just the 7 picked posts (an explicit, standing request). Viewpoints,
-      // The Lane, and The Free Critics are NOT excluded wholesale — a post from
-      // any of those that wasn't picked for Opinions/The Lane/The Free Critics can
-      // still surface naturally in the hero/sidebar/band sections. Only the
-      // exact posts already used for those pinned sections are deduped out by
-      // id, so nothing repeats.
-      const usedElsewhereIds = new Set([
-        ...opinionStories.map((p: any) => p.id),
-        ...portraitStories.map((p: any) => p.id),
-        ...digestStories.map((p: any) => p.id),
-      ]);
-      stories = mainPool.filter(
-        (p: any) =>
-          !p.categories?.nodes?.some((c: any) => c.slug === "news") &&
-          !usedElsewhereIds.has(p.id)
+      // not just the top-of-page picks (an explicit, standing request).
+      const topPool = mainPool.filter(
+        (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
       );
+
+      // Dedupe direction: the sections rendered at the TOP of the page (Hero,
+      // "More This Week", Featured Stories — the first 7 posts of topPool)
+      // get first claim on content. The pinned sections further down (The
+      // Edit is exempt — News is already fully carved out above — Opinions,
+      // The Lane, The Free Critics) then backfill from their own taxonomy
+      // pool, skipping whatever the top already used, rather than the other
+      // way around. Previously the pinned sections claimed their picks first
+      // and the top sections got only the leftovers, which could bump the
+      // single best/most-recent story out of the Hero slot in favour of a
+      // niche section further down the page.
+      const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
+
+      opinionStories = (opinionData?.posts?.nodes || [])
+        .filter((p: any) => !usedByTopIds.has(p.id))
+        .slice(0, 4);
+      portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
+        .filter((p: any) => !usedByTopIds.has(p.id))
+        .slice(0, 5);
+      digestStories = (digestData?.seriesItem?.posts?.nodes || [])
+        .filter((p: any) => !usedByTopIds.has(p.id))
+        .slice(0, 4);
+
+      stories = topPool;
     }
   } catch (err: any) {
     // CMS unreachable — was previously a silent no-op, which made a blank
