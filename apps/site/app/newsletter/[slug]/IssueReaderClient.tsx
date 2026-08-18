@@ -60,6 +60,7 @@ export default function IssueReaderClient({
   const [progress, setProgress] = useState(0);
   const [sortAsc, setSortAsc] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   // Track right-pane element scroll for progress bar
   useEffect(() => {
@@ -99,74 +100,95 @@ export default function IssueReaderClient({
     <div className="rd-layout">
 
       {/* ── LEFT SIDEBAR (desktop only) ── */}
-      <div className="rd-sidebar">
-        {/* Header */}
-        <div className="rd-sidebar-header">
-          <Link
-            href={`/newsletter/${listId}`}
-            className={`rd-sidebar-title${isGml ? " rd-sidebar-title--getmelit" : ""}`}
-          >
-            {meta.label}
-          </Link>
-          <p className="rd-sidebar-standfirst">
-            Browse all {issues.length} issues of {meta.label} — {meta.tagline.toLowerCase()}
-          </p>
-          <HideIfSubscribed>
-            <a href="#rd-subscribe" className="rd-sidebar-subscribe" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
-              Subscribe free →
-            </a>
-          </HideIfSubscribed>
-        </div>
+      <div className={`rd-sidebar${collapsed ? " rd-sidebar--collapsed" : ""}`}>
+        {/* Everything that should slide out of view when collapsed lives in
+            this fixed-width inner wrapper, so it clips cleanly during the
+            width transition instead of reflowing/wrapping. */}
+        <div className="rd-sidebar-scroll" aria-hidden={collapsed}>
+          {/* Header */}
+          <div className="rd-sidebar-header">
+            <Link
+              href={`/newsletter/${listId}`}
+              className={`rd-sidebar-title${isGml ? " rd-sidebar-title--getmelit" : ""}`}
+              tabIndex={collapsed ? -1 : undefined}
+            >
+              {meta.label}
+            </Link>
+            <p className="rd-sidebar-standfirst">
+              Browse all {issues.length} issues of {meta.label} — {meta.tagline.toLowerCase()}
+            </p>
+            <HideIfSubscribed>
+              <a
+                href="#rd-subscribe"
+                className="rd-sidebar-subscribe"
+                style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+                tabIndex={collapsed ? -1 : undefined}
+              >
+                Subscribe free →
+              </a>
+            </HideIfSubscribed>
+          </div>
 
-        {/* Archive panel */}
-        <div className="rd-archive-panel">
-          {/* Sticky panel header */}
-          <div className="rd-archive-panel-header">
-            <span className="rd-archive-panel-label">Browse Archive</span>
-            <div className="rd-sort-toggle">
-              <button
-                className={`rd-sort-btn${!sortAsc ? " rd-sort-btn--active" : ""}`}
-                onClick={() => setSortAsc(false)}
-                title="Newest first"
-              >↓</button>
-              <button
-                className={`rd-sort-btn${sortAsc ? " rd-sort-btn--active" : ""}`}
-                onClick={() => setSortAsc(true)}
-                title="Oldest first"
-              >↑</button>
+          {/* Archive panel */}
+          <div className="rd-archive-panel">
+            {/* Sticky panel header */}
+            <div className="rd-archive-panel-header">
+              <span className="rd-archive-panel-label">Browse Archive</span>
+              <div className="rd-sort-toggle">
+                <button
+                  className={`rd-sort-btn${!sortAsc ? " rd-sort-btn--active" : ""}`}
+                  onClick={() => setSortAsc(false)}
+                  title="Newest first"
+                  tabIndex={collapsed ? -1 : undefined}
+                >↓</button>
+                <button
+                  className={`rd-sort-btn${sortAsc ? " rd-sort-btn--active" : ""}`}
+                  onClick={() => setSortAsc(true)}
+                  title="Oldest first"
+                  tabIndex={collapsed ? -1 : undefined}
+                >↑</button>
+              </div>
+            </div>
+
+            {/* Scrollable issue list */}
+            <div className="rd-archive-list">
+              {sortedIssues.map((issue) => {
+                const isActive = issue.slug === currentSlug;
+                const activeClass = isGml
+                  ? " rd-archive-row--active--getmelit"
+                  : " rd-archive-row--active";
+                return (
+                  <Link
+                    key={issue.slug}
+                    id={`rd-row-${issue.slug}`}
+                    href={`/newsletter/${issue.slug}`}
+                    className={`rd-archive-row${isActive ? activeClass : ""}`}
+                    tabIndex={collapsed ? -1 : undefined}
+                  >
+                    <span className="rd-archive-num">
+                      Issue {String(issue.issueNum).padStart(3, "0")}
+                    </span>
+                    <span className="rd-archive-title">
+                      {issue.title}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
-
-          {/* Scrollable issue list */}
-          <div className="rd-archive-list">
-            {sortedIssues.map((issue) => {
-              const isActive = issue.slug === currentSlug;
-              const activeClass = isGml
-                ? " rd-archive-row--active--getmelit"
-                : " rd-archive-row--active";
-              return (
-                <Link
-                  key={issue.slug}
-                  id={`rd-row-${issue.slug}`}
-                  href={`/newsletter/${issue.slug}`}
-                  className={`rd-archive-row${isActive ? activeClass : ""}`}
-                >
-                  <span className="rd-archive-num">
-                    Issue {String(issue.issueNum).padStart(3, "0")}
-                  </span>
-                  <span className="rd-archive-title">
-                    {issue.title}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer — stays visible at any width so the sidebar can always be
+            brought back once collapsed. */}
         <div className="rd-sidebar-footer">
-          <button className="rd-sidebar-collapse" title="Scroll to top" onClick={() => paneRef.current?.scrollTo({ top: 0, behavior: "smooth" })}>
-            «
+          <button
+            className="rd-sidebar-collapse"
+            title={collapsed ? "Expand archive sidebar" : "Collapse archive sidebar"}
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed((c) => !c)}
+          >
+            <span className="rd-sidebar-collapse-arrow">{collapsed ? "»" : "«"}</span>
+            {!collapsed && <span className="rd-sidebar-collapse-label">Collapse</span>}
           </button>
         </div>
       </div>
