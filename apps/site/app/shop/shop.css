@@ -69,10 +69,10 @@
 
 /* ── STICKY FILTER BAR (superseded — the search+filter bar was removed from the
    page entirely and moved into <ShopSearchModal>, opened from the header search
-   icon on any /shop* page. .sl-filter/.sl-filter-row1/.sl-search/.sl-filter-pills/
-   .sl-filter-right/.sl-filter-row2/.sl-view-toggle/.sl-vt-btn* below are now dead
-   — kept in case this ever needs reverting. .sl-fpill*/.sl-chip*/.sl-filter-clear/
-   .sl-sort-select are NOT dead — ShopSearchModal.tsx reuses them for its own pills.) ── */
+   icon on any shop route. .sl-filter, .sl-filter-row1, .sl-search, .sl-filter-pills,
+   .sl-filter-right, .sl-filter-row2, .sl-view-toggle and .sl-vt-btn (below) are now
+   dead — kept in case this ever needs reverting. .sl-fpill, .sl-chip, .sl-filter-clear
+   and .sl-sort-select are NOT dead — ShopSearchModal.tsx reuses them for its pills. ── */
 .sl-filter {
   position: sticky;
   top: 0;
