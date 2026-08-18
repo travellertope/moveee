@@ -111,9 +111,11 @@ export default function IssueReaderClient({
           <p className="rd-sidebar-standfirst">
             Browse all {issues.length} issues of {meta.label} — {meta.tagline.toLowerCase()}
           </p>
-          <a href="#rd-subscribe" className="rd-sidebar-subscribe" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
-            Subscribe free →
-          </a>
+          <HideIfSubscribed>
+            <a href="#rd-subscribe" className="rd-sidebar-subscribe" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
+              Subscribe free →
+            </a>
+          </HideIfSubscribed>
         </div>
 
         {/* Archive panel */}
