@@ -2163,6 +2163,21 @@ Two small, unrelated fixes requested together against `/magazine` and its editio
   future pinned section needs the same treatment, follow this pattern: fetch its own pool, add
   its ids to `usedElsewhereIds`, and do **not** add a `categories.nodes.some(...)`/
   `series.nodes.some(...)` blanket exclusion for its taxonomy.
+  **Dedupe direction reversed (August 2026, user-reported):** the by-id dedupe above used to run
+  pinned-sections-first — each of Opinions/The Lane/The Free Critics independently claimed its
+  own top-N freshest posts, and only those exact ids were then stripped out of the top-of-page
+  pool (Hero/"More This Week"/Featured Stories). That meant if the single best/most-recent story
+  site-wide also happened to carry a Viewpoints tag (or sat in The Lane/Free Critics series), a
+  pinned section further down the page could claim it first, bumping it out of the Hero slot in
+  favour of stale content up top. Reversed: the top pool (`topPool`, News already excluded) picks
+  its first 7 posts (Hero + 3 "More This Week" + 3 Featured Stories) *first*; those ids become
+  `usedByTopIds`; Opinions/The Lane/The Free Critics then filter their own taxonomy pool against
+  `usedByTopIds` before slicing to their needed count. Opinions' fetch was bumped from `first: 4`
+  to `first: 12` to leave headroom for that filter (Lane/Free Critics already had buffer via
+  `GET_SERIES_STORIES`'s built-in `first: 48`). News is unaffected — it's still excluded from the
+  top pool unconditionally, so there's never overlap to resolve there. **If you add a new pinned
+  section, give it the same "fetch a buffer, filter against `usedByTopIds`, then slice" treatment
+  — do not go back to computing pinned sections before the top pool.**
 - **Cross-section horizontal alignment fix** — user-reported: sections had visibly inconsistent
   left/right margins on wide viewports. Root cause was two separate bugs in `magazine.css`, both
   against the shared `max-width: calc(1200px + 128px)` (1328px) centered-column convention every
