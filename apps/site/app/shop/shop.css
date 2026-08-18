@@ -932,7 +932,7 @@
      photo enough for the white text to stay legible and preserves the
      section's original warm-brown palette. */
   background:
-    linear-gradient(160deg, rgba(61,48,32,.86), rgba(20,17,13,.92) 60%),
+    linear-gradient(160deg, rgba(61,48,32,.5), rgba(20,17,13,.6) 60%),
     url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg/1920px-Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg') center/cover;
   border-radius: 20px;
   overflow: hidden;
@@ -974,15 +974,17 @@
   color: var(--paper);
   margin: 0 0 16px;
   line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-left h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .sl-member-left > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
-  color: rgba(243,236,224,.7);
+  color: rgba(243,236,224,.85);
   line-height: 1.6;
   max-width: 440px;
   margin: 0 0 36px;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-perks {
   display: grid;
@@ -1001,12 +1003,14 @@
   font-weight: 700;
   color: var(--paper);
   margin-bottom: 3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
 }
 .sl-mperk-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
-  color: rgba(243,236,224,.5);
+  color: rgba(243,236,224,.7);
   line-height: 1.4;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 .sl-member-cta {
   display: inline-flex;
@@ -1039,6 +1043,8 @@
   padding: 32px 40px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.14);
+  background: rgba(20,17,13,.35);
+  backdrop-filter: blur(2px);
 }
 .sl-member-stat-num {
   font-family: 'Fraunces', serif;
@@ -1046,6 +1052,7 @@
   font-weight: 700;
   color: #fff;
   line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-stat-label {
   font-family: 'JetBrains Mono', monospace;
