@@ -164,7 +164,9 @@ export default async function ShopArchiveWrapper({
       {/* ── 0. TRUST LINE — very top of the page, slim dark bar ── */}
       <section className="sl-trust">
         <p className="sl-trust-line">
-          <strong>Vetted Makers</strong> · <strong>4.8 average rating</strong> · <strong>Moveee Pro</strong> saves {proDiscountPercent}%
+          <strong>Vetted Makers</strong>
+          <span className="sl-trust-rating"> · <strong>4.8 average rating</strong></span>
+          {" "}· <strong>Moveee Pro</strong> saves {proDiscountPercent}%
         </p>
       </section>
 

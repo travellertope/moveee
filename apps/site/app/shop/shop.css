@@ -309,8 +309,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 16px;
+  padding: 16px 0;
   border-top: 1px solid var(--rule);
+  /* Sticky so "View N Results" stays reachable while scrolling a long filter
+     list instead of only appearing after scrolling all the way down. */
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
 }
 .shop-search-view-btn {
   margin-left: auto;
@@ -330,8 +335,21 @@
 .shop-search-view-btn:hover { background: var(--ochre); }
 
 @media (max-width: 640px) {
-  .shop-search-body { padding: 8px 22px 32px; }
-  .shop-search-footer { flex-direction: column-reverse; align-items: stretch; }
+  .shop-search-body { padding: 8px 22px 16px; gap: 14px; }
+  .shop-search-group-label { margin-bottom: 6px; }
+  /* Pill rows scroll horizontally instead of wrapping — same pattern as the
+     old sticky filter bar's mobile treatment above — so ~5 facet groups fit
+     without each one eating several wrapped rows of vertical space. */
+  .shop-search-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .shop-search-pills::-webkit-scrollbar { display: none; }
+  .shop-search-pills .sl-fpill { flex-shrink: 0; }
+  .shop-search-footer { flex-direction: column-reverse; align-items: stretch; padding: 12px 0; }
   .shop-search-view-btn { width: 100%; text-align: center; }
 }
 
@@ -1251,6 +1269,9 @@
   .sl-head-inner h1 { font-size: 26px; }
   .sl-head-desc { font-size: 13px; }
   .sl-trust-line { padding: 12px 20px; font-size: 10px; }
+  /* Dropped on mobile so the trust line fits on one row — see .sl-trust-rating
+     in ShopArchiveWrapper.tsx (still shown at wider widths). */
+  .sl-trust-rating { display: none; }
 
   .sl-pick-title { font-size: 26px; }
   .sl-featured-grid { grid-template-columns: 1fr; gap: 24px; }
