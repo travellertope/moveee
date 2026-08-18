@@ -3602,7 +3602,7 @@
   line-height: 1.3;
   margin: 64px 0 12px;
   padding-top: 24px;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid rgba(20, 17, 13, 0.1);
 }
 .rd-body--getmelit h2, .rd-body--getmelit h3 { color: var(--gold); }
 .rd-body h2 { font-size: 26px; }
@@ -3627,6 +3627,18 @@
   width: 100%;
   border-radius: var(--radius-lg, 6px);
   margin: 8px 0 24px;
+}
+.rd-body hr {
+  border: none;
+  border-top: 1px solid rgba(20, 17, 13, 0.1);
+  margin: 40px 0;
+}
+/* Comments (ArticleComments.tsx) already draws its own divider above the
+   "Comments" heading — an <hr> at the very end of the issue body (a common
+   WP block for "end of newsletter") would otherwise stack a second one
+   right on top of it. */
+.rd-body hr:last-child {
+  display: none;
 }
 /* ── FIGURE / MEDIA CAPTIONS ──
    Gutenberg image/embed blocks wrap media in <figure><img><figcaption> —
