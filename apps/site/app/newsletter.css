@@ -3520,19 +3520,21 @@
   align-items: center;
   gap: 40px;
 }
-.rd-pull-quote-col {
+.rd-hero-text-col {
   width: 45%;
   display: flex;
   flex-direction: column;
 }
-.rd-pull-quote-text {
+.rd-hero-title {
   font-family: Fraunces, serif;
-  font-size: 26px;
-  font-style: italic;
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 600;
+  font-style: normal;
   color: var(--ink);
-  line-height: 1.45;
+  line-height: 1.15;
+  margin: 0;
 }
-.rd-pull-quote-cite {
+.rd-hero-date {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   color: var(--mute);
@@ -3831,7 +3833,7 @@
   .rd-issue-badge { display: none; }
   .rd-hero { padding: 32px 16px; min-height: auto; }
   .rd-hero-inner { flex-direction: column; gap: 24px; }
-  .rd-pull-quote-col, .rd-hero-image-col { width: 100%; }
+  .rd-hero-text-col, .rd-hero-image-col { width: 100%; }
   .rd-hero-image { max-width: 100%; margin-left: 0; }
   .rd-wordmark-text { font-size: 36px; }
   .rd-wordmark { margin-top: 24px; margin-bottom: 16px; }

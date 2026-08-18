@@ -32,7 +32,6 @@ interface Props {
   publishedDate: string;
   readingTime: number;
   imageUrl?: string;
-  heroPullQuote?: string;
   previewHtml?: string;
   accessLevel: AccessLevel;
   callbackUrl: string;
@@ -48,7 +47,6 @@ export default function IssueReaderClient({
   publishedDate,
   readingTime,
   imageUrl,
-  heroPullQuote,
   previewHtml,
   accessLevel,
   callbackUrl,
@@ -280,19 +278,10 @@ export default function IssueReaderClient({
         {/* Hero */}
         <div className={`rd-hero${isGml ? " rd-hero--getmelit" : ""}`}>
           <div className="rd-hero-inner">
-            {/* Left: pull quote */}
-            <div className="rd-pull-quote-col">
-              {heroPullQuote ? (
-                <>
-                  <p className="rd-pull-quote-text">&ldquo;{heroPullQuote}&rdquo;</p>
-                  <span className="rd-pull-quote-cite">— {meta.pillars[0]?.name || meta.label}</span>
-                </>
-              ) : (
-                <>
-                  <p className="rd-pull-quote-text">&ldquo;{meta.pullQuote}&rdquo;</p>
-                  <span className="rd-pull-quote-cite">{meta.pullCite}</span>
-                </>
-              )}
+            {/* Left: issue title + date */}
+            <div className="rd-hero-text-col">
+              <h1 className="rd-hero-title">{issueTitle}</h1>
+              <span className="rd-hero-date">{publishedDate}</span>
             </div>
             {/* Right: featured image */}
             <div className="rd-hero-image-col">
