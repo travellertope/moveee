@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Search, ShoppingBag, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
+import ShopSearchModal from "./ShopSearchModal";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 
@@ -25,6 +26,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
     pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Shop pages get a dedicated search+filter modal instead of the generic
+  // sitewide one — see ShopSearchModal.tsx / apps/site/lib/shopFiltersBus.ts.
+  const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
@@ -300,7 +304,11 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         </div>
       </nav>
 
-      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {isShopPage ? (
+        <ShopSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      ) : (
+        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      )}
     </>
   );
 };

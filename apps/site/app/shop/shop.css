@@ -51,10 +51,9 @@
   margin: 0;
 }
 
-/* ── 4. TRUST LINE — single slim mono line under the pick/featured sections ── */
+/* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
 .sl-trust {
-  background: #fff;
-  border-bottom: 1px solid var(--rule);
+  background: var(--ink);
 }
 .sl-trust-line {
   max-width: 1440px;
@@ -64,11 +63,16 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   letter-spacing: .02em;
-  color: var(--mute);
+  color: rgba(243,236,224,.7);
 }
-.sl-trust-line strong { color: var(--ink); font-weight: 700; }
+.sl-trust-line strong { color: var(--paper); font-weight: 700; }
 
-/* ── 3. STICKY FILTER BAR ── */
+/* ── STICKY FILTER BAR (superseded — the search+filter bar was removed from the
+   page entirely and moved into <ShopSearchModal>, opened from the header search
+   icon on any /shop* page. .sl-filter/.sl-filter-row1/.sl-search/.sl-filter-pills/
+   .sl-filter-right/.sl-filter-row2/.sl-view-toggle/.sl-vt-btn* below are now dead
+   — kept in case this ever needs reverting. .sl-fpill*/.sl-chip*/.sl-filter-clear/
+   .sl-sort-select are NOT dead — ShopSearchModal.tsx reuses them for its own pills.) ── */
 .sl-filter {
   position: sticky;
   top: 0;
@@ -272,6 +276,63 @@
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+/* ── SHOP SEARCH MODAL (ShopSearchModal.tsx) — reuses apps/site's shared
+   .search-overlay/.search-panel/.search-input-row shell (see homepage.css)
+   for the backdrop + input row; everything below is the shop-specific body
+   that replaced the old sticky filter bar. Filter pills reuse .sl-fpill/
+   .sl-chip/.sl-filter-clear/.sl-sort-select above, unstyled here as buttons/
+   links instead of <select>s so each choice applies immediately on click. ── */
+.shop-search-body {
+  padding: 8px 56px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.shop-search-group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 10px;
+}
+.shop-search-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.shop-search-pills a.sl-fpill { text-decoration: none; }
+.shop-search-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.shop-search-view-btn {
+  margin-left: auto;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+}
+.shop-search-view-btn:hover { background: var(--ochre); }
+
+@media (max-width: 640px) {
+  .shop-search-body { padding: 8px 22px 32px; }
+  .shop-search-footer { flex-direction: column-reverse; align-items: stretch; }
+  .shop-search-view-btn { width: 100%; text-align: center; }
 }
 
 /* ── 2. EDITOR'S PICK — single split strip, hairline rules, no shadow ── */
