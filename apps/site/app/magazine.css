@@ -898,6 +898,60 @@
   padding: 80px 0;
 }
 
+/* ── AUTHOR ARCHIVE MASTHEAD ── */
+.mg-author-head {
+  padding: 56px 64px 32px;
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.mg-author-head-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.mg-author-avatar {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid rgba(42,36,28,.2);
+  flex-shrink: 0;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mg-author-avatar span {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 28px;
+  color: var(--paper, #fff);
+}
+.mg-author-info { min-width: 0; }
+.mg-author-name {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 6px 0 8px;
+}
+.mg-author-name em { font-style: italic; }
+.mg-author-bio {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #3A342B;
+  max-width: 640px;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .mg-author-head { padding: 40px 16px 24px; }
+  .mg-author-head-inner { align-items: flex-start; }
+}
+
 /* ── ISSUES ARCHIVE ──
    Class names below fixed to mag-issues-* (was mg-issues-*, a typo that
    never matched app/magazine/issues/page.tsx's actual className props) —
