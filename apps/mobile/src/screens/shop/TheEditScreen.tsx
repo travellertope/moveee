@@ -17,6 +17,7 @@ import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { api, MOBILE_API } from "../../api/client";
 
@@ -63,6 +64,7 @@ export default function TheEditScreen() {
   const { addItem, itemCount } = useCartStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
 
   const [heroPick, setHeroPick]   = useState<EditProduct | null>(null);
   const [seasonPicks, setSeasonPicks] = useState<EditProduct[]>([]);
@@ -125,7 +127,7 @@ export default function TheEditScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tabletCap}>
         {/* Hero */}
         <ImageBackground source={EDIT_HERO_IMAGE} style={styles.hero} resizeMode="cover">
           <LinearGradient

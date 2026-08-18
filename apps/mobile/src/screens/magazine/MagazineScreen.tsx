@@ -19,6 +19,7 @@ import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const CATEGORIES = ["All", "Fashion", "Music", "Film", "Food", "Interview", "Visuals", "Ideas"];
 
@@ -325,6 +326,7 @@ export default function MagazineScreen() {
   const { newsletters } = useNewsletters();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
 
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -394,7 +396,7 @@ export default function MagazineScreen() {
       {/* Category filter strip — sticky */}
       <CategoryStrip active={activeCategory} onSelect={setActiveCategory} styles={styles} c={c} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingBottom: 90 }, tabletCap]}>
         {/* Featured Hero */}
         {featured ? (
           <TouchableOpacity style={styles.hero} onPress={() => openArticle(featured)} activeOpacity={0.92}>

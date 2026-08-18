@@ -13,6 +13,7 @@ import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const RESEND_COOLDOWN = 30;
 
@@ -52,6 +53,7 @@ export default function VerifyEmailScreen() {
   const password: string = params?.password ?? "";
 
   const { login, setProfileSetupRequired } = useAuthStore();
+  const tabletCap = useTabletContentStyle(440);
 
   const resendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -118,7 +120,7 @@ export default function VerifyEmailScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.inner}>
+      <View style={[styles.inner, tabletCap]}>
         <EnvelopeIcon />
 
         <Text style={styles.heading}>Check your inbox.</Text>

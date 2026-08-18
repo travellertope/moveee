@@ -11,6 +11,7 @@ import { useThemeStore } from "../../store/themeStore";
 import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 import { api, MOBILE_API } from "../../api/client";
 import type { Cluster } from "../../types";
@@ -169,6 +170,7 @@ export default function MemberDashboardScreen() {
   const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(780);
   const { mode } = useThemeStore();
   const systemScheme = useColorScheme();
   const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
@@ -226,7 +228,7 @@ export default function MemberDashboardScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, tabletCap]}
         showsVerticalScrollIndicator={false}
       >
         {/* Card 1: Hero Profile */}

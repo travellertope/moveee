@@ -9,6 +9,7 @@ import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Hub } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
@@ -52,6 +53,7 @@ export default function HubsScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = React.useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore() as any;
 
   const [q, setQ] = useState("");
@@ -156,7 +158,7 @@ export default function HubsScreen() {
               </Text>
             </TouchableOpacity>
           )}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={[{ paddingBottom: 40 }, tabletCap]}
         />
       )}
     </SafeAreaView>

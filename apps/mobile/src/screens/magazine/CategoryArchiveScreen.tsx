@@ -10,6 +10,7 @@ import { useCategoryArchive } from "../../features/magazine/useMagazine";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { Article } from "../../types";
 
 function timeAgo(dateStr: string): string {
@@ -58,6 +59,7 @@ export default function CategoryArchiveScreen() {
   const { categorySlug, categoryName: passedName } = route.params ?? {};
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(720);
 
   const { categoryName, articles, loading, loadingMore, hasMore, error, loadMore } = useCategoryArchive(categorySlug ?? "");
 
@@ -132,7 +134,7 @@ export default function CategoryArchiveScreen() {
             <Text style={styles.endText}>— End of {displayName} —</Text>
           ) : null
         }
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, tabletCap]}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

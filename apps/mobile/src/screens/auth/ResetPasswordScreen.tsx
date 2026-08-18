@@ -17,6 +17,7 @@ import { useNav } from "../../hooks/useNav";
 import Svg, { Circle, Path, Rect, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function EyeIcon({ visible, color = colors.ghost }: { visible: boolean; color?: string }) {
@@ -166,6 +167,7 @@ export default function ResetPasswordScreen() {
   const nav = useNav();
   const { params } = useRoute<any>();
   const token: string = params?.token ?? "";
+  const tabletCap = useTabletContentStyle(440);
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -238,7 +240,7 @@ export default function ResetPasswordScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

@@ -16,6 +16,7 @@ import Svg, { Path, Polyline } from "react-native-svg";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const INTERESTS = [
   { slug: "fashion-streetwear", label: "Fashion & Streetwear",      emoji: "👗" },
@@ -75,6 +76,7 @@ const stepS = StyleSheet.create({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function RegisterCompleteScreen() {
   const { refreshProfile, setProfileSetupRequired } = useAuthStore();
+  const tabletCap = useTabletContentStyle(520);
 
   const [step, setStep] = useState(0); // 0=about, 1=interests, 2=tier
 
@@ -154,7 +156,7 @@ export default function RegisterCompleteScreen() {
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

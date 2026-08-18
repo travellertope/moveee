@@ -11,6 +11,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { LedgerEntry } from "../../types";
 import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 
@@ -165,6 +166,7 @@ export default function WalletScreen() {
   const isPro = user?.tier === "patron";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [tab, setTab] = useState<WalletTab>("history");
   const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
@@ -328,7 +330,7 @@ export default function WalletScreen() {
             <ActivityIndicator color={c.gold} />
           </View>
         ) : (
-          <ScrollView style={styles.scrollArea} contentContainerStyle={styles.historyContent} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scrollArea} contentContainerStyle={[styles.historyContent, tabletCap]} showsVerticalScrollIndicator={false}>
             {entries.length === 0 ? (
               <Text style={styles.emptyText}>No transactions yet.</Text>
             ) : (
@@ -366,7 +368,7 @@ export default function WalletScreen() {
           </ScrollView>
         )
       ) : (
-        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.cashoutContent} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollArea} contentContainerStyle={[styles.cashoutContent, tabletCap]} showsVerticalScrollIndicator={false}>
           <View style={[styles.cashoutCard, shadows.card]}>
             <Text style={styles.cashoutLabel}>Credits to cash out</Text>
             <Text style={styles.cashoutAmount}>{cashoutCredits}</Text>

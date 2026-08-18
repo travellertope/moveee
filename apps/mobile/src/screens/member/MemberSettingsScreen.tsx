@@ -26,6 +26,7 @@ const PROXY = "https://themoveee.com/api";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { useThemeStore, type ThemeMode } from "../../store/themeStore";
 import type { Passkey } from "../../types";
 
@@ -151,6 +152,7 @@ function ProfileTab() {
   const c = useColors();
   const profileStyles = useMemo(() => createProfileStyles(c), [c]);
   const pf = useMemo(() => createPfStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [form, setForm] = useState({
     displayName:        user?.displayName ?? "",
     phone:              user?.phone ?? "",
@@ -260,7 +262,7 @@ function ProfileTab() {
 
   return (
     <View style={{ flex: 1, position: "relative" }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 120 }, tabletCap]}>
         {/* Cover photo */}
         <TouchableOpacity style={profileStyles.coverWrap} onPress={handleCoverPhotoPick}>
           {user?.coverPhotoUrl ? (
@@ -587,6 +589,7 @@ function DirectoryTab() {
   const c = useColors();
   const dirStyles = useMemo(() => createDirStyles(c), [c]);
   const pf = useMemo(() => createPfStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [optIn, setOptIn]             = useState(user?.directoryOptIn ?? false);
   const [bio, setBio]                 = useState(user?.directoryBio ?? "");
   const [disciplines, setDisciplines] = useState<string[]>(user?.directoryDisciplines ?? []);
@@ -627,7 +630,7 @@ function DirectoryTab() {
 
   return (
     <View style={{ flex: 1, position: "relative" }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 120 }, tabletCap]}>
         {/* Directory opt-in toggle */}
         <View style={dirStyles.toggleRow}>
           <View style={{ flex: 1 }}>
@@ -809,6 +812,7 @@ function InterestsTab() {
   const { user, refreshProfile } = useAuthStore();
   const c = useColors();
   const intStyles = useMemo(() => createIntStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [selected, setSelected] = useState<string[]>(user?.interests ?? []);
   const [saving, setSaving] = useState(false);
 
@@ -840,7 +844,7 @@ function InterestsTab() {
 
   return (
     <View style={{ flex: 1, position: "relative" }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 120 }, tabletCap]}>
         <Text style={intStyles.heading}>What are you into?</Text>
         <Text style={intStyles.sub}>Select at least 3 to personalise your Connect feed.</Text>
 
@@ -916,6 +920,7 @@ function NewslettersTab() {
   const { user } = useAuthStore();
   const c = useColors();
   const nlStyles = useMemo(() => createNlStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [subscribed, setSubscribed] = useState<Record<string, boolean>>({
     getmelit:       false,
     "culture-drop": false,
@@ -944,7 +949,7 @@ function NewslettersTab() {
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={c.ochre} />;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 40 }, tabletCap]}>
       <Text style={nlStyles.heading}>Your Newsletters</Text>
       <Text style={nlStyles.sub}>Manage which newsletters you receive.</Text>
 
@@ -996,6 +1001,7 @@ function createNlStyles(c: ColorPalette) {
 function NotificationsTab() {
   const c = useColors();
   const nlStyles = useMemo(() => createNlStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
@@ -1015,7 +1021,7 @@ function NotificationsTab() {
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={c.ochre} />;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 40 }, tabletCap]}>
       <Text style={nlStyles.heading}>Notification Preferences</Text>
       <Text style={nlStyles.sub}>Choose which in-app notifications you want to receive.</Text>
 
@@ -1043,9 +1049,10 @@ function AppearanceTab() {
   const { mode, setMode } = useThemeStore();
   const c = useColors();
   const apStyles = useMemo(() => createApStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   return (
-    <ScrollView contentContainerStyle={apStyles.content}>
+    <ScrollView contentContainerStyle={[apStyles.content, tabletCap]}>
       <Text style={apStyles.sectionHeader}>Appearance</Text>
 
       <View style={apStyles.optionsBlock}>
@@ -1119,15 +1126,17 @@ function createApStyles(c: ColorPalette) {
 
 // ── Security Tab ──────────────────────────────────────────────────────────────
 function SecurityTab() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
   const c = useColors();
   const secStyles = useMemo(() => createSecStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const [passkeys,   setPasskeys]   = useState<Passkey[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [adding,     setAdding]     = useState(false);
   const [changingPw, setChangingPw] = useState(false);
   const [supported,  setSupported]  = useState(true);
   const [trashHover, setTrashHover] = useState<string | null>(null);
+  const [deleting,   setDeleting]   = useState(false);
 
   useEffect(() => {
     setSupported(Passkeys.isSupported());
@@ -1211,8 +1220,40 @@ function SecurityTab() {
     }
   };
 
+  // In-app initiation only — the actual deletion happens after the user taps
+  // the confirmation link we email them, on the public web page at
+  // /account/delete/confirm. Required by Google Play's account-deletion
+  // policy (an in-app path to *start* deletion), see
+  // culture-community/includes/core/class-culture-account-deletion.php.
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      "Delete your account",
+      "We'll email you a confirmation link. Your account won't be deleted until you tap it — the link expires in 24 hours.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Send confirmation email", style: "destructive", onPress: requestDeleteAccount },
+      ]
+    );
+  };
+
+  const requestDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.post(`${MOBILE_API}/account/delete-request`, {});
+      Alert.alert(
+        "Check your email",
+        "We've sent a confirmation link to your email address. You'll be signed out now — deletion only completes once you tap that link.",
+        [{ text: "OK", onPress: () => logout() }]
+      );
+    } catch {
+      Alert.alert("Error", "Could not send the confirmation email. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 40 }, tabletCap]}>
       <Text style={secStyles.heading}>Security</Text>
 
       {/* Change Password card */}
@@ -1314,6 +1355,23 @@ function SecurityTab() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Danger Zone */}
+      <View style={[secStyles.card, shadows.card, secStyles.dangerCard]}>
+        <TouchableOpacity
+          style={secStyles.passwordRow}
+          activeOpacity={0.7}
+          disabled={deleting}
+          onPress={confirmDeleteAccount}
+        >
+          <Ionicons name="trash-outline" size={20} color={c.error} />
+          <Text style={secStyles.dangerLabel}>Delete Account</Text>
+          {deleting
+            ? <ActivityIndicator size="small" color={c.ghost} />
+            : <Ionicons name="chevron-forward" size={18} color={c.ghost} />}
+        </TouchableOpacity>
+        <Text style={secStyles.passwordSub}>Permanently delete your profile, posts, and data</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -1361,6 +1419,9 @@ function createSecStyles(c: ColorPalette) {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
     },
     addPasskeyText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+
+    dangerCard:  { marginTop: 16, borderWidth: 1, borderColor: c.error + "33" },
+    dangerLabel: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.error, flex: 1 },
   });
 }
 

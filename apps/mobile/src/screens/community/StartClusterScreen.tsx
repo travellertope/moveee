@@ -11,6 +11,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { useAuthStore } from "../../auth/authStore";
 import type { AppParamList } from "../../hooks/useNav";
 import type { RouteProp } from "@react-navigation/native";
@@ -114,6 +115,7 @@ export default function StartClusterScreen() {
   const params = route.params ?? {};
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const user = useAuthStore((s) => s.user);
 
   const [name, setName] = useState("");
@@ -250,7 +252,7 @@ export default function StartClusterScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.body, tabletCap]} keyboardShouldPersistTaps="handled">
           <Text style={styles.intro}>
             Name your Stoop and set your meeting schedule. Members in
             your area can join and you'll unlock check-ins and rewards once

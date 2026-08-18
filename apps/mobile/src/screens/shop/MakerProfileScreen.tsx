@@ -20,6 +20,7 @@ import { openInApp } from "../../utils/openInApp";
 import { useCartStore } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -301,6 +302,7 @@ function createProductCardStyles(c: ColorPalette) {
 export default function MakerProfileScreen() {
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
   const navigation = useNav();
   const route = useRoute<RouteProp<MakerProfileRouteParams, "MakerProfile">>();
   const { makerSlug, makerName } = route.params;
@@ -394,7 +396,7 @@ export default function MakerProfileScreen() {
 
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={s.scrollContent}
+        contentContainerStyle={[s.scrollContent, tabletCap]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Hero ── */}

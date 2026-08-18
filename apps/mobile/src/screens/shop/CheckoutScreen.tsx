@@ -18,6 +18,7 @@ import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { api, MOBILE_API } from "../../api/client";
 
@@ -74,6 +75,7 @@ export default function CheckoutScreen() {
   const { items, clearCart } = useCartStore();
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [step, setStep] = useState<Step>("address");
   const [name, setName] = useState(user?.displayName ?? "");
@@ -243,7 +245,7 @@ export default function CheckoutScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView style={s.scroll} contentContainerStyle={[s.scrollContent, tabletCap]} showsVerticalScrollIndicator={false}>
           {step === "address" ? (
             <>
               <Text style={s.sectionTitle}>Contact</Text>

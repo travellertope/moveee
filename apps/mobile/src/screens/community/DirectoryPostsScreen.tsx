@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, CULTURE_API } from "../../api/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -214,6 +215,7 @@ export default function DirectoryPostsScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [posts, setPosts]           = useState<Post[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -296,7 +298,7 @@ export default function DirectoryPostsScreen() {
               })}
             />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, tabletCap]}
           ItemSeparatorComponent={() => null}
           onEndReached={loadMore}
           onEndReachedThreshold={0.3}

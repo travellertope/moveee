@@ -10,6 +10,7 @@ import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Hub } from "../../types";
 
@@ -76,6 +77,7 @@ export default function HubCreateScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = React.useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -138,7 +140,7 @@ export default function HubCreateScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
         <Text style={styles.heading}>Start a Hub.</Text>
         <Text style={styles.sub}>
           A Hub is a topic community — anyone can join, post, and comment on what

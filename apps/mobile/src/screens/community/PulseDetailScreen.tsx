@@ -12,6 +12,7 @@ import HtmlContent from "../../components/ui/HtmlContent";
 import type { FeedItem } from "../../types";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import CommentSection from "../../components/community/CommentSection";
 
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
@@ -44,6 +45,7 @@ export default function PulseDetailScreen() {
   const postId = item?.wpId ?? "";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const HTML_TAG_STYLES = {
     p: { fontSize: 15, lineHeight: 25, color: c.inkSoft, fontFamily: SERIF, marginBottom: 12 },
@@ -85,7 +87,7 @@ export default function PulseDetailScreen() {
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.listContent}>
+        <ScrollView contentContainerStyle={[styles.listContent, tabletCap]}>
           <Text style={styles.title}>{item.title}</Text>
 
           <View style={styles.metaRow}>

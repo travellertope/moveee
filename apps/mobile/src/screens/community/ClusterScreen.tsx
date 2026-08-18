@@ -11,6 +11,7 @@ import QRCode from "react-native-qrcode-svg";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type {
   Cluster, ClusterStatus, ClusterElectionStatus,
@@ -132,6 +133,7 @@ export default function ClusterScreen() {
   const c = useColors();
   const myUserId = Number(useAuthStore((s) => s.user?.id) ?? 0);
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const clusterId: number = route.params?.id;
 
   const [cluster, setCluster] = useState<Cluster | null>(null);
@@ -386,7 +388,7 @@ export default function ClusterScreen() {
           </View>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
           <View style={styles.nameBlock}>
             <Text style={styles.eyebrow}>People Near Me › Stoop</Text>
             <Text style={styles.name}>{cluster.name}</Text>

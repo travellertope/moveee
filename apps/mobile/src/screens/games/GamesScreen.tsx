@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } fr
 import { useNav } from "../../hooks/useNav";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import { useGameStreak } from "../../features/games/useGameStreak";
 import { Ionicons } from "@expo/vector-icons";
@@ -64,6 +65,7 @@ export default function GamesScreen() {
   const nav    = useNav();
   const c      = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(760);
   const streak = useGameStreak();
 
   return (
@@ -86,7 +88,7 @@ export default function GamesScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 90 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingTop: 16, paddingBottom: 90 }, tabletCap]}>
         {/* Streak banner */}
         {streak > 0 && (
           <View style={styles.streakBanner}>

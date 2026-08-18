@@ -9,11 +9,13 @@ import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 export default function WishlistScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { wishlist, toggleWishlist } = useCartStore();
 
   const renderItem = ({ item }: { item: WishlistItem }) => (
@@ -72,7 +74,7 @@ export default function WishlistScreen() {
           data={wishlist}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, tabletCap]}
           showsVerticalScrollIndicator={false}
         />
       )}

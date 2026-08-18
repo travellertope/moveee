@@ -756,6 +756,35 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Account deletion — step 1 only (in-app initiation). Confirmation always
+        // happens via the emailed link on the public web page, per Google Play's
+        // account-deletion policy — see class-culture-account-deletion.php.
+        register_rest_route( 'culture/v1', '/mobile/account/delete-request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_account_delete_request' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Google Play Billing — verifies a subscription purchase and grants
+        // Moveee Pro. See class-culture-google-play-billing.php.
+        register_rest_route( 'culture/v1', '/mobile/billing/verify-google-play', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_verify_google_play_purchase' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'product_id' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'purchase_token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/mobile/analytics', array(
             'methods'             => 'GET',
@@ -3710,6 +3739,27 @@ class Culture_Mobile_API {
             $prefs = array();
         }
         return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
+    }
+
+    public static function handle_account_delete_request( $request ) {
+        $user_id = get_current_user_id();
+        $result  = Culture_Account_Deletion::request_deletion( $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_verify_google_play_purchase( $request ) {
+        $user_id        = get_current_user_id();
+        $product_id     = $request->get_param( 'product_id' );
+        $purchase_token = $request->get_param( 'purchase_token' );
+
+        $result = Culture_Google_Play_Billing::verify_and_grant( $user_id, $product_id, $purchase_token );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true, 'tier' => 'patron' ) );
     }
 
     public static function handle_analytics( $request ) {

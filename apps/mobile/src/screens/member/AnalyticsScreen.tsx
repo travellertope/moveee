@@ -12,6 +12,7 @@ import Svg, {
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import type { AnalyticsData } from "../../types";
 
@@ -174,6 +175,7 @@ export default function AnalyticsScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(780);
 
   useEffect(() => {
     api.get<AnalyticsData>(`${MOBILE_API}/analytics`)
@@ -200,7 +202,7 @@ export default function AnalyticsScreen() {
         <View style={styles.center}><Text style={styles.errorText}>{error}</Text></View>
       ) : data ? (
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, tabletCap]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.statsCard}>

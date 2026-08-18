@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 
@@ -106,6 +107,7 @@ export default function MyRSVPsScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore() as any;
 
   const [rsvps, setRsvps] = useState<RsvpItem[]>([]);
@@ -168,7 +170,7 @@ export default function MyRSVPsScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={[styles.list, tabletCap]}>
           {rsvps.map((item) => {
             const statusConfig = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.attending;
             return (

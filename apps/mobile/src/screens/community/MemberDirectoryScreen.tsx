@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
@@ -99,6 +100,7 @@ export default function MemberDirectoryScreen() {
   const { user } = useAuthStore() as any;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
   const [members,    setMembers]    = useState<Member[]>([]);
   const [filtered,   setFiltered]   = useState<Member[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -206,7 +208,7 @@ export default function MemberDirectoryScreen() {
           data={filtered}
           keyExtractor={(m) => m.id}
           numColumns={2}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={[styles.grid, tabletCap]}
           columnWrapperStyle={styles.row}
           ListEmptyComponent={
             <View style={styles.empty}>

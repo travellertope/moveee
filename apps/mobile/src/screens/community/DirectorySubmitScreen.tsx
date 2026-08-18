@@ -12,6 +12,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 // ── Interest tags ─────────────────────────────────────────────────────────────
 
@@ -303,6 +304,7 @@ export default function DirectorySubmitScreen() {
 
   const c      = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const user   = useAuthStore((s) => s.user);
   const isPatron = user?.tier === "patron";
 
@@ -444,7 +446,7 @@ export default function DirectorySubmitScreen() {
       >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, tabletCap]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

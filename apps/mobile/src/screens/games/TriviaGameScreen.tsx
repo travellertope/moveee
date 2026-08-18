@@ -10,6 +10,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import GameScoreCard from "../../components/games/GameScoreCard";
 import { useScoreCardShare } from "../../features/games/useScoreCardShare";
@@ -51,6 +52,7 @@ export default function TriviaGameScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(600);
   const { user } = useAuthStore();
   const isPro = user?.tier === "patron";
   const { cardRef, share: shareScoreCard, sharing } = useScoreCardShare();
@@ -219,7 +221,7 @@ export default function TriviaGameScreen() {
 
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: c.paperWarm }]}>
-        <ScrollView contentContainerStyle={styles.scoreBody}>
+        <ScrollView contentContainerStyle={[styles.scoreBody, tabletCap]}>
           <Text style={styles.scoreLarge}>{final} / {questions.length}</Text>
           <Text style={styles.scorePct}>{pct}% correct</Text>
           <Text style={styles.scoreMsg}>{msg}</Text>
@@ -298,7 +300,7 @@ export default function TriviaGameScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gameBody}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.gameBody, tabletCap]}>
         {/* Question card */}
         <View style={styles.questionCard}>
           {currentQ.category ? (

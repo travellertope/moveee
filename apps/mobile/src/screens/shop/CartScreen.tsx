@@ -14,6 +14,7 @@ import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { api, MOBILE_API } from "../../api/client";
 
@@ -25,6 +26,7 @@ export default function CartScreen() {
   const { items, removeItem, updateQty, clearCart } = useCartStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [voucher, setVoucher]         = useState("");
   const [appliedVoucher, setApplied]   = useState("");
@@ -120,7 +122,7 @@ export default function CartScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, tabletCap]}
         showsVerticalScrollIndicator={false}
       >
         {items.map((item) => (

@@ -11,6 +11,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import GameScoreCard from "../../components/games/GameScoreCard";
 import { useScoreCardShare } from "../../features/games/useScoreCardShare";
@@ -35,6 +36,7 @@ export default function WhoSaidItGameScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(600);
   const { user } = useAuthStore();
   const isPro = user?.tier === "patron";
   const { cardRef, share: shareScoreCard, sharing } = useScoreCardShare();
@@ -176,7 +178,7 @@ export default function WhoSaidItGameScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <Header nav={nav} styles={styles} c={c} />
-        <ScrollView contentContainerStyle={styles.doneBody}>
+        <ScrollView contentContainerStyle={[styles.doneBody, tabletCap]}>
           <Text style={styles.doneEmoji}>✍️</Text>
           <Text style={styles.doneTitle}>{msg}</Text>
           <Text style={styles.doneScore}>{finalScore} / {questions.length}</Text>
@@ -250,7 +252,7 @@ export default function WhoSaidItGameScreen() {
         <View style={[styles.progressFill, { width: `${((qIndex + 1) / questions.length) * 100}%` as any }]} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.gameBody} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.gameBody, tabletCap]} showsVerticalScrollIndicator={false}>
         {/* Quote block */}
         <View style={styles.quoteCard}>
           <Text style={styles.quoteMarks}>"</Text>

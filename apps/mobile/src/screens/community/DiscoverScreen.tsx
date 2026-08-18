@@ -21,6 +21,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { interestsToTagSet } from "@moveee/utils/interest-mappings";
 import DiscoverCard, { DiscoverEntry, TYPE_BADGE } from "../../components/community/DiscoverCard";
 import DiscoverFilterSheet, { SortOption } from "../../components/community/DiscoverFilterSheet";
+import { useIsTablet } from "../../hooks/useIsTablet";
 
 const PER_PAGE = 20;
 
@@ -72,6 +73,8 @@ function decodeEntries(entries: DiscoverEntry[]): DiscoverEntry[] {
 export default function DiscoverScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const isTablet = useIsTablet();
+  const numColumns = isTablet ? 3 : 2;
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<AppParamList, "Discover">>();
@@ -323,11 +326,14 @@ export default function DiscoverScreen() {
       />
 
       <FlatList
+        // numColumns can't change on the fly without a remount — the `key`
+        // forces one whenever the tablet/phone column count differs.
+        key={`grid-${numColumns}`}
         data={entries}
         keyExtractor={(item) => String(item.id)}
-        numColumns={2}
+        numColumns={numColumns}
         columnWrapperStyle={styles.gridRow}
-        contentContainerStyle={styles.gridContent}
+        contentContainerStyle={[styles.gridContent, isTablet && styles.gridContentTablet]}
         onEndReachedThreshold={0.4}
         onEndReached={loadMore}
         ListHeaderComponent={
@@ -501,6 +507,7 @@ const createStyles = (c: ColorPalette) =>
       marginBottom: space[2],
     },
     gridContent: { paddingHorizontal: space[4], paddingBottom: space[8] },
+    gridContentTablet: { maxWidth: 960, width: "100%", alignSelf: "center" },
     gridRow: { gap: 10 },
     gridItem: { flex: 1, marginBottom: 10 },
     emptyText: {

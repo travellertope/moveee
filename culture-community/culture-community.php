@@ -47,6 +47,8 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-auth.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-account-deletion.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-play-billing.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-country-cleanup.php';
 

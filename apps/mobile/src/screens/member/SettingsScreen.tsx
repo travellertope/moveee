@@ -9,6 +9,6 @@ export default function SettingsScreen() {
   );
 }
 const styles = StyleSheet.create({
-  c: { flex: 1, backgroundColor: "#f3ece0", justifyContent: "center", alignItems: "center" },
+  c: { flex: 1, backgroundColor: "#ffffff", justifyContent: "center", alignItems: "center" },
   t: { fontSize: 20, color: "#14110d" },
 });

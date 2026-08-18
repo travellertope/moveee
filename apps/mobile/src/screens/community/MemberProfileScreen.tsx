@@ -13,6 +13,7 @@ import { openInApp } from "../../utils/openInApp";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { Member, FeedItem, TemplateType } from "../../types";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
@@ -344,6 +345,7 @@ export default function MemberProfileScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const currentUser = useAuthStore((s) => s.user);
 
   const [profile,   setProfile]   = useState<PublicProfile | null>(null);
@@ -458,7 +460,7 @@ export default function MemberProfileScreen() {
     <View style={styles.outerContainer}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, tabletCap]}
         showsVerticalScrollIndicator={false}
       >
         {profile.coverPhotoUrl ? (

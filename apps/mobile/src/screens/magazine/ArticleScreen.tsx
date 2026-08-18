@@ -32,6 +32,7 @@ import { useAuthStore } from "../../auth/authStore";
 import BottomSheet from "../../components/ui/BottomSheet";
 import ReactionBar from "../../components/community/ReactionBar";
 import CommentSection, { type NormalizedComment } from "../../components/community/CommentSection";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 
 const HERO_HEIGHT = 280;
 const SHEET_OVERLAP = 32;
@@ -612,6 +613,7 @@ export default function ArticleScreen() {
   const { article: fetched, loading, error } = useArticle(slug);
   const article: Article | undefined = fetched ?? passedArticle;
   const { width, height } = useWindowDimensions();
+  const tabletCap = useTabletContentStyle(680);
 
   const user = useAuthStore((s) => s.user);
   const isPatron = user?.tier === "patron";
@@ -836,8 +838,8 @@ export default function ArticleScreen() {
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
           >
-            {/* ── White rounded card ── */}
-            <View style={styles.sheet}>
+            {/* ── White rounded card (capped to a reading-width column on tablet — hero stays full-bleed above it) ── */}
+            <View style={[styles.sheet, tabletCap]}>
               {/* Breadcrumb */}
               <TouchableOpacity
                 onPress={() => article.category && nav.push("CategoryArchive", {

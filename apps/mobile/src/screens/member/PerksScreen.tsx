@@ -9,6 +9,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { api, CULTURE_API, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
 import { ConfirmRedeemDialog } from "../../components/ui/Overlays";
 import type { Perk } from "../../types";
@@ -83,6 +84,7 @@ export default function PerksScreen() {
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(900);
 
   const credits    = user?.credits ?? 0;
   const hasPasskey = user?.hasPasskey ?? false;
@@ -176,7 +178,7 @@ export default function PerksScreen() {
           data={perks}
           keyExtractor={(p) => String(p.id)}
           numColumns={2}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={[styles.grid, tabletCap]}
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>

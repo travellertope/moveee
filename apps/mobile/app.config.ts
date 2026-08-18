@@ -19,10 +19,10 @@ export default {
     splash: {
       image: "./assets/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#f3ece0",
+      backgroundColor: "#ffffff",
     },
     ios: {
-      supportsTablet: false,
+      supportsTablet: true,
       bundleIdentifier: "com.moveee.connect",
     },
     android: {
@@ -62,6 +62,13 @@ export default {
         "@react-native-google-signin/google-signin",
         { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
       ],
+      "react-native-iap",
+      // react-native-iap ships both "amazon" and "play" Android product
+      // flavors — Gradle can't resolve which one to use without this hint.
+      // Must come after the "react-native-iap" plugin above so the Gradle
+      // file it patches already has the dependency block react-native-iap's
+      // own plugin adds.
+      "./plugins/withAndroidIapStoreFlavor",
     ],
     extra: {
       eas: {

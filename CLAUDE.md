@@ -5938,6 +5938,131 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ---
 
+## Account deletion (August 2026)
+
+Required by Google Play's account-deletion policy ahead of the Play Store submission
+(see `docs/play-store-listing.md` for the full submission-readiness doc this is part
+of) — an app that supports account creation must offer both an in-app path to
+*initiate* deletion and a public web page that can *complete* it without the app
+installed. Two-step request/confirm flow, mirroring the existing email-verification
+token pattern (`_culture_email_verify_token` in `class-culture-rest-api.php`) exactly:
+a random token, stored only as `wp_hash()`, emailed to the account's own address,
+expiring after 24 hours. Two steps rather than one in-app tap so a stray tap or a
+forwarded/leaked link can't delete an account outright.
+
+- **Backend**: `culture-community/includes/core/class-culture-account-deletion.php`
+  (`Culture_Account_Deletion::request_deletion()` / `::confirm_deletion()`). Wired into
+  `class-culture-rest-api.php` (web, API-key: `POST /culture/v1/account/delete-request`
+  takes an explicit `user_id`, `POST /culture/v1/account/delete-confirm` takes `uid`+
+  `token`) and `class-culture-mobile-api.php` (mobile, JWT: `POST
+  /mobile/account/delete-request` only — mobile never gets a confirm endpoint, since
+  confirmation always happens via the emailed web link, see below). Email template:
+  `Culture_Emails::send_account_deletion_email()`.
+- **Deletion mechanics**: on confirm, `wp_delete_user()` removes the WP user row and
+  every `wp_usermeta` row — which is where the actual PII lives (name, email, phone,
+  DOB, city, occupation, avatar/cover URLs, interests, directory bio). Authored
+  posts/comments are reassigned to a lazily-created "Deleted User" placeholder account
+  (`Culture_Account_Deletion::get_placeholder_user_id()`, cached in the
+  `culture_deleted_user_id` option) rather than left attributed to a vanished ID.
+- **Deliberate scope limit, not an oversight**: custom plugin tables keyed by user_id
+  (credit ledger, notifications, follows, RSVPs, hub/cluster membership, redemptions,
+  attendance, etc.) are **not** swept — their rows become orphaned references to a
+  user_id that no longer resolves via `get_userdata()`, which is harmless (nothing
+  renders for a nonexistent user) but isn't a full data purge. If a stricter
+  data-retention audit ever requires it, that's a real follow-up project (enumerate
+  every `wp_culture_*` table with a `user_id`/`author_id` column and write a proper
+  per-table cleanup pass) — don't assume it's already covered.
+- **Web** (`apps/connect` — auth/account pages live on Site B, per the site-split
+  rules above): `/account/delete` (public — shows the delete flow for a logged-in
+  visitor, or a login prompt + `privacy@themoveee.com` fallback for a logged-out one;
+  deliberately never redirects a logged-out visitor away, since Play requires this
+  page reachable without the app) and `/account/delete/confirm?uid=&token=` (public,
+  reads the emailed link — requires an explicit final button tap, not auto-triggered
+  on page load, so an email client's link-preview/security scanner prefetching the URL
+  can't fire a destructive action). Proxied through `/api/account/delete-request`
+  (session-based) and `/api/account/delete-confirm` (public — the token itself is the
+  credential, same trust model `/api/verify-email` already uses).
+- **Mobile**: `MemberSettingsScreen.tsx`'s Security tab has a "Delete Account" row in a
+  new Danger Zone card (`secStyles.dangerCard`/`dangerLabel`) below the passkeys card.
+  Confirms via `Alert`, calls the delete-request endpoint, then calls `logout()` —
+  nothing left to do in-app until the emailed link is confirmed.
+- **`apps/site` is untouched** — its own `/account/*` prefix already 308-redirects to
+  `web.themoveee.com` (see "Site architecture — split complete" above), so
+  `themoveee.com/account/delete` correctly reaches these new `apps/connect` pages with
+  no proxy changes needed there.
+
+---
+
+## Google Play Billing — Moveee Pro upgrade on Android (August 2026)
+
+Moveee Pro's Android upgrade goes through real Google Play Billing now, not a web-
+checkout redirect — the redirect risked a Payments-policy rejection (an app unlocking
+in-app digital features via an external checkout), flagged during Play Store submission
+prep (see `docs/play-store-listing.md`). A client-reported purchase is never trusted on
+its own — every purchase token is verified against the Play Developer API server-side
+before Pro is granted, matching the existing Stripe/Paystack posture.
+
+**Restored, not new**: `react-native-iap` and its Android store-flavor config plugin
+(`apps/mobile/plugins/withAndroidIapStoreFlavor.js` — the file itself was never
+deleted, only unwired) had been deliberately stripped from `package.json`/`app.config.ts`
+to unblock early preview builds (see the "Production build checklist" table above,
+which is now stale on this point — both are back). Lockfile regenerated via the
+documented out-of-tree process.
+
+- **Client** (`apps/mobile`): `src/config/iap.ts` — the two subscription SKU constants
+  (`moveee_pro_monthly` / `moveee_pro_annual`) that must match Play Console and the WP
+  Admin setting below exactly. `src/features/billing/iap.ts` — `initIAP()`/`endIAP()`,
+  `getProSubscriptions()`, `purchaseProSubscription()` (wraps react-native-iap's
+  purchase-updated/error listeners into one promise that only resolves after our
+  backend verifies the purchase). Android's Billing Library v5+ requires an explicit
+  `offerToken` per SKU, not a bare SKU string — pulled from the live subscription's own
+  `subscriptionOfferDetails` rather than hardcoded, so a promotional offer added later
+  in Play Console keeps working with no code change.
+- **`MembershipScreen.tsx`**: on Android, fetches both subscriptions on mount and shows
+  Monthly/Annual buttons with live store-formatted prices — falls back to the original
+  "Upgrade on the web" button if Play Billing is unavailable (no Play Services, some
+  emulators). iOS is untouched, still redirects to web checkout — StoreKit wiring is
+  separate, out-of-scope work.
+- **Backend**: `culture-community/includes/core/class-culture-google-play-billing.php`
+  (`Culture_Google_Play_Billing::verify_and_grant()`) — signs its own OAuth2
+  service-account JWT with `openssl_sign()` (RS256) and calls the Play Developer API via
+  raw `wp_remote_request()`, no Google API client library / Composer dependency, same
+  "raw HTTP, no SDK" convention as `class-culture-r2.php`'s hand-rolled AWS SigV4
+  signer. Checks `paymentState`/`expiryTimeMillis` before granting anything; **rejects
+  any `product_id` that isn't one of the two configured subscription IDs** (so a valid
+  purchase token for some unrelated product under the same package could never grant
+  Pro on its own); acknowledges the purchase with Google if not already acknowledged
+  (required within 3 days or Google auto-refunds it); fires the same
+  `culture_payment_completed` action Stripe/Paystack already fire, so receipt emails
+  and analytics work unmodified. New REST route:
+  `POST /culture/v1/mobile/billing/verify-google-play` (JWT).
+- **WP Admin**: Payment tab → new "Google Play Billing (Android app)" section — package
+  name, service account JSON (textarea, mirrors the `culture_stripe_secret_key`-style
+  plaintext-option storage convention every other payment gateway here already uses),
+  monthly/annual product IDs.
+- **Human setup still required before this works end-to-end** (none of this is
+  something code alone can do): create the `moveee_pro_monthly`/`moveee_pro_annual`
+  subscription products in Play Console → Monetize → Subscriptions under this app's
+  package (or use different IDs and update the WP Admin fields to match); create a
+  service account with Play Developer API access (Play Console → Setup → API access)
+  and paste its downloaded JSON key into WP Admin; note the subscription products can't
+  go live/testable until a build has been uploaded to a Play Console testing track —
+  there's an unavoidable chicken-and-egg ordering with the rest of the submission
+  checklist.
+- **Known, deliberate scope limit — this only verifies at purchase time.** Renewals,
+  cancellations, refunds, and grace-period/account-hold transitions that happen later
+  are **not** reflected automatically — that needs Google Play Real-Time Developer
+  Notifications (a Cloud Pub/Sub subscription), which needs Google Cloud infrastructure
+  a human has to set up before any code could consume it. Until that's built: a
+  subscription that's been cancelled but hasn't reached its paid-through date still
+  correctly shows as Pro (right — they paid for the period), but a subscription that
+  silently lapses without the app ever calling this endpoint again won't auto-downgrade
+  to Citizen. If a future "why do cancelled users still have Pro" report comes in, this
+  is why — it's a scoped-out gap, not a bug, and closing it means building the RTDN
+  receiver, not re-debugging this class.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
@@ -5987,16 +6112,127 @@ WordPress.
 
 The app lives in `apps/mobile/` using Expo + React Navigation + Zustand + MMKV.
 
-### ⚠️ Production build checklist — items removed for preview builds
+### Tablet support — foundational shell (August 2026)
 
-These were stripped to unblock preview APK builds and **must be restored before production**:
+Mockup-first as usual (Artifact, two frames — Feed and Discover at iPad-landscape width),
+iterated once (an early draft used the just-retired `paperWarm` cream background — caught
+and fixed before this was built) then approved. This is the **foundational shell** pass
+specifically — a real per-screen tablet layout audit across the other ~40 screens is a
+separate, larger follow-up, not done here.
 
-| Item | Where | Why removed | How to restore |
-|------|-------|-------------|----------------|
-| `react-native-iap` | `apps/mobile/package.json` dependencies | Has Amazon/Play store flavors — Gradle can't resolve without the store flavor plugin | Add back: `"react-native-iap": "^12.15.4"` |
-| `./plugins/withAndroidIapStoreFlavor` | `apps/mobile/app.json` plugins array | Required by react-native-iap to select Play vs Amazon flavor | Add back to plugins array |
+- **`ios.supportsTablet`** flipped to `true` in `app.config.ts` (was `false`, iPad was
+  explicitly opted out). Both iPad and Android tablets are in scope.
+- **`src/hooks/useIsTablet.ts`** — the one detection primitive everything else is built on.
+  Uses `Math.min(width, height) >= 600` (`useWindowDimensions`), matching Android's own
+  `sw600dp` tablet qualifier — shortest-side, not raw width, so a phone in landscape
+  doesn't misfire as "tablet."
+- **Left nav rail replaces the bottom tab bar on tablet** — `src/navigation/TabletRail.tsx`,
+  passed as the `tabBar` prop on the existing `Tab.Navigator` in `navigation/index.tsx`'s
+  `MainTabs()` only when `useIsTablet()` is true (`tabBar={isTablet ? (props) => <TabletRail
+  {...props} /> : undefined}`). This is the same `Tab.Navigator`/route state phones use —
+  no new navigator type, no `@react-navigation/drawer` dependency added — the rail is just a
+  custom renderer for the identical state, following React Navigation's own documented
+  custom-tab-bar pattern (`navigation.emit('tabPress', ...)` before navigating, so
+  `tabPress` listeners on individual screens still fire correctly). **If you add a 6th
+  top-level tab in the future, no rail changes are needed** — it maps over `state.routes`
+  generically; only the `TAB_ICONS`/`TAB_LABELS` lookup maps need a new entry (same
+  maintenance burden the old bottom-tab `screenOptions.tabBarIcon` already had).
+- **Feed** (`ConnectFeedScreen.tsx`) — on tablet, the feed column caps at 620px and centers
+  (`listContentTablet`) instead of stretching edge-to-edge, and a new 288px right rail
+  appears with Trending (reusing the same `getTrending()` data/component logic the phone's
+  horizontal "Trending Strip" already used — the strip itself is hidden on tablet via
+  `!isTablet &&`, so the same data isn't shown twice) and a static About card. Unlike the
+  phone strip (only shown in "For You" mode), the tablet rail's Trending card shows
+  regardless of feed mode — matches how the equivalent web sidebar behaves (see "Phase 8b —
+  Feed recommendations" above, web's trending sidebar is independent of the For You filter
+  too). The FAB shifts left on tablet (`fabTablet`) so it floats over the feed column, not
+  on top of the new right rail.
+- **Discover** (`DiscoverScreen.tsx`) — the "Explore More" grid's `numColumns` goes from a
+  hardcoded `2` to `isTablet ? 3 : 2`. **`FlatList.numColumns` can't change without a
+  remount** — `key={`grid-${numColumns}`}` forces one when the value flips (e.g. rotating an
+  iPad, or a Slide Over/Split View resize). Grid content also caps at 960px width and
+  centers on very wide screens (`gridContentTablet`) so a 4-up-equivalent grid on a 12.9"
+  iPad doesn't stretch absurdly wide. The horizontal "Picked for You"/"Recently Added"/
+  "Trending in Community" rails above the grid are untouched — still phone-sized cards,
+  out of scope for this pass.
+- **Not touched in this pass, still phone-only layout**: every screen besides Feed/
+  Discover, and the in-screen headers some screens carry (e.g. `ConnectFeedScreen.tsx`'s
+  own Hub/Stoop/Directory/Discover/Bell/Avatar icon row) — those provide real navigation the
+  rail doesn't cover and were deliberately left as-is rather than restructured into the rail
+  itself, to keep this pass scoped to the shell + two example screens the mockup covered.
+- **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
+  via `tsc --noEmit` (clean, same 35 pre-existing baseline errors as before this pass, all
+  unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
+  actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
+  renders identically to before) before considering this fully closed.
 
-Before production build, also run `npm install` after restoring `react-native-iap`.
+### Tablet support — remaining ~55 screens (August 2026, same day follow-up)
+
+Closes the "screen-by-screen tablet audit is a separate follow-up" gap left open by the
+foundational-shell pass above — every other screen in the app now gets the same
+cap-and-center treatment Feed/Discover proved out, rather than stretching edge-to-edge on
+an iPad/Android tablet.
+
+- **New: `src/hooks/useTabletContentStyle.ts`** — the shared primitive this pass is built
+  on. `useTabletContentStyle(maxWidth = 720)` returns `{ maxWidth, width: "100%", alignSelf:
+  "center" }` on tablet (per `useIsTablet()`) and `undefined` on phone, so spreading it into
+  a `contentContainerStyle` array (`[styles.scroll, tabletCap]`) is a no-op on phone and a
+  centered reading/form column on tablet. Every screen below calls this once and passes the
+  result into its outer `ScrollView`/`FlatList`'s `contentContainerStyle` (or, for the rare
+  screen with no scroll container, its outer `View`).
+- **Scope**: every screen under `src/screens/{magazine,shop,events,games,member,community,
+  auth}/` that wasn't already covered by the foundational-shell pass — roughly 55 screens.
+  Two screens were deliberately skipped: `MemberScreen.tsx`/`SettingsScreen.tsx` (confirmed
+  dead — not registered in `navigation/index.tsx`) and `OnboardingScreen.tsx` (a full-bleed
+  swipeable paging carousel sized directly off `Dimensions.get("window")` — capping it would
+  break the `pagingEnabled` snap math, so it stays full-bleed on tablet, same as the
+  full-bleed-hero exception below).
+- **Consistent `maxWidth` choices by content type** (not a single universal number): ~440px
+  for single-column auth forms (Login/Register/Forgot/Reset/VerifyEmail), ~520–620px for
+  puzzle/game screens (Sudoku/Crossword/Trivia/WhoSaidIt — narrower, since a stretched grid
+  or quiz card reads worse than a stretched article), ~680px for detail/settings/list pages
+  (the majority of the pass), ~760–900px for browse/grid pages (Shop home, Member Directory,
+  Perks — wider, since these want more of a tablet's horizontal space per the same reasoning
+  `gridContentTablet` used for Discover).
+- **Full-bleed hero exception, applied consistently**: any screen with a full-bleed
+  photo/gradient hero above a card-style body (`ArticleScreen.tsx`, `EventDetailScreen.tsx`)
+  caps only the body "sheet"/"content" card below the hero, not the hero itself — same
+  reasoning as `ArticleScreen.tsx`'s original tablet pass (the very first screen done in this
+  batch, before the rest were tackled): a capped-width hero on a wide iPad would look like a
+  mistake, not a design choice. Everywhere else (product pages, event listings, shop
+  screens with a hero banner inside the main scroll), the simpler "cap the whole scroll
+  content" treatment was used instead, accepting that a hero banner shrinks along with the
+  rest of the page — the same tradeoff already made for `ShopScreen.tsx`'s hero banner in the
+  foundational-shell pass's own reasoning, applied consistently rather than re-litigated
+  per screen.
+- **`FlatList numColumns` grids were *not* given the Discover-style column-bump treatment**
+  in this pass (2 columns stays 2 columns on tablet, e.g. `ShopListingScreen.tsx`,
+  `MemberDirectoryScreen.tsx`, `PerksScreen.tsx`) — only cap-and-center. Bumping column count
+  cleanly requires reworking each screen's own card-width math (several compute `colW` from
+  a module-level `Dimensions.get("window")` snapshot, not a reactive hook), which is real
+  per-screen work; Discover got it because it was one of the two screens the original mockup
+  covered. If a specific grid screen's tablet layout looks sparse, that's the known,
+  deliberate gap to revisit — not a bug.
+- **`MemberSettingsScreen.tsx`** (7 tabs — Profile/Directory/Interests/Newsletters/
+  Notifications/Appearance/Security) needed one `useTabletContentStyle()` call and one
+  `contentContainerStyle` wrap *per tab component*, since each tab is its own function
+  component with its own local styles/state, not a shared outer scroll container.
+- **Not visually verified on a real device or simulator** — same sandbox gap as the
+  foundational-shell pass above. Verified via `tsc --noEmit` after every batch (Magazine,
+  Shop, Events, Games, Member, Community, Auth) — stayed at exactly the same 35 pre-existing
+  baseline errors throughout, confirming none of the ~55 edits introduced a regression.
+  Re-check pixel fidelity on an actual iPad/Android tablet before considering this fully
+  closed, same as the foundational shell.
+
+### Production build checklist — react-native-iap restored (August 2026)
+
+`react-native-iap` and `./plugins/withAndroidIapStoreFlavor` were stripped in an
+earlier pass to unblock preview APK builds (Gradle couldn't resolve the Amazon/Play
+store flavor without the plugin) — **both are now restored**, since Moveee Pro's
+Android upgrade needs real Google Play Billing to be Payments-policy compliant. See
+"Google Play Billing — Moveee Pro upgrade on Android" above for the full
+implementation. Lockfile was regenerated via the documented out-of-tree process below
+after restoring the dependency.
 
 ### Architecture
 - `src/api/client.ts` — `api.get/post/put/delete/upload()` with Bearer token injection
@@ -6249,6 +6485,42 @@ containment in both directions plus a small `CATEGORY_ALIASES` lookup table for 
 matching alone can't catch (e.g. `music` → `album`, `travel` → `place`, `design` → `architecture`).
 When adding a new filter chip, check whether it needs an alias entry — substring matching alone
 is enough for cases like "Food" ⊂ "Food & Drink".
+
+### `paperWarm` cream background removed — now plain white (August 2026)
+
+Mirrors `apps/connect`'s earlier "cream-removal pass" (`--paper` went from `#f3ece0` to
+`#ffffff`, see the `apps/site` shop-rebuild section above) — the mobile app had the same
+cream tone under a different name, `paperWarm` (`theme.ts` comment: "Primary background"),
+kept as a **separate token from `paper`** (`"Card surface"`, already white) rather than the
+single token web uses. `paperWarm` is used as a screen-level `backgroundColor` in **~110
+places** across `apps/mobile/src`.
+
+**Fixed by changing the token's value, not each call site** — same resolution shape as the
+web pass: `lightColors.paperWarm` and `darkColors.paperWarm` in `theme.ts` now equal
+`paper`'s value in each palette (`#FFFFFF` light, `#242018` dark) instead of their own cream/
+warm-black tone. Every screen using `c.paperWarm` picked this up automatically with a
+2-line diff — no risk of missing one of the ~110 call sites. Cards now differentiate from
+the screen background via `shadows.card`/borders alone, not a background-color contrast —
+already the dominant pattern (`shadows.card` was already used pervasively), so this didn't
+introduce a new visual language, just removed a tint.
+
+**Also fixed, since they bypassed the token entirely and wouldn't have picked up the
+above**: `app.config.ts`'s native splash screen (`backgroundColor: "#f3ece0"` → `"#ffffff"`
+— `assets/splash.png` itself turned out to be a **flat cream rectangle with no logo at
+all**, so it was safe to just regenerate as flat white rather than needing to preserve any
+artwork), and two **unreachable/dead screens** (`screens/member/MemberScreen.tsx`,
+`screens/member/SettingsScreen.tsx` — neither is registered in `navigation/index.tsx`;
+the real settings screen is `MemberSettingsScreen.tsx`) that had `"#f3ece0"` hardcoded
+directly rather than through the theme — fixed for hygiene even though nothing renders them.
+
+**Deliberately left alone** — confirmed these are foreground/decorative uses of the cream
+tone, not backgrounds, so flattening the token wouldn't have touched them anyway and they
+don't need a separate fix: `PostCard.tsx`/`QuoteShareCard.tsx`/`GameScoreCard.tsx`/
+`EventDetailScreen.tsx` (light-colored text/border on a dark card), `DirectoryDetailScreen.tsx`/
+`MemberProfileScreen.tsx` (gradient decoration endpoints), `ForgotPasswordScreen.tsx`/
+`OnboardingScreen.tsx` (illustrative SVG fill), `Avatar.tsx` (initials text color). If a
+future pass wants the cream tone fully gone from the app (not just as a background), revisit
+this list — it was out of scope for "no more paper background."
 
 ### theme.ts — available keys
 - `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants

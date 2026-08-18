@@ -1,15 +1,19 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
-  TouchableOpacity,
+  TouchableOpacity, Platform, ActivityIndicator, Alert,
 } from "react-native";
+import type { Subscription } from "react-native-iap";
 import { openInApp } from "../../utils/openInApp";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { ColorPalette } from "../../theme";
+import { initIAP, endIAP, getProSubscriptions, purchaseProSubscription, formatSubscriptionPrice } from "../../features/billing/iap";
+import { MOVEEE_PRO_MONTHLY_SKU, MOVEEE_PRO_ANNUAL_SKU } from "../../config/iap";
 
 const CITIZEN_PERKS = [
   "Pulse feed & community posts",
@@ -36,11 +40,59 @@ const PRO_PERKS = [
 
 export default function MembershipScreen() {
   const nav = useNav();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, updateUser } = useAuthStore();
   const isPro = user?.tier === "patron";
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
+
+  // Android: real Google Play Billing purchase flow. iOS keeps directing to
+  // the web checkout (see handleUpgrade below) — StoreKit isn't wired up.
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loadingSubs, setLoadingSubs] = useState(Platform.OS === "android");
+  const [purchasingSku, setPurchasingSku] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await initIAP();
+        const subs = await getProSubscriptions();
+        if (!cancelled) setSubscriptions(subs);
+      } catch {
+        // Play Billing unavailable (no Play Services, e.g. some emulators) —
+        // falls back to the web-checkout button below.
+        if (!cancelled) setSubscriptions([]);
+      } finally {
+        if (!cancelled) setLoadingSubs(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      endIAP();
+    };
+  }, []);
+
+  const handlePurchase = useCallback(async (subscription: Subscription) => {
+    setPurchasingSku(subscription.productId);
+    try {
+      await purchaseProSubscription(subscription);
+      updateUser({ tier: "patron" });
+      Alert.alert("Welcome to Moveee Pro", "Your subscription is active.");
+    } catch (e: any) {
+      if (e?.code !== "E_USER_CANCELLED") {
+        Alert.alert("Purchase failed", e?.message || "Something went wrong. Please try again.");
+      }
+    } finally {
+      setPurchasingSku(null);
+    }
+  }, [updateUser]);
+
+  const monthlySub = subscriptions.find((s) => s.productId === MOVEEE_PRO_MONTHLY_SKU) ?? null;
+  const annualSub = subscriptions.find((s) => s.productId === MOVEEE_PRO_ANNUAL_SKU) ?? null;
+  const hasNativePlans = Platform.OS === "android" && !loadingSubs && (!!monthlySub || !!annualSub);
 
   const handleUpgrade = () => {
     openInApp("https://web.themoveee.com/register?upgrade=patron");
@@ -59,7 +111,7 @@ export default function MembershipScreen() {
         <Text style={styles.headerTitle}>Membership</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.body, tabletCap]} showsVerticalScrollIndicator={false}>
         <Text style={styles.intro}>Choose the plan that works for you.</Text>
 
         <View style={styles.card}>
@@ -89,7 +141,11 @@ export default function MembershipScreen() {
             <Text style={styles.proStar}>★</Text>
           </View>
           <Text style={styles.cardName}>Moveee Pro</Text>
-          <Text style={styles.proPrice}>Upgrade on the web</Text>
+          <Text style={styles.proPrice}>
+            {Platform.OS === "android"
+              ? loadingSubs ? "Loading plans…" : hasNativePlans ? "Choose a plan" : "Upgrade on the web"
+              : "Upgrade on the web"}
+          </Text>
           <View style={styles.divider} />
           {PRO_PERKS.map((p) => (
             <View key={p} style={styles.perkRow}>
@@ -107,6 +163,41 @@ export default function MembershipScreen() {
             <View style={[styles.currentPlanBadge, styles.currentPlanBadgePro]}>
               <Text style={[styles.currentPlanText, { color: c.gold }]}>Your current plan</Text>
             </View>
+          ) : Platform.OS === "android" && loadingSubs ? (
+            <ActivityIndicator color={c.gold} style={{ marginTop: space[3] }} />
+          ) : hasNativePlans ? (
+            <View style={{ gap: space[2], marginTop: space[2] }}>
+              {monthlySub && (
+                <TouchableOpacity
+                  style={styles.ctaPro}
+                  disabled={!!purchasingSku}
+                  onPress={() => handlePurchase(monthlySub)}
+                >
+                  {purchasingSku === monthlySub.productId ? (
+                    <ActivityIndicator color={c.ink} />
+                  ) : (
+                    <Text style={styles.ctaProText}>
+                      Monthly{formatSubscriptionPrice(monthlySub) ? ` — ${formatSubscriptionPrice(monthlySub)}` : ""} →
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              {annualSub && (
+                <TouchableOpacity
+                  style={styles.ctaSecondary}
+                  disabled={!!purchasingSku}
+                  onPress={() => handlePurchase(annualSub)}
+                >
+                  {purchasingSku === annualSub.productId ? (
+                    <ActivityIndicator color={c.ink} />
+                  ) : (
+                    <Text style={styles.ctaSecondaryText}>
+                      Annual{formatSubscriptionPrice(annualSub) ? ` — ${formatSubscriptionPrice(annualSub)}` : ""} →
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           ) : (
             <TouchableOpacity style={styles.ctaPro} onPress={handleUpgrade}>
               <Text style={styles.ctaProText}>Upgrade →</Text>
@@ -115,7 +206,9 @@ export default function MembershipScreen() {
         </View>
 
         <Text style={styles.footnote}>
-          Upgrades are managed on the web. Tap "Upgrade →" to open your browser and complete the purchase.
+          {hasNativePlans && !isPro
+            ? "Subscriptions are billed through Google Play and renew automatically. Cancel anytime in Play Store → Subscriptions."
+            : "Upgrades are managed on the web. Tap \"Upgrade →\" to open your browser and complete the purchase."}
         </Text>
       </ScrollView>
     </SafeAreaView>

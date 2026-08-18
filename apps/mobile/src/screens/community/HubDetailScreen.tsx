@@ -11,6 +11,7 @@ import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Hub, HubStatus, FeedItem } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
@@ -112,6 +113,7 @@ export default function HubDetailScreen() {
   const slug: string = route.params?.slug;
   const c = useColors();
   const styles = React.useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore() as any;
 
   const [loading, setLoading] = useState(true);
@@ -425,7 +427,7 @@ export default function HubDetailScreen() {
           <Text style={styles.notFoundText}>This Hub doesn't exist or has been removed.</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
           {hub.status === "archived" && (
             <View style={styles.card}>
               <Text style={[styles.cardBody, { fontWeight: "700" }]}>

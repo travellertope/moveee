@@ -9,6 +9,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import type { FeedItem } from "../../types";
 import QuoteDetailModal from "../../components/community/QuoteDetailModal";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
@@ -70,6 +71,7 @@ export default function SavedArticlesScreen() {
   const user = useAuthStore((s) => s.user);
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabletCap = useTabletContentStyle(680);
 
   const [all, setAll] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,7 +318,7 @@ export default function SavedArticlesScreen() {
             </View>
           )
         }
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, tabletCap]}
         showsVerticalScrollIndicator={false}
       />
 
