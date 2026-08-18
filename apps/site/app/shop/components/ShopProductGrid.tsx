@@ -11,6 +11,7 @@ import {
   vendorName,
 } from "./ShopFilterContext";
 import { useShopFilter } from "./ShopFilterContext";
+import { clearShopFilters } from "@/lib/shopFiltersBus";
 
 interface Props {
   isFiltered: boolean;
@@ -18,7 +19,7 @@ interface Props {
 }
 
 export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
-  const { filtered, view, clearAll } = useShopFilter();
+  const { filtered } = useShopFilter();
 
   return (
     <section className="sl-grid">
@@ -33,12 +34,12 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
         {filtered.length === 0 ? (
           <div className="sl-empty">
             <p className="sl-empty-text">No products found.</p>
-            <button type="button" className="sl-empty-clear" onClick={clearAll}>
+            <button type="button" className="sl-empty-clear" onClick={clearShopFilters}>
               Clear filters
             </button>
           </div>
         ) : (
-          <div className={view === "grid" ? "sl-product-grid" : "sl-product-list"}>
+          <div className="sl-product-grid">
             {filtered.map((p: any) => {
               const vname = vendorName(p);
               const outOfStock = isOutOfStock(p);
