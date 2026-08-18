@@ -3567,11 +3567,10 @@
   font-weight: 700;
   color: var(--ink);
   line-height: 1.3;
-  margin: 40px 0 16px;
+  margin: 64px 0 12px;
   padding-top: 24px;
   border-top: 1px solid var(--rule);
 }
-.rd-body h2:first-child, .rd-body h3:first-child { margin-top: 0; }
 .rd-body h2::before, .rd-body h3::before {
   content: "";
   display: inline-block;
@@ -3593,8 +3592,9 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ochre);
-  margin: 32px 0 12px;
+  margin: 48px 0 10px;
 }
+.rd-body h2:first-child, .rd-body h3:first-child, .rd-body h4:first-child { margin-top: 0; }
 .rd-body--getmelit h4 { color: var(--gold); }
 .rd-body a {
   color: var(--ochre);
@@ -3605,6 +3605,28 @@
   width: 100%;
   border-radius: var(--radius-lg, 6px);
   margin: 8px 0 24px;
+}
+/* ── FIGURE / MEDIA CAPTIONS ──
+   Gutenberg image/embed blocks wrap media in <figure><img><figcaption> —
+   figcaption previously had no rule at all, so it fell back to plain body
+   paragraph styling (same size/weight as .rd-body p) with no visual
+   distinction from actual copy. */
+.rd-body figure {
+  margin: 8px 0 32px;
+}
+.rd-body figure img,
+.rd-body figure video,
+.rd-body figure iframe {
+  margin: 0 0 10px;
+  display: block;
+}
+.rd-body figcaption {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--mute);
+  padding: 0 4px;
 }
 .rd-body strong { color: var(--ink); font-weight: 700; }
 .rd-body blockquote {

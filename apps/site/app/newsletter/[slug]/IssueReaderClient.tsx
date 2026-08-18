@@ -283,11 +283,6 @@ export default function IssueReaderClient({
           </div>
         </div>
 
-        {/* Wordmark */}
-        <div className="rd-wordmark">
-          <h2 className="rd-wordmark-text">{meta.label}</h2>
-        </div>
-
         {/* Article body */}
         <article className={`rd-body${isGml ? " rd-body--getmelit" : ""}`}>
           <ArticleContentGate
