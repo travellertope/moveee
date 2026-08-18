@@ -3257,6 +3257,26 @@
   flex-direction: column;
   border-right: 1px solid var(--rule);
   background: #fff;
+  overflow: hidden;
+  transition: width .25s cubic-bezier(.2, .8, .2, 1);
+}
+.rd-sidebar--collapsed {
+  width: 56px;
+}
+/* Fixed-width inner wrapper so the header/archive list clip cleanly as
+   .rd-sidebar's width animates, instead of reflowing/wrapping mid-transition. */
+.rd-sidebar-scroll {
+  width: 420px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity .15s ease;
+}
+.rd-sidebar--collapsed .rd-sidebar-scroll {
+  opacity: 0;
+  pointer-events: none;
 }
 .rd-sidebar-header {
   padding: 24px;
@@ -3389,18 +3409,29 @@
   flex-shrink: 0;
   background: #fff;
 }
+.rd-sidebar--collapsed .rd-sidebar-footer {
+  text-align: center;
+  padding: 12px 8px;
+}
 .rd-sidebar-collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   color: var(--mute);
   font-weight: 700;
-  letter-spacing: .2em;
+  letter-spacing: .1em;
+  text-transform: uppercase;
   background: none;
   border: none;
+  border-radius: var(--radius-md, 4px);
+  padding: 6px 8px;
   cursor: pointer;
-  transition: color .2s;
+  transition: color .2s, background .2s;
 }
-.rd-sidebar-collapse:hover { color: var(--ink); }
+.rd-sidebar-collapse:hover { color: var(--ink); background: var(--paper-warm); }
+.rd-sidebar-collapse-arrow { font-size: 14px; letter-spacing: normal; line-height: 1; }
 
 /* ── RIGHT PANE ── */
 .rd-pane {
