@@ -3598,24 +3598,13 @@
 .rd-body h2, .rd-body h3 {
   font-family: Fraunces, serif;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--ochre);
   line-height: 1.3;
   margin: 64px 0 12px;
   padding-top: 24px;
   border-top: 1px solid var(--rule);
 }
-.rd-body h2::before, .rd-body h3::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ochre);
-  margin-right: 10px;
-  vertical-align: middle;
-  transform: translateY(-2px);
-}
-.rd-body--getmelit h2::before, .rd-body--getmelit h3::before { background: var(--gold); }
+.rd-body--getmelit h2, .rd-body--getmelit h3 { color: var(--gold); }
 .rd-body h2 { font-size: 26px; }
 .rd-body h3 { font-size: 22px; }
 .rd-body h4 {
