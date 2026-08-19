@@ -20,7 +20,7 @@
   --accent-gold-frame-ink: #2c2007;
 }
 
-.hpv2 .wrap { max-width: 1024px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+.hpv2 .wrap { max-width: 1176px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 /* The masthead (welcome text) + carousel section keeps the old, wider
    column — only the card-grid sections below it were asked to narrow to
    1024px. The carousel itself (.index-strip/.carousel-track) never used
