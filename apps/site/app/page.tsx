@@ -108,6 +108,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       price: p.price || p.regularPrice || "",
       image: p.image?.sourceUrl || null,
       vendor: p.vendorProfile?.storeName || null,
+      databaseId: p.databaseId ?? null,
     }));
 
     const featureStory = latestIssueStories?.[0] || stories?.[0] || null;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { colorForCard } from "@/lib/cardColors";
 
 interface ShopRailProduct {
   slug: string;
@@ -9,6 +10,7 @@ interface ShopRailProduct {
   price: string;
   image: string | null;
   vendor: string | null;
+  databaseId?: number | null;
 }
 
 // Monocle-style horizontal shop strip — arrow-paged one card at a time
@@ -36,8 +38,13 @@ export default function ShopRail({ products }: { products: ShopRailProduct[] }) 
         </svg>
       </button>
       <div className="shop-rail" ref={railRef}>
-        {products.map((p) => (
-          <Link key={p.slug} href={`/shop/${p.slug}`} className="wcard shop-card">
+        {products.map((p, i) => (
+          <Link
+            key={p.slug}
+            href={`/shop/${p.slug}`}
+            className="wcard shop-card"
+            style={{ background: colorForCard(p.databaseId ?? p.slug?.length ?? i) }}
+          >
             <div className="wcard-photo">
               {p.image && <img src={p.image} alt={p.name} />}
               {p.price && <span className="shop-price-tag" dangerouslySetInnerHTML={{ __html: p.price }} />}
