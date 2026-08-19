@@ -224,12 +224,12 @@
 }
 
 /* ============================================================
-   SEARCH OVERLAY — full-screen white takeover, matching the menu
-   overlay's shell (same shape as the mockup's search frame). These
+   SEARCH OVERLAY — shared full-screen white shell, two consumers:
+   SearchOverlay.tsx (generic, every non-shop page) and
+   ShopSearchModal.tsx (/shop* pages, its own filter body). These
    rules override the older dropdown-panel-with-dark-scrim styling
    still defined in homepage.css (loaded earlier, so this wins on
-   the cascade) — SearchOverlay.tsx's own JSX/logic is untouched,
-   only its visual shell changes.
+   the cascade).
    ============================================================ */
 .search-overlay {
   position: fixed;
@@ -241,6 +241,9 @@
   flex-direction: column;
   align-items: stretch;
 }
+
+/* ── ShopSearchModal's own shell (.search-panel/.search-input-row) —
+   unchanged from before, kept exactly as-is for that consumer. ── */
 .search-panel {
   background: var(--paper);
   border-bottom: none;
@@ -254,10 +257,80 @@
   padding: clamp(24px, 4vw, 40px) clamp(20px, 5vw, 64px) 24px;
   border-bottom: 1px solid var(--rule);
 }
-.search-input { font-size: clamp(28px, 5vw, 42px); }
-.search-results, .search-empty, .search-hint {
+.search-panel .search-input { font-size: clamp(28px, 5vw, 42px); }
+.search-panel .search-results,
+.search-panel .search-empty,
+.search-panel .search-hint {
   max-width: 720px;
   margin: 0 auto;
   width: 100%;
 }
-.search-hint { text-align: center; padding-top: clamp(60px, 12vh, 140px); }
+.search-panel .search-hint { text-align: center; padding-top: clamp(60px, 12vh, 140px); }
+
+/* ── SearchOverlay's own shell — exact port of the mockup's
+   #searchOverlay: it reuses .menu-overlay-bar as-is for its top bar
+   (close · centered logo · decorative search glyph — see
+   SearchOverlay.tsx, same class the mockup's own markup reuses) and
+   a centered .search-overlay-body holding one large bottom-border-
+   only serif input. Live results are an addition the mockup's own
+   decorative input doesn't have — .search-overlay-body--results
+   switches the body from vertically-centered (idle) to top-anchored/
+   scrollable (results showing) without touching the input/top-bar
+   chrome. All rules scoped under .search-overlay-body so they can't
+   leak onto ShopSearchModal's differently-sized .search-panel input
+   above, despite both sharing the .search-input/.search-hint/etc.
+   class names. ── */
+.search-overlay-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px clamp(20px, 4vw, 64px) 80px;
+  overflow-y: auto;
+}
+.search-overlay-body--results { justify-content: flex-start; }
+.search-form { width: 100%; display: flex; justify-content: center; }
+.search-input-wrap {
+  position: relative;
+  width: min(100%, 720px);
+}
+.search-overlay-body .search-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid var(--rule-strong, var(--rule));
+  background: transparent;
+  outline: none;
+  text-align: center;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: clamp(32px, 6vw, 60px);
+  color: var(--ink);
+  padding: 10px 0 18px;
+}
+.search-overlay-body .search-input::placeholder { color: var(--rule-strong, var(--mute)); }
+.search-overlay-body .search-input:focus { border-bottom-color: var(--ochre); }
+.search-overlay-body .search-loader {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.search-overlay-body .search-hint {
+  margin-top: 22px;
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--mute);
+}
+.search-overlay-body .search-results,
+.search-overlay-body .search-empty {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+.search-overlay-body--results .search-form { padding-top: clamp(12px, 4vh, 40px); }
+.search-overlay-body .search-empty { text-align: center; padding: 36px 0; }
