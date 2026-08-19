@@ -312,7 +312,14 @@ export async function proxy(request: NextRequest) {
   // ── Root-level post slugs (/%postname%/) ─────────────────────
   // This is the old WordPress permalink structure.
   // Only redirect single-segment paths that don't match known app routes.
-  if (cleanPath && !cleanPath.includes('/') && !APP_ROUTES.has(cleanPath.toLowerCase())) {
+  // Excludes anything with a file extension (logo-dark.png, og-fallback.png,
+  // the Google site-verification .html file, etc.) — a public/ static asset
+  // has a "." in its single path segment same as a real slug never does, and
+  // was previously being caught by this same catch-all and redirected to a
+  // nonexistent /magazine/<filename>, breaking every root-level static file
+  // (discovered via the new logo images silently 301-ing to /magazine/...).
+  const looksLikeStaticFile = /\.[a-z0-9]+$/i.test(cleanPath)
+  if (cleanPath && !cleanPath.includes('/') && !looksLikeStaticFile && !APP_ROUTES.has(cleanPath.toLowerCase())) {
     return NextResponse.redirect(
       new URL(`/magazine/${cleanPath}`, request.url),
       301
