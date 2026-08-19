@@ -71,15 +71,7 @@ export function ShopFilterProvider({
   const [filters, setFilters] = useState(getShopFilters());
   useEffect(() => subscribeShopFilters(() => setFilters(getShopFilters())), []);
 
-  const { query, priceBand, material, location, inStockOnly, sort } = filters;
-
-  const availableMaterials = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of products) {
-      for (const m of p.productMaterials ?? []) set.add(m);
-    }
-    return [...set].slice(0, 8);
-  }, [products]);
+  const { query, priceBand, location, inStockOnly, sort } = filters;
 
   const availableLocations = useMemo(() => {
     const set = new Set<string>();
@@ -106,9 +98,6 @@ export function ShopFilterProvider({
       const band = priceBands.find((b) => b.id === priceBand);
       if (band) list = list.filter((p) => band.test(parsePrice(p.price)));
     }
-    if (material) {
-      list = list.filter((p) => p.productMaterials?.includes(material));
-    }
     if (location) {
       list = list.filter((p) => vendorLocation(p) === location);
     }
@@ -124,7 +113,7 @@ export function ShopFilterProvider({
       sorted.sort((a, b) => reviewCount(b) - reviewCount(a) || averageRating(b) - averageRating(a));
     }
     return sorted;
-  }, [products, query, priceBand, priceBands, material, location, inStockOnly, sort]);
+  }, [products, query, priceBand, priceBands, location, inStockOnly, sort]);
 
   // Push this page's facets + result count up to the bus so <ShopSearchModal>
   // (mounted in Header.tsx, outside this tree) can render them — and clear
@@ -133,20 +122,19 @@ export function ShopFilterProvider({
     setShopFilterMeta({
       categories,
       activeCategorySlug,
-      availableMaterials,
       availableLocations,
       priceBands: priceBands.map((b) => ({ id: b.id, label: b.label })),
       resultCount: filtered.length,
     });
     return () => clearShopFilterMeta();
-  }, [categories, activeCategorySlug, availableMaterials, availableLocations, priceBands, filtered.length]);
+  }, [categories, activeCategorySlug, availableLocations, priceBands, filtered.length]);
 
   // Reset any leftover filters from a previous shop page the moment a new
   // one mounts (e.g. navigating from /shop to /shop/category/ceramics) —
   // otherwise a search term or filter picked earlier would silently keep
   // narrowing a page the visitor never applied it to.
   useEffect(() => {
-    setShopFilters({ query: "", priceBand: null, material: null, location: null, inStockOnly: false, sort: "default" });
+    setShopFilters({ query: "", priceBand: null, location: null, inStockOnly: false, sort: "default" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
