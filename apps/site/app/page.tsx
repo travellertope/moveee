@@ -45,13 +45,6 @@ export const metadata: Metadata = {
   },
 };
 
-function stripHtml(html: unknown) {
-  // `(x || "").replace` only guards against falsy `x` — a truthy
-  // non-string value (seen from the CMS in production) still throws on
-  // `.replace`. See CLAUDE.md's homepage-crash entry.
-  return (typeof html === "string" ? html : "").replace(/<[^>]*>/g, "").trim();
-}
-
 interface HomeSections {
   coverStory: any;
   carouselStories: any[];
@@ -105,7 +98,6 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       slug: s.slug,
       title: s.title || "",
       categoryName: s.categories?.nodes?.[0]?.name || "Moveee Magazine",
-      excerpt: stripHtml(s.excerpt).slice(0, 90),
       image: s.featuredImage?.node?.sourceUrl || null,
       alt: s.featuredImage?.node?.altText || s.title || "",
     }));

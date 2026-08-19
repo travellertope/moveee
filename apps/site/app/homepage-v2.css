@@ -8,7 +8,29 @@
    already defined in globals.css.
    ============================================================ */
 
+.hpv2 {
+  /* Accent frame colors for the hero carousel's rotating card backgrounds —
+     copied from the mockup's :root (never ported over; only --paper/--ink/
+     etc. made it into globals.css, which is why every carousel card was
+     hardcoded to the same frame--cream instead of cycling through these). */
+  --accent-plum: #4a2f45;
+  --accent-teal: #1f3b3b;
+  --accent-clay: #7a4a2c;
+  --accent-gold-frame: #e8d59a;
+  --accent-gold-frame-ink: #2c2007;
+}
+
 .hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+
+/* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
+   none; }`) — this port never carried that reset over, so every card here
+   (.fcell/.wcard/.shop-card, all <a>-wrapped) rendered its title/kicker/dek text
+   with the browser's default blue underlined link style, on top of each
+   component's own color rules. That's what made the sections under the hero
+   read as "jumbled together" rather than as distinct cards. Scoped to .hpv2
+   rather than added globally, since other pages already style their own links
+   explicitly and don't need this reset. */
+.hpv2 a { color: inherit; text-decoration: none; }
 
 /* ── FULL-BLEED OPENING HERO ── */
 .hero-full { position: relative; height: 100vh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
@@ -17,7 +39,7 @@
 .hero-full-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,7,4,.15) 0%, rgba(10,7,4,.1) 40%, rgba(10,7,4,.55) 82%, rgba(10,7,4,.78) 100%); }
 .hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
 .hero-full-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(243,236,224,.78); margin-bottom: 22px; }
-.hero-full h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(40px, 9vw, 128px); line-height: .96; letter-spacing: -.03em; color: #f3ece0; text-wrap: balance; }
+.hero-full h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(36px, 6.5vw, 88px); line-height: .96; letter-spacing: -.03em; color: #f3ece0; text-wrap: balance; }
 .hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(243,236,224,.82); }
 .hero-full-scroll { position: relative; display: flex; align-items: center; justify-content: center; padding-bottom: clamp(22px, 4vw, 40px); }
 .hero-full-scroll span { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); border: 1px solid rgba(243,236,224,.4); color: #f3ece0; animation: hero-bounce 2.1s ease-in-out infinite; transition: border-color .15s; }
@@ -75,8 +97,21 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
 .fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 15.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 12px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
+/* Rotating card backgrounds — matches the mockup's 6-color cycle (only
+   frame--paper/--cream were ported originally, so every carousel card was
+   stuck on the same cream background instead of rotating). See
+   HeroCarousel.tsx's FRAMES array for the rotation itself. */
 .frame--paper { background: var(--paper); border: 1px solid var(--rule); }
 .frame--cream { background: var(--paper-warm); border: 1px solid var(--rule); }
+.frame--gold { background: var(--accent-gold-frame); }
+.frame--gold .fcell-kicker { color: var(--ochre-deep); }
+.frame--gold h3 { color: var(--accent-gold-frame-ink); }
+.frame--plum, .frame--teal, .frame--clay { color: #f3ece0; }
+.frame--plum { background: var(--accent-plum); }
+.frame--teal { background: var(--accent-teal); }
+.frame--clay { background: var(--accent-clay); }
+.frame--plum h3, .frame--teal h3, .frame--clay h3 { color: #f3ece0; }
+.frame--plum .fcell-kicker, .frame--teal .fcell-kicker, .frame--clay .fcell-kicker { color: var(--gold); }
 
 /* ── SECTION HEADER ── */
 .band { padding: clamp(52px, 6.5vw, 88px) 0; }
