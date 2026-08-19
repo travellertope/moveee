@@ -15,7 +15,6 @@ interface FeaturedProduct {
   slug: string;
   price: string;
   image: string | null;
-  vendor: string | null;
 }
 
 // Site-wide floating pill header (search · logo · cart · menu), rebuilt
@@ -213,10 +212,7 @@ const Header = () => {
                   <div className="menu-feature-photo">
                     {featuredProduct.image && <img src={featuredProduct.image} alt={featuredProduct.name} />}
                   </div>
-                  <p className="menu-feature-title">
-                    {featuredProduct.name}
-                    {featuredProduct.vendor ? ` — ${featuredProduct.vendor}` : ""}
-                  </p>
+                  <p className="menu-feature-title">{featuredProduct.name}</p>
                   {featuredProduct.price && (
                     <div
                       className="menu-feature-price"
