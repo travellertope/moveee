@@ -111,16 +111,16 @@
 .carousel-track {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 24px;
   overflow-x: auto;
   overflow-y: hidden;
-  /* Reserve-height estimate for the active (scaled 1.16) card: the square
+  /* Reserve-height estimate for the active (scaled 1.04) card: the square
      photo's own height (card width minus its 18px+18px padding) plus the
      kicker/title text block + padding below it (~120px, unscaled), all
-     scaled by the active card's 1.16 growth. Approximate on purpose —
-     this is only a layout-shift-avoiding floor, not a hard height; a
-     real title wrapping to a 3rd line just grows the row past it. */
-  min-height: calc((var(--carousel-card-w, 300px) - 36px + 120px) * 1.16);
+     scaled by the active card's growth. Approximate on purpose — this is
+     only a layout-shift-avoiding floor, not a hard height; a real title
+     wrapping to a 3rd line just grows the row past it. */
+  min-height: calc((var(--carousel-card-w, 300px) - 36px + 120px) * 1.04);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   /* x-only, not the shorthand `overscroll-behavior: contain` — the
@@ -147,41 +147,23 @@
   scroll-snap-align: center;
   flex: 0 0 auto;
   width: var(--carousel-card-w, min(80vw, 340px));
-  opacity: .48;
-  transform: scale(.8);
-  transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
-  /* Layout gap is 0 — spacing between receded cards comes entirely from
-     this negative margin, which halves the previous overall spacing while
-     the active card's larger offsetting margin below preserves the same
-     equal-gap math (see that rule's own comment for the derivation). */
-  margin: 0 calc(var(--carousel-card-w, 300px) * -0.037);
-}
-/* Every card is transformed (non-active cards recede to scale(.8),
-   the active one grows to scale(1.16)) — transforms are paint-only, so
-   the flex row's 20px gap always stays anchored to the *unscaled* box
-   edges while the actual rendered edges are pulled in (receding pairs)
-   or pushed out (a pair next to the active card) by different amounts.
-   That's why the gap next to the active card visibly reads as smaller
-   than the gap between two receded cards, even though the layout gap
-   is identical everywhere: two receded neighbours both pull inward
-   (gap grows), but the active card bulges outward into its neighbour's
-   space (gap shrinks) — an active-adjacent pair and a receded/receded
-   pair end up at two different average scales, not just one.
-
-   For two cards at scales s1/s2 with unscaled width W and layout gap
-   G, the visual gap works out to G + W*(1 - (s1+s2)/2) — so matching
-   a receded/receded pair (s=.8 both) means solving for how much extra
-   margin an active/receded pair (s=1.16/.8) needs to reach that same
-   value: margin = W * ((1-.8) - (1-(1.16+.8)/2)) = W * 0.18. (0.08 —
-   half the active card's own growth — was only correct if neighbouring
-   cards didn't move at all, which they do.) */
-.strip-card.is-active {
+  /* All cards fully opaque, only a subtle scale bump on the active one —
+     the old .48 opacity / 0.8-vs-1.16 scale spread (per the mockup this
+     was built from) made every non-active card fade out and shrink hard,
+     reading as "everything but the center card is disabled." Matched
+     against a reference where every card reads clearly and the active
+     one is only modestly larger, per explicit request. At this small a
+     scale delta the transform-vs-layout-gap mismatch documented in
+     earlier revisions of this rule is imperceptible, so the negative-
+     margin compensation trick that used to live here is gone too — a
+     plain flex `gap` (above) is enough. */
   opacity: 1;
-  transform: scale(1.16);
+  transform: scale(.94);
+  transition: transform .4s cubic-bezier(.2,.8,.2,1);
+}
+.strip-card.is-active {
+  transform: scale(1.04);
   z-index: 2;
-  /* Base -0.037 margin (undoes the receded-card pull above for this card)
-     plus the original 0.18 offset. */
-  margin: 0 calc(var(--carousel-card-w, 300px) * 0.143);
 }
 /* .fcell is the *whole card* (photo + kicker + title + dek stacked in a
    column) — forcing it to 1/1 only capped the card's total height, and
@@ -207,8 +189,8 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: var(--radius-lg); overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 14px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 7px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
