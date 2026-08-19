@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { headers, cookies } from "next/headers";
 import { editionFromCountry, isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
-import { getMagazineSections } from "@/lib/wp";
+import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import MasonryRandomSection from "@/components/MasonryRandomSection";
@@ -81,12 +81,13 @@ const EMPTY_SECTIONS: HomeSections = {
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
     const regionalEdition = edition === "global" ? undefined : edition;
-    const [homepageData, sections] = await Promise.all([
+    const [homepageData, sections, newsletters] = await Promise.all([
       fetchHomepageData(regionalEdition),
       getMagazineSections(edition),
+      getNewslettersWithFallback(10).catch(() => []),
     ]);
 
-    const { coverStory, stories, products, latestIssueStories } = homepageData;
+    const { coverStory, stories, products } = homepageData;
     const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
 
     const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
@@ -108,9 +109,23 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       price: p.price || p.regularPrice || "",
       image: p.image?.sourceUrl || null,
       vendor: p.vendorProfile?.storeName || null,
+      databaseId: p.databaseId ?? null,
     }));
 
-    const featureStory = latestIssueStories?.[0] || stories?.[0] || null;
+    // JoinSection is specifically about Culture Drop ("You'll (probably)
+    // love Culture Drop.") — the feature card must be an actual newsletter
+    // issue, not a random magazine article. It used to be sourced from
+    // getLatestIssue()/getPostsByIssue() (a *magazine* "Issue" archive term,
+    // unrelated to the newsletter CPT) via fetchHomepageData's
+    // latestIssueStories, which returns WP core REST post shapes
+    // (title: {rendered}, no featuredImage.node) — rendering as a blank
+    // image and a literal "[object Object]" caption once JoinSection tried
+    // to read them as the GraphQL shape it actually expects.
+    // getNewslettersWithFallback() returns real culture_newsletter posts,
+    // already normalised (via both its GraphQL and REST fallback paths) to
+    // that same GraphQL shape JoinSection needs.
+    const featureStory =
+      newsletters.find((n: any) => n.nlList === "culture-drop") || newsletters[0] || null;
 
     return {
       coverStory,
@@ -189,7 +204,6 @@ export default async function Home() {
         eyebrowTitle={<>The <em>Lane</em></>}
         subtitle="Portraits from the people who make the culture, not just cover it."
         stories={portraitStories}
-        tint
       />
 
       <MasonryRandomSection
@@ -198,19 +212,20 @@ export default async function Home() {
         viewAllHref="/magazine/category/news"
         viewAllLabel="All news"
         stories={editorialStories}
+        tint
       />
 
       <MasonryRandomSection
         eyebrowTitle={<>The Free <em>Critics</em></>}
         subtitle="Unbought, unfiltered verdicts on the films, books, and records everyone's asking about."
         stories={digestStories}
-        tint
       />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
         subtitle="Arguments worth having, from writers who'll actually take a side."
         stories={opinionStories}
+        tint
       />
 
       <JoinSection edition={edition} featureStory={featureStory} />

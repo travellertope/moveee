@@ -12,6 +12,14 @@
 .ar-breadcrumb {
   position: relative;
   padding: 22px 64px;
+  /* Clears the floating header — applies to both the normal-flow variant
+     (plain white background) and, combined with .ar-breadcrumb--overlay
+     below, the photo-hero variant: since padding-top only pushes this
+     element's *content* down within its own box, .ar-hero's gradient
+     background (which the overlay variant sits on top of, position:
+     absolute; top: 0) still starts flush at the true top of the section —
+     only the breadcrumb text itself moves down. */
+  padding-top: var(--header-clear, 96px);
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.1em;
@@ -30,6 +38,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   padding: 22px 64px;
+  padding-top: var(--header-clear, 96px);
   max-width: none;
   color: rgba(255,255,255,0.55);
   background: transparent;
@@ -47,6 +56,18 @@
   width: 100%;
   min-height: 60vh;
   min-height: max(60vh, 500px);
+  /* The site-wide `* { box-sizing: border-box }` reset means padding
+     alone can't grow this box past its min-height — it just eats into
+     the content area. .ar-hero-text is bottom-anchored (justify-content:
+     flex-end) and a long headline can already sit fairly close to the
+     top of the box, so pushing .ar-breadcrumb--overlay's own content
+     down (see --header-clear above) without also growing this min-height
+     just moves the breadcrumb *into* space the title was already tightly
+     using, instead of the whole hero gaining real extra room. Bumping
+     min-height by the same amount pushes the bottom-anchored content
+     down together with the breadcrumb, so they stop competing for the
+     same space. */
+  min-height: calc(max(60vh, 500px) + var(--header-clear, 96px));
   overflow: hidden;
   background: linear-gradient(160deg, #3d3020, #14110d 60%);
   display: flex;
@@ -1053,8 +1074,8 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .ar-breadcrumb { padding: 16px 32px; }
-  .ar-breadcrumb--overlay { padding: 16px 32px; }
+  .ar-breadcrumb { padding: 16px 32px; padding-top: var(--header-clear, 96px); }
+  .ar-breadcrumb--overlay { padding: 16px 32px; padding-top: var(--header-clear, 96px); }
   .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
   .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
   .ar-standard-hero { padding: 40px 32px 32px; }
@@ -1090,8 +1111,8 @@
   .ar-byline { gap: 14px; flex-direction: column; align-items: flex-start; }
   .ar-actions { align-self: flex-start; }
   .ar-standard-hero { padding: 28px 20px 24px; }
-  .ar-breadcrumb { padding: 14px 20px; }
-  .ar-breadcrumb--overlay { padding: 14px 20px; }
+  .ar-breadcrumb { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
+  .ar-breadcrumb--overlay { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
   .ar-wrap {
     grid-template-columns: 1fr;
     padding: 0 20px 40px;

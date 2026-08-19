@@ -3,6 +3,8 @@ import Link from "next/link";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import CultureDropBand from "./CultureDropBand";
+import { tileMasonryShapes } from "@/lib/masonryShapes";
+import { colorForCard } from "@/lib/cardColors";
 
 interface Story {
   id: string;
@@ -29,7 +31,7 @@ export default function SeriesLandingPage({ name, description, stories }: Series
   return (
     <>
       {/* ── SERIES HERO HEADER ── */}
-      <section className="sr-hero">
+      <section className="sr-hero" data-header-zone="dark">
         <div className="sr-hero-inner">
           <div className="sr-hero-eyebrow">Series</div>
           <h1 className="sr-hero-title">{name}</h1>
@@ -136,42 +138,34 @@ export default function SeriesLandingPage({ name, description, stories }: Series
             <div className="sr-grid-header">
               <span className="sr-grid-label">More from {name}</span>
             </div>
-            <div className="sr-grid">
-              {remainder.map((story) => (
-                <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-card">
-                  <div className="mg-card-img">
-                    {story.featuredImage?.node?.sourceUrl ? (
-                      <Image
-                        src={story.featuredImage.node.sourceUrl}
-                        alt={story.featuredImage.node.altText || story.title}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                    )}
-                  </div>
-                  <div className="mg-card-body">
-                    <div className="mg-card-kicker">
-                      {decodeHtml(story.categories?.nodes[0]?.name || "Article")}
+            {/* Same masonry treatment as the homepage sections and the
+                category/industry/country/tag/author archives — see
+                MagazineArchiveWrapper.tsx for the full rationale. */}
+            <div className="masonry-rand">
+              {tileMasonryShapes(remainder).map(({ item: story, shape }) => {
+                const image = story.featuredImage?.node?.sourceUrl || null;
+                const alt = story.featuredImage?.node?.altText || story.title || "";
+                return (
+                  <Link
+                    key={story.id}
+                    href={`/magazine/${story.slug}`}
+                    className={`wcard wcard--${shape}`}
+                    style={{ background: colorForCard((story as any).databaseId ?? story.id) }}
+                  >
+                    <div className="wcard-photo">
+                      {image ? (
+                        <img src={image} alt={alt} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                      )}
                     </div>
-                    <h4
-                      className="mg-card-title"
+                    <p
+                      className="wcard-caption"
                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
                     />
-                    <div
-                      className="mg-card-desc"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
-                      }}
-                    />
-                    <div className="mg-card-date">
-                      {new Date(story.date).toLocaleDateString("en-GB")}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

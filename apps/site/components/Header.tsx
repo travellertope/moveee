@@ -15,7 +15,6 @@ interface FeaturedProduct {
   slug: string;
   price: string;
   image: string | null;
-  vendor: string | null;
 }
 
 // Site-wide floating pill header (search · logo · cart · menu), rebuilt
@@ -57,37 +56,48 @@ const Header = () => {
     signOut({ callbackUrl: "https://themoveee.com/" });
   }, []);
 
-  // Scroll-driven show/hide + solid/transparent state. Re-checks for a
-  // `.hero-full` element on the current page every time the route
-  // changes — only the homepage has one; every other page has no dark
-  // hero to float transparently over, so the header just starts solid
-  // and stays that way (still auto-hiding/showing on scroll direction,
-  // for a consistent floating feel site-wide).
+  // Scroll-driven show/hide + solid/transparent state. Re-scans for every
+  // `[data-header-zone="dark"]` element on the current page each time the
+  // route changes (not just `.hero-full` — any page's dark first section,
+  // e.g. .ar-hero on an article, .sr-hero on a series landing page,
+  // .sl-trust on /shop, opts in the same way) and, on every scroll tick,
+  // checks whether the header's own vertical position currently falls
+  // inside ANY of them — so the header stays transparent (with light
+  // logo/icon colours) for as long as it's floating over a dark zone,
+  // wherever in the page that zone happens to sit, and picks up the
+  // regular translucent-paper pill the instant it isn't. This replaces
+  // the old binary "solid immediately on every non-homepage page" default
+  // — a page with no dark zone at all still starts transparent, it just
+  // never has a dark zone to render light-on-dark colours for.
   useEffect(() => {
-    const heroEl = document.querySelector<HTMLElement>(".hero-full");
+    let zones: HTMLElement[] = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
     let lastY = window.scrollY;
     let raf: number | null = null;
 
+    function inDarkZone(y: number): boolean {
+      // Sample a bit below the header's own top edge (same -120/+40
+      // grace the old single-hero check used) rather than bare scrollY,
+      // so the switch happens once the header has genuinely cleared the
+      // zone, not the instant scrollY passes its exact pixel boundary.
+      const sampleY = y + 40;
+      return zones.some((el) => {
+        const top = el.offsetTop;
+        const bottom = top + el.offsetHeight;
+        return sampleY >= top - 40 && sampleY < bottom - 120;
+      });
+    }
+
     function update() {
       const y = window.scrollY;
-      if (heroEl) {
-        const heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
-        const inHero = y < heroBottom - 120;
-        setOnDark(inHero);
-        if (inHero) {
-          setIsHidden(false);
-          setIsSolid(false);
-        } else if (y < lastY - 2) {
-          setIsHidden(false);
-          setIsSolid(true);
-        } else if (y > lastY + 6) {
-          setIsHidden(true);
-        }
-      } else {
-        setOnDark(false);
-        setIsSolid(true);
-        if (y < lastY - 2) setIsHidden(false);
-        else if (y > lastY + 6) setIsHidden(true);
+      const dark = inDarkZone(y);
+      setOnDark(dark);
+      setIsSolid(!dark);
+      if (dark) {
+        setIsHidden(false);
+      } else if (y < lastY - 2) {
+        setIsHidden(false);
+      } else if (y > lastY + 6) {
+        setIsHidden(true);
       }
       lastY = y;
     }
@@ -100,8 +110,16 @@ const Header = () => {
         raf = null;
       });
     };
+    const onResize = () => {
+      zones = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
+      update();
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
   }, [pathname]);
 
   // Close the mobile body-scroll lock + fetch a fresh featured product
@@ -213,10 +231,7 @@ const Header = () => {
                   <div className="menu-feature-photo">
                     {featuredProduct.image && <img src={featuredProduct.image} alt={featuredProduct.name} />}
                   </div>
-                  <p className="menu-feature-title">
-                    {featuredProduct.name}
-                    {featuredProduct.vendor ? ` — ${featuredProduct.vendor}` : ""}
-                  </p>
+                  <p className="menu-feature-title">{featuredProduct.name}</p>
                   {featuredProduct.price && (
                     <div
                       className="menu-feature-price"

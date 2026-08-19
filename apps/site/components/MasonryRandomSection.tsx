@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { colorForCard } from "@/lib/cardColors";
 
 interface MasonrySectionProps {
   eyebrowTitle: React.ReactNode;
@@ -75,11 +76,13 @@ export default function MasonryRandomSection({
             const shape = shapes[i];
             const image = story.featuredImage?.node?.sourceUrl || null;
             const alt = story.featuredImage?.node?.altText || story.title || "";
+            const cardSeed = story.databaseId ?? story.id?.length ?? i;
             return (
               <Link
                 key={story.slug || story.id}
                 href={`/magazine/${story.slug}`}
                 className={`wcard wcard--${shape}`}
+                style={{ background: colorForCard(cardSeed) }}
               >
                 <div className="wcard-photo">{image && <img src={image} alt={alt} />}</div>
                 {/* Title only — no excerpt appended. Cards previously showed

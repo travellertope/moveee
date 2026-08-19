@@ -38,6 +38,12 @@
 :root {
   --paper: #ffffff;
   --paper-deep: #f2f2f2;
+  /* Was never actually defined anywhere in apps/site despite being used
+     across newsletter.css and the new homepage (.wcard/.frame--cream card
+     backgrounds) — every `background: var(--paper-warm)` was silently
+     invalid with no fallback, leaving those cards fully transparent.
+     Value matches the mockup's own :root. */
+  --paper-warm: #faf7f2;
   --ink: #14110d;
   --ink-soft: #3a342b;
   --mute: #7a6f5c;
@@ -117,6 +123,27 @@ body {
   background-image:
     radial-gradient(circle at 20% 10%, rgba(197, 73, 31, 0.04), transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
+}
+
+/* The site-wide header (header.css's .site-toolbar) is `position: fixed`,
+   so it never reserves layout space of its own. This was first "fixed" by
+   padding <main> itself — but that pushes a page's *entire* first section
+   down as one block, which for any section with its own background (a
+   dark hero, a black trust bar) opened a visible gap of plain body-colour
+   padding above it, reading as a second, mismatched header bar rather
+   than a clearance gap. The correct fix is per-page: the first section
+   keeps its background flush at the true top of the viewport (y=0, so it
+   still runs *behind* the floating header, exactly like the homepage's
+   .hero-full already does), and only that section's own inner content
+   (title, breadcrumb, nav) gets pushed down via its own padding-top —
+   see --header-clear below, applied directly on each page's first
+   section (`.ar-breadcrumb`, `.mg-head`, `.sr-hero`, `.sl-trust-line`,
+   etc.) rather than here. Pages whose first section is already the same
+   colour as the page background (most listing pages) need this exactly
+   as much as a dark hero does — there's just no visible seam either way,
+   which is why it's easy to miss until a page's hero has real contrast. */
+:root {
+  --header-clear: 96px;
 }
 
 /* Subtle paper grain */

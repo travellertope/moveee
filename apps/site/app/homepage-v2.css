@@ -20,7 +20,12 @@
   --accent-gold-frame-ink: #2c2007;
 }
 
-.hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+.hpv2 .wrap { max-width: 1176px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+/* The masthead (welcome text) + carousel section keeps the old, wider
+   column — only the card-grid sections below it were asked to narrow to
+   1024px. The carousel itself (.index-strip/.carousel-track) never used
+   .wrap at all, so it's already unaffected either way. */
+.masthead .wrap { max-width: 1328px; }
 
 /* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
    none; }`) — this port never carried that reset over, so every card here
@@ -33,15 +38,64 @@
 .hpv2 a { color: inherit; text-decoration: none; }
 
 /* ── FULL-BLEED OPENING HERO ── */
-.hero-full { position: relative; height: 100vh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
+/* `100dvh` (dynamic viewport height) is the primary value — on mobile
+   browsers, plain `100vh` is measured against the *largest* possible
+   viewport (address bar collapsed), so on first paint (address bar still
+   expanded) the hero renders taller than what's actually visible, reading
+   as "too long" and pushing the rest of the page an extra 50-100px below
+   the fold for no visual reason. `100vh` stays as the fallback for browsers
+   that don't support `dvh` yet. */
+.hero-full { position: relative; height: 100vh; height: 100dvh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
+@media (max-width: 640px) {
+  /* Beyond the dvh fix above, the hero is still a full screen's worth of
+     content on a phone — cap it to a shorter, fixed max so at least a
+     sliver of the section below is visible without scrolling, instead of
+     the hero alone filling the entire first viewport. */
+  .hero-full { max-height: 640px; }
+}
 .hero-full-photo { position: absolute; inset: 0; background: var(--ink); }
 .hero-full-photo img { width: 100%; height: 100%; object-fit: cover; }
 .hero-full-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,7,4,.15) 0%, rgba(10,7,4,.1) 40%, rgba(10,7,4,.55) 82%, rgba(10,7,4,.78) 100%); }
+/* .hero-full-linklayer wraps the photo + body (see FullBleedHero.tsx) —
+   display:contents means it generates no box of its own, so its children
+   lay out exactly as if they were direct flex children of .hero-full, and
+   HeroScrollButton (rendered after it, a true DOM sibling) keeps sitting
+   in the same bottom flex slot it always has. */
+.hero-full-linklayer { display: contents; }
 .hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
 .hero-full-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(243,236,224,.78); margin-bottom: 22px; }
-.hero-full h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(36px, 6.5vw, 88px); line-height: .96; letter-spacing: -.03em; color: #f3ece0; text-wrap: balance; }
+/* Layered shadow (a tight near-black pass for edge definition + a softer,
+   wider pass for general legibility) so the title stays readable over any
+   photo — a bright sky, a pale wall, a face lit from the front — not just
+   the darker lower-2/3 the .hero-full-photo::after gradient already
+   covers well. */
+.hero-full h1 {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: clamp(36px, 6.5vw, 88px);
+  line-height: .96;
+  letter-spacing: -.03em;
+  color: #f3ece0;
+  text-wrap: balance;
+  text-shadow: 0 1px 3px rgba(0,0,0,.55), 0 8px 28px rgba(0,0,0,.4);
+}
 .hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(243,236,224,.82); }
-.hero-full-scroll { position: relative; display: flex; align-items: center; justify-content: center; padding-bottom: clamp(22px, 4vw, 40px); }
+.hero-full-scroll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: clamp(22px, 4vw, 40px);
+  /* Button resets — .hero-full-scroll used to be a plain <div>, now a
+     <button> (see HeroScrollButton.tsx) so it can actually handle a click
+     without being nested inside the article-navigation <a>. */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
 .hero-full-scroll span { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); border: 1px solid rgba(243,236,224,.4); color: #f3ece0; animation: hero-bounce 2.1s ease-in-out infinite; transition: border-color .15s; }
 .hero-full:hover .hero-full-scroll span { border-color: rgba(243,236,224,.8); }
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
@@ -64,6 +118,15 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior: contain;
+  /* Without this, a touch swipe that starts on the carousel is ambiguous
+     to mobile browsers (this element scrolls horizontally, so a diagonal
+     or even mostly-vertical swipe beginning here can get captured trying
+     to resolve which axis it belongs to) — the reported "scroll just
+     stops right after the hero" bug. Declaring the element's own touch
+     handling as horizontal-only tells the browser to hand any vertical
+     component of the gesture straight to the page immediately, with no
+     ambiguity/capture at all. */
+  touch-action: pan-x;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 .strip-card {
@@ -74,7 +137,31 @@
   transform: scale(.8);
   transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
 }
-.strip-card.is-active { opacity: 1; transform: scale(1.16); z-index: 2; }
+/* Every card is transformed (non-active cards recede to scale(.8),
+   the active one grows to scale(1.16)) — transforms are paint-only, so
+   the flex row's 20px gap always stays anchored to the *unscaled* box
+   edges while the actual rendered edges are pulled in (receding pairs)
+   or pushed out (a pair next to the active card) by different amounts.
+   That's why the gap next to the active card visibly reads as smaller
+   than the gap between two receded cards, even though the layout gap
+   is identical everywhere: two receded neighbours both pull inward
+   (gap grows), but the active card bulges outward into its neighbour's
+   space (gap shrinks) — an active-adjacent pair and a receded/receded
+   pair end up at two different average scales, not just one.
+
+   For two cards at scales s1/s2 with unscaled width W and layout gap
+   G, the visual gap works out to G + W*(1 - (s1+s2)/2) — so matching
+   a receded/receded pair (s=.8 both) means solving for how much extra
+   margin an active/receded pair (s=1.16/.8) needs to reach that same
+   value: margin = W * ((1-.8) - (1-(1.16+.8)/2)) = W * 0.18. (0.08 —
+   half the active card's own growth — was only correct if neighbouring
+   cards didn't move at all, which they do.) */
+.strip-card.is-active {
+  opacity: 1;
+  transform: scale(1.16);
+  z-index: 2;
+  margin: 0 calc(var(--carousel-card-w, 300px) * 0.18);
+}
 .strip-card .fcell { aspect-ratio: 3/4.3; }
 
 /* ── UNIFIED FRAMED CARD ── */
@@ -84,7 +171,7 @@
   flex-direction: column;
   height: 100%;
   border-radius: var(--radius-xl);
-  padding: 14px 14px 18px;
+  padding: 18px 18px 22px;
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
   transition: box-shadow .3s, transform .3s;
   overflow: hidden;
@@ -94,9 +181,9 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: var(--radius-lg); overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 15.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
-.fcell p.dek { font-size: 12px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
+.fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
    stuck on the same cream background instead of rotating). See
@@ -132,14 +219,18 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
   .wcard--rect, .wcard--sq { grid-column: span 1; }
   .wcard--rect .wcard-photo, .wcard--sq .wcard-photo { aspect-ratio: 4/3; }
 }
-.wcard { display: block; border-radius: 22px; padding: 14px 14px 30px; color: var(--ink); box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
+/* text-decoration: none set directly here (not just relying on the .hpv2 a
+   reset above) — .wcard is also reused outside .hpv2, on the magazine
+   category/industry/country/tag filtered listing pages
+   (MagazineArchiveWrapper.tsx), which have no such reset of their own. */
+.wcard { display: block; border-radius: 22px; padding: 18px 18px 34px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
 .wcard:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
 .wcard-photo { position: relative; width: 100%; border-radius: 13px; overflow: hidden; background: var(--ink); }
 .wcard-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 .wcard:hover .wcard-photo img { transform: scale(1.08); }
 .wcard--rect .wcard-photo { aspect-ratio: 2.15 / 1; }
 .wcard--sq .wcard-photo { aspect-ratio: 1 / 1; }
-.wcard-caption { margin-top: 22px; text-align: center; font-family: "Fraunces", serif; font-size: 16.5px; line-height: 1.55; max-width: 34ch; margin-left: auto; margin-right: auto; }
+.wcard-caption { margin-top: 22px; text-align: center; font-family: "Fraunces", serif; font-size: 18.5px; line-height: 1.55; max-width: 34ch; margin-left: auto; margin-right: auto; }
 
 /* ── SHOP RAIL ── */
 .shop-rail-wrap { position: relative; }
@@ -147,11 +238,11 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .shop-rail::-webkit-scrollbar { display: none; }
 .shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); scroll-snap-align: start; }
 .shop-card .wcard-photo { aspect-ratio: 1 / 1.08; }
-.shop-price-tag { position: absolute; top: 10px; right: 10px; z-index: 2; background: var(--ink); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; padding: 5px 10px; border-radius: var(--radius-full); }
+.shop-price-tag { position: absolute; top: 10px; right: 10px; z-index: 2; background: var(--ink); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .02em; padding: 5px 10px; border-radius: var(--radius-full); }
 .shop-caption { margin-top: 16px; text-align: left; }
-.shop-caption-maker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .62; }
-.shop-caption-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 15px; line-height: 1.3; margin-top: 5px; }
-.shop-caption-price { margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ochre-deep); }
+.shop-caption-maker { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .62; }
+.shop-caption-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; line-height: 1.3; margin-top: 5px; }
+.shop-caption-price { margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ochre-deep); }
 .shop-arrow {
   position: absolute; top: calc(50% - 14px); transform: translateY(-50%);
   width: 46px; height: 46px; border-radius: var(--radius-full);

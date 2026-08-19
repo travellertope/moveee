@@ -40,13 +40,16 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus on open; reset on close
+  // Auto-focus on open (mirrors the mockup's own 60ms-delayed focus, needed
+  // since the overlay is still animating in); reset on close.
   useEffect(() => {
-    if (!isOpen) {
-      setQuery('');
-      setResults(null);
-      setLoading(false);
+    if (isOpen) {
+      const t = setTimeout(() => inputRef.current?.focus(), 60);
+      return () => clearTimeout(t);
     }
+    setQuery('');
+    setResults(null);
+    setLoading(false);
   }, [isOpen]);
 
   // ESC to close
@@ -97,28 +100,51 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
 
   const hasResults = !!results && total > 0;
   const noResults  = !!results && total === 0 && !loading;
+  const showingContent = hasResults || noResults;
 
+  // Shell matches the mockup's #searchOverlay exactly: it reuses the same
+  // .menu-overlay-bar (close · centered logo · decorative search glyph) as
+  // the main menu overlay, then a centered .search-overlay-body holding a
+  // single large serif input with a bottom-border-only underline — no
+  // backdrop-click-to-close panel, same as the menu overlay's own
+  // close-via-X-or-Escape-only convention in Header.tsx. Live results are
+  // additive (the mockup's input is decorative) and only affect the body's
+  // layout mode, not the input/top-bar chrome.
   return (
-    /* Backdrop — click outside panel to close */
-    <div className="search-overlay" onClick={onClose}>
-      <div className="search-panel" onClick={e => e.stopPropagation()}>
+    <div className="search-overlay">
+      <div className="menu-overlay-bar">
+        <button className="toolbar-icon" onClick={onClose} aria-label="Close search">
+          <X size={16} strokeWidth={1.5} />
+        </button>
+        <Link href="/" className="toolbar-logo" onClick={onClose}>
+          moveee<span>.</span>
+        </Link>
+        <span className="toolbar-icon" aria-hidden="true">
+          <Search size={16} strokeWidth={1.5} />
+        </span>
+      </div>
 
-        {/* ── Input row ── */}
-        <div className="search-input-row">
-          <Search size={20} strokeWidth={1.5} className="search-icon-lead" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search pulse, community, editorials, events, directory…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            className="search-input"
-          />
-          {loading && <Loader2 size={18} strokeWidth={1.5} className="search-loader" />}
-          <button onClick={onClose} className="search-close-btn" aria-label="Close search">
-            <X size={20} strokeWidth={1.5} />
-          </button>
-        </div>
+      <div className={`search-overlay-body${showingContent ? " search-overlay-body--results" : ""}`}>
+        <form onSubmit={e => e.preventDefault()} className="search-form">
+          <div className="search-input-wrap">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="search-input"
+              autoComplete="off"
+            />
+            {loading && <Loader2 size={18} strokeWidth={1.5} className="search-loader" />}
+          </div>
+        </form>
+
+        {!showingContent && (
+          <p className="search-hint">
+            Search across magazine, events, origins, quotes, culture directory and shop.
+          </p>
+        )}
 
         {/* ── Results ── */}
         {hasResults && (
@@ -137,12 +163,6 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
         {noResults && (
           <p className="search-empty">
             No results for <em>"{query}"</em> — try a different term.
-          </p>
-        )}
-
-        {!query.trim() && (
-          <p className="search-hint">
-            Search across magazine, events, origins, quotes, culture directory and shop.
           </p>
         )}
       </div>
