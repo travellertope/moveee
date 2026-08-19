@@ -304,6 +304,34 @@
   gap: 8px;
 }
 .shop-search-pills a.sl-fpill { text-decoration: none; }
+
+/* Category/Price/Sort are pills at desktop widths and a plain <select> on
+   mobile (below) — Material Location stays pills-only at every width, In
+   Stock Only is always its own single pill regardless of width. */
+.shop-search-mobile-only { display: none; }
+.shop-search-select {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  background: var(--paper, #fff);
+  padding: 0 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237a6f5c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+.shop-search-select:focus { border-color: var(--ochre); }
+
 .shop-search-footer {
   display: flex;
   align-items: center;
@@ -337,9 +365,11 @@
 @media (max-width: 640px) {
   .shop-search-body { padding: 8px 22px 16px; gap: 14px; }
   .shop-search-group-label { margin-bottom: 6px; }
-  /* Pill rows scroll horizontally instead of wrapping — same pattern as the
-     old sticky filter bar's mobile treatment above — so ~5 facet groups fit
-     without each one eating several wrapped rows of vertical space. */
+  /* Category/Price/Sort become plain <select>s on mobile instead of pill rows. */
+  .shop-search-mobile-only { display: block; }
+  .shop-search-desktop-only { display: none; }
+  /* Location's pill row still scrolls horizontally instead of wrapping — same
+     pattern as the old sticky filter bar's mobile treatment above. */
   .shop-search-pills {
     flex-wrap: nowrap;
     overflow-x: auto;

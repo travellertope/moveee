@@ -4,11 +4,11 @@
 // apps/connect's discoverFiltersBus.ts/peopleFiltersBus.ts. The shop's
 // search+filter UI now lives in <ShopSearchModal> (mounted globally from
 // Header.tsx), while the actual product list/derived filter facets
-// (categories, materials, locations, price bands) live inside
-// <ShopFilterProvider> deep in the /shop page tree. Neither can reach the
-// other via props, so the bus is the shared source of truth: the page
-// pushes its computed meta in, the modal reads it and pushes filter
-// changes back out, and ShopFilterContext applies them to the product list.
+// (categories, locations, price bands) live inside <ShopFilterProvider>
+// deep in the /shop page tree. Neither can reach the other via props, so
+// the bus is the shared source of truth: the page pushes its computed meta
+// in, the modal reads it and pushes filter changes back out, and
+// ShopFilterContext applies them to the product list.
 
 export interface ShopPriceBand {
   id: string;
@@ -23,7 +23,6 @@ export interface ShopCategory {
 export interface ShopFilters {
   query: string;
   priceBand: string | null;
-  material: string | null;
   location: string | null;
   inStockOnly: boolean;
   sort: string;
@@ -34,7 +33,6 @@ export interface ShopFilterMeta {
   active: boolean;
   categories: ShopCategory[];
   activeCategorySlug?: string;
-  availableMaterials: string[];
   availableLocations: string[];
   priceBands: ShopPriceBand[];
   resultCount: number;
@@ -43,7 +41,6 @@ export interface ShopFilterMeta {
 export const DEFAULT_SHOP_FILTERS: ShopFilters = {
   query: "",
   priceBand: null,
-  material: null,
   location: null,
   inStockOnly: false,
   sort: "default",
@@ -52,7 +49,6 @@ export const DEFAULT_SHOP_FILTERS: ShopFilters = {
 const DEFAULT_META: ShopFilterMeta = {
   active: false,
   categories: [],
-  availableMaterials: [],
   availableLocations: [],
   priceBands: [],
   resultCount: 0,

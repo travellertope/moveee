@@ -1391,6 +1391,36 @@ for the precedent this follows) bridging the two trees:
   check (598/598). Re-check pixel fidelity and the `/shop/category/*`/`/shop/tag/*`
   routes (which reuse the same `ShopArchiveWrapper`) in a real environment.
 
+**Follow-up fixes (same day)**:
+- **Trust bar wraps to two rows on mobile** — `<span className="sl-trust-rating">` now
+  wraps the "· 4.8 average rating" segment in `ShopArchiveWrapper.tsx` and
+  `.sl-trust-rating { display: none; }` inside `shop.css`'s existing `max-width: 640px`
+  block drops it on mobile only ("Vetted Makers · Moveee Pro saves X%"); desktop/tablet
+  still show the full line.
+- **Modal needed to scroll on mobile** — `.shop-search-pills` scroll horizontally instead
+  of wrapping on mobile (same technique as the old sticky filter bar's own mobile
+  treatment, still further up this file), `.shop-search-body`'s gap/label margins were
+  tightened, `.search-panel`'s mobile `max-height` bumped 80vh → 92vh, and
+  `.shop-search-footer` (Clear all / View N Results) is now `position: sticky; bottom: 0`
+  so the primary action never requires scrolling to reach.
+- **Material filter removed entirely** (not just hidden) — the `material` field is gone
+  from `ShopFilters`/`ShopFilterMeta` in `shopFiltersBus.ts`, `ShopFilterContext.tsx`
+  no longer computes `availableMaterials` or filters by it, and the Material group is
+  gone from `ShopSearchModal.tsx`. The underlying `productMaterials` data field itself
+  is untouched — `ShopArchiveWrapper.tsx` still fetches it (still used by
+  `app/shop/[slug]/page.tsx`'s product detail page) — only the archive-page *filter* on
+  it was removed.
+- **Category/Price/Sort are a `<select>` on mobile, pills on desktop** — each of those
+  three groups now renders both a `.shop-search-select` (native `<select>`,
+  `.shop-search-mobile-only`) and its existing pill row (`.shop-search-desktop-only`),
+  toggled purely by the same `max-width: 640px` CSS breakpoint everything else in this
+  modal already uses — no JS viewport detection, so no hydration/flash-of-wrong-UI risk.
+  Category's `<select>` navigates via `useRouter().push()` (`/shop` or
+  `/shop/category/{slug}`) since it was never a bus-driven filter, matching the pill
+  version's own `<Link>` behavior. **Maker Location intentionally stayed pills-only at
+  every width** — not part of this ask — and **In Stock Only stays a single pill
+  regardless of width**, per explicit instruction.
+
 ### Shop by Category + Meet the Makers sections removed (Site A, August 2026)
 
 Per explicit user request, `ShopArchiveWrapper.tsx`'s "Shop by Category" (`.sl-cat`) and

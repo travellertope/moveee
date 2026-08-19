@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import {
   getShopFilters,
@@ -27,6 +28,7 @@ const SORT_OPTIONS: { id: string; label: string }[] = [
 ];
 
 export default function ShopSearchModal({ isOpen, onClose }: Props) {
+  const router = useRouter();
   const [filters, setFilters] = useState<ShopFilters>(getShopFilters());
   const [meta, setMeta] = useState<ShopFilterMeta>(getShopFilterMeta());
 
@@ -52,7 +54,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const hasActiveFilters =
-    !!filters.query.trim() || !!filters.priceBand || !!filters.material || !!filters.location || filters.inStockOnly;
+    !!filters.query.trim() || !!filters.priceBand || !!filters.location || filters.inStockOnly;
 
   return (
     <div className="search-overlay" onClick={onClose}>
@@ -74,11 +76,27 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
         </div>
 
         <div className="shop-search-body">
-          {/* Category */}
+          {/* Category — <select> on mobile, pills on desktop */}
           {meta.categories.length > 0 && (
             <div className="shop-search-group">
               <p className="shop-search-group-label">Category</p>
-              <div className="shop-search-pills">
+              <select
+                className="shop-search-select shop-search-mobile-only"
+                value={meta.activeCategorySlug ?? ""}
+                onChange={(e) => {
+                  router.push(e.target.value ? `/shop/category/${e.target.value}` : "/shop");
+                  onClose();
+                }}
+                aria-label="Filter by category"
+              >
+                <option value="">All Categories</option>
+                {meta.categories.map((cat) => (
+                  <option key={cat.slug} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <div className="shop-search-pills shop-search-desktop-only">
                 <Link href="/shop" onClick={onClose} className={`sl-fpill${!meta.activeCategorySlug ? " sl-fpill--active" : ""}`}>
                   All Categories
                 </Link>
@@ -96,11 +114,24 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
-          {/* Price */}
+          {/* Price — <select> on mobile, pills on desktop */}
           {meta.priceBands.length > 0 && (
             <div className="shop-search-group">
               <p className="shop-search-group-label">Price</p>
-              <div className="shop-search-pills">
+              <select
+                className="shop-search-select shop-search-mobile-only"
+                value={filters.priceBand ?? ""}
+                onChange={(e) => setShopFilters({ priceBand: e.target.value || null })}
+                aria-label="Filter by price"
+              >
+                <option value="">Any Price</option>
+                {meta.priceBands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+              <div className="shop-search-pills shop-search-desktop-only">
                 <button
                   type="button"
                   className={`sl-fpill${!filters.priceBand ? " sl-fpill--active" : ""}`}
@@ -122,33 +153,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
-          {/* Material */}
-          {meta.availableMaterials.length > 0 && (
-            <div className="shop-search-group">
-              <p className="shop-search-group-label">Material</p>
-              <div className="shop-search-pills">
-                <button
-                  type="button"
-                  className={`sl-fpill${!filters.material ? " sl-fpill--active" : ""}`}
-                  onClick={() => setShopFilters({ material: null })}
-                >
-                  Any Material
-                </button>
-                {meta.availableMaterials.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`sl-fpill${filters.material === m ? " sl-fpill--active" : ""}`}
-                    onClick={() => setShopFilters({ material: filters.material === m ? null : m })}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Maker location */}
+          {/* Maker location — pills only (not asked to become a dropdown) */}
           {meta.availableLocations.length > 0 && (
             <div className="shop-search-group">
               <p className="shop-search-group-label">Maker Location</p>
@@ -174,10 +179,22 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
-          {/* Sort */}
+          {/* Sort — <select> on mobile, pills on desktop */}
           <div className="shop-search-group">
             <p className="shop-search-group-label">Sort</p>
-            <div className="shop-search-pills">
+            <select
+              className="shop-search-select shop-search-mobile-only"
+              value={filters.sort}
+              onChange={(e) => setShopFilters({ sort: e.target.value })}
+              aria-label="Sort products"
+            >
+              {SORT_OPTIONS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <div className="shop-search-pills shop-search-desktop-only">
               {SORT_OPTIONS.map((s) => (
                 <button
                   key={s.id}
@@ -191,7 +208,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
             </div>
           </div>
 
-          {/* In stock only */}
+          {/* In stock only — stays a pill at every width */}
           <div className="shop-search-group">
             <button
               type="button"
