@@ -1,0 +1,1784 @@
+<title>The Editorial Rail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+/* ============================================================
+   Moveee article page — width-tier rail.
+   Tokens mirror apps/site/app/editorial.css + globals.css so this
+   mockup reads as the real site, not a separate visual language.
+   ============================================================ */
+:root {
+  --ink: #14110d;
+  --ink-soft: #3b342b;
+  --mute: #7a6f5c;
+  --paper: #ffffff;
+  --paper-deep: #f2f2f2;
+  --paper-sunk: #ebe7df;
+  --ochre: #c5491f;
+  --gold: #b38238;
+  --ghost: #c8bfb0;
+  --ghost-light: #eee8df;
+  --rule: rgba(20, 17, 13, 0.12);
+  /* verbatim from apps/site/app/globals.css — the homepage JoinSection
+     depends on these, so the band below is the same component, not a
+     lookalike rebuilt with different numbers. */
+  --paper-warm: #faf7f2;
+  --ochre-deep: #8a2d10;
+  --rule-strong: rgba(20, 17, 13, .22);
+  --radius-full: 9999px;
+  --shadow-1: 0 6px 14px -8px rgba(20,17,13,.10), 0 2px 5px -3px rgba(197,73,31,.07);
+  --shadow-2: 0 18px 34px -14px rgba(20,17,13,.16), 0 6px 14px -8px rgba(197,73,31,.10);
+  --shadow-3: 0 34px 60px -18px rgba(20,17,13,.20);
+  --shadow-card: 0 1px 3px rgba(20,17,13,.08), 0 1px 2px rgba(20,17,13,.04);
+  --shadow-lift: 0 12px 34px rgba(20,17,13,.14);
+  --hero-grad: linear-gradient(160deg, #3d3020, #14110d 60%);
+
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #f4efe6;
+    --ink-soft: #d8d0c3;
+    --mute: #9d9282;
+    --paper: #17140f;
+    --paper-deep: #1f1b15;
+    --paper-sunk: #262119;
+    --ochre: #e8724a;
+    --gold: #d0a463;
+    --ghost: #4a4238;
+    --ghost-light: #2a251d;
+    --rule: rgba(244, 239, 230, 0.16);
+    --shadow-card: 0 1px 3px rgba(0,0,0,.5);
+    --shadow-lift: 0 12px 34px rgba(0,0,0,.55);
+  --paper-warm: #1c1812;
+    --ochre-deep: #f08a5f;
+    --rule-strong: rgba(244, 239, 230, .28);
+    --shadow-1: 0 6px 14px -8px rgba(0,0,0,.55);
+    --shadow-2: 0 18px 34px -14px rgba(0,0,0,.6);
+    --shadow-3: 0 34px 60px -18px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #f4efe6;
+  --ink-soft: #d8d0c3;
+  --mute: #9d9282;
+  --paper: #17140f;
+  --paper-deep: #1f1b15;
+  --paper-sunk: #262119;
+  --ochre: #e8724a;
+  --gold: #d0a463;
+  --ghost: #4a4238;
+  --ghost-light: #2a251d;
+  --rule: rgba(244, 239, 230, 0.16);
+  --shadow-card: 0 1px 3px rgba(0,0,0,.5);
+  --shadow-lift: 0 12px 34px rgba(0,0,0,.55);
+  --paper-warm: #1c1812;
+  --ochre-deep: #f08a5f;
+  --rule-strong: rgba(244, 239, 230, .28);
+  --shadow-1: 0 6px 14px -8px rgba(0,0,0,.55);
+  --shadow-2: 0 18px 34px -14px rgba(0,0,0,.6);
+  --shadow-3: 0 34px 60px -18px rgba(0,0,0,.65);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: var(--ochre); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--ochre); outline-offset: 3px; }
+
+/* ── doc chrome ─────────────────────────────────────────── */
+.doc-bar {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 18px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  align-items: baseline;
+}
+:root[data-theme="dark"] .doc-bar,
+:root:not([data-theme="light"]) .doc-bar { border-bottom: 1px solid var(--rule); }
+.doc-bar strong {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 19px;
+  letter-spacing: .01em;
+}
+.doc-bar span {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .72;
+}
+
+/* ============================================================
+   THE RAIL — one grid, three width tiers.
+   Children default to `text`; they opt into `wide` or `full`.
+   ============================================================ */
+.rail {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(20px, 1fr)
+    [wide-start] minmax(0, 200px)
+    [text-start] minmax(0, 680px) [text-end]
+    minmax(0, 200px) [wide-end]
+    minmax(20px, 1fr) [full-end];
+  row-gap: 0;
+}
+.rail > * { grid-column: text; }
+.rail > .t-wide { grid-column: wide; }
+.rail > .t-full { grid-column: full; }
+/* margin note sits in the left half of the wide gutter */
+.rail > .t-note { grid-column: wide-start / text-start; }
+
+/* Anything living in the gutter (Details, margin notes, tier badges) is
+   still a grid child, so its height would set its ROW's height — a tall
+   Details block then pushes the NEXT paragraph down by the difference,
+   which reads as random dead space between two paragraphs. Taking them
+   out of the height calculation (height:0 + overflow:visible) lets the
+   text column set the rhythm on its own; gutter content still paints. */
+@media (min-width: 1081px) {
+  .rail > .t-note,
+  .rail > .details,
+  .rail > .tier {
+    height: 0;
+    overflow: visible;
+    margin-top: 0;
+  }
+  .rail > .t-note { padding-top: 7px; }
+  .rail > .tier { padding-top: 3px; }
+}
+
+/* ── tier badge (mockup annotation only — not shipped) ──── */
+.tier {
+  grid-column: wide-start / text-start;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  border-top: 1px solid var(--ochre);
+  padding-top: 5px;
+  margin-top: 44px;
+  align-self: start;
+  opacity: .85;
+}
+.tier--full { color: var(--gold); border-color: var(--gold); }
+
+/* ── HERO + TITLE — unchanged, shown for continuity ─────── */
+.ar-hero {
+  position: relative;
+  background: var(--hero-grad);
+  padding: 96px 0 72px;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ar-hero-wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 70% at 22% 18%, rgba(197,73,31,.5), transparent 62%),
+              radial-gradient(48% 60% at 82% 76%, rgba(179,130,56,.42), transparent 66%);
+  opacity: .55;
+  z-index: -1;
+}
+/* position:relative so the photo anchors HERE, not to the viewport —
+   the panel stops at the content column's right edge rather than
+   bleeding off-screen. */
+.ar-hero-inner {
+  max-width: 1248px;
+  margin: 0 auto;
+  padding: 0 28px;
+  width: 100%;
+  position: relative;
+}
+.ar-hero-text { max-width: 640px; }
+.ar-hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #e9c98d;
+  margin: 0 0 22px;
+}
+.ar-hero h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(34px, 5vw, 60px);
+  line-height: 1.06;
+  letter-spacing: -.015em;
+  color: #fdfaf4;
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+.ar-hero h1 em { font-style: italic; color: #f0cf9a; }
+.ar-hero-standfirst {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 19px;
+  line-height: 1.55;
+  color: rgba(253,250,244,.8);
+  margin: 0 0 30px;
+  max-width: 52ch;
+}
+.ar-hero-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(253,250,244,.62);
+}
+.ar-hero-byline b { color: #fdfaf4; font-weight: 500; }
+/* Two classes, deliberately: `.ph` further down the sheet also sets
+   `position`, and at equal specificity the later rule would win and drop
+   this panel back into normal flow. */
+.ar-hero .ar-hero-photo {
+  position: absolute;
+  /* 28px = .ar-hero-inner's own horizontal padding, so the panel's right
+     edge lines up with the content column rather than the screen edge. */
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(230px, 30vw, 430px);
+  height: 74%;
+  border-radius: 20px;          /* all four corners — it no longer bleeds */
+  overflow: hidden;
+  box-shadow: var(--shadow-lift);
+}
+.unchanged-flag {
+  position: absolute;
+  top: 18px;
+  left: 28px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(253,250,244,.55);
+  border: 1px solid rgba(253,250,244,.28);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
+
+/* ── PROSE ──────────────────────────────────────────────── */
+.body-rail { padding: 56px 0 90px; }
+.p, .rail > h2, .rail > h3 { margin: 0; }
+.p { margin-bottom: 1.45em; }
+/* ── HEADINGS · LISTS · QUOTES — the newsletter reader's treatment
+   (.rd-body in apps/site/app/newsletter.css), scaled to the article's
+   17px body: ochre serif headings over a hairline rule, ochre dot
+   bullets, ochre numbered discs. Same system, one reading experience
+   across the magazine and the newsletter. */
+.rail > h2 {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.3;
+  color: var(--ochre);
+  margin: 64px 0 14px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+.rail > h3 {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--ochre);
+  margin: 44px 0 10px;
+}
+/* h4 is a label, not a title — mono, like the reader's */
+.rail > h4 {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--ochre);
+  margin: 38px 0 12px;
+}
+
+.rail ul, .rail ol { margin: 0 0 1.45em; padding: 0; list-style: none; }
+.rail li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 12px;
+}
+.rail ul > li::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ochre);
+}
+.rail ol { counter-reset: rail-ol; }
+.rail ol > li { counter-increment: rail-ol; padding-left: 36px; }
+.rail ol > li::before {
+  content: counter(rail-ol);
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ochre);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* nested lists step down to a hollow ring so depth reads at a glance */
+.rail li ul, .rail li ol { margin-top: 12px; margin-bottom: 0; }
+.rail li ul > li::before {
+  background: transparent;
+  border: 1.5px solid var(--ochre);
+  width: 6px;
+  height: 6px;
+  top: 11px;
+}
+
+/* standard pull-out quote, matching .rd-body blockquote */
+.rail > blockquote:not(.pull) {
+  margin: 1.6em 0;
+  padding: 4px 0 4px 22px;
+  border-left: 3px solid var(--ochre);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.pull {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 25px;
+  line-height: 1.36;
+  color: var(--ink);
+  border-left: 3px solid var(--ochre);
+  padding: 4px 0 4px 26px;
+  margin: 2.2em 0;
+}
+
+/* ── margin notes ───────────────────────────────────────── */
+.t-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: .04em;
+  color: var(--mute);
+  padding-right: 56px;
+  align-self: start;
+  margin-top: 46px;
+  text-align: right;
+}
+.t-note b {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+/* ── photo placeholders ─────────────────────────────────── */
+.ph {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper-sunk);
+}
+.ph::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 2px, transparent 2px 5px);
+  mix-blend-mode: overlay;
+}
+.ph.ph--1 { background: linear-gradient(148deg, #8d6b4a, #3f2f22 78%); }
+.ph.ph--2 { background: linear-gradient(150deg, #b8813f, #5c3d1e 82%); }
+.ph.ph--3 { background: linear-gradient(160deg, #6d7a5e, #2b3226 80%); }
+.ph.ph--4 { background: linear-gradient(140deg, #a8523a, #4a1f16 84%); }
+.ph.ph--5 { background: linear-gradient(155deg, #4f6572, #1d272d 80%); }
+.ph.ph--6 { background: linear-gradient(135deg, #c19a5e, #6b4a24 82%); }
+.ph.ph--7 { background: linear-gradient(165deg, #7b5f74, #2e2230 80%); }
+.ph.ph--8 { background: linear-gradient(145deg, #97785a, #3a2c20 80%); }
+
+/* ── figures + galleries ────────────────────────────────── */
+figure { margin: 0; }
+.fig { margin: 46px 0 0; }
+/* Caption: a mono ochre label over an italic description — the label
+   carries the fact, the italic carries the sentence. Distinct from body
+   copy at a glance without shouting. */
+.fig figcaption, .gal-cap {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--mute);
+  margin-top: 13px;
+  max-width: 62ch;
+}
+.gal-cap b, .fig figcaption b {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 5px;
+}
+
+.gal { display: grid; gap: 10px; }
+.gal--2 { grid-template-columns: repeat(2, 1fr); }
+.gal--3 { grid-template-columns: repeat(3, 1fr); }
+.gal--4 { grid-template-columns: repeat(4, 1fr); }
+.gal--contact { grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.gal .ph { aspect-ratio: 3 / 4; }
+.gal--wide-cells .ph { aspect-ratio: 4 / 3; }
+
+/* asymmetric mosaic — a lead frame plus a stack */
+.gal--mosaic {
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 1fr;
+}
+.gal--mosaic .ph { aspect-ratio: auto; }
+.gal--mosaic .lead { grid-column: span 2; grid-row: span 2; }
+
+/* full-bleed strip */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+.strip .ph { aspect-ratio: 1 / 1; border-radius: 0; }
+
+/* ── tables ─────────────────────────────────────────────── */
+.tbl-wrap {
+  margin: 46px 0 0;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  /* fade hints that there's more to the right */
+  background-image:
+    linear-gradient(to right, var(--paper) 30%, rgba(255,255,255,0)),
+    linear-gradient(to left, var(--paper) 30%, rgba(255,255,255,0));
+  background-position: left center, right center;
+  background-repeat: no-repeat;
+  background-size: 34px 100%, 34px 100%;
+  background-attachment: local, local;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 720px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 14px 18px 10px;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--paper-deep);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-align: left;
+  padding: 11px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rule);
+}
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ghost-light);
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--paper-deep) 55%, transparent); }
+/* first column stays put while the rest scrolls */
+th.stick, td.stick {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--paper);
+  border-right: 1px solid var(--rule);
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+thead th.stick { z-index: 3; background: var(--paper-deep); }
+tbody tr:nth-child(even) td.stick { background: color-mix(in srgb, var(--paper-deep) 55%, var(--paper)); }
+td .num { font-family: var(--mono); font-size: 13px; }
+.pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill--live { background: color-mix(in srgb, #3f7d4e 18%, transparent); color: #3f7d4e; }
+.pill--rare { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold); }
+.pill--gone { background: color-mix(in srgb, var(--ochre) 16%, transparent); color: var(--ochre); }
+:root[data-theme="dark"] .pill--live,
+:root:not([data-theme="light"]) .pill--live { color: #7fc08f; }
+
+/* ── ex-sidebar pieces, rehoused in the rail ────────────── */
+/* Details: was .ar-sidebar-card--meta. Now a gutter block, set once at
+   the top of the piece where a reader looks for provenance. */
+.details {
+  align-self: start;
+  margin-top: 4px;
+  padding-right: 56px;
+  text-align: right;
+}
+/* the ochre rule sits UNDER the metadata, separating it from the
+   actions below and from the body beside it */
+.details dl {
+  border-bottom: 1px solid var(--ochre);
+  padding-bottom: 13px;
+}
+.details dt {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-top: 11px;
+}
+.details dt:first-of-type { margin-top: 0; }
+.details dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.details dl { margin: 0; }
+
+/* ── ACTIONS — apps/site/components/ArticleActions.tsx, unchanged.
+   Same .ar-actions / .ar-action-btn classes, just relocated from the
+   article body into the gutter directly beneath Details. */
+.ar-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.ar-action-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.ar-action-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ar-action-btn--active { background: var(--ochre); border-color: var(--ochre); color: #fff; }
+
+/* ── FLOATING SHARE ── pill on desktop, icon-only on mobile */
+.share-fab {
+  position: fixed; left: 24px; bottom: 24px; z-index: 60;
+  display: inline-flex; align-items: center; gap: 11px;
+  padding: 12px 22px 12px 24px;
+  border-radius: var(--radius-full);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-2);
+  font-family: var(--sans); font-size: 14px; font-weight: 500;
+  color: var(--ink); cursor: pointer;
+  transition: background .18s, color .18s;
+}
+.share-fab:hover { background: var(--ink); color: var(--paper); }
+@media (max-width: 760px) {
+  .share-fab { left: 16px; bottom: 16px; width: 50px; height: 50px; padding: 0; justify-content: center; }
+  .share-fab span { display: none; }
+}
+
+/* Inline promo bands: was --newsletter / Shop the Edit / --dark.
+   In the flow at the wide tier, so they get real room instead of a
+   300px column, and they land where the reader actually is. */
+.band-inline {
+  margin: 62px 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 26px 28px;
+  background: var(--paper-deep);
+}
+.band-inline .band-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  display: block;
+  margin-bottom: 12px;
+}
+.band-inline h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.band-inline p { margin: 0 0 18px; font-size: 15px; color: var(--mute); max-width: 56ch; }
+.shop-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.shop-item .ph { aspect-ratio: 1 / 1; margin-bottom: 9px; }
+.shop-name { font-size: 13.5px; color: var(--ink); line-height: 1.35; }
+.shop-price { font-family: var(--mono); font-size: 12px; color: var(--mute); margin-top: 3px; }
+
+/* End matter: was the two --story cards + --dark archive card */
+.endmatter { margin-top: 74px; border-top: 1px solid var(--rule); padding-top: 34px; }
+.endmatter-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: block;
+  margin-bottom: 20px;
+}
+.rel-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.rel-card .ph { aspect-ratio: 16 / 10; margin-bottom: 11px; }
+.rel-kicker {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 5px;
+}
+.rel-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .shop-row { grid-template-columns: repeat(2, 1fr); }
+  .rel-row { grid-template-columns: 1fr; }
+  .details { text-align: left; padding-right: 0; }
+}
+
+/* ── CULTURE DROP — the homepage JoinSection, unmodified ──
+   Rules below are lifted verbatim from apps/site/app/homepage-v2.css.
+   Same markup, same classes, same tokens: on the article page it just
+   sits at the wide tier instead of full-page width, so it's genuinely
+   one component in two places rather than two that resemble each other. */
+.join-section { padding: clamp(56px, 7vw, 96px) 0; }
+.join-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
+.join-grid > * { min-width: 0; }
+@media (min-width: 900px) { .join-grid { grid-template-columns: 1.25fr 0.75fr; } }
+.join-title {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(30px, 4vw, 48px); line-height: 1.2;
+  letter-spacing: -.02em; max-width: 15ch; color: var(--ink); margin: 0;
+}
+.join-title em { font-style: italic; color: var(--ochre); font-weight: 400; }
+.join-form { margin-top: 32px; display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
+.join-input {
+  flex: 1; min-width: 0;
+  border: 1px solid var(--rule-strong, var(--rule));
+  border-radius: var(--radius-full);
+  padding: 15px 22px;
+  font-family: var(--sans);
+  font-size: 14px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.join-input::placeholder { color: var(--mute); }
+.join-input:focus { outline: none; border-color: var(--ochre); }
+.join-submit {
+  border-radius: var(--radius-full);
+  padding: 15px 30px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  cursor: pointer;
+  transition: opacity .2s;
+  flex-shrink: 0;
+}
+.join-submit:hover { opacity: .85; }
+.join-note { margin-top: 6px; font-size: 12px; color: var(--mute); }
+
+/* the tilted card on the right — .wcard is the homepage card primitive */
+.wcard {
+  display: block; border-radius: 22px; padding: 18px 18px 34px;
+  color: var(--ink); text-decoration: none;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow .3s, transform .3s;
+  background: var(--paper-warm);
+}
+.wcard-photo { position: relative; width: 100%; border-radius: 13px; overflow: hidden; background: var(--ink); }
+.wcard-caption {
+  margin: 22px auto 0; text-align: center;
+  font-family: var(--serif); font-size: 18.5px; line-height: 1.55; max-width: 34ch;
+}
+.join-feature { max-width: 300px; margin: 0 auto; transform: rotate(3deg); box-shadow: var(--shadow-2); }
+.join-feature:hover { transform: rotate(3deg) translateY(-5px); box-shadow: var(--shadow-3); }
+.join-feature .wcard-photo { aspect-ratio: 1 / 1.05; }
+@media (max-width: 640px) { .join-feature { max-width: 230px; } }
+.join-feature-badge {
+  display: block; text-align: center; margin-bottom: 14px;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--mute);
+}
+
+/* ── ISSUE CARD — was .ar-sidebar-card--issue ────────────── */
+.issue-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 22px;
+  background: var(--paper-warm);
+  text-decoration: none;
+  margin-top: 22px;
+}
+.issue-card .ph { aspect-ratio: 3 / 4; border-radius: 6px; }
+.issue-label {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ochre); display: block; margin-bottom: 9px;
+}
+.issue-num { font-family: var(--serif); font-size: 25px; font-weight: 400; color: var(--ink); margin: 0 0 4px; }
+.issue-sub { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--mute); margin: 0 0 12px; }
+.issue-read { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ochre); }
+@media (max-width: 620px) {
+  .issue-card { grid-template-columns: 1fr; gap: 16px; }
+  .issue-card .ph { max-width: 150px; }
+}
+
+/* ============================================================
+   MOBILE FRAMES
+   Real components at a real 390px width. Media queries are keyed to
+   the VIEWPORT, so they can't fire inside a 390px box on a desktop
+   page — these `.phone` rules restate the same breakpoint behaviour
+   so what you see here is what a phone gets.
+   ============================================================ */
+.phones { background: var(--paper-sunk); padding: 68px 0 78px; border-top: 1px solid var(--rule); }
+.phones-inner { max-width: 1248px; margin: 0 auto; padding: 0 28px; }
+.phones h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; color: var(--ink); margin: 0 0 8px; }
+.phones .lede { color: var(--mute); margin: 0 0 38px; max-width: 62ch; }
+.phone-row { display: flex; gap: 30px; overflow-x: auto; padding: 6px 2px 20px; scroll-snap-type: x mandatory; }
+.phone-col { flex: 0 0 auto; scroll-snap-align: start; }
+.phone-cap {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute); margin: 0 0 12px; text-align: center;
+}
+.phone-cap b { display: block; color: var(--ink); font-size: 11px; margin-bottom: 3px; }
+.phone {
+  width: 390px; height: 720px;
+  border: 10px solid #14110d;
+  border-radius: 34px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--paper);
+  box-shadow: var(--shadow-lift);
+  scrollbar-width: none;
+}
+.phone::-webkit-scrollbar { display: none; }
+
+/* ── restate the ≤1080px + ≤760px behaviour, scoped to the frame ── */
+.phone .rail {
+  grid-template-columns:
+    [full-start] 18px
+    [wide-start] 0
+    [text-start] minmax(0, 1fr) [text-end]
+    0 [wide-end]
+    18px [full-end];
+}
+.phone .body-rail { padding: 26px 0 40px; }
+.phone .tier { display: none; }
+.phone .rail > .t-note { grid-column: text; text-align: left; padding-right: 0; margin-top: 20px; }
+.phone .details { text-align: left; padding-right: 0; margin-top: 0; }
+.phone .details dl {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  grid-template-rows: auto auto;
+  gap: 3px 24px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.phone .details dl::-webkit-scrollbar { display: none; }
+.phone .details dt, .phone .details dd { white-space: nowrap; }
+.phone .details dt { margin-top: 0; }
+.phone .details { margin-bottom: 34px; }
+.phone .details dl { padding-bottom: 11px; }
+.phone .ar-actions { justify-content: flex-start; margin-top: 16px; }
+/* sticky rather than fixed so it stays inside the frame */
+.phone .share-fab {
+  position: sticky; left: auto; bottom: 14px;
+  margin: 0 0 14px 16px; width: 50px; height: 50px;
+  padding: 0; justify-content: center;
+}
+.phone .share-fab span { display: none; }
+.phone .ar-hero { min-height: 0; display: block; padding: 30px 0 34px; }
+.phone .ar-hero-inner { padding: 0 18px; }
+.phone .ar-hero-text { max-width: none; }
+.phone .ar-hero .ar-hero-photo {
+  position: static; transform: none; width: 100%; height: auto;
+  aspect-ratio: 4 / 3; border-radius: 12px; margin-bottom: 24px;
+}
+.phone .ar-hero h1 { font-size: 34px; }
+.phone .ar-hero-standfirst { font-size: 16px; }
+.phone .p, .phone .rail { font-size: 16px; }
+.phone .rail > h2 { font-size: 24px; }
+.phone .pull { font-size: 20px; padding-left: 18px; margin: 1.6em 0; }
+.phone .spec .lede { color: var(--mute); margin: 0 0 40px; max-width: 62ch; }
+.spec h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 66px 0 8px;
+  padding-top: 34px;
+  border-top: 1px solid var(--rule);
+}
+.spec h3 + .lede { margin-bottom: 28px; }
+.spec .tbl-wrap { margin: 0 0 30px; }
+.spec code {
+  font-family: var(--mono);
+  font-size: .87em;
+  background: color-mix(in srgb, var(--ochre) 12%, transparent);
+  color: var(--ochre);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.diagram { display: grid; gap: 10px; margin-bottom: 44px; }
+.drow { display: flex; align-items: center; gap: 16px; }
+.dlabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  width: 132px;
+  flex: none;
+}
+.dbar { height: 30px; border-radius: 4px; display: flex; align-items: center; padding: 0 12px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; }
+.dbar--text { width: 46%; background: var(--ink); color: var(--paper); }
+.dbar--wide { width: 72%; background: var(--ochre); color: #fff; }
+.dbar--full { width: 100%; background: var(--gold); color: #241a09; }
+
+pre {
+  margin: 0 0 26px;
+  background: var(--ink);
+  color: #f0ebe1;
+  border-radius: 8px;
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+pre .c { color: #9a8f7c; }
+pre .k { color: #e8a866; }
+pre .v { color: #a8c98f; }
+
+.cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); }
+.card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+}
+.card h4 {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin: 0 0 9px;
+}
+.card p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
+
+/* ── responsive ─────────────────────────────────────────── */
+@media (max-width: 1080px) {
+  .rail {
+    grid-template-columns:
+      [full-start] 20px
+      [wide-start] 0
+      [text-start] minmax(0, 1fr) [text-end]
+      0 [wide-end]
+      20px [full-end];
+  }
+  .rail > .t-note { grid-column: text; text-align: left; padding-right: 0; margin-top: 22px; }
+  .tier { display: none; }
+
+  /* Details becomes one horizontal scrolling row. `grid-auto-flow: column`
+     over two rows puts each dt/dd pair in its own column with no wrapper
+     markup — same <dl> the desktop gutter uses, 2 lines instead of 8. */
+  .details { text-align: left; padding-right: 0; margin-top: 0; }
+  .details dl {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-rows: auto auto;
+    gap: 3px 24px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .details dl::-webkit-scrollbar { display: none; }
+  .details dt, .details dd { white-space: nowrap; }
+  .details dt { margin-top: 0; }
+  /* clear air between the metadata row and the opening paragraph */
+  .details { margin-bottom: 34px; }
+  .details dl { padding-bottom: 11px; }
+  .ar-actions { justify-content: flex-start; margin-top: 16px; }
+  .ar-hero .ar-hero-photo {
+    position: static;
+    transform: none;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    margin-bottom: 30px;
+  }
+  .ar-hero { padding: 76px 0 48px; min-height: 0; display: block; }
+  .ar-hero-text { max-width: none; }
+}
+@media (max-width: 760px) {
+  .gal--4, .gal--contact { grid-template-columns: repeat(3, 1fr); }
+  .gal--mosaic { grid-template-columns: repeat(2, 1fr); }
+  .gal--mosaic .lead { grid-column: span 2; grid-row: span 1; aspect-ratio: 4/3; }
+  .strip { grid-template-columns: repeat(2, 1fr); }
+  .dlabel { width: 92px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="doc-bar">
+  <strong>The Editorial Rail</strong>
+  <span>Moveee Magazine · article layout proposal</span>
+  <span>hero &amp; title unchanged</span>
+</div>
+
+<!-- ════════ HERO — UNCHANGED ════════ -->
+<header class="ar-hero">
+  <div class="ar-hero-wash"></div>
+  <span class="unchanged-flag">Unchanged — current hero &amp; title</span>
+  <div class="ar-hero-inner">
+    <div class="ar-hero-photo ph ph--2"></div>
+    <div class="ar-hero-text">
+      <p class="ar-hero-eyebrow">★ The Lane · Textiles</p>
+      <h1>The Loom Keeps <em>Time</em></h1>
+      <p class="ar-hero-standfirst">
+        Four hundred looms, eleven towns, and a counting system older than the
+        cloth trade itself. Inside the archive trying to record every weave
+        before the last people who can read them stop weaving.
+      </p>
+      <div class="ar-hero-byline">
+        <span>By <b>Adaeze Okonkwo</b></span>
+        <span>Photographs <b>Tife Ajayi</b></span>
+        <span>19 Aug 2026</span>
+        <span>14 min read</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ════════ BODY — THE RAIL ════════ -->
+<div class="rail body-rail">
+
+  <!-- was .ar-sidebar-card--meta, now a gutter block -->
+  <div class="details t-note" style="margin-top:0">
+    <dl>
+      <dt>Writer</dt><dd>Adaeze Okonkwo</dd>
+      <dt>Photographs</dt><dd>Tife Ajayi</dd>
+      <dt>Location</dt><dd>Aba, Abia State</dd>
+      <dt>Section</dt><dd>The Lane</dd>
+      <dt>Series</dt><dd>Made by Hand</dd>
+    </dl>
+      <div class="ar-actions">
+        <button class="ar-action-btn" type="button" aria-label="Share this article" title="Share this article">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
+        <button class="ar-action-btn" type="button" aria-label="Save to collection" title="Save to collection">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>
+        </button>
+        <button class="ar-action-btn" type="button" aria-label="Like this article" title="Like this article">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5 5 0 00-7.1 0L12 7.3l-1.7-1.7a5 5 0 10-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 000-7.1z"/></svg>
+        </button>
+      </div>
+  </div>
+
+  <p class="p">
+    The archive occupies two rooms above a hardware shop, and the first thing you
+    notice is the noise it does not make. Four hundred looms are catalogued here,
+    but none of them are in this building. What is here are the records: index
+    cards, thread counts, photographs taken at a fixed distance so that any two
+    cloths can be compared honestly.
+  </p>
+  <p class="p">
+    Ifeoma Nwosu has run the project since 2019. Her method is unglamorous and
+    entirely the point — every cloth is shot the same way, from the same height,
+    under the same light, against the same grey card. <a href="#">The catalogue</a>
+    is the argument: put four decades of a single weaver's output in one grid and
+    the drift becomes visible in a way no single photograph could show.
+  </p>
+
+  <span class="tier">Wide · 1080</span>
+  <figure class="fig t-wide">
+    <div class="gal gal--3 gal--wide-cells">
+      <div class="ph ph--1"></div>
+      <div class="ph ph--6"></div>
+      <div class="ph ph--8"></div>
+    </div>
+    <figcaption><b>Three-up, wide tier.</b> The standard gallery. Breaks the reading
+      column on both sides but stays inside the page grid — enough room for detail
+      without turning into a slideshow.</figcaption>
+  </figure>
+
+  <p class="t-note"><b>On method</b>Same height, same light, same grey card — so any two cloths in the archive can be compared honestly.</p>
+  <p class="p">
+    That drift is what the archive is really recording. A weaver working the same
+    pattern for thirty years does not repeat it; the pattern moves with them.
+    Nwosu calls the change "the hand showing" and treats it as data rather than
+    error — which is why the catalogue photographs are so rigidly standardised.
+  </p>
+
+  <blockquote class="pull">
+    You cannot see a decade in one cloth. You see it in forty, laid out in
+    order, and then you cannot unsee it.
+  </blockquote>
+
+  <span class="tier">Wide · 1080</span>
+  <figure class="fig t-wide">
+    <div class="gal gal--contact">
+      <div class="ph ph--1"></div><div class="ph ph--2"></div><div class="ph ph--3"></div>
+      <div class="ph ph--4"></div><div class="ph ph--5"></div><div class="ph ph--6"></div>
+      <div class="ph ph--7"></div><div class="ph ph--8"></div><div class="ph ph--2"></div>
+      <div class="ph ph--3"></div><div class="ph ph--1"></div><div class="ph ph--5"></div>
+      <div class="ph ph--6"></div><div class="ph ph--4"></div><div class="ph ph--7"></div>
+      <div class="ph ph--8"></div><div class="ph ph--3"></div><div class="ph ph--2"></div>
+    </div>
+    <figcaption><b>Contact sheet, six columns.</b> For sequences where the pattern
+      across the set is the story. Scales to any count — the grid stays fixed and
+      the cells shrink, so a 12-image and a 40-image sheet look like siblings.</figcaption>
+  </figure>
+
+  <h2>Reading a weave</h2>
+  <p class="p">
+    Every cloth in the catalogue carries a six-part record: the town, the loom
+    type, the warp count, the weeks of work, what it was made for, and whether
+    anyone still weaves it. Those six fields are the reason the archive needed a
+    table format at all — and the reason the table cannot live inside a
+    680-pixel column.
+  </p>
+
+  <span class="tier">Wide · 1080</span>
+  <div class="tbl-wrap t-wide">
+    <table>
+      <caption>Catalogued weaves — Nwosu archive, Aug 2026</caption>
+      <thead>
+        <tr>
+          <th class="stick" scope="col">Cloth</th>
+          <th scope="col">Town</th>
+          <th scope="col">Loom</th>
+          <th scope="col">Warp count</th>
+          <th scope="col">Weeks</th>
+          <th scope="col">Traditional use</th>
+          <th scope="col">Weavers left</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="stick">Akwete broadcloth</td>
+          <td>Akwete</td><td>Upright single-heddle</td>
+          <td class="num">2,400</td><td class="num">6</td>
+          <td>Wrapper, ceremonial</td><td class="num">210</td>
+          <td><span class="pill pill--live">Active</span></td>
+        </tr>
+        <tr>
+          <td class="stick">Aso-oke, sanyan</td>
+          <td>Iseyin</td><td>Narrow horizontal strip</td>
+          <td class="num">1,150</td><td class="num">9</td>
+          <td>Wedding, chieftaincy</td><td class="num">88</td>
+          <td><span class="pill pill--live">Active</span></td>
+        </tr>
+        <tr>
+          <td class="stick">Akwa ocha</td>
+          <td>Asaba</td><td>Narrow horizontal strip</td>
+          <td class="num">980</td><td class="num">4</td>
+          <td>Title-taking, burial</td><td class="num">31</td>
+          <td><span class="pill pill--rare">At risk</span></td>
+        </tr>
+        <tr>
+          <td class="stick">Ukara indigo</td>
+          <td>Abakaliki</td><td>Resist-dyed, hand-stitched</td>
+          <td class="num">1,600</td><td class="num">11</td>
+          <td>Society regalia</td><td class="num">14</td>
+          <td><span class="pill pill--rare">At risk</span></td>
+        </tr>
+        <tr>
+          <td class="stick">Ijebu ikale</td>
+          <td>Ijebu-Ode</td><td>Upright double-heddle</td>
+          <td class="num">3,050</td><td class="num">14</td>
+          <td>Funerary display</td><td class="num">3</td>
+          <td><span class="pill pill--gone">Last hands</span></td>
+        </tr>
+        <tr>
+          <td class="stick">Bunu tie-dye</td>
+          <td>Kabba</td><td>Vertical broadloom</td>
+          <td class="num">1,900</td><td class="num">8</td>
+          <td>Shrine cloth</td><td class="num">0</td>
+          <td><span class="pill pill--gone">Recorded only</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="gal-cap t-wide" style="margin-top:12px">
+    <b>Eight columns, wide tier.</b> First column pinned, header row pinned, figures
+    on tabular numerals so they align down the column. Below ~1080px the table scrolls
+    inside its own box — the page itself never scrolls sideways.
+  </p>
+
+  <p class="p">
+    Two of the six rows above have no living practitioner. A third has three, all
+    over seventy, in the same compound. Nwosu is careful not to call this
+    preservation — the archive does not intervene, it records — but the funding
+    applications say something closer to rescue.
+  </p>
+
+  <h2>How a cloth is recorded</h2>
+  <p class="p">
+    Nwosu's intake procedure has not changed since the second year. It is
+    written on a card taped inside the cupboard door, and every volunteer
+    follows it in the same order.
+  </p>
+
+  <ol>
+    <li><strong>Measure before you touch.</strong> Length, width and selvedge depth,
+      recorded in hand-spans first and centimetres second — never the other way round.</li>
+    <li><strong>Photograph at fixed distance.</strong> Same height, same grey card, same
+      two lamps at 45°. No exceptions, no natural light, no "just this once".</li>
+    <li><strong>Count the warp.</strong> Twice, by two people, on separate days. A count
+      that disagrees is re-run rather than averaged.</li>
+    <li><strong>Interview the weaver.</strong> Who taught them, what the pattern is called
+      in their own town, and what it was made for.</li>
+  </ol>
+
+  <h4>What the card does not ask for</h4>
+  <p class="p">
+    Four fields were tried and dropped. Each was removed for the same reason: it
+    invited the recorder to interpret rather than record.
+  </p>
+
+  <ul>
+    <li>Quality grade — "there is no bad cloth, only cloth you don't understand yet"</li>
+    <li>Estimated market value, which moved faster than the archive could update it</li>
+    <li>Condition rating, replaced by a photograph of the damage itself</li>
+    <li>Regional style family, which turned out to be
+      <ul>
+        <li>inconsistently defined between towns, and</li>
+        <li>frequently disputed by the weavers themselves</li>
+      </ul>
+    </li>
+  </ul>
+
+  <blockquote>
+    The moment you write down what you think it means, that is the thing the next
+    person reads instead of the cloth.
+  </blockquote>
+
+  <span class="tier tier--full">Full bleed</span>
+  <figure class="fig t-full" style="margin-top:56px">
+    <div class="strip">
+      <div class="ph ph--4"></div>
+      <div class="ph ph--7"></div>
+      <div class="ph ph--3"></div>
+      <div class="ph ph--5"></div>
+    </div>
+  </figure>
+  <p class="gal-cap" style="margin-top:14px">
+    <b>Full-bleed strip.</b> Edge to edge, no gutter — reserved for one or two moments
+    per article, where a set of frames is meant to land as a single image.
+  </p>
+
+  <!-- was the "Shop the Edit" sidebar card — 4-up at the wide tier -->
+  <span class="tier">Wide · 1080</span>
+  <aside class="band-inline t-wide">
+    <span class="band-label">Shop the Edit</span>
+    <h3>Cloth from the towns in this story</h3>
+    <p>Pieces from makers in the archive, sold through Moveee.</p>
+    <div class="shop-row">
+      <div class="shop-item">
+        <div class="ph ph--6"></div>
+        <div class="shop-name">Akwete wrapper, indigo</div>
+        <div class="shop-price">£184.00</div>
+      </div>
+      <div class="shop-item">
+        <div class="ph ph--2"></div>
+        <div class="shop-name">Aso-oke runner</div>
+        <div class="shop-price">£96.00</div>
+      </div>
+      <div class="shop-item">
+        <div class="ph ph--3"></div>
+        <div class="shop-name">Ukara cushion cover</div>
+        <div class="shop-price">£58.00</div>
+      </div>
+      <div class="shop-item">
+        <div class="ph ph--8"></div>
+        <div class="shop-name">Hand-spun cotton throw</div>
+        <div class="shop-price">£142.00</div>
+      </div>
+    </div>
+  </aside>
+
+  <h2>The counting system</h2>
+  <p class="p">
+    Warp counts in the archive are recorded in threads per hand-span, not per
+    centimetre, because that is how the weavers themselves count. Converting
+    them would make the data tidier and the record less true. So the catalogue
+    keeps both, side by side, and lets the reader do the arithmetic.
+  </p>
+
+  <p class="t-note"><b>Fig. 04</b>Two frames, matched scale. Left, 1987. Right, the same pattern in 2024.</p>
+  <span class="tier">Wide · 1080</span>
+  <figure class="fig t-wide">
+    <div class="gal gal--2 gal--wide-cells">
+      <div class="ph ph--8"></div>
+      <div class="ph ph--1"></div>
+    </div>
+    <figcaption><b>Two-up comparison.</b> Equal cells at matched aspect ratio — the
+      before/after pairing the archive's whole method depends on.</figcaption>
+  </figure>
+
+  <span class="tier">Wide · 1080</span>
+  <figure class="fig t-wide">
+    <div class="gal gal--mosaic">
+      <div class="ph ph--5 lead"></div>
+      <div class="ph ph--2"></div><div class="ph ph--6"></div>
+      <div class="ph ph--3"></div><div class="ph ph--7"></div>
+    </div>
+    <figcaption><b>Lead-plus-stack mosaic.</b> One frame carries the set, four support
+      it. For when the images are not equals and the layout should say so.</figcaption>
+  </figure>
+
+  <p class="p">
+    The last card in the catalogue is blank except for a town name and a date in
+    1974 — a cloth someone remembered but no one could produce. Nwosu keeps it in
+    the drawer with the rest. "It counts," she says. "Knowing that we lost it is
+    also a record."
+  </p>
+
+  <!-- was .ar-sidebar-card--newsletter. This is the homepage JoinSection
+       component verbatim — same markup, classes and tokens — just placed
+       at the wide tier instead of full-page width. -->
+  <span class="tier">Wide · 1080</span>
+  <section class="join-section t-wide" id="joinband">
+    <div class="join-grid">
+      <div>
+        <h2 class="join-title">Like our stories? You&rsquo;ll (probably) love <em>Culture Drop</em>.</h2>
+        <form class="join-form" onsubmit="return false">
+          <label for="joinmail" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Your email address</label>
+          <input id="joinmail" class="join-input" type="email" placeholder="Your email address">
+          <button class="join-submit" type="submit">Subscribe →</button>
+        </form>
+        <p class="join-note">Free · Weekly · Unsubscribe any time</p>
+      </div>
+      <div>
+        <span class="join-feature-badge">Latest Edition: Culture Drop</span>
+        <a href="#" class="wcard join-feature">
+          <div class="wcard-photo ph ph--6"></div>
+          <p class="wcard-caption">The weavers issue — who still counts threads by hand, and what happens when they stop.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- was .ar-sidebar-card--issue, now closing the piece beside Series -->
+  <div class="endmatter t-wide" style="margin-top:20px">
+    <span class="endmatter-label">This piece is from</span>
+    <a href="#" class="issue-card">
+      <div class="ph ph--7"></div>
+      <div>
+        <span class="issue-label">★ Made by Hand</span>
+        <p class="issue-num">Issue 14</p>
+        <p class="issue-sub">Things that take a long time</p>
+        <span class="issue-read">Read the full issue →</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- was the two --story cards + the --dark "From the archive" card -->
+  <div class="endmatter t-wide">
+    <span class="endmatter-label">Keep reading</span>
+    <div class="rel-row">
+      <a class="rel-card" href="#" style="text-decoration:none">
+        <div class="ph ph--5"></div>
+        <div class="rel-kicker">The Lane</div>
+        <div class="rel-title">The last indigo pit in Abeokuta</div>
+      </a>
+      <a class="rel-card" href="#" style="text-decoration:none">
+        <div class="ph ph--7"></div>
+        <div class="rel-kicker">Interviews</div>
+        <div class="rel-title">Ifeoma Nwosu on recording what's leaving</div>
+      </a>
+      <a class="rel-card" href="#" style="text-decoration:none">
+        <div class="ph ph--4"></div>
+        <div class="rel-kicker">Made by Hand</div>
+        <div class="rel-title">Why the strip loom never got wider</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<button class="share-fab" type="button">
+  <span>Share this story</span>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+</button>
+
+<!-- ════════ MOBILE ════════ -->
+<section class="phones" id="mobile">
+  <div class="phones-inner">
+    <h2>On a phone</h2>
+    <p class="lede">
+      Live components at a true 390px — scroll inside each frame. The three
+      tiers collapse to one column, galleries step down a size rather than
+      shrinking to thumbnails, and the eight-column table keeps every column
+      and scrolls inside its own box, so the page itself never moves sideways.
+    </p>
+
+    <div class="phone-row">
+
+      <!-- 1 — hero + opening -->
+      <div class="phone-col">
+        <p class="phone-cap"><b>Hero &amp; opening</b>photo stacks · details inline</p>
+        <div class="phone">
+          <header class="ar-hero">
+            <div class="ar-hero-wash"></div>
+            <div class="ar-hero-inner">
+              <div class="ar-hero-photo ph ph--2"></div>
+              <div class="ar-hero-text">
+                <p class="ar-hero-eyebrow">★ The Lane · Textiles</p>
+                <h1>The Loom Keeps <em>Time</em></h1>
+                <p class="ar-hero-standfirst">Four hundred looms, eleven towns, and a counting system older than the cloth trade itself.</p>
+                <div class="ar-hero-byline"><span>By <b>Adaeze Okonkwo</b></span><span>14 min read</span></div>
+              </div>
+            </div>
+          </header>
+          <div class="rail body-rail">
+            <div class="details t-note">
+              <dl>
+                <dt>Writer</dt><dd>Adaeze Okonkwo</dd>
+                <dt>Photographs</dt><dd>Tife Ajayi</dd>
+                <dt>Location</dt><dd>Aba, Abia State</dd>
+                <dt>Section</dt><dd>The Lane</dd>
+                <dt>Series</dt><dd>Made by Hand</dd>
+              </dl>
+      <div class="ar-actions">
+        <button class="ar-action-btn" type="button" aria-label="Share this article" title="Share this article">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
+        <button class="ar-action-btn" type="button" aria-label="Save to collection" title="Save to collection">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>
+        </button>
+        <button class="ar-action-btn" type="button" aria-label="Like this article" title="Like this article">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5 5 0 00-7.1 0L12 7.3l-1.7-1.7a5 5 0 10-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 000-7.1z"/></svg>
+        </button>
+      </div>
+            </div>
+            <p class="p">The archive occupies two rooms above a hardware shop, and the first thing you notice is the noise it does not make. Four hundred looms are catalogued here, but none of them are in this building.</p>
+            <blockquote class="pull">You cannot see a decade in one cloth. You see it in forty, laid out in order.</blockquote>
+            <p class="p">That drift is what the archive is really recording. A weaver working the same pattern for thirty years does not repeat it; the pattern moves with them.</p>
+          </div>
+          <button class="share-fab" type="button">
+  <span>Share this story</span>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+</button>
+        </div>
+      </div>
+
+      <!-- 2 — galleries -->
+      <div class="phone-col">
+        <p class="phone-cap"><b>Galleries</b>3-up → 2 · contact sheet → 3</p>
+        <div class="phone">
+          <div class="rail body-rail">
+            <p class="p">Every cloth is shot the same way, from the same height, under the same light.</p>
+            <figure class="fig t-wide">
+              <div class="gal gal--3 gal--wide-cells">
+                <div class="ph ph--1"></div><div class="ph ph--6"></div><div class="ph ph--8"></div>
+              </div>
+              <figcaption><b>Three-up.</b> Steps down to two so each frame stays legible.</figcaption>
+            </figure>
+            <figure class="fig t-wide">
+              <div class="gal gal--contact">
+                <div class="ph ph--1"></div><div class="ph ph--2"></div><div class="ph ph--3"></div>
+                <div class="ph ph--4"></div><div class="ph ph--5"></div><div class="ph ph--6"></div>
+                <div class="ph ph--7"></div><div class="ph ph--8"></div><div class="ph ph--2"></div>
+              </div>
+              <figcaption><b>Contact sheet.</b> Six columns become three — the grid survives, the story survives.</figcaption>
+            </figure>
+            <figure class="fig t-full">
+              <div class="strip">
+                <div class="ph ph--4"></div><div class="ph ph--7"></div>
+                <div class="ph ph--3"></div><div class="ph ph--5"></div>
+              </div>
+            </figure>
+            <p class="gal-cap" style="margin-top:12px"><b>Full bleed</b> still bleeds — 2×2 instead of 1×4.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 — table -->
+      <div class="phone-col">
+        <p class="phone-cap"><b>Wide table</b>all 8 columns · scrolls in its box</p>
+        <div class="phone">
+          <div class="rail body-rail">
+            <p class="p">Those six fields are the reason the archive needed a table at all — and the reason it cannot live inside the reading column.</p>
+            <div class="tbl-wrap t-wide">
+              <table>
+                <caption>Catalogued weaves →&nbsp;swipe</caption>
+                <thead>
+                  <tr>
+                    <th class="stick" scope="col">Cloth</th>
+                    <th scope="col">Town</th><th scope="col">Loom</th>
+                    <th scope="col">Warp</th><th scope="col">Weeks</th>
+                    <th scope="col">Use</th><th scope="col">Left</th><th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="stick">Akwete broadcloth</td><td>Akwete</td><td>Upright single-heddle</td><td class="num">2,400</td><td class="num">6</td><td>Ceremonial</td><td class="num">210</td><td><span class="pill pill--live">Active</span></td></tr>
+                  <tr><td class="stick">Aso-oke, sanyan</td><td>Iseyin</td><td>Narrow strip</td><td class="num">1,150</td><td class="num">9</td><td>Wedding</td><td class="num">88</td><td><span class="pill pill--live">Active</span></td></tr>
+                  <tr><td class="stick">Akwa ocha</td><td>Asaba</td><td>Narrow strip</td><td class="num">980</td><td class="num">4</td><td>Burial</td><td class="num">31</td><td><span class="pill pill--rare">At risk</span></td></tr>
+                  <tr><td class="stick">Ukara indigo</td><td>Abakaliki</td><td>Resist-dyed</td><td class="num">1,600</td><td class="num">11</td><td>Regalia</td><td class="num">14</td><td><span class="pill pill--rare">At risk</span></td></tr>
+                  <tr><td class="stick">Ijebu ikale</td><td>Ijebu-Ode</td><td>Double-heddle</td><td class="num">3,050</td><td class="num">14</td><td>Funerary</td><td class="num">3</td><td><span class="pill pill--gone">Last hands</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="gal-cap" style="margin-top:12px"><b>Nothing is dropped.</b> The first column stays pinned while the rest scrolls under your thumb.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 — culture drop + issue + end matter -->
+      <div class="phone-col">
+        <p class="phone-cap"><b>Closing</b>Culture Drop · Issue · Keep reading</p>
+        <div class="phone">
+          <div class="rail body-rail">
+            <p class="p">"It counts," she says. "Knowing that we lost it is also a record."</p>
+
+            <section class="join-section t-wide" id="joinband">
+              <div class="join-grid">
+                <div>
+                  <h2 class="join-title">Like our stories? You&rsquo;ll (probably) love <em>Culture Drop</em>.</h2>
+                  <form class="join-form" onsubmit="return false">
+                    <label for="jm2" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Your email address</label>
+                    <input id="jm2" class="join-input" type="email" placeholder="Your email address">
+                    <button class="join-submit" type="submit">Subscribe →</button>
+                  </form>
+                  <p class="join-note">Free · Weekly · Unsubscribe any time</p>
+                </div>
+                <div>
+                  <span class="join-feature-badge">Latest Edition: Culture Drop</span>
+                  <a href="#" class="wcard join-feature">
+                    <div class="wcard-photo ph ph--6"></div>
+                    <p class="wcard-caption">The weavers issue — who still counts threads by hand.</p>
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <div class="endmatter t-wide" style="margin-top:20px">
+              <span class="endmatter-label">This piece is from</span>
+              <a href="#" class="issue-card">
+                <div class="ph ph--7"></div>
+                <div>
+                  <span class="issue-label">★ Made by Hand</span>
+                  <p class="issue-num">Issue 14</p>
+                  <p class="issue-sub">Things that take a long time</p>
+                  <span class="issue-read">Read the full issue →</span>
+                </div>
+              </a>
+            </div>
+
+            <div class="endmatter t-wide">
+              <span class="endmatter-label">Keep reading</span>
+              <div class="rel-row">
+                <a class="rel-card" href="#" style="text-decoration:none">
+                  <div class="ph ph--5"></div>
+                  <div class="rel-kicker">The Lane</div>
+                  <div class="rel-title">The last indigo pit in Abeokuta</div>
+                </a>
+                <a class="rel-card" href="#" style="text-decoration:none">
+                  <div class="ph ph--7"></div>
+                  <div class="rel-kicker">Interviews</div>
+                  <div class="rel-title">Ifeoma Nwosu on recording what's leaving</div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mob-notes cards">
+      <div class="card">
+        <h4>Gutters collapse, not content</h4>
+        <p>Below 1080px all three tiers resolve to one column at 18px inset. Nothing
+          is hidden — <code>.t-wide</code> and <code>.t-full</code> simply stop
+          differing from <code>text</code>.</p>
+      </div>
+      <div class="card">
+        <h4>Details scroll sideways</h4>
+        <p>Stacked, the Details list costs 8 lines before the article starts. It
+          becomes one horizontal row — <code>grid-auto-flow: column</code> over two
+          rows, so each label/value pair gets its own column with no wrapper markup.
+          Figure credits still drop inline under the block they annotate.</p>
+      </div>
+      <div class="card">
+        <h4>Galleries step, never shrink</h4>
+        <p>6→3 and 3→2 columns. Cells keep a usable size instead of becoming
+          thumbnails, which is what a fixed column count would do.</p>
+      </div>
+      <div class="card">
+        <h4>Tables keep every column</h4>
+        <p>No column dropping, no card-per-row transform. Header and first column
+          pin; the rest scrolls inside <code>.tbl-wrap</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SPEC ════════ -->
+<section class="spec">
+  <div class="spec-inner">
+    <h2>How it works</h2>
+    <p class="lede">
+      One CSS grid with named lines replaces the current fixed prose column.
+      Everything defaults to the reading measure; galleries and tables opt out into
+      a wider track. No wrappers, no negative margins, no JavaScript.
+    </p>
+
+    <div class="diagram">
+      <div class="drow"><span class="dlabel">Text · default</span><span class="dbar dbar--text">680px — body copy, headings, quotes</span></div>
+      <div class="drow"><span class="dlabel">Wide · .t-wide</span><span class="dbar dbar--wide">1080px — galleries, tables, figures</span></div>
+      <div class="drow"><span class="dlabel">Full · .t-full</span><span class="dbar dbar--full">100% — bleed strips, one or two per piece</span></div>
+    </div>
+
+<pre><span class="c">/* the whole system */</span>
+.ar-prose {
+  <span class="k">display</span>: <span class="v">grid</span>;
+  <span class="k">grid-template-columns</span>:
+    [full-start] <span class="v">minmax(20px, 1fr)</span>
+    [wide-start] <span class="v">minmax(0, 200px)</span>
+    [text-start] <span class="v">minmax(0, 680px)</span> [text-end]
+                 <span class="v">minmax(0, 200px)</span> [wide-end]
+                 <span class="v">minmax(20px, 1fr)</span> [full-end];
+}
+.ar-prose &gt; *          { <span class="k">grid-column</span>: <span class="v">text</span>; }  <span class="c">/* default */</span>
+.ar-prose &gt; .t-wide    { <span class="k">grid-column</span>: <span class="v">wide</span>; }
+.ar-prose &gt; .t-full    { <span class="k">grid-column</span>: <span class="v">full</span>; }
+.ar-prose &gt; .t-note    { <span class="k">grid-column</span>: <span class="v">wide-start / text-start</span>; }</pre>
+
+    <h3>Where the sidebar goes</h3>
+    <p class="lede">
+      The right rail is a parking lot — six cards of unrelated purpose stacked at
+      equal weight, which is why none of them get read. Rather than move it
+      wholesale, each card goes where its own job actually belongs. All six are
+      live in the article above.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="stick" scope="col">Sidebar card</th>
+            <th scope="col">New home</th>
+            <th scope="col">Tier</th>
+            <th scope="col">Why there</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="stick">Details</td>
+            <td>Gutter, top of piece</td>
+            <td><span class="pill pill--live">Note</span></td>
+            <td>Provenance you check once, at the start. Becomes a horizontal scroll row on mobile.</td>
+          </tr>
+          <tr>
+            <td class="stick">This piece is from <span style="color:var(--mute)">(Issue)</span></td>
+            <td>End matter, beside Series</td>
+            <td><span class="pill pill--rare">Wide</span></td>
+            <td>Closing thought, not an opening one — sits with Keep reading.</td>
+          </tr>
+          <tr>
+            <td class="stick">Shop the Edit</td>
+            <td>Inline band, mid-article</td>
+            <td><span class="pill pill--rare">Wide</span></td>
+            <td>Four products across instead of a cramped 300px stack.</td>
+          </tr>
+          <tr>
+            <td class="stick">Culture Drop</td>
+            <td>Inline band, after the last line</td>
+            <td><span class="pill pill--rare">Wide</span></td>
+            <td>The homepage <code>JoinSection</code> verbatim — one component, two places.</td>
+          </tr>
+          <tr>
+            <td class="stick">Related stories ×2</td>
+            <td>End matter, 3-up row</td>
+            <td><span class="pill pill--rare">Wide</span></td>
+            <td>Becomes three real cards with images at a readable size.</td>
+          </tr>
+          <tr>
+            <td class="stick">From the archive</td>
+            <td>Folded into end matter</td>
+            <td><span class="pill pill--gone">Merged</span></td>
+            <td>Duplicated "browse everything" — the Keep reading row already does it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Authoring in WordPress</h3>
+    <p class="lede">
+      No shortcodes, no custom blocks, no editor training: the tiers map onto
+      Gutenberg's <em>existing</em> alignment control. An editor selects a block,
+      picks Wide or Full from the toolbar they already use, and the frontend
+      resolves it to a track.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="stick" scope="col">In the editor</th>
+            <th scope="col">Class WordPress emits</th>
+            <th scope="col">Renders as</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="stick">Alignment → None</td><td><code>(none)</code></td><td>Text · 680</td></tr>
+          <tr><td class="stick">Alignment → Wide width</td><td><code>alignwide</code></td><td>Wide · 1080</td></tr>
+          <tr><td class="stick">Alignment → Full width</td><td><code>alignfull</code></td><td>Full bleed</td></tr>
+          <tr><td class="stick">Insert a Table block</td><td><code>wp-block-table</code></td><td>Wide by default</td></tr>
+          <tr><td class="stick">Insert a Gallery, 4 columns</td><td><code>wp-block-gallery columns-4</code></td><td>Wide, 4-up</td></tr>
+          <tr><td class="stick">Advanced → CSS class</td><td><code>is-text-width</code></td><td>Force back to 680</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><span class="c">/* 1. WP side — makes Wide/Full appear in the block toolbar.
+      culture-theme/functions.php (or theme.json settings.layout) */</span>
+add_theme_support( <span class="v">'align-wide'</span> );
+
+<span class="c">/* 2. Frontend — map WP's own classes onto the tiers */</span>
+.ar-prose &gt; .alignwide,
+.ar-prose &gt; figure.wp-block-table,        <span class="c">/* tables default wide */</span>
+.ar-prose &gt; .wp-block-gallery            <span class="c">/* galleries default wide */</span>
+                        { <span class="k">grid-column</span>: <span class="v">wide</span>; }
+.ar-prose &gt; .alignfull  { <span class="k">grid-column</span>: <span class="v">full</span>; }
+.ar-prose &gt; .is-text-width
+                        { <span class="k">grid-column</span>: <span class="v">text</span>; }  <span class="c">/* escape hatch */</span>
+
+<span class="c">/* 3. Gallery columns come straight from the block */</span>
+.wp-block-gallery.columns-2 { <span class="k">grid-template-columns</span>: <span class="v">repeat(2, 1fr)</span>; }
+.wp-block-gallery.columns-3 { <span class="k">grid-template-columns</span>: <span class="v">repeat(3, 1fr)</span>; }
+.wp-block-gallery.columns-6 { <span class="k">grid-template-columns</span>: <span class="v">repeat(6, 1fr)</span>; }
+
+<span class="c">/* 4. The Table block already ships its own &lt;figure&gt; wrapper —
+      style that as the scroll box, no markup changes needed */</span>
+figure.wp-block-table { <span class="k">overflow-x</span>: <span class="v">auto</span>; }</pre>
+
+    <div class="cards">
+      <div class="card">
+        <h4>The sidebar question</h4>
+        <p>The current <code>.ar-wrap</code> is <code>1fr 300px</code>, which caps the
+          body at ~844px and makes a real breakout impossible. To get the wide tier,
+          the Details card moves out of the right rail — either into the margin-note
+          gutter, or a compact meta strip under the title.</p>
+      </div>
+      <div class="card">
+        <h4>Reading measure</h4>
+        <p>Body copy narrows from 844px to 680px — closer to 65 characters. Text gets
+          easier to read while images and tables get more room, not less.</p>
+      </div>
+      <div class="card">
+        <h4>Tables today</h4>
+        <p><code>editorial.css</code> has no <code>table</code> rules at all, so CMS
+          tables render unstyled and overflow. This adds pinned header and first
+          column, tabular numerals, and per-table horizontal scroll.</p>
+      </div>
+      <div class="card">
+        <h4>Already verified</h4>
+        <p><code>class</code> is in <code>sanitize.ts</code>'s <code>ALLOWED_ATTR</code>,
+          so <code>alignwide</code>/<code>alignfull</code> survive sanitising. Had it
+          been stripped, this whole approach would silently collapse to one width.</p>
+      </div>
+      <div class="card">
+        <h4>Mobile</h4>
+        <p>Under 1080px the gutters collapse to zero and all three tiers resolve to
+          one column. Margin notes drop inline beneath their paragraph rather than
+          disappearing.</p>
+      </div>
+      <div class="card">
+        <h4>What stays</h4>
+        <p>Hero, title, standfirst, byline, breadcrumb and the floating TOC are
+          untouched. This changes the body canvas only.</p>
+      </div>
+    </div>
+  </div>
+</section>
