@@ -1954,6 +1954,103 @@ directly followed by unwrapped text with no card chrome).
   as every other mockup-first rebuild in this file. Verified via `tsc --noEmit` (clean) on
   `apps/site` and a CSS brace-balance check on `magazine.css` (344/344).
 
+### Magazine article body — width-tier rail, sidebar retired (August 2026)
+
+Mockup-first as usual (`mockups/web/moveee_article_rail.html`, an Artifact iterated
+through several rounds before being built for real) — solves two things the article page
+had no answer for: multi-image galleries and wide CMS tables both had nowhere to go but a
+680–844px reading column, and there was no `table` CSS in this file at all (a CMS table
+rendered unstyled and overflowed). Supersedes the "MAIN LAYOUT — 2-column grid" /
+`.ar-prose` + `.ar-sidebar` model entirely — read this entry before touching the article
+page again, the old model is gone.
+
+**The core mechanism — `display: contents` on `.prose-content`.** `.ar-wrap` is one CSS
+grid with three named-line tracks (`text` 680px default, `wide` ~1080px, `full` edge to
+edge). The raw, sanitized CMS body used to render *inside* a wrapping `.prose-content` div
+— which would make that whole div a single grid cell, sized to whatever's biggest inside
+it, killing any idea of per-block width variation. `.prose-content` is instead
+`display: contents`: this removes only its own box, not the DOM node, so its real children
+(the actual `<p>`/`<h2>`/`<table>`/`<figure class="wp-block-gallery">` elements) become
+direct grid items of `.ar-wrap` for layout purposes — while `.ar-wrap .prose-content h2`
+-style descendant selectors still match correctly, since `display: contents` doesn't
+change the DOM tree, only what generates a box. This is the one idea that makes the whole
+system work; if a future pass ever needs to touch this, understand this trick before
+changing anything.
+
+**Width tiers map onto Gutenberg's own alignment control** — `add_theme_support(
+'align-wide' )` was already set in `culture-theme/functions.php` before this pass, so no
+WP change was needed. `alignwide`/`alignfull` (the classes WP emits) map straight onto the
+`wide`/`full` grid tracks; `table`/`.wp-block-table`/`.wp-block-gallery` default to `wide`
+without the editor doing anything; `.is-text-width` (Advanced → CSS class) is the escape
+hatch back to reading width. `class` was already confirmed in `sanitize.ts`'s
+`ALLOWED_ATTR` before this was built — had it been stripped, every block would have
+silently collapsed to one width with no visible cause. **A read-only "Article Layout
+Guide" meta box** was added to the WP Admin `post` edit screen (side panel, low priority —
+`Culture_Post_Types::render_layout_guide_meta_box()` in `class-culture-post-types.php`) so
+this is documented right where an editor is writing, not in a doc nobody opens.
+
+**The old `.ar-sidebar` is gone — its six cards were redistributed by purpose, not moved
+as a block:**
+| Old sidebar card | New home |
+|---|---|
+| Details (Writer/Location/Section/Series) | Left gutter, first row of the grid — `.ar-details`, a `<dl>`. Ties into the same `height: 0; overflow: visible` trick as figure captions (see the dead-space bug below) so it never inflates the row it sits in. |
+| Share/Bookmark/Like (`ArticleActions`) | Moved out of the hero's frosted-glass byline entirely, now directly under Details, using the light `.ar-actions--standard` variant (`ArticleActions` gained an optional `className` prop for this). |
+| Shop the Edit | Inline `.ar-band` card, mid-article, at the wide tier. The old *separate* mobile-only strip (`.ste-section--mobile`) is gone — one band now serves every width. |
+| Culture Drop newsletter box | **Reuses the homepage's `<JoinSection>` component directly** — not a lookalike — passed `edition="global"` and `relatedStories[0]` (already-fetched, same slug/title/excerpt/featuredImage shape `JoinSection` expects on the homepage) as `featureStory`. One component, two places. |
+| "This piece is from" (Issue) | `.ar-issue-card`, inline near the end of the article, beside where Series context already sits. |
+| 2× related-story cards + "From the archive" dark card | **Deleted, not moved** — both duplicated the standalone `.ar-related` "Keep reading" section that already exists at the bottom of the page (outside `.ar-wrap`, untouched by this pass) — no functional loss. |
+
+**`ArticleComments.tsx` split from a body-plus-comments component into comments-only** —
+it used to `dangerouslySetInnerHTML` the article body into a leading `.prose-content` div
+*and* render the comment thread, both from one `content` prop. That made it impossible to
+place the new inline bands (Shop the Edit / Culture Drop / Issue) between the body and the
+comments, since both were welded into one component's return value. `page.tsx` now renders
+`.prose-content` itself, directly, ahead of `<ArticleComments>` and the new bands. **The
+`content` prop on `ArticleComments` is now optional, not removed** — the newsletter reader
+(`app/newsletter/[slug]/page.tsx`) still passes it and still relies on the component
+rendering both together; that path is completely unchanged. Don't "clean up" the optional
+prop later without checking that caller first.
+
+**A dead-space bug, and the general lesson from it**: any element positioned in the
+gutter (Details, a figure's margin-note-style caption) is still a real grid child, so its
+own height would otherwise set its row's height for the *whole* row — a tall Details block
+then pushes whatever paragraph sits beside it down by the difference, reading as random
+dead space between two unrelated paragraphs. Fixed with `height: 0; overflow: visible` on
+gutter items only (`@media (min-width: 1025px)`, matching this file's existing tablet
+breakpoint rather than introducing a fourth, close-but-different threshold) — they still
+paint exactly where positioned, they just stop contributing to row sizing. **If a future
+gutter element reintroduces visible dead space in adjacent body copy, this is almost
+certainly the cause** — check whether it has the `height: 0` treatment before assuming
+it's a spacing/margin problem.
+
+**Typography ported from the newsletter reader** (`.rd-body` in `newsletter.css`) so the
+two reading experiences feel like one system rather than two: h2/h3 go ochre over a
+hairline rule, h4 becomes a mono-uppercase label (not a heading), list markers are ochre
+dot bullets / ochre numbered discs with hollow-ring nesting, blockquote keeps its existing
+ochre left border. Captions are a mono ochre label line over an italic description — this
+was a judgment call (the reader's own captions are plain italic only), flagged in the
+mockup review, not objected to.
+
+**Floating share button** (`ArticleShareFab.tsx`, new) — bottom-left pill (icon-only circle
+under 760px), opposite `ArticleToc`'s existing bottom-right FAB. Deliberately a separate,
+lighter share handler from `ArticleActions`'s (which is wired into the like/bookmark sync
+flow and awards `magazine_share` points) rather than a shared hook — this one has no auth
+gate and is meant as an always-visible nudge, matching the mockup's standalone pill.
+
+**Verification**: reproduced the real DOM shape (`.ar-wrap > .ar-details` +
+`.prose-content` with realistic Gutenberg output — `alignwide` table, `wp-block-gallery
+columns-3`, nested lists — + the inline bands) via a scratch route under
+`app/features/artcheck/` (deleted before commit, per the homepage-crash lesson above:
+clean mock data proves little, the real risk was always in the grid mechanics), screenshot
+-verified in Chromium. `tsc --noEmit` clean on both `apps/site` and `apps/connect`
+(`JoinSection`/`ArticleActions`/`ArticleComments` are consumed cross-app), CSS
+brace-balanced (242/242), `php -l` clean on `class-culture-post-types.php`. **Not visually
+verified against a live CMS** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file; external test images in the verification route failed to load
+(no network in the sandbox) but reserved the correct `aspect-ratio`-driven space, confirmed
+not a layout bug. Re-check pixel fidelity against a real article with a real gallery/table
+in a live environment before considering this fully closed.
+
 ### Magazine article page — hero rebuild: gradient bg + right-bleed image panel (August 2026)
 
 `apps/site/app/magazine/[slug]/page.tsx` + `apps/site/app/editorial.css` (`ar-*`

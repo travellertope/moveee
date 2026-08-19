@@ -261,19 +261,142 @@
   object-fit: cover;
 }
 
-/* ── MAIN LAYOUT — 2-column grid ──
-   The left TOC column was removed (Aug 2026) so the prose column takes that
-   width; contents now live in the floating `.ar-toc-fab` panel below, and the
-   article meta that sat under the old TOC moved to `.ar-sidebar-card--meta`. */
+/* ── MAIN LAYOUT — width-tier rail (Aug 2026) ──
+   Supersedes the old 2-column `ar-prose` + `ar-sidebar` grid. One CSS grid
+   with three named-line tracks — text (680px, the default), wide (~1080px,
+   for galleries/tables/inline bands), full (edge to edge, rare). Mirrors
+   Gutenberg's own alignwide/alignfull so editors use the toolbar control
+   they already know — see the mapping a few rules down.
+
+   `.ar-details` (Writer/Photographs/Location/Section/Series + the
+   share/bookmark/like actions — what used to be the `.ar-sidebar-card--meta`
+   card) is a direct child positioned in the LEFT gutter. It carries
+   `height: 0; overflow: visible` so its own height never sets the grid
+   row's height — without that, a tall Details block pushes whatever
+   paragraph sits beside it down by the difference, which reads as random
+   dead space between two unrelated paragraphs. Every other former sidebar
+   card (Issue, Shop the Edit, Culture Drop) is now an inline band in the
+   reading flow instead — see further down this file. */
 .ar-wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 56px;
-  max-width: 1248px; /* 1200px column + the 24px side padding on each edge */
+  grid-template-columns:
+    [full-start] minmax(20px, 1fr)
+    [wide-start] minmax(0, 200px)
+    [text-start] minmax(0, 680px) [text-end]
+    minmax(0, 200px) [wide-end]
+    minmax(20px, 1fr) [full-end];
+  row-gap: 0;
+  max-width: 1248px;
   margin: 64px auto 0;
   padding: 0 24px 80px;
   box-sizing: border-box;
-  align-items: start;
+}
+.ar-wrap > * { grid-column: text; }
+.ar-wrap > .t-wide { grid-column: wide; }
+.ar-wrap > .t-full { grid-column: full; }
+
+/* `.prose-content` (the raw, sanitized CMS body — see ArticleComments.tsx's
+   former role, now rendered directly in page.tsx) becomes `display:
+   contents` so ITS children — the actual <p>/<h2>/<table>/gallery elements —
+   participate as direct grid items of `.ar-wrap`. display:contents removes
+   only the box, not the DOM node, so `.ar-wrap > .prose-content > *`
+   selectors below still match correctly. */
+.ar-wrap > .prose-content { display: contents; }
+.ar-wrap > .prose-content > * { grid-column: text; }
+
+/* Gutenberg's native alignment control maps straight onto the tiers — no
+   custom block, no shortcode. Editors pick Wide/Full from the toolbar they
+   already use (requires `add_theme_support('align-wide')`, already set in
+   culture-theme/functions.php). Tables and galleries default to wide
+   without the editor doing anything; `.is-text-width` (Advanced → CSS
+   class) is the escape hatch back down to the reading column. */
+.ar-wrap > .prose-content > .alignwide { grid-column: wide; }
+.ar-wrap > .prose-content > .alignfull { grid-column: full; }
+.ar-wrap > .prose-content > .is-text-width { grid-column: text; }
+.ar-wrap > .prose-content > table,
+.ar-wrap > .prose-content > .wp-block-table,
+.ar-wrap > .prose-content > .wp-block-gallery,
+.ar-wrap > .prose-content > figure.wp-block-table,
+.ar-wrap > .prose-content > figure.wp-block-gallery {
+  grid-column: wide;
+}
+
+.ar-details {
+  align-self: start;
+  margin-top: 4px;
+  padding-right: 32px;
+  text-align: right;
+}
+.ar-meta-list {
+  margin: 0;
+  border-bottom: 1px solid var(--ar-ochre);
+  padding-bottom: 13px;
+}
+.ar-meta-list dt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ar-ghost);
+  margin-top: 11px;
+}
+.ar-meta-list dt:first-of-type { margin-top: 0; }
+.ar-meta-list dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.ar-meta-val-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--mute);
+  margin-top: 2px;
+}
+.ar-details .ar-actions--standard {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+/* 1025px, not 1080 — matches this file's existing tablet breakpoint (see
+   RESPONSIVE below) rather than introducing a second, close-but-different
+   threshold to track. */
+@media (min-width: 1025px) {
+  .ar-wrap > .ar-details { grid-column: wide-start / text-start; height: 0; overflow: visible; }
+}
+
+/* ── FLOATING SHARE — bottom-left, opposite ArticleToc's bottom-right FAB.
+   Pill with a label at desktop, icon-only circle under 760px. ── */
+.ar-share-fab {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 22px 12px 24px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid var(--ar-ghost-light);
+  box-shadow: 0 6px 20px -4px rgba(20,17,13,0.22);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .18s, color .18s, transform .18s;
+}
+.ar-share-fab:hover { background: var(--ink); color: #ffffff; transform: translateY(-2px); }
+@media (max-width: 760px) {
+  .ar-share-fab {
+    left: 16px; bottom: 16px;
+    width: 50px; height: 50px;
+    padding: 0; justify-content: center;
+  }
+  .ar-share-fab span { display: none; }
 }
 
 /* ── FLOATING TABLE OF CONTENTS ──
@@ -398,233 +521,317 @@
 .ar-toc-list a.active .ar-toc-num { color: var(--ar-ochre); opacity: 1; }
 .ar-toc-text { min-width: 0; }
 
-/* ── PROSE ── */
-.ar-prose {
+/* ── PROSE ──
+   Scoped to `.ar-wrap .prose-content` rather than a dedicated `.ar-prose`
+   wrapper class — `.prose-content` is `display: contents` (see above), so
+   these are inherited properties (font/color/line-height) cascading down
+   to its real children; that works regardless of the wrapper generating no
+   box of its own. `.ar-wrap` is only ever used on this page, so this scope
+   is exactly as safe as a dedicated class would have been. */
+.ar-wrap .prose-content {
   font-size: 17px;
   line-height: 1.7;
   color: var(--ink-soft);
-  min-width: 0;
 }
 /* keep an anchored heading clear of the top of the viewport when the
    floating TOC jumps to it */
-.ar-prose h2,
-.ar-prose h3,
-.ar-prose p[id] { scroll-margin-top: 24px; }
-.ar-prose p { margin-bottom: 1.4em; }
-.ar-prose h1 {
+.ar-wrap .prose-content h2,
+.ar-wrap .prose-content h3,
+.ar-wrap .prose-content p[id] { scroll-margin-top: 24px; }
+.ar-wrap .prose-content p { margin-bottom: 1.4em; }
+.ar-wrap .prose-content h1 {
   font-family: 'Fraunces', serif;
-  font-size: 32px;
   font-weight: 700;
+  font-size: 32px;
   color: var(--ink);
   margin: 2em 0 0.7em;
   line-height: 1.15;
 }
-.ar-prose h2 {
+/* h2/h3 — ochre, over a hairline rule, matching the newsletter reader's
+   treatment (`.rd-body` in newsletter.css) so the two reading experiences
+   feel like one system. h4 is a label (mono, uppercase), not a heading —
+   same distinction the reader makes. */
+.ar-wrap .prose-content h2 {
   font-family: 'Fraunces', serif;
-  font-size: 26px;
   font-weight: 700;
-  color: var(--ink);
-  margin: 2em 0 0.7em;
-  line-height: 1.2;
-}
-.ar-prose h3 {
-  font-family: 'Fraunces', serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 1.7em 0 0.6em;
-  line-height: 1.25;
-}
-.ar-prose h4 {
-  font-family: 'Fraunces', serif;
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 1.5em 0 0.5em;
+  font-size: 28px;
   line-height: 1.3;
-}
-.ar-prose h5 {
-  font-family: 'Fraunces', serif;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 1.4em 0 0.5em;
-  line-height: 1.35;
-}
-.ar-prose h6 {
-  font-family: 'Fraunces', serif;
-  font-size: 16px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  margin: 1.4em 0 0.5em;
-  line-height: 1.35;
-}
-.ar-prose blockquote {
-  border-left: 3px solid var(--ar-ochre);
-  padding: 8px 24px;
-  margin: 2em 0;
-  font-family: 'Fraunces', serif;
-  font-size: 22px;
-  font-style: italic;
-  color: var(--ink);
-  line-height: 1.45;
-}
-.ar-prose a { color: var(--ar-ochre); text-decoration: underline; text-underline-offset: 3px; }
-.ar-prose a:hover { color: var(--ink); }
-/* Tailwind's Preflight resets list-style to none globally — CMS body copy
-   needs real markers restored explicitly, or bullets/numbers silently never
-   render despite the reserved padding-left. */
-.ar-prose ul, .ar-prose ol { margin-bottom: 1.4em; padding-left: 1.4em; }
-.ar-prose ul { list-style: disc outside; }
-.ar-prose ol { list-style: decimal outside; }
-.ar-prose ul ul { list-style: circle outside; }
-.ar-prose ul ul ul { list-style: square outside; }
-.ar-prose ol ol { list-style: lower-alpha outside; }
-.ar-prose li { margin-bottom: 0.5em; padding-left: 4px; }
-.ar-prose li::marker { color: var(--ar-ochre); }
-.ar-prose li > ul, .ar-prose li > ol { margin-top: 0.5em; margin-bottom: 0; }
-.ar-prose img { width: 100%; border-radius: 4px; margin: 2em 0; }
-.ar-prose hr { border: none; border-top: 1px solid var(--ar-ghost-light); margin: 3em 0; }
-.ar-prose figure { margin: 2em 0; }
-.ar-prose figcaption {
-  font-size: 12px;
-  color: var(--mute);
-  font-style: italic;
-  margin-top: 8px;
-  text-align: center;
-}
-
-/* ── SIDEBAR ── */
-.ar-sidebar {
-  position: sticky;
-  top: 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.ar-sidebar-card {
-  border-radius: var(--radius-xl);
-  padding: 18px 20px;
-  background: #ffffff;
-  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.05));
-  border: 1px solid var(--ar-ghost-light);
-}
-.ar-sidebar-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--ar-ghost);
-  margin-bottom: 10px;
-  display: block;
-}
-.ar-sidebar-card--issue {
-  border-left: 4px solid var(--ar-ochre);
-  padding-left: 16px;
-}
-/* Article details — the meta block that used to sit under the old left-column
-   contents list (Writer / Location / Section / Series / Industry). */
-.ar-sidebar-card--meta { padding-bottom: 6px; }
-.ar-meta-list {
-  display: flex;
-  flex-direction: column;
-}
-.ar-meta-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 0;
+  color: var(--ar-ochre);
+  margin: 2.2em 0 0.5em;
+  padding-top: 24px;
   border-top: 1px solid var(--ar-ghost-light);
 }
-.ar-meta-row:first-child { border-top: none; padding-top: 2px; }
-.ar-meta-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-ghost);
-  flex-shrink: 0;
-}
-.ar-meta-val {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-soft);
-  text-align: right;
-  line-height: 1.4;
-  min-width: 0;
-}
-.ar-meta-val-sub {
-  display: block;
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--mute);
-  margin-top: 2px;
-}
-.ar-sidebar-card--newsletter {
-  background: var(--paper);
-  border-color: var(--ar-ghost-light);
-}
-.ar-sidebar-card--newsletter input[type="email"] {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px 14px;
-  background: #ffffff;
-  border: 1px solid var(--ar-ghost-light);
-  border-radius: 4px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  color: var(--ink);
-  outline: none;
-  transition: border-color .2s;
-  margin-bottom: 10px;
-}
-.ar-sidebar-card--newsletter input[type="email"]::placeholder { color: var(--mute); }
-.ar-sidebar-card--newsletter input[type="email"]:focus { border-color: var(--ar-ochre); }
-.ar-sidebar-card--newsletter button {
-  display: inline-block;
-  width: 100%;
-  box-sizing: border-box;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--paper);
-  background: var(--ink);
-  border: none;
-  border-radius: 4px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background .2s;
-}
-.ar-sidebar-card--newsletter button:hover { background: var(--ar-ochre); }
-.ar-sidebar-card--newsletter button:disabled { opacity: .6; cursor: default; }
-.ar-sidebar-card--story .ar-sc-thumb {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-.ar-sidebar-card--story .ar-sc-kicker {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-ochre);
-  margin-bottom: 6px;
-}
-.ar-sidebar-card--story .ar-sc-title {
+.ar-wrap .prose-content h3 {
   font-family: 'Fraunces', serif;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--ar-ochre);
+  margin: 1.6em 0 0.4em;
+}
+.ar-wrap .prose-content h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ar-ochre);
+  margin: 1.4em 0 0.5em;
+}
+.ar-wrap .prose-content h5,
+.ar-wrap .prose-content h6 {
+  font-family: 'Fraunces', serif;
   font-weight: 700;
   color: var(--ink);
-  line-height: 1.3;
-  margin-bottom: 8px;
+  margin: 1.4em 0 0.5em;
+  line-height: 1.35;
 }
+.ar-wrap .prose-content h5 { font-size: 17px; }
+.ar-wrap .prose-content h6 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
+.ar-wrap .prose-content h2:first-child,
+.ar-wrap .prose-content h3:first-child { margin-top: 0; }
+
+.ar-wrap .prose-content blockquote {
+  border-left: 3px solid var(--ar-ochre);
+  padding: 4px 0 4px 22px;
+  margin: 1.6em 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.ar-wrap .prose-content a { color: var(--ar-ochre); text-decoration: underline; text-underline-offset: 3px; }
+.ar-wrap .prose-content a:hover { color: var(--ink); }
+
+/* Ochre markers — dot bullets, ochre numbered discs, hollow-ring nesting —
+   the same system as the newsletter reader (`.rd-body ul/ol` in
+   newsletter.css). Tailwind's Preflight resets list-style globally, so
+   these are built from scratch rather than restoring the browser default. */
+.ar-wrap .prose-content ul,
+.ar-wrap .prose-content ol { margin: 0 0 1.4em; padding: 0; list-style: none; }
+.ar-wrap .prose-content li {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 12px;
+}
+.ar-wrap .prose-content ul > li::before {
+  content: "";
+  position: absolute;
+  left: 3px; top: 11px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ar-ochre);
+}
+.ar-wrap .prose-content ol { counter-reset: ar-ol; }
+.ar-wrap .prose-content ol > li { counter-increment: ar-ol; padding-left: 36px; }
+.ar-wrap .prose-content ol > li::before {
+  content: counter(ar-ol);
+  position: absolute;
+  left: 0; top: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ar-ochre);
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ar-wrap .prose-content li ul,
+.ar-wrap .prose-content li ol { margin-top: 12px; margin-bottom: 0; }
+.ar-wrap .prose-content li ul > li::before {
+  background: transparent;
+  border: 1.5px solid var(--ar-ochre);
+  width: 6px; height: 6px;
+  top: 11px;
+}
+
+.ar-wrap .prose-content img { width: 100%; border-radius: 4px; margin: 2em 0; }
+.ar-wrap .prose-content hr { border: none; border-top: 1px solid var(--ar-ghost-light); margin: 3em 0; }
+.ar-wrap .prose-content figure { margin: 2em 0; }
+/* Caption: a mono ochre label over an italic description — the label
+   carries the fact, the italic carries the sentence. */
+.ar-wrap .prose-content figcaption {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--mute);
+  margin-top: 13px;
+  text-align: left;
+}
+.ar-wrap .prose-content figcaption b,
+.ar-wrap .prose-content figcaption strong {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ar-ochre);
+  margin-bottom: 5px;
+}
+
+/* ── WP GALLERY BLOCK ── grid, gap, per-column count from Gutenberg's own
+   `columns-N` class. Each image is already wrapped in its own
+   `figure.wp-block-image` by the block — no markup changes needed. */
+.ar-wrap .prose-content .wp-block-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+.ar-wrap .prose-content .wp-block-gallery.columns-2 { grid-template-columns: repeat(2, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-3 { grid-template-columns: repeat(3, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-4 { grid-template-columns: repeat(4, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-5 { grid-template-columns: repeat(5, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-6 { grid-template-columns: repeat(6, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery figure.wp-block-image { margin: 0; }
+.ar-wrap .prose-content .wp-block-gallery img {
+  width: 100%; height: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 0;
+}
+.ar-wrap .prose-content .wp-block-gallery figcaption { text-align: center; }
+
+/* ── WP TABLE BLOCK ── pinned header row + first column, tabular numerals,
+   and per-table horizontal scroll — the page body itself never scrolls
+   sideways. There was no table styling in this file before this pass;
+   CMS tables previously rendered unstyled and overflowed. */
+.ar-wrap .prose-content .wp-block-table,
+.ar-wrap .prose-content figure.wp-block-table {
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: 8px;
+  background: #ffffff;
+}
+.ar-wrap .prose-content table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.ar-wrap .prose-content caption {
+  caption-side: top;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 14px 18px 10px;
+}
+.ar-wrap .prose-content thead th {
+  position: sticky;
+  top: 0;
+  background: var(--paper-deep, #f2f2f2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-align: left;
+  padding: 11px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--ar-ghost-light);
+}
+.ar-wrap .prose-content tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ar-ghost-light);
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+.ar-wrap .prose-content tbody tr:last-child td { border-bottom: none; }
+.ar-wrap .prose-content tbody tr:nth-child(even) td { background: rgba(20,17,13,0.02); }
+.ar-wrap .prose-content th.stick,
+.ar-wrap .prose-content td.stick {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+  border-right: 1px solid var(--ar-ghost-light);
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.ar-wrap .prose-content thead th.stick { z-index: 3; background: var(--paper-deep, #f2f2f2); }
+
+/* ── INLINE BANDS — Shop the Edit, Issue card ──
+   What used to be right-sidebar cards are now bands inside the reading
+   flow, at the wide tier (via the `.t-wide` class in page.tsx — see the
+   grid mapping above). Culture Drop reuses the homepage JoinSection
+   component directly (packages/shared imports it as-is in page.tsx) rather
+   than a lookalike here, so it isn't duplicated in this file. */
+.ar-band {
+  margin: 62px 0;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: var(--radius-xl);
+  padding: 26px 28px;
+  background: #ffffff;
+}
+.ar-band-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ar-ochre);
+  display: block;
+  margin-bottom: 16px;
+}
+.ar-band-shop-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.ar-band-shop-item { text-decoration: none; display: block; }
+.ar-band-shop-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--ar-ghost-light);
+  margin-bottom: 9px;
+}
+.ar-band-shop-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.ar-band-shop-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--mute);
+  margin-top: 3px;
+}
+
+.ar-issue-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  border: 1px solid var(--ar-ghost-light);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  background: #ffffff;
+  text-decoration: none;
+  margin: 40px 0;
+}
+.ar-issue-card-photo {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper-deep, #f2f2f2);
+}
+.ar-issue-card-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.ar-issue-card-sub { font-style: italic; font-size: 14px; color: var(--mute); margin: 0 0 12px; }
 .ar-sc-read {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -634,65 +841,6 @@
   text-decoration: none;
 }
 .ar-sc-read:hover { text-decoration: underline; }
-.ar-sidebar-card--dark {
-  background: var(--ink);
-  border-color: transparent;
-  color: rgba(255,255,255,0.85);
-}
-.ar-sidebar-card--dark .ar-sidebar-label { color: rgba(255,255,255,0.4); }
-
-/* Shop the Edit sidebar card */
-.ste-sidebar-card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--ar-shadow);
-}
-.ste-sidebar-card-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--mute);
-  padding: 14px 16px 8px;
-  background: #ffffff;
-  border: 1px solid var(--ar-ghost-light);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-}
-.ste-sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: #ffffff;
-  border: 1px solid var(--ar-ghost-light);
-  border-top: none;
-  text-decoration: none;
-}
-.ste-sidebar-item:last-child { border-radius: 0 0 8px 8px; }
-.ste-sidebar-item:hover { background: #fafafa; }
-.ste-sidebar-item-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: var(--ar-ghost-light);
-}
-.ste-sidebar-item-info { flex: 1; min-width: 0; }
-.ste-sidebar-item-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ste-sidebar-item-price {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--mute);
-}
 
 /* ── FINISH READING BANNER ── */
 .ar-finish {
@@ -1017,61 +1165,6 @@
 .ar-gate-footnote a { color: var(--ar-ochre); text-decoration: none; }
 .ar-gate-footnote a:hover { text-decoration: underline; }
 
-/* ── SHOP THE EDIT — mobile strip (hidden on desktop) ── */
-.ste-section--mobile {
-  display: none;
-  padding: 24px 20px;
-  background: #ffffff;
-  border-top: 1px solid var(--ar-ghost-light);
-}
-.ste-mobile-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--mute);
-  margin-bottom: 12px;
-}
-.ste-mobile-scroll {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.ste-mobile-scroll::-webkit-scrollbar { display: none; }
-.ste-mobile-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  width: 80px;
-  text-decoration: none;
-}
-.ste-mobile-img {
-  width: 72px;
-  height: 72px;
-  border-radius: 6px;
-  object-fit: cover;
-  background: var(--ar-ghost-light);
-}
-.ste-mobile-name {
-  font-size: 10px;
-  color: var(--ink);
-  text-align: center;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 72px;
-}
-.ste-mobile-price {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  color: var(--mute);
-}
-
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .ar-breadcrumb { padding: 16px 32px; padding-top: var(--header-clear, 96px); }
@@ -1079,12 +1172,44 @@
   .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
   .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
   .ar-standard-hero { padding: 40px 32px 32px; }
+  /* Rail collapse: the wide/full tiers only mean anything once there's
+     enough viewport for a gutter either side of the 680px text column
+     (see the .ar-details min-width above) — below that, every tier
+     resolves to one text-width column. Nothing is hidden here, the wide
+     and full tracks simply stop differing from text. */
   .ar-wrap {
-    grid-template-columns: minmax(0, 1fr) 260px;
-    gap: 32px;
+    grid-template-columns:
+      [full-start] 0
+      [wide-start] 0
+      [text-start] minmax(0, 1fr) [text-end]
+      0 [wide-end]
+      0 [full-end];
     padding: 0 32px 60px;
     margin-top: 48px;
   }
+  .ar-details { text-align: left; padding-right: 0; margin-bottom: 34px; }
+  .ar-details .ar-actions--standard { justify-content: flex-start; }
+  /* Details becomes one horizontal-scrolling row instead of a stacked
+     list — `grid-auto-flow: column` over two rows puts each dt/dd pair
+     in its own column with no wrapper markup, same <dl> the desktop
+     gutter uses. */
+  .ar-meta-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-rows: auto auto;
+    gap: 3px 24px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-bottom: 11px;
+  }
+  .ar-meta-list::-webkit-scrollbar { display: none; }
+  .ar-meta-list dt, .ar-meta-list dd { white-space: nowrap; }
+  .ar-meta-list dt { margin-top: 0; }
+  .ar-band-shop-row { grid-template-columns: repeat(2, 1fr); }
+  .ar-issue-card { grid-template-columns: 1fr; gap: 16px; }
+  .ar-issue-card-photo { max-width: 150px; }
   .ar-finish { padding: 24px 32px; }
   .ar-author { padding: 28px 32px; }
   .ar-related { padding: 0 32px 60px; }
@@ -1114,12 +1239,15 @@
   .ar-breadcrumb { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
   .ar-breadcrumb--overlay { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
   .ar-wrap {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      [full-start] 0
+      [wide-start] 0
+      [text-start] minmax(0, 1fr) [text-end]
+      0 [wide-end]
+      0 [full-end];
     padding: 0 20px 40px;
     margin-top: 28px;
-    gap: 24px;
   }
-  .ar-sidebar { position: static; }
   /* TOC panel becomes a bottom sheet, with a real tap-catching scrim */
   .ar-toc-fab { right: 16px; bottom: 16px; width: 44px; height: 44px; }
   .ar-toc-scrim {
@@ -1146,7 +1274,6 @@
   }
   .ar-toc-list a { padding: 12px 20px; font-size: 14px; }
   .ar-toc-panel-head { padding: 16px 20px; }
-  .ste-section--mobile { display: block; }
   .ar-related-grid { grid-template-columns: 1fr; gap: 24px; }
   .ar-related { padding: 0 20px 40px; margin-top: 48px; }
   .ar-author { flex-direction: column; align-items: center; text-align: center; padding: 24px 20px; }

@@ -1442,6 +1442,50 @@ class Culture_Post_Types {
         add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
+        add_meta_box( 'culture_layout_guide', __( 'Article Layout Guide', 'culture-community' ), array( __CLASS__, 'render_layout_guide_meta_box' ), 'post', 'side', 'low' );
+    }
+
+    /**
+     * Read-only reference for the width-tier article layout (Aug 2026 —
+     * see CLAUDE.md's "Article body — width-tier rail" entry for the full
+     * technical picture). No settings to save here; this exists purely so
+     * an editor writing a piece with a wide table or a multi-image gallery
+     * finds the instructions right where they're working, instead of
+     * needing someone to tell them the toolbar control exists.
+     */
+    public static function render_layout_guide_meta_box( $post ) {
+        ?>
+        <div style="font-size:12px;line-height:1.6;color:#3c434a;">
+            <p style="margin:0 0 10px;">
+                <?php esc_html_e( 'The article page has three body widths. Select a block, then use its own toolbar to choose one — no shortcodes.', 'culture-community' ); ?>
+            </p>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+                <tbody>
+                    <tr>
+                        <td style="padding:4px 0;font-weight:600;white-space:nowrap;vertical-align:top;"><?php esc_html_e( 'Normal', 'culture-community' ); ?></td>
+                        <td style="padding:4px 0 4px 10px;"><?php esc_html_e( 'Default. Every paragraph and heading — the reading column.', 'culture-community' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:4px 0;font-weight:600;white-space:nowrap;vertical-align:top;"><?php esc_html_e( 'Wide width', 'culture-community' ); ?></td>
+                        <td style="padding:4px 0 4px 10px;"><?php esc_html_e( 'Toolbar → alignment icon → "Wide width". Use for anything that needs more room to breathe than a paragraph.', 'culture-community' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:4px 0;font-weight:600;white-space:nowrap;vertical-align:top;"><?php esc_html_e( 'Full width', 'culture-community' ); ?></td>
+                        <td style="padding:4px 0 4px 10px;"><?php esc_html_e( 'Toolbar → alignment icon → "Full width". Edge to edge — use sparingly, at most once or twice per piece.', 'culture-community' ); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin:0 0 6px;font-weight:600;"><?php esc_html_e( 'What already goes wide automatically', 'culture-community' ); ?></p>
+            <ul style="margin:0 0 10px 16px;padding:0;list-style:disc;">
+                <li><?php esc_html_e( 'Table blocks — no need to set alignment yourself.', 'culture-community' ); ?></li>
+                <li><?php esc_html_e( 'Gallery blocks — same. Pick 2–6 columns in the block\'s own settings; the column count carries through.', 'culture-community' ); ?></li>
+            </ul>
+            <p style="margin:0 0 6px;font-weight:600;"><?php esc_html_e( 'Force something back to Normal', 'culture-community' ); ?></p>
+            <p style="margin:0;">
+                <?php esc_html_e( 'Select the block → Advanced (bottom of the sidebar) → Additional CSS class(es) → type: ', 'culture-community' ); ?><code>is-text-width</code>
+            </p>
+        </div>
+        <?php
     }
 
     public static function render_event_checkin_meta_box( $post ) {

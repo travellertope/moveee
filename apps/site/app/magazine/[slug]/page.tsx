@@ -6,12 +6,13 @@ import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
-import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import HideIfSubscribed from "@/components/HideIfSubscribed";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
 import ArticleToc from "@/components/ArticleToc";
+import ArticleShareFab from "@/components/ArticleShareFab";
+import JoinSection from "@/components/JoinSection";
 import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -306,7 +307,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <div className="ar-byline-val">{readingTime} minutes</div>
                 </div>
               </div>
-              <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
           </div>
         </section>
@@ -343,7 +343,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <div className="ar-byline-val">{readingTime} min</div>
                 </div>
               </div>
-              <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
           </header>
         </>
@@ -352,136 +351,113 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       {/* ── FLOATING TABLE OF CONTENTS ── */}
       <ArticleToc headings={headings} />
 
-      {/* ── ARTICLE 2-COLUMN LAYOUT ── */}
+      {/* ── ARTICLE BODY — width-tier rail ──
+          .ar-wrap is a single CSS grid (text/wide/full named tracks, see
+          editorial.css). The old two-column ar-prose+ar-sidebar layout is
+          gone — Details+Actions now sit in the left gutter of the grid's
+          first row, and what used to be sidebar cards are inline bands in
+          the reading flow instead (Shop the Edit, Culture Drop, Issue).
+          `.prose-content` is `display: contents` so the raw CMS elements
+          inside it (p/h2/table/wp-block-gallery/…) become direct grid
+          items in their own right — that's what lets a wide table or
+          gallery break out past the 680px text column while everything
+          else stays at reading width. */}
       <ImageLightbox>
         <div className="ar-wrap">
-
-          {/* LEFT — PROSE */}
-          <div className="ar-prose" id="article-body">
-            <ArticleContentGate
-              accessLevel={accessLevel}
-              callbackUrl={`/magazine/${resolvedParams.slug}`}
-              previewHtml={sanitizeHtml(
-                (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
-                post.excerpt ||
-                ""
-              )}
-              fullContent={
-                <>
-                  <ArticleComments
-                    postId={parseInt(post.databaseId)}
-                    content={processedContent || ""}
-                  />
-                  <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
-                </>
-              }
-            />
+          <div className="ar-details">
+            <dl className="ar-meta-list">
+              {articleMeta.map((m) => (
+                <React.Fragment key={m.label}>
+                  <dt>{m.label}</dt>
+                  <dd>{m.value}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+            <ArticleActions postId={parseInt(post.databaseId)} className="ar-actions--standard" />
           </div>
 
-          {/* RIGHT — SIDEBAR */}
-          <aside className="ar-sidebar">
+          <ArticleContentGate
+            accessLevel={accessLevel}
+            callbackUrl={`/magazine/${resolvedParams.slug}`}
+            previewHtml={sanitizeHtml(
+              (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
+              post.excerpt ||
+              ""
+            )}
+            fullContent={
+              <>
+                <div
+                  className="prose-content"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
+                />
 
-            <div className="ar-sidebar-card ar-sidebar-card--meta">
-              <span className="ar-sidebar-label">Details</span>
-              <div className="ar-meta-list">
-                {articleMeta.map((m) => (
-                  <div className="ar-meta-row" key={m.label}>
-                    <span className="ar-meta-label">{m.label}</span>
-                    <span className="ar-meta-val">{m.value}</span>
+                {(post.featuredProducts ?? []).length > 0 && (
+                  <div className="ar-band t-wide">
+                    <span className="ar-band-label">Shop the Edit</span>
+                    <div className="ar-band-shop-row">
+                      {(post.featuredProducts as any[]).map((p: any) => (
+                        <Link key={p.id} href={`/shop/${p.slug}`} className="ar-band-shop-item">
+                          <div className="ar-band-shop-img" style={{ position: "relative" }}>
+                            {p.imageUrl ? (
+                              <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="180px" />
+                            ) : null}
+                          </div>
+                          <div className="ar-band-shop-name">{p.name}</div>
+                          <div className="ar-band-shop-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
 
-            {postIssue && (
-              <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: "none" }}>
-                <div className="ar-sidebar-card ar-sidebar-card--issue">
-                  <span className="ar-sidebar-label">This piece is from</span>
-                  <h4 style={{ marginBottom: postIssue.meta?.issue_subtitle ? 4 : 12 }}>
-                    {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
-                  </h4>
-                  {postIssue.meta?.issue_subtitle && (
-                    <p style={{ fontStyle: "italic", fontSize: 13, marginBottom: 12, color: "var(--ink-soft)" }}>
-                      {postIssue.meta.issue_subtitle}
-                    </p>
-                  )}
-                  {postIssue.meta?.issue_cover_image_url && (
-                    <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", marginBottom: 12, overflow: "hidden", background: "var(--paper-deep)" }}>
-                      <Image
-                        src={postIssue.meta.issue_cover_image_url}
-                        alt={postIssue.name}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
-                  <span className="ar-sc-read">Read the full issue →</span>
-                </div>
-              </Link>
-            )}
+                {/* Culture Drop — the homepage JoinSection component itself,
+                    not a lookalike, per explicit request. featureStory reuses
+                    the first already-fetched related story (real slug/title/
+                    excerpt/featuredImage — same shape JoinSection expects on
+                    the homepage) rather than firing a second newsletter-issue
+                    fetch just for this card. */}
+                <HideIfSubscribed>
+                  <div className="t-wide">
+                    <JoinSection edition="global" featureStory={relatedStories[0] ?? null} />
+                  </div>
+                </HideIfSubscribed>
 
-            {(post.featuredProducts ?? []).length > 0 && (
-              <div className="ste-sidebar-card">
-                <div className="ste-sidebar-card-label">Shop the Edit</div>
-                {(post.featuredProducts as any[]).map((p: any) => (
-                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sidebar-item">
-                    <div className="ste-sidebar-item-img" style={{ position: "relative" }}>
-                      {p.imageUrl ? (
-                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="48px" />
-                      ) : null}
-                    </div>
-                    <div className="ste-sidebar-item-info">
-                      <div className="ste-sidebar-item-name">{p.name}</div>
-                      <div className="ste-sidebar-item-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
-                    </div>
-                  </Link>
-                ))}
-                <Link href="/shop" style={{ display: "block", padding: "10px 16px", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ar-ochre)", textDecoration: "none", borderTop: "1px solid var(--ar-ghost-light)" }}>
-                  Browse all products →
-                </Link>
-              </div>
-            )}
+                {postIssue && (
+                  <div className="t-wide">
+                    <Link href={`/magazine/issues/${postIssue.slug}`} className="ar-issue-card">
+                      <div className="ar-issue-card-photo" style={{ position: "relative" }}>
+                        {postIssue.meta?.issue_cover_image_url && (
+                          <Image
+                            src={postIssue.meta.issue_cover_image_url}
+                            alt={postIssue.name}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <span className="ar-band-label">This piece is from</span>
+                        <p className="ar-issue-card-num">
+                          {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
+                        </p>
+                        {postIssue.meta?.issue_subtitle && (
+                          <p className="ar-issue-card-sub">{postIssue.meta.issue_subtitle}</p>
+                        )}
+                        <span className="ar-sc-read">Read the full issue →</span>
+                      </div>
+                    </Link>
+                  </div>
+                )}
 
-            <HideIfSubscribed>
-              <div className="ar-sidebar-card ar-sidebar-card--newsletter">
-                <span className="ar-sidebar-label">★ Culture Drop</span>
-                <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Culture in your inbox, every Tuesday.</h4>
-                <p style={{ fontSize: 13, color: "var(--mute)", marginBottom: 14, lineHeight: 1.5 }}>Film picks, exhibition openings, music worth your time. No noise.</p>
-                <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
-              </div>
-            </HideIfSubscribed>
-
-            {relatedStories.slice(0, 2).map((story: any) => (
-              <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: "none" }}>
-                <div className="ar-sidebar-card ar-sidebar-card--story">
-                  {story.featuredImage?.node?.sourceUrl && (
-                    <div className="ar-sc-thumb" style={{ position: "relative", width: "100%", aspectRatio: "16/9", marginBottom: 10, overflow: "hidden", borderRadius: 4, background: "var(--ar-ghost-light)" }}>
-                      <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill style={{ objectFit: "cover" }} />
-                    </div>
-                  )}
-                  <div className="ar-sc-kicker">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
-                  <div className="ar-sc-title">{story.title}</div>
-                  {story.excerpt && (
-                    <p style={{ fontSize: 12, color: "var(--mute)", margin: "6px 0 10px", lineHeight: 1.5 }}
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…") }}
-                    />
-                  )}
-                  <span className="ar-sc-read">Read →</span>
-                </div>
-              </Link>
-            ))}
-
-            <div className="ar-sidebar-card ar-sidebar-card--dark">
-              <span className="ar-sidebar-label">From the archive</span>
-              <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, color: "#ffffff", marginBottom: 8 }}>Explore the full magazine</h4>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 14, lineHeight: 1.5 }}>Browse all essays, interviews, and dispatches from The Moveee editorial team.</p>
-              <Link href="/magazine" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>
-                All stories →
-              </Link>
-            </div>
-          </aside>
+                <ArticleComments postId={parseInt(post.databaseId)} />
+                <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
+              </>
+            }
+          />
         </div>
       </ImageLightbox>
+
+      <ArticleShareFab />
 
       {/* ── SERIES CONTEXT ── */}
       {post.series?.nodes?.[0]?.description && (
@@ -566,26 +542,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </Link>
         )}
       </div>
-
-      {/* ── SHOP THE EDIT — mobile strip ── */}
-      {(post.featuredProducts ?? []).length > 0 && (
-        <section className="ste-section--mobile">
-          <div className="ste-mobile-label">Shop the Edit</div>
-          <div className="ste-mobile-scroll">
-            {(post.featuredProducts as any[]).map((p: any) => (
-              <Link key={p.id} href={`/shop/${p.slug}`} className="ste-mobile-item">
-                <div className="ste-mobile-img" style={{ position: "relative", overflow: "hidden" }}>
-                  {p.imageUrl && (
-                    <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="72px" />
-                  )}
-                </div>
-                <div className="ste-mobile-name">{p.name}</div>
-                <div className="ste-mobile-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ── RELATED ── */}
       {relatedStories.length > 0 && (

@@ -13,7 +13,16 @@ interface Comment {
 
 interface Props {
   postId: number;
-  content: string;
+  /**
+   * Optional — the magazine article page (app/magazine/[slug]/page.tsx)
+   * now renders `.prose-content` itself, ahead of this component, so the
+   * width-tier rail (editorial.css's `.ar-wrap`) can place inline Shop the
+   * Edit / Culture Drop / Issue bands between the body and the comment
+   * thread. The newsletter reader (app/newsletter/[slug]/page.tsx) still
+   * passes `content` and relies on this component rendering it — keep that
+   * path working rather than forcing every caller through the split.
+   */
+  content?: string;
 }
 
 export default function ArticleComments({ postId, content }: Props) {
@@ -74,10 +83,12 @@ export default function ArticleComments({ postId, content }: Props) {
 
   return (
     <>
-      <div
-        className="prose-content"
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
-      />
+      {content && (
+        <div
+          className="prose-content"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+        />
+      )}
 
       <section className="article-comments" id="comments">
         <h3 className="article-comments-heading">

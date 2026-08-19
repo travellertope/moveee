@@ -6,9 +6,11 @@ import { useSession } from "next-auth/react";
 
 interface ArticleActionsProps {
   postId: number;
+  /** e.g. "ar-actions--standard" for the light (non-hero) button treatment. */
+  className?: string;
 }
 
-export default function ArticleActions({ postId }: ArticleActionsProps) {
+export default function ArticleActions({ postId, className = "" }: ArticleActionsProps) {
   const { data: session } = useSession();
   const [bookmarked, setBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -99,7 +101,7 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
   };
 
   return (
-    <div className="ar-actions">
+    <div className={`ar-actions${className ? ` ${className}` : ""}`}>
       <button
         className={`ar-action-btn${copied ? ' ar-action-btn--active' : ''}`}
         aria-label={copied ? "Link copied!" : "Share"}
