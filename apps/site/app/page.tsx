@@ -49,6 +49,91 @@ function stripHtml(html: string) {
   return (html || "").replace(/<[^>]*>/g, "").trim();
 }
 
+interface HomeSections {
+  coverStory: any;
+  carouselStories: any[];
+  featuredPool: any[];
+  shopProducts: any[];
+  portraitStories: any[];
+  editorialStories: any[];
+  digestStories: any[];
+  opinionStories: any[];
+  featureStory: any | null;
+}
+
+const EMPTY_SECTIONS: HomeSections = {
+  coverStory: null,
+  carouselStories: [],
+  featuredPool: [],
+  shopProducts: [],
+  portraitStories: [],
+  editorialStories: [],
+  digestStories: [],
+  opinionStories: [],
+  featureStory: null,
+};
+
+// Every WP-backed fetch this page needs, wrapped so that a bad response
+// shape or an unexpected data edge case can never take down the whole
+// page render — worst case, a section renders empty (each of
+// FullBleedHero/HeroCarousel/MasonryRandomSection/ShopRail/JoinSection
+// already no-ops on empty input) rather than the visitor seeing the
+// generic error boundary. fetchHomepageData()/getMagazineSections()
+// already degrade gracefully on network/CMS failures internally; this
+// is the outer safety net for anything else (a genuinely unexpected
+// field shape, etc.) that neither of those anticipates.
+async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
+  try {
+    const regionalEdition = edition === "global" ? undefined : edition;
+    const [homepageData, sections] = await Promise.all([
+      fetchHomepageData(regionalEdition),
+      getMagazineSections(edition),
+    ]);
+
+    const { coverStory, stories, products, latestIssueStories } = homepageData;
+    const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
+
+    const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
+    const carouselPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
+    carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
+    const featuredPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug));
+
+    const carouselStories = carouselPool.map((s: any) => ({
+      slug: s.slug,
+      title: s.title || "",
+      categoryName: s.categories?.nodes?.[0]?.name || "Moveee Magazine",
+      excerpt: stripHtml(s.excerpt).slice(0, 90),
+      image: s.featuredImage?.node?.sourceUrl || null,
+      alt: s.featuredImage?.node?.altText || s.title || "",
+    }));
+
+    const shopProducts = (products || []).slice(0, 8).map((p: any) => ({
+      slug: p.slug,
+      name: p.name,
+      price: p.price || p.regularPrice || "",
+      image: p.image?.sourceUrl || null,
+      vendor: p.vendorProfile?.storeName || null,
+    }));
+
+    const featureStory = latestIssueStories?.[0] || stories?.[0] || null;
+
+    return {
+      coverStory,
+      carouselStories,
+      featuredPool,
+      shopProducts,
+      portraitStories: portraitStories || [],
+      editorialStories: editorialStories || [],
+      digestStories: digestStories || [],
+      opinionStories: opinionStories || [],
+      featureStory,
+    };
+  } catch (err: any) {
+    console.error("[homepage] loadHomeSections failed, rendering empty page:", err?.message || err);
+    return EMPTY_SECTIONS;
+  }
+}
+
 export default async function Home() {
   const h = await headers();
   const c = await cookies();
@@ -56,39 +141,18 @@ export default async function Home() {
   const edition: EditionSlug = isValidRegionalSlug(savedEdition)
     ? savedEdition
     : editionFromCountry(h.get("x-vercel-ip-country") ?? "");
-  const regionalEdition = edition === "global" ? undefined : edition;
 
-  const [homepageData, sections] = await Promise.all([
-    fetchHomepageData(regionalEdition),
-    getMagazineSections(edition),
-  ]);
-
-  const { coverStory, stories, products, latestIssueStories } = homepageData;
-  const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
-
-  const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
-  const carouselPool = topPool.filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
-  carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
-  const featuredPool = topPool.filter((s: any) => !usedSlugs.has(s.slug));
-
-  const carouselStories = carouselPool.map((s: any) => ({
-    slug: s.slug,
-    title: s.title || "",
-    categoryName: s.categories?.nodes?.[0]?.name || "Moveee Magazine",
-    excerpt: stripHtml(s.excerpt).slice(0, 90),
-    image: s.featuredImage?.node?.sourceUrl || null,
-    alt: s.featuredImage?.node?.altText || s.title || "",
-  }));
-
-  const shopProducts = (products || []).slice(0, 8).map((p: any) => ({
-    slug: p.slug,
-    name: p.name,
-    price: p.price || p.regularPrice || "",
-    image: p.image?.sourceUrl || null,
-    vendor: p.vendorProfile?.storeName || null,
-  }));
-
-  const featureStory = latestIssueStories?.[0] || stories?.[0] || null;
+  const {
+    coverStory,
+    carouselStories,
+    featuredPool,
+    shopProducts,
+    portraitStories,
+    editorialStories,
+    digestStories,
+    opinionStories,
+    featureStory,
+  } = await loadHomeSections(edition);
 
   return (
     <div className="hpv2">
