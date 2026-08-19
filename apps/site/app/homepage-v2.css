@@ -38,7 +38,21 @@
 .hpv2 a { color: inherit; text-decoration: none; }
 
 /* ── FULL-BLEED OPENING HERO ── */
-.hero-full { position: relative; height: 100vh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
+/* `100dvh` (dynamic viewport height) is the primary value — on mobile
+   browsers, plain `100vh` is measured against the *largest* possible
+   viewport (address bar collapsed), so on first paint (address bar still
+   expanded) the hero renders taller than what's actually visible, reading
+   as "too long" and pushing the rest of the page an extra 50-100px below
+   the fold for no visual reason. `100vh` stays as the fallback for browsers
+   that don't support `dvh` yet. */
+.hero-full { position: relative; height: 100vh; height: 100dvh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
+@media (max-width: 640px) {
+  /* Beyond the dvh fix above, the hero is still a full screen's worth of
+     content on a phone — cap it to a shorter, fixed max so at least a
+     sliver of the section below is visible without scrolling, instead of
+     the hero alone filling the entire first viewport. */
+  .hero-full { max-height: 640px; }
+}
 .hero-full-photo { position: absolute; inset: 0; background: var(--ink); }
 .hero-full-photo img { width: 100%; height: 100%; object-fit: cover; }
 .hero-full-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,7,4,.15) 0%, rgba(10,7,4,.1) 40%, rgba(10,7,4,.55) 82%, rgba(10,7,4,.78) 100%); }
@@ -69,6 +83,15 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior: contain;
+  /* Without this, a touch swipe that starts on the carousel is ambiguous
+     to mobile browsers (this element scrolls horizontally, so a diagonal
+     or even mostly-vertical swipe beginning here can get captured trying
+     to resolve which axis it belongs to) — the reported "scroll just
+     stops right after the hero" bug. Declaring the element's own touch
+     handling as horizontal-only tells the browser to hand any vertical
+     component of the gesture straight to the page immediately, with no
+     ambiguity/capture at all. */
+  touch-action: pan-x;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 .strip-card {
