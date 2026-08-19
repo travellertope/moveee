@@ -1191,6 +1191,11 @@
   max-width: calc(1200px + 128px);
   margin: 0 auto;
   padding: 64px 64px 96px;
+  /* Clears the floating header — see the --header-clear comment in
+     globals.css. This page was missed by that pass (it's its own route,
+     not the shared MagazineArchiveWrapper), hence the header sitting
+     flush against the issue cover/title on load. */
+  padding-top: var(--header-clear, 96px);
   box-sizing: border-box;
 }
 .mag-issue-page-header {
@@ -1386,11 +1391,11 @@
 .mag-issue-back a:hover { text-decoration: underline; }
 
 @media (max-width: 1024px) {
-  .mag-issue-page { padding: 48px 32px 80px; }
+  .mag-issue-page { padding: 48px 32px 80px; padding-top: var(--header-clear, 96px); }
   .mag-issue-posts { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .mag-issue-page { padding: 32px 16px 64px; }
+  .mag-issue-page { padding: 32px 16px 64px; padding-top: var(--header-clear, 96px); }
   .mag-issue-page-header { grid-template-columns: 1fr; gap: 24px; }
   .mag-issue-page-cover { width: 160px; height: 240px; }
   .mag-issue-page-title { font-size: 28px; }
@@ -1782,6 +1787,7 @@
 .mgh-intro {
   padding: 56px 0 48px;
   border-bottom: 1px solid var(--rule);
+  text-align: center;
 }
 .mgh-intro-title {
   font-family: 'Fraunces', serif;
@@ -1790,11 +1796,11 @@
   line-height: 1.08;
   letter-spacing: -.02em;
   max-width: 15ch;
-  margin: 0;
+  margin: 0 auto;
 }
 .mgh-intro-title em { font-style: italic; font-weight: 400; color: var(--ochre); }
-.mgh-intro-sub { margin-top: 20px; max-width: 56ch; font-size: 16px; line-height: 1.6; color: var(--ink-soft, #3a342b); }
-.mgh-intro-links { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 26px; }
+.mgh-intro-sub { margin: 20px auto 0; max-width: 56ch; font-size: 16px; line-height: 1.6; color: var(--ink-soft, #3a342b); }
+.mgh-intro-links { margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
 .mgh-intro-links a {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
