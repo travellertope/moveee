@@ -266,7 +266,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <section className="ar-hero" data-header-zone="dark">
           <nav className="ar-breadcrumb ar-breadcrumb--overlay">
             <Link href="/">Home</Link><span className="sep"> / </span>
-            <Link href="/magazine">Editorials</Link><span className="sep"> / </span>
+            <Link href="/magazine">Magazine</Link><span className="sep"> / </span>
             <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
             <span className="ar-breadcrumb-current">{post.title}</span>
           </nav>
@@ -314,7 +314,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <>
           <nav className="ar-breadcrumb">
             <Link href="/">Home</Link><span className="sep"> / </span>
-            <Link href="/magazine">Editorials</Link><span className="sep"> / </span>
+            <Link href="/magazine">Magazine</Link><span className="sep"> / </span>
             <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
             <span className="ar-breadcrumb-current">{post.title}</span>
           </nav>

@@ -153,7 +153,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
           <div className="search-results">
             <ResultSection label="Pulse"             items={results!.pulse}      basePath="/pulse"     onClose={onClose} />
             <ResultSection label="Community"         items={results!.community}  basePath="/community" onClose={onClose} />
-            <ResultSection label="Editorials"        items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
+            <ResultSection label="Magazine"        items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
             <ResultSection label="Happenings"        items={results!.events}     basePath="/events"    onClose={onClose} />
             <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"  onClose={onClose} />
             <ResultSection label="Quotes"            items={results!.quotes}     basePath="/quotes"    onClose={onClose} />
