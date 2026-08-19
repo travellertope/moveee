@@ -38,6 +38,12 @@
 :root {
   --paper: #ffffff;
   --paper-deep: #f2f2f2;
+  /* Was never actually defined anywhere in apps/site despite being used
+     across newsletter.css and the new homepage (.wcard/.frame--cream card
+     backgrounds) — every `background: var(--paper-warm)` was silently
+     invalid with no fallback, leaving those cards fully transparent.
+     Value matches the mockup's own :root. */
+  --paper-warm: #faf7f2;
   --ink: #14110d;
   --ink-soft: #3a342b;
   --mute: #7a6f5c;
