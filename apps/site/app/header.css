@@ -28,15 +28,13 @@
   border-radius: var(--radius-full);
   overflow: hidden;
   background: transparent;
-  border: 1px solid transparent;
   box-shadow: none;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 .site-toolbar.is-solid .toolbar-shell {
   background: color-mix(in srgb, var(--paper) 72%, transparent);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border-color: var(--rule);
   box-shadow: var(--shadow-2);
 }
 
