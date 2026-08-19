@@ -70,11 +70,19 @@ const Header = () => {
   // — a page with no dark zone at all still starts transparent, it just
   // never has a dark zone to render light-on-dark colours for.
   useEffect(() => {
-    let zones: HTMLElement[] = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
     let lastY = window.scrollY;
     let raf: number | null = null;
 
     function inDarkZone(y: number): boolean {
+      // Re-queried on every call (cheap, and already rAF-throttled below)
+      // rather than cached once at effect-mount time — caching it left a
+      // hydration race where the very first update() (called synchronously
+      // below, before the DOM necessarily reflects the just-hydrated page)
+      // could find zero zones and latch the header solid/dark-text for the
+      // rest of the page's life, never re-scanning until a resize. That's
+      // what caused the homepage hero to render with a solid pill/dark
+      // logo instead of transparent/light on initial load.
+      const zones = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
       // Sample a bit below the header's own top edge (same -120/+40
       // grace the old single-hero check used) rather than bare scrollY,
       // so the switch happens once the header has genuinely cleared the
@@ -110,10 +118,7 @@ const Header = () => {
         raf = null;
       });
     };
-    const onResize = () => {
-      zones = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
-      update();
-    };
+    const onResize = () => update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     return () => {
@@ -221,7 +226,7 @@ const Header = () => {
                 <a href={CONNECT_URL}>Feed</a>
                 <a href={`${CONNECT_URL}/discover`}>Discover</a>
                 <a href={`${CONNECT_URL}/events`}>Events</a>
-                <Link href="/magazine" data-active={active("/magazine") || undefined}>Editorials</Link>
+                <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
                 <Link href="/shop" data-active={active("/shop") || undefined}>Shop</Link>
                 <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
               </nav>

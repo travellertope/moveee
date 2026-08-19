@@ -171,7 +171,7 @@ export default async function Home() {
       <section className="masthead" id="mainMasthead">
         <div className="wrap">
           <h1>
-            Best in <em>culture</em>,<br />every single week.
+            Culture, <em>curated</em>.<br />Movers, platformed.
           </h1>
           <p className="sub">
             An independent magazine for people who live for culture — reported from the

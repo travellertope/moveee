@@ -1194,8 +1194,10 @@
   /* Clears the floating header — see the --header-clear comment in
      globals.css. This page was missed by that pass (it's its own route,
      not the shared MagazineArchiveWrapper), hence the header sitting
-     flush against the issue cover/title on load. */
-  padding-top: var(--header-clear, 96px);
+     flush against the issue cover/title on load. Extra 32px on top of
+     the standard clearance per explicit request for more breathing
+     room here specifically. */
+  padding-top: calc(var(--header-clear, 96px) + 32px);
   box-sizing: border-box;
 }
 .mag-issue-page-header {
@@ -1204,7 +1206,6 @@
   gap: 48px;
   margin-bottom: 64px;
   padding-bottom: 48px;
-  border-bottom: 1px solid var(--rule);
 }
 .mag-issue-page-cover {
   position: relative;
@@ -1243,9 +1244,8 @@
   margin: 0;
 }
 .mag-issue-page-note {
-  font-family: 'Fraunces', serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 16px;
-  font-style: italic;
   color: var(--ink-soft, #3A342B);
   line-height: 1.6;
   margin: 0;
@@ -1391,11 +1391,11 @@
 .mag-issue-back a:hover { text-decoration: underline; }
 
 @media (max-width: 1024px) {
-  .mag-issue-page { padding: 48px 32px 80px; padding-top: var(--header-clear, 96px); }
+  .mag-issue-page { padding: 48px 32px 80px; padding-top: calc(var(--header-clear, 96px) + 32px); }
   .mag-issue-posts { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .mag-issue-page { padding: 32px 16px 64px; padding-top: var(--header-clear, 96px); }
+  .mag-issue-page { padding: 32px 16px 64px; padding-top: calc(var(--header-clear, 96px) + 32px); }
   .mag-issue-page-header { grid-template-columns: 1fr; gap: 24px; }
   .mag-issue-page-cover { width: 160px; height: 240px; }
   .mag-issue-page-title { font-size: 28px; }

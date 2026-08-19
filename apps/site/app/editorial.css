@@ -38,7 +38,11 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   padding: 22px 64px;
-  padding-top: var(--header-clear, 96px);
+  /* Extra 32px on top of the standard header-clear — the photo hero
+     reads visually crowded against the floating header at the bare
+     clearance value, since it's overlaid directly on a bright/busy
+     image rather than sitting on plain paper like most other pages. */
+  padding-top: calc(var(--header-clear, 96px) + 32px);
   max-width: none;
   color: rgba(255,255,255,0.55);
   background: transparent;
@@ -67,7 +71,7 @@
      min-height by the same amount pushes the bottom-anchored content
      down together with the breadcrumb, so they stop competing for the
      same space. */
-  min-height: calc(max(60vh, 500px) + var(--header-clear, 96px));
+  min-height: calc(max(60vh, 500px) + var(--header-clear, 96px) + 32px);
   overflow: hidden;
   background: linear-gradient(160deg, #3d3020, #14110d 60%);
   display: flex;
@@ -98,7 +102,11 @@
    photo frame instead of an accidental clip against the viewport edge */
 .ar-hero-photo {
   position: absolute;
-  top: 48px;
+  /* Ties the panel's top offset to the same header-clear + extra 32px
+     the breadcrumb above uses, instead of a bare 48px unrelated to the
+     header's own height — otherwise the panel could start above where
+     the breadcrumb/header clearance actually ends. */
+  top: calc(var(--header-clear, 96px) + 32px);
   bottom: 48px;
   right: 48px;
   width: clamp(260px, 30vw, 520px);
