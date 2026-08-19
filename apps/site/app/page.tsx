@@ -190,7 +190,6 @@ export default async function Home() {
         eyebrowTitle={<>The <em>Lane</em></>}
         subtitle="Portraits from the people who make the culture, not just cover it."
         stories={portraitStories}
-        tint
       />
 
       <MasonryRandomSection
@@ -199,19 +198,20 @@ export default async function Home() {
         viewAllHref="/magazine/category/news"
         viewAllLabel="All news"
         stories={editorialStories}
+        tint
       />
 
       <MasonryRandomSection
         eyebrowTitle={<>The Free <em>Critics</em></>}
         subtitle="Unbought, unfiltered verdicts on the films, books, and records everyone's asking about."
         stories={digestStories}
-        tint
       />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
         subtitle="Arguments worth having, from writers who'll actually take a side."
         stories={opinionStories}
+        tint
       />
 
       <JoinSection edition={edition} featureStory={featureStory} />
