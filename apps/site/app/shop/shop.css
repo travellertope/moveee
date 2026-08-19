@@ -51,10 +51,9 @@
   margin: 0;
 }
 
-/* ── 4. TRUST LINE — single slim mono line under the pick/featured sections ── */
+/* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
 .sl-trust {
-  background: #fff;
-  border-bottom: 1px solid var(--rule);
+  background: var(--ink);
 }
 .sl-trust-line {
   max-width: 1440px;
@@ -64,11 +63,16 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   letter-spacing: .02em;
-  color: var(--mute);
+  color: rgba(243,236,224,.7);
 }
-.sl-trust-line strong { color: var(--ink); font-weight: 700; }
+.sl-trust-line strong { color: var(--paper); font-weight: 700; }
 
-/* ── 3. STICKY FILTER BAR ── */
+/* ── STICKY FILTER BAR (superseded — the search+filter bar was removed from the
+   page entirely and moved into <ShopSearchModal>, opened from the header search
+   icon on any shop route. .sl-filter, .sl-filter-row1, .sl-search, .sl-filter-pills,
+   .sl-filter-right, .sl-filter-row2, .sl-view-toggle and .sl-vt-btn (below) are now
+   dead — kept in case this ever needs reverting. .sl-fpill, .sl-chip, .sl-filter-clear
+   and .sl-sort-select are NOT dead — ShopSearchModal.tsx reuses them for its pills. ── */
 .sl-filter {
   position: sticky;
   top: 0;
@@ -272,6 +276,111 @@
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+/* ── SHOP SEARCH MODAL (ShopSearchModal.tsx) — reuses apps/site's shared
+   .search-overlay/.search-panel/.search-input-row shell (see homepage.css)
+   for the backdrop + input row; everything below is the shop-specific body
+   that replaced the old sticky filter bar. Filter pills reuse .sl-fpill/
+   .sl-chip/.sl-filter-clear/.sl-sort-select above, unstyled here as buttons/
+   links instead of <select>s so each choice applies immediately on click. ── */
+.shop-search-body {
+  padding: 8px 56px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.shop-search-group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 10px;
+}
+.shop-search-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.shop-search-pills a.sl-fpill { text-decoration: none; }
+
+/* Category/Price/Sort are pills at desktop widths and a plain <select> on
+   mobile (below) — Material Location stays pills-only at every width, In
+   Stock Only is always its own single pill regardless of width. */
+.shop-search-mobile-only { display: none; }
+.shop-search-select {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  background: var(--paper, #fff);
+  padding: 0 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237a6f5c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+.shop-search-select:focus { border-color: var(--ochre); }
+
+.shop-search-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+  /* Sticky so "View N Results" stays reachable while scrolling a long filter
+     list instead of only appearing after scrolling all the way down. */
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+}
+.shop-search-view-btn {
+  margin-left: auto;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+}
+.shop-search-view-btn:hover { background: var(--ochre); }
+
+@media (max-width: 640px) {
+  .shop-search-body { padding: 8px 22px 16px; gap: 14px; }
+  .shop-search-group-label { margin-bottom: 6px; }
+  /* Category/Price/Sort become plain <select>s on mobile instead of pill rows. */
+  .shop-search-mobile-only { display: block; }
+  .shop-search-desktop-only { display: none; }
+  /* Location's pill row still scrolls horizontally instead of wrapping — same
+     pattern as the old sticky filter bar's mobile treatment above. */
+  .shop-search-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .shop-search-pills::-webkit-scrollbar { display: none; }
+  .shop-search-pills .sl-fpill { flex-shrink: 0; }
+  .shop-search-footer { flex-direction: column-reverse; align-items: stretch; padding: 12px 0; }
+  .shop-search-view-btn { width: 100%; text-align: center; }
 }
 
 /* ── 2. EDITOR'S PICK — single split strip, hairline rules, no shadow ── */
@@ -932,7 +1041,7 @@
      photo enough for the white text to stay legible and preserves the
      section's original warm-brown palette. */
   background:
-    linear-gradient(160deg, rgba(61,48,32,.86), rgba(20,17,13,.92) 60%),
+    linear-gradient(160deg, rgba(61,48,32,.5), rgba(20,17,13,.6) 60%),
     url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg/1920px-Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg') center/cover;
   border-radius: 20px;
   overflow: hidden;
@@ -974,15 +1083,17 @@
   color: var(--paper);
   margin: 0 0 16px;
   line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-left h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .sl-member-left > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
-  color: rgba(243,236,224,.7);
+  color: rgba(243,236,224,.85);
   line-height: 1.6;
   max-width: 440px;
   margin: 0 0 36px;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-perks {
   display: grid;
@@ -1001,12 +1112,14 @@
   font-weight: 700;
   color: var(--paper);
   margin-bottom: 3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
 }
 .sl-mperk-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
-  color: rgba(243,236,224,.5);
+  color: rgba(243,236,224,.7);
   line-height: 1.4;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 .sl-member-cta {
   display: inline-flex;
@@ -1039,6 +1152,8 @@
   padding: 32px 40px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.14);
+  background: rgba(20,17,13,.35);
+  backdrop-filter: blur(2px);
 }
 .sl-member-stat-num {
   font-family: 'Fraunces', serif;
@@ -1046,6 +1161,7 @@
   font-weight: 700;
   color: #fff;
   line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-stat-label {
   font-family: 'JetBrains Mono', monospace;
@@ -1183,6 +1299,9 @@
   .sl-head-inner h1 { font-size: 26px; }
   .sl-head-desc { font-size: 13px; }
   .sl-trust-line { padding: 12px 20px; font-size: 10px; }
+  /* Dropped on mobile so the trust line fits on one row — see .sl-trust-rating
+     in ShopArchiveWrapper.tsx (still shown at wider widths). */
+  .sl-trust-rating { display: none; }
 
   .sl-pick-title { font-size: 26px; }
   .sl-featured-grid { grid-template-columns: 1fr; gap: 24px; }

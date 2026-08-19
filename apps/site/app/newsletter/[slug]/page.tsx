@@ -221,10 +221,6 @@ export default async function GmlIssuePage({
   const currentTitleIdx = seenTitles.indexOf(currentTitle);
   const currentIssueNum = currentTitleIdx >= 0 ? uniqueCount - currentTitleIdx : uniqueCount;
 
-  const heroPullQuote = issue.excerpt
-    ? decodeEntities(issue.excerpt.replace(/<[^>]*>/g, "")).trim().slice(0, 200)
-    : undefined;
-
   const previewHtml = issue.excerpt
     ? sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, ""))
     : undefined;
@@ -246,7 +242,6 @@ export default async function GmlIssuePage({
       publishedDate={publishedDate}
       readingTime={readingTime}
       imageUrl={hasFeaturedImage ? issue.featuredImage.node.sourceUrl : undefined}
-      heroPullQuote={heroPullQuote}
       previewHtml={previewHtml}
       accessLevel={accessLevel}
       callbackUrl={`/newsletter/${resolvedParams.slug}`}

@@ -11,7 +11,7 @@ import "./editorial.css";
 import "./not-found.css";
 import "./legal.css";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
 import CookieConsent from "@/components/CookieConsent";
 import CartDrawer from "@/components/CartDrawer";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -172,7 +172,7 @@ export default async function RootLayout({
                   )}
                   <Header />
                   <main>{children}</main>
-                  <Footer />
+                  <ConditionalFooter />
                   <CartDrawer />
                   <CookieConsent />
                   <GlobalAuthModal />

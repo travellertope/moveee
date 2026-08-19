@@ -1220,34 +1220,41 @@ centered-absolute pattern instead of chasing the breakpoint each time).
 `products`/`categories` via `getWPData`) renders the page in this order
 (rebuilt August 2026 — see the dated entry below for the full rationale;
 Category Grid and Vendor Strip removed August 2026, see the entry further
-below): 1. Shop Head (compact eyebrow+h1, `.sl-head`), 2. Hero Pick +
-"More From The Edit" 3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`),
-3. Trust Bar (single slim line, `.sl-trust`), [inside `ShopFilterProvider`]
-4. `ShopFilterBar`, 5. Slim Magazine Bridge (`.sl-bridge`, merges what used to
-be two separate Magazine/Origins bridges), 6. `ShopProductGrid`,
-[outside provider] 7. Member Band (Moveee Pro, rounded dark
-card — `.sl-member-wrap` > `.sl-member`), 8. Origins Bridge Closing
-(`.sl-origins`).
+below; the on-page search/filter bar was removed and the Trust Bar moved to
+the very top in a later August 2026 pass — see "Shop search + filter moved
+into a dedicated header search modal" further below, which supersedes item 4
+here): 0. Trust Bar (single slim dark line, `.sl-trust`), 1. Shop Head
+(compact eyebrow+h1, `.sl-head`), 2. Hero Pick + "More From The Edit"
+3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`), [inside
+`ShopFilterProvider`] 4. Slim Magazine Bridge (`.sl-bridge`, merges what used
+to be two separate Magazine/Origins bridges), 5. `ShopProductGrid`, [outside
+provider] 6. Member Band (Moveee Pro, rounded dark card — `.sl-member-wrap` >
+`.sl-member`), 7. Origins Bridge Closing (`.sl-origins`).
 
 **Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
 mockup's filter bar and product grid aren't adjacent (other sections sit
 between them), so state had to move to a shared React Context instead of one
 combined client component:
 - `components/ShopFilterContext.tsx` — `ShopFilterProvider` + `useShopFilter()`
-  hook; owns all filter/sort/view state and the derived `filtered` list, plus
-  shared helper exports (`vendorName`, `parsePrice`, `formatGBP`, `isNew`,
-  `isOutOfStock`, `averageRating`, `reviewCount`, `PRICE_BANDS`).
-- `components/ShopFilterBar.tsx` — renders the filter dropdown pills, search
-  toggle, sort select, view toggle, and active-filter chips. Pure consumer of
-  `useShopFilter()`, no local state.
+  hook; owns the derived `filtered` list, plus shared helper exports
+  (`vendorName`, `parsePrice`, `formatGBP`, `isNew`, `isOutOfStock`,
+  `averageRating`, `reviewCount`, `PRICE_BANDS`). **As of August 2026 it no
+  longer owns the filter/sort/view *state itself*** — see "Shop search +
+  filter moved into a dedicated header search modal" below; it now mirrors
+  `apps/site/lib/shopFiltersBus.ts` into local state instead of holding its
+  own `useState`s.
+- `components/ShopFilterBar.tsx` — **deleted August 2026**, superseded by
+  `components/ShopSearchModal.tsx` (see below).
 - `components/ShopProductGrid.tsx` — renders the actual product cards from
-  `filtered`. Also a pure consumer of `useShopFilter()`.
+  `filtered`. A pure consumer of `useShopFilter()` (now just `{ filtered }`),
+  plus `clearShopFilters()` imported directly from the bus for its empty-state
+  "Clear filters" button.
 
-Both `ShopFilterBar` and `ShopProductGrid` must be rendered inside
-`ShopFilterProvider` (see the section order above — sections 3 through 7 are
-nested inside the provider in `ShopArchiveWrapper.tsx`; the category
-grid/vendor strip/member band/origins-closing sections after it are outside,
-since they don't need filter state).
+`ShopProductGrid` must be rendered inside `ShopFilterProvider` (see the
+section order above — sections 4–5 are nested inside the provider in
+`ShopArchiveWrapper.tsx`; the trust bar/head/hero-pick sections before it and
+the member-band/origins-closing sections after it are outside, since they
+don't need filter state).
 
 - Facets: price bands (4 fixed ranges), tag pills derived from `productTags`
   (excluding the `"new"` tag slug), **Material pills** (from the
@@ -1298,6 +1305,97 @@ none;` inside the mobile override so the button is visible by default on
 mobile. **If you add a hover-revealed element anywhere in the shop UI, check
 whether it also needs a mobile always-visible override** — touch devices never
 trigger `:hover`.
+
+### Shop search + filter moved into a dedicated header search modal (Site A, August 2026)
+
+Per explicit user request: the grid/list view toggle was removed outright (not migrated
+anywhere), the Trust Bar moved from mid-page (section 4, below the Hero Pick/Featured
+Products) to section 0 — the very first thing on the page, above the Shop Head — and
+switched from a white background to `var(--ink)` (black) with "Free Returns in 30 days"
+dropped from its copy (now just "Vetted Makers · 4.8 average rating · Moveee Pro saves
+{X}%"). The entire on-page search + filter bar (`ShopFilterBar.tsx` — search input,
+Category/Price/Material/Maker-Location pills, In Stock Only, sort select, active-filter
+chips) was deleted and rebuilt as `components/ShopSearchModal.tsx`, opened from the
+**header** search icon (not a page-level control) whenever the visitor is on any
+`/shop`-prefixed route — mirrors the existing generic `SearchOverlay.tsx` visual shell
+(`.search-overlay`/`.search-panel`/`.search-input-row`, defined in `homepage.css`) but
+with a shop-specific filter body instead of live cross-content search results.
+
+**Why a bus, not props or the existing React Context alone**: `Header.tsx` (and
+therefore `ShopSearchModal`, mounted from it) renders on every page as a sibling of
+`<main>{children}</main>` in the root layout — it is structurally outside
+`ShopFilterProvider`, which only wraps a few sections deep inside the `/shop` page tree.
+Neither can reach the other via props or `useContext` alone. `apps/site/lib/
+shopFiltersBus.ts` is a plain module-level pub/sub store (same shape as
+`apps/connect`'s `discoverFiltersBus.ts`/`peopleFiltersBus.ts` — see those entries above
+for the precedent this follows) bridging the two trees:
+- `ShopFilterProvider` (`ShopFilterContext.tsx`) no longer owns filter/sort state as its
+  own `useState`s — it mirrors `getShopFilters()`/`subscribeShopFilters()` into local
+  state purely so `filtered` can be a memo, and pushes its derived facets (categories —
+  now passed to the provider as a prop, `availableMaterials`, `availableLocations`,
+  `priceBands`, `activeCategorySlug`, and `filtered.length` as `resultCount`) up via
+  `setShopFilterMeta()` in a `useEffect`, clearing them (`clearShopFilterMeta()`) on
+  unmount so the modal knows when it's no longer looking at a shop page. It also resets
+  the bus's filters to defaults on mount, so a filter/search term picked on one shop page
+  doesn't silently leak into the next one navigated to.
+- `ShopSearchModal.tsx` reads `getShopFilterMeta()`/`getShopFilters()` and re-renders on
+  every `subscribeShopFilters()` tick; every pill/button calls `setShopFilters({...})`
+  directly (immediate-apply, same "chip applies without typing" pattern documented for
+  `apps/connect`'s `SearchModal.tsx` structural filters above) — there is no "apply"
+  step, the page's product grid updates live the moment a filter changes (though it's
+  not visible until the modal closes, since the modal is a full-viewport overlay).
+  Category is rendered as real `<Link>`s to `/shop` / `/shop/category/{slug}` (full
+  navigation, same as the old `<select>`'s `window.location.href` — category was never
+  part of the live-filtered `products` array, it's a different WP query per category)
+  rather than a bus-driven filter. Price/Material/Location/Sort/In-Stock reuse the
+  existing `.sl-fpill`/`.sl-fpill--active`/`.sl-fpill--filled`/`--unfilled`/`.sl-chip`/
+  `.sl-filter-clear`/`.sl-sort-select` classes from the now-otherwise-dead sticky filter
+  bar CSS (`shop.css`, still there, marked dead in its own header comment) as buttons
+  instead of `<select>`s, styled via new `.shop-search-*` wrapper classes.
+- `Header.tsx` gained `isShopPage = pathname === "/shop" || pathname.startsWith("/shop/")`
+  and now renders `<ShopSearchModal>` instead of the generic `<SearchOverlay>` when true —
+  both share the same `searchOpen` state/toggle, only the rendered component differs.
+  **If a future page under `/shop/*` is added, it automatically gets the shop modal for
+  free** (path-prefix check, not a route allowlist) — but it will only show any
+  facets/results if that page also renders `<ShopFilterProvider>` somewhere in its tree
+  (product detail pages, `/shop/[slug]`, do not, so the modal would show search + no
+  facets there — this hasn't come up yet since only the archive routes link products).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
+  gap as every other pass in this file. Verified via a static-HTML Playwright harness
+  loading the real `shop.css`/`homepage.css`/`globals.css` (confirmed the modal's pill
+  states, footer, and the black trust bar render correctly) and a CSS brace-balance
+  check (598/598). Re-check pixel fidelity and the `/shop/category/*`/`/shop/tag/*`
+  routes (which reuse the same `ShopArchiveWrapper`) in a real environment.
+
+**Follow-up fixes (same day)**:
+- **Trust bar wraps to two rows on mobile** — `<span className="sl-trust-rating">` now
+  wraps the "· 4.8 average rating" segment in `ShopArchiveWrapper.tsx` and
+  `.sl-trust-rating { display: none; }` inside `shop.css`'s existing `max-width: 640px`
+  block drops it on mobile only ("Vetted Makers · Moveee Pro saves X%"); desktop/tablet
+  still show the full line.
+- **Modal needed to scroll on mobile** — `.shop-search-pills` scroll horizontally instead
+  of wrapping on mobile (same technique as the old sticky filter bar's own mobile
+  treatment, still further up this file), `.shop-search-body`'s gap/label margins were
+  tightened, `.search-panel`'s mobile `max-height` bumped 80vh → 92vh, and
+  `.shop-search-footer` (Clear all / View N Results) is now `position: sticky; bottom: 0`
+  so the primary action never requires scrolling to reach.
+- **Material filter removed entirely** (not just hidden) — the `material` field is gone
+  from `ShopFilters`/`ShopFilterMeta` in `shopFiltersBus.ts`, `ShopFilterContext.tsx`
+  no longer computes `availableMaterials` or filters by it, and the Material group is
+  gone from `ShopSearchModal.tsx`. The underlying `productMaterials` data field itself
+  is untouched — `ShopArchiveWrapper.tsx` still fetches it (still used by
+  `app/shop/[slug]/page.tsx`'s product detail page) — only the archive-page *filter* on
+  it was removed.
+- **Category/Price/Sort are a `<select>` on mobile, pills on desktop** — each of those
+  three groups now renders both a `.shop-search-select` (native `<select>`,
+  `.shop-search-mobile-only`) and its existing pill row (`.shop-search-desktop-only`),
+  toggled purely by the same `max-width: 640px` CSS breakpoint everything else in this
+  modal already uses — no JS viewport detection, so no hydration/flash-of-wrong-UI risk.
+  Category's `<select>` navigates via `useRouter().push()` (`/shop` or
+  `/shop/category/{slug}`) since it was never a bus-driven filter, matching the pill
+  version's own `<Link>` behavior. **Maker Location intentionally stayed pills-only at
+  every width** — not part of this ask — and **In Stock Only stays a single pill
+  regardless of width**, per explicit instruction.
 
 ### Shop by Category + Meet the Makers sections removed (Site A, August 2026)
 

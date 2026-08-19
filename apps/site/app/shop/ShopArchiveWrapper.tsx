@@ -17,7 +17,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShopFilterProvider } from "./components/ShopFilterContext";
 import { getShopCountryParam } from "./components/shopCountry";
-import ShopFilterBar from "./components/ShopFilterBar";
 import ShopProductGrid from "./components/ShopProductGrid";
 import "./shop.css";
 
@@ -162,6 +161,15 @@ export default async function ShopArchiveWrapper({
 
   return (
     <>
+      {/* ── 0. TRUST LINE — very top of the page, slim dark bar ── */}
+      <section className="sl-trust">
+        <p className="sl-trust-line">
+          <strong>Vetted Makers</strong>
+          <span className="sl-trust-rating"> · <strong>4.8 average rating</strong></span>
+          {" "}· <strong>Moveee Pro</strong> saves {proDiscountPercent}%
+        </p>
+      </section>
+
       {/* ── 1. COMPACT SHOP HEAD (replaces the old centered masthead) ── */}
       <section className="sl-head">
         <div className="sl-head-inner">
@@ -266,18 +274,8 @@ export default async function ShopArchiveWrapper({
         </section>
       )}
 
-      {/* ── 4. TRUST LINE — single slim mono line ── */}
-      <section className="sl-trust">
-        <p className="sl-trust-line">
-          <strong>Vetted Makers</strong> · <strong>4.8 average rating</strong> · <strong>Free Returns</strong> in 30 days · <strong>Moveee Pro</strong> saves {proDiscountPercent}%
-        </p>
-      </section>
-
-      <ShopFilterProvider products={products}>
-        {/* ── 5. FILTER BAR ── */}
-        <ShopFilterBar categories={categories.slice(0, 8)} activeCategorySlug={category} />
-
-        {/* ── 6. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
+      <ShopFilterProvider products={products} categories={categories.slice(0, 8)} activeCategorySlug={category}>
+        {/* ── 4. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
         <div className="sl-bridge">
           <div className="sl-bridge-inner">
             <div className="sl-bridge-left">
@@ -295,11 +293,11 @@ export default async function ShopArchiveWrapper({
           </div>
         </div>
 
-        {/* ── 7. MAIN PRODUCT GRID ── */}
+        {/* ── 5. MAIN PRODUCT GRID ── */}
         <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
       </ShopFilterProvider>
 
-      {/* ── 8. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
+      {/* ── 6. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
       <div className="sl-member-wrap">
         <section className="sl-member">
           <div className="sl-member-left">
@@ -337,7 +335,7 @@ export default async function ShopArchiveWrapper({
         </section>
       </div>
 
-      {/* ── 9. LIFESTYLE EDIT CLOSING BRIDGE ── */}
+      {/* ── 7. LIFESTYLE EDIT CLOSING BRIDGE ── */}
       <section className="sl-origins">
         <div className="sl-origins-inner">
           {/* Photo: "Woodworking workshop" by wengenroad on Unsplash, CC0, via Wikimedia Commons — no attribution required under CC0. */}

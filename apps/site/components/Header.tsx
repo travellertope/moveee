@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
+import ShopSearchModal from "./ShopSearchModal";
 import { useCart } from "@/context/CartContext";
 
 const CONNECT_URL = "https://web.themoveee.com";
@@ -33,6 +34,9 @@ const Header = () => {
   const pathname = usePathname();
   const active = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
+  // Shop pages get a dedicated search+filter modal instead of the generic
+  // sitewide one — see ShopSearchModal.tsx / apps/site/lib/shopFiltersBus.ts.
+  const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -280,7 +284,11 @@ const Header = () => {
         <div className="menu-overlay-foot">Best in Culture</div>
       </div>
 
-      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {isShopPage ? (
+        <ShopSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      ) : (
+        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      )}
     </>
   );
 };

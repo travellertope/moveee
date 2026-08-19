@@ -2016,6 +2016,7 @@
     .masthead-bar-left span + span, .masthead-bar-right span + span { margin-left: 12px; }
 
     /* Search overlay on small screens */
+    .search-panel { max-height: 92vh; }
     .search-input-row { padding: 20px 22px; gap: 12px; }
     .search-input { font-size: 20px; }
     .search-results { padding: 16px 22px 36px; gap: 24px; }
