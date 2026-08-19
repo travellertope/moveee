@@ -67,8 +67,7 @@
 .mfoot-column a { font-family: "Fraunces", serif; font-weight: 500; font-size: clamp(19px, 1.8vw, 23px); color: var(--paper); transition: color 0.15s; }
 .mfoot-column a:hover { color: var(--gold); }
 
-.mfoot-wordmark { text-align: center; font-family: "Fraunces", serif; font-weight: 700; font-size: 20px; color: rgba(243, 236, 224, 0.45); }
-.mfoot-wordmark span { color: var(--gold); }
+.mfoot-wordmark-img { display: block; margin: 0 auto; height: 22px; width: auto; opacity: 0.45; }
 
 .mfoot-bottom {
   margin-top: clamp(40px, 5vw, 60px);

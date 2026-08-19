@@ -110,7 +110,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mfoot-wordmark">moveee<span>.</span></div>
+        <img src="/logo-light.png" alt="Moveee" className="mfoot-wordmark-img" />
 
         <div className="mfoot-bottom">
           <span>© 2026 The Moveee. All Rights Reserved.</span>
