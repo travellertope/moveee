@@ -12,8 +12,6 @@ import {
   type IssueTerm,
 } from "@/lib/wp";
 import Link from "next/link";
-import CategoryNav from "@/components/CategoryNav";
-import MagazineFilterPills from "@/components/MagazineFilterPills";
 import SeriesLandingPage from "@/components/SeriesLandingPage";
 import MagazineHub from "@/components/MagazineHub";
 import "../magazine.css";
@@ -114,39 +112,22 @@ export default async function MagazineArchiveWrapper({
 
   const allFetchedCats =
     filters?.categories?.nodes?.map((c: any) => ({ name: c.name, slug: c.slug })) || [];
-  const topCategories = [{ name: "All Stories", slug: "" }, ...allFetchedCats];
 
   const seriesOptions = filters?.series?.nodes || [];
-  const industryOptions = filters?.industries?.nodes || [];
-  const countryOptions = filters?.countries?.nodes || [];
 
   const isFiltered = !!(category || industry || country || series || tag);
 
   return (
     <>
-      {/* ── MAGAZINE NAV ── */}
-      <section className="mg-head">
-        <nav className="mg-nav">
-          <CategoryNav
-            categories={topCategories}
-            currentCategory={category || null}
-            activeFilter={!!(industry || country || series || tag)}
-          />
-
-          {/* Filter pills — client component (event handlers not allowed in RSC) */}
-          <MagazineFilterPills
-            seriesOptions={seriesOptions}
-            industryOptions={industryOptions}
-            countryOptions={countryOptions}
-            activeSeries={series}
-            activeIndustry={industry}
-            activeCountry={country}
-          />
-          {isFiltered && (
-            <Link href="/magazine" className="mg-filter-clear">Clear ✕</Link>
-          )}
-        </nav>
-      </section>
+      {/* ── HEADER CLEARANCE ──
+          The category-tab/filter-pill nav that used to live here is gone
+          (removed per explicit request — the Magazine Hub's own Sections/
+          Series grids are the browsing UI now). This section is kept as a
+          spacer only, sized to the exact height the nav used to occupy
+          (measured: 96px header-clear + ~44px nav row) so the distance
+          between the floating header and the first real section's title
+          is unchanged. */}
+      <section className="mg-head" />
 
       {series ? (
         /* ── SERIES LANDING PAGE ── */

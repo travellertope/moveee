@@ -16,7 +16,13 @@
    column) so the nav/filter row lines up with the hero, bands, and every
    other section instead of stretching edge-to-edge on wide viewports. */
 .mg-head {
-  padding: 32px 64px 0;
+  /* The category-tab/filter-pill nav that used to render inside this
+     section is gone (removed per explicit request). The bottom padding
+     below (44px) stands in for that nav row's own height, measured
+     before removal, so the space between the floating header and the
+     first real section's title is unchanged even though this section is
+     now visually empty. */
+  padding: 32px 64px 44px;
   /* Clears the floating header — see the --header-clear comment in
      globals.css. This is the page's first section, plain paper
      background, so there's no visible seam either way, but it needs the
@@ -1154,14 +1160,11 @@
   .mg-filtered-grid { grid-template-columns: repeat(2, 1fr); }
   .mag-issues-archive { padding: 64px 32px; padding-top: var(--header-clear, 96px); }
   .mag-issues-grid { grid-template-columns: repeat(3, 1fr); }
-  .mg-head { padding: 24px 32px 0; padding-top: var(--header-clear, 96px); }
+  .mg-head { padding: 24px 32px 44px; padding-top: var(--header-clear, 96px); }
 }
 
 @media (max-width: 768px) {
-  .mg-head { padding: 20px 16px 0; padding-top: var(--header-clear, 96px); }
-  .mg-nav { flex-wrap: wrap; gap: 8px; }
-  .mg-nav-filters { padding-top: 8px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
-  .mg-nav-filters::-webkit-scrollbar { display: none; }
+  .mg-head { padding: 20px 16px 44px; padding-top: var(--header-clear, 96px); }
   .mg-hero { padding: 32px 16px; }
   .mg-band { padding: 32px 0 40px; }
   .mg-band-inner { padding: 0 16px; }
@@ -1763,6 +1766,19 @@
   box-sizing: border-box;
 }
 
+/* JoinSection.tsx's own ".wrap" class only gets a max-width from
+   ".hpv2 .wrap" (homepage-v2.css, scoped to the homepage's own wrapper
+   div) — on /magazine, which renders the same component with no ".hpv2"
+   ancestor, ".wrap" had no max-width at all and stretched edge-to-edge,
+   visibly wider than every other section on this page. Constrain it to
+   the same column every other section on this page uses instead. */
+.join-section .wrap {
+  max-width: calc(1200px + 128px);
+  margin: 0 auto;
+  padding: 0 64px;
+  box-sizing: border-box;
+}
+
 .mgh-intro {
   padding: 56px 0 48px;
   border-bottom: 1px solid var(--rule);
@@ -1963,6 +1979,7 @@
 }
 @media (max-width: 640px) {
   .mgh-wrap { padding: 0 20px; }
+  .join-section .wrap { padding: 0 20px; }
   .mgh-issue-strip { grid-template-columns: 1fr; }
   .mgh-cat-grid { grid-template-columns: repeat(2, 1fr); }
   .mgh-sec-head { flex-direction: column; align-items: flex-start; }
