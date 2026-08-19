@@ -7,10 +7,15 @@ interface CarouselStory {
   slug: string;
   title: string;
   categoryName: string;
-  excerpt: string;
   image: string | null;
   alt: string;
 }
+
+// Rotating card background, matching the mockup's 6-color cycle (see the
+// .frame--* rules in homepage-v2.css) — derived from each card's own index
+// so server and client render identically, same convention as
+// MasonryRandomSection.tsx's shapeForRow().
+const FRAMES = ["frame--cream", "frame--teal", "frame--gold", "frame--clay", "frame--plum", "frame--paper"];
 
 // Centered-snap carousel: the card nearest the viewport centre scales up,
 // the rest recede. Ported from the mockup's carousel-track/strip-card
@@ -80,11 +85,10 @@ export default function HeroCarousel({ stories }: { stories: CarouselStory[] }) 
       <div className="carousel-track" ref={trackRef}>
         {stories.map((s, i) => (
           <div className={`strip-card${i === activeIndex ? " is-active" : ""}`} key={s.slug}>
-            <Link className="fcell frame--cream" href={`/magazine/${s.slug}`}>
+            <Link className={`fcell ${FRAMES[i % FRAMES.length]}`} href={`/magazine/${s.slug}`}>
               <div className="fcell-photo">{s.image && <img src={s.image} alt={s.alt} />}</div>
               <div className="fcell-kicker">{s.categoryName}</div>
               <h3 dangerouslySetInnerHTML={{ __html: s.title }} />
-              <p className="dek">{s.excerpt}</p>
             </Link>
           </div>
         ))}

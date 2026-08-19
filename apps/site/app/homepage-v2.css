@@ -8,6 +8,18 @@
    already defined in globals.css.
    ============================================================ */
 
+.hpv2 {
+  /* Accent frame colors for the hero carousel's rotating card backgrounds —
+     copied from the mockup's :root (never ported over; only --paper/--ink/
+     etc. made it into globals.css, which is why every carousel card was
+     hardcoded to the same frame--cream instead of cycling through these). */
+  --accent-plum: #4a2f45;
+  --accent-teal: #1f3b3b;
+  --accent-clay: #7a4a2c;
+  --accent-gold-frame: #e8d59a;
+  --accent-gold-frame-ink: #2c2007;
+}
+
 .hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 
 /* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
@@ -85,8 +97,21 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
 .fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 15.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 12px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
+/* Rotating card backgrounds — matches the mockup's 6-color cycle (only
+   frame--paper/--cream were ported originally, so every carousel card was
+   stuck on the same cream background instead of rotating). See
+   HeroCarousel.tsx's FRAMES array for the rotation itself. */
 .frame--paper { background: var(--paper); border: 1px solid var(--rule); }
 .frame--cream { background: var(--paper-warm); border: 1px solid var(--rule); }
+.frame--gold { background: var(--accent-gold-frame); }
+.frame--gold .fcell-kicker { color: var(--ochre-deep); }
+.frame--gold h3 { color: var(--accent-gold-frame-ink); }
+.frame--plum, .frame--teal, .frame--clay { color: #f3ece0; }
+.frame--plum { background: var(--accent-plum); }
+.frame--teal { background: var(--accent-teal); }
+.frame--clay { background: var(--accent-clay); }
+.frame--plum h3, .frame--teal h3, .frame--clay h3 { color: #f3ece0; }
+.frame--plum .fcell-kicker, .frame--teal .fcell-kicker, .frame--clay .fcell-kicker { color: var(--gold); }
 
 /* ── SECTION HEADER ── */
 .band { padding: clamp(52px, 6.5vw, 88px) 0; }

@@ -75,10 +75,6 @@ export default function MasonryRandomSection({
             const shape = shapes[i];
             const image = story.featuredImage?.node?.sourceUrl || null;
             const alt = story.featuredImage?.node?.altText || story.title || "";
-            // See FullBleedHero.tsx's identical guard — `excerpt` isn't
-            // reliably a string, and `(x || "").replace` only catches
-            // falsy, not non-string, which crashed the homepage render.
-            const excerpt = (typeof story.excerpt === "string" ? story.excerpt : "").replace(/<[^>]*>/g, "").trim();
             return (
               <Link
                 key={story.slug || story.id}
@@ -86,12 +82,10 @@ export default function MasonryRandomSection({
                 className={`wcard wcard--${shape}`}
               >
                 <div className="wcard-photo">{image && <img src={image} alt={alt} />}</div>
-                <p
-                  className="wcard-caption"
-                  dangerouslySetInnerHTML={{
-                    __html: `${story.title || ""}${excerpt ? ` — ${excerpt}` : ""}`,
-                  }}
-                />
+                {/* Title only — no excerpt appended. Cards previously showed
+                    "{title} — {excerpt}" in one run-on caption with no visual
+                    distinction between the two. */}
+                <p className="wcard-caption" dangerouslySetInnerHTML={{ __html: story.title || "" }} />
               </Link>
             );
           })}
