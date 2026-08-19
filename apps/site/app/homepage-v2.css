@@ -137,7 +137,31 @@
   transform: scale(.8);
   transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
 }
-.strip-card.is-active { opacity: 1; transform: scale(1.16); z-index: 2; }
+/* Every card is transformed (non-active cards recede to scale(.8),
+   the active one grows to scale(1.16)) — transforms are paint-only, so
+   the flex row's 20px gap always stays anchored to the *unscaled* box
+   edges while the actual rendered edges are pulled in (receding pairs)
+   or pushed out (a pair next to the active card) by different amounts.
+   That's why the gap next to the active card visibly reads as smaller
+   than the gap between two receded cards, even though the layout gap
+   is identical everywhere: two receded neighbours both pull inward
+   (gap grows), but the active card bulges outward into its neighbour's
+   space (gap shrinks) — an active-adjacent pair and a receded/receded
+   pair end up at two different average scales, not just one.
+
+   For two cards at scales s1/s2 with unscaled width W and layout gap
+   G, the visual gap works out to G + W*(1 - (s1+s2)/2) — so matching
+   a receded/receded pair (s=.8 both) means solving for how much extra
+   margin an active/receded pair (s=1.16/.8) needs to reach that same
+   value: margin = W * ((1-.8) - (1-(1.16+.8)/2)) = W * 0.18. (0.08 —
+   half the active card's own growth — was only correct if neighbouring
+   cards didn't move at all, which they do.) */
+.strip-card.is-active {
+  opacity: 1;
+  transform: scale(1.16);
+  z-index: 2;
+  margin: 0 calc(var(--carousel-card-w, 300px) * 0.18);
+}
 .strip-card .fcell { aspect-ratio: 3/4.3; }
 
 /* ── UNIFIED FRAMED CARD ── */
