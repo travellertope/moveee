@@ -23,12 +23,11 @@ export default function JoinSection({
   const copy = EDITION_COPY[edition] || EDITION_COPY.global;
   const image = featureStory?.featuredImage?.node?.sourceUrl || null;
   const alt = featureStory?.featuredImage?.node?.altText || featureStory?.title || "";
-  // See FullBleedHero.tsx's identical guard — `excerpt`/`title` aren't
-  // reliably strings, and `(x || "").replace` only catches falsy, not
-  // non-string (a non-string title interpolated into the caption below
-  // would render as the literal text "[object Object]").
+  // See FullBleedHero.tsx's identical guard — `title` isn't reliably a
+  // string, and `(x || "")` only catches falsy, not non-string (a
+  // non-string title interpolated into the caption below would render as
+  // the literal text "[object Object]").
   const title = typeof featureStory?.title === "string" ? featureStory.title : "";
-  const excerpt = (typeof featureStory?.excerpt === "string" ? featureStory.excerpt : "").replace(/<[^>]*>/g, "").trim();
   // The card links to the actual latest newsletter issue, not a generic
   // archive route — featureStory is now always a real culture_newsletter
   // post (see loadHomeSections() in app/page.tsx), so its own slug is
@@ -65,12 +64,10 @@ export default function JoinSection({
               <span className="join-feature-badge">Latest Edition: {copy.kicker}</span>
               <a href={href} className="wcard join-feature">
                 <div className="wcard-photo">{image && <img src={image} alt={alt} />}</div>
-                <p
-                  className="wcard-caption"
-                  dangerouslySetInnerHTML={{
-                    __html: `${title}${excerpt ? ` — ${excerpt}` : ""}`,
-                  }}
-                />
+                {/* Title only — matches every other card on this page
+                    (MasonryRandomSection/HeroCarousel), not a merged
+                    "title — excerpt" caption. */}
+                <p className="wcard-caption" dangerouslySetInnerHTML={{ __html: title }} />
               </a>
             </div>
           )}
