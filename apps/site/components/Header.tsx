@@ -170,7 +170,11 @@ const Header = () => {
             </button>
 
             <Link href="/" className="toolbar-logo">
-              moveee<span>.</span>
+              <img
+                src={onDark ? "/logo-light.png" : "/logo-dark.png"}
+                alt="Moveee"
+                className="toolbar-logo-img"
+              />
             </Link>
 
             <button
@@ -201,7 +205,9 @@ const Header = () => {
             <CloseIcon />
           </button>
           <Link href="/" className="toolbar-logo" onClick={() => setMenuOpen(false)}>
-            moveee<span>.</span>
+            {/* Overlay body is always the light `--paper` background,
+                regardless of onDark — always the dark wordmark. */}
+            <img src="/logo-dark.png" alt="Moveee" className="toolbar-logo-img" />
           </Link>
           <span />
         </div>
