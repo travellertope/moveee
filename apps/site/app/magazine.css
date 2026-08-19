@@ -17,6 +17,11 @@
    other section instead of stretching edge-to-edge on wide viewports. */
 .mg-head {
   padding: 32px 64px 0;
+  /* Clears the floating header — see the --header-clear comment in
+     globals.css. This is the page's first section, plain paper
+     background, so there's no visible seam either way, but it needs the
+     same clearance any other first section does. */
+  padding-top: var(--header-clear, 96px);
   max-width: calc(1200px + 128px);
   margin: 0 auto;
   box-sizing: border-box;
@@ -901,6 +906,7 @@
 /* ── AUTHOR ARCHIVE MASTHEAD ── */
 .mg-author-head {
   padding: 56px 64px 32px;
+  padding-top: var(--header-clear, 96px);
   max-width: calc(1200px + 128px);
   margin: 0 auto;
   box-sizing: border-box;
@@ -948,7 +954,7 @@
   margin: 0;
 }
 @media (max-width: 640px) {
-  .mg-author-head { padding: 40px 16px 24px; }
+  .mg-author-head { padding: 40px 16px 24px; padding-top: var(--header-clear, 96px); }
   .mg-author-head-inner { align-items: flex-start; }
 }
 
@@ -960,6 +966,7 @@
    full-bleed stacked images with an unstyled title. */
 .mag-issues-archive {
   padding: 80px 64px;
+  padding-top: var(--header-clear, 96px);
   max-width: calc(1200px + 128px);
   margin: 0 auto;
   box-sizing: border-box;
@@ -1145,13 +1152,13 @@
   .mg-cta-section { padding: 48px 32px; }
   .mg-filtered { padding: 64px 32px 120px; }
   .mg-filtered-grid { grid-template-columns: repeat(2, 1fr); }
-  .mag-issues-archive { padding: 64px 32px; }
+  .mag-issues-archive { padding: 64px 32px; padding-top: var(--header-clear, 96px); }
   .mag-issues-grid { grid-template-columns: repeat(3, 1fr); }
-  .mg-head { padding: 24px 32px 0; }
+  .mg-head { padding: 24px 32px 0; padding-top: var(--header-clear, 96px); }
 }
 
 @media (max-width: 768px) {
-  .mg-head { padding: 20px 16px 0; }
+  .mg-head { padding: 20px 16px 0; padding-top: var(--header-clear, 96px); }
   .mg-nav { flex-wrap: wrap; gap: 8px; }
   .mg-nav-filters { padding-top: 8px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
   .mg-nav-filters::-webkit-scrollbar { display: none; }
@@ -1172,7 +1179,7 @@
   .mg-cta-section { padding: 40px 16px; }
   .mg-filtered { padding: 40px 16px 80px; }
   .mg-filtered-grid { grid-template-columns: 1fr; }
-  .mag-issues-archive { padding: 40px 16px; }
+  .mag-issues-archive { padding: 40px 16px; padding-top: var(--header-clear, 96px); }
   .mag-issues-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -1396,6 +1403,10 @@
   background: var(--ink);
   color: var(--paper);
   padding: 80px 64px 72px;
+  /* Dark background — same treatment as .ar-hero: stays flush at the top
+     of the viewport (behind the floating header) while padding-top pushes
+     just the eyebrow/title/description down to clear it. */
+  padding-top: var(--header-clear, 96px);
 }
 .sr-hero-inner {
   max-width: 800px;
@@ -1711,7 +1722,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .sr-hero { padding: 64px 32px 56px; }
+  .sr-hero { padding: 64px 32px 56px; padding-top: var(--header-clear, 96px); }
   .sr-lead { padding: 0 32px; }
   .sr-lead-inner { grid-template-columns: 1fr; }
   .sr-lead-card { padding: 48px 0; border-right: none; border-bottom: 1px solid var(--rule); }
@@ -1724,7 +1735,7 @@
   .cd-band-desc { max-width: none; }
 }
 @media (max-width: 640px) {
-  .sr-hero { padding: 48px 16px 40px; }
+  .sr-hero { padding: 48px 16px 40px; padding-top: var(--header-clear, 96px); }
   .sr-hero-title { font-size: 40px; }
   .sr-lead { padding: 0 16px; }
   .sr-lead-title { font-size: 26px; }

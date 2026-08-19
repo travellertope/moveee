@@ -31,7 +31,7 @@ export default function SeriesLandingPage({ name, description, stories }: Series
   return (
     <>
       {/* ── SERIES HERO HEADER ── */}
-      <section className="sr-hero">
+      <section className="sr-hero" data-header-zone="dark">
         <div className="sr-hero-inner">
           <div className="sr-hero-eyebrow">Series</div>
           <h1 className="sr-hero-title">{name}</h1>

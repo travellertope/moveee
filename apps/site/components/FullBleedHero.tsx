@@ -20,7 +20,7 @@ export default function FullBleedHero({ story }: { story: any }) {
   const excerpt = (typeof story.excerpt === "string" ? story.excerpt : "").replace(/<[^>]*>/g, "").trim();
 
   return (
-    <div className="hero-full">
+    <div className="hero-full" data-header-zone="dark">
       {/* display:contents (see homepage-v2.css) makes this <Link> generate
           no box of its own — its children (photo + body) lay out exactly
           as if they were direct flex children of .hero-full, while

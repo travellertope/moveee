@@ -263,7 +263,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
       {/* ── HERO ── */}
       {hasFeaturedImage ? (
-        <section className="ar-hero">
+        <section className="ar-hero" data-header-zone="dark">
           <nav className="ar-breadcrumb ar-breadcrumb--overlay">
             <Link href="/">Home</Link><span className="sep"> / </span>
             <Link href="/magazine">Editorials</Link><span className="sep"> / </span>

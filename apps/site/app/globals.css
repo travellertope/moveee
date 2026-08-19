@@ -126,25 +126,25 @@ body {
 }
 
 /* The site-wide header (header.css's .site-toolbar) is `position: fixed`,
-   so it never reserves layout space of its own — every inner page's
-   content used to start flush at the very top of the viewport, right
-   under the floating pill, so whatever sat in that top ~70px (nav tabs,
-   filter pills, page titles) rendered partially hidden behind it. Every
-   page gets this padding except the ones below, which are exempted via a
-   plain CSS `:has()` selector (no client JS/hydration involved, so no
-   flash-of-wrong-spacing on first paint either way):
-   - `main:has(> .hpv2)` — the real homepage. Its .hero-full is a
-     deliberate full-bleed photo the header floats transparently over
-     (see Header.tsx's own hero-detection effect), so it's meant to run
-     flush behind the header, not clear of it.
-   - `main:has(> .rd-layout)` — the newsletter reader (/newsletter/[slug]).
-     .rd-layout is a fixed `height: calc(100svh - 64px)` two-pane layout
-     with `overflow: hidden`; adding this padding on top of it would push
-     the whole pane down without shrinking its own height calc to match,
-     clipping ~96px off its bottom instead of just adding a gap up top. */
-main { padding-top: 96px; }
-main:has(> .hpv2),
-main:has(> .rd-layout) { padding-top: 0; }
+   so it never reserves layout space of its own. This was first "fixed" by
+   padding <main> itself — but that pushes a page's *entire* first section
+   down as one block, which for any section with its own background (a
+   dark hero, a black trust bar) opened a visible gap of plain body-colour
+   padding above it, reading as a second, mismatched header bar rather
+   than a clearance gap. The correct fix is per-page: the first section
+   keeps its background flush at the true top of the viewport (y=0, so it
+   still runs *behind* the floating header, exactly like the homepage's
+   .hero-full already does), and only that section's own inner content
+   (title, breadcrumb, nav) gets pushed down via its own padding-top —
+   see --header-clear below, applied directly on each page's first
+   section (`.ar-breadcrumb`, `.mg-head`, `.sr-hero`, `.sl-trust-line`,
+   etc.) rather than here. Pages whose first section is already the same
+   colour as the page background (most listing pages) need this exactly
+   as much as a dark hero does — there's just no visible seam either way,
+   which is why it's easy to miss until a page's hero has real contrast. */
+:root {
+  --header-clear: 96px;
+}
 
 /* Subtle paper grain */
 body::before {
