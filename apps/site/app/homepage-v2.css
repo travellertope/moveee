@@ -4,7 +4,8 @@
    Ported from mockups/web/moveee_homepage_wepresent_concept.html.
    Header/footer live in header.css/footer.css; this file covers
    everything between them. Uses the shared --paper/--ink/--ochre/
-   --gold/--radius-*/--shadow-* tokens already in globals.css.
+   --gold tokens, plus the --radius and --shadow token scales,
+   already defined in globals.css.
    ============================================================ */
 
 .hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
