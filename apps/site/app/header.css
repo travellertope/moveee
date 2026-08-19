@@ -89,7 +89,7 @@
 /* The image itself swaps (logo-dark.png/logo-light.png) based on the
    header's onDark state — see Header.tsx — rather than a CSS colour
    override, since the wordmark is a real logo file now, not styled text. */
-.toolbar-logo-img { height: 20px; width: auto; display: block; }
+.toolbar-logo-img { height: 40px; width: auto; display: block; }
 
 /* ============================================================
    MENU OVERLAY — full-viewport takeover, 3-column grid on desktop.

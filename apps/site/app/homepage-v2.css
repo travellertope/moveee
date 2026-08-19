@@ -114,10 +114,18 @@
   gap: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  min-height: calc(var(--carousel-card-w, 300px) * 1.4333 * 1.16 + 40px);
+  min-height: calc(var(--carousel-card-w, 300px) * 1.16 + 40px);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  overscroll-behavior: contain;
+  /* x-only, not the shorthand `overscroll-behavior: contain` — the
+     shorthand also contains the *vertical* axis, and since this element
+     has no vertical scroll room at all (overflow-y: hidden), containing
+     it stops a mouse-wheel's vertical delta from chaining up to the page
+     the instant the cursor is over the carousel — the page reads as
+     "stuck" until the mouse moves off. Vertical scroll should always
+     chain to the page; only horizontal overscroll (the rubber-band glow
+     past the first/last card) needs containing. */
+  overscroll-behavior-x: contain;
   /* Without this, a touch swipe that starts on the carousel is ambiguous
      to mobile browsers (this element scrolls horizontally, so a diagonal
      or even mostly-vertical swipe beginning here can get captured trying
@@ -169,7 +177,7 @@
      plus the original 0.18 offset. */
   margin: 0 calc(var(--carousel-card-w, 300px) * 0.143);
 }
-.strip-card .fcell { aspect-ratio: 3/4.3; }
+.strip-card .fcell { aspect-ratio: 1/1; }
 
 /* ── UNIFIED FRAMED CARD ── */
 .fcell {
