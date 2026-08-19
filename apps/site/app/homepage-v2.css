@@ -111,7 +111,7 @@
 .carousel-track {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 0;
   overflow-x: auto;
   overflow-y: hidden;
   min-height: calc(var(--carousel-card-w, 300px) * 1.4333 * 1.16 + 40px);
@@ -136,6 +136,11 @@
   opacity: .48;
   transform: scale(.8);
   transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
+  /* Layout gap is 0 — spacing between receded cards comes entirely from
+     this negative margin, which halves the previous overall spacing while
+     the active card's larger offsetting margin below preserves the same
+     equal-gap math (see that rule's own comment for the derivation). */
+  margin: 0 calc(var(--carousel-card-w, 300px) * -0.037);
 }
 /* Every card is transformed (non-active cards recede to scale(.8),
    the active one grows to scale(1.16)) — transforms are paint-only, so
@@ -160,7 +165,9 @@
   opacity: 1;
   transform: scale(1.16);
   z-index: 2;
-  margin: 0 calc(var(--carousel-card-w, 300px) * 0.18);
+  /* Base -0.037 margin (undoes the receded-card pull above for this card)
+     plus the original 0.18 offset. */
+  margin: 0 calc(var(--carousel-card-w, 300px) * 0.143);
 }
 .strip-card .fcell { aspect-ratio: 3/4.3; }
 
