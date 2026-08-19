@@ -20,7 +20,12 @@
   --accent-gold-frame-ink: #2c2007;
 }
 
-.hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+.hpv2 .wrap { max-width: 1024px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+/* The masthead (welcome text) + carousel section keeps the old, wider
+   column — only the card-grid sections below it were asked to narrow to
+   1024px. The carousel itself (.index-strip/.carousel-track) never used
+   .wrap at all, so it's already unaffected either way. */
+.masthead .wrap { max-width: 1328px; }
 
 /* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
    none; }`) — this port never carried that reset over, so every card here
@@ -84,7 +89,7 @@
   flex-direction: column;
   height: 100%;
   border-radius: var(--radius-xl);
-  padding: 14px 14px 18px;
+  padding: 18px 18px 22px;
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
   transition: box-shadow .3s, transform .3s;
   overflow: hidden;
@@ -94,9 +99,9 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: var(--radius-lg); overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 15.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
-.fcell p.dek { font-size: 12px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
+.fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
    stuck on the same cream background instead of rotating). See
@@ -132,14 +137,14 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
   .wcard--rect, .wcard--sq { grid-column: span 1; }
   .wcard--rect .wcard-photo, .wcard--sq .wcard-photo { aspect-ratio: 4/3; }
 }
-.wcard { display: block; border-radius: 22px; padding: 14px 14px 30px; color: var(--ink); box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
+.wcard { display: block; border-radius: 22px; padding: 18px 18px 34px; color: var(--ink); box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
 .wcard:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
 .wcard-photo { position: relative; width: 100%; border-radius: 13px; overflow: hidden; background: var(--ink); }
 .wcard-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 .wcard:hover .wcard-photo img { transform: scale(1.08); }
 .wcard--rect .wcard-photo { aspect-ratio: 2.15 / 1; }
 .wcard--sq .wcard-photo { aspect-ratio: 1 / 1; }
-.wcard-caption { margin-top: 22px; text-align: center; font-family: "Fraunces", serif; font-size: 16.5px; line-height: 1.55; max-width: 34ch; margin-left: auto; margin-right: auto; }
+.wcard-caption { margin-top: 22px; text-align: center; font-family: "Fraunces", serif; font-size: 18.5px; line-height: 1.55; max-width: 34ch; margin-left: auto; margin-right: auto; }
 
 /* ── SHOP RAIL ── */
 .shop-rail-wrap { position: relative; }
@@ -147,11 +152,11 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .shop-rail::-webkit-scrollbar { display: none; }
 .shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); scroll-snap-align: start; }
 .shop-card .wcard-photo { aspect-ratio: 1 / 1.08; }
-.shop-price-tag { position: absolute; top: 10px; right: 10px; z-index: 2; background: var(--ink); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; padding: 5px 10px; border-radius: var(--radius-full); }
+.shop-price-tag { position: absolute; top: 10px; right: 10px; z-index: 2; background: var(--ink); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .02em; padding: 5px 10px; border-radius: var(--radius-full); }
 .shop-caption { margin-top: 16px; text-align: left; }
-.shop-caption-maker { font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .62; }
-.shop-caption-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 15px; line-height: 1.3; margin-top: 5px; }
-.shop-caption-price { margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ochre-deep); }
+.shop-caption-maker { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .62; }
+.shop-caption-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; line-height: 1.3; margin-top: 5px; }
+.shop-caption-price { margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ochre-deep); }
 .shop-arrow {
   position: absolute; top: calc(50% - 14px); transform: translateY(-50%);
   width: 46px; height: 46px; border-radius: var(--radius-full);
