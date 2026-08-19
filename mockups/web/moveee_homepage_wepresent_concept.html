@@ -1,0 +1,1541 @@
+<title>Moveee Magazine — Homepage Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Fraunces:ital,opsz,wght@1,9..144,400..600&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #ffffff;
+    --paper-deep: #f2f2f2;
+    --paper-warm: #faf7f2;
+    --ink: #14110d;
+    --ink-soft: #3a342b;
+    --mute: #7a6f5c;
+    --rule: rgba(20, 17, 13, .12);
+    --rule-strong: rgba(20, 17, 13, .22);
+    --ochre: #c5491f;
+    --ochre-deep: #8a2d10;
+    --gold: #b38238;
+    --moss: #3d4a2a;
+
+    --accent-plum: #4a2f45;
+    --accent-teal: #1f3b3b;
+    --accent-clay: #7a4a2c;
+    --accent-gold-frame: #e8d59a;
+    --accent-gold-frame-ink: #2c2007;
+
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 12px;
+    --radius-2xl: 20px;
+    --radius-full: 9999px;
+
+    --shadow-1: 0 6px 14px -8px rgba(20, 17, 13, .10), 0 2px 5px -3px rgba(197, 73, 31, .07);
+    --shadow-2: 0 18px 34px -14px rgba(20, 17, 13, .16), 0 6px 14px -8px rgba(197, 73, 31, .10);
+    --shadow-3: 0 34px 60px -18px rgba(20, 17, 13, .20), 0 14px 26px -12px rgba(197, 73, 31, .12);
+
+    --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #161310; --paper-deep: #1e1a15; --paper-warm: #221c15;
+      --ink: #f3ece0; --ink-soft: #d9cdb8; --mute: #a3937a;
+      --rule: rgba(243, 236, 224, .14); --rule-strong: rgba(243, 236, 224, .24);
+      --ochre: #e2683a; --ochre-deep: #f0916a; --gold: #d4a75c; --moss: #7a9a72;
+      --shadow-1: 0 6px 16px -8px rgba(0, 0, 0, .5);
+      --shadow-2: 0 18px 38px -14px rgba(0, 0, 0, .55);
+      --shadow-3: 0 34px 68px -18px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #161310; --paper-deep: #1e1a15; --paper-warm: #221c15;
+    --ink: #f3ece0; --ink-soft: #d9cdb8; --mute: #a3937a;
+    --rule: rgba(243, 236, 224, .14); --rule-strong: rgba(243, 236, 224, .24);
+    --ochre: #e2683a; --ochre-deep: #f0916a; --gold: #d4a75c; --moss: #7a9a72;
+    --shadow-1: 0 6px 16px -8px rgba(0, 0, 0, .5);
+    --shadow-2: 0 18px 38px -14px rgba(0, 0, 0, .55);
+    --shadow-3: 0 34px 68px -18px rgba(0, 0, 0, .6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  /* overflow-x: hidden is a deliberate safety net, not just tidiness —
+     the tilted .join-feature card (rotate(3deg)) widens its own visual
+     bounding box beyond its unrotated width, and on a narrow phone
+     viewport that was enough to push the whole page into horizontal
+     scroll (confirmed: body.scrollWidth exceeded the viewport). Any
+     future rotated/transformed element could do the same; this
+     contains it at the page level regardless of the cause. */
+  body { background: var(--paper); color: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; background: none; border: none; cursor: pointer; }
+  ::selection { background: var(--ochre); color: var(--paper); }
+
+  .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+
+  .concept-note { background: var(--ink); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; text-align: center; padding: 10px 20px; position: relative; z-index: 80; }
+  .concept-note b { color: var(--gold); font-weight: 700; }
+
+  /* ============================================================
+     4 — HEADER: floating pill, logo centered with a utility icon
+     on each side, transparent while inside the hero, hides on
+     scroll-down and returns as a solid pill on scroll-up.
+     ============================================================ */
+  .site-toolbar {
+    position: fixed;
+    /* --concept-note-h is measured/set by JS below — on a narrow
+       viewport the dev-only disclaimer banner above wraps to 2-3
+       lines instead of one, and since this header is fixed (floats
+       at a constant viewport position, independent of that banner's
+       in-flow height), a short hardcoded offset would let the taller
+       banner physically sit on top of the header and block clicks on
+       the search/menu icons — this keeps the header pinned exactly
+       18px below the banner's real rendered height at any width. */
+    top: calc(var(--concept-note-h, 0px) + 18px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    padding: 0 20px;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), top .15s ease;
+  }
+  /* A flat -140% was calibrated for the old fixed top:18px offset — it
+     cleared the viewport fine then, but this header's `top` is now
+     dynamic (see --concept-note-h above), and on any width where the
+     banner wraps to more lines, that same -140% (still just ~1.4x the
+     header's OWN height, unrelated to how far down `top` pushed it)
+     stopped being enough to actually clear the viewport — "hidden"
+     was leaving most of the header still visibly on-screen, sitting
+     transparent (no solid backdrop) on top of whatever content was
+     underneath. This instead moves it up by its own full height, the
+     entire dynamic top offset, and 40px of margin — always enough
+     regardless of how tall the banner renders at any width. */
+  .site-toolbar.is-hidden { transform: translateY(calc(-100% - var(--concept-note-h, 0px) - 58px)); }
+  .toolbar-shell {
+    width: min(100%, 460px);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .site-toolbar.is-solid .toolbar-shell {
+    background: color-mix(in srgb, var(--paper) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border-color: var(--rule);
+    box-shadow: var(--shadow-2);
+  }
+  .toolbar-pill {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    padding: 6px;
+    width: 100%;
+  }
+  .toolbar-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--paper-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background .15s, transform .3s, opacity .3s;
+    opacity: .55;
+  }
+  .site-toolbar.is-solid .toolbar-icon { opacity: 1; }
+  .menu-open .toolbar-icon--menu { transform: rotate(90deg); opacity: 1; }
+  .toolbar-logo {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -.01em;
+    cursor: pointer;
+  }
+  .toolbar-logo span { color: var(--ochre); }
+  /* While the toolbar floats over the dark full-bleed hero photo,
+     the logo needs to switch to a light colour to stay legible —
+     the icon circles are unaffected since they already carry their
+     own solid light background regardless of what's behind them. */
+  .site-toolbar.is-on-dark .toolbar-logo { color: #f3ece0; }
+  .site-toolbar.is-on-dark .toolbar-logo span { color: var(--gold); }
+
+  /* ============================================================
+     MENU OVERLAY — a full-viewport takeover (fixed, its own top
+     bar) instead of the old in-place pill expansion, which grew
+     the sticky toolbar's own box and pushed the page content down.
+     ============================================================ */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: var(--paper);
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(.98);
+    transition: opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-overlay.is-open { opacity: 1; pointer-events: auto; transform: none; }
+
+  /* Search overlay reuses the same fixed full-viewport shell/top-bar
+     shape as .menu-overlay, just with a search field instead of the
+     3-column grid. */
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 91;
+    background: var(--paper);
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(.98);
+    transition: opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    flex-direction: column;
+  }
+  .search-overlay.is-open { opacity: 1; pointer-events: auto; transform: none; }
+  .search-overlay-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px clamp(20px, 4vw, 64px) 80px; }
+  .search-input {
+    width: min(100%, 720px);
+    border: none;
+    border-bottom: 2px solid var(--rule-strong);
+    background: transparent;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(36px, 7vw, 68px);
+    color: var(--ink);
+    padding: 10px 0 18px;
+  }
+  .search-input::placeholder { color: var(--rule-strong); }
+  .search-input:focus { outline: none; border-bottom-color: var(--ochre); }
+  .search-hint { margin-top: 22px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--mute); }
+  .menu-overlay-bar {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    padding: 24px clamp(20px, 4vw, 40px);
+    flex-shrink: 0;
+  }
+  .menu-overlay-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 20px clamp(20px, 4vw, 64px) 40px;
+    overflow-y: auto;
+  }
+  .menu-overlay-foot { padding: 24px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); flex-shrink: 0; }
+
+  /* ── 3-column overlay grid: nav / account / featured ── */
+  .menu-grid { display: grid; grid-template-columns: 1fr; gap: 40px; width: 100%; max-width: 1180px; margin: 0 auto; }
+  @media (min-width: 900px) { .menu-grid { grid-template-columns: 0.85fr 1.05fr 1.05fr; gap: 56px; } }
+  .menu-col-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-bottom: 22px; }
+
+  .menu-nav-list { display: flex; flex-direction: column; }
+  .menu-nav-list a { font-family: 'Fraunces', serif; font-weight: 500; font-size: clamp(24px, 2.6vw, 32px); padding: 7px 0; color: var(--ink); transition: color .15s; }
+  .menu-nav-list a:hover { color: var(--ochre); }
+
+  .menu-account-card { background: var(--paper-warm); border: 1px solid var(--rule); border-radius: 20px; padding: 28px; }
+  .menu-account-id { display: flex; align-items: center; gap: 14px; }
+  .menu-account-avatar { width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; flex-shrink: 0; }
+  .menu-account-name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; }
+  .menu-account-tier { margin-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre); }
+  .menu-account-links { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; }
+  .menu-account-links a { font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink-soft); padding: 7px 0; transition: color .15s; }
+  .menu-account-links a:hover { color: var(--ochre); }
+  .menu-account-links a.danger { color: var(--mute); }
+  .menu-account-links a.danger:hover { color: var(--ochre); }
+
+  .menu-feature-card { max-width: 320px; }
+  .menu-feature-card .wcard-photo { aspect-ratio: 1 / 1; }
+  .menu-feature-price { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--mute); margin-top: 6px; text-align: center; }
+  .menu-feature-cta { display: block; width: fit-content; margin: 16px auto 0; border-radius: var(--radius-full); padding: 11px 24px; background: var(--ink); color: var(--paper); font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px; transition: opacity .15s; }
+  .menu-feature-cta:hover { opacity: .82; }
+
+  /* ============================================================
+     FULL-BLEED OPENING HERO
+     A single full-viewport statement section ahead of the masthead —
+     the one deliberate "not WeTransfer" beat: a huge duotone image
+     with an oversized headline over it, rather than another masonry
+     grid. Text stays white regardless of light/dark theme since it
+     always sits on the dark photo overlay, not the page background.
+     ============================================================ */
+  .hero-full { position: relative; height: 100vh; min-height: 560px; max-height: 980px; overflow: hidden; display: flex; flex-direction: column; }
+  .hero-full-photo { position: absolute; inset: 0; }
+  .hero-full-photo-fill { position: absolute; inset: 0; }
+  .hero-full-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,7,4,.15) 0%, rgba(10,7,4,.1) 40%, rgba(10,7,4,.55) 82%, rgba(10,7,4,.78) 100%); }
+  .hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
+  .hero-full-kicker { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(243,236,224,.78); margin-bottom: 22px; }
+  .hero-full h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(56px, 11vw, 168px); line-height: .92; letter-spacing: -.03em; color: #f3ece0; text-transform: uppercase; text-wrap: balance; }
+  .hero-full h1 em { font-style: italic; font-weight: 400; color: var(--gold); }
+  .hero-full-byline { margin-top: 26px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(243,236,224,.82); }
+  .hero-full-scroll { position: relative; display: flex; align-items: center; justify-content: center; padding-bottom: clamp(22px, 4vw, 40px); }
+  .hero-full-scroll span { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); border: 1px solid rgba(243,236,224,.4); color: #f3ece0; animation: hero-bounce 2.1s ease-in-out infinite; transition: border-color .15s; }
+  .hero-full:hover .hero-full-scroll span { border-color: rgba(243,236,224,.8); }
+  @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+  /* ============================================================
+     MASTHEAD
+     ============================================================ */
+  .masthead { padding: clamp(28px, 5vw, 56px) 0 0; text-align: center; }
+  .masthead h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(38px, 6vw, 76px); letter-spacing: -.025em; line-height: 1.03; text-wrap: balance; }
+  .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+  .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
+
+  /* ============================================================
+     HERO CAROUSEL — centered snap, edges genuinely cropped by the
+     viewport (no side padding reserved for them), and the card
+     nearest the centre scales up while the rest recede. Cards use
+     the same framed-card language as the rest of the page.
+     ============================================================ */
+  /* Extra top/bottom breathing room, on top of the base margin, so the
+     active card's scale(1.16) overshoot (see .carousel-track below)
+     has clear space above/below rather than sitting flush against the
+     masthead copy or the section that follows. */
+  .index-strip { margin: clamp(56px, 7vw, 76px) 0 clamp(32px, 4vw, 48px); position: relative; }
+  .carousel-track {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    overflow-x: auto;
+    /* An explicit overflow-y: visible does NOT survive here — per the
+       CSS Overflow spec, pairing 'visible' with a non-visible value on
+       the other axis is disallowed outright, so the engine silently
+       forces overflow-y to 'auto' too, no matter how it's declared.
+       (Confirmed via computed styles: it really does come back as
+       'auto', not 'visible', despite this rule.) So instead of fighting
+       that, the track's own *layout* height is reserved tall enough to
+       fully contain the active card's scale(1.16) overshoot up front —
+       with nothing left over that height, there's nothing for `auto`
+       to ever need to clip. 1.4333 = the .fcell aspect-ratio's
+       width→height factor (3/4.3); 1.16 = the active-card scale; the
+       flat 40px is slack for its box-shadow spread beyond the box.
+       align-items: center (below) then centres every *unscaled* card
+       vertically within this now-taller row. */
+    overflow-y: hidden;
+    min-height: calc(var(--carousel-card-w, 300px) * 1.4333 * 1.16 + 40px);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    /* Stops a mostly-horizontal trackpad swipe's small residual
+       vertical delta from chaining up to the page (which used to
+       false-trigger the header's scroll-up return, see the JS wheel
+       handler this replaced) — without touching scrolling itself, so
+       native momentum and scroll-snap keep working exactly as the
+       browser intends. A JS wheel handler was tried here first
+       (manually redirecting deltaX into scrollLeft + preventDefault);
+       it caused the real regression this comment replaces the fix
+       for — intercepting every wheel tick individually broke
+       momentum/snap continuity entirely, so a real swipe's many small
+       deltas each got resnapped back before the next one arrived,
+       netting zero movement. This CSS property is the purpose-built
+       fix for exactly this "stop the leak, don't touch the scroll"
+       problem; don't reintroduce a manual wheel handler here. */
+    overscroll-behavior: contain;
+  }
+  .carousel-track::-webkit-scrollbar { display: none; }
+  .strip-card {
+    scroll-snap-align: center;
+    flex: 0 0 auto;
+    /* Set by JS so exactly 3 cards sit fully in view with a half
+       card peeking at each edge — see the layout() function below. */
+    width: var(--carousel-card-w, min(80vw, 340px));
+    opacity: .48;
+    transform: scale(.8);
+    transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
+  }
+  .strip-card.is-active { opacity: 1; transform: scale(1.16); z-index: 2; }
+  .strip-card .fcell { aspect-ratio: 3/4.3; }
+  .strip-num { position: absolute; top: 12px; left: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.85); letter-spacing: .08em; z-index: 2; }
+
+  /* ============================================================
+     UNIFIED FRAMED CARD — every card on the page (carousel + all
+     five section grids) shares this component: a coloured or
+     neutral mat, an inset photo (not the full card background),
+     and a caption underneath the photo.
+     ============================================================ */
+  .fcell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: var(--radius-xl);
+    padding: 14px 14px 18px;
+    box-shadow: var(--shadow-1);
+    transition: box-shadow .3s, transform .3s;
+    overflow: hidden;
+    isolation: isolate;
+    /* Chromium can lose the overflow:hidden clip on a rounded corner
+       when this element sits inside an ancestor that's scaled via
+       transform (the active carousel card) while it also has its own
+       box-shadow and a blend-mode descendant — the corner renders
+       square instead of clipped. Forcing an explicit mask-based clip
+       sidesteps that compositing bug without changing how it looks. */
+    -webkit-mask-image: -webkit-radial-gradient(#fff, #000);
+    mask-image: radial-gradient(#fff, #000);
+  }
+  a.fcell:hover, .cluster-cell:hover .fcell { box-shadow: var(--shadow-2); transform: translateY(-3px); }
+  .fcell-photo {
+    position: relative;
+    flex: 1;
+    min-height: 56px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(#fff, #000);
+    mask-image: radial-gradient(#fff, #000);
+  }
+  .fcell-photo::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .4; mix-blend-mode: overlay; z-index: 1; }
+  /* Zoom-on-hover: the gradient "photo" lives on this inner layer, not
+     the clipping frame itself, so it can scale up without the frame's
+     rounded corners moving or the card's own hover-lift fighting it. */
+  .fcell-photo-fill { position: absolute; inset: 0; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  a.fcell:hover .fcell-photo-fill { transform: scale(1.08); }
+  .fcell-kicker { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 13px; flex-shrink: 0; }
+  .fcell h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 15.5px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; }
+  .fcell p.dek { font-size: 12px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; }
+  .fcell--lg h3 { font-size: clamp(19px, 2vw, 24px); }
+  .fcell--lg .fcell-kicker { font-size: 10.5px; }
+  .fcell--lg p.dek { font-size: 13px; }
+
+  .frame--paper { background: var(--paper); border: 1px solid var(--rule); }
+  .frame--paper .fcell-kicker { color: var(--ochre); }
+  .frame--paper p.dek { color: var(--mute); }
+  .frame--cream { background: var(--paper-warm); border: 1px solid var(--rule); }
+  .frame--cream .fcell-kicker { color: var(--ochre-deep); }
+  .frame--cream p.dek { color: var(--mute); }
+  .frame--gold { background: var(--accent-gold-frame); }
+  .frame--gold .fcell-kicker { color: var(--ochre-deep); }
+  .frame--gold h3 { color: var(--accent-gold-frame-ink); }
+  .frame--gold p.dek { color: rgba(44,32,7,.65); }
+  .frame--plum, .frame--teal, .frame--clay { color: #f3ece0; }
+  .frame--plum { background: var(--accent-plum); }
+  .frame--teal { background: var(--accent-teal); }
+  .frame--clay { background: var(--accent-clay); }
+  .frame--plum .fcell-kicker, .frame--teal .fcell-kicker, .frame--clay .fcell-kicker { color: var(--gold); }
+  .frame--plum p.dek, .frame--teal p.dek, .frame--clay p.dek { color: rgba(243,236,224,.7); }
+
+  /* ============================================================
+     "LATEST STORIES" CARD — matches the reference design exactly
+     (structure, spacing, colour, radius) aside from typeface: a
+     pastel mat, an inset photo close to the card's own edges, and
+     one centred caption line below — no separate kicker/label.
+     ============================================================ */
+  .wcard {
+    display: block;
+    border-radius: 22px;
+    padding: 14px 14px 30px;
+    color: var(--ink);
+    box-shadow: var(--shadow-1);
+    transition: box-shadow .3s, transform .3s;
+  }
+  .wcard:hover { box-shadow: var(--shadow-2); transform: translateY(-3px); }
+  .wcard-photo {
+    position: relative;
+    width: 100%;
+    border-radius: 13px;
+    overflow: hidden;
+  }
+  .wcard-photo::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .4; mix-blend-mode: overlay; z-index: 1; }
+  /* Zoom-on-hover lives on this inner fill layer, not the clipping
+     frame, so the rounded corners stay put while the image grows. */
+  .wcard-photo-fill { position: absolute; inset: 0; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .wcard:hover .wcard-photo-fill { transform: scale(1.08); }
+  .wcard--rect .wcard-photo { aspect-ratio: 2.15 / 1; }
+  .wcard--sq .wcard-photo { aspect-ratio: 1 / 1; }
+  .wcard-caption {
+    margin-top: 22px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-size: 16.5px;
+    line-height: 1.55;
+    max-width: 34ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ============================================================
+     FEATURED PRODUCTS (SHOP) — a horizontally-scrolling rail rather
+     than a masonry grid, so it reads as a distinct "browse the shop"
+     moment rather than another editorial section, while still using
+     the same framed-card + zoom/shadow-hover language as everywhere
+     else. Arrow nav is a lighter-weight cousin of the hero carousel
+     above: paged one card at a time, no centre-focus scaling, no
+     infinite loop — reaching the real ends of a product rail is
+     normal, unlike the hero's deliberately looping strip.
+     ============================================================ */
+  .shop-rail-wrap { position: relative; }
+  .shop-rail {
+    display: flex;
+    gap: 22px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 4px 2px 8px;
+  }
+  .shop-rail::-webkit-scrollbar { display: none; }
+  .shop-card {
+    flex: 0 0 auto;
+    width: clamp(190px, 19vw, 246px);
+    scroll-snap-align: start;
+  }
+  .shop-card .wcard-photo { aspect-ratio: 1 / 1.08; }
+  .shop-price-tag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: 5px 10px;
+    border-radius: var(--radius-full);
+  }
+  .shop-caption { margin-top: 16px; text-align: left; }
+  .shop-caption-maker { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .62; }
+  .shop-caption-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 15px; line-height: 1.3; margin-top: 5px; }
+  .shop-arrow {
+    position: absolute;
+    top: calc(50% - 14px);
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-full);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-2);
+    color: var(--ink);
+    transition: background .15s, color .15s, box-shadow .15s;
+    z-index: 3;
+  }
+  .shop-arrow:hover { background: var(--ink); color: var(--paper); box-shadow: var(--shadow-3); }
+  .shop-arrow--prev { left: -10px; }
+  .shop-arrow--next { right: -10px; }
+  @media (max-width: 860px) { .shop-arrow { display: none; } }
+
+  /* ── DUOTONE "PHOTO" placeholders ── */
+  .ph-1 { background: radial-gradient(120% 140% at 20% 0%, #d97a4a 0%, #8a2d10 46%, #2c1206 100%); }
+  .ph-2 { background: radial-gradient(120% 140% at 80% 100%, #6f8a52 0%, #3d4a2a 50%, #14150c 100%); }
+  .ph-3 { background: radial-gradient(130% 130% at 50% 0%, #e0b06a 0%, #b38238 42%, #4a2f10 100%); }
+  .ph-4 { background: radial-gradient(120% 140% at 0% 100%, #c5491f 0%, #5c1c0a 55%, #180a04 100%); }
+  .ph-5 { background: radial-gradient(140% 140% at 100% 0%, #8a6a8f 0%, #4a3350 48%, #170f1c 100%); }
+  .ph-6 { background: radial-gradient(120% 130% at 50% 100%, #4d7a86 0%, #22424a 50%, #0c1a1d 100%); }
+  .ph-7 { background: radial-gradient(130% 140% at 20% 20%, #d4a75c 0%, #8a2d10 55%, #1c0d05 100%); }
+  .ph-8 { background: radial-gradient(120% 140% at 90% 90%, #7a9a72 0%, #2c3a1f 50%, #0d130a 100%); }
+  .ph-9 { background: radial-gradient(130% 140% at 40% 10%, #b95c3e 0%, #6b2c18 48%, #170a05 100%); }
+
+  /* ============================================================
+     3 — SECTION HEADER: centred title + subtitle
+     ============================================================ */
+  .band { padding: clamp(52px, 6.5vw, 88px) 0; }
+  .band--tint { background: var(--paper-deep); }
+  .band-head { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 46ch; margin: 0 auto clamp(30px, 4vw, 46px); }
+  .band-head h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(28px, 3.4vw, 40px); letter-spacing: -.015em; line-height: 1.1; }
+  .band-head h2 em { font-style: italic; color: var(--ochre); font-weight: 400; }
+  .band-head p.subtitle { margin-top: 14px; font-size: 15px; color: var(--mute); line-height: 1.6; }
+  .band-head a.view-all { margin-top: 18px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre); padding-bottom: 3px; border-bottom: 1px solid var(--ochre); }
+
+  /* ============================================================
+     1 & 2 — RANDOMISED MASONRY: a 3-column grid, always exactly two
+     rows, where each row's own shape is picked at random from three
+     row layouts — three squares, or a square+rectangle pair in
+     either order — by the JS at the bottom of the page. Card count
+     per section therefore varies (4–6) depending on what the two
+     rows rolled. Row height is content-driven, not forced.
+     ============================================================ */
+  .masonry-rand {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .wcard--rect { grid-column: span 2; }
+  .wcard--sq { grid-column: span 1; }
+  @media (max-width: 780px) {
+    .masonry-rand { grid-template-columns: 1fr; }
+    .wcard--rect, .wcard--sq { grid-column: span 1; }
+    .wcard--rect .wcard-photo, .wcard--sq .wcard-photo { aspect-ratio: 4/3; }
+  }
+
+  /* ============================================================
+     NEWSLETTER CTA — "Join the club": a real signup form on the
+     left, and on the right a single feature card (reusing the same
+     .wcard language as every other section) previewing whichever
+     Culture Drop edition is meant for this visitor. See the
+     geo-detection script at the bottom of the page.
+     ============================================================ */
+  .join-section { padding: clamp(56px, 7vw, 96px) 0; }
+  .join-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
+  /* A 1fr column's implicit minimum is `auto`, which resolves to the
+     widest min-content contribution among the column's items rather
+     than being capped at the available space — so on mobile (single
+     column) this grid was silently growing to whatever its widest
+     descendant needed and overflowing the page (confirmed: computed
+     grid-template-columns came back 468px against a 350px container).
+     min-width: 0 on the direct children overrides that per-item
+     minimum so the track actually respects the 1fr sizing. */
+  .join-grid > * { min-width: 0; }
+  @media (min-width: 900px) { .join-grid { grid-template-columns: 1.25fr 0.75fr; } }
+  .join-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); margin-bottom: 20px; }
+  .join-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(30px, 4vw, 48px); line-height: 1.2; letter-spacing: -.02em; max-width: 15ch; }
+  .join-title em { font-style: italic; color: var(--ochre); font-weight: 400; }
+  .join-form { margin-top: 32px; display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
+  .join-row { display: flex; gap: 14px; }
+  .join-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-full);
+    padding: 15px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .join-input::placeholder { color: var(--mute); }
+  .join-input:focus { outline: none; border-color: var(--ochre); }
+  .join-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .join-more {
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-full);
+    padding: 15px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: border-color .15s;
+  }
+  .join-more:hover { border-color: var(--ink); }
+  .join-submit {
+    border-radius: var(--radius-full);
+    padding: 15px 30px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    background: var(--ink);
+    color: var(--paper);
+    transition: opacity .2s;
+  }
+  .join-submit:hover { opacity: .85; }
+  .join-note { margin-top: 6px; font-size: 12px; color: var(--mute); }
+
+  /* A slight resting tilt + a heavier shadow than other cards sells
+     the "floating" feel — explicit hover rule keeps the tilt instead
+     of losing it to .wcard:hover's plain translateY. */
+  .join-feature { max-width: 300px; margin: 0 auto; transform: rotate(3deg); box-shadow: var(--shadow-2); }
+  .join-feature:hover { transform: rotate(3deg) translateY(-5px); box-shadow: var(--shadow-3); }
+  .join-feature .wcard-photo { aspect-ratio: 1 / 1.05; }
+  /* Narrower on phones — the rotation's own bounding-box growth was
+     tight against the viewport edge at the full 300px width (relying
+     on body's overflow-x:hidden alone would've just clipped the card's
+     corner/shadow instead of leaving it visibly clear of the edge). */
+  @media (max-width: 640px) { .join-feature { max-width: 230px; } }
+  .join-feature-badge {
+    display: block;
+    text-align: center;
+    margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* ============================================================
+     FOOTER — structurally borrowed from WePresent's own (newsletter +
+     socials up top, a row of big-serif link columns, a small centred
+     wordmark, one thin closing line) but in Moveee's own dark-ink/
+     paper palette rather than their navy, and closing the page as a
+     deliberate dark bookend against the dark full-bleed hero at the
+     very top — light content sandwiched between two dark moments.
+     ============================================================ */
+  .mfoot { background: var(--ink); color: var(--paper); padding: clamp(56px, 7vw, 100px) 0 0; }
+  .mfoot-inner { display: flex; flex-direction: column; gap: clamp(56px, 6vw, 90px); }
+
+  .mfoot-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 40px; }
+  .mfoot-newsletter { display: flex; flex: 1 1 320px; min-width: 300px; flex-direction: column; gap: 22px; }
+  .mfoot-newsletter h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(24px, 2.6vw, 32px); line-height: 1.25; letter-spacing: -.01em; }
+  .mfoot-newsletter h2 em { font-style: italic; font-weight: 400; color: var(--gold); }
+  .mfoot-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 480px; }
+  .mfoot-input {
+    /* min-width: 0 overrides the grid item's default `auto` minimum,
+       which otherwise defers to the <input>'s own content-based min
+       size and refuses to shrink the 1fr track below it — without
+       this, the form was overflowing its own container (and, via the
+       tilted card above, the whole page) on narrow phone widths. The
+       existing .join-input form elsewhere on the page already had
+       this; it was missed when this footer form was added. */
+    min-width: 0;
+    width: 100%;
+    height: 46px;
+    padding: 0 20px;
+    border: 1px solid rgba(243, 236, 224, .28);
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    transition: border-color .2s;
+    box-sizing: border-box;
+  }
+  .mfoot-input::placeholder { color: rgba(243, 236, 224, .5); }
+  .mfoot-input:focus { outline: none; border-color: var(--gold); }
+  .mfoot-input--email { grid-column: 1 / 3; }
+  .mfoot-form-actions { grid-column: 1 / 3; display: flex; flex-wrap: wrap; gap: 12px; }
+  .mfoot-btn-ghost {
+    border: 1px solid rgba(243, 236, 224, .28);
+    border-radius: var(--radius-full);
+    padding: 13px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    color: var(--paper);
+    transition: border-color .15s;
+  }
+  .mfoot-btn-ghost:hover { border-color: var(--paper); }
+  .mfoot-btn-filled {
+    border-radius: var(--radius-full);
+    padding: 13px 26px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    background: var(--ochre);
+    color: #f3ece0;
+    transition: opacity .2s;
+  }
+  .mfoot-btn-filled:hover { opacity: .85; }
+
+  .mfoot-social { display: flex; align-self: flex-end; gap: 12px; }
+  .mfoot-social a {
+    width: 42px; height: 42px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(243, 236, 224, .28);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: .02em;
+    color: var(--paper);
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .mfoot-social a:hover { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+
+  .mfoot-columns { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 48px; padding-top: clamp(40px, 5vw, 64px); border-top: 1px solid rgba(243, 236, 224, .14); }
+  .mfoot-column { display: flex; flex-direction: column; gap: 18px; min-width: 140px; }
+  .mfoot-column-label { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(243, 236, 224, .5); }
+  .mfoot-column ul { display: flex; flex-direction: column; gap: 10px; list-style: none; }
+  .mfoot-column a { font-family: 'Fraunces', serif; font-weight: 500; font-size: clamp(19px, 1.8vw, 23px); color: var(--paper); transition: color .15s; }
+  .mfoot-column a:hover { color: var(--gold); }
+
+  .mfoot-wordmark { text-align: center; font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; color: rgba(243, 236, 224, .45); }
+  .mfoot-wordmark span { color: var(--gold); }
+
+  .mfoot-bottom {
+    margin-top: clamp(40px, 5vw, 60px);
+    border-top: 1px solid rgba(243, 236, 224, .14);
+    padding: 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 11.5px;
+    color: rgba(243, 236, 224, .5);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .02em;
+  }
+
+  @media (max-width: 720px) {
+    .mfoot-columns { flex-direction: column; gap: 36px; }
+    .mfoot-social { align-self: flex-start; }
+    .mfoot-form { max-width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.001ms !important; scroll-behavior: auto !important; } }
+</style>
+
+<div class="concept-note">Design concept v3 — <b>not</b> live content · framed cards + masonry everywhere, centre-focus carousel, transparent auto-hide header</div>
+
+<div class="site-toolbar is-solid" id="siteToolbar">
+  <div class="toolbar-shell" id="toolbarShell">
+    <div class="toolbar-pill">
+      <button class="toolbar-icon" id="searchIcon" aria-label="Search">⚲</button>
+      <button class="toolbar-logo" id="toolbarToggle">moveee<span>.</span></button>
+      <span class="toolbar-icon toolbar-icon--menu" id="menuIcon">☰</span>
+    </div>
+  </div>
+</div>
+
+<div class="search-overlay" id="searchOverlay">
+  <div class="menu-overlay-bar">
+    <button class="toolbar-icon" id="searchClose" aria-label="Close search">✕</button>
+    <span class="toolbar-logo">moveee<span>.</span></span>
+    <span class="toolbar-icon" aria-hidden="true">⚲</span>
+  </div>
+  <div class="search-overlay-body">
+    <form onsubmit="return false">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search" autocomplete="off" />
+    </form>
+    <p class="search-hint">Try “Afrobeats”, “Lagos Fashion Week”, or an artist's name</p>
+  </div>
+</div>
+
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-overlay-bar">
+    <button class="toolbar-icon" id="menuClose" aria-label="Close menu">✕</button>
+    <span class="toolbar-logo">moveee<span>.</span></span>
+    <button class="toolbar-icon" id="menuCloseAlt" aria-label="Close menu">☰</button>
+  </div>
+  <div class="menu-overlay-body">
+    <div class="menu-grid">
+      <!-- Column 1 — regular menu items -->
+      <div>
+        <div class="menu-col-label">Menu</div>
+        <nav class="menu-nav-list">
+          <a href="#">Feed</a>
+          <a href="#" style="color:var(--ochre)">Editorials</a>
+          <a href="#">Discover</a>
+          <a href="#">Events</a>
+          <a href="#">Shop</a>
+          <a href="#">Newsletter</a>
+        </nav>
+      </div>
+
+      <!-- Column 2 — featured product (randomised on open) -->
+      <div>
+        <div class="menu-col-label">From the Shop</div>
+        <a class="wcard menu-feature-card" href="#" id="menuFeatureProduct"></a>
+      </div>
+
+      <!-- Column 3 — user quick profile menu -->
+      <div>
+        <div class="menu-col-label">Account</div>
+        <div class="menu-account-card">
+          <div class="menu-account-id">
+            <span class="menu-account-avatar">A</span>
+            <div>
+              <div class="menu-account-name">Ada Okafor</div>
+              <div class="menu-account-tier">Moveee Pro</div>
+            </div>
+          </div>
+          <div class="menu-account-links">
+            <a href="#">My Account</a>
+            <a href="#">Saved Stories</a>
+            <a href="#">Membership</a>
+            <a href="#">Settings</a>
+            <a href="#" class="danger">Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="menu-overlay-foot">Best in Culture</div>
+</div>
+
+<main>
+
+  <!-- ── FULL-BLEED OPENING HERO ──
+       Not static copy — this section is a single featured post (the
+       lead/cover story), same as the rest of the homepage pulls from a
+       content pool. Background is that post's own featured image;
+       kicker/title/dek are its category, headline, and excerpt. JS
+       below picks one and renders it in; the markup here is just the
+       skeleton + a no-JS fallback story so the section never renders
+       empty. -->
+  <a class="hero-full" id="heroFullLink" href="#" aria-label="Read the featured story">
+    <div class="hero-full-photo"><div class="hero-full-photo-fill ph-5" id="heroFullPhoto"></div></div>
+    <div class="hero-full-body">
+      <h1 id="heroFullTitle">Lagos, After the Rain</h1>
+      <p class="hero-full-byline" id="heroFullDek">A photo essay on the city's blue hour, when the markets reopen and the sound systems come back on.</p>
+    </div>
+    <div class="hero-full-scroll">
+      <span aria-label="Scroll to explore">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+  </a>
+
+  <!-- ── MASTHEAD + HERO CAROUSEL ── -->
+  <section class="masthead" id="mainMasthead">
+    <div class="wrap">
+      <h1>Best in <em>culture</em>,<br>every single week.</h1>
+      <p class="sub">An independent magazine for people who live for culture — reported from the cities, kitchens, and studios where it's actually made.</p>
+    </div>
+    <div class="index-strip">
+      <div class="carousel-track" id="carouselTrack">
+        <div class="strip-card"><a class="fcell frame--cream" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-1"></div></div><div class="fcell-kicker">Fashion</div><h3>The Gele Goes Global</h3><p class="dek">How a Yoruba headwrap became the season's most photographed silhouette.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--teal" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-2"></div></div><div class="fcell-kicker">Nightlife</div><h3>Lagos After Dark</h3><p class="dek">Inside the clubs redrawing the city's map after midnight.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--gold" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-3"></div></div><div class="fcell-kicker">Music</div><h3>Amapiano's Second Wave</h3><p class="dek">Producers in Pretoria bedrooms are rewriting the rules again.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--clay" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-4"></div></div><div class="fcell-kicker">Food</div><h3>The Recipe She Wouldn't Write Down</h3><p class="dek">A cook in Accra reconstructs a dish from memory alone.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--plum" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-5"></div></div><div class="fcell-kicker">Visuals</div><h3>Kingston, In Twelve Frames</h3><p class="dek">A decade-long study of dancehall's home city, shot on film.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--paper" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-6"></div></div><div class="fcell-kicker">Opinion</div><h3>Who Owns the Ankara Print?</h3><p class="dek">A textile historian traces one pattern's contested journey.</p></a></div>
+        <div class="strip-card"><a class="fcell frame--cream" href="#"><div class="fcell-photo"><div class="fcell-photo-fill ph-7"></div></div><div class="fcell-kicker">Portraits</div><h3>The Barbershop as Archive</h3><p class="dek">Three generations of one Brixton shop, told through its regulars.</p></a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURED STORIES ── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>The <em>Front</em> Page</h2>
+        <p class="subtitle">The strongest reporting and photography from the last two weeks, in one place.</p>
+        <a class="view-all" href="#">View all stories</a>
+      </div>
+      <div class="masonry-rand" data-cards="cards-featured"></div>
+    </div>
+  </section>
+
+  <!-- ── FEATURED PRODUCTS (SHOP) ── -->
+  <section class="band band--tint">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>From The <em>Shop</em></h2>
+        <p class="subtitle">Handmade pieces from Moveee's maker community — new drops, restocks, and one-offs.</p>
+        <a class="view-all" href="#">Shop all products</a>
+      </div>
+      <div class="shop-rail-wrap">
+        <button class="shop-arrow shop-arrow--prev" id="shopPrev" aria-label="Previous products">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="shop-rail" id="shopRail"></div>
+        <button class="shop-arrow shop-arrow--next" id="shopNext" aria-label="Next products">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── THE LANE ── -->
+  <section class="band band--tint">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>The <em>Lane</em></h2>
+        <p class="subtitle">Portraits from the people who make the culture, not just cover it.</p>
+      </div>
+      <div class="masonry-rand" data-cards="cards-lane"></div>
+    </div>
+  </section>
+
+  <!-- ── THE EDIT ── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>The <em>Edit</em></h2>
+        <p class="subtitle">The news, arguments, and small print worth knowing about this week.</p>
+        <a class="view-all" href="#">All news</a>
+      </div>
+      <div class="masonry-rand" data-cards="cards-edit"></div>
+    </div>
+  </section>
+
+  <!-- ── THE FREE CRITICS ── -->
+  <section class="band band--tint">
+    <div class="wrap">
+      <div class="band-head">
+        <h2>The Free <em>Critics</em></h2>
+        <p class="subtitle">Unbought, unfiltered verdicts on the films, books, and records everyone's asking about.</p>
+      </div>
+      <div class="masonry-rand" data-cards="cards-critics"></div>
+    </div>
+  </section>
+
+  <!-- ── OPINIONS & ESSAYS ── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <h2><em>Opinions</em> &amp; Essays</h2>
+        <p class="subtitle">Arguments worth having, from writers who'll actually take a side.</p>
+      </div>
+      <div class="masonry-rand" data-cards="cards-opinions"></div>
+    </div>
+  </section>
+
+  <!-- ── NEWSLETTER CTA — JOIN THE CLUB ── -->
+  <section class="join-section">
+    <div class="wrap">
+      <div class="join-grid">
+        <div>
+          <h3 class="join-title">Like our stories? You'll (probably) love <em>Culture Drop</em>.</h3>
+          <form class="join-form" onsubmit="return false">
+            <div class="join-row">
+              <input class="join-input" type="text" placeholder="First name" />
+              <input class="join-input" type="text" placeholder="Last name" />
+            </div>
+            <input class="join-input" type="email" placeholder="Your email address" />
+            <div class="join-actions">
+              <button class="join-submit" type="submit">Subscribe →</button>
+            </div>
+          </form>
+          <p class="join-note">Free · Weekly · Unsubscribe any time</p>
+        </div>
+
+        <div>
+          <span class="join-feature-badge" id="joinFeatureBadge">Latest Edition</span>
+          <!-- Populated by the geo-detection script below: on the real
+               site this reads the same x-vercel-ip-country edge header
+               / editionFromCountry() already used for /uk /us /africa,
+               not a client-side guess. -->
+          <a class="wcard join-feature" href="#" id="joinFeature"></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="mfoot">
+  <div class="wrap mfoot-inner">
+    <div class="mfoot-top">
+      <div class="mfoot-newsletter">
+        <h2>Stay close to <em>culture</em>.<br>Get our weekly dispatch.</h2>
+        <form class="mfoot-form" onsubmit="return false">
+          <input class="mfoot-input" type="text" placeholder="First name" />
+          <input class="mfoot-input" type="text" placeholder="Last name" />
+          <input class="mfoot-input mfoot-input--email" type="email" placeholder="Your email address" />
+          <div class="mfoot-form-actions">
+            <button class="mfoot-btn-filled" type="submit">Subscribe →</button>
+          </div>
+        </form>
+      </div>
+      <div class="mfoot-social">
+        <a href="#" aria-label="Moveee on Instagram">IG</a>
+        <a href="#" aria-label="Moveee on TikTok">TT</a>
+        <a href="#" aria-label="Moveee on X">X</a>
+      </div>
+    </div>
+
+    <div class="mfoot-columns">
+      <div class="mfoot-column">
+        <span class="mfoot-column-label">Explore</span>
+        <ul>
+          <li><a href="#">Magazine</a></li>
+          <li><a href="#">Shop</a></li>
+          <li><a href="#">Journeys</a></li>
+          <li><a href="#">Events</a></li>
+        </ul>
+      </div>
+      <div class="mfoot-column">
+        <span class="mfoot-column-label">Moveee</span>
+        <ul>
+          <li><a href="#">Discover</a></li>
+          <li><a href="#">Community</a></li>
+          <li><a href="#">Games</a></li>
+          <li><a href="#">Directory</a></li>
+        </ul>
+      </div>
+      <div class="mfoot-column">
+        <span class="mfoot-column-label">Company</span>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mfoot-wordmark">moveee<span>.</span></div>
+
+    <div class="mfoot-bottom">
+      <span>© Moveee Magazine — Homepage design concept v3</span>
+      <span>Best in Culture</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Keep the fixed header pinned just below the dev-only concept-note
+  // banner, whatever height it actually renders at — on a narrow phone
+  // width its long text wraps to 2-3 lines instead of one, and without
+  // this the fixed header (which floats at a constant viewport position
+  // no matter how tall the in-flow banner above it grows) would sit on
+  // top of that taller banner and have its search/menu icons blocked
+  // from clicks by the banner's own, higher stacking layer.
+  (function () {
+    var note = document.querySelector('.concept-note');
+    if (!note) return;
+    function measure() {
+      document.documentElement.style.setProperty('--concept-note-h', note.getBoundingClientRect().height + 'px');
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+  })();
+
+  // ── Randomised masonry: each .masonry-rand section always renders
+  // exactly two rows. Each row's shape is rolled independently from
+  // three layouts (three squares, or a square+rectangle pair in
+  // either order), so the card count per section (4–6) and the mix
+  // of square/rectangle cards varies on every load. Card background
+  // colour is also rolled per card, always from a pool of light
+  // pastel tones (never a dark shade).
+  (function () {
+    var ROW_LAYOUTS = {
+      '3sq': ['sq', 'sq', 'sq'],
+      'sq-rect': ['sq', 'rect'],
+      'rect-sq': ['rect', 'sq']
+    };
+    var LAYOUT_KEYS = Object.keys(ROW_LAYOUTS);
+
+    // Light pastel tones only — same family as the reference design,
+    // widened out so repeats are less likely across six cards.
+    var LIGHT_COLORS = [
+      '#dcdcda', // grey
+      '#d9e6a0', // sage
+      '#f0dda0', // gold
+      '#eeb49c', // terracotta
+      '#e3c9ae', // clay
+      '#f4c9d6', // pink
+      '#c9dce0', // blue-grey
+      '#e4d6f0'  // lavender
+    ];
+
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    var CARD_DATA = {
+      'cards-featured': [
+        { ph: 'ph-9', title: 'The Sound System Builders', dek: "Meet the engineers keeping Jamaica's analog tradition alive." },
+        { ph: 'ph-4', title: 'Return to Marrakech', dek: 'A writer retraces the journey her mother made north, forty years later.' },
+        { ph: 'ph-3', title: 'What the Runway Forgot', dek: "Lagos Fashion Week's quiet rebellion against the algorithm." },
+        { ph: 'ph-6', title: 'The Vinyl Diggers of Accra', dek: "Crates and back rooms where a city's record history survives." },
+        { ph: 'ph-7', title: 'Small Studios, Big Bets', dek: 'Three ateliers betting against fast fashion.' },
+        { ph: 'ph-8', title: 'Inside the Archive Nobody Was Meant to Find', dek: "A Ghanaian institution's decade-long fight to reclaim its own history." }
+      ],
+      'cards-lane': [
+        { ph: 'ph-4', title: 'Yejide', dek: 'A return to the compound where she was born.' },
+        { ph: 'ph-5', title: 'Themba', dek: 'Building instruments from scrap in a Soweto workshop.' },
+        { ph: 'ph-6', title: 'Aiyana', dek: 'Twenty years photographing one street in Brooklyn.' },
+        { ph: 'ph-1', title: 'Kwabena', dek: 'The last griot of his family line, in his own words.' },
+        { ph: 'ph-2', title: 'Selam', dek: 'A tailor’s hands, photographed over one working day.' },
+        { ph: 'ph-3', title: 'Nia', dek: "A choir director's Sunday morning ritual, unchanged in forty years." }
+      ],
+      'cards-edit': [
+        { ph: 'ph-7', title: 'The Museum That Refused to Wait for Restitution', dek: 'A Ghanaian institution built its own collection while the argument over stolen artifacts continues abroad.' },
+        { ph: 'ph-8', title: 'Afrobeats Streaming Payouts Rise', dek: 'Platforms move to a fairer split as African catalogues top the global charts.' },
+        { ph: 'ph-9', title: 'New UK Visa Route for Touring Artists', dek: 'A narrower path opens for musicians crossing the border to perform.' },
+        { ph: 'ph-1', title: 'The Independent Press Keeping Nairobi Honest', dek: 'One newsroom, no major backers, three award nominations this year.' },
+        { ph: 'ph-2', title: "Accra's Art Fair Doubles in Size", dek: 'Galleries from six countries return for a second edition.' },
+        { ph: 'ph-3', title: 'A Landmark Ruling on Sampling Rights Divides Producers', dek: 'A court decision upends twenty years of studio practice.' }
+      ],
+      'cards-critics': [
+        { ph: 'ph-4', title: 'Dele Weds Destiny', dek: 'A wedding comedy that knows exactly when to stop joking. ★★★★☆' },
+        { ph: 'ph-3', title: 'Water Under', dek: 'A debut novel about the Niger Delta that refuses easy grief. ★★★★★' },
+        { ph: 'ph-6', title: 'Homegoing, Reheated', dek: 'A revival that finds new urgency in an old script. ★★★☆☆' },
+        { ph: 'ph-9', title: 'Nectar', dek: 'A third full-length from a singer still finding her register. ★★★★☆' },
+        { ph: 'ph-1', title: 'The Beat Doctor', dek: "A weekly diagnosis of what's actually good in African hip-hop right now. ★★★★☆" },
+        { ph: 'ph-5', title: 'Sable', dek: "A travelling exhibition on Black designers finally gets the space it deserves. ★★★★★" }
+      ],
+      'cards-opinions': [
+        { ph: 'ph-3', title: 'Stop Calling It a Renaissance', dek: "By Folake Adeyemi. Culture didn't disappear before this; it was just uncovered." },
+        { ph: 'ph-4', title: 'The Diaspora Is Not a Focus Group', dek: 'By Marcus Whyte. What gets lost when heritage becomes a marketing category.' },
+        { ph: 'ph-5', title: 'In Defense of the Long Caption', dek: "By Ijeoma Nnadi. Why the internet's shortest form failed our stories." },
+        { ph: 'ph-6', title: 'My Father’s Music Was Never "World Music"', dek: 'By Teo Ribeiro. A reconsideration of a lazy record-store label.' },
+        { ph: 'ph-7', title: 'We Need to Talk About Gatekeeping', dek: "By Ngozi Achebe. Who decides what counts as 'authentic' culture, and why does it matter who's asking." },
+        { ph: 'ph-8', title: "The Playlist Isn't Curation", dek: 'By Samuel Okafor. Algorithms borrowed the language of taste without earning it.' }
+      ]
+    };
+
+    document.querySelectorAll('.masonry-rand').forEach(function (container) {
+      var pool = CARD_DATA[container.getAttribute('data-cards')];
+      if (!pool) return;
+
+      var row1 = ROW_LAYOUTS[pick(LAYOUT_KEYS)];
+      var row2 = ROW_LAYOUTS[pick(LAYOUT_KEYS)];
+      var shapes = row1.concat(row2);
+      var items = pool.slice(0, shapes.length);
+
+      container.innerHTML = items.map(function (item, i) {
+        var shape = shapes[i];
+        var color = pick(LIGHT_COLORS);
+        return '<a class="wcard wcard--' + shape + '" href="#" style="background:' + color + '">' +
+          '<div class="wcard-photo"><div class="wcard-photo-fill ' + item.ph + '"></div></div>' +
+          '<p class="wcard-caption">' + item.title + ' — ' + item.dek + '</p>' +
+          '</a>';
+      }).join('');
+    });
+  })();
+
+  // ── Opening hero: not static copy — it's a single featured post,
+  // same as everything else on this homepage pulls from a content
+  // pool (the real site would pass in that day's lead/cover story;
+  // here a small pool stands in and one is picked on load). Photo,
+  // kicker, title, dek, and the click-through link all come from
+  // whichever post is picked — none of it is hardcoded in the markup.
+  (function () {
+    var STORIES = [
+      { ph: 'ph-5', kicker: 'Visuals', title: 'Kingston, In Twelve Frames', dek: "A decade-long study of dancehall's home city, shot on film.", href: '/magazine/kingston-in-twelve-frames' },
+      { ph: 'ph-1', kicker: 'Fashion', title: 'The Gele Goes Global', dek: "How a Yoruba headwrap became the season's most photographed silhouette.", href: '/magazine/the-gele-goes-global' },
+      { ph: 'ph-2', kicker: 'Nightlife', title: 'Lagos After Dark', dek: "Inside the clubs redrawing the city's map after midnight.", href: '/magazine/lagos-after-dark' },
+      { ph: 'ph-4', kicker: 'Food', title: "The Recipe She Wouldn't Write Down", dek: 'A cook in Accra reconstructs a dish from memory alone.', href: '/magazine/the-recipe-she-wouldnt-write-down' },
+      { ph: 'ph-9', kicker: 'Music', title: "Amapiano's Second Wave", dek: 'Producers in Pretoria bedrooms are rewriting the rules again.', href: '/magazine/amapianos-second-wave' }
+    ];
+    var link = document.getElementById('heroFullLink');
+    var photo = document.getElementById('heroFullPhoto');
+    var titleEl = document.getElementById('heroFullTitle');
+    var dekEl = document.getElementById('heroFullDek');
+    if (!link) return;
+
+    var story = STORIES[Math.floor(Math.random() * STORIES.length)];
+    link.href = story.href;
+    if (photo) photo.className = 'hero-full-photo-fill ' + story.ph;
+    if (titleEl) titleEl.textContent = story.title;
+    if (dekEl) dekEl.textContent = story.dek;
+  })();
+
+  // ── Featured Products rail: a Monocle-style horizontal shop strip —
+  // arrow-paged one card at a time rather than centre-focus/looping
+  // like the hero carousel, since reaching the real ends of a product
+  // rail is expected, not something to hide with a fake infinite loop.
+  (function () {
+    var rail = document.getElementById('shopRail');
+    var prevBtn = document.getElementById('shopPrev');
+    var nextBtn = document.getElementById('shopNext');
+    if (!rail) return;
+
+    var SHOP_PRODUCTS = [
+      { ph: 'ph-7', title: 'Terracotta Vessel No. 4', maker: 'Studio Fern', price: '£68', color: '#eeb49c' },
+      { ph: 'ph-2', title: 'Woven Raffia Tote', maker: 'Kaya & Co', price: '£54', color: '#d9e6a0' },
+      { ph: 'ph-3', title: 'Brass Cuff, Hand-Cast', maker: 'Adeyemi Studio', price: '£92', color: '#f0dda0' },
+      { ph: 'ph-6', title: 'Indigo Wax-Print Scarf', maker: 'Ile Textiles', price: '£38', color: '#c9dce0' },
+      { ph: 'ph-1', title: 'Sun-Dried Clay Beads', maker: 'Moremi Co', price: '£24', color: '#e8c9b0' },
+      { ph: 'ph-5', title: 'Handwoven Kente Cushion', maker: 'Osei & Daughters', price: '£76', color: '#d9c6e0' },
+      { ph: 'ph-4', title: 'Cast-Iron Incense Holder', maker: 'Bàbá Forge', price: '£46', color: '#e0b8a8' },
+      { ph: 'ph-9', title: 'Hand-Dyed Linen Runner', maker: 'Àlàyà Textiles', price: '£58', color: '#f2d9a0' }
+    ];
+
+    rail.innerHTML = SHOP_PRODUCTS.map(function (p) {
+      return '<a class="wcard shop-card" href="#" style="background:' + p.color + '">' +
+        '<div class="wcard-photo"><div class="wcard-photo-fill ' + p.ph + '"></div><span class="shop-price-tag">' + p.price + '</span></div>' +
+        '<div class="shop-caption">' +
+          '<div class="shop-caption-maker">' + p.maker + '</div>' +
+          '<div class="shop-caption-title">' + p.title + '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    function step() {
+      var card = rail.querySelector('.shop-card');
+      var gap = parseFloat(getComputedStyle(rail).columnGap) || 22;
+      return card ? card.getBoundingClientRect().width + gap : 220;
+    }
+    if (prevBtn) prevBtn.addEventListener('click', function () { rail.scrollLeft -= step(); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { rail.scrollLeft += step(); });
+  })();
+
+  // ── Newsletter feature card: shows the Culture Drop edition meant
+  // for this visitor. This mockup approximates region from the
+  // browser's own timezone (Intl.DateTimeFormat), since a static
+  // page has no server request to read a real geo header from. The
+  // real site already has the correct mechanism for this — proxy.ts
+  // reads the `x-vercel-ip-country` edge header into
+  // editionFromCountry() to pick uk/us/africa/global (see the
+  // `moveee-edition` cookie / /uk /us /africa routes) — swap this
+  // detectEdition() for that server-resolved value when this is
+  // built for real, don't ship a timezone guess to production.
+  (function () {
+    var EDITIONS = {
+      uk: { kicker: 'UK Edition', title: 'Grime’s Quiet Comeback', dek: 'How a genre everyone declared dead is filling rooms again.', href: '/newsletter/uk', ph: 'ph-6', color: '#c9dce0' },
+      us: { kicker: 'US Edition', title: 'The Block Party Never Left', dek: "Why the backyard cookout is still American culture's most honest stage.", href: '/newsletter/us', ph: 'ph-3', color: '#f0dda0' },
+      africa: { kicker: 'Africa Edition', title: 'The Gele on the Global Stage', dek: 'How a Yoruba headwrap became the season’s most photographed silhouette.', href: '/newsletter/africa', ph: 'ph-1', color: '#d9e6a0' },
+      global: { kicker: 'Culture Drop', title: "This Week's Dispatch", dek: 'Culture, art, heritage, and the stories worth reading — curated from Lagos, London, Accra, and beyond.', href: '/newsletter', ph: 'ph-9', color: '#eeb49c' }
+    };
+
+    function detectEdition() {
+      try {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (/^Europe\//.test(tz)) return 'uk';
+        if (/^America\//.test(tz)) return 'us';
+        if (/^Africa\//.test(tz)) return 'africa';
+      } catch (e) {}
+      return 'global';
+    }
+
+    var card = document.getElementById('joinFeature');
+    var badge = document.getElementById('joinFeatureBadge');
+    if (!card) return;
+
+    var data = EDITIONS[detectEdition()];
+    card.href = data.href;
+    card.style.background = data.color;
+    card.innerHTML =
+      '<div class="wcard-photo"><div class="wcard-photo-fill ' + data.ph + '"></div></div>' +
+      '<p class="wcard-caption">' + data.title + ' — ' + data.dek + '</p>';
+    if (badge) badge.textContent = 'Latest Edition: ' + data.kicker;
+  })();
+
+  // ── Menu: a full-viewport overlay (fixed, outside document flow)
+  // rather than expanding the sticky pill's own box in place — the
+  // old approach grew the toolbar's in-flow height on open, which
+  // pushed the masthead content down underneath it.
+  (function () {
+    var overlay = document.getElementById('menuOverlay');
+    var toolbar = document.getElementById('siteToolbar');
+    var toggle = document.getElementById('toolbarToggle');
+    var menuIcon = document.getElementById('menuIcon');
+    var closeBtn = document.getElementById('menuClose');
+    var closeAltBtn = document.getElementById('menuCloseAlt');
+    if (!overlay) return;
+
+    // Column 3's featured product — reshuffled every time the menu opens.
+    var PRODUCTS = [
+      { ph: 'ph-7', title: 'Terracotta Vessel No. 4', maker: 'Studio Fern', price: '£68', color: '#eeb49c' },
+      { ph: 'ph-2', title: 'Woven Raffia Tote', maker: 'Kaya & Co', price: '£54', color: '#d9e6a0' },
+      { ph: 'ph-3', title: 'Brass Cuff, Hand-Cast', maker: 'Adeyemi Studio', price: '£92', color: '#f0dda0' },
+      { ph: 'ph-6', title: 'Indigo Wax-Print Scarf', maker: 'Ile Textiles', price: '£38', color: '#c9dce0' }
+    ];
+    var featureEl = document.getElementById('menuFeatureProduct');
+    function shuffleFeature() {
+      if (!featureEl) return;
+      var p = PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)];
+      featureEl.href = '#';
+      featureEl.style.background = p.color;
+      featureEl.innerHTML =
+        '<div class="wcard-photo"><div class="wcard-photo-fill ' + p.ph + '"></div></div>' +
+        '<p class="wcard-caption">' + p.title + ' — ' + p.maker + '</p>' +
+        '<div class="menu-feature-price">' + p.price + '</div>' +
+        '<span class="menu-feature-cta">Shop now →</span>';
+    }
+
+    function setOpen(open) {
+      overlay.classList.toggle('is-open', open);
+      document.documentElement.classList.toggle('menu-open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) {
+        shuffleFeature();
+        if (window.__closeSearchOverlay) window.__closeSearchOverlay();
+      }
+    }
+    function toggleOpen() { setOpen(!overlay.classList.contains('is-open')); }
+    window.__closeMenuOverlay = function () { setOpen(false); };
+
+    toggle.addEventListener('click', toggleOpen);
+    menuIcon.addEventListener('click', toggleOpen);
+    closeBtn.addEventListener('click', function () { setOpen(false); });
+    closeAltBtn.addEventListener('click', function () { setOpen(false); });
+    // Click the empty overlay background (not a nav link) to close.
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.closest('.menu-overlay-bar, .menu-overlay-foot')) {
+        if (!e.target.closest('a, button')) setOpen(false);
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setOpen(false);
+    });
+
+    var heroEl = document.querySelector('.hero-full');
+    var lastY = window.scrollY;
+    var ticking = false;
+    function update() {
+      var y = window.scrollY;
+      var heroBottom = heroEl ? heroEl.offsetTop + heroEl.offsetHeight : 400;
+      var inHero = y < heroBottom - 120;
+      // Hiding needs a small dead-zone so a stray 1-2px jitter doesn't hide
+      // it; returning on scroll-up is intentionally near-instant — but
+      // still wants a couple of px of dead-zone, not zero, otherwise a
+      // diagonal-trackpad wheel event that leaks 1px of vertical delta
+      // while the user is really just swiping the carousel horizontally
+      // was enough to pop the header back up deep inside that section
+      // and overlap the enlarged active card (see the carousel wheel
+      // handler below, which now also stops that leak at the source).
+      var scrollingDown = y > lastY + 6;
+      var scrollingUp = y < lastY - 2;
+
+      toolbar.classList.toggle('is-on-dark', inHero);
+
+      if (inHero) {
+        toolbar.classList.remove('is-hidden');
+        toolbar.classList.remove('is-solid');
+      } else if (scrollingUp) {
+        toolbar.classList.remove('is-hidden');
+        toolbar.classList.add('is-solid');
+      } else if (scrollingDown) {
+        toolbar.classList.add('is-hidden');
+      }
+      lastY = y;
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+    update();
+  })();
+
+  // ── Search: same full-viewport overlay pattern as the menu.
+  (function () {
+    var overlay = document.getElementById('searchOverlay');
+    var icon = document.getElementById('searchIcon');
+    var closeBtn = document.getElementById('searchClose');
+    var input = document.getElementById('searchInput');
+    if (!overlay || !icon) return;
+
+    function setOpen(open) {
+      overlay.classList.toggle('is-open', open);
+      document.documentElement.classList.toggle('menu-open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) {
+        if (window.__closeMenuOverlay) window.__closeMenuOverlay();
+        setTimeout(function () { if (input) input.focus(); }, 60);
+      } else if (input) {
+        input.value = '';
+      }
+    }
+    window.__closeSearchOverlay = function () { setOpen(false); };
+
+    icon.addEventListener('click', function () {
+      setOpen(!overlay.classList.contains('is-open'));
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function () { setOpen(false); });
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.closest('.menu-overlay-bar')) {
+        if (!e.target.closest('a, button, input')) setOpen(false);
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('is-open')) setOpen(false);
+    });
+  })();
+
+  // ── Hero carousel: centre-snap, closest-to-centre card scaled up,
+  // genuinely infinite in both directions. N clones of the tail are
+  // prepended and N clones of the head are appended (aria-hidden, not
+  // tabbable) so there's always something cropped at each edge; once
+  // scrolling settles inside a cloned region, the track silently jumps
+  // by exactly one full lap (realCards.length steps) to the matching
+  // real card — same scrollLeft-within-the-lap, so it's imperceptible.
+  (function () {
+    var track = document.getElementById('carouselTrack');
+    if (!track) return;
+    var realCards = Array.prototype.slice.call(track.querySelectorAll('.strip-card'));
+    // Centering any given card needs roughly 2 card-widths of *trailing*
+    // content after it (half the ~4-card-wide viewport on each side of
+    // the centered one) — the browser's native scrollLeft can never go
+    // past scrollWidth-clientWidth, so a card with less than that much
+    // real/clone content after it can never actually be centered. With
+    // only 2 clones (trailing count N-1=1), the first appended clone
+    // could never be centered, so the loop-jump condition below was
+    // simply never true and the user just hit the hard scroll wall. N=4
+    // gives 3 trailing cards past that clone — comfortably enough.
+    var N = 4;
+
+    function makeClone(source) {
+      var clone = source.cloneNode(true);
+      clone.classList.add('is-clone');
+      clone.setAttribute('aria-hidden', 'true');
+      Array.prototype.forEach.call(clone.querySelectorAll('a'), function (a) { a.tabIndex = -1; });
+      return clone;
+    }
+
+    realCards.slice(-N).forEach(function (c) { track.insertBefore(makeClone(c), track.firstChild); });
+    realCards.slice(0, N).forEach(function (c) { track.appendChild(makeClone(c)); });
+
+    var cards = Array.prototype.slice.call(track.querySelectorAll('.strip-card'));
+    var GAP = 20;
+    var LAP = realCards.length; // how many card-steps make one full loop
+
+    // Card width so the viewport shows exactly: half card | full | full
+    // (active, scaled up further by CSS) | full | half card. That's 4
+    // card-widths and 4 gaps across the container.
+    function layout() {
+      var containerW = track.parentElement.clientWidth;
+      var cardW = Math.max(180, (containerW - GAP * 4) / 4);
+      document.documentElement.style.setProperty('--carousel-card-w', cardW + 'px');
+      return cardW;
+    }
+
+    function updateActive() {
+      var trackRect = track.getBoundingClientRect();
+      var centerX = trackRect.left + trackRect.width / 2;
+      var closest = null, closestDist = Infinity, closestIndex = -1;
+      cards.forEach(function (c, i) {
+        var r = c.getBoundingClientRect();
+        var cx = r.left + r.width / 2;
+        var d = Math.abs(cx - centerX);
+        if (d < closestDist) { closestDist = d; closest = c; closestIndex = i; }
+      });
+      cards.forEach(function (c) { c.classList.toggle('is-active', c === closest); });
+      return closestIndex;
+    }
+
+    function positionOn(index) {
+      var cardW = layout();
+      var target = cards[index];
+      var trackRect = track.getBoundingClientRect();
+      var cardRect = target.getBoundingClientRect();
+      var currentOffset = cardRect.left - trackRect.left + track.scrollLeft;
+      var peek = cardW / 2; // exactly half a card left cropped at the edge
+      track.scrollLeft = Math.max(0, currentOffset - peek);
+      updateActive();
+    }
+
+    // Real cards occupy combined positions [N, N + LAP - 1]. Once
+    // scrolling settles with a clone centered (idx outside that range —
+    // only reachable at all because N leaves enough trailing content,
+    // see above), jump exactly one lap so the equivalent real card is
+    // centered in the identical spot — same relative scroll position,
+    // so nothing visibly moves.
+    var settleTimer;
+    function checkLoopJump() {
+      var idx = updateActive();
+      var step = cardW() + GAP;
+      if (idx < N) {
+        track.scrollLeft += LAP * step;
+      } else if (idx >= N + LAP) {
+        track.scrollLeft -= LAP * step;
+      }
+      updateActive();
+    }
+    function cardW() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-card-w')) || 0;
+    }
+
+    var raf;
+    track.addEventListener('scroll', function () {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(updateActive);
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(checkLoopJump, 120);
+    }, { passive: true });
+
+    // No JS wheel handler here on purpose — see the `overscroll-behavior:
+    // contain` rule on .carousel-track in the CSS above, which now does
+    // this job. A manual wheel handler was tried here first (redirecting
+    // horizontal-dominant deltaX into scrollLeft + preventDefault) and
+    // caused a real regression: intercepting every individual wheel tick
+    // broke native momentum/scroll-snap continuity, so an actual swipe's
+    // many small deltas each got resnapped back before the next tick
+    // arrived, netting zero movement — the carousel stopped responding
+    // to real trackpad swipes entirely. Don't reintroduce it.
+
+    window.addEventListener('resize', function () { positionOn(N); });
+    window.addEventListener('load', function () { positionOn(N); });
+    requestAnimationFrame(function () { positionOn(N); });
+  })();
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var reveal = document.querySelectorAll('.band');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.style.transition = 'opacity .6s ease, transform .6s ease';
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'none';
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    reveal.forEach(function (el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(18px)';
+      io.observe(el);
+    });
+  }
+</script>
