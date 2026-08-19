@@ -823,7 +823,7 @@ export const GET_FILTERS = `
     categories(where: { hideEmpty: true, orderby: COUNT, order: DESC }, first: 100) { nodes { name, slug } }
     industries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
     countries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
-    series(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+    series(where: { hideEmpty: true }, first: 100) { nodes { name, slug, description } }
   }
 `;
 
