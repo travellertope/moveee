@@ -15,7 +15,7 @@ interface CarouselStory {
 // .frame--* rules in homepage-v2.css) — derived from each card's own
 // position in the real (unrepeated) story list, so a clone always matches
 // its original's color.
-const FRAMES = ["frame--cream", "frame--teal", "frame--gold", "frame--clay", "frame--plum", "frame--paper"];
+const FRAMES = ["frame--peach", "frame--teal", "frame--gold", "frame--clay", "frame--plum", "frame--sky"];
 
 const GAP = 20;
 // Clones on each side. Centering any given card needs roughly 2 card-widths
