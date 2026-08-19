@@ -2168,6 +2168,47 @@ and dark WePresent-style footer were adopted **site-wide**, not just on the home
   masonry section card shapes, shop rail arrows, and the header's transparent-to-solid scroll
   transition in particular — in a real environment before considering this fully closed.
 
+### Homepage "Something went wrong" crash — an index lookup that could return `undefined` (fixed August 2026)
+
+After the WePresent homepage rebuild shipped, `/` served the `app/error.tsx` boundary
+("SOMETHING WENT WRONG / A brief interruption") on every visit while **every other route
+worked fine**. Root cause was one line in `apps/site/components/MasonryRandomSection.tsx`:
+
+```ts
+return layouts[seed % layouts.length] as any;   // ← can be undefined
+```
+called as `[...shapeForRow(row1Seed), ...shapeForRow(row2Seed)]`. `seed` is CMS-derived
+(`databaseId`, falling back to an id string's `.length`), so a missing or non-numeric
+`databaseId` makes the modulo `NaN`, `layouts[NaN]` is `undefined`, and **spreading
+`undefined` throws** `TypeError: ... is not iterable`. That killed the whole Server
+Components render. Fixed by making `shapeForRow` total (coerce the seed, fall back to
+layout 0 for any non-finite value) and filtering null entries out of `stories` first.
+
+**Three diagnosis traps this hit, worth internalising — they cost days:**
+1. **HTTP 200 proves nothing.** Streaming SSR commits the status before the render fails,
+   so Vercel logs showed `/ → 200` for every broken request. Don't rule out a server
+   crash because the status looks healthy.
+2. **A clean `next build` log proves nothing for a `force-dynamic` route.** The page body
+   never executes at build time — only at request time. The build being green was
+   meaningless here.
+3. **Production redacts the error.** Next.js strips Server Component error messages before
+   they reach the browser; the console only shows "An error occurred in the Server
+   Components render..." plus an opaque `digest`. Nothing anywhere printed the real cause.
+   `apps/site/instrumentation.ts` (`onRequestError`) now logs one greppable line per server
+   error — **search Vercel logs for `MOVEEE_SERVER_ERROR`** to get message, stack, route,
+   and digest. Reach for that first next time instead of guessing from stack traces.
+
+**What actually found it:** running `next dev` in the sandbox and requesting the page.
+Note the sandbox's blocked network is a *feature* here — it simulates total CMS failure —
+but an all-empty CMS response makes every one of these components early-return `null`, so
+that alone exercises almost nothing. The bug only surfaced after rendering the components
+against **deliberately hostile data** (missing `databaseId`, string/`NaN` ids, `null`
+`featuredImage.node`, absent `slug`) via a scratch page under an `APP_ROUTES`-allowed path.
+**If a homepage/section component needs debugging again, build that hostile-data page
+first** — clean mock data renders fine and proves nothing. Two gotchas when doing it: a
+route directory starting with `_` is a Next private folder and won't route, and `proxy.ts`
+301-redirects any first path segment not in its `APP_ROUTES` set.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
