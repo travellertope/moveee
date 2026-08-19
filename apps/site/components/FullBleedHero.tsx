@@ -11,7 +11,11 @@ export default function FullBleedHero({ story }: { story: any }) {
   const category = story.categories?.nodes?.[0]?.name || "Moveee Magazine";
   const image = story.featuredImage?.node?.sourceUrl || null;
   const alt = story.featuredImage?.node?.altText || story.title || "";
-  const excerpt = (story.excerpt || "").replace(/<[^>]*>/g, "").trim();
+  // `story.excerpt` isn't reliably a string — WPGraphQL can hand back a
+  // non-string truthy value for some posts, and `(x || "").replace` only
+  // guards against falsy `x`, not "truthy but not a string" (which crashed
+  // the whole homepage render — see CLAUDE.md's homepage-crash entry).
+  const excerpt = (typeof story.excerpt === "string" ? story.excerpt : "").replace(/<[^>]*>/g, "").trim();
 
   return (
     <Link href={`/magazine/${story.slug}`} className="hero-full" aria-label="Read the featured story">

@@ -23,7 +23,9 @@ export default function JoinSection({
   const copy = EDITION_COPY[edition] || EDITION_COPY.global;
   const image = featureStory?.featuredImage?.node?.sourceUrl || null;
   const alt = featureStory?.featuredImage?.node?.altText || featureStory?.title || "";
-  const excerpt = (featureStory?.excerpt || "").replace(/<[^>]*>/g, "").trim();
+  // See FullBleedHero.tsx's identical guard — `excerpt` isn't reliably a
+  // string, and `(x || "").replace` only catches falsy, not non-string.
+  const excerpt = (typeof featureStory?.excerpt === "string" ? featureStory.excerpt : "").replace(/<[^>]*>/g, "").trim();
 
   return (
     <section className="join-section">

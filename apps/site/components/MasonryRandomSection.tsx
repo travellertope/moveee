@@ -75,7 +75,10 @@ export default function MasonryRandomSection({
             const shape = shapes[i];
             const image = story.featuredImage?.node?.sourceUrl || null;
             const alt = story.featuredImage?.node?.altText || story.title || "";
-            const excerpt = (story.excerpt || "").replace(/<[^>]*>/g, "").trim();
+            // See FullBleedHero.tsx's identical guard — `excerpt` isn't
+            // reliably a string, and `(x || "").replace` only catches
+            // falsy, not non-string, which crashed the homepage render.
+            const excerpt = (typeof story.excerpt === "string" ? story.excerpt : "").replace(/<[^>]*>/g, "").trim();
             return (
               <Link
                 key={story.slug || story.id}

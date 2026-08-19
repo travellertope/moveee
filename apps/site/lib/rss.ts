@@ -24,8 +24,8 @@ export function buildNewsletterRssFeed(
   const items = issues
     .map((issue) => {
       const link = `${FRONTEND_URL}/newsletter/${issue.slug}`;
-      const title = (issue.title || "").replace(/<[^>]*>/g, "");
-      const description = (issue.excerpt || "")
+      const title = (typeof issue.title === "string" ? issue.title : "").replace(/<[^>]*>/g, "");
+      const description = (typeof issue.excerpt === "string" ? issue.excerpt : "")
         .replace(/<!--more[^>]*-->/gi, "")
         .replace(/<!--\s*\/?wp:more[^>]*-->/gi, "");
       const content = issue.content || "";

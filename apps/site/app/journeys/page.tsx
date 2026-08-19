@@ -41,7 +41,10 @@ export default async function OriginsPage() {
   const featuredJourney = journeys.find(j => j.journeyStatus === "active") || journeys[0];
   const completedCount = journeys.filter(j => j.journeyStatus === "completed").length;
 
-  const stripHtml = (html: string) => html?.replace(/<[^>]*>/g, "").trim() || "";
+  // `?.` only guards null/undefined — a truthy non-string `html` (seen from
+  // the CMS in production, see CLAUDE.md's homepage-crash entry) would
+  // still throw on `.replace`, so check the type explicitly.
+  const stripHtml = (html: unknown) => (typeof html === "string" ? html : "").replace(/<[^>]*>/g, "").trim();
 
   return (
     <div className="origins-page">
