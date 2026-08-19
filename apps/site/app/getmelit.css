@@ -15,7 +15,7 @@
    word, small muted subtitle underneath. ── */
 .gml-hero {
   background: var(--paper);
-  padding: clamp(72px, 11vw, 148px) 0 clamp(56px, 7vw, 84px);
+  padding: clamp(72px, 11vw, 148px) 0 clamp(32px, 4vw, 48px);
   text-align: center;
 }
 .gml-hero-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
@@ -78,7 +78,7 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
 .gml-hero-submit:hover { opacity: .7; }
 
 /* ── TODAY'S STORY — manuscript page ── */
-.gml-today { background: var(--paper); padding: clamp(48px, 7vw, 90px) 0 clamp(64px, 8vw, 110px); position: relative; }
+.gml-today { background: var(--paper); padding: clamp(24px, 3vw, 40px) 0 clamp(64px, 8vw, 110px); position: relative; }
 .gml-today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 44px; flex-wrap: wrap; }
 .gml-today-eyebrow { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
 .gml-today-day { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
