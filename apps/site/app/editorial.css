@@ -56,6 +56,18 @@
   width: 100%;
   min-height: 60vh;
   min-height: max(60vh, 500px);
+  /* The site-wide `* { box-sizing: border-box }` reset means padding
+     alone can't grow this box past its min-height — it just eats into
+     the content area. .ar-hero-text is bottom-anchored (justify-content:
+     flex-end) and a long headline can already sit fairly close to the
+     top of the box, so pushing .ar-breadcrumb--overlay's own content
+     down (see --header-clear above) without also growing this min-height
+     just moves the breadcrumb *into* space the title was already tightly
+     using, instead of the whole hero gaining real extra room. Bumping
+     min-height by the same amount pushes the bottom-anchored content
+     down together with the breadcrumb, so they stop competing for the
+     same space. */
+  min-height: calc(max(60vh, 500px) + var(--header-clear, 96px));
   overflow: hidden;
   background: linear-gradient(160deg, #3d3020, #14110d 60%);
   display: flex;
