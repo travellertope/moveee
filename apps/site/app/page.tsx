@@ -45,8 +45,11 @@ export const metadata: Metadata = {
   },
 };
 
-function stripHtml(html: string) {
-  return (html || "").replace(/<[^>]*>/g, "").trim();
+function stripHtml(html: unknown) {
+  // `(x || "").replace` only guards against falsy `x` — a truthy
+  // non-string value (seen from the CMS in production) still throws on
+  // `.replace`. See CLAUDE.md's homepage-crash entry.
+  return (typeof html === "string" ? html : "").replace(/<[^>]*>/g, "").trim();
 }
 
 interface HomeSections {

@@ -88,7 +88,7 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
           {filtered.map(entry => {
             const type = entry.cultureDirectoryTypes?.nodes?.[0];
             const img = entry.featuredImage?.node?.sourceUrl;
-            const rawExcerpt = (entry.excerpt ?? '').replace(/<[^>]*>/g, '').trim();
+            const rawExcerpt = (typeof entry.excerpt === 'string' ? entry.excerpt : '').replace(/<[^>]*>/g, '').trim();
             const excerpt = rawExcerpt.length > 120 ? rawExcerpt.slice(0, 120) + '…' : rawExcerpt;
 
             return (

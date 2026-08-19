@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       title: entry.title ?? "",
       // Strip HTML tags from excerpt — the form textarea is plain text
-      excerpt: (entry.excerpt ?? "").replace(/<[^>]*>/g, "").trim(),
+      excerpt: (typeof entry.excerpt === "string" ? entry.excerpt : "").replace(/<[^>]*>/g, "").trim(),
       content: entry.content ?? "",
       entryType: entry.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "concept",
       slug: entry.slug,

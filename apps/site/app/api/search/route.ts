@@ -147,7 +147,8 @@ export async function GET(req: NextRequest) {
 
   const community: any[] = (communityResult.status === 'fulfilled' ? communityResult.value : [])
     .map((p: any) => {
-      const text = (p.content?.rendered ?? '').replace(/<[^>]+>/g, '').trim();
+      const rendered = p.content?.rendered;
+      const text = (typeof rendered === 'string' ? rendered : '').replace(/<[^>]+>/g, '').trim();
       return {
         id:    p.id,
         title: text.slice(0, 80) + (text.length > 80 ? '…' : ''),

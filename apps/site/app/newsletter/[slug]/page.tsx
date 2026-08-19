@@ -171,7 +171,7 @@ export default async function GmlIssuePage({
   const seenTitles: string[] = [];
   const editionsByTitle: Record<string, { slug: string; segment: string; label: string }[]> = {};
   for (const n of allIssues) {
-    const t = decodeEntities((n.title || "").replace(/<[^>]*>/g, "")).trim();
+    const t = decodeEntities((typeof n.title === "string" ? n.title : "").replace(/<[^>]*>/g, "")).trim();
     if (!editionsByTitle[t]) {
       seenTitles.push(t);
       editionsByTitle[t] = [];
@@ -186,7 +186,7 @@ export default async function GmlIssuePage({
   const uniqueCount = seenTitles.length;
 
   // For the current issue, figure out its canonical title so we know which group to look in.
-  const currentTitle = decodeEntities((issue.title || "").replace(/<[^>]*>/g, "")).trim();
+  const currentTitle = decodeEntities((typeof issue.title === "string" ? issue.title : "").replace(/<[^>]*>/g, "")).trim();
 
   // Geo-based auto-redirect: if this issue has regional editions and the current slug isn't
   // the right one for the viewer's location, send them to the matching edition silently.

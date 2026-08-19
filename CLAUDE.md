@@ -2209,6 +2209,35 @@ first** — clean mock data renders fine and proves nothing. Two gotchas when do
 route directory starting with `_` is a Next private folder and won't route, and `proxy.ts`
 301-redirects any first path segment not in its `APP_ROUTES` set.
 
+**This fix was incomplete — the crash kept recurring after it shipped (fixed for real,
+same day).** The `MOVEEE_SERVER_ERROR` marker the fix above added did its job: pulling the
+actual Vercel log entry for a request that still hit the error boundary post-deploy showed
+a **different** `TypeError`, not the `shapeForRow` one:
+```
+TypeError: ((intermediate value) || "").replace is not a function
+```
+Root cause was the same class of bug, one field over: `FullBleedHero.tsx`, `JoinSection.tsx`,
+and `MasonryRandomSection.tsx` all rendered `(story.excerpt || "").replace(/<[^>]*>/g,
+"")` directly in JSX (not inside `loadHomeSections()`'s try/catch, which only wraps the
+data-fetch phase — a throw during render itself is never caught by it). `x || ""` only
+substitutes the fallback when `x` is falsy; if `excerpt` comes back from WPGraphQL as a
+**truthy non-string** value for some post (seen in production), `.replace` doesn't exist on
+it and throws, same "kills the whole Server Components render" outcome as the first bug.
+Fixed by checking the type explicitly — `typeof x === "string" ? x : ""` — in all three
+components, `app/page.tsx`'s own `stripHtml()`, and every other place in the codebase with
+the identical fragile pattern found by grepping for it repo-wide: the newsletter reader's
+two title-strip call sites and `lib/rss.ts` (`apps/site/app/newsletter/[slug]/page.tsx`),
+`app/journeys/page.tsx`'s local `stripHtml`, two API routes (`api/search`,
+`api/directory/entry`), and `packages/shared/components/DirectoryGrid.tsx` — all take
+CMS-sourced excerpt/content/title fields and were equally exposed, just hadn't crashed
+(yet) in production. **`(x || "").replace(...)` (or `?.replace`, or `(x ?? "").replace`)
+on any CMS-sourced field is not a safe idiom in this codebase** — WPGraphQL fields here
+have demonstrably come back as truthy-but-non-string at least once; always guard with an
+explicit `typeof x === "string"` check instead of relying on `||`/`??`/`?.` alone.
+**Lesson for next time this class of bug is suspected**: a fix that only addresses the
+one stack trace you have doesn't mean the bug class is gone — grep for the same fragile
+pattern repo-wide before considering it closed, the same way this pass eventually did.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
