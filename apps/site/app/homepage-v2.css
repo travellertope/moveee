@@ -56,11 +56,46 @@
 .hero-full-photo { position: absolute; inset: 0; background: var(--ink); }
 .hero-full-photo img { width: 100%; height: 100%; object-fit: cover; }
 .hero-full-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,7,4,.15) 0%, rgba(10,7,4,.1) 40%, rgba(10,7,4,.55) 82%, rgba(10,7,4,.78) 100%); }
+/* .hero-full-linklayer wraps the photo + body (see FullBleedHero.tsx) —
+   display:contents means it generates no box of its own, so its children
+   lay out exactly as if they were direct flex children of .hero-full, and
+   HeroScrollButton (rendered after it, a true DOM sibling) keeps sitting
+   in the same bottom flex slot it always has. */
+.hero-full-linklayer { display: contents; }
 .hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
 .hero-full-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(243,236,224,.78); margin-bottom: 22px; }
-.hero-full h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(36px, 6.5vw, 88px); line-height: .96; letter-spacing: -.03em; color: #f3ece0; text-wrap: balance; }
+/* Layered shadow (a tight near-black pass for edge definition + a softer,
+   wider pass for general legibility) so the title stays readable over any
+   photo — a bright sky, a pale wall, a face lit from the front — not just
+   the darker lower-2/3 the .hero-full-photo::after gradient already
+   covers well. */
+.hero-full h1 {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: clamp(36px, 6.5vw, 88px);
+  line-height: .96;
+  letter-spacing: -.03em;
+  color: #f3ece0;
+  text-wrap: balance;
+  text-shadow: 0 1px 3px rgba(0,0,0,.55), 0 8px 28px rgba(0,0,0,.4);
+}
 .hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(243,236,224,.82); }
-.hero-full-scroll { position: relative; display: flex; align-items: center; justify-content: center; padding-bottom: clamp(22px, 4vw, 40px); }
+.hero-full-scroll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: clamp(22px, 4vw, 40px);
+  /* Button resets — .hero-full-scroll used to be a plain <div>, now a
+     <button> (see HeroScrollButton.tsx) so it can actually handle a click
+     without being nested inside the article-navigation <a>. */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
 .hero-full-scroll span { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); border: 1px solid rgba(243,236,224,.4); color: #f3ece0; animation: hero-bounce 2.1s ease-in-out infinite; transition: border-color .15s; }
 .hero-full:hover .hero-full-scroll span { border-color: rgba(243,236,224,.8); }
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
