@@ -9,6 +9,8 @@ import SeriesLandingPage from "@/components/SeriesLandingPage";
 import "../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { type EditionSlug } from "@/lib/editions";
+import { tileMasonryShapes } from "@/lib/masonryShapes";
+import { colorForCard } from "@/lib/cardColors";
 
 interface MagazineArchiveProps {
   category?: string;
@@ -160,42 +162,40 @@ export default async function MagazineArchiveWrapper({
             />
           )}
           {stories.length > 0 ? (
-            <div className="mg-filtered-grid">
-                {stories.map((story) => (
-                  <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-card">
-                    <div className="mg-card-img">
-                      {story.featuredImage?.node?.sourceUrl ? (
-                        <Image
-                          src={story.featuredImage.node.sourceUrl}
-                          alt={story.title}
-                          fill
-                          style={{ objectFit: "cover" }}
-                        />
+            // Same randomised-but-deterministic masonry treatment as the
+            // homepage sections (MasonryRandomSection/homepage-v2.css) —
+            // tileMasonryShapes() is the open-ended-list generalisation of
+            // that component's own shapeForRow() (which only ever sizes a
+            // fixed one-or-two-row preview, not an arbitrary-length listing
+            // page). Title-only cards, matching the homepage exactly —
+            // the previous per-card category kicker/excerpt/date is
+            // dropped, same simplification already made there.
+            <div className="masonry-rand">
+              {tileMasonryShapes(stories).map(({ item: story, shape }) => {
+                const image = story.featuredImage?.node?.sourceUrl || null;
+                const alt = story.featuredImage?.node?.altText || story.title || "";
+                return (
+                  <Link
+                    key={story.id}
+                    href={`/magazine/${story.slug}`}
+                    className={`wcard wcard--${shape}`}
+                    style={{ background: colorForCard(story.databaseId ?? story.id) }}
+                  >
+                    <div className="wcard-photo">
+                      {image ? (
+                        <img src={image} alt={alt} />
                       ) : (
                         <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                       )}
                     </div>
-                    <div className="mg-card-body">
-                      <div className="mg-card-kicker">
-                        {decodeHtml(story.categories?.nodes[0]?.name || "Article")}
-                      </div>
-                      <h4
-                        className="mg-card-title"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                      />
-                      <div
-                        className="mg-card-desc"
-                        dangerouslySetInnerHTML={{
-                          __html: sanitizeHtml(story.excerpt?.replace(/<[^>]*>/g, "") || ""),
-                        }}
-                      />
-                      <div className="mg-card-date">
-                        {new Date(story.date).toLocaleDateString("en-GB")}
-                      </div>
-                    </div>
+                    <p
+                      className="wcard-caption"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
+                    />
                   </Link>
-                ))}
-              </div>
+                );
+              })}
+            </div>
           ) : (
             <p className="mg-empty">No stories found with this filter constraint.</p>
           )}

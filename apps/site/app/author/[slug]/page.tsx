@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import "@/app/magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
+import { tileMasonryShapes } from "@/lib/masonryShapes";
+import { colorForCard } from "@/lib/cardColors";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -105,43 +107,34 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
         </div>
 
         {stories.length > 0 ? (
-          <div className="mg-filtered-grid">
-            {stories.map((story: any) => (
-              <Link key={story.id} href={`/magazine/${story.slug}`} className="mg-card">
-                <div className="mg-card-img">
-                  {story.featuredImage?.node?.sourceUrl ? (
-                    <Image
-                      src={story.featuredImage.node.sourceUrl}
-                      alt={story.featuredImage.node.altText || story.title}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                  )}
-                </div>
-                <div className="mg-card-body">
-                  <div className="mg-card-kicker">
-                    {decodeHtml(story.categories?.nodes?.[0]?.name || "Article")}
+          // Same masonry treatment as the homepage sections and the
+          // category/industry/country/tag archives — see
+          // MagazineArchiveWrapper.tsx for the full rationale.
+          <div className="masonry-rand">
+            {tileMasonryShapes(stories).map(({ item: story, shape }: any) => {
+              const image = story.featuredImage?.node?.sourceUrl || null;
+              const alt = story.featuredImage?.node?.altText || story.title || "";
+              return (
+                <Link
+                  key={story.id}
+                  href={`/magazine/${story.slug}`}
+                  className={`wcard wcard--${shape}`}
+                  style={{ background: colorForCard(story.databaseId ?? story.id) }}
+                >
+                  <div className="wcard-photo">
+                    {image ? (
+                      <img src={image} alt={alt} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                    )}
                   </div>
-                  <h4
-                    className="mg-card-title"
+                  <p
+                    className="wcard-caption"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
                   />
-                  {story.excerpt && (
-                    <div
-                      className="mg-card-desc"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…"),
-                      }}
-                    />
-                  )}
-                  <div className="mg-card-date">
-                    {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <p className="mg-empty">No stories published yet.</p>

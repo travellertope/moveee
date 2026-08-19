@@ -125,6 +125,22 @@ body {
     radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
 }
 
+/* The site-wide header (header.css's .site-toolbar) is `position: fixed`,
+   so it never reserves layout space of its own — every inner page's
+   content used to start flush at the very top of the viewport, right
+   under the floating pill, so whatever sat in that top ~70px (nav tabs,
+   filter pills, page titles) rendered partially hidden behind it. Only
+   the homepage is meant to have content flush behind the header — its
+   .hero-full is a deliberate full-bleed photo the header floats
+   transparently over (see Header.tsx's own hero-detection effect). Every
+   other page gets this padding instead. `main:has(> .hpv2)` targets
+   exactly the real homepage (app/page.tsx's root element), which is the
+   only page whose direct child under <main> should get flush 0 padding —
+   this is a plain CSS exemption (no client JS/hydration involved, so
+   there's no flash-of-wrong-spacing on first paint either way). */
+main { padding-top: 96px; }
+main:has(> .hpv2) { padding-top: 0; }
+
 /* Subtle paper grain */
 body::before {
   content: '';

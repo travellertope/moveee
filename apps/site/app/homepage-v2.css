@@ -195,7 +195,11 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
   .wcard--rect, .wcard--sq { grid-column: span 1; }
   .wcard--rect .wcard-photo, .wcard--sq .wcard-photo { aspect-ratio: 4/3; }
 }
-.wcard { display: block; border-radius: 22px; padding: 18px 18px 34px; color: var(--ink); box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
+/* text-decoration: none set directly here (not just relying on the .hpv2 a
+   reset above) — .wcard is also reused outside .hpv2, on the magazine
+   category/industry/country/tag filtered listing pages
+   (MagazineArchiveWrapper.tsx), which have no such reset of their own. */
+.wcard { display: block; border-radius: 22px; padding: 18px 18px 34px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
 .wcard:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
 .wcard-photo { position: relative; width: 100%; border-radius: 13px; overflow: hidden; background: var(--ink); }
 .wcard-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
