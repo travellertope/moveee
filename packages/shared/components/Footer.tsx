@@ -8,6 +8,14 @@ import SubscribeForm from "@/components/SubscribeForm";
 
 const EDITION_ORDER = ["global", "uk", "us", "africa"] as const;
 
+// Community/auth routes don't exist in apps/site — proxy.ts 308-redirects
+// every one of them (see its `connectPrefixes` array) to Site B. A Next
+// <Link> to one of these is therefore wrong twice over: Next prefetches it
+// as `/feed?_rsc=…`, which 308s cross-origin and dies on CORS ("No
+// 'Access-Control-Allow-Origin' header"), and clicking it costs a wasted
+// round-trip through the redirect. Link them straight at Site B instead.
+const CONNECT_URL = "https://web.themoveee.com";
+
 // Site-wide footer, rebuilt from mockups/web/moveee_homepage_wepresent_concept.html
 // (WePresent's own structure: newsletter + socials up top, big-serif link
 // columns, a small centred wordmark, one thin closing line) in Moveee's own
@@ -76,17 +84,17 @@ const Footer = () => {
               <li><Link href="/newsletter">Newsletter</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
               <li><Link href="/visuals">Visuals</Link></li>
-              <li><Link href="/quotes">Quotes</Link></li>
+              <li><a href={`${CONNECT_URL}/quotes`}>Quotes</a></li>
             </ul>
           </div>
           <div className="mfoot-column">
             <span className="mfoot-column-label">Moveee</span>
             <ul>
-              <li><Link href="/feed">Feed</Link></li>
-              <li><Link href="/connect/people">People Near Me</Link></li>
-              <li><Link href="/events">Happenings</Link></li>
-              <li><Link href="/directory">Culture Directory</Link></li>
-              <li><Link href="/games">Games</Link></li>
+              <li><a href={`${CONNECT_URL}/feed`}>Feed</a></li>
+              <li><a href={`${CONNECT_URL}/connect/people`}>People Near Me</a></li>
+              <li><a href={`${CONNECT_URL}/events`}>Happenings</a></li>
+              <li><a href={`${CONNECT_URL}/directory`}>Culture Directory</a></li>
+              <li><a href={`${CONNECT_URL}/games`}>Games</a></li>
               <li><Link href="/shop">Shop</Link></li>
             </ul>
           </div>
