@@ -152,17 +152,19 @@
   .masthead-bar-left span + span { margin-left: 24px; }
   .masthead-bar-right span + span { margin-left: 24px; }
 
-  .masthead {
-    background: var(--paper);
-    border-bottom: 2px solid var(--rule);
-    padding: 32px 56px;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 40px;
-    position: relative;
-    z-index: 3;
-  }
+  /* .masthead itself (the old top-nav grid: logo/left-nav/right-nav) is
+     removed — Header.tsx's own rebuild dropped this bar entirely (see its
+     top comment) and this class name silently collided with the *new*,
+     unrelated `.masthead` welcome-text-and-carousel section added in
+     homepage-v2.css/page.tsx, which inherited `display: grid;
+     grid-template-columns: 1fr auto 1fr` from here since homepage.css loads
+     first and homepage-v2.css never redeclared `display` — squeezing the
+     hero title into a narrow grid column beside the carousel instead of
+     stacking them. .masthead-left/-right/-bar/-icon-btn/etc. below are
+     kept (dead, but harmless — no colliding class name), same "leave
+     unused CSS in case needed again" convention as the rest of this file.
+     If `.masthead` styling is ever needed again here, give it a new,
+     non-colliding class name instead of restoring this one. */
 
   .masthead-left, .masthead-right {
     display: flex;
@@ -1935,11 +1937,9 @@
 
     /* Masthead: logo left-aligned + icons + hamburger on mobile */
     .masthead-left, .masthead-right { display: none; }
-    .masthead {
-      grid-template-columns: 1fr auto;
-      padding: 14px 20px;
-      gap: 0;
-    }
+    /* .masthead override removed — see the dead-code note where the base
+       .masthead rule used to be, above; this mobile override collided with
+       the new homepage section the same way. */
     .wordmark {
       align-items: flex-start;
       text-align: left;
@@ -1951,12 +1951,11 @@
   }
 
   @media (max-width: 640px) {
-    .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 16px; padding-right: 16px; }
+    .container, .hero, .pillar, .connect, footer, .masthead-bar { padding-left: 16px; padding-right: 16px; }
     .masthead-mobile-actions { gap: 6px; }
     .masthead-mobile-actions .masthead-icon-btn:not(.mobile-avatar-btn) { padding: 5px; }
     .mobile-header-signin { padding: 5px 10px; font-size: 11px; }
     .mobile-header-join { padding: 5px 10px; font-size: 11px; }
-    .masthead { padding: 12px 16px; }
     .wordmark img { height: 24px !important; }
     .wordmark .kicker { display: none; }
     .mobile-menu-links a { padding: 14px 20px; font-size: 14px; }
