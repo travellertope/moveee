@@ -1,77 +1,160 @@
 import React from "react";
-import MagazineArchiveWrapper from "./magazine/MagazineArchiveWrapper";
 import { Metadata } from "next";
 import { headers, cookies } from "next/headers";
-import { editionFromCountry, isValidRegionalSlug } from "@/lib/editions";
+import { editionFromCountry, isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
+import { fetchHomepageData } from "@/lib/fetchHomepageData";
+import { getMagazineSections } from "@/lib/wp";
+import FullBleedHero from "@/components/FullBleedHero";
+import HeroCarousel from "@/components/HeroCarousel";
+import MasonryRandomSection from "@/components/MasonryRandomSection";
+import ShopRail from "@/components/ShopRail";
+import JoinSection from "@/components/JoinSection";
 
-// Reads geo/cookie headers to scope the front page to the visitor's edition
-// (see the `edition` prop below) — can't be statically rendered/ISR'd like
-// a plain page. The underlying WP data fetches still cache in Vercel KV
-// (see getWPData's own TTL handling), so this stays cheap despite being
-// dynamic — same pattern /newsletter already uses for the same reason.
+// Homepage rebuild (WePresent concept, see
+// mockups/web/moveee_homepage_wepresent_concept.html) — live at `/`,
+// replacing the temporary Magazine-archive swap that used to render here
+// (that swap and the old real homepage that lived at `/app` are both
+// retired by this file; `/app` no longer exists as a route).
+//
+// Edition detection is the same pattern the temporary swap used: the
+// `moveee-edition` cookie (kept in sync with EDITION_COOKIE in proxy.ts)
+// takes priority, falling back to `x-vercel-ip-country` via
+// editionFromCountry(). The geo-redirect that used to send UK/US/Africa
+// visitors to /uk /us /africa is still disabled in proxy.ts, so this is
+// the only place that scoping happens for the front page.
 export const dynamic = "force-dynamic";
 
-// TEMPORARY: the Magazine archive is standing in as the site's front page
-// until the Moveee app is accepted in the Play Store — see `app/app/page.tsx`
-// for where the real homepage (HomepageContent) moved to in the meantime.
-// To swap back: restore this file to what `app/app/page.tsx` currently has,
-// and restore `app/app/page.tsx` (or delete it) — plus flip the `robots`/
-// `alternates.canonical` values back and remove the `mg-page-white` wrapper
-// below (that class exists to paint the sitewide body-grain texture white,
-// same as `app/magazine/layout.tsx` does for every other /magazine route —
-// this page isn't nested under that layout since it lives at the root).
-//
-// Edition detection: UK/US/Africa visitors get a `country`-taxonomy-scoped
-// story pool (see MagazineArchiveWrapper's `edition` prop) instead of the
-// plain global pool — the geo-redirect that used to send them to /uk /us
-// /africa is disabled (see proxy.ts) for this same period, so this is now
-// the only place that scoping happens for the front page. Cookie name here
-// ('moveee-edition') must stay in sync with EDITION_COOKIE in proxy.ts.
 export const metadata: Metadata = {
-  title: "Moveee Magazine — Best in Culture",
-  description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
+  title: "Moveee — Culture. Discover and Engage.",
+  description: "An independent magazine and community for people who live for culture — music, film, art, food, travel, and ideas.",
   alternates: { canonical: "https://themoveee.com/" },
   openGraph: {
-    title: "Moveee Magazine — Best in Culture",
-    description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
+    title: "Moveee — Culture. Discover and Engage.",
+    description: "An independent magazine and community for people who live for culture — music, film, art, food, travel, and ideas.",
     url: "https://themoveee.com/",
-    siteName: "Moveee Magazine",
+    siteName: "Moveee",
     type: "website",
-    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Magazine" }],
+    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee" }],
   },
   twitter: {
     card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
-    title: "Moveee Magazine — Best in Culture",
-    description: "Long-form essays, interviews, and cultural commentary. Independent writing about music, film, art, food, travel, and ideas.",
+    title: "Moveee — Culture. Discover and Engage.",
+    description: "An independent magazine and community for people who live for culture — music, film, art, food, travel, and ideas.",
   },
 };
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string, industry?: string, country?: string, series?: string, tag?: string }>
-}) {
-  const resolvedParams = await searchParams;
+function stripHtml(html: string) {
+  return (html || "").replace(/<[^>]*>/g, "").trim();
+}
 
+export default async function Home() {
   const h = await headers();
   const c = await cookies();
   const savedEdition = c.get("moveee-edition")?.value ?? "";
-  const edition = isValidRegionalSlug(savedEdition)
+  const edition: EditionSlug = isValidRegionalSlug(savedEdition)
     ? savedEdition
     : editionFromCountry(h.get("x-vercel-ip-country") ?? "");
+  const regionalEdition = edition === "global" ? undefined : edition;
+
+  const [homepageData, sections] = await Promise.all([
+    fetchHomepageData(regionalEdition),
+    getMagazineSections(edition),
+  ]);
+
+  const { coverStory, stories, products, latestIssueStories } = homepageData;
+  const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
+
+  const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
+  const carouselPool = topPool.filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
+  carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
+  const featuredPool = topPool.filter((s: any) => !usedSlugs.has(s.slug));
+
+  const carouselStories = carouselPool.map((s: any) => ({
+    slug: s.slug,
+    title: s.title || "",
+    categoryName: s.categories?.nodes?.[0]?.name || "Moveee Magazine",
+    excerpt: stripHtml(s.excerpt).slice(0, 90),
+    image: s.featuredImage?.node?.sourceUrl || null,
+    alt: s.featuredImage?.node?.altText || s.title || "",
+  }));
+
+  const shopProducts = (products || []).slice(0, 8).map((p: any) => ({
+    slug: p.slug,
+    name: p.name,
+    price: p.price || p.regularPrice || "",
+    image: p.image?.sourceUrl || null,
+    vendor: p.vendorProfile?.storeName || null,
+  }));
+
+  const featureStory = latestIssueStories?.[0] || stories?.[0] || null;
 
   return (
-    <div className="mg-page-white">
-      <MagazineArchiveWrapper
-        category={resolvedParams?.category}
-        industry={resolvedParams?.industry}
-        country={resolvedParams?.country}
-        series={resolvedParams?.series}
-        tag={resolvedParams?.tag}
-        edition={edition}
+    <div className="hpv2">
+      <FullBleedHero story={coverStory} />
+
+      <section className="masthead" id="mainMasthead">
+        <div className="wrap">
+          <h1>
+            Best in <em>culture</em>,<br />every single week.
+          </h1>
+          <p className="sub">
+            An independent magazine for people who live for culture — reported from the
+            cities, kitchens, and studios where it&rsquo;s actually made.
+          </p>
+        </div>
+        <HeroCarousel stories={carouselStories} />
+      </section>
+
+      <MasonryRandomSection
+        eyebrowTitle={<>The <em>Front</em> Page</>}
+        subtitle="The strongest reporting and photography from the last two weeks, in one place."
+        viewAllHref="/magazine"
+        viewAllLabel="View all stories"
+        stories={featuredPool}
       />
+
+      <section className="band band--tint">
+        <div className="wrap">
+          <div className="band-head">
+            <h2>From The <em>Shop</em></h2>
+            <p className="subtitle">Handmade pieces from Moveee&rsquo;s maker community — new drops, restocks, and one-offs.</p>
+            <a className="view-all" href="/shop">Shop all products</a>
+          </div>
+          <ShopRail products={shopProducts} />
+        </div>
+      </section>
+
+      <MasonryRandomSection
+        eyebrowTitle={<>The <em>Lane</em></>}
+        subtitle="Portraits from the people who make the culture, not just cover it."
+        stories={portraitStories}
+        tint
+      />
+
+      <MasonryRandomSection
+        eyebrowTitle={<>The <em>Edit</em></>}
+        subtitle="The news, arguments, and small print worth knowing about this week."
+        viewAllHref="/magazine/category/news"
+        viewAllLabel="All news"
+        stories={editorialStories}
+      />
+
+      <MasonryRandomSection
+        eyebrowTitle={<>The Free <em>Critics</em></>}
+        subtitle="Unbought, unfiltered verdicts on the films, books, and records everyone's asking about."
+        stories={digestStories}
+        tint
+      />
+
+      <MasonryRandomSection
+        eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
+        subtitle="Arguments worth having, from writers who'll actually take a side."
+        stories={opinionStories}
+      />
+
+      <JoinSection edition={edition} featureStory={featureStory} />
     </div>
   );
 }

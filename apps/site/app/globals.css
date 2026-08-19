@@ -3,7 +3,7 @@
 @theme {
   /* Colors */
   --color-paper: #ffffff;
-  --color-paper-deep: #f5f5f5;
+  --color-paper-deep: #f2f2f2;
   --color-ink: #14110d;
   --color-ink-soft: #3a342b;
   --color-mute: #7a6f5c;
@@ -46,6 +46,7 @@
   --ochre-deep: #8a2d10;
   --moss: #3d4a2a;
   --gold: #b38238;
+  --rule-strong: rgba(20, 17, 13, .22);
 
   /* Radius scale (mirrors apps/connect/app/globals.css + apps/mobile/src/theme.ts radius —
      site-wide, June 2026, see CLAUDE.md "Border-radius convention") */
@@ -55,6 +56,18 @@
   --radius-xl: 12px;
   --radius-2xl: 20px;
   --radius-full: 9999px;
+
+  /* Real shadow tokens (added for the homepage/header/footer rebuild,
+     see mockups/web/moveee_homepage_wepresent_concept.html) — every
+     `var(--shadow-card, ...)` reference elsewhere in this file predates
+     these and was always resolving to its own literal fallback, since
+     no --shadow-* custom property was ever actually defined. Those call
+     sites are untouched (their fallbacks already match the intended
+     look); this just gives new code a real token to reach for instead
+     of inventing another one-off fallback. */
+  --shadow-1: 0 6px 14px -8px rgba(20, 17, 13, .10), 0 2px 5px -3px rgba(197, 73, 31, .07);
+  --shadow-2: 0 18px 34px -14px rgba(20, 17, 13, .16), 0 6px 14px -8px rgba(197, 73, 31, .10);
+  --shadow-3: 0 34px 60px -18px rgba(20, 17, 13, .20), 0 14px 26px -12px rgba(197, 73, 31, .12);
 }
 
 @layer base {

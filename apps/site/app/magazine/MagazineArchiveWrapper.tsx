@@ -1,4 +1,4 @@
-import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO, getStoriesByCountrySlugs } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO, getMagazineSections } from "@/lib/wp";
 import { decodeHtml } from "@/lib/decode-html";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,7 +8,7 @@ import MagazineFilterPills from "@/components/MagazineFilterPills";
 import SeriesLandingPage from "@/components/SeriesLandingPage";
 import "../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { EDITIONS, type EditionSlug } from "@/lib/editions";
+import { type EditionSlug } from "@/lib/editions";
 
 interface MagazineArchiveProps {
   category?: string;
@@ -26,68 +26,6 @@ interface MagazineArchiveProps {
   // Omitted entirely by every other consumer (/magazine, /magazine/africa,
   // /magazine/uk, /magazine/us all render unscoped, exactly as before).
   edition?: EditionSlug;
-}
-
-async function getGlobalPool(): Promise<any[]> {
-  const data = await getWPData(GET_STORIES, { first: 40 });
-  return data?.posts?.nodes || [];
-}
-
-// Main-pool fetch for the default (unfiltered) view — edition-scoped by the
-// `country` taxonomy when a visitor's edition is known, otherwise the plain
-// latest-40 pool. Pulled out of the component so the edition/global branches
-// can run inside the same Promise.all as the pinned-section fetches below.
-//
-// Never throws and never resolves empty when the plain global pool has
-// content: any failure in the edition-scoped path (or a pool that ends up
-// empty — e.g. no posts currently tagged for that edition, or the REST
-// country-lookup failing independently of the main GraphQL fetch) falls
-// back to getGlobalPool() rather than leaving the whole front page blank.
-// The rest of MagazineArchiveWrapper's story fetches (pinned sections,
-// GET_FILTERS) have no equivalent edition-specific step and were already
-// resilient to this — this function is the one new failure surface the
-// `edition` prop introduced, so it gets its own explicit safety net rather
-// than relying on the outer try/catch (which would blank every section,
-// not just the main pool, if this ever threw uncaught).
-async function getMainPool(edition: EditionSlug | undefined): Promise<any[]> {
-  if (!edition || edition === "global") {
-    return getGlobalPool();
-  }
-
-  try {
-    const countrySlugs = (EDITIONS[edition]?.countrySlugs ?? []) as unknown as string[];
-    const [editionPosts, latestData] = await Promise.all([
-      getStoriesByCountrySlugs(countrySlugs, 40, { revalidate: 300 }),
-      getWPData(GET_STORIES, { first: 40 }),
-    ]);
-    const latestPosts: any[] = latestData?.posts?.nodes || [];
-
-    // A post only counts as "universal" filler if it isn't tagged to ANY
-    // edition's countries — same rule fetchHomepageData.ts applies so a
-    // Nigeria-tagged post never shows as generic filler on the UK edition.
-    const allEditionCountrySlugs = new Set(
-      Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
-    );
-    const editionIds = new Set(editionPosts.map((p: any) => p.id));
-    const universalPosts = latestPosts.filter((p: any) => {
-      if (editionIds.has(p.id)) return false;
-      const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
-      return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
-    });
-
-    const pool = [...editionPosts, ...universalPosts];
-    if (pool.length > 0) return pool;
-
-    // Both fetches came back empty (e.g. nothing tagged for this edition
-    // right now, or a transient failure on one side while the other still
-    // returned a well-formed empty result) — fall back rather than show
-    // an empty homepage for this edition.
-    console.warn(`[magazine-edition] empty pool for edition "${edition}", falling back to global`);
-    return getGlobalPool();
-  } catch (err: any) {
-    console.error(`[magazine-edition] getMainPool failed for edition "${edition}":`, err?.message || err);
-    return getGlobalPool();
-  }
 }
 
 export default async function MagazineArchiveWrapper({
@@ -145,54 +83,19 @@ export default async function MagazineArchiveWrapper({
         category;
       termDescription = catData?.category?.description || "";
     } else {
-      // "The Edit", "Opinions & Essays", "The Lane", and "The Free Critics" are all
-      // fetched separately from the main story pool so they stay pinned to
-      // their own taxonomy term (News category, Viewpoints category, The Lane
-      // series, The Free Critics series) regardless of what else is on the
-      // page — a plain positional slice of `stories` would mix in whatever
-      // content happened to land in that range. Fetches a larger main pool
-      // (40, not 27) to leave headroom for the dedupe below. Opinions is now
-      // fetched with a buffer (12, not the 4 actually used) for the same
-      // reason Lane/Free Critics already get one via GET_SERIES_STORIES'
-      // built-in first:48 — see the dedupe-direction note below.
-      const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
-        getMainPool(edition),
-        getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
-        getWPData(GET_STORIES, { first: 12, categoryName: "viewpoints" }),
-        getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
-        getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
-      ]);
-      editorialStories = editData?.posts?.nodes || [];
-
-      // News is fully excluded from every other section — the whole category,
-      // not just the top-of-page picks (an explicit, standing request).
-      const topPool = mainPool.filter(
-        (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
-      );
-
-      // Dedupe direction: the sections rendered at the TOP of the page (Hero,
-      // "More This Week", Featured Stories — the first 7 posts of topPool)
-      // get first claim on content. The pinned sections further down (The
-      // Edit is exempt — News is already fully carved out above — Opinions,
-      // The Lane, The Free Critics) then backfill from their own taxonomy
-      // pool, skipping whatever the top already used, rather than the other
-      // way around. Previously the pinned sections claimed their picks first
-      // and the top sections got only the leftovers, which could bump the
-      // single best/most-recent story out of the Hero slot in favour of a
-      // niche section further down the page.
-      const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
-
-      opinionStories = (opinionData?.posts?.nodes || [])
-        .filter((p: any) => !usedByTopIds.has(p.id))
-        .slice(0, 4);
-      portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
-        .filter((p: any) => !usedByTopIds.has(p.id))
-        .slice(0, 5);
-      digestStories = (digestData?.seriesItem?.posts?.nodes || [])
-        .filter((p: any) => !usedByTopIds.has(p.id))
-        .slice(0, 4);
-
-      stories = topPool;
+      // "The Edit", "Opinions & Essays", "The Lane", and "The Free Critics" —
+      // each pinned to its own taxonomy term regardless of what else is on
+      // the page, plus the edition-aware, News-excluded top pool for the
+      // hero/week-row/featured band. Shared with the homepage via
+      // getMagazineSections() in wp.ts — see that function's own docblock
+      // for the full fetch/dedupe rationale; keep both callers in sync if
+      // this ever changes.
+      const sections = await getMagazineSections(edition);
+      editorialStories = sections.editorialStories;
+      opinionStories = sections.opinionStories;
+      portraitStories = sections.portraitStories;
+      digestStories = sections.digestStories;
+      stories = sections.topPool;
     }
   } catch (err: any) {
     // CMS unreachable — was previously a silent no-op, which made a blank

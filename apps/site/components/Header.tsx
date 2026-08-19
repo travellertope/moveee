@@ -1,308 +1,329 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingBag, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
-import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 
 const CONNECT_URL = "https://web.themoveee.com";
 
-interface HeaderProps {
-  variant?: "light" | "dark";
-  siteSettings?: any;
+interface FeaturedProduct {
+  name: string;
+  slug: string;
+  price: string;
+  image: string | null;
+  vendor: string | null;
 }
 
-const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
-  const { language, setLanguage } = useLanguage();
+// Site-wide floating pill header (search · logo · cart · menu), rebuilt
+// from mockups/web/moveee_homepage_wepresent_concept.html — transparent
+// over a page's full-bleed dark hero (only the homepage has one), solid
+// blurred pill everywhere else, auto-hides on scroll-down and returns
+// near-instantly on scroll-up. Cart and the session-aware account state
+// are preserved from the previous compact-header; the account state now
+// lives entirely inside the full-screen menu overlay (no separate
+// always-visible avatar/sign-in button) since the overlay already covers
+// it. The language switcher and masthead ticker were dropped entirely
+// per explicit product direction, not carried over anywhere.
+const Header = () => {
   const { itemCount, openDrawer } = useCart();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const active = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
+    pathname === href || pathname.startsWith(href + "/");
 
-  const handleSignOut = async () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [isSolid, setIsSolid] = useState(true);
+  const [onDark, setOnDark] = useState(false);
+  const [featuredProduct, setFeaturedProduct] = useState<FeaturedProduct | null>(null);
+  const [featuredLoading, setFeaturedLoading] = useState(false);
+
+  const user = session?.user as any;
+
+  const handleSignOut = useCallback(async () => {
     try {
       await fetch("/api/auth/clear-cookies", { method: "POST" });
     } catch {
       // proceed with sign-out even if the cleanup call fails
     }
     signOut({ callbackUrl: "https://themoveee.com/" });
-  };
-  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
-
-  const user = session?.user as any;
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-      if (mobileUserMenuRef.current && !mobileUserMenuRef.current.contains(e.target as Node)) {
-        setMobileUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const tickerData = siteSettings?.mastheadTicker || {};
-  const issueText = tickerData.issueText || "";
-  const announcementText = tickerData.announcementText || "";
-  const announcementUrl = tickerData.announcementUrl || "";
-  const locations: string[] = tickerData.locations || [];
+  // Scroll-driven show/hide + solid/transparent state. Re-checks for a
+  // `.hero-full` element on the current page every time the route
+  // changes — only the homepage has one; every other page has no dark
+  // hero to float transparently over, so the header just starts solid
+  // and stays that way (still auto-hiding/showing on scroll direction,
+  // for a consistent floating feel site-wide).
+  useEffect(() => {
+    const heroEl = document.querySelector<HTMLElement>(".hero-full");
+    let lastY = window.scrollY;
+    let raf: number | null = null;
+
+    function update() {
+      const y = window.scrollY;
+      if (heroEl) {
+        const heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
+        const inHero = y < heroBottom - 120;
+        setOnDark(inHero);
+        if (inHero) {
+          setIsHidden(false);
+          setIsSolid(false);
+        } else if (y < lastY - 2) {
+          setIsHidden(false);
+          setIsSolid(true);
+        } else if (y > lastY + 6) {
+          setIsHidden(true);
+        }
+      } else {
+        setOnDark(false);
+        setIsSolid(true);
+        if (y < lastY - 2) setIsHidden(false);
+        else if (y > lastY + 6) setIsHidden(true);
+      }
+      lastY = y;
+    }
+
+    update();
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        update();
+        raf = null;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [pathname]);
+
+  // Close the mobile body-scroll lock + fetch a fresh featured product
+  // each time the menu opens (mirrors the mockup's shuffle-on-open, but
+  // against the real API instead of a static pool).
+  useEffect(() => {
+    document.documentElement.classList.toggle("menu-open", menuOpen);
+    document.body.style.overflow = menuOpen || searchOpen ? "hidden" : "";
+    if (menuOpen) {
+      setFeaturedLoading(true);
+      fetch("/api/header/featured-product")
+        .then((r) => r.json())
+        .then((d) => setFeaturedProduct(d.product || null))
+        .catch(() => setFeaturedProduct(null))
+        .finally(() => setFeaturedLoading(false));
+    }
+  }, [menuOpen, searchOpen]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Close the menu on route change (client-side nav within a Link).
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  const toolbarClass = [
+    "site-toolbar",
+    isHidden ? "is-hidden" : "",
+    isSolid ? "is-solid" : "",
+    onDark ? "is-on-dark" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <>
-      <header className="compact-header">
-        {/* Left zone: logo + divider + nav */}
-        <div className="compact-header-left">
-          <Link href="/" className="compact-logo">
-            <img
-              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
-              alt="The Moveee Logo"
-            />
+      <div className={toolbarClass}>
+        <div className="toolbar-shell">
+          <div className="toolbar-pill">
+            <button className="toolbar-icon" aria-label="Search" onClick={() => setSearchOpen(true)}>
+              <SearchIcon />
+            </button>
+
+            <Link href="/" className="toolbar-logo">
+              moveee<span>.</span>
+            </Link>
+
+            <button
+              className="toolbar-icon"
+              aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
+              onClick={openDrawer}
+            >
+              <CartIcon />
+              {itemCount > 0 && <span className="toolbar-cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
+            </button>
+
+            <button
+              className="toolbar-icon toolbar-icon--menu"
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <MenuIcon open={menuOpen} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Full-screen menu overlay ── */}
+      <div className={`menu-overlay${menuOpen ? " is-open" : ""}`}>
+        <div className="menu-overlay-bar">
+          <button className="toolbar-icon" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
+            <CloseIcon />
+          </button>
+          <Link href="/" className="toolbar-logo" onClick={() => setMenuOpen(false)}>
+            moveee<span>.</span>
           </Link>
-          <div className="compact-logo-divider" />
-          <nav className="compact-nav">
-            <a href={CONNECT_URL} className="compact-nav-link">Feed</a>
-            <a href={`${CONNECT_URL}/discover`} className="compact-nav-link">Discover</a>
-            <a href={`${CONNECT_URL}/events`} className="compact-nav-link">Events</a>
-            <Link href="/magazine" className="compact-nav-link" data-active={active("/magazine")}>Editorials</Link>
-            <Link href="/shop" className="compact-nav-link" data-active={active("/shop")}>Shop</Link>
-            <Link href="/newsletter" className="compact-nav-link" data-active={active("/newsletter")}>Newsletter</Link>
-          </nav>
+          <span />
         </div>
 
-        {/* Center zone: ticker info (desktop only, hidden ≤1100px) */}
-        {issueText && (
-          <div className="compact-ticker">
-            <div className="compact-ticker-dot" />
-            <div className="compact-ticker-info-wrap">
-              <span className="compact-ticker-text">{issueText}</span>
-              {(locations.length > 0 || announcementText) && (
-                <div className="compact-ticker-tooltip">
-                  {locations.length > 0 && (
-                    <>
-                      <span className="compact-ticker-tooltip-label">Touring</span>
-                      <span className="compact-ticker-tooltip-locs">{locations.join(" · ")}</span>
-                    </>
+        <div className="menu-overlay-body">
+          <div className="menu-grid">
+            {/* Column 1 — nav */}
+            <div>
+              <p className="menu-col-label">Menu</p>
+              <nav className="menu-nav-list">
+                <a href={CONNECT_URL}>Feed</a>
+                <a href={`${CONNECT_URL}/discover`}>Discover</a>
+                <a href={`${CONNECT_URL}/events`}>Events</a>
+                <Link href="/magazine" data-active={active("/magazine") || undefined}>Editorials</Link>
+                <Link href="/shop" data-active={active("/shop") || undefined}>Shop</Link>
+                <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
+              </nav>
+            </div>
+
+            {/* Column 2 — featured product */}
+            <div>
+              <p className="menu-col-label">From the Shop</p>
+              {featuredLoading ? (
+                <div className="menu-feature-card menu-feature-card--loading" />
+              ) : featuredProduct ? (
+                <Link href={`/shop/${featuredProduct.slug}`} className="menu-feature-card" onClick={() => setMenuOpen(false)}>
+                  <div className="menu-feature-photo">
+                    {featuredProduct.image && <img src={featuredProduct.image} alt={featuredProduct.name} />}
+                  </div>
+                  <p className="menu-feature-title">
+                    {featuredProduct.name}
+                    {featuredProduct.vendor ? ` — ${featuredProduct.vendor}` : ""}
+                  </p>
+                  {featuredProduct.price && (
+                    <div
+                      className="menu-feature-price"
+                      dangerouslySetInnerHTML={{ __html: featuredProduct.price }}
+                    />
                   )}
-                  {announcementText && (
-                    <>
-                      {locations.length > 0 && <div className="compact-ticker-tooltip-divider" />}
-                      {announcementUrl ? (
-                        <a href={announcementUrl} className="compact-ticker-tooltip-cta">
-                          {announcementText} →
-                        </a>
-                      ) : (
-                        <span className="compact-ticker-tooltip-cta">{announcementText}</span>
-                      )}
-                    </>
-                  )}
+                  <span className="menu-feature-cta">Shop now →</span>
+                </Link>
+              ) : (
+                <Link href="/shop" className="menu-feature-card menu-feature-card--fallback" onClick={() => setMenuOpen(false)}>
+                  <p className="menu-feature-title">Visit the Shop</p>
+                  <span className="menu-feature-cta">Browse all products →</span>
+                </Link>
+              )}
+            </div>
+
+            {/* Column 3 — account */}
+            <div>
+              <p className="menu-col-label">Account</p>
+              {status === "authenticated" && user ? (
+                <div className="menu-account-card">
+                  <div className="menu-account-id">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="menu-account-avatar" />
+                    ) : (
+                      <span className="menu-account-avatar menu-account-avatar--initial">
+                        {(user.name || user.username || "M").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <div>
+                      <div className="menu-account-name">{user.displayName || user.name}</div>
+                      <div className="menu-account-tier">{user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}</div>
+                    </div>
+                  </div>
+                  <div className="menu-account-links">
+                    <a href={`${CONNECT_URL}/member`}>My Dashboard</a>
+                    <a href={`${CONNECT_URL}/feed`}>Feed</a>
+                    <a href={`${CONNECT_URL}/member/wallet`}>Wallet</a>
+                    <a href={`${CONNECT_URL}/member/settings`}>Settings</a>
+                    <button className="danger" onClick={handleSignOut}>Sign Out</button>
+                  </div>
                 </div>
+              ) : status === "unauthenticated" ? (
+                <div className="menu-account-card menu-account-card--guest">
+                  <p className="menu-account-guest-copy">Join Moveee to post, earn Culture Credits, and unlock Pro perks.</p>
+                  <a
+                    href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                    className="menu-guest-btn menu-guest-btn--primary"
+                  >
+                    Join →
+                  </a>
+                  <a
+                    href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                    className="menu-guest-btn"
+                  >
+                    Sign in
+                  </a>
+                </div>
+              ) : (
+                <div className="menu-account-card menu-account-card--loading" />
               )}
             </div>
           </div>
-        )}
-
-        {/* Right zone */}
-        <div className="compact-header-right">
-          {/* Language pills */}
-          <div className="lang-pills">
-            <button
-              onClick={() => setLanguage("EN")}
-              className={`lang-pill${language === "EN" ? " lang-pill--active" : ""}`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage("FR")}
-              className={`lang-pill${language === "FR" ? " lang-pill--active" : ""}`}
-            >
-              FR
-            </button>
-          </div>
-
-          <button
-            className="compact-icon-btn"
-            aria-label="Search"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search size={17} strokeWidth={1.5} />
-          </button>
-
-          <button
-            className="compact-icon-btn cart-icon-btn"
-            aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
-            onClick={openDrawer}
-            style={{ position: "relative" }}
-          >
-            <ShoppingBag size={17} strokeWidth={1.5} />
-            {itemCount > 0 && (
-              <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
-            )}
-          </button>
-
-          <div className="compact-divider" />
-
-          {/* Session-aware auth zone */}
-          {status === "authenticated" && user ? (
-            <div className="compact-user-wrap" ref={userMenuRef}>
-              <button
-                className="compact-avatar-btn"
-                onClick={() => setUserMenuOpen((v) => !v)}
-                aria-label="User menu"
-                aria-expanded={userMenuOpen}
-              >
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="compact-avatar-img" />
-                ) : (
-                  <span className="compact-avatar-initial">
-                    {(user.name || user.username || "M").charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </button>
-              {userMenuOpen && (
-                <div className="compact-user-menu" role="menu">
-                  <div className="compact-user-name">{user.displayName || user.name}</div>
-                  <div className="compact-user-tier">
-                    {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
-                  </div>
-                  <div className="compact-user-divider" />
-                  <a href={`${CONNECT_URL}/member`} className="compact-user-item" role="menuitem">My Dashboard</a>
-                  <a href={`${CONNECT_URL}/feed`} className="compact-user-item" role="menuitem">Feed</a>
-                  <a href={`${CONNECT_URL}/member/wallet`} className="compact-user-item" role="menuitem">Wallet</a>
-                  <a href={`${CONNECT_URL}/member/settings`} className="compact-user-item" role="menuitem">Settings</a>
-                  <div className="compact-user-divider" />
-                  <button
-                    className="compact-user-item compact-user-item--danger"
-                    role="menuitem"
-                    onClick={handleSignOut}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : status === "unauthenticated" ? (
-            <>
-              <div className="compact-sign-in-wrap">
-                <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="compact-icon-btn" aria-label="Sign in">
-                  <User size={17} strokeWidth={1.5} />
-                </a>
-                <div className="compact-sign-in-tooltip">Sign in</div>
-              </div>
-              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="compact-join-btn" style={{ textDecoration: "none" }}>
-                Join →
-              </a>
-            </>
-          ) : null /* loading — render nothing to avoid flash */}
         </div>
-
-        {/* Mobile: search + cart + auth (unauthenticated) + hamburger */}
-        <div className="masthead-mobile-actions">
-          <button
-            className="masthead-icon-btn"
-            aria-label="Search"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search size={18} strokeWidth={1.5} />
-          </button>
-          <button
-            className="masthead-icon-btn cart-icon-btn"
-            aria-label="Cart"
-            onClick={openDrawer}
-            style={{ position: "relative" }}
-          >
-            <ShoppingBag size={18} strokeWidth={1.5} />
-            {itemCount > 0 && (
-              <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
-            )}
-          </button>
-          {status === "unauthenticated" && (
-            <>
-              <a href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-header-signin">Sign in</a>
-              <a href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`} className="mobile-header-join">Join →</a>
-            </>
-          )}
-          {status === "authenticated" && user && (
-            <div className="mobile-avatar-wrap" ref={mobileUserMenuRef}>
-              <button
-                className="masthead-icon-btn mobile-avatar-btn"
-                onClick={() => setMobileUserMenuOpen((v) => !v)}
-                aria-label="User menu"
-                aria-expanded={mobileUserMenuOpen}
-              >
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="mobile-avatar-img" />
-                ) : (
-                  <span className="mobile-avatar-initial">
-                    {(user.name || user.username || "M").charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </button>
-              {mobileUserMenuOpen && (
-                <div className="mobile-avatar-menu" role="menu">
-                  <div className="compact-user-name">{user.displayName || user.name}</div>
-                  <div className="compact-user-tier">
-                    {user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}
-                  </div>
-                  <div className="compact-user-divider" />
-                  <a href={`${CONNECT_URL}/member`} className="compact-user-item" role="menuitem">My Dashboard</a>
-                  <a href={`${CONNECT_URL}/feed`} className="compact-user-item" role="menuitem">Feed</a>
-                  <a href={`${CONNECT_URL}/member/wallet`} className="compact-user-item" role="menuitem">Wallet</a>
-                  <a href={`${CONNECT_URL}/member/settings`} className="compact-user-item" role="menuitem">Settings</a>
-                  <div className="compact-user-divider" />
-                  <button
-                    className="compact-user-item compact-user-item--danger"
-                    role="menuitem"
-                    onClick={() => { setMobileUserMenuOpen(false); handleSignOut(); }}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          <button
-            className="masthead-hamburger"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            <span className={`hamburger-icon ${mobileMenuOpen ? "open" : ""}`}>
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile dropdown */}
-      <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
-        <div className="mobile-menu-links">
-          <a href={CONNECT_URL} onClick={() => setMobileMenuOpen(false)}>Feed</a>
-          <a href={`${CONNECT_URL}/discover`} onClick={() => setMobileMenuOpen(false)}>Discover</a>
-          <a href={`${CONNECT_URL}/events`} onClick={() => setMobileMenuOpen(false)}>Events</a>
-          <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
-          <Link href="/shop" onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Shop</Link>
-          <Link href="/newsletter" onClick={() => setMobileMenuOpen(false)} data-active={active("/newsletter")}>Newsletter</Link>
-        </div>
-      </nav>
+        <div className="menu-overlay-foot">Best in Culture</div>
+      </div>
 
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 };
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 4h1.6l1 8.4a1.2 1.2 0 001.2 1.1h6.4a1.2 1.2 0 001.2-1L14.6 6H4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="6.5" cy="15" r="1" fill="currentColor" />
+      <circle cx="12" cy="15" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .3s" }}>
+      <path d="M2 5h12M2 11h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default Header;

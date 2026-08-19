@@ -1,3 +1,5 @@
+import { EDITIONS, type EditionSlug } from "@/lib/editions";
+
 const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
 const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
 
@@ -1004,6 +1006,102 @@ export async function getStoriesByCountrySlugs(slugs: string[], first = 14, opti
     return json.map(mapRestStoryToFrontendShape);
   } catch {
     return [];
+  }
+}
+
+// ── Magazine section fetching — the same pinned-section pattern used by
+// /magazine's default (unfiltered) view (News → "The Edit", Viewpoints →
+// "Opinions & Essays", the-lane series → "The Lane", the-free-critics
+// series → "The Free Critics", plus a general edition-aware top pool for
+// "The Front Page"/hero content). Extracted out of
+// apps/site/app/magazine/MagazineArchiveWrapper.tsx so the homepage can
+// reuse the exact same fetch/dedupe logic instead of re-deriving it —
+// see that file's own `else` branch, which now just calls
+// getMagazineSections() too. Keep both callers in sync if this changes.
+
+async function getGlobalStoryPool(): Promise<any[]> {
+  const data = await getWPData(GET_STORIES, { first: 40 });
+  return data?.posts?.nodes || [];
+}
+
+async function getMagazineMainPool(edition: EditionSlug | undefined): Promise<any[]> {
+  if (!edition || edition === "global") {
+    return getGlobalStoryPool();
+  }
+
+  try {
+    const countrySlugs = (EDITIONS[edition]?.countrySlugs ?? []) as unknown as string[];
+    const [editionPosts, latestData] = await Promise.all([
+      getStoriesByCountrySlugs(countrySlugs, 40, { revalidate: 300 }),
+      getWPData(GET_STORIES, { first: 40 }),
+    ]);
+    const latestPosts: any[] = latestData?.posts?.nodes || [];
+
+    const allEditionCountrySlugs = new Set(
+      Object.values(EDITIONS).flatMap((e) => e.countrySlugs as unknown as string[])
+    );
+    const editionIds = new Set(editionPosts.map((p: any) => p.id));
+    const universalPosts = latestPosts.filter((p: any) => {
+      if (editionIds.has(p.id)) return false;
+      const postCountrySlugs: string[] = (p.countries?.nodes ?? []).map((c: any) => c.slug);
+      return !postCountrySlugs.some((s) => allEditionCountrySlugs.has(s));
+    });
+
+    const pool = [...editionPosts, ...universalPosts];
+    if (pool.length > 0) return pool;
+
+    console.warn(`[magazine-sections] empty pool for edition "${edition}", falling back to global`);
+    return getGlobalStoryPool();
+  } catch (err: any) {
+    console.error(`[magazine-sections] getMagazineMainPool failed for edition "${edition}":`, err?.message || err);
+    return getGlobalStoryPool();
+  }
+}
+
+export interface MagazineSections {
+  /** News-excluded, edition-aware top pool — hero/sidebar/band content lives here. */
+  topPool: any[];
+  /** News category — "The Edit". */
+  editorialStories: any[];
+  /** Viewpoints category — "Opinions & Essays". */
+  opinionStories: any[];
+  /** "the-lane" series — "The Lane". */
+  portraitStories: any[];
+  /** "the-free-critics" series — "The Free Critics". */
+  digestStories: any[];
+}
+
+export async function getMagazineSections(edition?: EditionSlug): Promise<MagazineSections> {
+  try {
+    const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
+      getMagazineMainPool(edition),
+      getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
+      getWPData(GET_STORIES, { first: 12, categoryName: "viewpoints" }),
+      getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
+      getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
+    ]);
+    const editorialStories = editData?.posts?.nodes || [];
+
+    const topPool = mainPool.filter(
+      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+    );
+
+    const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
+
+    const opinionStories = (opinionData?.posts?.nodes || [])
+      .filter((p: any) => !usedByTopIds.has(p.id))
+      .slice(0, 4);
+    const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
+      .filter((p: any) => !usedByTopIds.has(p.id))
+      .slice(0, 5);
+    const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
+      .filter((p: any) => !usedByTopIds.has(p.id))
+      .slice(0, 4);
+
+    return { topPool, editorialStories, opinionStories, portraitStories, digestStories };
+  } catch (err: any) {
+    console.error("[magazine-sections] getMagazineSections failed:", err?.message || err);
+    return { topPool: [], editorialStories: [], opinionStories: [], portraitStories: [], digestStories: [] };
   }
 }
 

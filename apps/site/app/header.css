@@ -1,0 +1,263 @@
+/* ============================================================
+   SITE-WIDE HEADER — floating pill + full-screen menu overlay.
+   Rebuilt from mockups/web/moveee_homepage_wepresent_concept.html.
+   Renders on every apps/site page (mounted once in app/layout.tsx).
+   Transparent-over-dark-hero only applies on pages that actually have
+   a `.hero-full` section (currently just the homepage) — see the
+   hero-detection effect in Header.tsx; everywhere else it's solid
+   from the first paint but still auto-hides/returns on scroll.
+   ============================================================ */
+
+.site-toolbar {
+  position: fixed;
+  top: 18px;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Moves up by its own full height plus a flat margin — robust
+   regardless of the pill's rendered height, no magic percentage. */
+.site-toolbar.is-hidden { transform: translateY(calc(-100% - 40px)); }
+
+.toolbar-shell {
+  width: min(100%, 460px);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.site-toolbar.is-solid .toolbar-shell {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-color: var(--rule);
+  box-shadow: var(--shadow-2);
+}
+
+.toolbar-pill {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px 40px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  width: 100%;
+}
+.toolbar-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--paper-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  flex-shrink: 0;
+  transition: background 0.15s, opacity 0.3s;
+  opacity: 0.6;
+}
+.site-toolbar.is-solid .toolbar-icon { opacity: 1; }
+.toolbar-icon--menu { justify-self: end; }
+.toolbar-cart-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-full);
+  background: var(--ochre);
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.toolbar-logo {
+  grid-column: 2;
+  text-align: center;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.toolbar-logo span { color: var(--ochre); }
+.site-toolbar.is-on-dark .toolbar-logo { color: #f3ece0; }
+.site-toolbar.is-on-dark .toolbar-logo span { color: var(--gold); }
+
+/* ============================================================
+   MENU OVERLAY — full-viewport takeover, 3-column grid on desktop.
+   ============================================================ */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--paper);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.98);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.menu-overlay.is-open { opacity: 1; pointer-events: auto; transform: none; }
+
+.menu-overlay-bar {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  padding: 24px clamp(20px, 4vw, 40px);
+  flex-shrink: 0;
+}
+.menu-overlay-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 20px clamp(20px, 4vw, 64px) 40px;
+}
+.menu-overlay-foot {
+  padding: 24px;
+  text-align: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  flex-shrink: 0;
+}
+
+.menu-grid { display: grid; grid-template-columns: 1fr; gap: 40px; width: 100%; max-width: 1180px; margin: 0 auto; }
+.menu-grid > * { min-width: 0; }
+@media (min-width: 900px) { .menu-grid { grid-template-columns: 0.85fr 1.05fr 1.05fr; gap: 56px; } }
+
+.menu-col-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 22px;
+}
+
+.menu-nav-list { display: flex; flex-direction: column; }
+.menu-nav-list a {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: clamp(22px, 2.4vw, 30px);
+  padding: 7px 0;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+.menu-nav-list a:hover, .menu-nav-list a[data-active] { color: var(--ochre); }
+
+/* Column 2 — featured product (mirrors the .wcard framed-card language) */
+.menu-feature-card {
+  display: block;
+  border-radius: var(--radius-xl);
+  padding: 14px 14px 20px;
+  background: var(--paper-deep);
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.menu-feature-card:hover { box-shadow: var(--shadow-2); transform: translateY(-3px); }
+.menu-feature-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--paper);
+}
+.menu-feature-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.menu-feature-card:hover .menu-feature-photo img { transform: scale(1.08); }
+.menu-feature-title { margin-top: 16px; font-family: "Fraunces", serif; font-weight: 600; font-size: 16px; line-height: 1.35; color: var(--ink); }
+.menu-feature-price { margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ochre-deep); }
+.menu-feature-cta { display: block; width: fit-content; margin-top: 16px; border-radius: var(--radius-full); padding: 11px 24px; background: var(--ink); color: var(--paper); font-family: "DM Sans", sans-serif; font-weight: 700; font-size: 13px; transition: opacity 0.15s; }
+.menu-feature-card:hover .menu-feature-cta { opacity: 0.85; }
+.menu-feature-card--fallback { text-align: center; padding: 40px 20px; }
+.menu-feature-card--fallback .menu-feature-cta { margin: 16px auto 0; }
+.menu-feature-card--loading { height: 320px; background: var(--paper-deep); animation: menu-pulse 1.4s ease-in-out infinite; }
+@keyframes menu-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* Column 3 — account */
+.menu-account-card { border-radius: var(--radius-xl); padding: 22px; background: var(--paper-deep); }
+.menu-account-card--loading { height: 220px; animation: menu-pulse 1.4s ease-in-out infinite; }
+.menu-account-id { display: flex; align-items: center; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.menu-account-avatar { width: 44px; height: 44px; border-radius: var(--radius-full); object-fit: cover; flex-shrink: 0; }
+.menu-account-avatar--initial { display: flex; align-items: center; justify-content: center; background: var(--ink); color: var(--paper); font-family: "Fraunces", serif; font-weight: 700; font-size: 17px; }
+.menu-account-name { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; color: var(--ink); }
+.menu-account-tier { margin-top: 2px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ochre); }
+.menu-account-links { display: flex; flex-direction: column; padding-top: 12px; }
+.menu-account-links a, .menu-account-links button {
+  text-align: left;
+  padding: 10px 0;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14.5px;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+.menu-account-links a:hover, .menu-account-links button:hover { color: var(--ochre); }
+.menu-account-links .danger { color: #c62828; }
+.menu-account-links .danger:hover { color: #8e1c1c; }
+
+.menu-account-card--guest { text-align: center; padding: 28px 22px; }
+.menu-account-guest-copy { font-size: 14px; color: var(--ink-soft); line-height: 1.55; margin-bottom: 18px; }
+.menu-guest-btn { display: block; border-radius: var(--radius-full); padding: 13px 22px; font-family: "DM Sans", sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 10px; transition: opacity 0.15s; }
+.menu-guest-btn--primary { background: var(--ink); color: var(--paper); }
+.menu-guest-btn:not(.menu-guest-btn--primary) { border: 1px solid var(--rule); color: var(--ink); }
+.menu-guest-btn:hover { opacity: 0.85; }
+
+@media (max-width: 640px) {
+  .toolbar-shell { width: calc(100% - 8px); }
+}
+
+/* ============================================================
+   SEARCH OVERLAY — full-screen white takeover, matching the menu
+   overlay's shell (same shape as the mockup's search frame). These
+   rules override the older dropdown-panel-with-dark-scrim styling
+   still defined in homepage.css (loaded earlier, so this wins on
+   the cascade) — SearchOverlay.tsx's own JSX/logic is untouched,
+   only its visual shell changes.
+   ============================================================ */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: var(--paper);
+  backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.search-panel {
+  background: var(--paper);
+  border-bottom: none;
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.search-input-row {
+  padding: clamp(24px, 4vw, 40px) clamp(20px, 5vw, 64px) 24px;
+  border-bottom: 1px solid var(--rule);
+}
+.search-input { font-size: clamp(28px, 5vw, 42px); }
+.search-results, .search-empty, .search-hint {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+.search-hint { text-align: center; padding-top: clamp(60px, 12vh, 140px); }
