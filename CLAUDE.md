@@ -1159,45 +1159,21 @@ Two Vercel projects, one monorepo:
 
 Both share `cms.themoveee.com` (WordPress) as the backend.
 
-### TEMPORARY: `/magazine` swapped onto the site root, old homepage moved to `/app` (August 2026)
+### SUPERSEDED: `/magazine`-as-root swap / old `/app` detour (August 2026, replaced same month)
 
-**Active as of this entry — reverse before considering Site A's routing "normal" again.** Until
-the Moveee app is accepted in the Play Store, `apps/site/app/page.tsx` (`/`) renders the Magazine
-archive (`MagazineArchiveWrapper`, same content as `/magazine`) instead of `HomepageContent`. The
-prior homepage moved to a new route, `apps/site/app/app/page.tsx` (`/app`) — same component/data
-fetch (`fetchHomepageData()` + `HomepageContent`), `robots: { index: false }` added since it's now
-a secondary/duplicate-content page rather than the canonical root. `/magazine` itself is untouched
-and still works as before (both routes render the same archive independently, not a redirect).
-
-**The `/` → `/uk` `/us` `/africa` geo-redirect in `proxy.ts` is also disabled for this same period**
-(commented out, not deleted) — it used to send most GB/US/CA/MX/African-country visitors away from
-"/" to an edition homepage that still ran the old `HomepageContent`, which would have defeated the
-swap for the majority of traffic. `/uk`/`/us`/`/africa` themselves are unchanged — still reachable
-directly, still render `HomepageContent` with regional copy — only the automatic redirect *into*
-them from a bare `/` visit is off.
-
-`'app'` was added to `proxy.ts`'s `APP_ROUTES` set — without it, a direct request to `/app` would
-have been misread by the legacy-WordPress-permalink catch-all as an old post slug and 301-redirected
-to `/magazine/app`.
-
-**To revert (once the app is live):**
-1. Restore `apps/site/app/page.tsx` to `apps/site/app/app/page.tsx`'s current contents (the
-   `HomepageContent` version — drop the `robots: index:false` and fix `alternates.canonical`/
-   `openGraph.url` back to `https://themoveee.com/`).
-2. Delete `apps/site/app/app/` (or repurpose it).
-3. Uncomment the disabled `if (pathname === '/')` geo-redirect block in `proxy.ts`.
-4. `'app'` can stay in `APP_ROUTES` harmlessly, or be removed if the route no longer exists.
-5. Revert `MagazineArchiveWrapper`'s `edition` prop / `getMainPool()` helper if nothing else ends
-   up using them (see below — as of this entry, `/` is the only caller that passes `edition`).
-
-**Front page is edition-scoped, not just a flat swap (added same day).** Since the geo-redirect
-is off, `/` itself now does the edition detection that redirect used to do: `apps/site/app/page.tsx`
-reads the `moveee-edition` cookie (must stay in sync with `EDITION_COOKIE` in `proxy.ts` — not
-importable from there, so it's a duplicated literal) or, failing that, `x-vercel-ip-country` via
-`editionFromCountry()`, and passes the result as a new `edition` prop to `MagazineArchiveWrapper`.
-This makes the page dynamic (`export const dynamic = "force-dynamic"` — required because it reads
-`headers()`/`cookies()`; the underlying WP data is still Vercel-KV-cached per `getWPData`'s own TTL
-handling, same as `/newsletter`, so this doesn't mean an uncached WP hit on every request).
+Everything this entry used to describe — `/` temporarily rendering the Magazine archive, the old
+homepage parked at `/app`, the geo-redirect being disabled for that period — is **gone**. The
+"Homepage + site-wide header/footer — full rebuild onto the 'WePresent concept'" entry above is
+the current, real state: `/` now renders the real new homepage directly, `/app` was deleted, and
+edition detection (`moveee-edition` cookie → `x-vercel-ip-country` header → `editionFromCountry()`)
+moved into `apps/site/app/page.tsx` itself rather than being threaded through
+`MagazineArchiveWrapper`'s `edition` prop for the front page specifically. `MagazineArchiveWrapper`
+still accepts and uses an `edition` prop for its own callers (`/magazine`, `/magazine/uk`, etc. can
+still pass one) — that prop was never removed, just no longer driven by `/` itself. The `/` → `/uk`
+`/us` `/africa` geo-redirect in `proxy.ts` is **still disabled** (unrelated to this swap — see the
+Play Store gating this was always tied to), so nothing about that part changed. Kept this entry
+(rather than deleting it outright) since the git history and any external links referencing "the
+temporary swap" should resolve to an explanation, not a silent gap.
 
 `MagazineArchiveWrapper`'s `edition` prop only affects the **default, unfiltered view's main story
 pool** (hero + "More This Week" row + Featured Stories band) — when set to `uk`/`us`/`africa`, that
@@ -2099,6 +2075,98 @@ moving "the other details" into a box on the right sidebar. Touches
   `tsc --noEmit` (clean) on `apps/site` and a CSS brace/paren-balance check on `editorial.css`
   (213/213, 204/204). Still worth an eyes-on check against a real article — the harness has no
   featured-image hero, gate, comments, or `Shop the Edit` card.
+
+### Homepage + site-wide header/footer — full rebuild onto the "WePresent concept" (August 2026)
+
+**Supersedes the `MoveeeZone.tsx`/`HomepageContent.tsx` homepage entry directly below, and the
+`Header.tsx`/`Footer.tsx` shape referenced throughout the rest of this file.** Mockup-first as
+usual — `mockups/web/moveee_homepage_wepresent_concept.html` (a from-scratch concept, not a
+rebuild of the prior mockup) was approved, then wired to real data "to the last T" per explicit
+user direction, and — per an explicit scope expansion mid-build — the new floating-pill header
+and dark WePresent-style footer were adopted **site-wide**, not just on the homepage.
+
+**What changed and where:**
+- `apps/site/components/Header.tsx` + `apps/site/app/header.css` — full rewrite. A floating pill
+  (`search | logo | cart | menu`, no separate always-visible auth/language controls) that starts
+  transparent-over-dark only on a page with a `.hero-full` section (currently just `/`) and solid
+  everywhere else, auto-hiding on scroll-down/returning on scroll-up. Opening the hamburger opens
+  a full-screen `.menu-overlay` (3-column ≥900px): real nav links, a "From the Shop" card fetched
+  live from the new `GET /api/header/featured-product` route (random pick via `GET_PRODUCTS_EXTRA`,
+  refetched every time the menu opens), and an "Account" column that's session-aware
+  (`useSession()`) — signed-in members get a dashboard/feed/wallet/settings/sign-out card, signed-
+  out visitors get Join/Sign-in CTAs. **No EN/FR language switcher and no masthead ticker** — both
+  existed in the mockup and were explicitly cut before shipping. `SearchOverlay.tsx`'s own
+  fetch/grouping logic is untouched; only its CSS shell was restyled (full-screen white takeover
+  instead of a dark-scrim dropdown).
+- `packages/shared/components/Footer.tsx` + `apps/site/app/footer.css` — full rewrite, WePresent's
+  own structure (newsletter form + socials up top, big-serif link columns, a centred wordmark, one
+  thin closing line) in Moveee's dark-`--ink` palette. The newsletter form is a real
+  `<SubscribeForm list="culture-drop">`, not decorative. The 3-column link layout was kept from the
+  mockup (not expanded to 5) with the real link set redistributed into it: **Explore**
+  (Magazine/Newsletter/Origins/Visuals/Quotes), **Moveee** (Feed/People Near Me/Happenings/Culture
+  Directory/Games/Shop), **Company** (Contact/Privacy/Terms/Cookie Policy/AI Use Policy). The
+  pre-existing edition `<select>` (reads/writes the `moveee-edition` cookie) is unchanged, just
+  restyled. `Footer.tsx` is confirmed the **only** Footer importer site-wide (`apps/connect`
+  removed its own Footer entirely, see "Footer removed sitewide" above) — safe to rewrite freely.
+- `apps/site/app/page.tsx` — now renders the real new homepage directly (no more temporary
+  Magazine-archive swap, no more `/app` detour — see below). Same edition detection as the old
+  temporary swap (`moveee-edition` cookie → `x-vercel-ip-country` header → `editionFromCountry()`),
+  `dynamic = "force-dynamic"` for the same reason. Sections, top to bottom: `FullBleedHero` (real
+  `coverStory`, same "pool[0]" lead-story pattern `fetchHomepageData.ts` already used), a masthead
+  (`Best in *culture*, every single week.`) with `HeroCarousel` beneath it, then five sections
+  reusing the **exact same pinned-taxonomy fetch** `/magazine`'s default view already uses — "The
+  Front Page" (News-excluded top pool), "From The Shop" (`ShopRail`, real products), "The Lane"
+  (the-lane series), "The Edit" (News category), "The Free Critics" (the-free-critics series),
+  "Opinions & Essays" (Viewpoints category) — and closes with `JoinSection` (real subscribe form +
+  an edition-scoped "latest issue" feature card, no client-side timezone guess like the mockup's
+  static prototype).
+- **`getMagazineSections(edition?)` extracted into `packages/shared/lib/wp.ts`** (new exported
+  function, plus its private `getGlobalStoryPool()`/`getMagazineMainPool()` helpers) — this is the
+  pinned-section fetch/dedupe logic that used to live only as private, inline functions inside
+  `MagazineArchiveWrapper.tsx`. Both the new homepage and `MagazineArchiveWrapper.tsx` (refactored
+  in this same pass to call it instead of keeping its own duplicate copy) now share one
+  implementation. **If this fetch/dedupe logic ever needs to change, there is exactly one place to
+  change it** — don't let a future edit reintroduce a second copy in either caller.
+- New homepage-only components (all in `apps/site/components/`): `FullBleedHero.tsx` (server,
+  renders `coverStory`), `HeroCarousel.tsx` (client — centred-snap scroll carousel, active-card
+  scale-up; a **simplified** port of the mockup's carousel that drops its infinite-loop
+  clone-and-jump trick — a real, large story pool doesn't need to fake looping the way a
+  ~7-item static prototype did), `MasonryRandomSection.tsx` (server — the mockup randomises each
+  row's card-shape via client `Math.random()` on load; this instead derives shape
+  deterministically from each story's own id, so server and client render identically with no
+  hydration mismatch and no client component needed just for this), `ShopRail.tsx` (client —
+  arrow-paged horizontal product rail, real products). New CSS: `apps/site/app/homepage-v2.css`
+  (hero/masthead/carousel/framed-card/masonry/shop-rail/join-section rules, ported directly from
+  the mockup's `<style>` block).
+- `apps/site/app/globals.css` — added `--shadow-1`/`--shadow-2`/`--shadow-3` (real values; every
+  usage sitewide previously fell back to a hardcoded `var(--shadow-card, ...)` literal since no
+  real token existed) and `--rule-strong`. `--color-paper-deep` in the `@theme` Tailwind-mirror
+  block was also corrected from a stale `#f5f5f5` to `#f2f2f2`, matching `:root`'s own
+  `--paper-deep` (a pre-existing drift between the two blocks, unrelated to this rebuild but
+  caught while pulling the mockup's token values).
+- **`/app` route retired** — deleted (`apps/site/app/app/page.tsx`), since the real homepage now
+  lives at `/` directly and there's no more "temporary Magazine-archive swap at `/`, real
+  homepage parked at `/app`" split to maintain. `'app'` was left in `proxy.ts`'s `APP_ROUTES` set
+  (harmless now that the route doesn't exist) rather than removed, per that set's own documented
+  tolerance for stale entries.
+- **apps/site has no dark-mode system** (confirmed via grep — zero `data-theme`/`ThemeToggle`/
+  `useColors`/`prefers-color-scheme` references anywhere in the app, unlike `apps/connect`'s
+  extensive dark-mode work documented elsewhere in this file) — "adapt to dark mode" for this
+  rebuild meant building off the real `--paper`/`--ink`/etc. tokens rather than hardcoded hex, not
+  adding `[data-theme]` blocks. If dark mode is ever added to Site A, this rebuild's CSS is
+  already token-driven and shouldn't need a rewrite — just new dark values for the existing tokens
+  in `globals.css`, same shape as `apps/connect`'s own dark-mode tokens.
+- **Not visually verified in a browser** — same recurring sandbox gap as every other rebuild pass
+  in this file, compounded here by a pre-existing, unrelated environment quirk: `next dev` in this
+  sandbox intermittently fails to load `next.config.mjs` (`ENOENT ./redirects.json`, a relative-
+  path-vs-cwd issue in that config file, not something this pass touched) and background dev-server
+  processes were repeatedly killed by the sandbox before a page could be curled/screenshotted.
+  Verified via `tsc --noEmit` (clean) on both `apps/site` and `apps/connect`, and CSS brace-balance
+  checks on all three new/touched CSS files (`header.css` 67/67, `footer.css` 32/32,
+  `homepage-v2.css` 95/95). Re-check pixel fidelity against
+  `mockups/web/moveee_homepage_wepresent_concept.html` — hero, carousel active-card centering,
+  masonry section card shapes, shop rail arrows, and the header's transparent-to-solid scroll
+  transition in particular — in a real environment before considering this fully closed.
 
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 

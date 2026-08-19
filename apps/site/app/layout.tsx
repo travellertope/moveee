@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./homepage.css";
+import "./header.css";
+import "./footer.css";
+import "./homepage-v2.css";
 import "./moveee-zone.css";
 import "./features.css";
 import "./editorial.css";
@@ -167,7 +170,7 @@ export default async function RootLayout({
                       dangerouslySetInnerHTML={{ __html: adSettings.customScript }}
                     />
                   )}
-                  <Header siteSettings={siteData} />
+                  <Header />
                   <main>{children}</main>
                   <ConditionalFooter />
                   <CartDrawer />
