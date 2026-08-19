@@ -1,7 +1,7 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
-import NewsletterPublicationPage from "@/components/NewsletterPublicationPage";
+import GetMeLitPage from "@/components/GetMeLitPage";
 import { NL_META } from "@/lib/newsletter-lists";
-import "../../newsletter.css";
+import "../../getmelit.css";
 
 export const revalidate = 3600;
 
@@ -46,7 +46,7 @@ function deduplicateByIssueNum(issues: any[]): any[] {
   return result;
 }
 
-export default async function GetMeLitPage() {
+export default async function GetMeLitRoute() {
   let newsletters: any[] = [];
   try {
     newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
@@ -58,5 +58,5 @@ export default async function GetMeLitPage() {
     newsletters.filter((n: any) => (n.nlList || "") === "getmelit")
   );
 
-  return <NewsletterPublicationPage listId="getmelit" issues={issues} />;
+  return <GetMeLitPage issues={issues} />;
 }
