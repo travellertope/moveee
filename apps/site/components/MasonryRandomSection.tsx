@@ -16,13 +16,27 @@ interface MasonrySectionProps {
 // derived deterministically from each story's own id — same visual variety
 // (never a flat uniform grid) without client/server disagreement or an
 // extra client component just for this section.
-function shapeForRow(seed: number): ("sq" | "sq" | "sq") | ("sq" | "rect") | ("rect" | "sq") {
-  const layouts = [
-    ["sq", "sq", "sq"],
-    ["sq", "rect"],
-    ["rect", "sq"],
-  ] as const;
-  return layouts[seed % layouts.length] as any;
+type Shape = "sq" | "rect";
+
+const LAYOUTS: readonly (readonly Shape[])[] = [
+  ["sq", "sq", "sq"],
+  ["sq", "rect"],
+  ["rect", "sq"],
+];
+
+// `seed` comes straight from CMS data (`databaseId`, or an id string's
+// length), so it must be treated as untrusted: a missing/non-numeric
+// databaseId makes `seed % LAYOUTS.length` NaN, and a raw
+// `LAYOUTS[NaN]` returns undefined — which then throws
+// "not iterable" the moment it's spread at the call site, taking the
+// whole homepage down with a Server Components render error. Normalise
+// to a guaranteed-valid index so this function is total for ANY input.
+function shapeForRow(seed: unknown): readonly Shape[] {
+  const n = Number(seed);
+  const index = Number.isFinite(n)
+    ? Math.abs(Math.trunc(n)) % LAYOUTS.length
+    : 0;
+  return LAYOUTS[index];
 }
 
 export default function MasonryRandomSection({
@@ -34,12 +48,15 @@ export default function MasonryRandomSection({
   tint = false,
   max = 6,
 }: MasonrySectionProps) {
-  if (!stories || stories.length === 0) return null;
+  // Drop null/undefined entries before anything reads off them — a single
+  // bad node in a CMS response shouldn't be able to crash the section.
+  const safeStories = Array.isArray(stories) ? stories.filter(Boolean) : [];
+  if (safeStories.length === 0) return null;
 
-  const row1Seed = stories[0]?.databaseId ?? stories[0]?.id?.length ?? 0;
-  const row2Seed = (stories[1]?.databaseId ?? stories[1]?.id?.length ?? 1) + 1;
+  const row1Seed = safeStories[0]?.databaseId ?? safeStories[0]?.id?.length ?? 0;
+  const row2Seed = Number(safeStories[1]?.databaseId ?? safeStories[1]?.id?.length ?? 1) + 1;
   const shapes = [...shapeForRow(row1Seed), ...shapeForRow(row2Seed)].slice(0, max);
-  const items = stories.slice(0, shapes.length);
+  const items = safeStories.slice(0, shapes.length);
 
   return (
     <section className={`band${tint ? " band--tint" : ""}`}>
