@@ -103,35 +103,6 @@
    override, since the wordmark is a real logo file now, not styled text. */
 .toolbar-logo-img { height: 40px; width: auto; display: block; }
 
-/* Ghost watermark (Concept D) — a faint, oversized wordmark fixed
-   behind the pill. Sits before .toolbar-shell in DOM order so the pill
-   always paints on top with no z-index needed. Left-aligned and larger
-   while transparent-over-dark, centred and much fainter once the pill
-   is solid — matches the approved article-page mockup's two states. */
-.toolbar-watermark {
-  position: absolute;
-  top: 34px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(56vw, 460px);
-  pointer-events: none;
-  /* Negative z-index within .site-toolbar's own stacking context (it's
-     position:fixed + z-index:500) so it paints behind .toolbar-shell — a
-     static in-flow sibling otherwise paints *under* a position:absolute
-     one with the default auto z-index, the opposite of what's wanted
-     here. Still sits above normal page content since the whole toolbar
-     stacking context is z-index:500. */
-  z-index: -1;
-  transition: opacity 0.3s ease, left 0.3s ease, transform 0.3s ease, width 0.3s ease;
-}
-.toolbar-watermark img { width: 100%; height: auto; display: block; opacity: 0.045; transition: opacity 0.3s ease; }
-.site-toolbar.is-on-dark .toolbar-watermark {
-  left: 24px;
-  transform: none;
-  width: min(70vw, 680px);
-}
-.site-toolbar.is-on-dark .toolbar-watermark img { opacity: 0.1; }
-
 /* ============================================================
    MENU OVERLAY — full-viewport takeover, 3-column grid on desktop.
    ============================================================ */

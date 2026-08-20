@@ -41,15 +41,6 @@ export default async function PartnershipHubPage({
 
       <main className="market-main">
 
-        {/* Breadcrumb */}
-        <nav className="slug-breadcrumb" aria-label="Breadcrumb">
-          <Link href="/services">Services</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <Link href={`/services/${market}`}>{marketData.name}</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <span>Media Partnership</span>
-        </nav>
-
         {/* Hero */}
         <section className="slug-hero">
           <p className="market-eyebrow">

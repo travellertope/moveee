@@ -265,12 +265,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       {/* ── HERO ── */}
       {hasFeaturedImage ? (
         <section className="ar-hero" data-header-zone="dark">
-          <nav className="ar-breadcrumb ar-breadcrumb--overlay">
-            <Link href="/">Home</Link><span className="sep"> / </span>
-            <Link href="/magazine">Magazine</Link><span className="sep"> / </span>
-            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
-            <span className="ar-breadcrumb-current">{post.title}</span>
-          </nav>
           <div className="ar-hero-wash" />
           <div className="ar-hero-vignette" />
           <div className="ar-hero-photo">
@@ -312,12 +306,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </section>
       ) : (
         <>
-          <nav className="ar-breadcrumb">
-            <Link href="/">Home</Link><span className="sep"> / </span>
-            <Link href="/magazine">Magazine</Link><span className="sep"> / </span>
-            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep"> / </span>
-            <span className="ar-breadcrumb-current">{post.title}</span>
-          </nav>
           <header className="ar-standard-hero">
             <div className="ar-hero-eyebrow">★ {categoryName}</div>
             <h1 className="ar-title">{post.title}</h1>

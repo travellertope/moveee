@@ -104,17 +104,6 @@ export default async function PartnershipSubPage({
 
       <main className="market-main service-slug-page">
 
-        {/* Breadcrumb */}
-        <nav className="slug-breadcrumb" aria-label="Breadcrumb">
-          <Link href="/services">Services</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <Link href={`/services/${market}`}>{marketData.name}</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <Link href={`/services/${market}/partnership`}>Media Partnership</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <span>{cat.label}</span>
-        </nav>
-
         {/* Hero */}
         <section className="slug-hero">
           <p className="market-eyebrow">

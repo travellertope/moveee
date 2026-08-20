@@ -168,16 +168,6 @@ const Header = () => {
   return (
     <>
       <div className={toolbarClass}>
-        {/* Ghost watermark — a faint, oversized wordmark fixed behind the
-            pill (Concept D from the header exploration). Purely decorative:
-            sits before .toolbar-shell in source order so the shell always
-            paints on top of it with no z-index gymnastics needed. Left-
-            aligned + larger while transparent-over-dark, centred + smaller
-            once the pill goes solid — mirrors the approved article-page
-            mockup's two states exactly. */}
-        <div className="toolbar-watermark" aria-hidden="true">
-          <img src={onDark ? "/logo-light.png" : "/logo-dark.png"} alt="" />
-        </div>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
             <Link href="/" className="toolbar-logo">

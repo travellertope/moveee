@@ -291,23 +291,6 @@ export default async function ProductPage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productBreadcrumbJsonLd) }} />
-      {/* ── BREADCRUMB ── */}
-      <nav className="sp-breadcrumb" aria-label="Breadcrumb">
-        <div>
-          <Link href="/shop">Shop</Link>
-          {firstCat && (
-            <>
-              <span className="sep">→</span>
-              <Link href={`/shop/category/${firstCat.slug}`}>{firstCat.name}</Link>
-            </>
-          )}
-          <span className="sep">→</span>
-          <span style={{ color: "var(--ink)" }}>{product.name}</span>
-        </div>
-        <nav className="sp-breadcrumb-nav" aria-label="Product navigation">
-          <Link href="/shop">← Back to Shop</Link>
-        </nav>
-      </nav>
 
       {/* ── PRODUCT HERO ── */}
       <section className="sp-product-hero">
