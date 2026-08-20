@@ -235,6 +235,14 @@
 
 @media (max-width: 640px) {
   .toolbar-shell { width: calc(100% - 8px); }
+  /* The wordmark PNG is ~6.5:1 (w:h) — at the desktop 40px height it
+     renders ~260px wide, which on a narrow viewport pushes the cart/menu
+     icons past the pill's edge; .toolbar-shell has overflow:hidden, so
+     they were silently clipped off rather than wrapping. Shrinking the
+     logo on mobile keeps the full icon row inside the pill. */
+  .toolbar-logo-img { height: 26px; }
+  .toolbar-pill { gap: 12px; padding: 8px 14px; }
+  .toolbar-icons { gap: 10px; }
 }
 
 /* ============================================================
