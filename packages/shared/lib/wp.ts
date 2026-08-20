@@ -1453,6 +1453,7 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     slug
     date
     excerpt
+    content
     nlList
     nlSegment
     nlIssueNum

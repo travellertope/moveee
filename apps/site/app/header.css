@@ -40,27 +40,33 @@
 
 .toolbar-pill {
   display: grid;
-  grid-template-columns: 40px 1fr 40px 40px;
+  grid-template-columns: 36px 1fr 36px 36px;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 10px;
+  padding: 8px 16px;
   width: 100%;
 }
+/* Plain glyph icons, no circle backing — matches the approved
+   "ghost watermark" article-page mockup's slimmer pill treatment
+   rather than the old chunky paper-deep circle buttons. Contrast over
+   a dark hero comes from swapping the icon's own colour (.is-on-dark),
+   not from a background chip behind it. */
 .toolbar-icon {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-full);
-  background: var(--paper-deep);
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ink);
   flex-shrink: 0;
-  transition: background 0.15s, opacity 0.3s;
+  transition: color 0.2s, opacity 0.3s;
   opacity: 0.6;
 }
 .site-toolbar.is-solid .toolbar-icon { opacity: 1; }
+.site-toolbar.is-on-dark:not(.is-solid) .toolbar-icon { color: var(--paper); opacity: 0.85; }
 .toolbar-icon--menu { justify-self: end; }
 .toolbar-cart-badge {
   position: absolute;
