@@ -1407,6 +1407,11 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 50px 40px 80px;
+  /* This is now the page's first element (the breadcrumb it used to
+     sit below never had header-clear applied either, so this is a
+     genuine gap, not a regression) — see the --header-clear comment
+     in globals.css. */
+  padding-top: calc(var(--header-clear, 96px) + 50px);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 70px;

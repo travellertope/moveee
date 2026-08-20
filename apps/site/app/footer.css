@@ -67,7 +67,11 @@
 .mfoot-column a { font-family: "Fraunces", serif; font-weight: 500; font-size: clamp(19px, 1.8vw, 23px); color: var(--paper); transition: color 0.15s; }
 .mfoot-column a:hover { color: var(--gold); }
 
-.mfoot-wordmark-img { display: block; width: 100%; height: auto; opacity: 0.92; }
+/* .mfoot-inner is a flex column with one shared `gap` between every
+   child (56–90px) — too much space above/below a full-width wordmark
+   specifically. Negative margin pulls it in without touching the gap
+   used between the other sections. */
+.mfoot-wordmark-img { display: block; width: 100%; height: auto; opacity: 0.92; margin: -36px 0; }
 
 .mfoot-bottom {
   margin-top: clamp(40px, 5vw, 60px);
