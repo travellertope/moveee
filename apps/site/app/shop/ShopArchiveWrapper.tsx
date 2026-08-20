@@ -162,7 +162,7 @@ export default async function ShopArchiveWrapper({
   return (
     <>
       {/* ── 0. TRUST LINE — very top of the page, slim dark bar ── */}
-      <section className="sl-trust" data-header-zone="dark">
+      <section className="sl-trust">
         <p className="sl-trust-line">
           <strong>Vetted Makers</strong>
           <span className="sl-trust-rating"> · <strong>4.8 average rating</strong></span>
