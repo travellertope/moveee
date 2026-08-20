@@ -91,15 +91,6 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
 
   return (
     <div className="maker-single">
-      {/* Breadcrumb */}
-      <nav className="maker-breadcrumb" aria-label="Breadcrumb">
-        <Link href="/shop">Shop</Link>
-        <span className="sep">→</span>
-        <Link href="/makers">Makers</Link>
-        <span className="sep">→</span>
-        <span>{storeName}</span>
-      </nav>
-
       {/* Hero */}
       <section className="maker-hero">
         <div className="maker-hero-visual">

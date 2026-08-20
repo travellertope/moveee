@@ -111,6 +111,23 @@ const Header = () => {
     }
 
     update();
+    // A second (and third) check shortly after mount — `update()` above
+    // runs synchronously in the effect, which can land before the
+    // browser has finished settling layout for content the server just
+    // sent (web font swap, etc.), so `offsetTop`/`offsetHeight` on the
+    // dark-zone element can occasionally still measure stale/zero at
+    // that exact instant. That previously meant the homepage hero could
+    // render with the solid pill on first paint and only correct itself
+    // once a scroll/resize event happened to fire `update()` again. A
+    // double-rAF re-check (plus `load`, for a slow image/font) closes
+    // that gap without needing user interaction.
+    const cleanupRafs: number[] = [];
+    cleanupRafs.push(
+      requestAnimationFrame(() => {
+        cleanupRafs.push(requestAnimationFrame(update));
+      })
+    );
+    window.addEventListener("load", update);
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
@@ -124,6 +141,8 @@ const Header = () => {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("load", update);
+      cleanupRafs.forEach((id) => cancelAnimationFrame(id));
     };
   }, [pathname]);
 
@@ -168,16 +187,6 @@ const Header = () => {
   return (
     <>
       <div className={toolbarClass}>
-        {/* Ghost watermark — a faint, oversized wordmark fixed behind the
-            pill (Concept D from the header exploration). Purely decorative:
-            sits before .toolbar-shell in source order so the shell always
-            paints on top of it with no z-index gymnastics needed. Left-
-            aligned + larger while transparent-over-dark, centred + smaller
-            once the pill goes solid — mirrors the approved article-page
-            mockup's two states exactly. */}
-        <div className="toolbar-watermark" aria-hidden="true">
-          <img src={onDark ? "/logo-light.png" : "/logo-dark.png"} alt="" />
-        </div>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
             <Link href="/" className="toolbar-logo">

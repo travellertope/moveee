@@ -187,15 +187,6 @@ export default async function SlugPage({
 
       <main className="market-main service-slug-page">
 
-        {/* Breadcrumb */}
-        <nav className="slug-breadcrumb" aria-label="Breadcrumb">
-          <Link href="/services">Services</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <Link href={`/services/${market}`}>{marketData.name}</Link>
-          <span className="slug-breadcrumb-sep">›</span>
-          <span>{section.label}</span>
-        </nav>
-
         {/* Hero */}
         <section className="slug-hero">
           <p className="market-eyebrow">

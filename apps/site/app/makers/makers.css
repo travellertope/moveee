@@ -157,6 +157,10 @@
   min-height: 520px;
   margin-bottom: 80px;
   padding-bottom: 32px;
+  /* Now the page's first element since the breadcrumb (which used to
+     carry this) was removed — see the --header-clear comment in
+     globals.css. */
+  padding-top: var(--header-clear, 96px);
 }
 .maker-hero-visual {
   position: relative;

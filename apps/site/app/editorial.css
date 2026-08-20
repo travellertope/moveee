@@ -223,6 +223,10 @@
 .ar-standard-hero {
   background: #ffffff;
   padding: 48px 64px 40px;
+  /* Now the page's first element on the no-featured-image branch since
+     the breadcrumb nav (which used to carry this) was removed — see the
+     --header-clear comment in globals.css. */
+  padding-top: calc(var(--header-clear, 96px) + 48px);
   max-width: 900px;
   margin: 0 auto;
 }
@@ -1175,11 +1179,9 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .ar-breadcrumb { padding: 16px 32px; padding-top: var(--header-clear, 96px); }
-  .ar-breadcrumb--overlay { padding: 16px 32px; padding-top: var(--header-clear, 96px); }
   .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
   .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
-  .ar-standard-hero { padding: 40px 32px 32px; }
+  .ar-standard-hero { padding: 40px 32px 32px; padding-top: calc(var(--header-clear, 96px) + 40px); }
   /* Rail collapse: the wide/full tiers only mean anything once there's
      enough viewport for a gutter either side of the 680px text column
      (see the .ar-details min-width above) — below that, every tier
@@ -1243,9 +1245,7 @@
   .ar-standfirst { font-size: 16px; }
   .ar-byline { gap: 14px; flex-direction: column; align-items: flex-start; }
   .ar-actions { align-self: flex-start; }
-  .ar-standard-hero { padding: 28px 20px 24px; }
-  .ar-breadcrumb { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
-  .ar-breadcrumb--overlay { padding: 14px 20px; padding-top: var(--header-clear, 96px); }
+  .ar-standard-hero { padding: 28px 20px 24px; padding-top: calc(var(--header-clear, 96px) + 28px); }
   .ar-wrap {
     grid-template-columns:
       [full-start] 0

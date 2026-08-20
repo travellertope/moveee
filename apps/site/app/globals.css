@@ -137,7 +137,7 @@ body {
    .hero-full already does), and only that section's own inner content
    (title, breadcrumb, nav) gets pushed down via its own padding-top —
    see --header-clear below, applied directly on each page's first
-   section (`.ar-breadcrumb`, `.mg-head`, `.sr-hero`, `.sl-trust-line`,
+   section (`.ar-standard-hero`, `.mg-head`, `.sr-hero`, `.sl-trust-line`,
    etc.) rather than here. Pages whose first section is already the same
    colour as the page background (most listing pages) need this exactly
    as much as a dark hero does — there's just no visible seam either way,

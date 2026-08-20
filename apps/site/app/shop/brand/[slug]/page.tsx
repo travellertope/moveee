@@ -68,13 +68,6 @@ export default async function ShopBrandPage({ params }: { params: Promise<{ slug
 
   return (
     <div className="brand-page">
-      {/* Breadcrumb */}
-      <nav className="brand-breadcrumb" aria-label="Breadcrumb">
-        <Link href="/shop">Shop</Link>
-        <span className="sep">→</span>
-        <span>{storeName}</span>
-      </nav>
-
       {/* Header */}
       <header className="brand-header">
         <div className="brand-header-visual">
