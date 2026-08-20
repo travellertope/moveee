@@ -38,30 +38,42 @@
   box-shadow: var(--shadow-2);
 }
 
+/* Concept D pill — logo left, icons grouped right in one flex row (not
+   the old centred-logo grid). Icons are plain glyphs with no circle
+   backing; contrast over a dark hero comes from the icon's own colour
+   swapping (.is-on-dark), not a background chip behind it. Approved via
+   the article-page mockup before being wired in here. */
 .toolbar-pill {
-  display: grid;
-  grid-template-columns: 40px 1fr 40px 40px;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 18px;
+  padding: 8px 20px 8px 14px;
   width: 100%;
+}
+.toolbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
 }
 .toolbar-icon {
   position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background: var(--paper-deep);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   color: var(--ink);
   flex-shrink: 0;
-  transition: background 0.15s, opacity 0.3s;
+  transition: color 0.2s, opacity 0.3s;
   opacity: 0.6;
 }
 .site-toolbar.is-solid .toolbar-icon { opacity: 1; }
-.toolbar-icon--menu { justify-self: end; }
+.site-toolbar.is-on-dark .toolbar-icon { color: var(--paper); opacity: 0.85; }
 .toolbar-cart-badge {
   position: absolute;
   top: -2px;
@@ -81,15 +93,44 @@
   line-height: 1;
 }
 .toolbar-logo {
-  grid-column: 2;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 /* The image itself swaps (logo-dark.png/logo-light.png) based on the
    header's onDark state — see Header.tsx — rather than a CSS colour
    override, since the wordmark is a real logo file now, not styled text. */
 .toolbar-logo-img { height: 40px; width: auto; display: block; }
+
+/* Ghost watermark (Concept D) — a faint, oversized wordmark fixed
+   behind the pill. Sits before .toolbar-shell in DOM order so the pill
+   always paints on top with no z-index needed. Left-aligned and larger
+   while transparent-over-dark, centred and much fainter once the pill
+   is solid — matches the approved article-page mockup's two states. */
+.toolbar-watermark {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(56vw, 460px);
+  pointer-events: none;
+  /* Negative z-index within .site-toolbar's own stacking context (it's
+     position:fixed + z-index:500) so it paints behind .toolbar-shell — a
+     static in-flow sibling otherwise paints *under* a position:absolute
+     one with the default auto z-index, the opposite of what's wanted
+     here. Still sits above normal page content since the whole toolbar
+     stacking context is z-index:500. */
+  z-index: -1;
+  transition: opacity 0.3s ease, left 0.3s ease, transform 0.3s ease, width 0.3s ease;
+}
+.toolbar-watermark img { width: 100%; height: auto; display: block; opacity: 0.045; transition: opacity 0.3s ease; }
+.site-toolbar.is-on-dark .toolbar-watermark {
+  left: 24px;
+  transform: none;
+  width: min(70vw, 680px);
+}
+.site-toolbar.is-on-dark .toolbar-watermark img { opacity: 0.1; }
 
 /* ============================================================
    MENU OVERLAY — full-viewport takeover, 3-column grid on desktop.
@@ -116,6 +157,12 @@
   padding: 24px clamp(20px, 4vw, 40px);
   flex-shrink: 0;
 }
+/* .toolbar-icon's opacity is normally driven by .site-toolbar's
+   is-solid/is-on-dark state, which doesn't apply here (the overlay bar
+   isn't a descendant of .site-toolbar) — pin it to full opacity so the
+   close button doesn't stay stuck at the default 0.6 dimming, now that
+   there's no circle background to keep it legible on its own. */
+.menu-overlay-bar .toolbar-icon { opacity: 1; }
 .menu-overlay-body {
   flex: 1;
   display: flex;

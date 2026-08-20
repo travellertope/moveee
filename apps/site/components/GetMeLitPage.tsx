@@ -3,11 +3,6 @@ import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import HideIfSubscribed from "@/components/HideIfSubscribed";
 import { sanitizeHtml } from "@/lib/sanitize";
 
-function plainExcerpt(html: string, max = 320): string {
-  const text = sanitizeHtml(html).replace(/<[^>]*>/g, "").trim();
-  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
-}
-
 function issueNum(issue: any, totalCount: number, index: number): number {
   if (issue?.nlIssueNum && issue.nlIssueNum > 0) return issue.nlIssueNum;
   return totalCount > 0 ? totalCount - index : index + 1;
@@ -75,14 +70,10 @@ export default function GetMeLitPage({ issues }: { issues: any[] }) {
                   className="gml-page-title"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(today.title) }}
                 />
-                <div className="gml-page-body">
-                  <p>{plainExcerpt(today.excerpt)}</p>
-                </div>
-                <div className="gml-page-foot">
-                  <Link href={`/newsletter/${today.slug}`} className="gml-page-read-btn">
-                    Continue reading →
-                  </Link>
-                </div>
+                <div
+                  className="gml-page-body"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(today.content || today.excerpt) }}
+                />
               </div>
 
               <div className="gml-page-side">

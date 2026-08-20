@@ -55,14 +55,18 @@
 .sl-trust {
   background: var(--ink);
 }
+.sl-trust {
+  /* The trust bar is a slim dark line, not a hero — filling the header's
+     clearance space with black made the top of the page look like a huge
+     dead void. Push the whole bar down with a paper-background margin
+     instead, so the clearance space matches the page body. See the
+     --header-clear comment in globals.css. */
+  margin-top: var(--header-clear, 96px);
+}
 .sl-trust-line {
   max-width: 1440px;
   margin: 0 auto;
   padding: 14px 64px;
-  /* .sl-trust is the very first section on /shop, dark background — same
-     flush-background/padded-content treatment as .ar-hero/.sr-hero. See
-     the --header-clear comment in globals.css. */
-  padding-top: var(--header-clear, 96px);
   text-align: center;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -1302,7 +1306,7 @@
   .sl-head-inner { padding-left: 0; padding-right: 0; flex-direction: column; align-items: flex-start; gap: 10px; }
   .sl-head-inner h1 { font-size: 26px; }
   .sl-head-desc { font-size: 13px; }
-  .sl-trust-line { padding: 12px 20px; padding-top: var(--header-clear, 96px); font-size: 10px; }
+  .sl-trust-line { padding: 12px 20px; font-size: 10px; }
   /* Dropped on mobile so the trust line fits on one row — see .sl-trust-rating
      in ShopArchiveWrapper.tsx (still shown at wider widths). */
   .sl-trust-rating { display: none; }

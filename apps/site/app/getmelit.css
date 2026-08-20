@@ -99,8 +99,38 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
 .gml-page-num { position: absolute; top: 22px; right: 28px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--mute); letter-spacing: .06em; }
 .gml-page-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); margin-bottom: 16px; }
 .gml-page-title { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.14; letter-spacing: -.01em; margin-bottom: 22px; text-wrap: balance; }
+/* Now renders the full story body (dangerouslySetInnerHTML of the real
+   WP content), not a stripped excerpt — so this needs real typographic
+   rules for whatever the CMS body throws at it, not just <p>. Mirrors
+   .ar-prose's element set in editorial.css, scoped to this card. */
 .gml-page-body { font-size: 17px; line-height: 1.75; color: var(--ink-soft); max-width: 60ch; }
-.gml-page-body p { margin-bottom: 16px; }
+.gml-page-body p { margin-bottom: 1.3em; }
+.gml-page-body h2, .gml-page-body h3, .gml-page-body h4 {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 1.4em 0 .6em;
+}
+.gml-page-body h2 { font-size: 24px; }
+.gml-page-body h3 { font-size: 20px; }
+.gml-page-body h4 { font-size: 17px; }
+.gml-page-body blockquote {
+  border-left: 2px solid var(--ochre);
+  padding-left: 20px;
+  margin: 1.6em 0;
+  font-style: italic;
+  color: var(--ink);
+}
+.gml-page-body a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
+.gml-page-body a:hover { color: var(--ink); }
+.gml-page-body ul, .gml-page-body ol { margin: 0 0 1.3em; padding-left: 1.3em; }
+.gml-page-body li { margin-bottom: .5em; }
+.gml-page-body img { width: 100%; height: auto; border-radius: 4px; margin: 1.6em 0; }
+.gml-page-body hr { border: none; border-top: 1px solid var(--rule); margin: 2.2em 0; }
+/* Legacy — no longer rendered (the "Continue reading" link is gone now
+   that the full story shows on this page), left in case a future pass
+   wants a jump link back. */
 .gml-page-foot { margin-top: 28px; display: flex; align-items: center; gap: 16px; }
 .gml-page-read-btn { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1.5px solid var(--ochre); padding-bottom: 4px; }
 .gml-page-empty { font-size: 15px; color: var(--mute); }

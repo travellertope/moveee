@@ -168,12 +168,18 @@ const Header = () => {
   return (
     <>
       <div className={toolbarClass}>
+        {/* Ghost watermark — a faint, oversized wordmark fixed behind the
+            pill (Concept D from the header exploration). Purely decorative:
+            sits before .toolbar-shell in source order so the shell always
+            paints on top of it with no z-index gymnastics needed. Left-
+            aligned + larger while transparent-over-dark, centred + smaller
+            once the pill goes solid — mirrors the approved article-page
+            mockup's two states exactly. */}
+        <div className="toolbar-watermark" aria-hidden="true">
+          <img src={onDark ? "/logo-light.png" : "/logo-dark.png"} alt="" />
+        </div>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <button className="toolbar-icon" aria-label="Search" onClick={() => setSearchOpen(true)}>
-              <SearchIcon />
-            </button>
-
             <Link href="/" className="toolbar-logo">
               <img
                 src={onDark ? "/logo-light.png" : "/logo-dark.png"}
@@ -182,23 +188,29 @@ const Header = () => {
               />
             </Link>
 
-            <button
-              className="toolbar-icon"
-              aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
-              onClick={openDrawer}
-            >
-              <CartIcon />
-              {itemCount > 0 && <span className="toolbar-cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
-            </button>
+            <div className="toolbar-icons">
+              <button className="toolbar-icon" aria-label="Search" onClick={() => setSearchOpen(true)}>
+                <SearchIcon />
+              </button>
 
-            <button
-              className="toolbar-icon toolbar-icon--menu"
-              aria-label="Menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              <MenuIcon open={menuOpen} />
-            </button>
+              <button
+                className="toolbar-icon"
+                aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
+                onClick={openDrawer}
+              >
+                <CartIcon />
+                {itemCount > 0 && <span className="toolbar-cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
+              </button>
+
+              <button
+                className="toolbar-icon toolbar-icon--menu"
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((v) => !v)}
+              >
+                <MenuIcon open={menuOpen} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

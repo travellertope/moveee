@@ -1941,6 +1941,10 @@
   flex-direction: column;
   justify-content: space-between;
   aspect-ratio: 1.5/1;
+  /* Grid items default to min-width:auto, so a long, unbreakable category
+     name can force this track wider than its 1fr share and overflow the
+     row (and the page) horizontally on mobile — this was that bug. */
+  min-width: 0;
   padding: 20px;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
@@ -1949,7 +1953,7 @@
   transition: box-shadow .25s, transform .25s;
 }
 .mgh-cat-box:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
-.mgh-cat-box h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 21px; margin: 0; letter-spacing: -.01em; }
+.mgh-cat-box h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 21px; margin: 0; letter-spacing: -.01em; overflow-wrap: break-word; }
 .mgh-cat-box-arrow { align-self: flex-end; font-size: 17px; }
 
 /* ── SERIES ── */
@@ -1957,6 +1961,7 @@
 .mgh-series-box {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   padding: 24px 26px;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
