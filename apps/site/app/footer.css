@@ -74,7 +74,10 @@
 .mfoot-wordmark-img { display: block; width: 100%; height: auto; opacity: 0.92; margin: -36px 0; }
 
 .mfoot-bottom {
-  margin-top: clamp(40px, 5vw, 60px);
+  /* No margin-top here — .mfoot-inner's flex gap plus .mfoot-wordmark-img's
+     own symmetric negative margin already set the space above this section;
+     an extra margin-top only stacked on the bottom side, making the gap
+     below the wordmark bigger than the gap above it. */
   border-top: 1px solid rgba(243, 236, 224, 0.14);
   padding: 22px 0 clamp(40px, 5vw, 60px);
   display: flex;

@@ -234,7 +234,17 @@
 .menu-guest-btn:hover { opacity: 0.85; }
 
 @media (max-width: 640px) {
+  .site-toolbar { padding: 0 8px; }
   .toolbar-shell { width: calc(100% - 8px); }
+  /* The logo files are wide wordmarks (~6.5:1), not square marks — at the
+     desktop-sized 40px height they eat most of a narrow pill's width, and
+     since .toolbar-shell clips overflow, the trailing cart/menu icons get
+     cropped off-screen (only search, closest to the logo, stays visible).
+     Shrink the logo and tighten the gaps/padding so all three icons fit
+     down to a 320px-wide viewport. */
+  .toolbar-logo-img { height: 22px; }
+  .toolbar-pill { gap: 8px; padding: 8px 12px 8px 10px; }
+  .toolbar-icons { gap: 8px; }
 }
 
 /* ============================================================

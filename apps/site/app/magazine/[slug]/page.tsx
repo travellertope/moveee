@@ -279,9 +279,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </div>
           <div className="ar-hero-text">
             <h1 className="ar-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
-            {post.excerpt && (
-              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
-            )}
             <div className="ar-byline">
               <div className="ar-byline-items">
                 <div className="ar-byline-item">
@@ -302,6 +299,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 </div>
               </div>
             </div>
+            {post.excerpt && (
+              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
+            )}
           </div>
         </section>
       ) : (
@@ -309,9 +309,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <header className="ar-standard-hero">
             <div className="ar-hero-eyebrow">★ {categoryName}</div>
             <h1 className="ar-title">{post.title}</h1>
-            {post.excerpt && (
-              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
-            )}
             <div className="ar-byline">
               <div className="ar-byline-items">
                 <div className="ar-byline-item">
@@ -332,6 +329,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 </div>
               </div>
             </div>
+            {post.excerpt && (
+              <p className="ar-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
+            )}
           </header>
         </>
       )}
