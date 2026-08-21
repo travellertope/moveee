@@ -36,6 +36,11 @@ const Header = () => {
   // Shop pages get a dedicated search+filter modal instead of the generic
   // sitewide one — see ShopSearchModal.tsx / apps/site/lib/shopFiltersBus.ts.
   const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
+  const isMakersPage = pathname === "/makers" || pathname.startsWith("/makers/");
+  // Logo-branding scope only — deliberately broader than isShopPage (which
+  // also gates the shop-specific search modal further below; /makers pages
+  // still get the generic SearchOverlay, only the wordmark itself changes).
+  const isLifestylePage = isShopPage || isMakersPage;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -199,14 +204,14 @@ const Header = () => {
       <div className={toolbarClass}>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <Link href={isShopPage ? "/shop" : "/"} className="toolbar-logo">
+            <Link href={isLifestylePage ? (isMakersPage ? "/makers" : "/shop") : "/"} className="toolbar-logo">
               <img
                 src={
-                  isShopPage
+                  isLifestylePage
                     ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
                     : onDark ? "/logo-light.png" : "/logo-dark.png"
                 }
-                alt={isShopPage ? "Moveee Lifestyle" : "Moveee"}
+                alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
                 className="toolbar-logo-img"
               />
             </Link>

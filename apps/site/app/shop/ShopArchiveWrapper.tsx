@@ -161,7 +161,15 @@ export default async function ShopArchiveWrapper({
 
   return (
     <>
-      {/* ── 0. TRUST LINE — very top of the page, slim dark bar ── */}
+      {/* Header-clearance spacer, painted solid paper — the floating header
+          is fixed/transparent and reserves no layout space of its own, so
+          the true top of the viewport needs an explicit block here. Without
+          it this gap shows body's own radial-gradient wash (globals.css),
+          which is tinted rust near the top-left and reads as a visibly
+          different, off-white colour from the rest of the page. */}
+      <div className="sl-header-spacer" />
+
+      {/* ── 0. TRUST LINE — slim dark bar, sits right under the header ── */}
       <section className="sl-trust">
         <p className="sl-trust-line">
           <strong>Vetted Makers</strong>
@@ -170,25 +178,10 @@ export default async function ShopArchiveWrapper({
         </p>
       </section>
 
-      {/* ── 1. COMPACT SHOP HEAD (replaces the old centered masthead) ── */}
-      <section className="sl-head">
-        <div className="sl-head-inner">
-          <div>
-            <h1>
-              {isFiltered ? (
-                <em>{activeLabel}</em>
-              ) : (
-                <><em>Lifestyle</em> Shop</>
-              )}
-            </h1>
-          </div>
-          <p className="sl-head-desc">
-            {isFiltered
-              ? `A curated collection of ${activeLabel} goods from vetted makers.`
-              : "Every piece chosen for craft, longevity, and the story behind it — from makers personally vetted for craft integrity and fair production."}
-          </p>
-        </div>
-      </section>
+      {/* Title/subtitle head removed — the header's own logo now reads
+          "Moveee Lifestyle" on shop routes, so a repeated "Lifestyle Shop"
+          title here was redundant. isFiltered/activeLabel context (used
+          elsewhere on this page) is unaffected. */}
 
       {/* ── 2. EDITOR'S PICK — single split strip, hairline rules ── */}
       {heroPick && (
