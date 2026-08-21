@@ -28,7 +28,7 @@ export default function GetMeLitPage({ issues }: { issues: any[] }) {
   return (
     <>
       {/* ── HERO ── */}
-      <section className="gml-hero">
+      <section className="gml-hero" data-header-zone="dark">
         <div className="gml-hero-inner">
           <h1 className="gml-hero-title">
             Read a Story,<br /><em>Free</em> Everyday.
