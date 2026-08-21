@@ -93,7 +93,14 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 56px;
+  overflow: hidden;
 }
+/* Grid tracks default to a min-width of "auto" (their content's intrinsic
+   width) — a long unbroken URL in the story body (a common thing for a
+   GetMeLit issue to link out to) can blow the track past .gml-page's own
+   width, overflowing the card and the whole page horizontally on mobile.
+   min-width: 0 lets the track shrink below that intrinsic size instead. */
+.gml-page > * { min-width: 0; }
 @media (max-width: 900px) { .gml-page { grid-template-columns: 1fr; padding: 32px 26px; } }
 
 .gml-page-num { position: absolute; top: 22px; right: 28px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--mute); letter-spacing: .06em; }
@@ -103,7 +110,7 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
    WP content), not a stripped excerpt — so this needs real typographic
    rules for whatever the CMS body throws at it, not just <p>. Mirrors
    .ar-prose's element set in editorial.css, scoped to this card. */
-.gml-page-body { font-size: 17px; line-height: 1.75; color: var(--ink-soft); max-width: 60ch; }
+.gml-page-body { font-size: 17px; line-height: 1.75; color: var(--ink-soft); max-width: 60ch; overflow-wrap: break-word; word-break: break-word; }
 .gml-page-body p { margin-bottom: 1.3em; }
 .gml-page-body h2, .gml-page-body h3, .gml-page-body h4 {
   font-family: "Fraunces", serif;
