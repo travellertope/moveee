@@ -199,10 +199,14 @@ const Header = () => {
       <div className={toolbarClass}>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <Link href="/" className="toolbar-logo">
+            <Link href={isShopPage ? "/shop" : "/"} className="toolbar-logo">
               <img
-                src={onDark ? "/logo-light.png" : "/logo-dark.png"}
-                alt="Moveee"
+                src={
+                  isShopPage
+                    ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
+                    : onDark ? "/logo-light.png" : "/logo-dark.png"
+                }
+                alt={isShopPage ? "Moveee Lifestyle" : "Moveee"}
                 className="toolbar-logo-img"
               />
             </Link>
