@@ -30,7 +30,7 @@ export default function MagazineHub({ issues, categories, series, edition, featu
 
   return (
     <>
-      <section className="mgh-intro">
+      <section className="mgh-intro" data-header-zone="dark">
         <div className="mgh-wrap">
           <h1 className="mgh-intro-title">
             Every story lives <em>somewhere</em>.

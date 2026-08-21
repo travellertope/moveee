@@ -1784,22 +1784,43 @@
   box-sizing: border-box;
 }
 
+/* Dark hero — same gradient + radial wash as the magazine article hero
+   (editorial.css's .ar-hero/.ar-hero-wash) and GetMeLit's own hero
+   (getmelit.css's .gml-hero), applied here too per explicit request.
+   data-header-zone="dark" on the section (MagazineHub.tsx) tells the
+   floating header to render transparent/light over it — see the note
+   in MagazineArchiveWrapper.tsx for why .mg-head is skipped ahead of
+   this branch specifically (this section carries its own header-clear
+   directly instead, same as .gml-hero). */
 .mgh-intro {
-  padding: 56px 0 48px;
-  border-bottom: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3d3020, #14110d 60%);
+  padding: calc(var(--header-clear, 96px) + 56px) 0 48px;
   text-align: center;
 }
+.mgh-intro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background:
+    radial-gradient(circle at 30% 20%, var(--ochre) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, var(--gold) 0%, transparent 50%);
+}
+.mgh-intro .mgh-wrap { position: relative; z-index: 1; }
 .mgh-intro-title {
   font-family: 'Fraunces', serif;
   font-weight: 600;
   font-size: clamp(34px, 5vw, 52px);
   line-height: 1.08;
   letter-spacing: -.02em;
+  color: #ffffff;
   max-width: 15ch;
   margin: 0 auto;
 }
-.mgh-intro-title em { font-style: italic; font-weight: 400; color: var(--ochre); }
-.mgh-intro-sub { margin: 20px auto 0; max-width: 56ch; font-size: 16px; line-height: 1.6; color: var(--ink-soft, #3a342b); }
+.mgh-intro-title em { font-style: italic; font-weight: 400; color: var(--gold); }
+.mgh-intro-sub { margin: 20px auto 0; max-width: 56ch; font-size: 16px; line-height: 1.6; color: rgba(255,255,255,.75); }
 .mgh-intro-links { margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
 .mgh-intro-links a {
   font-family: 'JetBrains Mono', monospace;
@@ -1807,13 +1828,13 @@
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--ink);
-  border-bottom: 1px solid var(--rule-strong, var(--rule));
+  color: rgba(255,255,255,.85);
+  border-bottom: 1px solid rgba(255,255,255,.3);
   padding-bottom: 3px;
   text-decoration: none;
   transition: color .15s, border-color .15s;
 }
-.mgh-intro-links a:hover { color: var(--ochre); border-color: var(--ochre); }
+.mgh-intro-links a:hover { color: var(--gold); border-color: var(--gold); }
 
 .mgh-sec { padding: clamp(48px, 6vw, 72px) 0; }
 .mgh-sec--tint { background: var(--paper-deep, #f2f2f2); }
