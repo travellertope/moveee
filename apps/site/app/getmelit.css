@@ -10,29 +10,31 @@
 .gml-wrap { max-width: 1180px; margin: 0 auto; padding: 0 64px; }
 @media (max-width: 720px) { .gml-wrap { padding: 0 24px; } }
 
-/* ── HERO — matches /magazine's own hero convention (.mgh-intro in
-   this same file's sibling — see magazine.css): same title/sub font
-   sizes, weights, and section padding, plain paper background,
-   centered. The one difference is the top padding also carries this
-   page's own header-clear — /magazine gets that for free from the
-   empty .mg-head spacer that sits above .mgh-intro; this page has no
-   equivalent spacer since the hero is its first section outright. */
+/* ── HERO — dark variant, matching the magazine article hero's own
+   gradient + radial wash (editorial.css's .ar-hero/.ar-hero-wash).
+   data-header-zone="dark" on the section (see GetMeLitPage.tsx) tells
+   the floating header to render transparent/light over it — same
+   mechanism the article hero, homepage, and /shop's trust bar already
+   use, no separate header change needed. Title/sub sizing still
+   matches /magazine's .mgh-intro; only the colour scheme (dark bg,
+   light text) and the wash differ from that. */
 .gml-hero {
-  background: var(--paper);
-  /* An earlier pass shrank this to clamp(28px, 5vw, 56px) with no
-     --header-clear component at all, aiming to fix a large dead gap
-     above the title — but this hero is a plain white section (no
-     .hero-full/dark-zone treatment), so the floating header renders
-     solid on top of it and genuinely needs clearance space, the same
-     as /magazine's own hero gets from its .mg-head spacer. That fix
-     would have put the title behind the header. Kept the same "less
-     padding than before" spirit (56px decorative, not 148px) but with
-     header-clear restored underneath it. */
-  padding: calc(var(--header-clear, 96px) + 56px) 0 48px;
-  border-bottom: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3d3020, #14110d 60%);
+  padding: calc(var(--header-clear, 96px) + 56px) 0 64px;
   text-align: center;
 }
-.gml-hero-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.gml-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background:
+    radial-gradient(circle at 30% 20%, var(--ochre) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, var(--gold) 0%, transparent 50%);
+}
+.gml-hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 
 h1.gml-hero-title {
   font-family: "Fraunces", serif;
@@ -40,15 +42,15 @@ h1.gml-hero-title {
   font-size: clamp(34px, 5vw, 52px);
   line-height: 1.08;
   letter-spacing: -.02em;
-  color: var(--ink);
+  color: #ffffff;
   max-width: 15ch;
   text-wrap: balance;
 }
-h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre); }
+h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--gold); }
 
 .gml-hero-sub {
   font-size: 16px;
-  color: var(--ink-soft, #3a342b);
+  color: rgba(255, 255, 255, 0.75);
   margin-top: 20px;
   max-width: 56ch;
   line-height: 1.6;
@@ -59,11 +61,11 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
   display: flex;
   align-items: flex-end;
   gap: 16px;
-  border-bottom: 1.5px solid var(--rule);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.3);
   padding-bottom: 12px;
   transition: border-color .2s;
 }
-.gml-hero-form-row:focus-within { border-color: var(--ochre); }
+.gml-hero-form-row:focus-within { border-color: var(--gold); }
 .gml-hero-input {
   flex: 1;
   background: none;
@@ -71,11 +73,11 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
   outline: none;
   font-family: "DM Sans", sans-serif;
   font-size: 16px;
-  color: var(--ink);
+  color: #ffffff;
   padding: 6px 0;
   text-align: left;
 }
-.gml-hero-input::placeholder { color: var(--mute); }
+.gml-hero-input::placeholder { color: rgba(255, 255, 255, 0.5); }
 .gml-hero-submit {
   background: none;
   border: none;
@@ -85,7 +87,7 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre)
   font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--ochre);
+  color: var(--gold);
   padding-bottom: 6px;
   white-space: nowrap;
   transition: opacity .15s;

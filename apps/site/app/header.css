@@ -23,19 +23,22 @@
    regardless of the pill's rendered height, no magic percentage. */
 .site-toolbar.is-hidden { transform: translateY(calc(-100% - 40px)); }
 
+/* Fully transparent in both states now — the frosted white pill that
+   used to back the "solid" state was only there for legibility, but
+   the icon/logo colours already swap for contrast on their own
+   (dark on light pages, light on dark zones — see .toolbar-icon and
+   the onDark logo swap in Header.tsx), so the pill background was
+   redundant on any page whose scroll-height content stays light. If a
+   specific page later scrolls the header over a photo/dark band while
+   in the "solid" (light-icon) state, that's the case to watch for —
+   the dark icons would lose contrast there with no background to fall
+   back on. */
 .toolbar-shell {
   width: min(100%, 460px);
   border-radius: var(--radius-full);
   overflow: hidden;
   background: transparent;
   box-shadow: none;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-.site-toolbar.is-solid .toolbar-shell {
-  background: color-mix(in srgb, var(--paper) 72%, transparent);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  box-shadow: var(--shadow-2);
 }
 
 /* Concept D pill — logo left, icons grouped right in one flex row (not
