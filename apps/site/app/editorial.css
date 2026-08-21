@@ -156,6 +156,10 @@
   border-top: 1px solid rgba(255,255,255,0.2);
   padding-top: 16px;
   margin-top: 0;
+  /* Byline now sits between the title and the excerpt (moved up from
+     after the excerpt) — it had no bottom spacing of its own since it
+     used to be the last element in the hero header. */
+  margin-bottom: 24px;
 }
 .ar-byline-items {
   display: flex;
