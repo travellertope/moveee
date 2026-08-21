@@ -102,8 +102,9 @@ export default function CartDrawer() {
             </div>
             <p className="cart-subtotal-note">Shipping &amp; taxes calculated at checkout</p>
             <a
-              href="https://cms.themoveee.com/checkout"
+              href="/shop/checkout"
               className="cart-checkout-btn"
+              onClick={closeDrawer}
             >
               Checkout →
             </a>

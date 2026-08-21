@@ -1214,6 +1214,82 @@ centered-absolute pattern instead of chasing the breakpoint each time).
 | 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
 | 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
+### Shop checkout — in-house Next.js flow, no more WordPress handoff (Site A, August 2026)
+
+Checkout used to be `<a href="https://cms.themoveee.com/checkout">` in `CartDrawer.tsx` — a full
+redirect off the Next.js frontend onto the WordPress-rendered WooCommerce checkout page. Replaced
+with a real in-house flow on `apps/site`, reusing the exact same backend
+(`culture-community/includes/payment/class-culture-shop-checkout.php`, `Culture_Shop_Checkout`)
+already built and shipped for `apps/mobile`'s `CheckoutScreen.tsx` — quote totals (real WC
+shipping zones) → pay (Paystack NGN / Stripe everything-else, hosted redirect) → webhook creates
+the real `WC_Order` via `WC_Checkout::create_order()` (same hooks WCFM Marketplace needs for
+vendor payout splitting — see that file's own docblock for why hand-rolling order creation would
+silently break vendor payouts). This is not a new payment system, just a new *client* for one that
+already existed.
+
+**Why a new set of PHP routes was needed, not just calling the mobile ones directly**: the mobile
+endpoints (`/mobile/checkout/*`) are gated by `Culture_Mobile_API::mobile_permission()`, which
+requires a `Bearer` JWT-style token issued by the mobile login flow — the web app's NextAuth
+session has no such token to present, only a session cookie. `Culture_Shop_Checkout` now registers
+a second set of routes mirroring the mobile ones, gated the same way every other web mirror in
+this codebase is (API key + explicit `user_id` param — see the Follow system / community RSVP web
+mirrors in `class-culture-rest-api.php` for the precedent this follows):
+```
+POST culture/v1/shop/checkout/totals
+POST culture/v1/shop/checkout/pay
+GET  culture/v1/shop/checkout/order/{id}
+GET  culture/v1/shop/checkout/order-by-reference/{reference}
+```
+Both the mobile (JWT) and web (API key) callbacks delegate into the same private `do_totals()` /
+`do_pay()` / `do_get_order()` / `do_get_order_by_reference()` methods, which take an explicit
+`int $user_id` rather than calling `get_current_user_id()` themselves — **one implementation, two
+auth front doors**, same pattern as everywhere else this codebase mirrors a mobile endpoint for
+web. If this checkout logic ever needs to change, change the `do_*` method — never patch the
+mobile-only or web-only wrapper alone, or the two clients will drift.
+
+**Next.js side** (`apps/site`):
+- `app/api/checkout/totals/route.ts`, `.../pay/route.ts`, `.../order/[id]/route.ts`,
+  `.../order-by-reference/[reference]/route.ts` — thin proxies, same
+  `getServerSession(authOptions)` + `Authorization: Bearer ${CULTURE_API_SECRET}` + explicit
+  `user_id: session.user.id` pattern as `app/api/shop/reviews/route.ts`'s `POST` handler.
+- `app/shop/checkout/page.tsx` — 2-step client flow (Address → Review & Pay), mirrors
+  `CheckoutScreen.tsx`'s structure. Step 2's "Pay" button does a full `window.location.href`
+  redirect to the Paystack/Stripe hosted page (no in-app WebView the way mobile has one — this is
+  a normal browser tab, so a hosted-page redirect is the natural web equivalent). Gated: no
+  session → a login-gate card linking to `https://web.themoveee.com/login?callbackUrl=<back here>`
+  (absolute callback URLs are already supported by `apps/connect/app/login/page.tsx`); empty cart
+  → an empty-state card linking back to `/shop`.
+- `app/shop/order-confirmation/page.tsx` — reads `?shop_ref=` (Stripe/Paystack land here after
+  payment), polls `order-by-reference` every 3s (same ~2-minute/40-attempt cap as
+  `CheckoutScreen.tsx`) since the real `WC_Order` is only created once the payment webhook fires,
+  not at the moment the shopper returns from the hosted payment page.
+- **`Culture_Shop_Checkout::init_stripe()`'s `cancel_url` was changed from `/shop/cart` to
+  `/shop/checkout?checkout_cancelled=1`** — the former pointed at a page that was never built
+  (there is no dedicated `/shop/cart` route on this site; the cart is the `CartDrawer` overlay
+  only) and would have 404'd. `/shop/checkout` already exists and still has the shopper's items,
+  so cancelling now lands them back on step 1 with a small inline notice rather than a dead link.
+- **Per-item line prices in the order summary intentionally use the cart's own store-currency
+  totals (`useCart()`'s `totals.currency_symbol`, always GBP — the WooCommerce Store API doesn't
+  do FX conversion), not the checkout quote's `display.currency`.** The quote's subtotal/shipping/
+  tax/total *are* correctly FX-converted (Nigeria-resident shoppers see NGN, per
+  `resolve_shop_currency()` — see "Shop multi-currency" in the mobile section below), but if a
+  Nigeria shopper's per-item rows tried to reuse that NGN symbol against the cart's raw GBP unit
+  prices, the numbers would be GBP-magnitude with an NGN label — wrong. Don't merge these two
+  currency sources if you touch this page again.
+- **Auth note**: `apps/site` has no login/register pages of its own (see "Site architecture" above
+  — those live on Site B) but it *does* run the same `SessionProvider`/NextAuth config as
+  `apps/connect` (shared `.themoveee.com` cookie domain), confirmed by `app/api/shop/reviews/
+  route.ts` and `app/api/user/interactions/route.ts` already calling `getServerSession()`
+  successfully on this app. Checkout works the same way — no proxy/cross-domain session bridging
+  needed, a Site B login just works here too.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file (checkout additionally needs live Paystack/Stripe keys and a
+  Woo shipping zone configured to test the hosted-redirect round trip end to end). Verified via
+  `tsc --noEmit` (clean) on both `apps/site` and `apps/connect`, and `php -l` on the touched PHP
+  file. Re-check the full address → totals → pay → webhook → order-confirmation round trip in a
+  real environment (including the Paystack NGN path specifically, since `resolve_shop_currency()`
+  keys off a raw `country` string match) before considering this fully closed.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
