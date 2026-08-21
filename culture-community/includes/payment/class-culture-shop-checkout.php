@@ -20,11 +20,21 @@
  * and reporting stay in one consistent currency.
  *
  * REST endpoints (all under /wp-json/culture/v1/):
- *   POST mobile/checkout/totals            — quote cart + real shipping rates (auth required)
- *   POST mobile/checkout/pay                — start payment for a quote (auth required)
+ *   POST mobile/checkout/totals            — quote cart + real shipping rates (JWT auth required)
+ *   POST mobile/checkout/pay                — start payment for a quote (JWT auth required)
  *   POST shop/checkout/webhook/paystack     — Paystack charge.success webhook
  *   POST shop/checkout/webhook/stripe       — Stripe checkout.session.completed webhook
- *   GET  mobile/checkout/order/{id}         — order status lookup (auth required, ownership-checked)
+ *   GET  mobile/checkout/order/{id}         — order status lookup (JWT auth, ownership-checked)
+ *   GET  mobile/checkout/order-by-reference/{reference} — order status by reference (JWT auth)
+ *
+ * Web mirrors (API key + explicit user_id, same convention as the Follow
+ * system / community RSVP web mirrors in class-culture-rest-api.php) —
+ * used by apps/site's Next.js checkout proxy routes, since the Next.js web
+ * app has no JWT bearer token to present, only a NextAuth session:
+ *   POST shop/checkout/totals
+ *   POST shop/checkout/pay
+ *   GET  shop/checkout/order/{id}
+ *   GET  shop/checkout/order-by-reference/{reference}
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -89,6 +99,43 @@ class Culture_Shop_Checkout {
             'callback'            => array( __CLASS__, 'handle_get_order_by_reference' ),
             'permission_callback' => array( 'Culture_Mobile_API', 'mobile_permission' ),
         ) );
+
+        // ── Web mirrors (API key + explicit user_id) ────────────────────
+        register_rest_route( 'culture/v1', '/shop/checkout/totals', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_totals_web' ),
+            'permission_callback' => array( 'Culture_REST_API', 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/shop/checkout/pay', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_pay_web' ),
+            'permission_callback' => array( 'Culture_REST_API', 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/shop/checkout/order/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_order_web' ),
+            'permission_callback' => array( 'Culture_REST_API', 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/shop/checkout/order-by-reference/(?P<reference>[A-Za-z0-9\-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_order_by_reference_web' ),
+            'permission_callback' => array( 'Culture_REST_API', 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     // ── Totals (quote) ───────────────────────────────────────────────────
@@ -103,12 +150,24 @@ class Culture_Shop_Checkout {
      * persisted in our own transient and resolved again in handle_pay()).
      */
     public static function handle_totals( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+        return self::do_totals( $user_id, $request );
+    }
+
+    /** Web mirror — API key + explicit user_id (see class docblock). */
+    public static function handle_totals_web( WP_REST_Request $request ) {
+        return self::do_totals( (int) $request->get_param( 'user_id' ), $request );
+    }
+
+    private static function do_totals( int $user_id, WP_REST_Request $request ) {
         if ( ! function_exists( 'WC' ) ) {
             return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
         }
 
-        $user_id = get_current_user_id();
-        if ( ! $user_id ) {
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
             return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
         }
 
@@ -201,12 +260,24 @@ class Culture_Shop_Checkout {
      * NGN (Nigeria-resident shopper) → Paystack, everything else → Stripe.
      */
     public static function handle_pay( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+        return self::do_pay( $user_id, $request );
+    }
+
+    /** Web mirror — API key + explicit user_id (see class docblock). */
+    public static function handle_pay_web( WP_REST_Request $request ) {
+        return self::do_pay( (int) $request->get_param( 'user_id' ), $request );
+    }
+
+    private static function do_pay( int $user_id, WP_REST_Request $request ) {
         if ( ! function_exists( 'WC' ) ) {
             return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
         }
 
-        $user_id = get_current_user_id();
-        if ( ! $user_id ) {
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
             return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
         }
 
@@ -278,7 +349,7 @@ class Culture_Shop_Checkout {
     private static function init_stripe( string $reference, string $email, float $total_gbp ) {
         $frontend_url = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
         $success_url  = $frontend_url . '/shop/order-confirmation?shop_ref=' . $reference . '&session_id={CHECKOUT_SESSION_ID}';
-        $cancel_url   = $frontend_url . '/shop/cart?checkout_cancelled=1';
+        $cancel_url   = $frontend_url . '/shop/checkout?checkout_cancelled=1';
 
         $response = Culture_Stripe::payment_session( array(
             'mode'                => 'payment',
@@ -448,10 +519,20 @@ class Culture_Shop_Checkout {
     // ── Order lookup ─────────────────────────────────────────────────────
 
     public static function handle_get_order( WP_REST_Request $request ) {
-        $user_id  = get_current_user_id();
-        $order_id = (int) $request['id'];
-
+        $user_id = get_current_user_id();
         if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+        return self::do_get_order( $user_id, (int) $request['id'] );
+    }
+
+    /** Web mirror — API key + explicit user_id (see class docblock). */
+    public static function handle_get_order_web( WP_REST_Request $request ) {
+        return self::do_get_order( (int) $request->get_param( 'user_id' ), (int) $request['id'] );
+    }
+
+    private static function do_get_order( int $user_id, int $order_id ) {
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
             return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
         }
 
@@ -487,10 +568,23 @@ class Culture_Shop_Checkout {
      * order ID (the order is only created once the webhook fires).
      */
     public static function handle_get_order_by_reference( WP_REST_Request $request ) {
-        $user_id   = get_current_user_id();
-        $reference = sanitize_text_field( $request['reference'] );
-
+        $user_id = get_current_user_id();
         if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+        return self::do_get_order_by_reference( $user_id, sanitize_text_field( $request['reference'] ) );
+    }
+
+    /** Web mirror — API key + explicit user_id (see class docblock). */
+    public static function handle_get_order_by_reference_web( WP_REST_Request $request ) {
+        return self::do_get_order_by_reference(
+            (int) $request->get_param( 'user_id' ),
+            sanitize_text_field( $request['reference'] )
+        );
+    }
+
+    private static function do_get_order_by_reference( int $user_id, string $reference ) {
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
             return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
         }
 
@@ -513,8 +607,7 @@ class Culture_Shop_Checkout {
             return new WP_Error( 'not_found', 'Order not found', array( 'status' => 404 ) );
         }
 
-        $request->set_param( 'id', $order->get_id() );
-        return self::handle_get_order( $request );
+        return self::do_get_order( $user_id, $order->get_id() );
     }
 
     // ── Shared cart/shipping helpers ────────────────────────────────────
