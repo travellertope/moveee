@@ -53,17 +53,14 @@
 
 /* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
 .sl-trust {
-  /* Was var(--ink) (black) — the rest of the page is plain white, so a
-     black strip up top read as an unrelated band rather than part of
-     the same page. Matched to the page background instead; a hairline
-     bottom border does the job the dark fill used to do (separating
-     this line from the content below) without introducing a colour
-     the rest of the page doesn't have. */
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
+  background: var(--ink);
 }
 .sl-trust {
-  /* See the --header-clear comment in globals.css. */
+  /* The trust bar is a slim dark line, not a hero — filling the header's
+     clearance space with black made the top of the page look like a huge
+     dead void. Push the whole bar down with a paper-background margin
+     instead, so the clearance space matches the page body. See the
+     --header-clear comment in globals.css. */
   margin-top: var(--header-clear, 96px);
 }
 .sl-trust-line {
@@ -74,9 +71,9 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   letter-spacing: .02em;
-  color: var(--mute);
+  color: rgba(243,236,224,.7);
 }
-.sl-trust-line strong { color: var(--ink); font-weight: 700; }
+.sl-trust-line strong { color: var(--paper); font-weight: 700; }
 
 /* ── STICKY FILTER BAR (superseded — the search+filter bar was removed from the
    page entirely and moved into <ShopSearchModal>, opened from the header search
