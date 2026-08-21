@@ -15,7 +15,13 @@
    word, small muted subtitle underneath. ── */
 .gml-hero {
   background: var(--paper);
-  padding: clamp(72px, 11vw, 148px) 0 clamp(32px, 4vw, 48px);
+  /* Was clamp(72px, 11vw, 148px) — roughly 3x the homepage masthead's own
+     scale (see .masthead in homepage-v2.css) this section's comment claims
+     to mirror, leaving a large dead gap above the title that only got
+     worse on wider/desktop viewports and looked especially empty once the
+     subscribe form is hidden for already-subscribed/signed-in visitors
+     (HideIfSubscribed). Matched to the masthead's actual clamp instead. */
+  padding: clamp(28px, 5vw, 56px) 0 clamp(32px, 4vw, 48px);
   text-align: center;
 }
 .gml-hero-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
