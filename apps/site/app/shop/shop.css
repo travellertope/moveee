@@ -52,16 +52,16 @@
 }
 
 /* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
-.sl-trust {
-  background: var(--ink);
+.sl-header-spacer {
+  /* Solid paper block filling the header's clearance space — see the
+     comment at its JSX call site for why this replaced a plain
+     margin-top (which let body's own radial-gradient wash show through
+     and read as a visibly different colour from the rest of the page). */
+  height: var(--header-clear, 96px);
+  background: var(--paper);
 }
 .sl-trust {
-  /* The trust bar is a slim dark line, not a hero — filling the header's
-     clearance space with black made the top of the page look like a huge
-     dead void. Push the whole bar down with a paper-background margin
-     instead, so the clearance space matches the page body. See the
-     --header-clear comment in globals.css. */
-  margin-top: var(--header-clear, 96px);
+  background: var(--ink);
 }
 .sl-trust-line {
   max-width: 1440px;
