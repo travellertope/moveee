@@ -10,18 +10,26 @@
 .gml-wrap { max-width: 1180px; margin: 0 auto; padding: 0 64px; }
 @media (max-width: 720px) { .gml-wrap { padding: 0 24px; } }
 
-/* ── HERO — same convention as the homepage masthead: plain paper
-   background, centered black Fraunces headline with one italic ochre
-   word, small muted subtitle underneath. ── */
+/* ── HERO — matches /magazine's own hero convention (.mgh-intro in
+   this same file's sibling — see magazine.css): same title/sub font
+   sizes, weights, and section padding, plain paper background,
+   centered. The one difference is the top padding also carries this
+   page's own header-clear — /magazine gets that for free from the
+   empty .mg-head spacer that sits above .mgh-intro; this page has no
+   equivalent spacer since the hero is its first section outright. */
 .gml-hero {
   background: var(--paper);
-  /* Was clamp(72px, 11vw, 148px) — roughly 3x the homepage masthead's own
-     scale (see .masthead in homepage-v2.css) this section's comment claims
-     to mirror, leaving a large dead gap above the title that only got
-     worse on wider/desktop viewports and looked especially empty once the
-     subscribe form is hidden for already-subscribed/signed-in visitors
-     (HideIfSubscribed). Matched to the masthead's actual clamp instead. */
-  padding: clamp(28px, 5vw, 56px) 0 clamp(32px, 4vw, 48px);
+  /* An earlier pass shrank this to clamp(28px, 5vw, 56px) with no
+     --header-clear component at all, aiming to fix a large dead gap
+     above the title — but this hero is a plain white section (no
+     .hero-full/dark-zone treatment), so the floating header renders
+     solid on top of it and genuinely needs clearance space, the same
+     as /magazine's own hero gets from its .mg-head spacer. That fix
+     would have put the title behind the header. Kept the same "less
+     padding than before" spirit (56px decorative, not 148px) but with
+     header-clear restored underneath it. */
+  padding: calc(var(--header-clear, 96px) + 56px) 0 48px;
+  border-bottom: 1px solid var(--rule);
   text-align: center;
 }
 .gml-hero-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
@@ -29,20 +37,21 @@
 h1.gml-hero-title {
   font-family: "Fraunces", serif;
   font-weight: 600;
-  font-size: clamp(40px, 7vw, 84px);
-  line-height: 1.04;
-  letter-spacing: -.015em;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
   color: var(--ink);
+  max-width: 15ch;
   text-wrap: balance;
 }
 h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre); }
 
 .gml-hero-sub {
-  font-size: clamp(16px, 1.6vw, 19px);
-  color: var(--mute);
-  margin-top: 22px;
-  max-width: 48ch;
-  line-height: 1.55;
+  font-size: 16px;
+  color: var(--ink-soft, #3a342b);
+  margin-top: 20px;
+  max-width: 56ch;
+  line-height: 1.6;
 }
 
 .gml-hero-form { margin-top: 40px; width: 100%; max-width: 400px; }
