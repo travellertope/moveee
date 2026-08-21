@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -69,7 +69,17 @@ const Header = () => {
   // the old binary "solid immediately on every non-homepage page" default
   // — a page with no dark zone at all still starts transparent, it just
   // never has a dark zone to render light-on-dark colours for.
-  useEffect(() => {
+  //
+  // useLayoutEffect, not useEffect: the latter fires *after* the browser
+  // has already painted the mount-time render (solid/dark-text, per the
+  // useState defaults below) — so on the homepage the very first frame a
+  // visitor sees was always the wrong one, corrected a tick later. That
+  // read as "stuck solid" more often than not, since a visible correction
+  // one frame in is easy to miss but a wrong *first* paint isn't.
+  // useLayoutEffect runs synchronously after the DOM is hydrated but
+  // before the browser paints anything, so `update()`'s result is what
+  // actually gets painted first — no flash, no fix-up frame.
+  useLayoutEffect(() => {
     let lastY = window.scrollY;
     let raf: number | null = null;
 
