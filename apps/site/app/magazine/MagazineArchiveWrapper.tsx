@@ -126,8 +126,13 @@ export default async function MagazineArchiveWrapper({
           spacer only, sized to the exact height the nav used to occupy
           (measured: 96px header-clear + ~44px nav row) so the distance
           between the floating header and the first real section's title
-          is unchanged. */}
-      <section className="mg-head" />
+          is unchanged. Only rendered for the series/filtered branches —
+          the Hub's own .mgh-intro now carries its own header-clear
+          directly (same dark-hero pattern as GetMeLit's .gml-hero), so
+          this spacer would just add unwanted extra space above it and,
+          worse, delay the header's dark-zone detection until scrolled
+          past this spacer's own height. */}
+      {(series || isFiltered) && <section className="mg-head" />}
 
       {series ? (
         /* ── SERIES LANDING PAGE ── */
