@@ -1,0 +1,192 @@
+/* ========================================
+   CULTURE DROP NEWSLETTER PAGE  —  cd-* namespace
+   Mirrors getmelit.css's bespoke layout exactly (same approved Artifact
+   design, same "one issue's full body on its own manuscript page" shell)
+   — Culture Drop no longer shares NewsletterPublicationPage/np-* with
+   GetMeLit. Only the copy and the accent colour differ: Culture Drop
+   uses ochre throughout (including its hero accents, where GetMeLit uses
+   gold), matching the ochre/gold split already established by the
+   .nl-list-badge--culture-drop / --getmelit pair in newsletter.css.
+   ======================================== */
+
+.cd-wrap { max-width: 1180px; margin: 0 auto; padding: 0 64px; }
+@media (max-width: 720px) { .cd-wrap { padding: 0 24px; } }
+
+/* ── HERO — dark variant, matching the magazine article hero's own
+   gradient + radial wash (editorial.css's .ar-hero/.ar-hero-wash), same
+   as GetMeLit's .gml-hero. data-header-zone="dark" on the section (see
+   CultureDropPage.tsx) tells the floating header to render
+   transparent/light over it. */
+.cd-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3d3020, #14110d 60%);
+  padding: calc(var(--header-clear, 96px) + 56px) 0 64px;
+  text-align: center;
+}
+.cd-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background:
+    radial-gradient(circle at 30% 20%, var(--ochre) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, var(--gold) 0%, transparent 50%);
+}
+.cd-hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+
+h1.cd-hero-title {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  color: #ffffff;
+  max-width: 15ch;
+  text-wrap: balance;
+}
+h1.cd-hero-title em { font-style: italic; font-weight: 400; color: var(--ochre); }
+
+.cd-hero-sub {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 20px;
+  max-width: 56ch;
+  line-height: 1.6;
+}
+
+.cd-hero-form { margin-top: 40px; width: 100%; max-width: 400px; }
+.cd-hero-form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 12px;
+  transition: border-color .2s;
+}
+.cd-hero-form-row:focus-within { border-color: var(--ochre); }
+.cd-hero-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  color: #ffffff;
+  padding: 6px 0;
+  text-align: left;
+}
+.cd-hero-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.cd-hero-submit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  padding-bottom: 6px;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.cd-hero-submit:hover { opacity: .7; }
+
+/* ── LATEST ISSUE — manuscript page (same shell as GetMeLit's
+   .gml-page, holding the current issue's real full body) ── */
+.cd-today { background: var(--paper); padding: clamp(24px, 3vw, 40px) 0 clamp(64px, 8vw, 110px); position: relative; }
+.cd-today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 44px; flex-wrap: wrap; }
+.cd-today-eyebrow { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+.cd-today-day { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+
+.cd-page {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  box-shadow: 0 40px 70px -40px rgba(20,17,13,.2), 0 2px 0 var(--rule);
+  padding: clamp(36px, 5vw, 72px) clamp(30px, 6vw, 84px);
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 56px;
+  overflow: hidden;
+}
+/* Grid tracks default to a min-width of "auto" — a long unbroken URL in
+   the issue body can blow the track past .cd-page's own width,
+   overflowing the card and the page horizontally on mobile. min-width:0
+   lets the track shrink below that intrinsic size instead. */
+.cd-page > * { min-width: 0; }
+@media (max-width: 900px) { .cd-page { grid-template-columns: 1fr; padding: 32px 26px; } }
+
+.cd-page-num { position: absolute; top: 22px; right: 28px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--mute); letter-spacing: .06em; }
+.cd-page-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); margin-bottom: 16px; }
+.cd-page-title { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.14; letter-spacing: -.01em; margin-bottom: 22px; text-wrap: balance; }
+/* Renders the full issue body (dangerouslySetInnerHTML of the real WP
+   content) — needs real typographic rules for whatever the CMS body
+   throws at it. Mirrors .gml-page-body's element set exactly. */
+.cd-page-body { font-size: 17px; line-height: 1.75; color: var(--ink-soft); max-width: 60ch; overflow-wrap: break-word; word-break: break-word; }
+.cd-page-body p { margin-bottom: 1.3em; }
+.cd-page-body h2, .cd-page-body h3, .cd-page-body h4 {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 1.4em 0 .6em;
+}
+.cd-page-body h2 { font-size: 24px; }
+.cd-page-body h3 { font-size: 20px; }
+.cd-page-body h4 { font-size: 17px; }
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
+.cd-page-body a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
+.cd-page-body a:hover { color: var(--ink); }
+/* Tailwind's Preflight resets list-style to none globally — restore real
+   markers here, same fix as getmelit.css/directory.css/events.css/
+   editorial.css for the same reason. */
+.cd-page-body ul, .cd-page-body ol { margin: 0 0 1.3em; padding-left: 1.3em; }
+.cd-page-body ul { list-style: disc outside; }
+.cd-page-body ol { list-style: decimal outside; }
+.cd-page-body li { margin-bottom: .5em; }
+.cd-page-body img { width: 100%; height: auto; border-radius: 4px; margin: 1.6em 0; }
+.cd-page-body hr { border: none; border-top: 1px solid var(--rule); margin: 2.2em 0; }
+.cd-page-empty { font-size: 15px; color: var(--mute); }
+
+.cd-page-side { border-left: 1px dashed var(--rule); padding-left: 40px; display: flex; flex-direction: column; gap: 26px; }
+@media (max-width: 900px) { .cd-page-side { border-left: none; border-top: 1px dashed var(--rule); padding-left: 0; padding-top: 28px; } }
+.cd-page-side-label { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+
+.cd-stat { display: flex; align-items: center; gap: 14px; background: var(--paper-deep); border-radius: 8px; padding: 14px 16px; }
+.cd-stat b { font-family: "Fraunces", serif; font-size: 26px; font-weight: 600; color: var(--ochre); }
+.cd-stat span { font-family: "JetBrains Mono", monospace; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+
+/* Recent issues — compact vertical list, folded into the page-side
+   column instead of its own section (same as GetMeLit's .gml-mini-*). */
+.cd-mini-list { display: flex; flex-direction: column; margin-top: 14px; }
+.cd-mini-row { display: flex; align-items: baseline; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); text-decoration: none; transition: opacity .15s; }
+.cd-mini-row:last-child { border-bottom: none; }
+.cd-mini-row:hover { opacity: .6; }
+.cd-mini-num { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700; color: var(--ochre); flex-shrink: 0; }
+.cd-mini-title { font-family: "Fraunces", serif; font-size: 14.5px; font-weight: 600; color: var(--ink); line-height: 1.3; flex: 1; }
+.cd-mini-date { font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--mute); flex-shrink: 0; white-space: nowrap; }
+.cd-mini-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ochre);
+  padding-bottom: 3px;
+  transition: opacity .15s;
+}
+.cd-mini-all:hover { opacity: .7; }
+
+footer.cd-foot { background: var(--ink); padding: 26px 0 40px; text-align: center; border-top: 1px solid rgba(243,236,224,.1); }
+footer.cd-foot span { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(243,236,224,.35); }
