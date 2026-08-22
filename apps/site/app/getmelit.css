@@ -148,7 +148,13 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--gold);
 }
 .gml-page-body a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
 .gml-page-body a:hover { color: var(--ink); }
+/* Tailwind's Preflight resets list-style to none globally — restore real
+   markers here, same fix already applied in directory.css/events.css/
+   editorial.css for the same reason. Without this, CMS <ul>/<ol> content
+   renders as flush, marker-less paragraphs. */
 .gml-page-body ul, .gml-page-body ol { margin: 0 0 1.3em; padding-left: 1.3em; }
+.gml-page-body ul { list-style: disc outside; }
+.gml-page-body ol { list-style: decimal outside; }
 .gml-page-body li { margin-bottom: .5em; }
 .gml-page-body img { width: 100%; height: auto; border-radius: 4px; margin: 1.6em 0; }
 .gml-page-body hr { border: none; border-top: 1px solid var(--rule); margin: 2.2em 0; }
