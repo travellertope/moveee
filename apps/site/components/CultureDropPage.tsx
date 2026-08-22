@@ -34,8 +34,7 @@ export default function CultureDropPage({ issues }: { issues: any[] }) {
             The Week in <em>Culture</em>, Delivered.
           </h1>
           <p className="cd-hero-sub">
-            One deep essay, curated picks, a music dispatch, and what&rsquo;s happening across Lagos, London, New
-            York, and Accra. Written to make you think, not just scroll.
+            For readers who want depth over noise — one considered take on culture, delivered once a week.
           </p>
           <HideIfSubscribed>
             <div className="cd-hero-form">

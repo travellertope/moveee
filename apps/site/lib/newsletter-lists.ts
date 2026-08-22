@@ -36,7 +36,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     eyebrow: "★ Culture Drop · Every Tuesday",
     tagline: "The weekly dispatch on contemporary culture.",
     standfirst:
-      "One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll.",
+      "For readers who want depth over noise — one considered take on culture, delivered once a week.",
     signupNote: "Free · Weekly · Unsubscribe anytime",
     pillars: [
       {
