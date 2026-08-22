@@ -3,6 +3,7 @@ import Link from "next/link";
 import NlhArchiveList from "@/components/NlhArchiveList";
 import type { NlArchiveRow } from "@/components/NlArchiveList";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { issueNumbersByList } from "@/lib/newsletter-editions";
 import type { RegionalSlug } from "@/lib/editions";
 import "@/app/newsletter.css";
 import "@/app/newsletter-hub.css";
@@ -55,7 +56,9 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
   const allCount = newsletters.length;
   const cdCount = newsletters.filter((n: any) => (n.nlList || "") === "culture-drop").length;
   const gmlCount = newsletters.filter((n: any) => (n.nlList || "") === "getmelit").length;
-  const issueNum = (index: number) => (allCount > 0 ? allCount - index : index + 1);
+  // Per-list issue numbers, not one shared counter across both newsletters
+  // — see issueNumbersByList's own comment for why.
+  const issueNums = issueNumbersByList(newsletters);
 
   return (
     <>
@@ -105,12 +108,12 @@ export default async function EditionNewsletterHub({ edition }: { edition: Regio
           </div>
           {allCount > 0 ? (
             <NlhArchiveList
-              rows={newsletters.map((issue: any, idx: number): NlArchiveRow => {
+              rows={newsletters.map((issue: any): NlArchiveRow => {
                 const list = issue.nlList || null;
                 return {
                   id: issue.id,
                   slug: issue.slug,
-                  num: String(issueNum(idx)).padStart(2, "0"),
+                  num: String(issueNums.get(issue.id) ?? 0).padStart(2, "0"),
                   date: new Date(issue.date).toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
