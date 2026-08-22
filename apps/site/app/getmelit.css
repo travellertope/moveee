@@ -139,13 +139,9 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--gold);
 .gml-page-body h2 { font-size: 24px; }
 .gml-page-body h3 { font-size: 20px; }
 .gml-page-body h4 { font-size: 17px; }
-.gml-page-body blockquote {
-  border-left: 2px solid var(--ochre);
-  padding-left: 20px;
-  margin: 1.6em 0;
-  font-style: italic;
-  color: var(--ink);
-}
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 .gml-page-body a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
 .gml-page-body a:hover { color: var(--ink); }
 /* Tailwind's Preflight resets list-style to none globally — restore real
