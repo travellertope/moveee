@@ -1,9 +1,12 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
 import GetMeLitPage from "@/components/GetMeLitPage";
 import { NL_META } from "@/lib/newsletter-lists";
+import { geoSegment, deduplicateEditions } from "@/lib/newsletter-editions";
 import "../../getmelit.css";
 
-export const revalidate = 3600;
+// dynamic = "force-dynamic" because we read geo headers to serve the
+// viewer's regional edition (same reasoning as /newsletter's own hub).
+export const dynamic = "force-dynamic";
 
 const meta = NL_META["getmelit"];
 const url = "https://themoveee.com/newsletter/getmelit";
@@ -54,9 +57,12 @@ export default async function GetMeLitRoute() {
     // CMS unreachable
   }
 
-  const issues = deduplicateByIssueNum(
-    newsletters.filter((n: any) => (n.nlList || "") === "getmelit")
-  );
+  const segment = await geoSegment();
+  const listIssues = newsletters.filter((n: any) => (n.nlList || "") === "getmelit");
+  // Each regional edition of the same issue is a separate WP post — dedupe
+  // by title+segment first (so only the viewer's own edition shows), then
+  // by issue number for any other kind of duplicate.
+  const issues = deduplicateByIssueNum(deduplicateEditions(listIssues, segment));
 
   return <GetMeLitPage issues={issues} />;
 }

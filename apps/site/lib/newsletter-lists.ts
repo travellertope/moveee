@@ -36,7 +36,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     eyebrow: "★ Culture Drop · Every Tuesday",
     tagline: "The weekly dispatch on contemporary culture.",
     standfirst:
-      "One deep essay, curated picks, a music dispatch, and what's happening across Lagos, London, New York, and Accra. Written to make you think, not just scroll.",
+      "For readers who want depth over noise — one considered take on culture, delivered once a week.",
     signupNote: "Free · Weekly · Unsubscribe anytime",
     pillars: [
       {
@@ -76,7 +76,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     eyebrow: "★ GetMeLit · A story a day, more every Saturday",
     tagline: "A story a day. A full literary dispatch every Saturday.",
     standfirst:
-      "A new short story or poem in your inbox every weekday — plus books worth reading, opportunities for writers, and an in-depth author spotlight, every Saturday.",
+      "A small daily ritual for people who love to read — one story, five minutes, every morning.",
     signupNote: "Free · Daily · Unsubscribe anytime",
     pillars: [
       {

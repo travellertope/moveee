@@ -31,11 +31,10 @@ export default function CultureDropPage({ issues }: { issues: any[] }) {
       <section className="cd-hero" data-header-zone="dark">
         <div className="cd-hero-inner">
           <h1 className="cd-hero-title">
-            The Week in <em>Culture</em>, Delivered.
+            The Week in <em>Culture</em>
           </h1>
           <p className="cd-hero-sub">
-            One deep essay, curated picks, a music dispatch, and what&rsquo;s happening across Lagos, London, New
-            York, and Accra. Written to make you think, not just scroll.
+            For readers who want depth over noise — one considered take on culture, delivered once a week.
           </p>
           <HideIfSubscribed>
             <div className="cd-hero-form">
