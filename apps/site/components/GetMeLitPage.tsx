@@ -10,10 +10,12 @@ function issueNum(issue: any, totalCount: number, index: number): number {
 
 // Rebuilt from scratch off an approved Artifact mockup — GetMeLit's daily
 // story format needed a genuinely different, more literary layout than
-// NewsletterPublicationPage's shared np-* shell (still used by Culture
-// Drop). Hero -> Today's Story (real latest issue) -> footer; no separate
-// archive/CTA sections — "This week's stories" and "Full Archive" both
-// fold into the story page's own sidebar instead.
+// the old shared NewsletterPublicationPage/np-* shell. Hero -> Today's
+// Story (real latest issue) -> footer; no separate archive/CTA sections
+// — "This week's stories" and "Full Archive" both fold into the story
+// page's own sidebar instead. CultureDropPage.tsx mirrors this layout
+// exactly (see that file) — both /newsletter/getmelit and
+// /newsletter/culture-drop are now this same bespoke shell.
 export default function GetMeLitPage({ issues }: { issues: any[] }) {
   const totalCount = issues.length;
   const today = issues[0] || null;
@@ -96,7 +98,11 @@ export default function GetMeLitPage({ issues }: { issues: any[] }) {
                         </Link>
                       ))}
                     </div>
-                    <Link href="/newsletter?list=getmelit#archive" className="gml-mini-all">
+                    {/* The Newsletter Reader (/newsletter/[slug]) has its own
+                        "Browse Archive" sidebar listing every past issue —
+                        land there (on today's issue) rather than the generic
+                        /newsletter hub's archive list. */}
+                    <Link href={`/newsletter/${today.slug}`} className="gml-mini-all">
                       Full Archive →
                     </Link>
                   </div>

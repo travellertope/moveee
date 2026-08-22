@@ -1,0 +1,135 @@
+/* ========================================
+   NEWSLETTER HUB PAGE (/newsletter)  —  nlh-* namespace
+   Rebuilt from an approved Artifact mockup onto the same minimal,
+   dark-hero manuscript style as GetMeLit/Culture Drop's own landing
+   pages (getmelit.css/culturedrop.css) — hero with two entry buttons,
+   then a single unified archive list, no subscribe forms, no photo
+   feature bands, no "Coming Soon" section. EditionNewsletterHub.tsx
+   (/newsletter/uk, /us, /africa) is untouched and keeps the older,
+   fuller design (masthead/cards/testimonials/"Inside the programme") —
+   this rebuild is scoped to the global /newsletter hub only. Its own
+   archive rows use NlhArchiveList.tsx (not the shared NlArchiveList,
+   which EditionNewsletterHub still uses) so this restyle can't leak
+   onto the edition pages.
+   ======================================== */
+
+.nlh-wrap { max-width: 1180px; margin: 0 auto; padding: 0 64px; }
+@media (max-width: 720px) { .nlh-wrap { padding: 0 24px; } }
+
+/* ── HERO — same dark gradient + radial wash as .gml-hero/.cd-hero ── */
+.nlh-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3d3020, #14110d 60%);
+  padding: calc(var(--header-clear, 96px) + 64px) 0 72px;
+  text-align: center;
+}
+.nlh-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background:
+    radial-gradient(circle at 30% 20%, var(--ochre) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, var(--gold) 0%, transparent 50%);
+}
+.nlh-hero-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+
+h1.nlh-hero-title {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: clamp(32px, 5vw, 50px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  color: #ffffff;
+}
+h1.nlh-hero-title em { font-style: italic; font-weight: 400; color: var(--gold); }
+
+.nlh-hero-sub {
+  font-size: 16px;
+  color: rgba(255, 255, 255, .75);
+  margin-top: 18px;
+  max-width: 48ch;
+  line-height: 1.6;
+}
+
+.nlh-hero-pills { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; justify-content: center; }
+.nlh-hero-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: #ffffff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--ink);
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,.45);
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.nlh-hero-pill:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -6px rgba(0,0,0,.5); }
+.nlh-hero-pill .arrow { opacity: .5; transition: opacity .15s, transform .15s; }
+.nlh-hero-pill:hover .arrow { opacity: 1; transform: translateX(2px); }
+.nlh-hero-pill--cd:hover { background: var(--ochre); color: #fff; }
+.nlh-hero-pill--gml:hover { background: var(--gold); color: #fff; }
+
+/* ── ARCHIVE ── */
+.nlh-archive { background: var(--paper); padding: 64px 0 90px; }
+.nlh-archive-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  padding-bottom: 20px; border-bottom: 1px solid var(--rule); margin-bottom: 6px;
+}
+.nlh-archive-head h3 { font-size: 22px; font-weight: 600; }
+.nlh-archive-tabs { display: flex; gap: 22px; }
+.nlh-archive-tab {
+  font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--mute); padding-bottom: 4px; border-bottom: 2px solid transparent;
+  text-decoration: none; transition: color .15s, border-color .15s;
+}
+.nlh-archive-tab--active { color: var(--ink); border-bottom-color: var(--ochre); }
+.nlh-archive-tab .n { color: #a89e8c; font-weight: 500; }
+.nlh-archive-tab--active .n { color: var(--mute); }
+
+.nlh-arow {
+  display: grid;
+  grid-template-columns: 56px 1fr auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--paper-deep);
+  text-decoration: none;
+}
+.nlh-arow:hover .nlh-arow-title { color: var(--ochre); }
+.nlh-arow-num { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--mute); }
+.nlh-arow-title { font-family: "Fraunces", serif; font-size: 16.5px; font-weight: 600; line-height: 1.3; color: var(--ink); transition: color .12s; }
+.nlh-arow-date { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--mute); white-space: nowrap; }
+@media (max-width: 640px) {
+  .nlh-arow { grid-template-columns: 40px 1fr; row-gap: 6px; }
+  .nlh-arow .nl-list-badge, .nlh-arow-date { grid-column: 2; justify-self: start; }
+}
+
+.nlh-empty { font-size: 15px; color: var(--mute); padding: 24px 0; }
+
+.nlh-load-more {
+  display: block;
+  margin: 32px auto 0;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 11px 26px;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  transition: background .15s, color .15s;
+}
+.nlh-load-more:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+footer.nlh-closebar { background: var(--ink); padding: 26px 0 30px; text-align: center; border-top: 1px solid rgba(243,236,224,.1); }
+footer.nlh-closebar span { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(243,236,224,.35); }

@@ -502,15 +502,9 @@
   color: var(--ink);
   margin: 1.5em 0 0.6em;
 }
-.digest-prose blockquote {
-  border-left: 3px solid var(--ochre);
-  padding-left: 24px;
-  margin: 2em 0;
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 20px;
-  color: var(--ink);
-}
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 .digest-prose img {
   width: 100%;
   height: auto;
@@ -1487,16 +1481,9 @@
   color: var(--ink);
   margin: 1.2em 0 0.5em;
 }
-.gml-issue-prose blockquote,
-#issue-body .prose-content blockquote {
-  border-left: 3px solid var(--ochre);
-  padding-left: 24px;
-  margin: 2em 0;
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 20px;
-  color: var(--ink);
-}
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 .gml-issue-prose ul,
 #issue-body .prose-content ul {
   list-style: disc;
@@ -3663,14 +3650,10 @@
   padding: 0 4px;
 }
 .rd-body strong { color: var(--ink); font-weight: 700; }
-.rd-body blockquote {
-  margin: 24px 0;
-  padding: 4px 0 4px 20px;
-  border-left: 3px solid var(--ochre);
-  font-style: italic;
-  color: var(--ink-soft, var(--ink));
-}
-.rd-body--getmelit blockquote { border-left-color: var(--gold); }
+/* Blockquote styling (including the GetMeLit variant, which previously
+   had its own gold border) is unified across every prose surface — see
+   the shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 
 .rd-body ul, .rd-body ol {
   margin: 0 0 24px;

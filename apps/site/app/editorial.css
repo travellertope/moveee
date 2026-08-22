@@ -607,13 +607,9 @@
 .ar-wrap .prose-content h2:first-child,
 .ar-wrap .prose-content h3:first-child { margin-top: 0; }
 
-.ar-wrap .prose-content blockquote {
-  border-left: 3px solid var(--ar-ochre);
-  padding: 4px 0 4px 22px;
-  margin: 1.6em 0;
-  font-style: italic;
-  color: var(--ink-soft);
-}
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 .ar-wrap .prose-content a { color: var(--ar-ochre); text-decoration: underline; text-underline-offset: 3px; }
 .ar-wrap .prose-content a:hover { color: var(--ink); }
 

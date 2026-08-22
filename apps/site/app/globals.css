@@ -166,6 +166,32 @@ h1, h2, h3, h4 {
   font-variation-settings: "opsz" 144, "SOFT" 30;
 }
 
+/* ── Unified pull-quote/blockquote treatment ──
+   Every prose surface (magazine articles, newsletter reader, GetMeLit
+   hub, newsletter digest/issue archive) previously had its own slightly
+   different blockquote rule — different border widths, text colours, and
+   only one of the four used a serif upsize. Consolidated into one shared
+   rule here so every CMS <blockquote> reads identically regardless of
+   which surface renders it. Each surface's own CSS file keeps only the
+   selector (pointing back to this comment) rather than repeating the
+   declaration — see editorial.css/newsletter.css/getmelit.css. */
+.ar-wrap .prose-content blockquote,
+.digest-prose blockquote,
+.gml-issue-prose blockquote,
+#issue-body .prose-content blockquote,
+.gml-page-body blockquote,
+.rd-body blockquote {
+  border-left: 3px solid var(--ochre);
+  margin: 1.8em 0;
+  padding: 6px 0 6px 24px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
 .mono {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;

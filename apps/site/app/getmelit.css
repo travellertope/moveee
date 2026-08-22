@@ -1,10 +1,12 @@
 /* ========================================
    GETMELIT NEWSLETTER PAGE  —  gml-* namespace
-   Bespoke rebuild (from an approved Artifact mockup) — GetMeLit no
-   longer shares NewsletterPublicationPage/np-* with Culture Drop; its
-   daily-story format needed a genuinely different layout, not another
-   set of --getmelit modifiers on the shared component. Culture Drop
-   still uses NewsletterPublicationPage/np-* unchanged.
+   Bespoke rebuild (from an approved Artifact mockup) — no longer shares
+   the old NewsletterPublicationPage/np-* shell. Culture Drop's
+   /newsletter/culture-drop now mirrors this exact layout too — see
+   culturedrop.css's cd-* namespace (same structure, ochre accent instead
+   of gold). The np-* classes in newsletter.css are still live for other
+   surfaces (the /newsletter hub's NlCardPreview, EditionNewsletterHub) —
+   just no longer for either publication's own landing page.
    ======================================== */
 
 .gml-wrap { max-width: 1180px; margin: 0 auto; padding: 0 64px; }
@@ -139,16 +141,18 @@ h1.gml-hero-title em { font-style: italic; font-weight: 400; color: var(--gold);
 .gml-page-body h2 { font-size: 24px; }
 .gml-page-body h3 { font-size: 20px; }
 .gml-page-body h4 { font-size: 17px; }
-.gml-page-body blockquote {
-  border-left: 2px solid var(--ochre);
-  padding-left: 20px;
-  margin: 1.6em 0;
-  font-style: italic;
-  color: var(--ink);
-}
+/* Blockquote styling is unified across every prose surface — see the
+   shared rule in globals.css (search "Unified pull-quote/blockquote
+   treatment"). Don't add a divergent rule here. */
 .gml-page-body a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
 .gml-page-body a:hover { color: var(--ink); }
+/* Tailwind's Preflight resets list-style to none globally — restore real
+   markers here, same fix already applied in directory.css/events.css/
+   editorial.css for the same reason. Without this, CMS <ul>/<ol> content
+   renders as flush, marker-less paragraphs. */
 .gml-page-body ul, .gml-page-body ol { margin: 0 0 1.3em; padding-left: 1.3em; }
+.gml-page-body ul { list-style: disc outside; }
+.gml-page-body ol { list-style: decimal outside; }
 .gml-page-body li { margin-bottom: .5em; }
 .gml-page-body img { width: 100%; height: auto; border-radius: 4px; margin: 1.6em 0; }
 .gml-page-body hr { border: none; border-top: 1px solid var(--rule); margin: 2.2em 0; }
