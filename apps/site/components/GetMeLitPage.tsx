@@ -96,7 +96,11 @@ export default function GetMeLitPage({ issues }: { issues: any[] }) {
                         </Link>
                       ))}
                     </div>
-                    <Link href="/newsletter?list=getmelit#archive" className="gml-mini-all">
+                    {/* The Newsletter Reader (/newsletter/[slug]) has its own
+                        "Browse Archive" sidebar listing every past issue —
+                        land there (on today's issue) rather than the generic
+                        /newsletter hub's archive list. */}
+                    <Link href={`/newsletter/${today.slug}`} className="gml-mini-all">
                       Full Archive →
                     </Link>
                   </div>
