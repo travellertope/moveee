@@ -76,7 +76,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     eyebrow: "★ GetMeLit · A story a day, more every Saturday",
     tagline: "A story a day. A full literary dispatch every Saturday.",
     standfirst:
-      "A new short story or poem in your inbox every weekday — plus books worth reading, opportunities for writers, and an in-depth author spotlight, every Saturday.",
+      "A small daily ritual for people who love to read — one story, five minutes, every morning.",
     signupNote: "Free · Daily · Unsubscribe anytime",
     pillars: [
       {
