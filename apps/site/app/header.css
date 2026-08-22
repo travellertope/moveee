@@ -23,22 +23,32 @@
    regardless of the pill's rendered height, no magic percentage. */
 .site-toolbar.is-hidden { transform: translateY(calc(-100% - 40px)); }
 
-/* Fully transparent in both states now — the frosted white pill that
-   used to back the "solid" state was only there for legibility, but
-   the icon/logo colours already swap for contrast on their own
-   (dark on light pages, light on dark zones — see .toolbar-icon and
-   the onDark logo swap in Header.tsx), so the pill background was
-   redundant on any page whose scroll-height content stays light. If a
-   specific page later scrolls the header over a photo/dark band while
-   in the "solid" (light-icon) state, that's the case to watch for —
-   the dark icons would lose contrast there with no background to fall
-   back on. */
+/* Reinstated — the "fully transparent everywhere" version above was
+   found to collide unreadably with body text on pages where the header
+   scrolls over real content (e.g. the homepage masthead paragraph
+   sitting directly under the fixed pill once you scroll past the
+   hero), exactly the risk flagged when that transparent version shipped.
+   The fix isn't "always show a background" though — `isSolid` (see
+   Header.tsx's dark-zone-detection effect) is already false for as long
+   as the header is floating over any `[data-header-zone="dark"]`
+   section, which on the homepage covers both the true page-load state
+   (over FullBleedHero) and scrolling back up to it — so the frosted
+   backdrop below only ever appears once you've scrolled into a real
+   content-body area, and disappears again the moment you're back over
+   a dark hero. No JS change needed, this only had to come back in CSS. */
 .toolbar-shell {
   width: min(100%, 460px);
   border-radius: var(--radius-full);
   overflow: hidden;
   background: transparent;
   box-shadow: none;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.site-toolbar.is-solid .toolbar-shell {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: var(--shadow-2);
 }
 
 /* Concept D pill — logo left, icons grouped right in one flex row (not

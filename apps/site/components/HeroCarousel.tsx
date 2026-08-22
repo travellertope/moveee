@@ -17,6 +17,13 @@ interface CarouselStory {
 // its original's color.
 const FRAMES = ["frame--peach", "frame--teal", "frame--gold", "frame--clay", "frame--plum", "frame--sky"];
 
+// Purely decorative perforation rows above/below the track (see the
+// film-strip band comment in homepage-v2.css) — a fixed count generous
+// enough to fill the widest screens; both the row and the band wrapping
+// it clip any overflow, so there's no downside to over-rendering a few.
+const SPROCKET_COUNT = 40;
+const SPROCKETS = Array.from({ length: SPROCKET_COUNT });
+
 const GAP = 20;
 // Clones on each side. Centering any given card needs roughly 2 card-widths
 // of *trailing* content after it (half the ~4-card-wide viewport on each
@@ -157,6 +164,11 @@ export default function HeroCarousel({ stories }: { stories: CarouselStory[] }) 
 
   return (
     <div className="index-strip">
+      <div className="strip-sprockets top" aria-hidden="true">
+        {SPROCKETS.map((_, i) => (
+          <span className="sprocket" key={i} />
+        ))}
+      </div>
       <div className="carousel-track" ref={trackRef}>
         {renderList.map((s, i) => (
           <div
@@ -174,6 +186,11 @@ export default function HeroCarousel({ stories }: { stories: CarouselStory[] }) 
               <h3 dangerouslySetInnerHTML={{ __html: s.title }} />
             </Link>
           </div>
+        ))}
+      </div>
+      <div className="strip-sprockets bottom" aria-hidden="true">
+        {SPROCKETS.map((_, i) => (
+          <span className="sprocket" key={i} />
         ))}
       </div>
     </div>

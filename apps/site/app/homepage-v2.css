@@ -18,6 +18,13 @@
   --accent-clay: #7a4a2c;
   --accent-gold-frame: #e8d59a;
   --accent-gold-frame-ink: #2c2007;
+  /* Film-strip carousel band — deliberately near-pure black (not the
+     warm editorial-hero gradient used elsewhere on this page), matching
+     an approved mockup's own "film stock" palette rather than reusing
+     the site's dark-hero convention, which reads as a different thing
+     (an editorial mood wash, not a physical film canister). */
+  --film-band: #0c0b09;
+  --film-band-2: #1a1712;
 }
 
 .hpv2 .wrap { max-width: 1176px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
@@ -102,17 +109,67 @@
 
 /* ── MASTHEAD ── */
 .masthead { padding: clamp(28px, 5vw, 56px) 0 0; text-align: center; }
-.masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(38px, 6vw, 76px); letter-spacing: -.025em; line-height: 1.03; text-wrap: balance; }
+.masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(34px, 5vw, 58px); letter-spacing: -.025em; line-height: 1.05; text-wrap: balance; }
 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
 
-/* ── HERO CAROUSEL ── */
-.index-strip { margin: clamp(56px, 7vw, 76px) 0 clamp(32px, 4vw, 48px); position: relative; }
+/* ── HERO CAROUSEL — film strip ──
+   Rebuilt from an approved Artifact mockup: the carousel now sits in a
+   dark, full-bleed "film canister" band (.index-strip is already a
+   sibling of .masthead .wrap, so it's naturally full-width with no
+   extra markup needed) with a perforated sprocket-hole row above and
+   below, and a fade-to-black vignette at each edge so the strip reads
+   as a physical object rather than a plain rectangle. The cards
+   themselves (.fcell) and the carousel's centre-snap/infinite-loop
+   scroll mechanics (HeroCarousel.tsx) are unchanged — only the band
+   they sit in, and the cards' own padding/radius, changed. */
+.index-strip {
+  margin: clamp(56px, 7vw, 76px) 0 clamp(32px, 4vw, 48px);
+  position: relative;
+  background: linear-gradient(180deg, var(--film-band) 0%, var(--film-band-2) 100%);
+  padding: 22px 0;
+  overflow: hidden;
+}
+.strip-sprockets {
+  display: flex;
+  gap: 22px;
+  padding: 0 40px;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+.strip-sprockets .sprocket {
+  width: 12px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--film-band);
+  border: 1.5px solid rgba(255, 255, 255, .14);
+  flex-shrink: 0;
+}
+.strip-sprockets.bottom { margin-top: 14px; }
+.strip-sprockets.top { margin-bottom: 14px; }
+/* Fade-to-black vignette at each edge, over the scrollable track only —
+   sits above the cards (z-index 2) but doesn't intercept scroll/click,
+   matching the mockup's own ::before/::after treatment. */
+.index-strip::before, .index-strip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.index-strip::before { left: 0; background: linear-gradient(90deg, var(--film-band), transparent); }
+.index-strip::after { right: 0; background: linear-gradient(270deg, var(--film-band), transparent); }
+
 .carousel-track {
   display: flex;
   align-items: center;
   gap: 24px;
   overflow-x: auto;
+  position: relative;
+  z-index: 1;
   /* No overflow-y: hidden — CSS transforms are visual-only and don't
      affect layout size, so the active card's scale(1.04) always paints
      slightly outside its own unscaled layout box (the box this row's
@@ -194,19 +251,20 @@
      and .fcell's own `overflow: hidden` (below) silently clipped the
      card's bottom edge. Letting .fcell size itself from its content
      removes the circularity entirely. */
-  border-radius: var(--radius-xl);
-  padding: 18px 18px 22px;
+  border-radius: 16px;
+  padding: 10px 10px 12px;
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
   transition: box-shadow .3s, transform .3s;
   overflow: hidden;
   isolation: isolate;
 }
+.strip-card.is-active .fcell { box-shadow: 0 18px 40px -14px rgba(0,0,0,.55); }
 a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
-.fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: var(--radius-lg); overflow: hidden; background: var(--ink); }
+.fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 10px; overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 14px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 7px; flex-shrink: 0; color: var(--ink); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 10px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was

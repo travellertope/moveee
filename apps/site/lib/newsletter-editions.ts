@@ -52,3 +52,28 @@ export function deduplicateEditions(issues: any[], segment: string): any[] {
     );
   });
 }
+
+// Issue numbers per list, not one shared counter across both newsletters.
+// The archive on /newsletter and the edition hubs used to number every row
+// by its position in the combined (both-lists) array, so "All" counted
+// down 19, 18, 17... across Culture Drop and GetMeLit interleaved instead
+// of each newsletter having its own sequence. Prefers each issue's own
+// editorially-set _culture_nl_issue_num (nlIssueNum) when present, falling
+// back to a positional count scoped to that issue's own list.
+export function issueNumbersByList(issues: any[]): Map<string, number> {
+  const map = new Map<string, number>();
+  const byList: Record<string, any[]> = {};
+  for (const n of issues) {
+    const list = n.nlList || "unknown";
+    (byList[list] ??= []).push(n);
+  }
+  for (const list of Object.keys(byList)) {
+    const items = byList[list];
+    const total = items.length;
+    items.forEach((issue, idx) => {
+      const num = issue.nlIssueNum && issue.nlIssueNum > 0 ? issue.nlIssueNum : total - idx;
+      map.set(issue.id, num);
+    });
+  }
+  return map;
+}
