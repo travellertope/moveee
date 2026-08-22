@@ -1,7 +1,7 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
-import NewsletterPublicationPage from "@/components/NewsletterPublicationPage";
+import CultureDropPage from "@/components/CultureDropPage";
 import { NL_META } from "@/lib/newsletter-lists";
-import "../../newsletter.css";
+import "../../culturedrop.css";
 
 export const revalidate = 3600;
 
@@ -46,7 +46,7 @@ function deduplicateByIssueNum(issues: any[]): any[] {
   return result;
 }
 
-export default async function CultureDropPage() {
+export default async function CultureDropRoute() {
   let newsletters: any[] = [];
   try {
     newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
@@ -58,5 +58,5 @@ export default async function CultureDropPage() {
     newsletters.filter((n: any) => (n.nlList || "") === "culture-drop")
   );
 
-  return <NewsletterPublicationPage listId="culture-drop" issues={issues} />;
+  return <CultureDropPage issues={issues} />;
 }
