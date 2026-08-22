@@ -1,57 +1,11 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
-import { headers } from "next/headers";
 import Link from "next/link";
 import NlhArchiveList from "@/components/NlhArchiveList";
 import type { NlArchiveRow } from "@/components/NlArchiveList";
 import "../newsletter.css";
 import "../newsletter-hub.css";
 import { sanitizeHtml } from "@/lib/sanitize";
-
-const COUNTRY_TO_SEGMENT: Record<string, string> = {
-  GB: "uk", US: "us", NG: "ng", GH: "gh", CA: "ca", AU: "au",
-};
-
-async function geoSegment(): Promise<string> {
-  try {
-    const h = await headers();
-    const country = h.get("x-vercel-ip-country") ?? "";
-    return COUNTRY_TO_SEGMENT[country.toUpperCase()] ?? "";
-  } catch {
-    return "";
-  }
-}
-
-const HTML_ENTITIES: Record<string, string> = {
-  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
-  hellip: "…", mdash: "—", ndash: "–", lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”",
-};
-
-function cleanTitle(raw: string): string {
-  return raw
-    .replace(/<[^>]*>/g, "")
-    .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(Number(c)))
-    .replace(/&([a-z]+);/gi, (m, n) => HTML_ENTITIES[n.toLowerCase()] ?? m)
-    .trim();
-}
-
-// Deduplicate regional editions: group by cleaned title, pick the geo-appropriate slug.
-function deduplicateEditions(issues: any[], segment: string): any[] {
-  const seen: string[] = [];
-  const groups: Record<string, any[]> = {};
-  for (const n of issues) {
-    const t = cleanTitle(n.title || "");
-    if (!groups[t]) { seen.push(t); groups[t] = []; }
-    groups[t].push(n);
-  }
-  return seen.map((t) => {
-    const group = groups[t];
-    return (
-      group.find((n) => (n.nlSegment || "") === segment) ||
-      group.find((n) => (n.nlSegment || "") === "") ||
-      group[0]
-    );
-  });
-}
+import { geoSegment, deduplicateEditions } from "@/lib/newsletter-editions";
 
 // dynamic = "force-dynamic" because we read geo headers to serve the viewer's regional edition.
 export const dynamic = "force-dynamic";
