@@ -13,6 +13,11 @@ const ALLOWED_TAGS = new Set([
   "a", "img", "figure", "figcaption",
   "table", "thead", "tbody", "tr", "th", "td",
   "hr", "span", "div",
+  // WordPress's oEmbed handler (YouTube, Vimeo, SoundCloud, Spotify) renders
+  // a real <iframe> into the_content server-side — without this, every
+  // embedded video/track was silently stripped (the whole tag, not just
+  // unwrapped) since it wasn't in this allowlist at all.
+  "iframe",
 ]);
 
 const ALLOWED_ATTR = new Set([
@@ -22,7 +27,31 @@ const ALLOWED_ATTR = new Set([
   // stripped, which silently downgraded every CMS image to its full-size
   // original — see unlazyImages() below for the related lazy-load bug.
   "srcset", "sizes", "loading", "decoding",
+  // iframe embed attributes — allow/allowfullscreen/referrerpolicy are the
+  // ones YouTube/Vimeo's own embed markup actually sets.
+  "allow", "allowfullscreen", "frameborder", "referrerpolicy",
 ]);
+
+// iframe `src` is restricted to known embed providers — unlike img/a hrefs
+// (any CMS-authored link/image is fine), an arbitrary iframe src renders a
+// full external page inside ours, so it gets its own allowlist rather than
+// just the javascript:/data:/vbscript: scheme check below.
+const IFRAME_HOST_ALLOWLIST = [
+  "youtube.com", "www.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com",
+  "player.vimeo.com",
+  "w.soundcloud.com",
+  "open.spotify.com", "embed.spotify.com",
+];
+
+function isAllowedIframeSrc(value: string): boolean {
+  try {
+    const url = new URL(value, "https://placeholder.invalid");
+    if (url.protocol !== "https:") return false;
+    return IFRAME_HOST_ALLOWLIST.includes(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 // Attributes an image-optimisation / lazy-load plugin parks the REAL image URL
 // in while `src` holds a placeholder. Ordered by preference: Optimole's own
@@ -112,10 +141,12 @@ export function unlazyImages(html: string): string {
 // Matches an opening or closing HTML tag with its attributes.
 const TAG_RE = /<(\/?)([\w-]+)([^>]*?)(\s*\/?)>/gi;
 
-// Matches a single attribute: name="value", name='value', or name=value
-const ATTR_RE = /([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/gi;
+// Matches a single attribute: name="value", name='value', name=value, or a
+// bare boolean attribute with no value at all (e.g. YouTube/Vimeo's own
+// embed markup writes `allowfullscreen` with no `=`, not `allowfullscreen=""`).
+const ATTR_RE = /([\w-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/gi;
 
-function sanitizeAttrs(attrString: string): string {
+function sanitizeAttrs(attrString: string, tag: string): string {
   const out: string[] = [];
   let m: RegExpExecArray | null;
   ATTR_RE.lastIndex = 0;
@@ -129,6 +160,10 @@ function sanitizeAttrs(attrString: string): string {
     // srcset is a comma-separated candidate list, so the scheme can appear
     // anywhere in the value rather than only at the start.
     if (name === "srcset" && /(javascript|vbscript|data):/i.test(value)) continue;
+    // iframe src is restricted to known embed providers — see
+    // IFRAME_HOST_ALLOWLIST's own comment for why this is separate from the
+    // scheme check above.
+    if (tag === "iframe" && name === "src" && !isAllowedIframeSrc(value)) continue;
     out.push(`${name}="${value.replace(/"/g, "&quot;")}"`);
   }
   return out.length ? " " + out.join(" ") : "";
@@ -148,7 +183,7 @@ export function sanitizeHtml(dirty: string): string {
     const lower = tag.toLowerCase();
     if (!ALLOWED_TAGS.has(lower)) return "";
     if (slash) return `</${lower}>`;
-    return `<${lower}${sanitizeAttrs(attrs)}${selfClose ? " /" : ""}>`;
+    return `<${lower}${sanitizeAttrs(attrs, lower)}${selfClose ? " /" : ""}>`;
   });
 }
 
