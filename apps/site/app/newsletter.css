@@ -3809,7 +3809,12 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .rd-layout { flex-direction: column; height: auto; overflow: visible; }
+  /* Clears the floating header — see the --header-clear comment in
+     globals.css. .rd-mobile-strip is the first visible content on
+     mobile (the sidebar is hidden below), and being `position: sticky;
+     top: 0` it would otherwise sit flush under the fixed header pill
+     on initial load, with the issue title/tabs hidden behind it. */
+  .rd-layout { flex-direction: column; height: auto; overflow: visible; padding-top: var(--header-clear, 96px); }
   .rd-sidebar { display: none; }
   .rd-mobile-strip { display: flex; }
   .rd-pane { height: auto; overflow: visible; }

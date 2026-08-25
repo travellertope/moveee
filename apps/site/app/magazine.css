@@ -1864,7 +1864,10 @@
   overflow: hidden;
   background: var(--ink);
   box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16));
-  aspect-ratio: 4/5;
+  /* Issue covers are portrait (3/4, same ratio the real /magazine/issues
+     archive's .mag-issue-card-cover already uses) — matches so the cover
+     photo fills the card rather than getting a wide, off-centre crop. */
+  aspect-ratio: 3/4;
   text-decoration: none;
   color: inherit;
 }
@@ -1928,7 +1931,10 @@
   transition: box-shadow .25s, transform .25s;
 }
 .mgh-issue-card:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
-.mgh-issue-card-photo { position: relative; aspect-ratio: 4/3; background: linear-gradient(150deg,#3d4a2a,#14110d 75%); }
+/* Portrait, matching .mgh-issue-feature and the real issues archive's
+   .mag-issue-card-cover — these were 4/3 (landscape) before, which cropped
+   portrait issue covers badly (top/bottom cut off). */
+.mgh-issue-card-photo { position: relative; aspect-ratio: 3/4; background: linear-gradient(150deg,#3d4a2a,#14110d 75%); }
 .mgh-issue-card-photo img { object-fit: cover; }
 .mgh-issue-card-body { padding: 12px 14px 16px; }
 .mgh-issue-card-num {
@@ -2005,7 +2011,9 @@
 
 @media (max-width: 900px) {
   .mgh-issues-layout { grid-template-columns: 1fr; }
-  .mgh-issue-feature { aspect-ratio: 16/10; }
+  /* No landscape override here anymore — issue covers are portrait, so
+     stacking full-width at the base 3/4 ratio (see .mgh-issue-feature)
+     keeps the crop correct instead of forcing a wide landscape box. */
   .mgh-cat-grid { grid-template-columns: repeat(2, 1fr); }
   .mgh-series-grid { grid-template-columns: 1fr; }
 }
