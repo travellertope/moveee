@@ -6487,6 +6487,79 @@ documented out-of-tree process.
 
 ---
 
+## Sentry error tracking (mobile, August 2026)
+
+`apps/mobile` reports JS errors, native crashes, and navigation-tagged breadcrumbs to
+Sentry via `@sentry/react-native` (`~8.24.0`, compatible with the pinned Expo SDK 52 /
+RN 0.76.9 — see "Expo SDK version" above). **DSN/org/project are live** (org `moveee`,
+project `moveee-mobile`, EU data-residency region — the DSN's ingest host is
+`ingest.de.sentry.io`, not the default `sentry.io`) — `Sentry.init()` in `App.tsx` only
+skips itself when `SENTRY_DSN` is blank, which it no longer is, so JS errors/native
+crashes report as soon as a build runs this code. Source-map upload (readable stack
+traces, not just minified offsets) still needs the one remaining human step below —
+without it, events still arrive, just without symbolication.
+
+- **`src/config/sentry.ts`** — `SENTRY_DSN` (public identifier, same "safe to ship in
+  the binary" convention as `GOOGLE_IOS_CLIENT_ID` in `src/config/google.ts` — it only
+  lets events be *sent* to the project, no read access) plus `SENTRY_ORG`/
+  `SENTRY_PROJECT` slugs for the build plugin. `App.tsx` only calls `Sentry.init()`
+  when `SENTRY_DSN` is truthy — kept as a guard for local/fork dev, not because this
+  DSN is expected to go blank again.
+- **`App.tsx`** — `Sentry.init()` at module scope (before any component renders, so
+  startup crashes are captured too); the existing `ErrorBoundary` class's
+  `componentDidCatch` now also calls `Sentry.captureException()` (it still owns the
+  visible "Startup Error" fallback screen — Sentry reporting is additive, not a
+  replacement); the default export is `Sentry.wrap(App)` for automatic touch-event
+  breadcrumbs and cold/warm start timing; a `useEffect` keyed on the auth store's
+  `isAuthenticated`/`user.id`/`user.username` calls `Sentry.setUser()` — **id +
+  username only, deliberately never email/phone/DOB/etc.** — and clears it
+  (`Sentry.setUser(null)`) on logout so a handed-down/shared device doesn't
+  misattribute the next session's errors to the previous user.
+- **`src/navigation/index.tsx`** — exports `navigationIntegration =
+  Sentry.reactNavigationIntegration()` at module scope (imported by `App.tsx` into
+  `Sentry.init()`'s `integrations` array), and the `Navigation` component's
+  `NavigationContainer` gets a `useNavigationContainerRef()` ref registered via
+  `onReady={() => navigationIntegration.registerNavigationContainer(navigationRef)}`
+  — this is what actually turns screen changes into Sentry breadcrumbs/route
+  performance spans, `reactNavigationIntegration()` alone does nothing without it.
+- **`metro.config.js`** — final export wrapped in `withSentryConfig()` (from
+  `@sentry/react-native/metro`), applied *after* all the existing monorepo
+  react/react-native resolution customization rather than replacing
+  `getDefaultConfig()` — adds source-context annotations to the bundle so stack
+  traces resolve to real file/line. Safe with `SENTRY_DSN` unset; only affects
+  bundling, not whether events are sent.
+- **`app.config.ts`** — `@sentry/react-native/expo` added to the `plugins` array
+  (after `withAndroidIapStoreFlavor`, order doesn't matter for this one — unlike the
+  IAP flavor plugin, which must come after `react-native-iap`), configured with
+  `SENTRY_ORG`/`SENTRY_PROJECT` from `src/config/sentry.ts` and `url:
+  "https://de.sentry.io/"` — the EU-region API host, matching the DSN's ingest region
+  (**not** the default `https://sentry.io/` a US-region org would use). This is what
+  patches the native iOS/Android projects for crash-symbolication upload and, when a
+  `SENTRY_AUTH_TOKEN` env var is present at EAS build time, uploads JS source maps —
+  the auth token is a real secret and is **never** hardcoded here, only ever read
+  from the environment (see the one remaining setup step below).
+
+**One remaining human step — source-map upload** (same shape as the Google Play
+Billing / R2 "code alone can't do this" callouts elsewhere in this file; DSN/org/
+project are already filled in, this is the only gap left):
+1. Create a Sentry auth token (Settings → Auth Tokens, scoped to `project:releases`,
+   in the `moveee` org) and set it as an EAS Secret from `apps/mobile` —
+   `eas secret:create --name SENTRY_AUTH_TOKEN --value <token> --type string` — so
+   `@sentry/react-native/expo` can upload source maps and crash-symbolication data
+   during EAS builds. Never commit this token to the repo.
+2. Rebuild with EAS (a local `expo start` dev-client reload won't pick up the new
+   native config plugin) before expecting native (not just JS) crashes to report, and
+   before stack traces resolve to real file/line instead of minified bundle offsets.
+
+**If a future error-tracking report says "nothing showed up in Sentry," check the
+`moveee` org's `moveee-mobile` project — not `sentry.io` in general, since this org is
+EU-region-hosted (`de.sentry.io`) and won't show up under a default US-region search.**
+If events arrive but stack traces are unreadable, that's the `SENTRY_AUTH_TOKEN` step
+above not having been done yet (or not picked up by the build that shipped), not a
+bug in the instrumentation itself.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as

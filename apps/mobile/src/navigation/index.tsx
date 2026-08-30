@@ -1,14 +1,23 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import * as Sentry from "@sentry/react-native";
 
 import { useAuthStore } from "../auth/authStore";
 import { useNotificationCount } from "../features/notifications/useNotificationCount";
 import { colors } from "../theme";
 import type { FeedItem } from "../types";
+
+// Created once at module scope so App.tsx can pass it into Sentry.init()'s
+// `integrations` array before this file's NavigationContainer ever mounts —
+// registerNavigationContainer() below is what actually activates it. Gives
+// Sentry route-change breadcrumbs and navigation performance spans; a no-op
+// object when SENTRY_DSN (src/config/sentry.ts) is unset, same as every
+// other Sentry call in the app.
+export const navigationIntegration = Sentry.reactNavigationIntegration();
 
 // Auth
 import OnboardingScreen from "../screens/auth/OnboardingScreen";
@@ -344,11 +353,15 @@ function ProfileCompleteStack() {
 
 export default function Navigation() {
   const { isAuthenticated, isLoading, profileSetupRequired } = useAuthStore();
+  const navigationRef = useNavigationContainerRef();
 
   if (isLoading) return <AppLoadingScreen />;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => navigationIntegration.registerNavigationContainer(navigationRef)}
+    >
       {!isAuthenticated ? (
         <AuthStack />
       ) : profileSetupRequired ? (
