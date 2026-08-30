@@ -1,5 +1,3 @@
-import { SENTRY_ORG, SENTRY_PROJECT } from "./src/config/sentry";
-
 // Dynamic Expo config — keeps runtimeVersion and OTA updates out of Expo Go
 // (where they cause fetch errors) but restores them for EAS production builds.
 const IS_EAS_BUILD = !!process.env.EAS_BUILD;
@@ -8,6 +6,19 @@ const IS_EAS_BUILD = !!process.env.EAS_BUILD;
 // @react-native-google-signin/google-signin's config plugin so iOS can register
 // the URL scheme Google redirects back to after the native sign-in sheet closes.
 const GOOGLE_IOS_URL_SCHEME = "com.googleusercontent.apps.818521894942-85rteetrkupjtch3027nld5q8pv8t2jc";
+
+// Mirrors src/config/sentry.ts's SENTRY_ORG/SENTRY_PROJECT — kept in sync
+// manually, NOT imported. Expo's app.config.ts loader evaluates this file
+// via plain Node module resolution, which only resolves .js/.json/.node on
+// a bare relative require — it can't follow an import into a sibling .ts
+// file (unlike Metro/tsc, which both handle this fine for App.tsx's own
+// import of the same file). Importing it here fails with a silent
+// "Cannot find module" that EAS/expo swallow without printing anything.
+// Same reason GOOGLE_IOS_URL_SCHEME above is a literal instead of importing
+// from google.ts — follow that pattern for any future app.config.ts value
+// that also lives in src/config/*.ts.
+const SENTRY_ORG = "moveee";
+const SENTRY_PROJECT = "moveee-mobile";
 
 export default {
   expo: {
