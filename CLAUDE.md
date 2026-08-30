@@ -6841,11 +6841,54 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
 - `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
 - `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
+- `react-native-iap` must be pinned to the **exact** version `12.16.3` (not a caret range) —
+  see "react-native-iap 12.16.4 breaks the iOS native build" below.
 - **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
   EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
   `package.json` but not in the lockfile, it won't be installed.
 - To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
   (must be outside the monorepo to avoid workspace interference)
+
+### `react-native-iap` 12.16.4 breaks the iOS native build — pin to 12.16.3 exactly (August 2026)
+
+A real EAS iOS production build failed at the native `fastlane`/Xcode compile step (not the JS
+bundling step) with `value of type 'Transaction' has no member 'appTransactionID'`. Root cause:
+`react-native-iap`'s native `ios/IapSerializationUtils.swift` reads a StoreKit 2
+`Transaction.appTransactionID` property behind a guard that's wrong for what it's trying to do:
+
+```swift
+#if compiler(>=5.10)
+if #available(iOS 15.2, tvOS 15.2, *) {
+    result["appTransactionID"] = t.appTransactionID
+}
+#endif
+```
+
+`#if compiler(>=5.10)` checks the **Swift compiler** version, not whether the **StoreKit SDK**
+the build is compiling against actually has this property yet — those aren't the same thing.
+`appTransactionID` was added to `Transaction` in a StoreKit SDK newer than what EAS's build image
+ships, but that image's Swift compiler is still `>=5.10`, so the guard passes and the code tries
+to reference a symbol the SDK headers don't have — a hard compile error, not a runtime one.
+
+Confirmed via `npm pack`+diff across every `12.16.x` patch that **`appTransactionID` was
+introduced in `12.16.4` specifically** — `12.16.0` through `12.16.3` don't reference it at all
+and build cleanly. `package.json` previously pinned `"react-native-iap": "^12.15.4"` (a caret
+range), which silently resolved to the newest available `12.16.4` at lockfile-regen time — fixed
+by pinning the **exact** version `"react-native-iap": "12.16.3"` (no caret), so a future
+`package-lock.json` regen can't drift back onto the broken patch. Verified after the pin: the
+resolved package's `ios/IapSerializationUtils.swift` has zero `appTransactionID` references, and
+`npx expo export:embed --eager --platform ios --dev false` (the JS-bundling half of what EAS
+runs) still succeeds — the native Xcode compile itself can only be verified by an actual EAS
+build, not from this sandbox, so re-confirm the real `eas build --platform ios` output after
+pulling this fix.
+
+**If a future `npm update`/dependency bump ever moves `react-native-iap` off `12.16.3`**, check
+whether the target version still has this broken guard before accepting the bump — search the
+installed package for `appTransactionID` in `ios/IapSerializationUtils.swift`. If a `12.16.5+`
+or `13.x` release ever properly fixes the availability guard (e.g. gates on the actual SDK/OS
+version the property needs, not just the Swift compiler version), it's safe to move off this
+pin; don't assume it's fixed without checking the actual guard condition, since the compiler
+check alone isn't a reliable proxy for SDK contents.
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
