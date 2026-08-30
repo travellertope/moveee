@@ -1,3 +1,5 @@
+import { SENTRY_ORG, SENTRY_PROJECT } from "./src/config/sentry";
+
 // Dynamic Expo config — keeps runtimeVersion and OTA updates out of Expo Go
 // (where they cause fetch errors) but restores them for EAS production builds.
 const IS_EAS_BUILD = !!process.env.EAS_BUILD;
@@ -69,6 +71,20 @@ export default {
       // file it patches already has the dependency block react-native-iap's
       // own plugin adds.
       "./plugins/withAndroidIapStoreFlavor",
+      // Patches native iOS/Android projects (dSYM/ProGuard mapping upload
+      // build phases) and, when a SENTRY_AUTH_TOKEN env var is present at
+      // build time (EAS Secret — never hardcoded), uploads JS source maps
+      // so Sentry can symbolicate stack traces. Org/project come from
+      // src/config/sentry.ts; blank values are fine, the plugin just skips
+      // the upload step until they're filled in.
+      [
+        "@sentry/react-native/expo",
+        {
+          organization: SENTRY_ORG,
+          project: SENTRY_PROJECT,
+          url: "https://sentry.io/",
+        },
+      ],
     ],
     extra: {
       eas: {

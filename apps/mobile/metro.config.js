@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const { withSentryConfig } = require('@sentry/react-native/metro');
 const path = require('path');
 const fs = require('fs');
 
@@ -57,4 +58,9 @@ if (blockPatterns.length > 0) {
   config.resolver.blockList = allPatterns;
 }
 
-module.exports = config;
+// Wraps the (already monorepo-customized) config above with Sentry's own
+// Metro plugin — adds source-context annotations to the bundle so stack
+// traces in the Sentry dashboard show the actual failing line, not just a
+// file/offset. Safe to leave in place even with SENTRY_DSN unset (src/config/
+// sentry.ts) — it only affects bundling, not whether events are sent.
+module.exports = withSentryConfig(config);

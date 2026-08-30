@@ -6487,6 +6487,70 @@ documented out-of-tree process.
 
 ---
 
+## Sentry error tracking (mobile, August 2026)
+
+`apps/mobile` reports JS errors, native crashes, and navigation-tagged breadcrumbs to
+Sentry via `@sentry/react-native` (`~8.24.0`, compatible with the pinned Expo SDK 52 /
+RN 0.76.9 — see "Expo SDK version" above). **The SDK is wired up end-to-end but ships
+disabled** — every `Sentry.*` call in the app is a safe no-op until a human fills in a
+real DSN, so this can sit merged with zero effect on builds until that happens.
+
+- **`src/config/sentry.ts`** — `SENTRY_DSN` (public identifier, same "safe to ship in
+  the binary" convention as `GOOGLE_IOS_CLIENT_ID` in `src/config/google.ts` — it only
+  lets events be *sent* to the project, no read access) plus `SENTRY_ORG`/
+  `SENTRY_PROJECT` slugs for the build plugin. All three ship blank; `App.tsx` only
+  calls `Sentry.init()` when `SENTRY_DSN` is truthy.
+- **`App.tsx`** — `Sentry.init()` at module scope (before any component renders, so
+  startup crashes are captured too); the existing `ErrorBoundary` class's
+  `componentDidCatch` now also calls `Sentry.captureException()` (it still owns the
+  visible "Startup Error" fallback screen — Sentry reporting is additive, not a
+  replacement); the default export is `Sentry.wrap(App)` for automatic touch-event
+  breadcrumbs and cold/warm start timing; a `useEffect` keyed on the auth store's
+  `isAuthenticated`/`user.id`/`user.username` calls `Sentry.setUser()` — **id +
+  username only, deliberately never email/phone/DOB/etc.** — and clears it
+  (`Sentry.setUser(null)`) on logout so a handed-down/shared device doesn't
+  misattribute the next session's errors to the previous user.
+- **`src/navigation/index.tsx`** — exports `navigationIntegration =
+  Sentry.reactNavigationIntegration()` at module scope (imported by `App.tsx` into
+  `Sentry.init()`'s `integrations` array), and the `Navigation` component's
+  `NavigationContainer` gets a `useNavigationContainerRef()` ref registered via
+  `onReady={() => navigationIntegration.registerNavigationContainer(navigationRef)}`
+  — this is what actually turns screen changes into Sentry breadcrumbs/route
+  performance spans, `reactNavigationIntegration()` alone does nothing without it.
+- **`metro.config.js`** — final export wrapped in `withSentryConfig()` (from
+  `@sentry/react-native/metro`), applied *after* all the existing monorepo
+  react/react-native resolution customization rather than replacing
+  `getDefaultConfig()` — adds source-context annotations to the bundle so stack
+  traces resolve to real file/line. Safe with `SENTRY_DSN` unset; only affects
+  bundling, not whether events are sent.
+- **`app.config.ts`** — `@sentry/react-native/expo` added to the `plugins` array
+  (after `withAndroidIapStoreFlavor`, order doesn't matter for this one — unlike the
+  IAP flavor plugin, which must come after `react-native-iap`), configured with
+  `SENTRY_ORG`/`SENTRY_PROJECT` from `src/config/sentry.ts`. This is what patches the
+  native iOS/Android projects for crash-symbolication upload and, when a
+  `SENTRY_AUTH_TOKEN` env var is present at EAS build time, uploads JS source maps —
+  the auth token is a real secret and is **never** hardcoded here, only ever read
+  from the environment (see human setup below).
+
+**Human setup required before any of this actually reports anywhere** (same shape as
+the Google Play Billing / R2 "code alone can't do this" callouts elsewhere in this
+file):
+1. Create a Sentry project (platform: React Native) and copy its DSN into
+   `SENTRY_DSN` in `src/config/sentry.ts`; copy the org/project slugs into
+   `SENTRY_ORG`/`SENTRY_PROJECT` in the same file.
+2. Create a Sentry auth token (Settings → Auth Tokens, scoped to `project:releases`)
+   and set it as an EAS Secret — `eas secret:create --name SENTRY_AUTH_TOKEN --value
+   <token> --type string` — so `@sentry/react-native/expo` can upload source maps and
+   crash-symbolication data during EAS builds. Never commit this token to the repo.
+3. Rebuild with EAS (a local `expo start` dev-client reload won't pick up the new
+   native config plugin) before expecting native (not just JS) crashes to report.
+
+**If a future error-tracking report says "nothing showed up in Sentry," check
+`SENTRY_DSN` is actually filled in first** — an empty string is the default, working-
+as-designed state for this integration, not a bug.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in **`packages/utils/spam-protection.ts`** (imported everywhere as
