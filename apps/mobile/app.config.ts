@@ -77,12 +77,18 @@ export default {
       // so Sentry can symbolicate stack traces. Org/project come from
       // src/config/sentry.ts; blank values are fine, the plugin just skips
       // the upload step until they're filled in.
+      //
+      // url is the org's Sentry API host, not the DSN's ingest host — this
+      // org is on Sentry's EU data-residency region (its DSN points at
+      // ingest.de.sentry.io), so the management/API host is de.sentry.io
+      // too, not the default sentry.io. If this org is ever migrated to a
+      // different region, update this alongside SENTRY_DSN.
       [
         "@sentry/react-native/expo",
         {
           organization: SENTRY_ORG,
           project: SENTRY_PROJECT,
-          url: "https://sentry.io/",
+          url: "https://de.sentry.io/",
         },
       ],
     ],
