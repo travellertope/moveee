@@ -6,11 +6,10 @@
     "module": "esnext",
     "moduleResolution": "node10",
     "paths": {
-      "@moveee/utils/*": ["../../packages/utils/*"],
-      "react": ["./node_modules/@types/react"],
-      "react/*": ["./node_modules/@types/react/*"]
+      "@moveee/utils/*": ["../../packages/utils/*"]
     },
-    "types": ["react"]
+    "types": ["react"],
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     "**/*.ts",

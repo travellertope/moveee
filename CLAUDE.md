@@ -6847,7 +6847,7 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
 - To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
   (must be outside the monorepo to avoid workspace interference)
 
-### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed, sandbox-only bug)
+### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
 since nothing forces it local to `apps/mobile`) has its own bundled `.d.ts` files that do
 `import * as React from 'react'`. Because those `.d.ts` files physically live under
@@ -6862,23 +6862,41 @@ added `bigint` as a member, React 18's didn't — so **every** JSX element in th
 not assignable to type 'ReactNode'`, cascading into 5,000+ near-duplicate errors from one root
 cause. A plain `"types": ["react"]` restriction does **not** fix this — that only controls
 *implicit* ambient `@types` inclusion, not this specific `@types` **fallback** step, which
-ignores it. A `"paths"` remap of the bare `"react"` specifier to `apps/mobile`'s own package also
-doesn't fix it *by itself* — Node10 resolution's `@types` fallback re-walks from the *original*
-importing file's location if the redirected target has no directly-colocated `.d.ts`/`types`
-field (which `react`'s own `package.json` doesn't have — its types come entirely from the
-sibling `@types/react` package). **Fix, in `apps/mobile/tsconfig.json`**: add `"baseUrl": "."`
-and remap `"react"`/`"react/*"` straight to `./node_modules/@types/react` (not to
-`./node_modules/react`) — pointing directly at the `@types` package (which *does* have its own
-resolvable `.d.ts`/`types` field) makes the `paths` substitution succeed immediately, so
-resolution never falls through to the ancestor-walk that finds the root copy. Confirmed this is
-**sandbox-only, not a runtime bug** — Metro (the actual bundler) resolves modules per-file with
-its own algorithm and never mixes the two React type trees; this only ever affected `tsc
---noEmit` type-checking. Reduced the mobile app's error count from ~5,375 baseline to 82 (all
-pre-existing, unrelated real type issues — missing properties, PollBuilder setState type, one
-dead narrowing check in `validateAndSubmit()` — none touching JSX/React types). If this
+ignores it.
+
+**The original fix was wrong and broke a real production EAS build — do not reintroduce it.**
+The first fix tried was a `"paths"` remap of the bare `"react"` specifier straight to
+`./node_modules/@types/react` in `apps/mobile/tsconfig.json`, on the reasoning that this only
+affects `tsc`'s type resolution. That reasoning was **wrong**: Expo SDK 52 bundles a Metro
+version that also reads `tsconfig.json`'s `"paths"` for real, runtime JS module resolution — so
+the remap redirected the actual `import React from "react"` used by every component in the app
+to the types-only `@types/react` package (which has no runtime JS, just `.d.ts` files), and the
+production iOS build failed at the Metro bundling step on EAS's servers with `While trying to
+resolve module 'react' ... this package itself specifies a 'main' module field that could not be
+resolved`. This sat undetected for a while because local `tsc --noEmit` checks (which this fix
+was written for) don't exercise Metro at all, and no EAS build had been run since the fix was
+added until this bit for real. **The doc previously claimed this was "sandbox-only, not a
+runtime bug" — that claim was wrong; it was corrected after reproducing the exact EAS bundling
+failure locally.**
+
+**The actual, Metro-safe fix**: set `"typeRoots": ["./node_modules/@types"]` in
+`apps/mobile/tsconfig.json`'s `compilerOptions`, and do **not** touch `"paths"` for `react` at
+all (removed from `"paths"` entirely — that key should only ever carry the unrelated
+`@moveee/utils/*` alias). `typeRoots` is TypeScript-only — Metro has no concept of it and never
+reads it, so it cannot leak into JS bundling. It works by restricting where TS's `@types`
+fallback search is allowed to look, which is enough to stop it from ever finding the monorepo
+root's `@types/react` in the first place. Verified (August 2026 correction pass) against both
+failure modes at once, with a real React 19 `@types/react` planted at the repo root to reproduce
+the exact original conditions: `tsc --noEmit` stays at the same 35-pre-existing-error baseline
+with zero bigint/JSX conflict errors, **and** `npx expo export:embed --eager --platform ios
+--dev false` (the exact command EAS Build runs) succeeds and produces a real bundle. If this
 resolution trick ever needs revisiting (e.g. after a dependency bump changes how `react-native`
 or `@types/react` are laid out), re-run `npx tsc --noEmit --traceResolution | grep "Resolving
-module 'react' from.*react-native"` to see exactly which `@types/react` copy wins.
+module 'react' from.*react-native"` to see exactly which `@types/react` copy wins — but **never
+put `"react"` or `"react/*"` back into this file's `"paths"`**, regardless of what problem it
+looks like it would solve; use `typeRoots`, `types`, or a different lever instead, and if none of
+those work, test the fix against a real `expo export:embed`/EAS build before trusting it, not
+just `tsc --noEmit` alone.
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
