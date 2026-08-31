@@ -6890,7 +6890,7 @@ version the property needs, not just the Swift compiler version), it's safe to m
 pin; don't assume it's fixed without checking the actual guard condition, since the compiler
 check alone isn't a reliable proxy for SDK contents.
 
-### iOS native build failure — `fmt` library vs. newer Xcode/Clang `consteval` checking (fixed August 2026)
+### iOS native build failure — `fmt` library vs. newer Xcode/Clang `consteval` checking (fixed August 2026; the first fix attempt did nothing — corrected same day)
 
 Once `react-native-iap` was pinned off the broken `12.16.4` (above), the next EAS iOS build hit a
 **different** native compile error, in a completely unrelated dependency:
@@ -6899,42 +6899,83 @@ Once `react-native-iap` was pinned off the broken `12.16.4` (above), the next EA
 call to consteval function 'fmt::basic_format_string<...>::basic_format_string<FMT_COMPILE_STRING, 0>' is not a constant expression
 ```
 
-Root cause: `fmt` (a C++ formatting library pulled in transitively via `RCT-Folly`, a core React
-Native native dependency — nothing in this repo depends on it directly) uses a C++20 `consteval`
-constructor. The Xcode/Clang version required by `eas.json`'s `build.production.ios.image:
-"latest"` (needed for Apple's Xcode 26+ App Store SDK requirement — see the Google Play Billing
-section's iOS-submission context above) evaluates `consteval` more strictly than the bundled
-`fmt` version expects, so the constructor call fails to compile outright.
+Root cause: `fmt` 11.0.2 (a C++ formatting library — `react-native/third-party-podspecs/
+fmt.podspec` pins this exact version and fetches it fresh from GitHub at `pod install` time, it's
+never vendored in `node_modules`; pulled in transitively via `RCT-Folly`, a core React Native
+native dependency, nothing in this repo depends on it directly) uses a C++20 `consteval`
+constructor gated by its own compiler-version detection in `include/fmt/base.h`. That detection
+only disables `consteval` for "Apple clang < 14" — the Clang shipped with the Xcode 26+ image
+`eas.json`'s `build.production.ios.image: "latest"` now requires (Apple's App Store SDK
+requirement, see the Google Play Billing section's iOS-submission context above) is far newer
+than that cutoff, so fmt still enables `consteval` — but that specific newer Clang has a real
+regression/incompatibility with this usage pattern that fmt 11.0.2's detection logic (written
+before this Clang existed) has no way to know about.
 
-**Fix**: `apps/mobile/plugins/withFmtConstevalFix.js`, a `withPodfile` config plugin (same
-`@expo/config-plugins` API family as the existing `withAndroidIapStoreFlavor.js`, just the iOS/
-Podfile mod instead of the Android/Gradle one) that injects Ruby into the **existing**
-`post_install do |installer|` block Expo's own Podfile template already generates — defining the
-`FMT_CONSTEVAL=` preprocessor macro (empty) for every pod target's build settings. An empty
-`FMT_CONSTEVAL` makes `fmt` fall back to a plain `constexpr` constructor instead of `consteval`,
-sidestepping the stricter compile-time-evaluation requirement entirely. This is the standard,
-widely-used community workaround for this exact class of failure wherever `fmt`+`consteval` meets
-a newer Clang than the library anticipated — not something specific to this codebase.
+**First attempt — a `GCC_PREPROCESSOR_DEFINITIONS` override defining `FMT_CONSTEVAL=` — changed
+nothing and the exact same error recurred on the next build.** Root cause of *that* failure,
+found by fetching fmt 11.0.2's real `include/fmt/base.h` from GitHub and reading it directly:
+the entire detect-and-define block has **no `#ifndef` guard** —
+```cpp
+#if FMT_USE_CONSTEVAL
+#  define FMT_CONSTEVAL consteval
+#  define FMT_CONSTEXPR20 constexpr
+#else
+#  define FMT_CONSTEVAL
+#  define FMT_CONSTEXPR20
+#endif
+```
+`FMT_CONSTEVAL` gets unconditionally `#define`'d based on `FMT_USE_CONSTEVAL`'s computed value
+(itself unconditionally defined a few lines above, same lack of guard) — so whatever value a
+`-D`/`GCC_PREPROCESSOR_DEFINITIONS` compiler flag predefines gets silently overwritten the moment
+the header's own `#define` executes, since redefining an already-`#define`'d macro without an
+intervening `#undef` is exactly what happens here, and the *header's* definition (textually after
+the command-line one, in preprocessing order) is the one that wins. This is why the compiler-flag
+approach is a real, commonly-cited pattern that works for *many* libraries but did nothing here —
+it only works when the target header itself has an `#ifndef` guard around its own definition,
+and this one doesn't. **Lesson: verify a "standard community workaround" against the actual
+source of the specific version in use before trusting it — don't assume a fix that works for
+fmt/libraries in general applies unchanged to every version.**
 
-**Critical implementation detail — inject into the existing block, don't add a second one.**
-Expo's generated Podfile already defines one `post_install do |installer| ... end` block (calling
-`react_native_post_install(...)`, essential to the RN build). CocoaPods' Podfile DSL treats a
-second, separately-declared `post_install do |installer| ... end` as **overwriting** the first,
-not accumulating — so appending a whole new block instead of inserting into the existing one
-would have silently dropped `react_native_post_install(...)` and broken the build in a much
-harder-to-diagnose way. The plugin's regex specifically targets the literal `post_install do
-|installer|` opening line and inserts new lines immediately after it, inside the same block,
+**The fix that actually works**: patch the fetched `fmt` source file directly, post-checkout.
+`apps/mobile/plugins/withFmtConstevalFix.js` (a `withPodfile` config plugin, same
+`@expo/config-plugins` API family as the existing `withAndroidIapStoreFlavor.js`) injects Ruby
+into the **existing** `post_install do |installer|` block Expo's own Podfile template already
+generates (`post_install` runs after `pod install`'s download phase, so the fmt source is already
+on disk by then). It locates the checked-out fmt pod via CocoaPods' `installer.sandbox.pod_dir
+('fmt')` API (version/path-agnostic — doesn't hardcode a checkout path), globs for `base.h`, and
+replaces the entire `#if FMT_USE_CONSTEVAL ... #endif` block above with an `#undef` followed by a
+forced `#define FMT_USE_CONSTEVAL 0` / empty `FMT_CONSTEVAL`/`FMT_CONSTEXPR20` — since this comes
+*after* fmt's own block in the same file, and uses `#undef` before redefining, it reliably wins
+regardless of what fmt's own detection computes. This forces the exact same non-consteval
+codepath that already compiled successfully on every pre-Xcode-26 build.
+
+**Critical implementation detail — inject into the existing `post_install` block, don't add a
+second one.** Expo's generated Podfile already defines one `post_install do |installer| ... end`
+block (calling `react_native_post_install(...)`, essential to the RN build). CocoaPods' Podfile
+DSL treats a second, separately-declared `post_install do |installer| ... end` as **overwriting**
+the first, not accumulating — so appending a whole new block instead of inserting into the
+existing one would have silently dropped `react_native_post_install(...)` and broken the build in
+a much harder-to-diagnose way. The plugin's regex specifically targets the literal `post_install
+do |installer|` opening line and inserts new lines immediately after it, inside the same block,
 before the pre-existing `react_native_post_install(...)` call.
 
 Registered last in `app.config.ts`'s `plugins` array (order doesn't matter here specifically,
-since the regex anchor is a stable string none of the other plugins touch — placed last simply
-because it was added last chronologically). Verified: the Ruby generated by the plugin's regex
-replace is syntax-valid (`ruby -c`, tested against a representative Expo-template Podfile
-snippet), `npx expo config --json` loads the plugin with no errors, and `tsc --noEmit`/`expo
-export:embed` (the JS-layer checks available in this sandbox) show no regressions — **the actual
-native Xcode compile can only be verified by a real EAS build**, since this sandbox has no
-macOS/Xcode/CocoaPods toolchain. Re-confirm against the real `eas build --platform ios` output
-after pulling this fix.
+since the regex anchor is a stable string none of the other plugins touch). Verified end-to-end
+in this sandbox, not just syntax-checked: fetched the real fmt 11.0.2 `base.h` from GitHub,
+confirmed the exact `#if FMT_USE_CONSTEVAL ... #endif` block text matches what the plugin's regex
+targets, ran the **actual generated Ruby** (`ruby`, not a JS/Python simulation) against a copy of
+that real file with a stubbed `pod_dir`, and confirmed the patched output forces
+`FMT_USE_CONSTEVAL` to `0` / `FMT_CONSTEVAL` to empty exactly as intended. Also confirmed: the
+full Podfile-level Ruby (existing `post_install` content plus the injection) is syntax-valid
+(`ruby -c`), `npx expo config --json` loads the plugin with no errors, and `tsc --noEmit`/`expo
+export:embed` show no regressions. **The actual native Xcode compile still needs a real EAS build
+to give the final word** — this sandbox has no Xcode/CocoaPods toolchain, so nothing here can
+execute the real `pod install` + Xcode compile end-to-end. If this exact error recurs after
+pulling this fix, re-verify the regex still matches the *current* fmt version's `base.h` — a
+future RN bump could pull in a different fmt version with a differently-shaped (but likely
+equivalent) `#if FMT_USE_CONSTEVAL` block that no longer matches this plugin's exact-text regex,
+silently making the injected patch a no-op again (the plugin doesn't currently warn if its `sub`
+finds no match).
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
