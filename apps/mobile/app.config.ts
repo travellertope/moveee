@@ -102,6 +102,13 @@ export default {
           url: "https://de.sentry.io/",
         },
       ],
+      // Works around a native iOS build failure ("call to consteval
+      // function ... is not a constant expression") caused by the fmt
+      // library (bundled via RCT-Folly, a React Native core dependency)
+      // being incompatible with the stricter C++20 consteval checking in
+      // the newer Xcode/Clang required by eas.json's build.production.ios.image
+      // ("latest"). See apps/mobile/plugins/withFmtConstevalFix.js.
+      "./plugins/withFmtConstevalFix",
     ],
     extra: {
       eas: {
