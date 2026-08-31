@@ -1,0 +1,53 @@
+# EAS Build reads this file INSTEAD of .gitignore (it does not merge the
+# two) to decide what gets uploaded for a build — so everything .gitignore
+# excludes for safety/size reasons is repeated here, not just the new
+# monorepo-scoping rules below. If you ever edit .gitignore, check whether
+# the same entry needs to be mirrored here.
+
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# env files
+.env*.local
+.env
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.claude/
+**/.turbo/
+
+# Scope EAS Build's monorepo-wide `npm install` to what apps/mobile
+# actually needs. apps/mobile never imports from apps/site, apps/connect,
+# apps/figma, or culture-community (see CLAUDE.md — mobile is self-
+# contained, doesn't even import packages/shared, only @moveee/utils).
+# Excluding them keeps EAS from detecting their package.json files as
+# npm-workspace members and installing their dependencies too — which
+# matters because apps/site and apps/connect both depend on `sharp`
+# (native image processing), and `sharp` failing to build from source on
+# EAS's build image was breaking every apps/mobile build even though
+# apps/mobile has nothing to do with sharp at all.
+apps/site/
+apps/connect/
+apps/figma/
+culture-community/
