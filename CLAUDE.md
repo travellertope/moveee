@@ -6558,6 +6558,103 @@ If events arrive but stack traces are unreadable, that's the `SENTRY_AUTH_TOKEN`
 above not having been done yet (or not picked up by the build that shipped), not a
 bug in the instrumentation itself.
 
+**Sentry was initialized correctly but reporting nothing, because nothing ever called
+it (fixed August 2026).** `apps/mobile/src` has ~140 silent `catch {}` blocks — the
+intentional "fail quietly, don't crash the screen" pattern used throughout this app —
+but that also meant `Sentry.captureException` was only ever invoked from the top-level
+render `ErrorBoundary` in `App.tsx`. Every network/API failure (a 500, a token-
+resolution bug, a genuine crash-causing backend issue) got caught locally and silently
+swallowed before Sentry ever heard about it. Fixed by centralizing reporting in
+`src/api/client.ts`'s `request()`/`upload()` — the one choke point nearly every
+network call in the app funnels through, so coverage no longer depends on whether a
+given call site's `catch` block happens to report anything. Every failed request now
+leaves a Sentry breadcrumb; a full `captureException` only fires for network/fetch
+failures and 5xx responses — not ordinary 4xx application flow (validation errors, the
+expected 401-triggers-logout path), which are normal, not something to page on. If a
+future report says "X clearly failed but there's nothing in Sentry," check first
+whether the failure happened somewhere that *doesn't* route through `api/client.ts`
+(e.g. `react-native-iap`/passkey native module errors, a thrown error inside a
+component's own render) — those still need an explicit `Sentry.captureException` call
+added at the point of failure, this fix only covers the HTTP layer.
+
+---
+
+## Passkeys (WebAuthn) — never worked on native, missing platform setup (fixed August 2026)
+
+Web passkeys (`apps/connect`'s `PasskeyManager.tsx`, browser `@simplewebauthn/browser`)
+have worked since Phase 7 shipped — browser WebAuthn just checks the calling page's own
+origin, no extra platform config needed. **Mobile passkeys never worked, on either
+platform, because two OS-level trust files that `react-native-passkeys` requires were
+never set up** — this isn't a subtle bug, it's a complete, silent gap: without them,
+iOS/Android refuse to create or use a platform passkey for any `rp.id` at all, and
+`Passkeys.create()`/`.get()` in `MemberSettingsScreen.tsx`'s `PasskeyManager`-equivalent
+just fail (often silently, caught by one of the ~140 `catch {}` blocks mentioned in the
+Sentry entry above — which is also why this never showed up in Sentry either, before
+that fix).
+
+**What was missing and what closes it:**
+1. **iOS Associated Domains entitlement** — `apps/mobile/app.config.ts`'s `ios` block
+   now sets `associatedDomains: ["webcredentials:themoveee.com"]`. Without this, the
+   OS never even attempts to look up trust for the app.
+2. **`apple-app-site-association` file**, hosted at
+   `https://themoveee.com/.well-known/apple-app-site-association` (no extension, no
+   redirects) — new route handler,
+   `apps/site/app/.well-known/apple-app-site-association/route.ts`. Its `apps` array
+   is `["<APPLE_TEAM_ID>.com.moveee.connect"]`, built from an `APPLE_TEAM_ID` env var
+   (Vercel, Site A project) that still needs to be set — find it in Apple Developer →
+   Membership, or the "Team ID" line `eas credentials` prints. Deliberately degrades to
+   an empty `apps` array (inert, not broken) when unset, rather than baking in a
+   guessed value.
+3. **`assetlinks.json` file**, hosted at
+   `https://themoveee.com/.well-known/assetlinks.json` — new route handler,
+   `apps/site/app/.well-known/assetlinks.json/route.ts`. Its
+   `sha256_cert_fingerprints` comes from an `ANDROID_PASSKEY_SHA256_FINGERPRINTS` env
+   var (comma-separated, colon-hex format) — same "every keystore that will ever sign
+   a build you test on" requirement as the Google Sign-In SHA-1 setup elsewhere in
+   this file (production keystore and any EAS preview-profile keystore are typically
+   different certs). Get each via `eas credentials` → Android → view keystore, or
+   `keytool -list -v -keystore <file>.jks`. The `delegate_permission/
+   common.get_login_creds` relation specifically is what Android's Credential Manager
+   checks for passkey trust — without it, calls fail silently or return "no matching
+   credentials" rather than a clear error.
+4. **`expo-build-properties` plugin** (`apps/mobile/app.config.ts`, new dependency) —
+   `react-native-passkeys`'s own setup docs require it for setting a real iOS
+   deployment target (`15.1` — the platform-authenticator/passkey APIs don't exist
+   below iOS 15). Android's `compileSdkVersion 34+` requirement is already satisfied
+   by Expo SDK 52's own default, so no explicit override was added for that half.
+
+**The `themoveee.com` domain choice is an assumption, not a certainty — verify it.**
+`Culture_WebAuthn::rp_id()` (`culture-community/includes/core/class-culture-webauthn.php`)
+auto-derives the relying-party ID by stripping the `cms.` prefix off WordPress's own
+`home_url()` (→ `themoveee.com`) — there is no `culture_webauthn_rp_id` WP option ever
+set anywhere in this codebase and no WP Admin UI to set one, so the auto-derived
+default is almost certainly what's live in production. **But this must match exactly
+whatever `rp.id` the server actually returns from `GET
+/culture/v1/auth/passkey/register-options`** — if that ever turns out to be
+`web.themoveee.com` instead (e.g. an option was set directly in the database, bypassing
+the codebase entirely), both the `associatedDomains` entry and the `.well-known` files'
+location need to move to match. Confirm by hitting that endpoint and checking the
+`rp.id` in its response before assuming this fix is complete.
+
+**Requires a full native rebuild — a JS-only OTA update will not pick this up.** All
+four pieces above are native config (entitlements, deployment target) that only take
+effect through a real EAS build, not `expo start`/an OTA update. **Also still requires
+the two Vercel env vars above (`APPLE_TEAM_ID`, `ANDROID_PASSKEY_SHA256_FINGERPRINTS`)
+to be set on Site A before passkeys will actually work** — the code deploys safely
+without them (empty/inert `.well-known` responses), it just means passkeys stay broken
+until a human fills them in.
+
+**Not verified against a real device** — this sandbox has no way to test native
+WebAuthn flows or trigger an EAS build. Verified via: a Node-based syntax/structure
+check of the edited `app.config.ts` (confirmed `associatedDomains` and the
+`expo-build-properties` plugin entry parse correctly), confirming both new
+`.well-known` routes export a `GET` handler, confirming `proxy.ts`'s catch-all
+root-slug redirect can't intercept a multi-segment `.well-known/*` path (it explicitly
+skips any `cleanPath` containing a `/`), and regenerating `package-lock.json` via the
+documented out-of-tree process (confirms `expo-build-properties@0.13.3` resolves
+cleanly for the pinned Expo SDK 52 toolchain). Re-check on a real EAS build — with both
+env vars set — before considering this fully closed.
+
 ---
 
 ## Community feed spam protection

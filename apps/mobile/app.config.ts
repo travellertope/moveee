@@ -46,6 +46,21 @@ export default {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
+      // Required for react-native-passkeys (WebAuthn) to work at all on
+      // iOS — without this Associated Domains entitlement, iOS refuses to
+      // create/use a platform passkey for any rp.id, and Passkeys.create()/
+      // .get() calls in MemberSettingsScreen.tsx just fail. "themoveee.com"
+      // is Culture_WebAuthn::rp_id()'s auto-derived default (strips the
+      // "cms." prefix off WordPress's home_url() — see
+      // class-culture-webauthn.php; there is no culture_webauthn_rp_id
+      // option or WP Admin UI to override it, so nothing has ever set it to
+      // anything else). This MUST match whatever rp.id the server actually
+      // returns from GET /culture/v1/auth/passkey/register-options — if
+      // that's ever pointed at web.themoveee.com specifically instead,
+      // change this to match. Also requires an apple-app-site-association
+      // file hosted at https://themoveee.com/.well-known/
+      // apple-app-site-association — see apps/site/app/.well-known/.
+      associatedDomains: ["webcredentials:themoveee.com"],
     },
     android: {
       package: "com.moveee.connect",
@@ -63,6 +78,19 @@ export default {
     plugins: [
       "expo-notifications",
       "expo-secure-store",
+      // Required by react-native-passkeys — it needs a real iOS deployment
+      // target (15.0+, the platform-authenticator/passkey APIs don't exist
+      // below that) set via this plugin rather than app.config.ts directly,
+      // per the library's own setup docs. Android's compileSdkVersion 34+
+      // requirement is already satisfied by Expo SDK 52's own default, so
+      // no explicit override is needed there — only add one if a future
+      // build ever fails complaining compileSdk is too low.
+      [
+        "expo-build-properties",
+        {
+          ios: { deploymentTarget: "15.1" },
+        },
+      ],
       [
         "expo-image-picker",
         {
