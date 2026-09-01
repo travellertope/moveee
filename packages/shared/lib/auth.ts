@@ -34,10 +34,6 @@ function applyCultureProfile(token: any, data: any) {
   token.email = data.email ?? token.email;
 }
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET environment variable is not set. Authentication cannot start.");
-}
-
 export interface CultureUser {
   id: string;
   username: string;
