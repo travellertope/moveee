@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ ...body, user_id: session.user.id }),
   }).catch(() => null);
 
+  // This call authenticates with the server's own CULTURE_API_SECRET, not
+  // the signed-in user — a 401/403 here means the secret is misconfigured,
+  // not that the user is unauthorized, so don't forward it as 401.
   if (!res || !res.ok) {
-    return NextResponse.json({ error: "Could not create directory entry." }, { status: res?.status ?? 502 });
+    const status = !res ? 502 : res.status === 401 || res.status === 403 ? 502 : res.status;
+    return NextResponse.json({ error: "Could not create directory entry." }, { status });
   }
 
   const data = await res.json();
