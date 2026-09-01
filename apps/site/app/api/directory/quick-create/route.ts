@@ -23,12 +23,31 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
 
+  // Distinguish "your token is actually invalid" (WordPress explicitly said
+  // 401/403) from "we couldn't reach/parse WordPress" (network hiccup, 5xx,
+  // malformed body) — the mobile client force-logs-out on ANY 401 from an
+  // authenticated call (see api/client.ts's _onUnauthorized wiring), so
+  // collapsing a transient upstream failure into a 401 here was kicking
+  // signed-in users straight back to the login screen for no real reason.
+  // Only a genuine 401/403 from WordPress itself should propagate as 401;
+  // everything else surfaces as a retryable 502.
   const meRes = await fetch(`${WP_URL}/wp-json/culture/v1/mobile/me`, {
     headers: { Authorization: `Bearer ${token}` },
   }).catch(() => null);
-  const userId = meRes?.ok ? (await meRes.json().catch(() => ({})))?.id : null;
-  if (!userId) {
+
+  if (!meRes) {
+    return NextResponse.json({ error: "Could not reach the server. Please try again." }, { status: 502 });
+  }
+  if (meRes.status === 401 || meRes.status === 403) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  if (!meRes.ok) {
+    return NextResponse.json({ error: "Could not verify your account. Please try again." }, { status: 502 });
+  }
+
+  const userId = (await meRes.json().catch(() => ({})))?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Could not verify your account. Please try again." }, { status: 502 });
   }
 
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/quick-create`, {
@@ -40,8 +59,13 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ ...body, user_id: userId }),
   }).catch(() => null);
 
+  // This call authenticates with the server's own CULTURE_API_SECRET, not
+  // the user's token — a 401/403 here means the secret is misconfigured,
+  // not that the user is unauthorized, so never forward it as 401 (that
+  // would force-logout the user for a server-side config problem).
   if (!res || !res.ok) {
-    return NextResponse.json({ error: "Could not create directory entry." }, { status: res?.status ?? 502 });
+    const status = !res ? 502 : res.status === 401 || res.status === 403 ? 502 : res.status;
+    return NextResponse.json({ error: "Could not create directory entry." }, { status });
   }
 
   const data = await res.json();
