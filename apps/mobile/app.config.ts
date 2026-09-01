@@ -37,6 +37,15 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.moveee.connect",
+      // Declares the app's export-compliance status directly in the built
+      // Info.plist so App Store Connect stops asking the manual "App
+      // Encryption Documentation" question on every new build upload. The
+      // app only uses standard OS-level HTTPS/TLS (no proprietary/non-
+      // exempt encryption), so this is the correct value — Apple's own
+      // suggested fix for a build stuck in "Missing Compliance".
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
     android: {
       package: "com.moveee.connect",
