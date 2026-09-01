@@ -4,3 +4,12 @@ dist/
 *.tsbuildinfo
 .env*.local
 .env
+
+# Signing credentials — EAS can download these locally (e.g. via
+# `eas credentials`) for local builds/inspection. Never commit them.
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+*.cer
