@@ -165,7 +165,13 @@
 
 .carousel-track {
   display: flex;
-  align-items: center;
+  /* stretch, not center — every card in the row is stretched to match the
+     tallest card's natural content height (the flex algorithm's own
+     equal-height mechanism), so titles never need truncating: a card with
+     a short title just gets some blank space below it instead of the row
+     sitting at mismatched heights. See .fcell's height: 100% below for the
+     other half of this. */
+  align-items: stretch;
   gap: 0;
   overflow-x: auto;
   position: relative;
@@ -242,15 +248,14 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* No explicit height — this used to be `height: 100%` of .strip-card,
-     but .strip-card (a flex item under align-items: center, so not
-     stretched) has no height of its own beyond .fcell's own content
-     size, making that a circular reference the browser doesn't always
-     resolve generously. In one measured case the active (scaled) card's
-     real content came out ~8px taller than what "100%" resolved to,
-     and .fcell's own `overflow: hidden` (below) silently clipped the
-     card's bottom edge. Letting .fcell size itself from its content
-     removes the circularity entirely. */
+  /* .strip-card is now stretched by .carousel-track's align-items: stretch
+     to the tallest card's natural height in the row — that's a real,
+     resolved height (not content-circular the way it was under
+     align-items: center), so .fcell can safely fill it. A shorter card's
+     photo/kicker/title stack just leaves blank space below itself inside
+     this box; nothing crops, since .fcell never has less room than its
+     own content needs, only ever more. */
+  height: 100%;
   border-radius: 0;
   padding: 10px 10px 12px;
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
@@ -264,25 +269,7 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 10px; flex-shrink: 0; color: var(--ochre); }
-/* Clamped to 2 lines with a matching fixed height (2 x the 1.25 line-height,
-   in em so it tracks font-size) — the photo above is already a uniform
-   square (aspect-ratio 1/1 off the shared --carousel-card-w), so pinning
-   the title block's height is all that's needed to make every card in the
-   row come out the same total height regardless of how long its title is. */
-.fcell h3 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: 20px;
-  line-height: 1.25;
-  margin-top: 6px;
-  flex-shrink: 0;
-  color: var(--ink);
-  height: 2.5em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
