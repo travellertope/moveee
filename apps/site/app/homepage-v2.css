@@ -166,7 +166,7 @@
 .carousel-track {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 0;
   overflow-x: auto;
   position: relative;
   z-index: 1;
@@ -251,7 +251,7 @@
      and .fcell's own `overflow: hidden` (below) silently clipped the
      card's bottom edge. Letting .fcell size itself from its content
      removes the circularity entirely. */
-  border-radius: 16px;
+  border-radius: 0;
   padding: 10px 10px 12px;
   box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
   transition: box-shadow .3s, transform .3s;
@@ -260,7 +260,7 @@
 }
 .strip-card.is-active .fcell { box-shadow: 0 18px 40px -14px rgba(0,0,0,.55); }
 a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
-.fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 10px; overflow: hidden; background: var(--ink); }
+.fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 0; overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 10px; flex-shrink: 0; color: var(--ochre); }
