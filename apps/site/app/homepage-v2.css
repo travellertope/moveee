@@ -172,7 +172,12 @@
      sitting at mismatched heights. See .fcell's height: 100% below for the
      other half of this. */
   align-items: stretch;
-  gap: 0;
+  /* Matches the GAP constant HeroCarousel.tsx's scroll/centering math is
+     already built around (card-width + GAP per "step") — this was
+     previously 0, so the JS scroll math reserved 20px of spacing between
+     cards that the CSS never actually rendered, leaving the cards flush
+     against each other. */
+  gap: 20px;
   overflow-x: auto;
   position: relative;
   z-index: 1;
@@ -191,7 +196,7 @@
      scaled by the active card's growth. Approximate on purpose — this is
      only a layout-shift-avoiding floor, not a hard height; a real title
      wrapping to a 3rd line just grows the row past it. */
-  min-height: calc((var(--carousel-card-w, 300px) - 36px + 120px) * 1.04);
+  min-height: calc((var(--carousel-card-w, 300px) * .68 + 90px) * 1.04);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   /* x-only, not the shorthand `overscroll-behavior: contain` — the
@@ -241,7 +246,7 @@
    the actual image (.fcell-photo, flex: 1) got squeezed into whatever
    was left over after the text rows, landing on a landscape crop instead
    of a square one. The aspect ratio belongs on .fcell-photo itself. */
-.strip-card .fcell-photo { aspect-ratio: 1/1; flex: none; }
+.strip-card .fcell-photo { aspect-ratio: 3/2; flex: none; }
 
 /* ── UNIFIED FRAMED CARD ── */
 .fcell {
@@ -268,8 +273,8 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 0; overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 10px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; line-height: 1.22; margin-top: 5px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
