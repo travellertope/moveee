@@ -27,9 +27,7 @@ export default function LiteraryMasthead() {
     <>
       <div className="lit-ribbon">
         <div className="lit-ribbon-inner">
-          <span>
-            New <em>fiction</em>, poetry, essays and translation, published continuously.
-          </span>
+          <span>New fiction, poetry, essays and translation, published continuously.</span>
           <Link href="/newsletter">Get Updates</Link>
         </div>
       </div>
