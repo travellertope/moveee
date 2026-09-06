@@ -81,6 +81,7 @@ const Footer = () => {
             <span className="mfoot-column-label">Explore</span>
             <ul>
               <li><Link href="/magazine">Magazine</Link></li>
+              <li><Link href="/literary">The Moveee Literary</Link></li>
               <li><Link href="/newsletter">Newsletter</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
               <li><Link href="/visuals">Visuals</Link></li>

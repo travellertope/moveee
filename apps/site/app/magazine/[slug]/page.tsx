@@ -1,6 +1,6 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost } from "@/lib/wp";
-import { notFound } from "next/navigation";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost } from "@/lib/wp";
+import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
@@ -84,6 +84,15 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   if (!post) {
     notFound();
+  }
+
+  // Literary pieces (Poetry/Fiction/Nonfiction/Translation) are still the
+  // same `post` type — see "The Moveee Literary" in CLAUDE.md — but they
+  // read as a distinct vertical with its own template at /literary/{slug},
+  // not through this magazine article template. Redirect rather than
+  // duplicate-render, so there's exactly one canonical URL per piece.
+  if (isLiteraryPost(post)) {
+    redirect(`/literary/${post.slug}`);
   }
 
   const accessLevel = getAccessLevel(post);

@@ -1,5 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getWPData, GET_STORIES, GET_PRODUCTS, GET_NEWSLETTERS, GET_JOURNEYS, GET_FILTERS } from "@/lib/wp";
+import {
+  getWPData,
+  GET_STORIES,
+  GET_PRODUCTS,
+  GET_NEWSLETTERS,
+  GET_JOURNEYS,
+  GET_FILTERS,
+  isLiteraryPost,
+  LITERARY_GENRES,
+} from "@/lib/wp";
 import { FEATURE_PAGES } from "@/lib/features";
 
 const BASE = "https://themoveee.com";
@@ -38,7 +47,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/makers`,       changeFrequency: "weekly"  as const, priority: 0.6, lastModified: new Date() },
     { url: `${BASE}/visuals`,      changeFrequency: "monthly" as const, priority: 0.5, lastModified: new Date() },
     { url: `${BASE}/features`,     changeFrequency: "monthly" as const, priority: 0.7, lastModified: new Date() },
+    { url: `${BASE}/literary`,     changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
+    { url: `${BASE}/literary/submit`, changeFrequency: "monthly" as const, priority: 0.4, lastModified: new Date() },
   ];
+
+  const literaryGenreUrls: MetadataRoute.Sitemap = LITERARY_GENRES.map((g) => ({
+    url: `${BASE}/literary/${g.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+    lastModified: new Date(),
+  }));
 
   const featureUrls: MetadataRoute.Sitemap = FEATURE_PAGES.map((f) => ({
     url: `${BASE}/features/${f.slug}`,
@@ -47,12 +65,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  const articleUrls: MetadataRoute.Sitemap = articles.map((a) => ({
-    url: `${BASE}/magazine/${a.slug}`,
-    lastModified: new Date((a as any).modified || (a as any).date || new Date()),
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
+  // Literary pieces are still fetched by GET_STORIES (same `post` type,
+  // see "The Moveee Literary" in CLAUDE.md), but /magazine/[slug] redirects
+  // them to /literary/[slug] — listing them under /magazine/ here would
+  // point crawlers at a URL that immediately 308s, and skipping them from
+  // literaryUrls would leave them with no sitemap entry at all.
+  const articleUrls: MetadataRoute.Sitemap = articles
+    .filter((a) => !isLiteraryPost(a as any))
+    .map((a) => ({
+      url: `${BASE}/magazine/${a.slug}`,
+      lastModified: new Date((a as any).modified || (a as any).date || new Date()),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    }));
+
+  const literaryPieceUrls: MetadataRoute.Sitemap = articles
+    .filter((a) => isLiteraryPost(a as any))
+    .map((a) => ({
+      url: `${BASE}/literary/${a.slug}`,
+      lastModified: new Date((a as any).modified || (a as any).date || new Date()),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
 
   const productUrls: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${BASE}/shop/${p.slug}`,
@@ -82,5 +116,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...featureUrls, ...articleUrls, ...productUrls, ...newsletterUrls, ...journeyUrls, ...countryUrls];
+  return [
+    ...staticPages,
+    ...literaryGenreUrls,
+    ...featureUrls,
+    ...articleUrls,
+    ...literaryPieceUrls,
+    ...productUrls,
+    ...newsletterUrls,
+    ...journeyUrls,
+    ...countryUrls,
+  ];
 }

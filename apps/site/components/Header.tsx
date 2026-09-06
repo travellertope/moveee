@@ -267,6 +267,7 @@ const Header = () => {
                 <a href={`${CONNECT_URL}/discover`}>Discover</a>
                 <a href={`${CONNECT_URL}/events`}>Events</a>
                 <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
+                <Link href="/literary" data-active={active("/literary") || undefined}>The Moveee Literary</Link>
                 <Link href="/shop" data-active={active("/shop") || undefined}>Shop</Link>
                 <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
               </nav>

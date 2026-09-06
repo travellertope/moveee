@@ -410,6 +410,96 @@ Fixed:
   regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
   content going forward.
 
+## The Moveee Literary (`/literary`, added September 2026)
+
+A quarterly poetry/fiction/nonfiction/translation vertical on Site A (`apps/site`), built to feel
+like a distinct modern literary magazine while shipping alongside The Moveee's print quarterly.
+"The Moveee Literary" is a named section title, same pattern as "The Lane"/"The Edit"/"The Free
+Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
+generic-brand-name bug documented elsewhere in this file.
+
+**Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
+changes.** A literary piece is a completely normal magazine post; what makes it "literary" is
+purely a tagging convention:
+
+- Every literary piece must carry **both** the parent **`literary`** category **and** exactly one
+  genre child category: `literary-poetry`, `literary-fiction`, `literary-nonfiction`,
+  `literary-translation`. Both are required — WPGraphQL's `categoryName` filter (used by the
+  existing, generic `GET_STORIES` query) matches only the exact term, it does **not** include
+  descendant terms, so `categoryName: "literary"` (the whole-vertical view) only returns pieces
+  that carry the parent term directly; genre archives filter on the child term alone.
+- **These four categories do not exist in WordPress yet as of this writing** — an editor needs to
+  create them once in WP Admin → Posts → Categories (parent "Literary", slug `literary`; four
+  children with the exact slugs above) before any piece can be tagged. Until then, every page
+  under `/literary` renders correctly with an empty-state message (same graceful-degradation
+  pattern as every other magazine section in this file) — nothing is broken, there's just nothing
+  to show yet.
+- Genre metadata (slug, category slug, label, one-line tagline) lives in one place:
+  `LITERARY_GENRES` in `packages/shared/lib/wp.ts`, alongside `LITERARY_CATEGORY_SLUG`,
+  `getLiteraryGenre()`, `isLiteraryPost()`, `literaryGenreOfPost()`, and `getLiteraryPieces()`
+  (a thin `GET_STORIES` wrapper, same try/catch-to-empty-array pattern as every other
+  magazine-section helper in this file). Add a fifth genre here — nowhere else — if one is ever
+  needed.
+
+**Routes** (`apps/site/app/literary/`):
+- `layout.tsx` — sets the section's metadata and reuses `.mg-page-white` (magazine.css) to sit
+  above the sitewide body-grain texture, exactly like `/magazine`'s own layout.
+- `page.tsx` — landing page: hero, 4 genre tiles, a "Latest" grid across all genres, and a
+  submissions CTA band (reuses `.mg-cta-section`/`.mg-cta-band` from magazine.css rather than
+  inventing a new CTA component).
+- `[slug]/page.tsx` — **one dynamic segment serving two different things.** Next.js doesn't allow
+  sibling routes with different dynamic-segment names at the same level (`[genre]` next to
+  `[slug]` is a build error), so this single file checks the incoming slug against
+  `LITERARY_GENRES` first — a match renders the genre archive (`GenreArchive`), anything else
+  falls through to a real post lookup (`PiecePage`, which 404s if the post isn't tagged
+  `literary`). If you ever need a third `/literary/*` "thing" that isn't a genre or a piece, it
+  has to be a real static segment (like `submit/`, below) — Next.js resolves static segments
+  before dynamic ones, so there's no conflict — not another dynamic catch-all.
+- `submit/page.tsx` — static submissions guidelines (reading windows, formatting, response time,
+  rights language, a `mailto:literary@themoveee.com` link). **The specific windows/response
+  time/rights language in this file are reasonable starting defaults, not confirmed editorial
+  policy** — there's a code comment flagging this; check with The Moveee's editors before treating
+  it as final copy.
+
+**`/magazine/[slug]` redirects literary posts to `/literary/[slug]`** (added to that file's page
+component, right after the `notFound()` check) so there's exactly one canonical URL per piece —
+without this, a literary post would be reachable and fully renderable at both URLs (duplicate
+content), since it's the same underlying `post`. `sitemap.ts` mirrors this split: literary posts
+are filtered out of `articleUrls` (`/magazine/...`) and listed under a separate `literaryPieceUrls`
+(`/literary/...`) instead.
+
+**`'literary'` was added to `proxy.ts`'s `APP_ROUTES` set** — without this, the bare `/literary`
+path (no further segment) would be caught by the legacy-WordPress-permalink catch-all and
+301-redirected to the nonexistent `/magazine/literary`. Any future single-segment top-level route
+needs the same registration — see that file's own comment.
+
+**Visual identity, distinct from `/magazine`**: `apps/site/app/literary.css` (`lit-*` namespace,
+imported globally from `app/layout.tsx` alongside every other page-specific CSS file). Reuses the
+site's `--paper`/`--ink`/`--ochre`/`--gold`/`--radius`/`--shadow` tokens rather than inventing a
+new palette, but reads as its own thing via typography choice: piece bodies render in Fraunces
+serif at 19px/1.85 (magazine article bodies are DM Sans per `editorial.css`'s `.ar-wrap
+.prose-content`) with a drop cap on the opening paragraph, and each of the four genres gets a
+fixed accent color set once via a `--lit-accent` custom property (`.lit-poetry`/`.lit-fiction`/
+`.lit-nonfiction`/`.lit-translation` classes) — poetry = ochre, fiction = gold, nonfiction = a
+moss green (`#5a7a5a`, matching the ad hoc "moss" literal used elsewhere in this codebase),
+translation = purple (`#6b48a8`, the exact same purple already established for the mobile app's
+Book Review template — a deliberate echo, not a coincidence). `LiteraryPieceCard.tsx`
+(`apps/site/components/`) is the one card component every grid on the section reuses.
+
+**Discoverability**: linked from the Site A header's menu overlay (`Header.tsx`, between Magazine
+and Shop), the shared `Footer.tsx`'s Explore column, and a new contact card on `/contact`.
+
+**Not built in this pass, deliberately out of scope**: a real submissions intake portal (the
+guidelines page above just points to a mailto address — see the three-option scope conversation
+that shaped this build), Pro/Patron content gating (magazine articles nominally support this via
+`getAccessLevel()`/`ArticleContentGate`, but `GET_STORY_BY_SLUG` doesn't actually request the
+`cultureAccesses` field its own gating check reads, so that mechanism doesn't currently work even
+on `/magazine` — not fixed here, out of scope, and not worth replicating into a new vertical),
+and tying pieces to the existing "Issue" taxonomy for a literal "Issue N" badge (the taxonomy
+already exists and pieces can still be tagged with an Issue in WP Admin for internal
+recordkeeping — the site just doesn't surface it on `/literary` yet). Revisit any of these if
+asked.
+
 ## Process: adding a new newsletter
 
 Follow every step in order. Each step lists the exact file and what to change.

@@ -827,6 +827,86 @@ export const GET_FILTERS = `
   }
 `;
 
+// ── The Moveee Literary ───────────────────────────────────────────────────
+// A quarterly poetry/fiction/nonfiction/translation vertical at
+// apps/site/app/literary/*, built on the *same* `post` type as the rest of
+// the magazine (see "The Moveee Literary" in CLAUDE.md) — no new CPT, no
+// GraphQL schema changes. Every piece must carry the parent "literary"
+// category PLUS exactly one of the four genre child categories below:
+// WPGraphQL's `categoryName` filter matches only the exact term, it does
+// NOT include descendant terms, so tagging both is what makes
+// `categoryName: "literary"` return every piece across genres while
+// `categoryName: "literary-poetry"` (etc.) returns just one genre's pieces.
+export const LITERARY_CATEGORY_SLUG = "literary";
+
+export interface LiteraryGenre {
+  slug: string;
+  categorySlug: string;
+  label: string;
+  tagline: string;
+}
+
+export const LITERARY_GENRES: LiteraryGenre[] = [
+  {
+    slug: "poetry",
+    categorySlug: "literary-poetry",
+    label: "Poetry",
+    tagline: "Verse that moves like breath and lands like weather.",
+  },
+  {
+    slug: "fiction",
+    categorySlug: "literary-fiction",
+    label: "Fiction",
+    tagline: "Short stories and excerpts that hold a whole life in a few pages.",
+  },
+  {
+    slug: "nonfiction",
+    categorySlug: "literary-nonfiction",
+    label: "Nonfiction",
+    tagline: "Essays and true stories, reported and remembered.",
+  },
+  {
+    slug: "translation",
+    categorySlug: "literary-translation",
+    label: "Translation",
+    tagline: "Work carried across languages, credited by name.",
+  },
+];
+
+export function getLiteraryGenre(slug: string): LiteraryGenre | undefined {
+  return LITERARY_GENRES.find((g) => g.slug === slug.toLowerCase());
+}
+
+type CategorizedPost = { categories?: { nodes?: { slug: string }[] | null } | null } | null | undefined;
+
+export function isLiteraryPost(post: CategorizedPost): boolean {
+  return (post?.categories?.nodes || []).some((c) => c.slug === LITERARY_CATEGORY_SLUG);
+}
+
+export function literaryGenreOfPost(post: CategorizedPost): LiteraryGenre | undefined {
+  const slugs = new Set((post?.categories?.nodes || []).map((c) => c.slug));
+  return LITERARY_GENRES.find((g) => slugs.has(g.categorySlug));
+}
+
+/**
+ * Fetches pieces for the whole vertical (omit categorySlug) or one genre
+ * (pass one of LITERARY_GENRES[].categorySlug). Degrades to an empty array
+ * on any fetch failure — same pattern as every other magazine-section
+ * helper in this file — so a CMS hiccup never takes down /literary.
+ */
+export async function getLiteraryPieces(categorySlug?: string, first = 24): Promise<any[]> {
+  try {
+    const data = await getWPData(GET_STORIES, {
+      first,
+      categoryName: categorySlug || LITERARY_CATEGORY_SLUG,
+    });
+    return data?.posts?.nodes || [];
+  } catch (err: any) {
+    console.error("[literary] getLiteraryPieces failed:", err?.message || err);
+    return [];
+  }
+}
+
 // Kept for reference but no longer used directly — see GET_SERIES_STORIES etc.
 export const GET_TAX_STORIES = `
   query GetTaxStories($category: String, $series: ID, $industry: ID, $country: ID) {
