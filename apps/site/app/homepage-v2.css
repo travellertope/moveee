@@ -27,7 +27,9 @@
   --film-band-2: #1a1712;
 }
 
-.hpv2 .wrap { max-width: 1176px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+/* Widened from 1176px so the masonry sections below can go from 3 to 4
+   columns without squeezing each card too narrow. */
+.hpv2 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 /* The masthead (welcome text) + carousel section keeps the old, wider
    column — only the card-grid sections below it were asked to narrow to
    1024px. The carousel itself (.index-strip/.carousel-track) never used
@@ -172,26 +174,21 @@
      sitting at mismatched heights. See .fcell's height: 100% below for the
      other half of this. */
   align-items: stretch;
-  gap: 0;
+  /* Matches the GAP constant HeroCarousel.tsx's scroll/centering math is
+     already built around (card-width + GAP per "step") — this was
+     previously 0, so the JS scroll math reserved 20px of spacing between
+     cards that the CSS never actually rendered, leaving the cards flush
+     against each other. */
+  gap: 20px;
   overflow-x: auto;
   position: relative;
   z-index: 1;
-  /* No overflow-y: hidden — CSS transforms are visual-only and don't
-     affect layout size, so the active card's scale(1.04) always paints
-     slightly outside its own unscaled layout box (the box this row's
-     height is actually based on). Clipping the y-axis silently cropped
-     that overshoot off the active card's bottom edge — confirmed via a
-     real measurement (~8px) rather than assumed. There's nothing directly
-     below this row for the overshoot to visually collide with (.index-strip
-     has real margin on both sides), so there's no downside to leaving it
-     unclipped. */
-  /* Reserve-height estimate for the active (scaled 1.04) card: the square
-     photo's own height (card width minus its 18px+18px padding) plus the
-     kicker/title text block + padding below it (~120px, unscaled), all
-     scaled by the active card's growth. Approximate on purpose — this is
-     only a layout-shift-avoiding floor, not a hard height; a real title
-     wrapping to a 3rd line just grows the row past it. */
-  min-height: calc((var(--carousel-card-w, 300px) - 36px + 120px) * 1.04);
+  /* Reserve-height estimate: the photo's own height (card width * the
+     3/2 aspect ratio) plus the kicker/title text block + padding below
+     it (~90px). Approximate on purpose — this is only a layout-shift-
+     avoiding floor, not a hard height; a real title wrapping to a 3rd
+     line just grows the row past it. */
+  min-height: calc(var(--carousel-card-w, 300px) * .68 + 90px);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   /* x-only, not the shorthand `overscroll-behavior: contain` — the
@@ -218,22 +215,14 @@
   scroll-snap-align: center;
   flex: 0 0 auto;
   width: var(--carousel-card-w, min(80vw, 340px));
-  /* All cards fully opaque, only a subtle scale bump on the active one —
-     the old .48 opacity / 0.8-vs-1.16 scale spread (per the mockup this
-     was built from) made every non-active card fade out and shrink hard,
-     reading as "everything but the center card is disabled." Matched
-     against a reference where every card reads clearly and the active
-     one is only modestly larger, per explicit request. At this small a
-     scale delta the transform-vs-layout-gap mismatch documented in
-     earlier revisions of this rule is imperceptible, so the negative-
-     margin compensation trick that used to live here is gone too — a
-     plain flex `gap` (above) is enough. */
+  /* All cards render at the same size/opacity now — the old scale(.94)/
+     scale(1.04) active-card bump (and the .48-opacity/0.8-vs-1.16 spread
+     before that) read as a distracting "pop" every time the carousel
+     settled on a new card, per explicit user feedback. Removed outright
+     rather than just shrinking the delta further. */
   opacity: 1;
-  transform: scale(.94);
-  transition: transform .4s cubic-bezier(.2,.8,.2,1);
 }
 .strip-card.is-active {
-  transform: scale(1.04);
   z-index: 2;
 }
 /* .fcell is the *whole card* (photo + kicker + title + dek stacked in a
@@ -241,7 +230,7 @@
    the actual image (.fcell-photo, flex: 1) got squeezed into whatever
    was left over after the text rows, landing on a landscape crop instead
    of a square one. The aspect ratio belongs on .fcell-photo itself. */
-.strip-card .fcell-photo { aspect-ratio: 1/1; flex: none; }
+.strip-card .fcell-photo { aspect-ratio: 3/2; flex: none; }
 
 /* ── UNIFIED FRAMED CARD ── */
 .fcell {
@@ -268,8 +257,8 @@ a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)
 .fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 0; overflow: hidden; background: var(--ink); }
 .fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 10px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; line-height: 1.25; margin-top: 6px; flex-shrink: 0; color: var(--ink); }
+.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; flex-shrink: 0; color: var(--ochre); }
+.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; line-height: 1.22; margin-top: 5px; flex-shrink: 0; color: var(--ink); }
 .fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
 /* Rotating card backgrounds — matches the mockup's 6-color cycle (only
    frame--paper/--cream were ported originally, so every carousel card was
@@ -305,9 +294,12 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 
 /* ── RANDOMISED-LOOKING MASONRY (deterministic shape per index, so
    server + client render identically — no client Math.random) ── */
-.masonry-rand { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.masonry-rand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .wcard--rect { grid-column: span 2; }
 .wcard--sq { grid-column: span 1; }
+@media (max-width: 1100px) {
+  .masonry-rand { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 780px) {
   .masonry-rand { grid-template-columns: 1fr; }
   .wcard--rect, .wcard--sq { grid-column: span 1; }
