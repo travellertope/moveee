@@ -26,12 +26,35 @@ export default function LiteraryHeroCarousel({ slides }: { slides: LiteraryHeroS
 
   return (
     <div className="lit-wrap lit-hero">
-      <div className="lit-hero-frame">
-        {slide.imageUrl ? (
-          <img className="lit-hero-img" src={slide.imageUrl} alt="" />
-        ) : (
-          <div className="lit-hero-img lit-hero-img--placeholder" aria-hidden="true" />
-        )}
+      <div className="lit-hero-row">
+        <div className="lit-hero-frame">
+          {slide.imageUrl ? (
+            <img className="lit-hero-img" src={slide.imageUrl} alt="" />
+          ) : (
+            <div className="lit-hero-img lit-hero-img--placeholder" aria-hidden="true" />
+          )}
+        </div>
+        <div className="lit-hero-body">
+          <div className="lit-tag">{slide.genreLabel}</div>
+          <Link href={`/literary/${slide.slug}`}>
+            <h1 className="lit-hero-title" dangerouslySetInnerHTML={{ __html: slide.title }} />
+          </Link>
+          <div className="lit-hero-byline">By {slide.author}</div>
+          {slide.excerpt && <p className="lit-hero-standfirst">{slide.excerpt}</p>}
+          {slides.length > 1 && (
+            <div className="lit-hero-dots">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Show piece ${i + 1}`}
+                  className={i === index ? "is-active" : undefined}
+                  onClick={() => setIndex(i)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
         {slides.length > 1 && (
           <>
             <button type="button" className="lit-hero-arrow lit-hero-arrow--l" aria-label="Previous piece" onClick={() => go(-1)}>
@@ -41,29 +64,6 @@ export default function LiteraryHeroCarousel({ slides }: { slides: LiteraryHeroS
               ›
             </button>
           </>
-        )}
-      </div>
-      <div className="lit-hero-body">
-        <div>
-          <div className="lit-tag">{slide.genreLabel}</div>
-          <Link href={`/literary/${slide.slug}`}>
-            <h1 className="lit-hero-title" dangerouslySetInnerHTML={{ __html: slide.title }} />
-          </Link>
-          <div className="lit-hero-byline">By {slide.author}</div>
-          {slide.excerpt && <p className="lit-hero-standfirst">{slide.excerpt}</p>}
-        </div>
-        {slides.length > 1 && (
-          <div className="lit-hero-dots">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`Show piece ${i + 1}`}
-                className={i === index ? "is-active" : undefined}
-                onClick={() => setIndex(i)}
-              />
-            ))}
-          </div>
         )}
       </div>
     </div>

@@ -7,10 +7,11 @@ import {
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
 import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
+import { decodeHtml } from "@/lib/decode-html";
 
 function plainExcerpt(html: string | undefined | null, max = 220): string {
   if (typeof html !== "string") return "";
-  const text = html.replace(/<[^>]*>/g, "").trim();
+  const text = decodeHtml(html);
   return text.length > max ? text.slice(0, max).trim() + "…" : text;
 }
 

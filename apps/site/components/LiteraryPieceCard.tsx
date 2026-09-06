@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { literaryGenreOfPost } from "@/lib/wp";
+import { decodeHtml } from "@/lib/decode-html";
 
 function plainExcerpt(html: string | undefined | null, max = 140): string {
   if (typeof html !== "string") return "";
-  const text = html.replace(/<[^>]*>/g, "").trim();
+  const text = decodeHtml(html);
   return text.length > max ? text.slice(0, max).trim() + "…" : text;
 }
 
