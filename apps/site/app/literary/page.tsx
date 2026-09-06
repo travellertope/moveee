@@ -87,8 +87,7 @@ export default async function LiteraryLandingPage() {
 
       <section className="lit-cta-section">
         <div className="lit-cta-band">
-          <div className="lit-cta-label">We&rsquo;re Reading</div>
-          <h3>Submit poetry, fiction, nonfiction, conversations or translation.</h3>
+          <h3>We&rsquo;re reading. Submit poetry, fiction, nonfiction, conversations or translation.</h3>
           <p>We read on a rolling quarterly basis, in step with every print edition.</p>
           <Link className="lit-btn-primary" href="/literary/submit">
             Submission Guidelines →

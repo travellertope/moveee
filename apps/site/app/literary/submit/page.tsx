@@ -19,7 +19,6 @@ export const metadata = {
 export default function LiterarySubmitPage() {
   return (
     <div className="lit-submit-wrap">
-      <div className="lit-eyebrow">The Moveee Literary</div>
       <h1>Submit Your Work</h1>
       <p className="lit-sub">Fiction · Poetry · Essays · Conversations · In Translation</p>
 
@@ -78,14 +77,12 @@ export default function LiterarySubmitPage() {
 
         <div className="lit-submit-cards">
           <div className="lit-submit-card">
-            <div className="lit-submit-card-label">Submissions</div>
-            <h3>The Moveee Literary</h3>
+            <h3>Submissions</h3>
             <p>Fiction, poetry, essays, conversations, and translation for the quarterly literary supplement.</p>
             <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>
           </div>
           <div className="lit-submit-card">
-            <div className="lit-submit-card-label">Not Sure Where to Start?</div>
-            <h3>Read The Moveee Literary</h3>
+            <h3>Not sure where to start?</h3>
             <p>Get a feel for what we publish before you send us your work.</p>
             <Link href="/literary">Browse the archive →</Link>
           </div>

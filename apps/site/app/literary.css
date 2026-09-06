@@ -393,15 +393,6 @@
   padding: clamp(40px, 5vw, 56px);
   text-align: center;
 }
-.lit-cta-band .lit-cta-label {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lit-gold);
-  margin-bottom: 14px;
-}
 .lit-cta-band h3 {
   font-family: var(--font-lit-italic), Georgia, serif;
   font-style: italic;
@@ -513,15 +504,6 @@
 .lit-submit-wrap { max-width: 720px; margin: 0 auto; padding: clamp(64px, 8vw, 96px) 64px clamp(72px, 9vw, 112px); }
 @media (max-width: 1024px) { .lit-submit-wrap { padding-left: 32px; padding-right: 32px; } }
 @media (max-width: 640px) { .lit-submit-wrap { padding-left: 20px; padding-right: 20px; } }
-.lit-submit-wrap .lit-eyebrow {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lit-oxblood);
-  margin-bottom: 16px;
-}
 .lit-submit-wrap h1 {
   font-family: var(--font-lit-display), Georgia, serif;
   font-weight: 400;
@@ -546,15 +528,6 @@
 .lit-submit-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--lit-rule); border: 1px solid var(--lit-rule); margin-top: 40px; }
 @media (max-width: 620px) { .lit-submit-cards { grid-template-columns: 1fr; } }
 .lit-submit-card { background: var(--lit-ivory); padding: 26px 24px; }
-.lit-submit-card-label {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lit-mute);
-  margin-bottom: 8px;
-}
 .lit-submit-card h3 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 19px; color: var(--lit-ink); margin-bottom: 8px; }
 .lit-submit-card p { font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.55; color: var(--lit-mute); margin-bottom: 10px; }
 .lit-submit-card a { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600; color: var(--lit-oxblood); text-decoration: none; }
