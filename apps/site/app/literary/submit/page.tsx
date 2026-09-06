@@ -24,9 +24,9 @@ export default function LiterarySubmitPage() {
 
       <div className="lit-submit-body">
         <p>
-          The Moveee Literary is a digital home for new fiction, poetry, essays, conversations,
-          and translation, published continuously online. We&rsquo;re looking for work that takes
-          real risks on the page — voice-driven, specific, and finished. We read every submission
+          The Moveee Literary is a home for new fiction, poetry, essays, conversations, and
+          translation, published on a rolling basis. We&rsquo;re looking for work that takes real
+          risks on the page — voice-driven, specific, and finished. We read every submission
           ourselves.
         </p>
 
@@ -78,7 +78,7 @@ export default function LiterarySubmitPage() {
         <div className="lit-submit-cards">
           <div className="lit-submit-card">
             <h3>Submissions</h3>
-            <p>Fiction, poetry, essays, conversations, and translation for the digital literary page.</p>
+            <p>Fiction, poetry, essays, conversations, and translation for The Moveee Literary.</p>
             <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>
           </div>
           <div className="lit-submit-card">
