@@ -16,12 +16,7 @@ export default function LiteraryLogo({
       <img
         src="/logo-literary.png"
         alt="The Moveee Literary"
-        style={{
-          height: compact ? 34 : 52,
-          width: "auto",
-          display: "block",
-          filter: inverted ? "brightness(0) invert(1)" : undefined,
-        }}
+        className={`lit-logo-img${compact ? " lit-logo-img--compact" : ""}${inverted ? " lit-logo-img--inverted" : ""}`}
       />
     </Link>
   );
