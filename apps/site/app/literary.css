@@ -106,8 +106,8 @@
 }
 .lit-util-link { color: var(--lit-mute); }
 .lit-util-link:hover { color: var(--lit-oxblood); }
-.lit-btn-pill { border: 1px solid var(--lit-ink); padding: 7px 16px; border-radius: 999px; color: var(--lit-ink); }
-.lit-btn-pill:hover { background: var(--lit-ink); color: var(--lit-ivory); }
+.lit-btn-pill { border: 1px solid var(--lit-oxblood); padding: 7px 16px; border-radius: 999px; color: var(--lit-oxblood); }
+.lit-btn-pill:hover { background: var(--lit-oxblood); color: var(--lit-ivory); }
 .lit-btn-pill--fill { background: var(--lit-oxblood); color: var(--lit-ivory); border-color: var(--lit-oxblood); }
 .lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); }
 .lit-search-icon {
