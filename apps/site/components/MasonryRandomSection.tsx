@@ -11,18 +11,23 @@ interface MasonrySectionProps {
   max?: number;
 }
 
-// The mockup randomises each row's shape (3 squares, or a square+rectangle
-// pair) client-side via Math.random() on every page load. A server-rendered
+// The mockup randomises each row's shape (squares, or a square+rectangle
+// mix) client-side via Math.random() on every page load. A server-rendered
 // page can't do that without a hydration mismatch, so shape is instead
 // derived deterministically from each story's own id — same visual variety
 // (never a flat uniform grid) without client/server disagreement or an
 // extra client component just for this section.
+//
+// The grid is 4 columns wide (.masonry-rand) — sq spans 1 column, rect
+// spans 2, so every layout below sums to 4 columns per row.
 type Shape = "sq" | "rect";
 
 const LAYOUTS: readonly (readonly Shape[])[] = [
-  ["sq", "sq", "sq"],
-  ["sq", "rect"],
-  ["rect", "sq"],
+  ["sq", "sq", "sq", "sq"],
+  ["sq", "rect", "sq"],
+  ["rect", "sq", "sq"],
+  ["sq", "sq", "rect"],
+  ["rect", "rect"],
 ];
 
 // `seed` comes straight from CMS data (`databaseId`, or an id string's
@@ -47,7 +52,7 @@ export default function MasonryRandomSection({
   viewAllLabel = "View all stories",
   stories,
   tint = false,
-  max = 6,
+  max = 8,
 }: MasonrySectionProps) {
   // Drop null/undefined entries before anything reads off them — a single
   // bad node in a CMS response shouldn't be able to crash the section.

@@ -27,7 +27,9 @@
   --film-band-2: #1a1712;
 }
 
-.hpv2 .wrap { max-width: 1176px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
+/* Widened from 1176px so the masonry sections below can go from 3 to 4
+   columns without squeezing each card too narrow. */
+.hpv2 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 /* The masthead (welcome text) + carousel section keeps the old, wider
    column — only the card-grid sections below it were asked to narrow to
    1024px. The carousel itself (.index-strip/.carousel-track) never used
@@ -292,9 +294,12 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 
 /* ── RANDOMISED-LOOKING MASONRY (deterministic shape per index, so
    server + client render identically — no client Math.random) ── */
-.masonry-rand { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.masonry-rand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .wcard--rect { grid-column: span 2; }
 .wcard--sq { grid-column: span 1; }
+@media (max-width: 1100px) {
+  .masonry-rand { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 780px) {
   .masonry-rand { grid-template-columns: 1fr; }
   .wcard--rect, .wcard--sq { grid-column: span 1; }
