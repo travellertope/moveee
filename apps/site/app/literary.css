@@ -73,17 +73,22 @@
   margin-bottom: 9px;
 }
 
-/* ── RIBBON ── */
+/* ── RIBBON ──
+   Always one line — the ribbon is a slim status strip, not a place for
+   copy to wrap across 2-3 lines. The message truncates with an ellipsis
+   at narrow widths rather than wrapping. */
 .lit-ribbon { background: var(--lit-oxblood); color: var(--lit-ivory); padding: 9px 0; }
 .lit-ribbon-inner {
   max-width: 1160px; margin: 0 auto; padding: 0 32px;
   display: flex; align-items: center; justify-content: center; gap: 14px;
   font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; font-weight: 600;
-  text-align: center; flex-wrap: wrap;
+  text-align: center; flex-wrap: nowrap;
 }
-@media (max-width: 720px) { .lit-ribbon-inner { padding: 0 24px; } }
+@media (max-width: 720px) { .lit-ribbon-inner { padding: 0 24px; justify-content: flex-start; } }
 @media (max-width: 420px) { .lit-ribbon-inner { padding: 0 20px; } }
-.lit-ribbon-inner em { font-family: var(--font-lit-italic), Georgia, serif; font-style: italic; font-weight: 500; font-size: 14px; }
+.lit-ribbon-inner span {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
 .lit-ribbon-inner a {
   border: 1px solid rgba(245, 239, 228, 0.55); padding: 3px 12px; border-radius: 999px;
   font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
