@@ -66,6 +66,7 @@ async function getWPRedirects() {
 const APP_ROUTES = new Set([
   'app',
   'magazine',
+  'literary',
   'journeys',
   'newsletter',
   'shop',

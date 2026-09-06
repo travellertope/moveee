@@ -34,6 +34,12 @@ export default function ContactPage() {
             <p>Factual corrections, editorial feedback, and reader responses to published work.</p>
             <a href="mailto:letters@themoveee.com">letters@themoveee.com</a>
           </div>
+          <div className="contact-card">
+            <div className="contact-card-label">Poetry, Fiction, Nonfiction & Translation</div>
+            <h3>The Moveee Literary</h3>
+            <p>Submissions for our quarterly literary supplement — see <Link href="/literary/submit">submission guidelines</Link>.</p>
+            <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>
+          </div>
         </div>
 
         <h2>Partnerships & Advertising</h2>
