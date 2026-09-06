@@ -25,6 +25,14 @@ const SPROCKET_COUNT = 40;
 const SPROCKETS = Array.from({ length: SPROCKET_COUNT });
 
 const GAP = 20;
+// Below this container width, the centered card should read as "almost
+// full width" with only a thin sliver of its neighbors peeking in from
+// each edge (per explicit mobile design feedback) rather than the
+// desktop's fixed 4-cards-visible layout.
+const MOBILE_BREAKPOINT = 640;
+// How much of each neighboring card should peek in past the centered
+// card's edges on mobile.
+const MOBILE_PEEK = 24;
 // Clones on each side. Centering any given card needs roughly 2 card-widths
 // of *trailing* content after it (half the ~4-card-wide viewport on each
 // side of the centered one) — scrollLeft can never exceed
@@ -41,9 +49,9 @@ interface RenderItem extends CarouselStory {
   _origIndex: number;
 }
 
-// Centered-snap, genuinely infinite-looping carousel: the card nearest the
-// viewport centre scales up, N clones of the tail/head are prepended/
-// appended (aria-hidden, not tabbable) so there's always something cropped
+// Centered-snap, genuinely infinite-looping carousel: N clones of the
+// tail/head are prepended/appended (aria-hidden, not tabbable) so there's
+// always something cropped
 // at each edge, and once scrolling settles inside a cloned region the track
 // silently jumps by exactly one full lap to the matching real card — same
 // scrollLeft-within-the-lap, so the jump is imperceptible. Ported from the
@@ -77,7 +85,10 @@ export default function HeroCarousel({ stories }: { stories: CarouselStory[] }) 
 
     function layout() {
       const containerW = track!.parentElement?.clientWidth || 900;
-      const cardW = Math.max(180, (containerW - GAP * 4) / 4);
+      const cardW =
+        containerW < MOBILE_BREAKPOINT
+          ? Math.max(220, containerW - MOBILE_PEEK * 2 - GAP * 2)
+          : Math.max(180, (containerW - GAP * 4) / 4);
       document.documentElement.style.setProperty("--carousel-card-w", cardW + "px");
       return cardW;
     }

@@ -181,22 +181,12 @@
   overflow-x: auto;
   position: relative;
   z-index: 1;
-  /* No overflow-y: hidden — CSS transforms are visual-only and don't
-     affect layout size, so the active card's scale(1.04) always paints
-     slightly outside its own unscaled layout box (the box this row's
-     height is actually based on). Clipping the y-axis silently cropped
-     that overshoot off the active card's bottom edge — confirmed via a
-     real measurement (~8px) rather than assumed. There's nothing directly
-     below this row for the overshoot to visually collide with (.index-strip
-     has real margin on both sides), so there's no downside to leaving it
-     unclipped. */
-  /* Reserve-height estimate for the active (scaled 1.04) card: the square
-     photo's own height (card width minus its 18px+18px padding) plus the
-     kicker/title text block + padding below it (~120px, unscaled), all
-     scaled by the active card's growth. Approximate on purpose — this is
-     only a layout-shift-avoiding floor, not a hard height; a real title
-     wrapping to a 3rd line just grows the row past it. */
-  min-height: calc((var(--carousel-card-w, 300px) * .68 + 90px) * 1.04);
+  /* Reserve-height estimate: the photo's own height (card width * the
+     3/2 aspect ratio) plus the kicker/title text block + padding below
+     it (~90px). Approximate on purpose — this is only a layout-shift-
+     avoiding floor, not a hard height; a real title wrapping to a 3rd
+     line just grows the row past it. */
+  min-height: calc(var(--carousel-card-w, 300px) * .68 + 90px);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   /* x-only, not the shorthand `overscroll-behavior: contain` — the
@@ -223,22 +213,14 @@
   scroll-snap-align: center;
   flex: 0 0 auto;
   width: var(--carousel-card-w, min(80vw, 340px));
-  /* All cards fully opaque, only a subtle scale bump on the active one —
-     the old .48 opacity / 0.8-vs-1.16 scale spread (per the mockup this
-     was built from) made every non-active card fade out and shrink hard,
-     reading as "everything but the center card is disabled." Matched
-     against a reference where every card reads clearly and the active
-     one is only modestly larger, per explicit request. At this small a
-     scale delta the transform-vs-layout-gap mismatch documented in
-     earlier revisions of this rule is imperceptible, so the negative-
-     margin compensation trick that used to live here is gone too — a
-     plain flex `gap` (above) is enough. */
+  /* All cards render at the same size/opacity now — the old scale(.94)/
+     scale(1.04) active-card bump (and the .48-opacity/0.8-vs-1.16 spread
+     before that) read as a distracting "pop" every time the carousel
+     settled on a new card, per explicit user feedback. Removed outright
+     rather than just shrinking the delta further. */
   opacity: 1;
-  transform: scale(.94);
-  transition: transform .4s cubic-bezier(.2,.8,.2,1);
 }
 .strip-card.is-active {
-  transform: scale(1.04);
   z-index: 2;
 }
 /* .fcell is the *whole card* (photo + kicker + title + dek stacked in a
