@@ -1,30 +1,46 @@
 /* ========================================
    THE MOVEEE LITERARY  —  lit-* namespace
-   Quarterly poetry/fiction/nonfiction/translation vertical at /literary.
-   Reuses the site's --paper/--ink/--ochre/--gold tokens and the shared
-   --radius/--shadow scales (see CLAUDE.md "Border-radius convention") —
-   this file only adds the lit-specific layout/typography on top, the same
-   way shop.css/directory.css/events.css each layer their own namespace
-   over the shared design system rather than inventing new tokens.
-
-   Genre accent colors are intentionally a fixed 4-color set (not derived
-   from the general colorForCard() palette used for magazine masonry cards)
-   so a genre always reads the same color everywhere it appears — the
-   archive header, the nav pills, and every card's kicker/rule.
+   Built from docs/the-moveee-literary-brand-guide.pdf (v1.0, Sept 2026).
+   Deliberately does NOT reuse the sitewide --paper/--ink/--ochre/--gold
+   tokens — the brand guide specifies its own palette, distinct from the
+   rest of Site A, so this section reads as its own standalone literary
+   magazine (in the spirit of The Paris Review / Granta) rather than a
+   themed sub-section of the Moveee Magazine site. Palette custom
+   properties are declared at :root (not scoped under .lit-page) so
+   Header.tsx's literary-mode logo/nav — rendered as a DOM sibling of the
+   page content, not a descendant — can read them too.
    ======================================== */
 
-.lit-poetry { --lit-accent: var(--ochre); }
-.lit-fiction { --lit-accent: var(--gold); }
-.lit-nonfiction { --lit-accent: #5a7a5a; }
-.lit-translation { --lit-accent: #6b48a8; }
+:root {
+  /* Master palette, brand guide §08 */
+  --lit-ivory: #f5efe4;       /* primary background */
+  --lit-ink: #161412;         /* primary text */
+  --lit-oxblood: #7a241c;     /* primary accent */
+  --lit-mahogany: #6b2b21;    /* secondary burgundy */
+  --lit-gold: #b88942;        /* luxury accent — used sparingly, never dominant */
+  --lit-parchment: #e9ddc8;   /* secondary neutral */
+  --lit-umber: #8b4d2e;       /* earth accent */
+  --lit-mute: #6f6759;        /* muted ink for supporting copy — not in the guide's swatches, derived to sit between ink and parchment */
+  --lit-rule: rgba(22, 20, 18, 0.14);
+}
 
-/* .mg-page-white (magazine.css) already does exactly what this route needs
-   — sit above the sitewide body-grain texture (globals.css body::before,
-   z-index: 100) so the page reads as plain white — so the layout reuses
-   that class directly instead of duplicating it here. */
+/* Sits above the sitewide body-grain texture (globals.css body::before,
+   z-index: 100) with the brand's own Ivory rather than plain white — see
+   app/literary/layout.tsx, which wraps this route tree in the class and
+   also applies the four brand-guide font variables (only real inside this
+   subtree; Header.tsx's literary-mode nav deliberately sticks to sitewide
+   fonts already loaded everywhere, see that file's own comment). */
+.lit-page {
+  position: relative;
+  z-index: 101;
+  background: var(--lit-ivory);
+  color: var(--lit-ink);
+  font-family: var(--font-lit-body), Georgia, serif;
+}
+.lit-page a { color: inherit; }
 
 .lit-wrap {
-  max-width: calc(1200px + 128px);
+  max-width: 1160px;
   margin: 0 auto;
   padding: 0 64px;
   box-sizing: border-box;
@@ -32,33 +48,133 @@
 @media (max-width: 1024px) { .lit-wrap { padding: 0 32px; } }
 @media (max-width: 640px) { .lit-wrap { padding: 0 20px; } }
 
-/* ── HERO / MASTHEAD ── */
-.lit-hero { padding: clamp(64px, 8vw, 116px) 0 clamp(48px, 6vw, 72px); text-align: center; }
-.lit-eyebrow {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  margin-bottom: 18px;
+/* ── HEADER LOCKUP (also rendered by Header.tsx outside .lit-page) ──
+   "moveee" bold sans + oxblood dot, "LITERARY" tracked serif beneath —
+   brand guide §10, "Preferred visual masthead". Deliberately plain
+   sans/serif (DM Sans / Fraunces, both already loaded sitewide) rather
+   than the brand's Bodoni/Cormorant fonts — those are reserved for actual
+   page content; this lockup needs to render correctly in the header on
+   every page, including non-/literary ones briefly during navigation. */
+.lit-logo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--lit-ink);
+  line-height: 1;
+  flex-shrink: 0;
 }
-.lit-hero h1 {
+.lit-logo-word {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.lit-logo-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lit-oxblood);
+  margin-left: 2px;
+  vertical-align: top;
+  position: relative;
+  top: 2px;
+}
+.lit-logo-sub {
   font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: clamp(38px, 6vw, 72px);
-  letter-spacing: -.02em;
-  line-height: 1.02;
-  color: var(--ink);
-  text-wrap: balance;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--lit-ink);
+  opacity: 0.72;
+}
+.lit-logo--compact .lit-logo-word { font-size: 16px; }
+.lit-logo--compact .lit-logo-dot { width: 5px; height: 5px; }
+.lit-logo--compact .lit-logo-sub { font-size: 7.5px; letter-spacing: 0.26em; }
+
+/* ── HEADER PILL OVERRIDES (header.css owns .toolbar-shell/.toolbar-pill;
+   these are the literary-mode additions layered on top) ── */
+.toolbar-shell--literary { width: min(100%, 760px); }
+.site-toolbar.is-solid .toolbar-shell--literary {
+  background: color-mix(in srgb, var(--lit-ivory) 88%, transparent);
+}
+.toolbar-lit-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.toolbar-lit-nav a {
+  color: var(--lit-ink);
+  opacity: 0.68;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.toolbar-lit-nav a:hover,
+.toolbar-lit-nav a[data-active] {
+  opacity: 1;
+  color: var(--lit-oxblood);
+}
+.toolbar-lit-nav-dot { color: var(--lit-gold); opacity: 0.7; }
+@media (max-width: 780px) {
+  .toolbar-lit-nav { display: none; }
+  .toolbar-shell--literary { width: min(100%, 200px); }
+}
+
+/* ── SIGNATURE MOTIF — the curved oxblood/gold line, brand guide §11 ── */
+.lit-motif { display: block; width: 100%; height: auto; }
+.lit-motif path.lit-motif-primary { stroke: var(--lit-oxblood); }
+.lit-motif path.lit-motif-secondary { stroke: var(--lit-gold); }
+
+/* ── HERO / MASTHEAD ── */
+.lit-hero { padding: clamp(72px, 9vw, 128px) 0 clamp(40px, 5vw, 56px); text-align: center; }
+.lit-hero .lit-motif { max-width: 420px; margin: 0 auto clamp(28px, 4vw, 40px); }
+.lit-hero-lockup { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: clamp(28px, 4vw, 44px); }
+.lit-hero-lockup .lit-logo-word { font-size: clamp(36px, 6vw, 56px); }
+.lit-hero-lockup .lit-logo-dot { width: 10px; height: 10px; top: 4px; }
+.lit-hero-lockup .lit-logo-sub { font-size: clamp(13px, 1.6vw, 17px); letter-spacing: 0.42em; }
+.lit-hero h1 {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(30px, 4.4vw, 50px);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--lit-oxblood);
+  font-style: italic;
+  max-width: 18ch;
+  margin: 0 auto;
 }
 .lit-hero .lit-sub {
-  max-width: 54ch;
-  margin: 20px auto 0;
-  font-size: 16px;
+  max-width: 52ch;
+  margin: 22px auto 0;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 17px;
   line-height: 1.65;
-  color: var(--mute);
+  color: var(--lit-mute);
 }
+.lit-hero-nav {
+  margin-top: 20px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lit-mute);
+}
+.lit-hero-nav a { text-decoration: none; color: var(--lit-mute); transition: color .15s; }
+.lit-hero-nav a:hover { color: var(--lit-oxblood); }
+.lit-hero-nav .lit-hero-nav-dot { margin: 0 8px; color: var(--lit-gold); }
 .lit-hero-ctas {
   display: flex;
   flex-wrap: wrap;
@@ -70,133 +186,149 @@
 .lit-btn-ghost {
   display: inline-flex;
   align-items: center;
-  height: 48px;
+  height: 46px;
   padding: 0 26px;
-  border-radius: var(--radius-full);
-  font-family: "DM Sans", sans-serif;
-  font-size: 13.5px;
-  font-weight: 700;
+  border-radius: 2px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-decoration: none;
-  transition: opacity .15s, background .15s, color .15s;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
-.lit-btn-primary { background: var(--ink); color: var(--paper); }
-.lit-btn-primary:hover { opacity: .85; }
-.lit-btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule-strong, var(--rule)); }
-.lit-btn-ghost:hover { border-color: var(--ink); }
+.lit-btn-primary { background: var(--lit-ink); color: var(--lit-ivory); }
+.lit-btn-primary:hover { background: var(--lit-oxblood); }
+.lit-btn-ghost { background: transparent; color: var(--lit-ink); border: 1px solid var(--lit-rule); }
+.lit-btn-ghost:hover { border-color: var(--lit-oxblood); color: var(--lit-oxblood); }
 
-/* ── GENRE NAV (tiles on the landing page, pills everywhere else) ── */
+/* ── EDITORIAL PROMISE (institutional copy, brand guide §03/§21) ── */
+.lit-promise { padding: clamp(48px, 6vw, 72px) 0; border-top: 1px solid var(--lit-rule); border-bottom: 1px solid var(--lit-rule); }
+.lit-promise-quote {
+  font-family: var(--font-lit-italic), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(20px, 2.6vw, 28px);
+  line-height: 1.5;
+  color: var(--lit-ink);
+  max-width: 42ch;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* ── GENRE / SECTION TILES (landing page) ── */
 .lit-genre-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--lit-rule);
+  border: 1px solid var(--lit-rule);
   margin-top: clamp(8px, 2vw, 16px);
 }
-@media (max-width: 900px) { .lit-genre-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .lit-genre-grid { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .lit-genre-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .lit-genre-grid { grid-template-columns: 1fr; } }
 .lit-genre-tile {
   display: block;
-  padding: 26px 24px 28px;
-  background: var(--paper);
-  border: 1px solid var(--rule-strong, var(--rule));
-  border-top: 3px solid var(--lit-accent, var(--ochre));
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.06));
+  padding: 30px 26px 32px;
+  background: var(--lit-ivory);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow .2s, transform .2s;
+  transition: background 0.2s;
 }
-.lit-genre-tile:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
+.lit-genre-tile:hover { background: var(--lit-parchment); }
 .lit-genre-tile h3 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: 22px;
-  color: var(--ink);
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 23px;
+  color: var(--lit-ink);
   margin-bottom: 8px;
 }
 .lit-genre-tile p {
-  font-size: 13.5px;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 14.5px;
   line-height: 1.55;
-  color: var(--mute);
+  color: var(--lit-mute);
 }
 .lit-genre-tile .lit-genre-arrow {
   display: inline-block;
-  margin-top: 14px;
-  font-family: "JetBrains Mono", monospace;
+  margin-top: 16px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .08em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--lit-accent, var(--ochre));
+  color: var(--lit-oxblood);
 }
 
 .lit-genre-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 0;
+  margin-top: 24px;
+  border-top: 1px solid var(--lit-rule);
+  border-bottom: 1px solid var(--lit-rule);
 }
 .lit-genre-pill {
   display: inline-flex;
   align-items: center;
-  height: 34px;
+  height: 40px;
   padding: 0 16px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--rule-strong, var(--rule));
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--lit-mute);
   text-decoration: none;
-  transition: background .15s, color .15s, border-color .15s;
+  border-right: 1px solid var(--lit-rule);
+  transition: color 0.15s, background 0.15s;
 }
-.lit-genre-pill:hover { border-color: var(--lit-accent, var(--ochre)); color: var(--lit-accent, var(--ochre)); }
-.lit-genre-pill--active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.lit-genre-pill--active:hover { color: var(--paper); }
+.lit-genre-pill:hover { color: var(--lit-oxblood); background: var(--lit-parchment); }
+.lit-genre-pill--active { color: var(--lit-oxblood); }
 
 /* ── SECTION HEADER (shared by "Latest" band + genre archive header) ── */
-.lit-section { padding: clamp(40px, 5vw, 64px) 0; }
+.lit-section { padding: clamp(44px, 5.5vw, 72px) 0; }
 .lit-section-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: clamp(24px, 3vw, 36px);
+  margin-bottom: clamp(28px, 3.5vw, 40px);
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--lit-ink);
 }
 .lit-section-head h2 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: clamp(24px, 3vw, 34px);
-  color: var(--ink);
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 32px);
+  color: var(--lit-ink);
 }
 .lit-section-head a.lit-view-all {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .08em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ochre);
+  color: var(--lit-oxblood);
   text-decoration: none;
-  border-bottom: 1px solid var(--ochre);
-  padding-bottom: 2px;
   white-space: nowrap;
 }
+.lit-section-head a.lit-view-all:hover { text-decoration: underline; }
 
-/* Genre archive page's own header — bigger, with the tagline + genre-switch pills */
-.lit-genre-head { padding: clamp(48px, 6vw, 80px) 0 clamp(32px, 4vw, 48px); }
+/* Genre archive page's own header */
+.lit-genre-head { padding: clamp(56px, 7vw, 88px) 0 clamp(32px, 4vw, 48px); }
 .lit-genre-head h1 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: clamp(36px, 5.5vw, 60px);
-  letter-spacing: -.02em;
-  color: var(--lit-accent, var(--ink));
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(38px, 5.5vw, 60px);
+  letter-spacing: -0.01em;
+  color: var(--lit-oxblood);
 }
-.lit-genre-head .lit-sub { max-width: 56ch; margin-top: 14px; font-size: 15.5px; line-height: 1.6; color: var(--mute); }
+.lit-genre-head .lit-sub { max-width: 56ch; margin-top: 14px; font-size: 15.5px; line-height: 1.6; color: var(--lit-mute); }
 
 /* ── PIECE GRID + CARD ── */
-.lit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.lit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 32px; }
 @media (max-width: 900px) { .lit-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .lit-grid { grid-template-columns: 1fr; } }
 
@@ -204,38 +336,32 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 22px 22px 24px;
-  background: var(--paper);
-  border: 1px solid var(--rule-strong, var(--rule));
-  border-top: 3px solid var(--lit-accent, var(--ochre));
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(20,17,13,0.06));
   text-decoration: none;
   color: inherit;
-  transition: box-shadow .2s, transform .2s;
 }
-.lit-card:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
 .lit-card-kicker {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .08em;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--lit-accent, var(--ochre));
-  margin-bottom: 10px;
+  color: var(--lit-oxblood);
+  margin-bottom: 12px;
 }
 .lit-card h3 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: 19px;
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 21px;
   line-height: 1.3;
-  color: var(--ink);
+  color: var(--lit-ink);
 }
+.lit-card:hover h3 { color: var(--lit-oxblood); }
 .lit-card .lit-card-dek {
-  margin-top: 8px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--mute);
+  margin-top: 10px;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--lit-mute);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -244,101 +370,165 @@
 .lit-card .lit-card-byline {
   margin-top: auto;
   padding-top: 16px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  letter-spacing: .04em;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mute);
+  color: var(--lit-mute);
 }
 
 .lit-empty {
-  padding: 56px 28px;
+  padding: 64px 28px;
   text-align: center;
-  border: 1px dashed var(--rule-strong, var(--rule));
-  border-radius: var(--radius-xl);
-  background: var(--paper-warm);
+  border-top: 1px solid var(--lit-rule);
+  border-bottom: 1px solid var(--lit-rule);
 }
-.lit-empty p { max-width: 46ch; margin: 0 auto 20px; color: var(--mute); font-size: 15px; line-height: 1.6; }
+.lit-empty p { max-width: 44ch; margin: 0 auto 22px; color: var(--lit-mute); font-family: var(--font-lit-body), Georgia, serif; font-size: 16px; line-height: 1.6; font-style: italic; }
+
+/* ── CTA BAND (submissions) — dark ink, restrained gold, brand guide §14 "institutional news" treatment ── */
+.lit-cta-section { padding: clamp(56px, 7vw, 88px) 0; }
+.lit-cta-band {
+  background: var(--lit-ink);
+  color: var(--lit-ivory);
+  padding: clamp(40px, 5vw, 56px);
+  text-align: center;
+}
+.lit-cta-band h3 {
+  font-family: var(--font-lit-italic), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(22px, 3vw, 32px);
+  max-width: 24ch;
+  margin: 0 auto;
+}
+.lit-cta-band p {
+  margin-top: 14px;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 15px;
+  color: color-mix(in srgb, var(--lit-ivory) 75%, transparent);
+  max-width: 46ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+.lit-cta-band .lit-btn-primary { margin-top: 26px; background: var(--lit-ivory); color: var(--lit-ink); }
+.lit-cta-band .lit-btn-primary:hover { background: var(--lit-gold); color: var(--lit-ink); }
 
 /* ── SINGLE PIECE ── */
-.lit-piece-wrap { max-width: 700px; margin: 0 auto; padding: clamp(56px, 7vw, 88px) 64px clamp(64px, 8vw, 96px); }
+.lit-piece-wrap { max-width: 660px; margin: 0 auto; padding: clamp(56px, 7vw, 88px) 64px clamp(64px, 8vw, 96px); }
 @media (max-width: 1024px) { .lit-piece-wrap { padding-left: 32px; padding-right: 32px; } }
 @media (max-width: 640px) { .lit-piece-wrap { padding-left: 20px; padding-right: 20px; } }
 
 .lit-piece-kicker {
   display: inline-block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .1em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--lit-accent, var(--ochre));
+  color: var(--lit-oxblood);
   text-decoration: none;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .lit-piece-kicker:hover { text-decoration: underline; }
 .lit-piece-title {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: clamp(32px, 5vw, 52px);
-  line-height: 1.08;
-  letter-spacing: -.015em;
-  color: var(--ink);
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--lit-ink);
 }
 .lit-piece-byline {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--rule-strong, var(--rule));
-  font-family: "JetBrains Mono", monospace;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--lit-rule);
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 11.5px;
-  letter-spacing: .04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mute);
+  color: var(--lit-mute);
 }
 
 .lit-piece-body {
-  margin-top: 40px;
-  font-family: "Fraunces", serif;
+  margin-top: 44px;
+  font-family: var(--font-lit-body), Georgia, serif;
   font-weight: 400;
   font-size: 19px;
   line-height: 1.85;
-  color: var(--ink-soft);
+  color: var(--lit-ink);
 }
 .lit-piece-body p { margin: 0 0 1.5em; }
-/* Drop cap on the opening paragraph only. */
 .lit-piece-body > p:first-of-type::first-letter {
   float: left;
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: 4.1em;
-  line-height: .78;
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 4.3em;
+  line-height: 0.78;
   padding-right: 10px;
   padding-top: 4px;
-  color: var(--lit-accent, var(--ochre));
+  color: var(--lit-oxblood);
 }
 .lit-piece-body h2, .lit-piece-body h3 {
-  font-weight: 600;
-  color: var(--ink);
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  color: var(--lit-ink);
   margin: 1.6em 0 .6em;
 }
 .lit-piece-body blockquote {
-  margin: 1.6em 0;
-  padding-left: 22px;
-  border-left: 3px solid var(--lit-accent, var(--ochre));
+  margin: 1.8em 0;
+  padding-left: 24px;
+  border-left: 2px solid var(--lit-oxblood);
+  font-family: var(--font-lit-italic), Georgia, serif;
   font-style: italic;
-  color: var(--ink);
+  font-size: 1.08em;
+  color: var(--lit-ink);
 }
-.lit-piece-body a { color: var(--lit-accent, var(--ochre)); text-decoration: underline; text-underline-offset: 3px; }
-.lit-piece-body em { font-style: italic; }
+.lit-piece-body a { color: var(--lit-oxblood); text-decoration: underline; text-underline-offset: 3px; }
+.lit-piece-body em { font-style: italic; font-family: var(--font-lit-italic), Georgia, serif; }
 .lit-piece-body strong { font-weight: 700; }
 
-.lit-piece-more { margin-top: clamp(56px, 7vw, 88px); padding-top: clamp(40px, 5vw, 56px); border-top: 1px solid var(--rule-strong, var(--rule)); }
+.lit-piece-more { margin-top: clamp(56px, 7vw, 88px); padding-top: clamp(40px, 5vw, 56px); border-top: 1px solid var(--lit-rule); }
 .lit-piece-more h2 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
   font-size: 22px;
-  color: var(--ink);
-  margin-bottom: 22px;
+  color: var(--lit-ink);
+  margin-bottom: 26px;
 }
 .lit-piece-more .lit-grid { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 640px) { .lit-piece-more .lit-grid { grid-template-columns: 1fr; } }
+
+/* ── SUBMISSIONS PAGE (lit-submit-*, replaces reuse of the sitewide
+   legal-wrap/contact-* classes — this page needed its own ivory/oxblood
+   treatment like everything else in the section) ── */
+.lit-submit-wrap { max-width: 720px; margin: 0 auto; padding: clamp(64px, 8vw, 96px) 64px clamp(72px, 9vw, 112px); }
+@media (max-width: 1024px) { .lit-submit-wrap { padding-left: 32px; padding-right: 32px; } }
+@media (max-width: 640px) { .lit-submit-wrap { padding-left: 20px; padding-right: 20px; } }
+.lit-submit-wrap h1 {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(32px, 5vw, 48px);
+  color: var(--lit-ink);
+}
+.lit-submit-wrap .lit-sub { margin-top: 12px; font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lit-mute); }
+.lit-submit-body { margin-top: 44px; font-family: var(--font-lit-body), Georgia, serif; font-size: 17px; line-height: 1.75; color: var(--lit-ink); }
+.lit-submit-body > p { margin: 0 0 1.5em; }
+.lit-submit-body h2 {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--lit-oxblood);
+  margin: 2em 0 .7em;
+}
+.lit-submit-body ul { margin: 0 0 1.5em; padding: 0; list-style: none; }
+.lit-submit-body li { position: relative; padding-left: 22px; margin-bottom: 10px; }
+.lit-submit-body li::before { content: "—"; position: absolute; left: 0; color: var(--lit-oxblood); }
+.lit-submit-body a { color: var(--lit-oxblood); text-decoration: underline; text-underline-offset: 3px; }
+.lit-submit-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--lit-rule); border: 1px solid var(--lit-rule); margin-top: 40px; }
+@media (max-width: 620px) { .lit-submit-cards { grid-template-columns: 1fr; } }
+.lit-submit-card { background: var(--lit-ivory); padding: 26px 24px; }
+.lit-submit-card h3 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 19px; color: var(--lit-ink); margin-bottom: 8px; }
+.lit-submit-card p { font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.55; color: var(--lit-mute); margin-bottom: 10px; }
+.lit-submit-card a { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600; color: var(--lit-oxblood); text-decoration: none; }
+.lit-submit-card a:hover { text-decoration: underline; }

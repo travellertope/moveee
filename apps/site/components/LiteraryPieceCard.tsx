@@ -13,10 +13,9 @@ function plainExcerpt(html: string | undefined | null, max = 140): string {
 // kicker/top-rule without each card needing its own inline color logic.
 export default function LiteraryPieceCard({ piece }: { piece: any }) {
   const genre = literaryGenreOfPost(piece);
-  const genreClass = genre ? `lit-${genre.slug}` : "";
 
   return (
-    <Link href={`/literary/${piece.slug}`} className={`lit-card ${genreClass}`}>
+    <Link href={`/literary/${piece.slug}`} className="lit-card">
       <div className="lit-card-kicker">{genre?.label || "The Moveee Literary"}</div>
       <h3 dangerouslySetInnerHTML={{ __html: piece.title || "" }} />
       <p className="lit-card-dek">{plainExcerpt(piece.excerpt)}</p>
