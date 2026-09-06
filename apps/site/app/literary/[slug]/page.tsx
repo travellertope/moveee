@@ -10,6 +10,7 @@ import {
   LITERARY_GENRES,
 } from "@/lib/wp";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 
 // One dynamic segment serves two different things — a genre archive
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: { absolute: "The Moveee Literary" } };
   }
 
-  const plainExcerpt = typeof post.excerpt === "string" ? post.excerpt.replace(/<[^>]*>/g, "").slice(0, 160) : "";
+  const plainExcerpt = typeof post.excerpt === "string" ? decodeHtml(post.excerpt).slice(0, 160) : "";
   const genreOfPost = literaryGenreOfPost(post);
   const metaTitle = `${post.title} | The Moveee Literary`;
   const metaDescription = post.seoDescription?.trim() || plainExcerpt;
