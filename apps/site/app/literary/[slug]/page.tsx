@@ -72,9 +72,8 @@ async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof ge
   const pieces = await getLiteraryPieces(genre.tagSlug, 24);
 
   return (
-    <div className={`lit-wrap lit-${genre.slug}`}>
+    <div className="lit-wrap">
       <section className="lit-genre-head">
-        <div className="lit-eyebrow">The Moveee Literary</div>
         <h1>{genre.label}</h1>
         <p className="lit-sub">{genre.tagline}</p>
         <nav className="lit-genre-pills" aria-label="Genres">
@@ -138,7 +137,7 @@ async function PiecePage({ slug }: { slug: string }) {
   }
 
   return (
-    <div className={`lit-piece-wrap${genre ? ` lit-${genre.slug}` : ""}`}>
+    <div className="lit-piece-wrap">
       <article>
         {genre && (
           <Link className="lit-piece-kicker" href={`/literary/${genre.slug}`}>

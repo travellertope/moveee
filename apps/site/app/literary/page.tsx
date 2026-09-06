@@ -1,40 +1,65 @@
 import Link from "next/link";
 import { getLiteraryPieces, LITERARY_GENRES } from "@/lib/wp";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
+import LiteraryLogo from "@/components/LiteraryLogo";
 
-// Same defensive shape as apps/site/app/page.tsx's loadHomeSections() —
-// a CMS hiccup should degrade to an empty grid + genre nav, never take the
-// whole page down. getLiteraryPieces() already swallows its own errors.
+// Per the brand guide's homepage design principle (§14): masthead + tagline
+// + one inline section line + a single CTA — deliberately not "ten
+// competing menus". The genre grid below is the one intentional exception
+// (it's the section index, not a nav duplication) and links use the
+// section's own tagline copy from LITERARY_GENRES, never invented text.
 export default async function LiteraryLandingPage() {
   const pieces = await getLiteraryPieces(undefined, 9);
 
   return (
     <div className="lit-wrap">
       <section className="lit-hero" id="top">
-        <div className="lit-eyebrow">A Quarterly Literary Supplement</div>
-        <h1>The Moveee Literary</h1>
+        <div className="lit-hero-lockup">
+          <LiteraryLogo />
+        </div>
+        <h1>Writing that shapes the world.</h1>
         <p className="lit-sub">
-          New poetry, fiction, nonfiction, and translation — published alongside every print
-          quarterly, read here first.
+          An international page for fiction, poetry, essays, conversations and translated
+          literature — published alongside The Moveee&rsquo;s print quarterly.
         </p>
+        <nav className="lit-hero-nav" aria-label="Browse by section">
+          {LITERARY_GENRES.filter((g) => g.slug !== "notes").map((g, i) => (
+            <span key={g.slug}>
+              {i > 0 && <span className="lit-hero-nav-dot">·</span>}
+              <Link href={`/literary/${g.slug}`}>{g.label}</Link>
+            </span>
+          ))}
+        </nav>
         <div className="lit-hero-ctas">
           <a className="lit-btn-primary" href="#latest">
-            Read the latest
+            Read the Latest →
           </a>
           <Link className="lit-btn-ghost" href="/literary/submit">
-            Submit your work
+            Submit Your Work
           </Link>
         </div>
       </section>
 
-      <section className="lit-genre-grid" aria-label="Browse by genre">
-        {LITERARY_GENRES.map((genre) => (
-          <Link key={genre.slug} href={`/literary/${genre.slug}`} className={`lit-genre-tile lit-${genre.slug}`}>
-            <h3>{genre.label}</h3>
-            <p>{genre.tagline}</p>
-            <span className="lit-genre-arrow">Read {genre.label} →</span>
-          </Link>
-        ))}
+      <section className="lit-promise">
+        <p className="lit-promise-quote">
+          &ldquo;We publish writing that stays with you — stories, poems and essays built to
+          outlast the moment they were written in.&rdquo;
+        </p>
+      </section>
+
+      <section className="lit-section" aria-label="Browse by section">
+        <div className="lit-section-head">
+          <h2>The Sections</h2>
+        </div>
+        <div className="lit-genre-grid">
+          {LITERARY_GENRES.map((genre) => (
+            <Link key={genre.slug} href={`/literary/${genre.slug}`} className="lit-genre-tile">
+              <h3>{genre.label}</h3>
+              <p>{genre.tagline}</p>
+              <span className="lit-genre-arrow">Read {genre.label} →</span>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="lit-section" id="latest">
@@ -54,24 +79,20 @@ export default async function LiteraryLandingPage() {
               it yourself.
             </p>
             <Link className="lit-btn-primary" href="/literary/submit">
-              Submit your work
+              Submit Your Work
             </Link>
           </div>
         )}
       </section>
 
-      <section className="mg-cta-section">
-        <div className="mg-cta-band">
-          <div className="mg-cta-left">
-            <div className="mg-cta-label">We're Reading</div>
-            <h3>Submit poetry, fiction, nonfiction, or translation.</h3>
-            <p className="mg-cta-note">We read on a rolling quarterly basis, in step with every print edition.</p>
-          </div>
-          <div className="mg-cta-right">
-            <Link className="mg-cta-btn" href="/literary/submit">
-              Submission Guidelines →
-            </Link>
-          </div>
+      <section className="lit-cta-section">
+        <div className="lit-cta-band">
+          <div className="lit-cta-label">We&rsquo;re Reading</div>
+          <h3>Submit poetry, fiction, nonfiction, conversations or translation.</h3>
+          <p>We read on a rolling quarterly basis, in step with every print edition.</p>
+          <Link className="lit-btn-primary" href="/literary/submit">
+            Submission Guidelines →
+          </Link>
         </div>
       </section>
     </div>

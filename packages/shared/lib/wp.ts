@@ -834,19 +834,20 @@ export const GET_FILTERS = `
 `;
 
 // ── The Moveee Literary ───────────────────────────────────────────────────
-// A quarterly poetry/fiction/nonfiction/translation vertical at
-// apps/site/app/literary/*, built on the *same* `post` type as the rest of
-// the magazine (see "The Moveee Literary" in CLAUDE.md) — no new CPT, no
-// GraphQL schema changes. The vertical is scoped to a single real,
-// pre-existing category ("literary", shown in WP Admin as "Essay, Fiction &
-// Poetry" — the slug and the display name were set independently, they
-// don't have to match) that already has published poetry/fiction/nonfiction
-// content. Genre (Poetry/Fiction/Nonfiction/Translation) is a plain WP
-// **tag**, not a child category — the pre-existing posts predate any genre
-// split, so genre is an optional overlay on top of the category, not a
-// requirement for a piece to belong to the vertical at all. A post with no
-// genre tag still shows in the main /literary feed, it just won't appear on
-// any single genre's page until someone tags it.
+// An international literary publication at apps/site/app/literary/*, built
+// on the *same* `post` type as the rest of the magazine (see "The Moveee
+// Literary" in CLAUDE.md and docs/the-moveee-literary-brand-guide.pdf) — no
+// new CPT, no GraphQL schema changes. The vertical is scoped to a single
+// real, pre-existing category ("literary", shown in WP Admin as "Essay,
+// Fiction & Poetry" — the slug and the display name were set independently,
+// they don't have to match) that already has published content. Section
+// (Fiction/Poetry/Essays/Conversations/In Translation/Notes — the brand
+// guide's own "editorial architecture") is a plain WP **tag**, not a child
+// category — the pre-existing posts predate any section split, so section
+// is an optional overlay on top of the category, not a requirement for a
+// piece to belong to the vertical at all. A post with no section tag still
+// shows in the main /literary feed, it just won't appear on any single
+// section's page until someone tags it.
 export const LITERARY_CATEGORY_SLUG = "literary";
 
 export interface LiteraryGenre {
@@ -856,30 +857,43 @@ export interface LiteraryGenre {
   tagline: string;
 }
 
+// Order matches the brand guide's "Editorial architecture" page exactly.
 export const LITERARY_GENRES: LiteraryGenre[] = [
-  {
-    slug: "poetry",
-    tagSlug: "poetry",
-    label: "Poetry",
-    tagline: "Verse that moves like breath and lands like weather.",
-  },
   {
     slug: "fiction",
     tagSlug: "fiction",
     label: "Fiction",
-    tagline: "Short stories and excerpts that hold a whole life in a few pages.",
+    tagline: "Short stories and excerpts.",
   },
   {
-    slug: "nonfiction",
-    tagSlug: "nonfiction",
-    label: "Nonfiction",
-    tagline: "Essays and true stories, reported and remembered.",
+    slug: "poetry",
+    tagSlug: "poetry",
+    label: "Poetry",
+    tagline: "Individual poems and portfolios.",
+  },
+  {
+    slug: "essays",
+    tagSlug: "essays",
+    label: "Essays",
+    tagline: "Literary, cultural and personal essays.",
+  },
+  {
+    slug: "conversations",
+    tagSlug: "conversations",
+    label: "Conversations",
+    tagline: "Interviews with writers, artists and thinkers.",
   },
   {
     slug: "translation",
     tagSlug: "translation",
-    label: "Translation",
-    tagline: "Work carried across languages, credited by name.",
+    label: "In Translation",
+    tagline: "Writing crossing languages.",
+  },
+  {
+    slug: "notes",
+    tagSlug: "notes",
+    label: "Notes",
+    tagline: "Short criticism, dispatches, letters and observations.",
   },
 ];
 
