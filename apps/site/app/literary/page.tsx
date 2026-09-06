@@ -1,97 +1,169 @@
 import Link from "next/link";
-import { getLiteraryPieces, LITERARY_GENRES } from "@/lib/wp";
+import {
+  getLiteraryPieces,
+  literaryGenreOfPost,
+  LITERARY_GENRES,
+} from "@/lib/wp";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
-import LiteraryLogo from "@/components/LiteraryLogo";
+import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
+import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
 
-// Per the brand guide's homepage design principle (§14): masthead + tagline
-// + one inline section line + a single CTA — deliberately not "ten
-// competing menus". The genre grid below is the one intentional exception
-// (it's the section index, not a nav duplication) and links use the
-// section's own tagline copy from LITERARY_GENRES, never invented text.
+function plainExcerpt(html: string | undefined | null, max = 220): string {
+  if (typeof html !== "string") return "";
+  const text = html.replace(/<[^>]*>/g, "").trim();
+  return text.length > max ? text.slice(0, max).trim() + "…" : text;
+}
+
+const SHELF_GRADIENT = "linear-gradient(150deg, #17130f, #7a241c 65%, #8b4d2e 140%)";
+
+// Rebuilt from the approved Granta-inspired mockup — every section below is
+// wired to real getLiteraryPieces() data; sections the mockup showed that
+// have no real backing data (print-issue volumes, back-catalogue pricing)
+// were adapted to what the CMS actually models: a "Browse by Section" shelf
+// of the six real genre archives instead of fabricated past issues, and a
+// submissions spotlight in place of the print-issue plug.
 export default async function LiteraryLandingPage() {
-  const pieces = await getLiteraryPieces(undefined, 9);
+  const [pieces, translations] = await Promise.all([
+    getLiteraryPieces(undefined, 12),
+    getLiteraryPieces("translation", 6),
+  ]);
+
+  const heroPieces = pieces.slice(0, 3);
+  const usedSlugs = new Set(heroPieces.map((p: any) => p.slug));
+
+  const latest = pieces.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 6);
+  latest.forEach((p: any) => usedSlugs.add(p.slug));
+
+  const translationPieces = translations.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 6);
+  translationPieces.forEach((p: any) => usedSlugs.add(p.slug));
+
+  const more = pieces.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 3);
+
+  const heroSlides: LiteraryHeroSlide[] = heroPieces.map((p: any) => ({
+    slug: p.slug,
+    title: p.title || "",
+    author: p.author?.node?.name || "The Moveee Literary",
+    excerpt: plainExcerpt(p.excerpt),
+    genreLabel: literaryGenreOfPost(p)?.label || "The Moveee Literary",
+    imageUrl: p.featuredImage?.node?.sourceUrl || null,
+  }));
+
+  const shelfItems: LiteraryShelfItem[] = LITERARY_GENRES.map((g) => ({
+    href: `/literary/${g.slug}`,
+    label: g.label,
+    sub: g.label.slice(0, 3).toUpperCase(),
+    gradient: SHELF_GRADIENT,
+  }));
 
   return (
-    <div className="lit-wrap">
-      <section className="lit-hero" id="top">
-        <div className="lit-hero-lockup">
-          <LiteraryLogo />
-        </div>
-        <h1>Writing that shapes the world.</h1>
-        <p className="lit-sub">
-          An international home for fiction, poetry, essays, conversations and translated
-          literature, published continuously by The Moveee.
-        </p>
-        <nav className="lit-hero-nav" aria-label="Browse by section">
-          {LITERARY_GENRES.filter((g) => g.slug !== "notes").map((g, i) => (
-            <span key={g.slug}>
-              {i > 0 && <span className="lit-hero-nav-dot">·</span>}
-              <Link href={`/literary/${g.slug}`}>{g.label}</Link>
-            </span>
-          ))}
-        </nav>
-        <div className="lit-hero-ctas">
-          <a className="lit-btn-primary" href="#latest">
-            Read the Latest →
-          </a>
-          <Link className="lit-btn-ghost" href="/literary/submit">
-            Submit Your Work
-          </Link>
-        </div>
-      </section>
-
-      <section className="lit-promise">
-        <p className="lit-promise-quote">
-          &ldquo;We publish writing that stays with you — stories, poems and essays built to
-          outlast the moment they were written in.&rdquo;
-        </p>
-      </section>
-
-      <section className="lit-section" aria-label="Browse by section">
-        <div className="lit-section-head">
-          <h2>The Sections</h2>
-        </div>
-        <div className="lit-genre-grid">
-          {LITERARY_GENRES.map((genre) => (
-            <Link key={genre.slug} href={`/literary/${genre.slug}`} className="lit-genre-tile">
-              <h3>{genre.label}</h3>
-              <p>{genre.tagline}</p>
-              <span className="lit-genre-arrow">Read {genre.label} →</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="lit-section" id="latest">
-        <div className="lit-section-head">
-          <h2>Latest From The Moveee Literary</h2>
-        </div>
-        {pieces.length > 0 ? (
-          <div className="lit-grid">
-            {pieces.map((piece: any) => (
-              <LiteraryPieceCard key={piece.slug} piece={piece} />
-            ))}
-          </div>
-        ) : (
+    <div>
+      {heroSlides.length > 0 ? (
+        <LiteraryHeroCarousel slides={heroSlides} />
+      ) : (
+        <div className="lit-wrap">
           <div className="lit-empty">
             <p>
-              New work is coming with our next quarterly edition. Check back soon — or be part of
-              it yourself.
+              New work is coming soon. Check back shortly — or be part of it yourself.
             </p>
             <Link className="lit-btn-primary" href="/literary/submit">
               Submit Your Work
             </Link>
           </div>
-        )}
+        </div>
+      )}
+
+      {latest.length > 0 && (
+        <section className="lit-section">
+          <div className="lit-wrap">
+            <div className="lit-section-head">
+              <h2>Latest From The Moveee Literary</h2>
+            </div>
+            <div className="lit-grid">
+              {latest.slice(0, 3).map((piece: any) => (
+                <LiteraryPieceCard key={piece.slug} piece={piece} />
+              ))}
+            </div>
+            {latest.length > 3 && (
+              <div className="lit-grid lit-grid--divided" style={{ marginTop: 34 }}>
+                {latest.slice(3, 6).map((piece: any) => (
+                  <LiteraryPieceCard key={piece.slug} piece={piece} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {translationPieces.length > 0 && (
+        <section className="lit-section lit-band">
+          <div className="lit-wrap">
+            <div className="lit-section-head">
+              <h2>In Translation: A Rotating Table</h2>
+              <Link href="/literary/translation" className="lit-view-all">
+                All translations →
+              </Link>
+            </div>
+            <div className="lit-grid">
+              {translationPieces.slice(0, 3).map((piece: any) => (
+                <LiteraryPieceCard key={piece.slug} piece={piece} />
+              ))}
+            </div>
+            {translationPieces.length > 3 && (
+              <div className="lit-grid lit-grid--divided" style={{ marginTop: 34 }}>
+                {translationPieces.slice(3, 6).map((piece: any) => (
+                  <LiteraryPieceCard key={piece.slug} piece={piece} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {more.length > 0 && (
+        <section className="lit-section">
+          <div className="lit-wrap">
+            <div className="lit-section-head">
+              <h2>More From The Moveee Literary</h2>
+            </div>
+            <div className="lit-grid">
+              {more.map((piece: any) => (
+                <LiteraryPieceCard key={piece.slug} piece={piece} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="lit-section">
+        <div className="lit-wrap">
+          <div className="lit-plug">
+            <div className="lit-plug-cover">
+              <span className="lit-plug-cover-label">Submissions</span>
+              <span className="lit-plug-cover-title">Open</span>
+            </div>
+            <div>
+              <div className="lit-tag">Now Reading</div>
+              <h3>We&rsquo;re reading fiction, poetry, essays, conversations and translation.</h3>
+              <p>
+                We read on a rolling basis and publish new work continuously. Voice-driven,
+                specific, and finished — that&rsquo;s what we&rsquo;re looking for.
+              </p>
+              <div className="lit-plug-cta">
+                <Link href="/literary/submit" className="lit-btn-primary">
+                  Read the Guidelines
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="lit-cta-section">
-        <div className="lit-cta-band">
-          <h3>We&rsquo;re reading. Submit poetry, fiction, nonfiction, conversations or translation.</h3>
-          <p>We read on a rolling basis and publish new work continuously.</p>
-          <Link className="lit-btn-primary" href="/literary/submit">
-            Submission Guidelines →
-          </Link>
+      <section className="lit-section" style={{ paddingTop: 8 }}>
+        <div className="lit-wrap">
+          <div className="lit-section-head">
+            <h2>Browse by Section</h2>
+          </div>
+          <LiteraryShelf items={shelfItems} />
         </div>
       </section>
     </div>

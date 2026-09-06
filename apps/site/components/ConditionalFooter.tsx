@@ -26,8 +26,15 @@ function isNewsletterReaderPath(pathname: string): boolean {
   );
 }
 
+// The Moveee Literary renders its own dark footer (LiteraryFooter.tsx, via
+// app/literary/layout.tsx) — the sitewide footer has no role on any page
+// under /literary, same reasoning as the newsletter reader's own footer above.
+function isLiteraryPath(pathname: string): boolean {
+  return pathname === "/literary" || pathname.startsWith("/literary/");
+}
+
 export default function ConditionalFooter() {
   const pathname = usePathname();
-  if (pathname && isNewsletterReaderPath(pathname)) return null;
+  if (pathname && (isNewsletterReaderPath(pathname) || isLiteraryPath(pathname))) return null;
   return <Footer />;
 }

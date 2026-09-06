@@ -99,8 +99,8 @@ async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof ge
         ) : (
           <div className="lit-empty">
             <p>
-              New {genre.label.toLowerCase()} is coming with our next quarterly edition. Check
-              back soon — or submit your own.
+              New {genre.label.toLowerCase()} is coming soon. Check back shortly — or submit your
+              own.
             </p>
             <Link className="lit-btn-primary" href="/literary/submit">
               Submit your work

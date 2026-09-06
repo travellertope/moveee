@@ -35,9 +35,9 @@ export default function ContactPage() {
             <a href="mailto:letters@themoveee.com">letters@themoveee.com</a>
           </div>
           <div className="contact-card">
-            <div className="contact-card-label">Poetry, Fiction, Nonfiction & Translation</div>
+            <div className="contact-card-label">Fiction, Poetry, Essays & Translation</div>
             <h3>The Moveee Literary</h3>
-            <p>Submissions for our quarterly literary supplement — see <Link href="/literary/submit">submission guidelines</Link>.</p>
+            <p>Submissions for The Moveee Literary — see <Link href="/literary/submit">submission guidelines</Link>.</p>
             <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>
           </div>
         </div>

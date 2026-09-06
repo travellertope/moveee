@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Bodoni_Moda, Cormorant_Garamond, EB_Garamond, Inter } from "next/font/google";
+import LiteraryMasthead from "@/components/LiteraryMasthead";
+import LiteraryFooter from "@/components/LiteraryFooter";
 
 // Fonts scoped to this route tree only (per docs/the-moveee-literary-brand-guide.pdf
 // §09 Typography) — loaded from a nested layout rather than the root one so
@@ -51,9 +53,16 @@ export default function LiteraryLayout({ children }: { children: React.ReactNode
   // trick .mg-page-white uses for /magazine — but with the Literary
   // palette instead of plain white, since this section deliberately does
   // not share the rest of Site A's paper/ink tokens.
+  //
+  // LiteraryMasthead/LiteraryFooter replace the sitewide Header/Footer for
+  // this entire route tree (see Header.tsx's isLiteraryPage early-return
+  // and ConditionalFooter.tsx's isLiteraryPath check) — The Moveee Literary
+  // is a standalone mini-site with its own chrome, not a themed sub-section.
   return (
     <div className={`lit-page ${bodoniModa.variable} ${cormorant.variable} ${ebGaramond.variable} ${inter.variable}`}>
+      <LiteraryMasthead />
       {children}
+      <LiteraryFooter />
     </div>
   );
 }

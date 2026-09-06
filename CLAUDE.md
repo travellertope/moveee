@@ -446,10 +446,10 @@ pass). The whole vertical is scoped to that one existing category:
   Translation model built before the brand guide existed; if you see a reference to only 4
   genres anywhere, it's stale). "Conversations" is the deliberate brand-guide term for what would
   otherwise be called "Interviews" — warmer, more literary, per the guide's own voice section.
-  "Notes" (short criticism, dispatches, letters, observations) is excluded from the header's inline
-  nav and the hero's section line (`LITERARY_NAV`/the hero's `.filter((g) => g.slug !== "notes")`)
-  since it's a lower-traffic catch-all, not a primary pillar — it still has its own working genre
-  archive page at `/literary/notes`, just isn't promoted in nav chrome. **A post with no genre tag still appears in the main
+  "Notes" (short criticism, dispatches, letters, observations) is a lower-traffic catch-all, not a
+  primary pillar, but **is** included in `LiteraryMasthead.tsx`'s section nav along with the other
+  five — the September 2026 Granta-inspired rebuild (see below) shows the full section list rather
+  than dropping one for space, unlike the header nav it replaced. **A post with no genre tag still appears in the main
   `/literary` feed; it just won't show up on any single genre's page (`/literary/poetry` etc.)
   until someone adds the matching tag in WP Admin.** This can be done at any time, for old or new
   posts, with a single tag edit — no migration, no re-categorization.
@@ -465,14 +465,16 @@ pass). The whole vertical is scoped to that one existing category:
   — nowhere else — if one is ever needed.
 
 **Routes** (`apps/site/app/literary/`):
-- `layout.tsx` — sets the section's metadata and, per the brand-guide rebuild below, loads four
-  Google Fonts scoped to this route tree only (`next/font/google`, each exposed as a CSS variable
-  via the `variable` option) and wraps `children` in `.lit-page` (its own Ivory background, not
-  `.mg-page-white`/magazine.css's white).
-- `page.tsx` — landing page: the `LiteraryLogo` lockup, master tagline ("Writing that shapes the
-  world."), an inline dot-separated section nav, an editorial-promise pull-quote, a 6-tile section
-  grid, a "Latest" piece grid, and a submissions CTA band (`.lit-cta-section`/`.lit-cta-band`,
-  its own classes — not reused from magazine.css).
+- `layout.tsx` — sets the section's metadata, loads the four brand Google Fonts scoped to this
+  route tree (`next/font/google`, CSS variables via `variable`), wraps `children` in `.lit-page`
+  (its own Ivory background, not `.mg-page-white`/magazine.css's white), and — per the September
+  2026 Granta-inspired rebuild below — mounts `LiteraryMasthead`/`LiteraryFooter` around
+  `{children}`, since the sitewide Header/Footer don't render on any `/literary` route at all.
+- `page.tsx` — landing page, rebuilt from an approved Granta-inspired mockup: a real hero carousel,
+  a "Latest" grid, an "In Translation" band, a "More From The Moveee Literary" grid, a submissions
+  spotlight, and a "Browse by Section" shelf — see that rebuild entry below for the full detail
+  and for what the mockup showed that this doesn't have (per-issue volumes, a purchasable print
+  plug, a 6-tile genre-index grid, an editorial-promise pull-quote — all removed, not adapted).
 - `[slug]/page.tsx` — **one dynamic segment serving two different things.** Next.js doesn't allow
   sibling routes with different dynamic-segment names at the same level (`[genre]` next to
   `[slug]` is a build error), so this single file checks the incoming slug against
@@ -507,99 +509,132 @@ path (no further segment) would be caught by the legacy-WordPress-permalink catc
 301-redirected to the nonexistent `/magazine/literary`. Any future single-segment top-level route
 needs the same registration — see that file's own comment.
 
-### Brand-guide rebuild (September 2026) — standalone mini-site identity, supersedes the original shared-token look
+### Brand-guide rebuild, then a full Granta-inspired rebuild (September 2026) — standalone mini-site, own shell, real data
 
-The original build above reused the site's `--paper`/`--ink`/`--ochre`/`--gold` tokens with a
-per-genre accent color (poetry=ochre, fiction=gold, nonfiction=moss, translation=purple). Per
-explicit user direction ("we want /literary to look and feel like its own standalone mini site...
-we want the minisite to feel like a literary magazine like The Paris Review etc"), the section was
-rebuilt from a full brand identity PDF (`docs/the-moveee-literary-brand-guide.pdf`, "The Moveee
-Literary — Brand Identity & Editorial Guide," v1.0) into its own distinct visual system — this is
-the current, live state; the per-genre accent-color scheme described in earlier drafts of this
-entry is gone.
+Two passes, both superseded-by-the-next — this entry describes only the current, live state.
+The first pass (per the brand identity PDF, `docs/the-moveee-literary-brand-guide.pdf`) gave the
+section its own palette/type system but kept it living inside the sitewide floating header pill
+and used a text-drawn logo lockup. The user then supplied the **real logo file** and asked for a
+layout modeled directly on Granta's actual homepage ("build it for real... exactly as is, do not
+try to unnecessarily retain anything from current site") — that second pass is what's live now,
+and it removed or replaced most of what the first pass built.
 
-- **Palette** (`apps/site/app/literary.css`, declared at global `:root` scope — not scoped under
-  `.lit-page` — specifically so `Header.tsx`'s literary-mode logo/nav, which renders as a DOM
-  sibling of the page content rather than a descendant of `/literary`'s own layout wrapper, can
-  still read these tokens): `--lit-ivory` (`#f5efe4`, background), `--lit-ink` (`#161412`, text),
-  `--lit-oxblood` (`#7a241c`, primary accent), `--lit-mahogany` (`#6b2b21`, secondary burgundy),
-  `--lit-gold` (`#b88942`, luxury accent — used sparingly, never dominant, per the guide's 70/20/
-  7/3 Ivory/Ink/Oxblood/Gold ratio), `--lit-parchment` (`#e9ddc8`, secondary neutral), `--lit-umber`
-  (`#8b4d2e`, earth accent), plus a derived `--lit-mute` and `--lit-rule` not in the guide's own
-  swatch table. `.lit-page` (applied by `layout.tsx`) sits above the sitewide body-grain texture
-  with this Ivory background, the same z-index trick `.mg-page-white` uses for `/magazine` but
-  with the brand's own color instead of plain white.
-- **Typography** — four Google Fonts loaded via `next/font/google` in `app/literary/layout.tsx`
-  only (each exposed as a CSS variable through the `variable` option: `--font-lit-display`,
-  `--font-lit-italic`, `--font-lit-body`, `--font-lit-meta`) — **these variables only resolve to a
-  real font within the DOM subtree carrying the loader's `className`**, i.e. inside `.lit-page`;
-  they are not available sitewide. Bodoni Moda for display headlines (serif, hero h1s, drop caps),
-  Cormorant Garamond italic for emotional/pull-quote emphasis, EB Garamond for body copy, Inter
-  (uppercase, tracked) for metadata/bylines/nav — matches the guide's 4-level hierarchy exactly.
-  **The header's literary-mode logo/nav deliberately does NOT use these brand fonts** — it's a
-  compromise, made without a separate user confirmation, to keep the header rendering correctly
-  with fonts already loaded sitewide (DM Sans/Fraunces/JetBrains Mono) rather than adding a
-  fifth+ font-loading dependency to the global header component; only the actual `/literary` page
-  content gets the brand's real typefaces.
-- **Logo**: `apps/site/components/LiteraryLogo.tsx` — a text-based lockup (bold "moveee" wordmark
-  + oxblood dot + tracked serif "Literary" subline beneath), not an image asset — the guide's
-  "never" rules (no stretching, no drop shadows, no gradients, no rotation, no different typeface
-  for "LITERARY") are naturally satisfied by keeping it as styled text rather than a bitmap. Takes
-  an optional `compact` prop for the header context (smaller sizing) vs. the default larger sizing
-  used in the landing page's hero.
-- **Header integration** (`apps/site/components/Header.tsx`): a new `isLiteraryPage` branch
-  (`pathname === "/literary" || pathname.startsWith("/literary/")`) swaps the normal Moveee logo
-  image for `<LiteraryLogo compact />` plus an inline dot-separated nav row (`toolbar-lit-nav`,
-  linking to Fiction/Poetry/Essays/Conversations/In Translation — Notes excluded, see above) —
-  the existing 3 icon buttons (search/cart/hamburger menu) are unchanged. `.toolbar-shell--literary`
-  widens the pill to fit the extra nav items on desktop and collapses back down (nav hidden) under
-  780px, per `literary.css`'s own media query. This is on top of, not instead of, the pre-existing
-  "The Moveee Literary" link already in the hamburger overlay's `menu-nav-list`.
-- **Editorial-promise section** — a new `.lit-promise` block on the landing page: a large italic
-  Cormorant-Garamond pull-quote of the guide's own institutional copy, bordered top/bottom, styled
-  as a moment of restraint between the hero and the section grid — not reused from any other page.
-- **Signature motif** — `.lit-motif`/`.lit-motif-primary`/`.lit-motif-secondary` CSS classes exist
-  for the guide's curved oxblood/gold line graphic (§11) but are **not yet backed by an actual SVG
-  asset or component** — this is a known gap, not wired into any page yet.
-- **Cards are flush, not shadowed** — `.lit-card`/`.lit-genre-tile` deliberately have no
-  border-radius/box-shadow (unlike the sitewide `--radius-xl`/`--shadow-card` convention every
-  other Site A grid follows) — the brand guide's restraint principle reads as flush typographic
-  cards divided by hairline rule, closer to how The Paris Review/Granta actually lay out an
-  archive than a modern card-UI grid.
-  `LiteraryPieceCard.tsx` (`apps/site/components/`) is the one card component every grid on the
-  section reuses; it no longer generates a per-genre `lit-{slug}` className (that mechanism was
-  removed along with the per-genre accent-color scheme).
-- **Voice/copy constraints from the guide, apply to any future literary-section copywriting**:
-  avoid superlative/hype words ("groundbreaking," "game-changing," "revolutionary," "prestigious,"
-  "best," "leading," "world-class," "incredible," "amazing," "disruptive"); prefer short
-  declarative or image-based sentences over abstractions; "say less" — restraint is treated as a
-  form of luxury in this section specifically, unlike the rest of Site A's copy conventions.
+**Palette** (`apps/site/app/literary.css`, `:root` scope): `--lit-ivory` (`#f5efe4`, background),
+`--lit-ink` (`#161412`, text), `--lit-oxblood`/`--lit-oxblood-deep` (`#7a241c`/`#5c1b15`, primary
+accent), `--lit-mahogany` (`#6b2b21`), `--lit-gold` (`#b88942`, sparing luxury accent, per the
+guide's 70/20/7/3 Ivory/Ink/Oxblood/Gold ratio), `--lit-parchment` (`#e9ddc8`), `--lit-umber`
+(`#8b4d2e`), plus derived `--lit-mute`/`--lit-rule`/`--lit-rule-strong`. **No longer needs global
+`:root` scope for the header's sake** (see below — the sitewide header doesn't render on
+`/literary` at all anymore) but was left at `:root` anyway since nothing else on the site uses the
+`--lit-*` prefix. `.lit-page` (`layout.tsx`) still sits above the sitewide body-grain texture with
+this Ivory background, same trick as `/magazine`'s `.mg-page-white`.
 
-**Discoverability**: linked from the Site A header's menu overlay (`Header.tsx`, between Magazine
-and Shop) — now also from the header pill itself when already on a `/literary` page — the shared
-`Footer.tsx`'s Explore column, and a contact card on `/contact`.
+**Typography** — same four Google Fonts as before, loaded via `next/font/google` in
+`app/literary/layout.tsx` (`--font-lit-display` = Bodoni Moda, `--font-lit-italic` = Cormorant
+Garamond, `--font-lit-body` = EB Garamond, `--font-lit-meta` = Inter) — only real inside `.lit-page`.
+
+**The Moveee Literary is now a fully standalone shell — no sitewide chrome at all**, not just a
+re-skinned floating pill:
+- `Header.tsx` — the sitewide floating pill now **returns `null` entirely** when `isLiteraryPage`
+  (`pathname === "/literary" || .startsWith("/literary/")`), right before its `return (...)` (all
+  hooks still run unconditionally above that, per Rules of Hooks). The old `.toolbar-shell--literary`/
+  `.toolbar-lit-nav*` CSS and the `isLiteraryPage` branch inside the pill's JSX are gone — deleted,
+  not left dead, per this rebuild's own instruction not to retain unneeded old stuff.
+- `ConditionalFooter.tsx` — gained an `isLiteraryPath()` check alongside its existing newsletter-
+  reader check; the sitewide dark `Footer.tsx` never renders on any `/literary` route.
+- **`apps/site/components/LiteraryMasthead.tsx`** (new, client) and **`LiteraryFooter.tsx`** (new)
+  are mounted once from `app/literary/layout.tsx`, wrapping `{children}` — so every page under
+  `/literary` (landing, genre archives, single pieces, submissions) gets the same standalone
+  masthead/nav/footer, not just the homepage the mockup itself showed.
+  `LiteraryMasthead` renders: a slim oxblood ribbon ("New fiction, poetry, essays and translation,
+  published continuously." + a "Get Updates" link to `/newsletter`), a masthead row (real logo +
+  Sign In [cross-domain to `web.themoveee.com/login`, session-aware via `useSession()`] / Submit /
+  Subscribe / a search button reusing the sitewide `SearchOverlay` component), and a full 6-item
+  section nav (Fiction/Poetry/Essays/Conversations/In Translation/Notes — all six, unlike the old
+  pill nav which dropped Notes for space).
+- **Logo**: the user supplied the actual approved lockup file (a PNG: "The" in oxblood italic over
+  a bold black "moveee." wordmark with an oxblood period, "LITERARY" tracked serif caps beneath) —
+  saved as the real static asset `apps/site/public/logo-literary.png`. `LiteraryLogo.tsx` is now a
+  thin wrapper rendering that image (`compact`/`inverted` props for header vs. footer sizing/color)
+  — **no longer a CSS text-drawn lockup**; the old `.lit-logo*` CSS classes were deleted.
+
+**Homepage (`app/literary/page.tsx`) — rebuilt from an approved Granta-inspired Artifact mockup,
+every section wired to real `getLiteraryPieces()` data, not the mockup's placeholder copy:**
+- **Hero** — `LiteraryHeroCarousel.tsx` (new client component): a real carousel over the 3 most
+  recent pieces (arrows/dots only render when there's more than one), each slide showing the genre
+  tag, title (links to the piece), byline, and a plain-text excerpt standfirst. Falls back to an
+  `.lit-empty` prompt when there are zero pieces.
+- **"Latest From The Moveee Literary"** — next 6 pieces (after the 3 in the hero) in two rows of
+  three, the second row getting a `.lit-grid--divided` hairline top border (mirrors the mockup's
+  print-gutter rule). Section is omitted entirely when empty.
+- **"In Translation: A Rotating Table"** — a real `getLiteraryPieces("translation", 6)` fetch on a
+  `--lit-parchment`-tinted band (`.lit-band`); omitted entirely if no translation-tagged pieces
+  exist yet (graceful degradation, same convention as the rest of this codebase).
+- **"More From The Moveee Literary"** — up to 3 more pieces from the same pool, deduped against
+  everything already shown above via a running `Set` of used slugs.
+- **Submissions spotlight (`.lit-plug`)** — replaces the mockup's print-issue plug (a purchasable
+  physical volume, "Buy the Issue," a cover price) with the one thing that's actually real and
+  always relevant here: an always-open submissions call, reusing the plug's visual shape (a dark
+  cover-style tile + copy + CTA) but pointing at `/literary/submit`.
+- **"Browse by Section" (`LiteraryShelf.tsx`, new client component)** — replaces the mockup's
+  back-catalogue shelf of purchasable past volumes (there's no volume/issue taxonomy in the CMS at
+  all) with a horizontally-scrolling shelf of the six real genre archive pages instead — same
+  scroll-and-arrow-button mechanism as the mockup, backed by data that's always correct rather than
+  fabricated volume names/prices.
+- **Deliberately NOT carried over from the mockup or the prior brand-guide build**: any "Issue
+  04"/"Vol. IV" numbering (no such taxonomy exists — see the digital-only correction above), the
+  print-quarterly framing (see that same section), the old 6-tile genre-index grid and the
+  editorial-promise pull-quote section (both fully removed, not just unused), and the per-genre
+  accent-color scheme from the original build (one restrained oxblood accent throughout, per the
+  guide's own restraint principle).
+
+**`LiteraryPieceCard.tsx` gained a real image** — the mockup's cards all lead with a photo; the
+prior build's card had none. Renders `piece.featuredImage.node.sourceUrl` when present, an oxblood-
+gradient placeholder div when not. Its wrapper/class names were renamed from `lit-card`/
+`lit-card-kicker`/etc. to `piece`/`lit-tag`/`piece-title`/`piece-dek`/`piece-byline` to match the
+mockup's own naming — this is the one card component every grid across the whole section reuses
+(homepage, genre archives, the single-piece "More {Genre}" grid).
+
+**Cards are flush, not shadowed** — `.piece`/`.lit-shelf-item` deliberately have no border-radius/
+box-shadow (unlike the sitewide `--radius-xl`/`--shadow-card` convention every other Site A grid
+follows) — restraint, closer to how Granta/The Paris Review actually lay out an archive than a
+modern card-UI grid.
+
+**Signature motif (brand guide §11, curved oxblood/gold line)** — never built in either pass;
+still not wired into any page. If asked for later, it has no CSS classes reserved for it anymore
+(the placeholder `.lit-motif*` rules from the first pass were deleted in this rebuild).
+
+**Voice/copy constraints, apply to any future literary-section copywriting**: avoid superlative/
+hype words ("groundbreaking," "revolutionary," "prestigious," "best," "world-class," "incredible");
+prefer short declarative sentences over abstractions; restraint is treated as a form of luxury
+here. **Also avoid announcing what the section is *not*** — an earlier draft of this section's
+ribbon copy read "No print edition — read it all here," which the user flagged directly as bad
+copy ("why would you think it even makes sense to say something like this"): a real publication
+never states what it isn't. The same reflex ("digital home," "published continuously online")
+was caught and removed from the submissions page too — don't reintroduce a "we are/aren't X"
+qualifier anywhere in this section's copy.
+
+**Discoverability**: linked from the Site A header's menu overlay (`Header.tsx`'s full-screen menu,
+between Magazine and Shop — that link is unaffected by the pill returning `null` on `/literary`
+itself), the shared `Footer.tsx`'s Explore column, `LiteraryFooter.tsx`'s own Sections/Magazine
+columns, and a contact card on `/contact`.
 
 **Not built in this pass, deliberately out of scope**: a real submissions intake portal (the
-guidelines page above just points to a mailto address — see the three-option scope conversation
-that shaped this build), Pro/Patron content gating (magazine articles nominally support this via
-`getAccessLevel()`/`ArticleContentGate`, but `GET_STORY_BY_SLUG` doesn't actually request the
-`cultureAccesses` field its own gating check reads, so that mechanism doesn't currently work even
-on `/magazine` — not fixed here, out of scope, and not worth replicating into a new vertical),
-and tying pieces to the existing "Issue" taxonomy for a literal "Issue N" badge (the taxonomy
-already exists and pieces can still be tagged with an Issue in WP Admin for internal
-recordkeeping — the site just doesn't surface it on `/literary` yet). Also not yet built, from the
-September 2026 brand-guide rebuild specifically: a real SVG asset for the signature curved-line
-motif (CSS classes exist, unused), and the header's literary-mode nav using the brand's own
-Bodoni/Cormorant/EB Garamond/Inter fonts rather than sitewide DM Sans/Fraunces/JetBrains Mono
-(deliberate scope compromise, not confirmed with the user — see "Brand-guide rebuild" above).
-Revisit any of these if asked.
+guidelines page still just points to a mailto address), Pro/Patron content gating (magazine
+articles nominally support this via `getAccessLevel()`/`ArticleContentGate`, but `GET_STORY_BY_SLUG`
+doesn't request the `cultureAccesses` field that gate reads, so it doesn't work even on `/magazine`
+— not fixed here, not worth replicating into a new vertical), and any Issue/Volume taxonomy (see
+above — there's nothing to tie to yet).
 
 **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-other pass in this file, and this sandbox additionally had no `node_modules` installed at all for
-either app during this pass, so not even `tsc --noEmit` could be run — verified by manual read-
-through and a CSS brace-balance check on `literary.css` (135/135) instead. Re-check pixel fidelity
-against `docs/the-moveee-literary-brand-guide.pdf` in a real environment before considering this
-fully closed.
+other pass in this file, and this sandbox additionally had no `node_modules` installed for either
+app during the first pass (not re-checked in this second pass either). Verified by manual
+read-through, a CSS brace-balance check on `literary.css` (157/157), and a diff of every
+`className` referenced across the section's `.tsx` files against every selector defined in
+`literary.css` (no orphaned classes either direction, aside from the expected `is-active`/
+`is-current` dynamic states and `.lit-page` itself). Re-check pixel fidelity against the approved
+mockup and the real logo asset's rendering in a real environment before considering this fully
+closed.
 
 ## Process: adding a new newsletter
 
