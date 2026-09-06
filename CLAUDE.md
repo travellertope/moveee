@@ -419,27 +419,37 @@ Critics" — legitimate use of "The X" as this section's own proper noun, not th
 generic-brand-name bug documented elsewhere in this file.
 
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
-changes.** A literary piece is a completely normal magazine post; what makes it "literary" is
-purely a tagging convention:
+changes — and, critically, reuses an existing WordPress category rather than inventing one.**
+An initial draft of this feature assumed a brand-new "literary" category tree didn't exist yet
+and needed to be created; that was wrong — Moveee had already been publishing poetry, fiction,
+and nonfiction for a while under a real category (shown in WP Admin as **"Essay, Fiction &
+Poetry"**, 19 posts at the time this was built) whose **slug is `literary`** (the display name
+and the slug were set independently in WP and don't have to match — this tripped up the first
+pass). The whole vertical is scoped to that one existing category:
 
-- Every literary piece must carry **both** the parent **`literary`** category **and** exactly one
-  genre child category: `literary-poetry`, `literary-fiction`, `literary-nonfiction`,
-  `literary-translation`. Both are required — WPGraphQL's `categoryName` filter (used by the
-  existing, generic `GET_STORIES` query) matches only the exact term, it does **not** include
-  descendant terms, so `categoryName: "literary"` (the whole-vertical view) only returns pieces
-  that carry the parent term directly; genre archives filter on the child term alone.
-- **These four categories do not exist in WordPress yet as of this writing** — an editor needs to
-  create them once in WP Admin → Posts → Categories (parent "Literary", slug `literary`; four
-  children with the exact slugs above) before any piece can be tagged. Until then, every page
-  under `/literary` renders correctly with an empty-state message (same graceful-degradation
-  pattern as every other magazine section in this file) — nothing is broken, there's just nothing
-  to show yet.
-- Genre metadata (slug, category slug, label, one-line tagline) lives in one place:
-  `LITERARY_GENRES` in `packages/shared/lib/wp.ts`, alongside `LITERARY_CATEGORY_SLUG`,
-  `getLiteraryGenre()`, `isLiteraryPost()`, `literaryGenreOfPost()`, and `getLiteraryPieces()`
-  (a thin `GET_STORIES` wrapper, same try/catch-to-empty-array pattern as every other
-  magazine-section helper in this file). Add a fifth genre here — nowhere else — if one is ever
-  needed.
+- `LITERARY_CATEGORY_SLUG = "literary"` in `packages/shared/lib/wp.ts` is that category's slug.
+  `isLiteraryPost(post)` just checks whether a post carries it. **All 19 pre-existing posts
+  already qualify with zero WP Admin changes** — they show up in the main `/literary` feed
+  immediately on deploy, no backfill needed.
+- **Genre (Poetry/Fiction/Nonfiction/Translation) is a plain WordPress tag, not a child
+  category** — the existing posts predate any genre split and were never tagged by genre, so
+  genre is an *optional overlay* on top of the category, never a requirement for a piece to
+  belong to the vertical. `literaryGenreOfPost(post)` reads `post.tags.nodes`, matching against
+  `LITERARY_GENRES[].tagSlug` (`poetry`/`fiction`/`nonfiction`/`translation`, plain tag slugs —
+  no `literary-` prefix, no new categories). **A post with no genre tag still appears in the main
+  `/literary` feed; it just won't show up on any single genre's page (`/literary/poetry` etc.)
+  until someone adds the matching tag in WP Admin.** This can be done at any time, for old or new
+  posts, with a single tag edit — no migration, no re-categorization.
+- `getLiteraryPieces(tagSlug?, first)` always queries `GET_STORIES` scoped to
+  `categoryName: "literary"`, optionally adding `tag: tagSlug` to narrow to one genre — both
+  params are native, pre-existing `GET_STORIES` where-args, so no query changes were needed
+  beyond adding a `tags { nodes { name slug } }` field to the shared `STORY_FIELDS_FRAGMENT`
+  (a standard WP core taxonomy connection, same risk profile as the `categories`/`countries`
+  fields already there — not a custom/plugin field, so no bridge-plugin-isolation concerns).
+- Genre metadata (slug, tag slug, label, one-line tagline) lives in one place: `LITERARY_GENRES`
+  in `packages/shared/lib/wp.ts`, alongside `LITERARY_CATEGORY_SLUG`, `getLiteraryGenre()`,
+  `isLiteraryPost()`, `literaryGenreOfPost()`, and `getLiteraryPieces()`. Add a fifth genre here
+  — nowhere else — if one is ever needed.
 
 **Routes** (`apps/site/app/literary/`):
 - `layout.tsx` — sets the section's metadata and reuses `.mg-page-white` (magazine.css) to sit
@@ -451,8 +461,9 @@ purely a tagging convention:
   sibling routes with different dynamic-segment names at the same level (`[genre]` next to
   `[slug]` is a build error), so this single file checks the incoming slug against
   `LITERARY_GENRES` first — a match renders the genre archive (`GenreArchive`), anything else
-  falls through to a real post lookup (`PiecePage`, which 404s if the post isn't tagged
-  `literary`). If you ever need a third `/literary/*` "thing" that isn't a genre or a piece, it
+  falls through to a real post lookup (`PiecePage`, which 404s if the post isn't in the
+  `literary` category). If you ever need a third `/literary/*` "thing" that isn't a genre or a
+  piece, it
   has to be a real static segment (like `submit/`, below) — Next.js resolves static segments
   before dynamic ones, so there's no conflict — not another dynamic catch-all.
 - `submit/page.tsx` — static submissions guidelines (reading windows, formatting, response time,
@@ -467,6 +478,13 @@ without this, a literary post would be reachable and fully renderable at both UR
 content), since it's the same underlying `post`. `sitemap.ts` mirrors this split: literary posts
 are filtered out of `articleUrls` (`/magazine/...`) and listed under a separate `literaryPieceUrls`
 (`/literary/...`) instead.
+
+**This redirect takes effect immediately on deploy for the 19 pre-existing posts already in the
+`literary` category** — any of them currently reachable/indexed at `/magazine/{slug}` will start
+308-redirecting to `/literary/{slug}` the moment this ships, since they already carry the
+category. A 308 preserves most SEO equity, but it's a real, immediate change to already-published
+URLs, not just new behavior for future content — worth knowing before deploying, not a silent
+side effect.
 
 **`'literary'` was added to `proxy.ts`'s `APP_ROUTES` set** — without this, the bare `/literary`
 path (no further segment) would be caught by the legacy-WordPress-permalink catch-all and

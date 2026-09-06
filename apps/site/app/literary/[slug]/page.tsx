@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof getLiteraryGenre>> }) {
-  const pieces = await getLiteraryPieces(genre.categorySlug, 24);
+  const pieces = await getLiteraryPieces(genre.tagSlug, 24);
 
   return (
     <div className={`lit-wrap lit-${genre.slug}`}>
@@ -133,7 +133,7 @@ async function PiecePage({ slug }: { slug: string }) {
 
   let moreFromGenre: any[] = [];
   if (genre) {
-    const genrePieces = await getLiteraryPieces(genre.categorySlug, 8);
+    const genrePieces = await getLiteraryPieces(genre.tagSlug, 8);
     moreFromGenre = genrePieces.filter((p: any) => p.slug !== slug).slice(0, 3);
   }
 

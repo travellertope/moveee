@@ -743,6 +743,12 @@ const STORY_FIELDS_FRAGMENT = `
         slug
       }
     }
+    tags {
+      nodes {
+        name
+        slug
+      }
+    }
     industries {
       nodes {
         name
@@ -831,17 +837,21 @@ export const GET_FILTERS = `
 // A quarterly poetry/fiction/nonfiction/translation vertical at
 // apps/site/app/literary/*, built on the *same* `post` type as the rest of
 // the magazine (see "The Moveee Literary" in CLAUDE.md) — no new CPT, no
-// GraphQL schema changes. Every piece must carry the parent "literary"
-// category PLUS exactly one of the four genre child categories below:
-// WPGraphQL's `categoryName` filter matches only the exact term, it does
-// NOT include descendant terms, so tagging both is what makes
-// `categoryName: "literary"` return every piece across genres while
-// `categoryName: "literary-poetry"` (etc.) returns just one genre's pieces.
+// GraphQL schema changes. The vertical is scoped to a single real,
+// pre-existing category ("literary", shown in WP Admin as "Essay, Fiction &
+// Poetry" — the slug and the display name were set independently, they
+// don't have to match) that already has published poetry/fiction/nonfiction
+// content. Genre (Poetry/Fiction/Nonfiction/Translation) is a plain WP
+// **tag**, not a child category — the pre-existing posts predate any genre
+// split, so genre is an optional overlay on top of the category, not a
+// requirement for a piece to belong to the vertical at all. A post with no
+// genre tag still shows in the main /literary feed, it just won't appear on
+// any single genre's page until someone tags it.
 export const LITERARY_CATEGORY_SLUG = "literary";
 
 export interface LiteraryGenre {
   slug: string;
-  categorySlug: string;
+  tagSlug: string;
   label: string;
   tagline: string;
 }
@@ -849,25 +859,25 @@ export interface LiteraryGenre {
 export const LITERARY_GENRES: LiteraryGenre[] = [
   {
     slug: "poetry",
-    categorySlug: "literary-poetry",
+    tagSlug: "poetry",
     label: "Poetry",
     tagline: "Verse that moves like breath and lands like weather.",
   },
   {
     slug: "fiction",
-    categorySlug: "literary-fiction",
+    tagSlug: "fiction",
     label: "Fiction",
     tagline: "Short stories and excerpts that hold a whole life in a few pages.",
   },
   {
     slug: "nonfiction",
-    categorySlug: "literary-nonfiction",
+    tagSlug: "nonfiction",
     label: "Nonfiction",
     tagline: "Essays and true stories, reported and remembered.",
   },
   {
     slug: "translation",
-    categorySlug: "literary-translation",
+    tagSlug: "translation",
     label: "Translation",
     tagline: "Work carried across languages, credited by name.",
   },
@@ -877,28 +887,33 @@ export function getLiteraryGenre(slug: string): LiteraryGenre | undefined {
   return LITERARY_GENRES.find((g) => g.slug === slug.toLowerCase());
 }
 
-type CategorizedPost = { categories?: { nodes?: { slug: string }[] | null } | null } | null | undefined;
+type LiteraryTaxonomies = {
+  categories?: { nodes?: { slug: string }[] | null } | null;
+  tags?: { nodes?: { slug: string }[] | null } | null;
+} | null | undefined;
 
-export function isLiteraryPost(post: CategorizedPost): boolean {
+export function isLiteraryPost(post: LiteraryTaxonomies): boolean {
   return (post?.categories?.nodes || []).some((c) => c.slug === LITERARY_CATEGORY_SLUG);
 }
 
-export function literaryGenreOfPost(post: CategorizedPost): LiteraryGenre | undefined {
-  const slugs = new Set((post?.categories?.nodes || []).map((c) => c.slug));
-  return LITERARY_GENRES.find((g) => slugs.has(g.categorySlug));
+export function literaryGenreOfPost(post: LiteraryTaxonomies): LiteraryGenre | undefined {
+  const tagSlugs = new Set((post?.tags?.nodes || []).map((t) => t.slug));
+  return LITERARY_GENRES.find((g) => tagSlugs.has(g.tagSlug));
 }
 
 /**
- * Fetches pieces for the whole vertical (omit categorySlug) or one genre
- * (pass one of LITERARY_GENRES[].categorySlug). Degrades to an empty array
- * on any fetch failure — same pattern as every other magazine-section
+ * Fetches pieces for the whole vertical (omit tagSlug) or one genre (pass
+ * one of LITERARY_GENRES[].tagSlug) — always scoped to the "literary"
+ * category, optionally narrowed further by genre tag. Degrades to an empty
+ * array on any fetch failure — same pattern as every other magazine-section
  * helper in this file — so a CMS hiccup never takes down /literary.
  */
-export async function getLiteraryPieces(categorySlug?: string, first = 24): Promise<any[]> {
+export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<any[]> {
   try {
     const data = await getWPData(GET_STORIES, {
       first,
-      categoryName: categorySlug || LITERARY_CATEGORY_SLUG,
+      categoryName: LITERARY_CATEGORY_SLUG,
+      tag: tagSlug || undefined,
     });
     return data?.posts?.nodes || [];
   } catch (err: any) {
