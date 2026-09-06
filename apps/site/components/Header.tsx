@@ -6,17 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
 import ShopSearchModal from "./ShopSearchModal";
-import LiteraryLogo from "./LiteraryLogo";
 import { useCart } from "@/context/CartContext";
-import { LITERARY_GENRES } from "@/lib/wp";
-
-// The brand guide's own homepage mockup renders exactly this dot-separated
-// line under the masthead ("Fiction · Poetry · Essays · Conversations ·
-// Translation") — reused verbatim as the header's inline nav rather than
-// listing all 6 editorial sections (Notes included), matching the guide's
-// explicit "do not begin with ten competing menus" principle. Notes is
-// still a real section — reachable from the /literary landing page itself.
-const LITERARY_NAV = LITERARY_GENRES.filter((g) => g.slug !== "notes");
 
 const CONNECT_URL = "https://web.themoveee.com";
 
@@ -51,10 +41,10 @@ const Header = () => {
   // also gates the shop-specific search modal further below; /makers pages
   // still get the generic SearchOverlay, only the wordmark itself changes).
   const isLifestylePage = isShopPage || isMakersPage;
-  // The Moveee Literary reads as its own standalone mini-site: its own
-  // logo (LiteraryLogo, not the Moveee wordmark) and its own inline nav
-  // beside it, inside the same floating pill — the search/cart/menu icons
-  // are unchanged, only the leading half of the pill swaps.
+  // The Moveee Literary is its own standalone mini-site with its own
+  // masthead, section nav, and footer (LiteraryMasthead.tsx/LiteraryFooter.tsx,
+  // rendered from app/literary/layout.tsx) — the sitewide floating pill has
+  // no role there at all, unlike Shop/Makers which only swap the wordmark.
   const isLiteraryPage = pathname === "/literary" || pathname.startsWith("/literary/");
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -214,38 +204,27 @@ const Header = () => {
     .filter(Boolean)
     .join(" ");
 
+  // The Moveee Literary renders its own masthead/nav/footer (see the
+  // comment on isLiteraryPage above) — every hook above still runs
+  // unconditionally (Rules of Hooks), only the render is skipped.
+  if (isLiteraryPage) return null;
+
   return (
     <>
       <div className={toolbarClass}>
-        <div className={`toolbar-shell${isLiteraryPage ? " toolbar-shell--literary" : ""}`}>
+        <div className="toolbar-shell">
           <div className="toolbar-pill">
-            {isLiteraryPage ? (
-              <>
-                <LiteraryLogo compact />
-                <nav className="toolbar-lit-nav" aria-label="The Moveee Literary sections">
-                  {LITERARY_NAV.map((g, i) => (
-                    <React.Fragment key={g.slug}>
-                      {i > 0 && <span className="toolbar-lit-nav-dot" aria-hidden="true">·</span>}
-                      <Link href={`/literary/${g.slug}`} data-active={active(`/literary/${g.slug}`) || undefined}>
-                        {g.label}
-                      </Link>
-                    </React.Fragment>
-                  ))}
-                </nav>
-              </>
-            ) : (
-              <Link href={isLifestylePage ? (isMakersPage ? "/makers" : "/shop") : "/"} className="toolbar-logo">
-                <img
-                  src={
-                    isLifestylePage
-                      ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
-                      : onDark ? "/logo-light.png" : "/logo-dark.png"
-                  }
-                  alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
-                  className="toolbar-logo-img"
-                />
-              </Link>
-            )}
+            <Link href={isLifestylePage ? (isMakersPage ? "/makers" : "/shop") : "/"} className="toolbar-logo">
+              <img
+                src={
+                  isLifestylePage
+                    ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
+                    : onDark ? "/logo-light.png" : "/logo-dark.png"
+                }
+                alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
+                className="toolbar-logo-img"
+              />
+            </Link>
 
             <div className="toolbar-icons">
               <button className="toolbar-icon" aria-label="Search" onClick={() => setSearchOpen(true)}>

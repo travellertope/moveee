@@ -1,14 +1,14 @@
 /* ========================================
    THE MOVEEE LITERARY  —  lit-* namespace
-   Built from docs/the-moveee-literary-brand-guide.pdf (v1.0, Sept 2026).
+   Rebuilt from a Granta-inspired mockup (September 2026) approved before
+   this file was written — see CLAUDE.md's "Brand-guide rebuild" /
+   "full rebuild onto the Granta-inspired mockup" entries for the history.
    Deliberately does NOT reuse the sitewide --paper/--ink/--ochre/--gold
-   tokens — the brand guide specifies its own palette, distinct from the
-   rest of Site A, so this section reads as its own standalone literary
-   magazine (in the spirit of The Paris Review / Granta) rather than a
-   themed sub-section of the Moveee Magazine site. Palette custom
-   properties are declared at :root (not scoped under .lit-page) so
-   Header.tsx's literary-mode logo/nav — rendered as a DOM sibling of the
-   page content, not a descendant — can read them too.
+   tokens — the brand guide specifies its own palette so this section reads
+   as its own standalone literary magazine (The Paris Review / Granta),
+   with its own masthead/nav/footer replacing the sitewide Header/Footer
+   entirely on every /literary route (see Header.tsx's isLiteraryPage
+   early-return and ConditionalFooter.tsx's isLiteraryPath check).
    ======================================== */
 
 :root {
@@ -16,20 +16,21 @@
   --lit-ivory: #f5efe4;       /* primary background */
   --lit-ink: #161412;         /* primary text */
   --lit-oxblood: #7a241c;     /* primary accent */
+  --lit-oxblood-deep: #5c1b15;
   --lit-mahogany: #6b2b21;    /* secondary burgundy */
   --lit-gold: #b88942;        /* luxury accent — used sparingly, never dominant */
   --lit-parchment: #e9ddc8;   /* secondary neutral */
   --lit-umber: #8b4d2e;       /* earth accent */
   --lit-mute: #6f6759;        /* muted ink for supporting copy — not in the guide's swatches, derived to sit between ink and parchment */
   --lit-rule: rgba(22, 20, 18, 0.14);
+  --lit-rule-strong: rgba(22, 20, 18, 0.22);
 }
 
 /* Sits above the sitewide body-grain texture (globals.css body::before,
    z-index: 100) with the brand's own Ivory rather than plain white — see
    app/literary/layout.tsx, which wraps this route tree in the class and
-   also applies the four brand-guide font variables (only real inside this
-   subtree; Header.tsx's literary-mode nav deliberately sticks to sitewide
-   fonts already loaded everywhere, see that file's own comment). */
+   also applies the four brand-guide font variables and mounts
+   LiteraryMasthead/LiteraryFooter around {children}. */
 .lit-page {
   position: relative;
   z-index: 101;
@@ -37,385 +38,197 @@
   color: var(--lit-ink);
   font-family: var(--font-lit-body), Georgia, serif;
 }
-.lit-page a { color: inherit; }
+.lit-page a { color: inherit; text-decoration: none; }
+.lit-page h1, .lit-page h2, .lit-page h3 { margin: 0; }
 
 .lit-wrap {
   max-width: 1160px;
   margin: 0 auto;
-  padding: 0 64px;
+  padding: 0 32px;
   box-sizing: border-box;
 }
-@media (max-width: 1024px) { .lit-wrap { padding: 0 32px; } }
-@media (max-width: 640px) { .lit-wrap { padding: 0 20px; } }
+@media (max-width: 720px) { .lit-wrap { padding: 0 20px; } }
 
-/* ── HEADER LOCKUP (also rendered by Header.tsx outside .lit-page) ──
-   "moveee" bold sans + oxblood dot, "LITERARY" tracked serif beneath —
-   brand guide §10, "Preferred visual masthead". Deliberately plain
-   sans/serif (DM Sans / Fraunces, both already loaded sitewide) rather
-   than the brand's Bodoni/Cormorant fonts — those are reserved for actual
-   page content; this lockup needs to render correctly in the header on
-   every page, including non-/literary ones briefly during navigation. */
-.lit-logo {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  text-decoration: none;
-  color: var(--lit-ink);
-  line-height: 1;
-  flex-shrink: 0;
-}
-.lit-logo-word {
-  font-family: "DM Sans", sans-serif;
-  font-weight: 800;
-  font-size: 21px;
-  letter-spacing: -0.02em;
-  position: relative;
-}
-.lit-logo-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--lit-oxblood);
-  margin-left: 2px;
-  vertical-align: top;
-  position: relative;
-  top: 2px;
-}
-.lit-logo-sub {
-  font-family: "Fraunces", serif;
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--lit-ink);
-  opacity: 0.72;
-}
-.lit-logo--compact .lit-logo-word { font-size: 16px; }
-.lit-logo--compact .lit-logo-dot { width: 5px; height: 5px; }
-.lit-logo--compact .lit-logo-sub { font-size: 7.5px; letter-spacing: 0.26em; }
-
-/* ── HEADER PILL OVERRIDES (header.css owns .toolbar-shell/.toolbar-pill;
-   these are the literary-mode additions layered on top) ── */
-.toolbar-shell--literary { width: min(100%, 760px); }
-.site-toolbar.is-solid .toolbar-shell--literary {
-  background: color-mix(in srgb, var(--lit-ivory) 88%, transparent);
-}
-.toolbar-lit-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 16px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.toolbar-lit-nav a {
-  color: var(--lit-ink);
-  opacity: 0.68;
-  text-decoration: none;
-  transition: opacity 0.15s, color 0.15s;
-}
-.toolbar-lit-nav a:hover,
-.toolbar-lit-nav a[data-active] {
-  opacity: 1;
-  color: var(--lit-oxblood);
-}
-.toolbar-lit-nav-dot { color: var(--lit-gold); opacity: 0.7; }
-@media (max-width: 780px) {
-  .toolbar-lit-nav { display: none; }
-  .toolbar-shell--literary { width: min(100%, 200px); }
-}
-
-/* ── SIGNATURE MOTIF — the curved oxblood/gold line, brand guide §11 ── */
-.lit-motif { display: block; width: 100%; height: auto; }
-.lit-motif path.lit-motif-primary { stroke: var(--lit-oxblood); }
-.lit-motif path.lit-motif-secondary { stroke: var(--lit-gold); }
-
-/* ── HERO / MASTHEAD ── */
-.lit-hero { padding: clamp(72px, 9vw, 128px) 0 clamp(40px, 5vw, 56px); text-align: center; }
-.lit-hero .lit-motif { max-width: 420px; margin: 0 auto clamp(28px, 4vw, 40px); }
-.lit-hero-lockup { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: clamp(28px, 4vw, 44px); }
-.lit-hero-lockup .lit-logo-word { font-size: clamp(36px, 6vw, 56px); }
-.lit-hero-lockup .lit-logo-dot { width: 10px; height: 10px; top: 4px; }
-.lit-hero-lockup .lit-logo-sub { font-size: clamp(13px, 1.6vw, 17px); letter-spacing: 0.42em; }
-.lit-hero h1 {
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-size: clamp(30px, 4.4vw, 50px);
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  color: var(--lit-oxblood);
-  font-style: italic;
-  max-width: 18ch;
-  margin: 0 auto;
-}
-.lit-hero .lit-sub {
-  max-width: 52ch;
-  margin: 22px auto 0;
-  font-family: var(--font-lit-body), Georgia, serif;
-  font-size: 17px;
-  line-height: 1.65;
-  color: var(--lit-mute);
-}
-.lit-hero-nav {
-  margin-top: 20px;
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lit-mute);
-}
-.lit-hero-nav a { text-decoration: none; color: var(--lit-mute); transition: color .15s; }
-.lit-hero-nav a:hover { color: var(--lit-oxblood); }
-.lit-hero-nav .lit-hero-nav-dot { margin: 0 8px; color: var(--lit-gold); }
-.lit-hero-ctas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 32px;
-}
-.lit-btn-primary,
-.lit-btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  height: 46px;
-  padding: 0 26px;
-  border-radius: 2px;
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
-}
-.lit-btn-primary { background: var(--lit-ink); color: var(--lit-ivory); }
-.lit-btn-primary:hover { background: var(--lit-oxblood); }
-.lit-btn-ghost { background: transparent; color: var(--lit-ink); border: 1px solid var(--lit-rule); }
-.lit-btn-ghost:hover { border-color: var(--lit-oxblood); color: var(--lit-oxblood); }
-
-/* ── EDITORIAL PROMISE (institutional copy, brand guide §03/§21) ── */
-.lit-promise { padding: clamp(48px, 6vw, 72px) 0; border-top: 1px solid var(--lit-rule); border-bottom: 1px solid var(--lit-rule); }
-.lit-promise-quote {
-  font-family: var(--font-lit-italic), Georgia, serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: clamp(20px, 2.6vw, 28px);
-  line-height: 1.5;
-  color: var(--lit-ink);
-  max-width: 42ch;
-  margin: 0 auto;
-  text-align: center;
-}
-
-/* ── GENRE / SECTION TILES (landing page) ── */
-.lit-genre-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--lit-rule);
-  border: 1px solid var(--lit-rule);
-  margin-top: clamp(8px, 2vw, 16px);
-}
-@media (max-width: 860px) { .lit-genre-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .lit-genre-grid { grid-template-columns: 1fr; } }
-.lit-genre-tile {
-  display: block;
-  padding: 30px 26px 32px;
-  background: var(--lit-ivory);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.2s;
-}
-.lit-genre-tile:hover { background: var(--lit-parchment); }
-.lit-genre-tile h3 {
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-size: 23px;
-  color: var(--lit-ink);
-  margin-bottom: 8px;
-}
-.lit-genre-tile p {
-  font-family: var(--font-lit-body), Georgia, serif;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--lit-mute);
-}
-.lit-genre-tile .lit-genre-arrow {
-  display: inline-block;
-  margin-top: 16px;
+/* Generic genre/section metadata tag — real taxonomy (genre, "Series",
+   "Now Reading"), never a decorative label with no information. */
+.lit-tag {
   font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--lit-oxblood);
+  margin-bottom: 9px;
 }
 
-.lit-genre-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  margin-top: 24px;
-  border-top: 1px solid var(--lit-rule);
-  border-bottom: 1px solid var(--lit-rule);
+/* ── RIBBON ── */
+.lit-ribbon { background: var(--lit-oxblood); color: var(--lit-ivory); padding: 9px 0; }
+.lit-ribbon-inner {
+  max-width: 1160px; margin: 0 auto; padding: 0 32px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; font-weight: 600;
+  text-align: center; flex-wrap: wrap;
 }
+@media (max-width: 720px) { .lit-ribbon-inner { padding: 0 20px; } }
+.lit-ribbon-inner em { font-family: var(--font-lit-italic), Georgia, serif; font-style: italic; font-weight: 500; font-size: 14px; }
+.lit-ribbon-inner a {
+  border: 1px solid rgba(245, 239, 228, 0.55); padding: 3px 12px; border-radius: 999px;
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+  flex-shrink: 0;
+}
+.lit-ribbon-inner a:hover { background: var(--lit-ivory); color: var(--lit-oxblood-deep); border-color: var(--lit-ivory); }
+
+/* ── MASTHEAD ── */
+.lit-masthead { padding: 24px 0 16px; }
+.lit-masthead-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.lit-masthead-utility {
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.lit-util-link { color: var(--lit-mute); }
+.lit-util-link:hover { color: var(--lit-oxblood); }
+.lit-btn-pill { border: 1px solid var(--lit-ink); padding: 7px 16px; border-radius: 999px; color: var(--lit-ink); }
+.lit-btn-pill:hover { background: var(--lit-ink); color: var(--lit-ivory); }
+.lit-btn-pill--fill { background: var(--lit-oxblood); color: var(--lit-ivory); border-color: var(--lit-oxblood); }
+.lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); }
+.lit-search-icon {
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--lit-rule-strong);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--lit-mute);
+  background: transparent; cursor: pointer;
+}
+.lit-search-icon:hover { border-color: var(--lit-oxblood); color: var(--lit-oxblood); }
+@media (max-width: 640px) {
+  .lit-masthead-utility { gap: 10px; }
+  .lit-util-link { display: none; }
+}
+
+.lit-nav { border-top: 1px solid var(--lit-rule-strong); border-bottom: 1px solid var(--lit-rule-strong); }
+.lit-nav-inner {
+  display: flex; align-items: center; gap: 30px; overflow-x: auto;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; padding: 13px 0;
+}
+.lit-nav-inner a { color: var(--lit-mute); white-space: nowrap; padding-bottom: 3px; border-bottom: 2px solid transparent; }
+.lit-nav-inner a:hover, .lit-nav-inner a.is-current { color: var(--lit-ink); border-bottom-color: var(--lit-oxblood); }
+.lit-nav-inner a.is-current { color: var(--lit-oxblood); }
+
+/* ── HERO ── */
+.lit-hero { padding: 36px 0 8px; }
+.lit-hero-frame { position: relative; }
+.lit-hero-img { width: 100%; aspect-ratio: 16/8.4; object-fit: cover; display: block; background: linear-gradient(135deg, #2c2420, #5c4636 55%, var(--lit-oxblood) 130%); }
+.lit-hero-img--placeholder { background: linear-gradient(135deg, #2c2420, #5c4636 55%, var(--lit-oxblood) 130%); }
+.lit-hero-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong);
+  display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-size: 19px; color: var(--lit-ink);
+  cursor: pointer;
+}
+.lit-hero-arrow:hover { background: var(--lit-ink); color: var(--lit-ivory); border-color: var(--lit-ink); }
+.lit-hero-arrow--l { left: 20px; }
+.lit-hero-arrow--r { right: 20px; }
+.lit-hero-body { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; padding-top: 26px; align-items: end; }
+@media (max-width: 820px) { .lit-hero-body { grid-template-columns: 1fr; } }
+.lit-hero-title {
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 500; font-style: italic;
+  font-size: clamp(28px, 3.6vw, 42px); line-height: 1.12; color: var(--lit-ink); margin-top: 4px;
+}
+.lit-hero-title:hover { color: var(--lit-oxblood); }
+.lit-hero-byline { margin-top: 14px; font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; font-weight: 600; color: var(--lit-mute); }
+.lit-hero-standfirst {
+  font-family: var(--font-lit-italic), Georgia, serif; font-style: italic; font-size: 18px; line-height: 1.55;
+  color: var(--lit-mute); margin-top: 14px; max-width: 46ch;
+}
+.lit-hero-dots { display: flex; gap: 7px; align-items: center; justify-content: flex-end; }
+.lit-hero-dots button { width: 6px; height: 6px; border-radius: 50%; background: var(--lit-rule-strong); border: 0; padding: 0; cursor: pointer; }
+.lit-hero-dots button.is-active { background: var(--lit-oxblood); }
+
+/* ── SECTION HEADERS ── */
+.lit-section { padding: 46px 0; }
+.lit-section-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 26px; padding-bottom: 14px; border-bottom: 1px solid var(--lit-rule-strong);
+}
+.lit-section-head h2 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-style: italic; font-size: 26px; color: var(--lit-ink); }
+.lit-view-all {
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--lit-oxblood); white-space: nowrap;
+}
+.lit-view-all:hover { text-decoration: underline; }
+
+/* Genre archive page's own header */
+.lit-genre-head { padding: 40px 0 32px; }
+.lit-genre-head h1 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-style: italic; font-size: clamp(38px, 5.5vw, 60px); letter-spacing: -0.01em; color: var(--lit-oxblood); }
+.lit-genre-head .lit-sub { max-width: 56ch; margin-top: 14px; font-size: 15.5px; line-height: 1.6; color: var(--lit-mute); }
+
+.lit-genre-pills { display: flex; flex-wrap: wrap; gap: 0; margin-top: 24px; border-top: 1px solid var(--lit-rule); border-bottom: 1px solid var(--lit-rule); }
 .lit-genre-pill {
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--lit-mute);
-  text-decoration: none;
-  border-right: 1px solid var(--lit-rule);
-  transition: color 0.15s, background 0.15s;
+  display: inline-flex; align-items: center; height: 40px; padding: 0 16px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--lit-mute); border-right: 1px solid var(--lit-rule);
 }
 .lit-genre-pill:hover { color: var(--lit-oxblood); background: var(--lit-parchment); }
 .lit-genre-pill--active { color: var(--lit-oxblood); }
 
-/* ── SECTION HEADER (shared by "Latest" band + genre archive header) ── */
-.lit-section { padding: clamp(44px, 5.5vw, 72px) 0; }
-.lit-section-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: clamp(28px, 3.5vw, 40px);
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--lit-ink);
-}
-.lit-section-head h2 {
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-size: clamp(24px, 3vw, 32px);
-  color: var(--lit-ink);
-}
-.lit-section-head a.lit-view-all {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--lit-oxblood);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.lit-section-head a.lit-view-all:hover { text-decoration: underline; }
-
-/* Genre archive page's own header */
-.lit-genre-head { padding: clamp(56px, 7vw, 88px) 0 clamp(32px, 4vw, 48px); }
-.lit-genre-head h1 {
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-style: italic;
-  font-size: clamp(38px, 5.5vw, 60px);
-  letter-spacing: -0.01em;
-  color: var(--lit-oxblood);
-}
-.lit-genre-head .lit-sub { max-width: 56ch; margin-top: 14px; font-size: 15.5px; line-height: 1.6; color: var(--lit-mute); }
-
 /* ── PIECE GRID + CARD ── */
-.lit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 32px; }
+.lit-grid { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 32px; row-gap: 34px; }
 @media (max-width: 900px) { .lit-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .lit-grid { grid-template-columns: 1fr; } }
+.lit-grid--divided { position: relative; padding-top: 32px; }
+.lit-grid--divided::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--lit-rule); }
 
-.lit-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  text-decoration: none;
-  color: inherit;
-}
-.lit-card-kicker {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lit-oxblood);
-  margin-bottom: 12px;
-}
-.lit-card h3 {
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-size: 21px;
-  line-height: 1.3;
-  color: var(--lit-ink);
-}
-.lit-card:hover h3 { color: var(--lit-oxblood); }
-.lit-card .lit-card-dek {
-  margin-top: 10px;
-  font-family: var(--font-lit-body), Georgia, serif;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--lit-mute);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.lit-card .lit-card-byline {
-  margin-top: auto;
-  padding-top: 16px;
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--lit-mute);
-}
+.piece { display: flex; flex-direction: column; }
+.piece-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; margin-bottom: 14px; background: var(--lit-parchment); }
+.piece-img--placeholder { background: linear-gradient(160deg, #3d2a22, var(--lit-oxblood) 70%); }
+.piece-title { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 18px; line-height: 1.28; color: var(--lit-ink); }
+.piece:hover .piece-title { color: var(--lit-oxblood); }
+.piece-byline { font-family: var(--font-lit-body), Georgia, serif; font-style: italic; font-size: 13.5px; color: var(--lit-mute); margin-top: 5px; }
+.piece-dek { font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.55; color: var(--lit-mute); margin-top: 9px; }
 
-.lit-empty {
-  padding: 64px 28px;
-  text-align: center;
-  border-top: 1px solid var(--lit-rule);
-  border-bottom: 1px solid var(--lit-rule);
-}
+.lit-empty { padding: 64px 28px; text-align: center; border-top: 1px solid var(--lit-rule); border-bottom: 1px solid var(--lit-rule); }
 .lit-empty p { max-width: 44ch; margin: 0 auto 22px; color: var(--lit-mute); font-family: var(--font-lit-body), Georgia, serif; font-size: 16px; line-height: 1.6; font-style: italic; }
 
-/* ── CTA BAND (submissions) — dark ink, restrained gold, brand guide §14 "institutional news" treatment ── */
-.lit-cta-section { padding: clamp(56px, 7vw, 88px) 0; }
-.lit-cta-band {
-  background: var(--lit-ink);
-  color: var(--lit-ivory);
-  padding: clamp(40px, 5vw, 56px);
-  text-align: center;
+.lit-btn-primary {
+  display: inline-flex; align-items: center; height: 42px; padding: 0 22px;
+  background: var(--lit-ink); color: var(--lit-ivory);
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
 }
-.lit-cta-band h3 {
-  font-family: var(--font-lit-italic), Georgia, serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: clamp(22px, 3vw, 32px);
-  max-width: 24ch;
-  margin: 0 auto;
+.lit-btn-primary:hover { background: var(--lit-oxblood); }
+
+/* ── TINTED SERIES BAND ── */
+.lit-band { background: var(--lit-parchment); }
+
+/* ── SUBMISSIONS SPOTLIGHT (was a print-issue plug in the mockup — this is
+   the real, always-relevant equivalent: submissions are open year-round) ── */
+.lit-plug { display: grid; grid-template-columns: 190px 1fr; gap: 38px; align-items: center; padding: 34px; border: 1px solid var(--lit-rule-strong); }
+@media (max-width: 620px) { .lit-plug { grid-template-columns: 1fr; } }
+.lit-plug-cover {
+  aspect-ratio: 2/3; width: 100%;
+  background: linear-gradient(150deg, var(--lit-ink) 0%, var(--lit-oxblood-deep) 55%, var(--lit-umber) 120%);
+  display: flex; flex-direction: column; justify-content: space-between; padding: 16px; color: var(--lit-ivory);
 }
-.lit-cta-band p {
-  margin-top: 14px;
-  font-family: var(--font-lit-body), Georgia, serif;
-  font-size: 15px;
-  color: color-mix(in srgb, var(--lit-ivory) 75%, transparent);
-  max-width: 46ch;
-  margin-left: auto;
-  margin-right: auto;
+.lit-plug-cover-label { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lit-gold); }
+.lit-plug-cover-title { font-family: var(--font-lit-display), Georgia, serif; font-style: italic; font-size: 22px; line-height: 1.15; }
+.lit-plug h3 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-style: italic; font-size: 27px; margin-top: 8px; color: var(--lit-ink); }
+.lit-plug p { font-family: var(--font-lit-body), Georgia, serif; font-size: 15.5px; line-height: 1.65; color: var(--lit-mute); margin-top: 12px; max-width: 52ch; }
+.lit-plug-cta { margin-top: 16px; }
+
+/* ── SHELF (Browse by Section) ── */
+.lit-shelf { position: relative; }
+.lit-shelf-track { display: flex; gap: 26px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+.lit-shelf-item { flex: 0 0 160px; scroll-snap-align: start; }
+.lit-shelf-cover { aspect-ratio: 2/3; width: 100%; margin-bottom: 10px; display: flex; align-items: flex-end; padding: 12px; color: var(--lit-ivory); font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+.lit-shelf-name { font-family: var(--font-lit-display), Georgia, serif; font-size: 14.5px; color: var(--lit-ink); }
+.lit-shelf-nav {
+  position: absolute; top: 38%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%;
+  background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); display: flex; align-items: center; justify-content: center;
+  font-family: Georgia, serif; font-size: 16px; cursor: pointer;
 }
-.lit-cta-band .lit-btn-primary { margin-top: 26px; background: var(--lit-ivory); color: var(--lit-ink); }
-.lit-cta-band .lit-btn-primary:hover { background: var(--lit-gold); color: var(--lit-ink); }
+.lit-shelf-nav--l { left: -14px; }
+.lit-shelf-nav--r { right: -14px; }
 
 /* ── SINGLE PIECE ── */
-.lit-piece-wrap { max-width: 660px; margin: 0 auto; padding: clamp(56px, 7vw, 88px) 64px clamp(64px, 8vw, 96px); }
-@media (max-width: 1024px) { .lit-piece-wrap { padding-left: 32px; padding-right: 32px; } }
+.lit-piece-wrap { max-width: 660px; margin: 0 auto; padding: clamp(56px, 7vw, 88px) 32px clamp(64px, 8vw, 96px); }
 @media (max-width: 640px) { .lit-piece-wrap { padding-left: 20px; padding-right: 20px; } }
 
 .lit-piece-kicker {
@@ -495,14 +308,9 @@
   color: var(--lit-ink);
   margin-bottom: 26px;
 }
-.lit-piece-more .lit-grid { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 640px) { .lit-piece-more .lit-grid { grid-template-columns: 1fr; } }
 
-/* ── SUBMISSIONS PAGE (lit-submit-*, replaces reuse of the sitewide
-   legal-wrap/contact-* classes — this page needed its own ivory/oxblood
-   treatment like everything else in the section) ── */
-.lit-submit-wrap { max-width: 720px; margin: 0 auto; padding: clamp(64px, 8vw, 96px) 64px clamp(72px, 9vw, 112px); }
-@media (max-width: 1024px) { .lit-submit-wrap { padding-left: 32px; padding-right: 32px; } }
+/* ── SUBMISSIONS PAGE ── */
+.lit-submit-wrap { max-width: 720px; margin: 0 auto; padding: clamp(48px, 6vw, 72px) 32px clamp(72px, 9vw, 112px); }
 @media (max-width: 640px) { .lit-submit-wrap { padding-left: 20px; padding-right: 20px; } }
 .lit-submit-wrap h1 {
   font-family: var(--font-lit-display), Georgia, serif;
@@ -532,3 +340,32 @@
 .lit-submit-card p { font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.55; color: var(--lit-mute); margin-bottom: 10px; }
 .lit-submit-card a { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600; color: var(--lit-oxblood); text-decoration: none; }
 .lit-submit-card a:hover { text-decoration: underline; }
+
+/* ── FOOTER ── */
+.lit-foot { background: var(--lit-ink); color: var(--lit-ivory); margin-top: 8px; }
+.lit-foot-top { padding: 56px 0 40px; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 40px; }
+@media (max-width: 820px) { .lit-foot-top { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .lit-foot-top { grid-template-columns: 1fr; } }
+.lit-foot-tag { font-family: var(--font-lit-italic), Georgia, serif; font-style: italic; font-size: 15px; color: rgba(245, 239, 228, 0.62); margin: 10px 0 0; max-width: 26ch; }
+.lit-foot-h { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-gold); margin-bottom: 14px; }
+.lit-foot-links { display: flex; flex-direction: column; gap: 9px; font-family: var(--font-lit-body), Georgia, serif; font-size: 15px; }
+.lit-foot-links a { color: rgba(245, 239, 228, 0.82); }
+.lit-foot-links a:hover { color: var(--lit-ivory); text-decoration: underline; }
+.lit-nl-form { display: flex; margin-top: 20px; max-width: 320px; }
+.lit-nl-input {
+  flex: 1; background: transparent; border: 1px solid rgba(245, 239, 228, 0.3); border-right: 0; padding: 10px 12px; color: var(--lit-ivory);
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+}
+.lit-nl-input::placeholder { color: rgba(245, 239, 228, 0.45); }
+.lit-nl-btn {
+  background: var(--lit-oxblood); color: var(--lit-ivory); border: 1px solid var(--lit-oxblood); padding: 0 16px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.lit-nl-btn:hover { background: var(--lit-oxblood-deep); }
+.lit-foot-bottom {
+  border-top: 1px solid rgba(245, 239, 228, 0.14); padding: 20px 0;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; color: rgba(245, 239, 228, 0.55);
+}
+.lit-foot-bottom a { color: rgba(245, 239, 228, 0.7); }
+.lit-foot-bottom a:hover { color: var(--lit-ivory); }
