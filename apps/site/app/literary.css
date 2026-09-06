@@ -106,10 +106,14 @@
 }
 .lit-util-link { color: var(--lit-mute); }
 .lit-util-link:hover { color: var(--lit-oxblood); }
-.lit-btn-pill { border: 1px solid var(--lit-oxblood); padding: 7px 16px; border-radius: 999px; color: var(--lit-oxblood); }
-.lit-btn-pill:hover { background: var(--lit-oxblood); color: var(--lit-ivory); }
+/* Any solid-filled pill (oxblood or ink) always carries ivory text — never
+   black, never oxblood-on-oxblood. Submit is ink-filled, Subscribe is
+   oxblood-filled, so the two read as distinct actions rather than
+   duplicating each other's color. */
+.lit-btn-pill { background: var(--lit-ink); border: 1px solid var(--lit-ink); padding: 7px 16px; border-radius: 999px; color: var(--lit-ivory); }
+.lit-btn-pill:hover { background: var(--lit-oxblood); border-color: var(--lit-oxblood); color: var(--lit-ivory); }
 .lit-btn-pill--fill { background: var(--lit-oxblood); color: var(--lit-ivory); border-color: var(--lit-oxblood); }
-.lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); }
+.lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); border-color: var(--lit-oxblood-deep); color: var(--lit-ivory); }
 .lit-search-icon {
   width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--lit-rule-strong);
   display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--lit-mute);
