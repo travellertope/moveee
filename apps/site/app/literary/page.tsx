@@ -19,8 +19,8 @@ export default async function LiteraryLandingPage() {
         </div>
         <h1>Writing that shapes the world.</h1>
         <p className="lit-sub">
-          An international page for fiction, poetry, essays, conversations and translated
-          literature — published alongside The Moveee&rsquo;s print quarterly.
+          An international home for fiction, poetry, essays, conversations and translated
+          literature, published continuously by The Moveee.
         </p>
         <nav className="lit-hero-nav" aria-label="Browse by section">
           {LITERARY_GENRES.filter((g) => g.slug !== "notes").map((g, i) => (
@@ -88,7 +88,7 @@ export default async function LiteraryLandingPage() {
       <section className="lit-cta-section">
         <div className="lit-cta-band">
           <h3>We&rsquo;re reading. Submit poetry, fiction, nonfiction, conversations or translation.</h3>
-          <p>We read on a rolling quarterly basis, in step with every print edition.</p>
+          <p>We read on a rolling basis and publish new work continuously.</p>
           <Link className="lit-btn-primary" href="/literary/submit">
             Submission Guidelines →
           </Link>

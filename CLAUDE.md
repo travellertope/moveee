@@ -412,8 +412,12 @@ Fixed:
 
 ## The Moveee Literary (`/literary`, added September 2026)
 
-A quarterly poetry/fiction/nonfiction/translation vertical on Site A (`apps/site`), built to feel
-like a distinct modern literary magazine while shipping alongside The Moveee's print quarterly.
+A fiction/poetry/essays/conversations/translation vertical on Site A (`apps/site`), built to feel
+like a distinct modern literary magazine. **Digital-only for now — there is no print edition.**
+An earlier pass in this build described it as shipping alongside "The Moveee's print quarterly";
+that was wrong and has been corrected throughout the section's copy (landing page, submissions
+page) and the brand-guide rebuild entry below — don't reintroduce "print"/"quarterly edition"
+language into this vertical's user-facing copy unless a real print product is confirmed later.
 "The Moveee Literary" is a named section title, same pattern as "The Lane"/"The Edit"/"The Free
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
