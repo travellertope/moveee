@@ -2865,6 +2865,10 @@ dead CSS, unused by the homepage — see the "ARCHIVE-STYLE SECTIONS" comment ab
 in the same file) were left untouched. Not visually verified in a browser — same credentials gap
 as every other pass in this file.
 
+**Follow-up, same month — masthead `<h1>` size reduced.** `.masthead h1`'s `font-size` clamp
+(`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
+a straightforward size-only tweak, no layout/structure change.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
