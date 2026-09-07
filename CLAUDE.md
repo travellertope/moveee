@@ -1487,6 +1487,39 @@ the old filenames was missed, and `tsc --noEmit` (only pre-existing, unrelated e
 missing `@types/node`, `@vercel/kv`, Next.js `fetch`'s `next` option — none touching
 `Header.tsx`/`SearchOverlay.tsx`/`header.css`).
 
+### Site A floating header pill — reduced radius, full-width, bigger mobile logo (September 2026)
+
+Three CSS-only tweaks to `apps/site/app/header.css`'s `.toolbar-shell`/`.toolbar-pill`, per
+explicit user direction — the floating-pill behavior itself (transparent-over-dark, auto-hide
+on scroll, solid blurred pill elsewhere) is unchanged, only its shape/sizing:
+
+- **Less rounded**: `.toolbar-shell`'s `border-radius` went from `var(--radius-full)` (9999px,
+  a true pill) to `var(--radius-2xl)` (20px) — per the canonical radius scale documented above.
+- **Full section width**: `.toolbar-shell`'s `width` cap went from `min(100%, 460px)` to
+  `min(100%, 1328px)` — `1328px` is the site's established section column width (`.hpv2 .wrap`
+  in `homepage-v2.css`, the same max-width every homepage `.arc-section`/masthead uses), so the
+  header now spans the same width as the page content below it instead of floating as a small
+  centered capsule. `.toolbar-pill`'s existing `justify-content`-via-`margin-left:auto` layout
+  (logo left, icons pushed to the far right) already reads correctly at this width with no
+  further JSX/layout changes needed.
+- **Bigger mobile logo, same pill height**: `.toolbar-logo-img`'s mobile-breakpoint (`max-width:
+  640px`) height went from `22px` to `28px` — the user flagged it as "too tiny." This didn't
+  need any height-compensating padding change to hold the "don't increase header height" rule:
+  `.toolbar-icon` is a fixed `32px` box at every breakpoint, and 28px is still shorter than that,
+  so the pill's rendered height (still set by the icons + the unchanged `8px`/`8px` vertical
+  padding) doesn't move. Horizontal `.toolbar-pill`/`.toolbar-icons` gaps and padding were
+  tightened slightly (`gap: 8px→6px`, `padding: 8px 12px 8px 10px → 8px 10px 8px 8px`) to claw
+  back the extra horizontal room the bigger logo takes, so all three icons (search/cart/menu)
+  still fit down to a 320px-wide viewport — same reasoning the original 22px shrink documented.
+  Desktop logo size/padding are untouched (the user's ask was mobile-specific).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file, and no `node_modules` installed this session so `tsc --noEmit`
+  couldn't run either. Verified via a CSS brace-balance check on `header.css` (83/83, balanced)
+  and a manual read-through of `.toolbar-icon`'s fixed `32px` box to confirm the mobile
+  logo-height claim above. Re-check pixel fidelity — especially the wide-viewport pill spanning
+  the full 1328px column, and the mobile icon spacing at a 320px viewport — in a real environment
+  before considering this fully closed.
+
 ## Connect App build phases
 
 | Phase | Status | Scope |

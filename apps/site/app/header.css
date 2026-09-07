@@ -37,8 +37,8 @@
    content-body area, and disappears again the moment you're back over
    a dark hero. No JS change needed, this only had to come back in CSS. */
 .toolbar-shell {
-  width: min(100%, 460px);
-  border-radius: var(--radius-full);
+  width: min(100%, 1328px);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
   background: transparent;
   box-shadow: none;
@@ -250,14 +250,18 @@
   .site-toolbar { padding: 0 8px; }
   .toolbar-shell { width: calc(100% - 8px); }
   /* The logo files are wide wordmarks (~6.5:1), not square marks — at the
-     desktop-sized 40px height they eat most of a narrow pill's width, and
-     since .toolbar-shell clips overflow, the trailing cart/menu icons get
-     cropped off-screen (only search, closest to the logo, stays visible).
-     Shrink the logo and tighten the gaps/padding so all three icons fit
+     desktop-sized 40px height they'd eat most of a narrow pill's width, and
+     since .toolbar-shell clips overflow, the trailing cart/menu icons would
+     get cropped off-screen (only search, closest to the logo, stays
+     visible). Grown from an earlier 22px (was reading as "too tiny") to
+     28px — still shorter than the icons' own fixed 32px box, so the pill's
+     overall height (set by vertical padding + the taller of logo/icons)
+     doesn't grow along with it. Gaps/padding are tightened to claw back the
+     horizontal room the bigger logo takes, so all three icons still fit
      down to a 320px-wide viewport. */
-  .toolbar-logo-img { height: 22px; }
-  .toolbar-pill { gap: 8px; padding: 8px 12px 8px 10px; }
-  .toolbar-icons { gap: 8px; }
+  .toolbar-logo-img { height: 28px; }
+  .toolbar-pill { gap: 6px; padding: 8px 10px 8px 8px; }
+  .toolbar-icons { gap: 6px; }
 }
 
 /* ============================================================
