@@ -83,7 +83,7 @@
 }
 .feed-category-pill:hover:not(.feed-category-pill--active) { color: #14110d; }
 .feed-category-pill--active {
-  color: #c5491f;
-  border-bottom-color: #c5491f;
+  color: #7a241c;
+  border-bottom-color: #7a241c;
   font-weight: 700;
 }

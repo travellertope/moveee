@@ -1,7 +1,7 @@
 /* ========== EDITORIAL / SINGLE POST — ar-* namespace ========== */
 
 :root {
-  --ar-ochre: #C5491F;
+  --ar-ochre: #7a241c;
   --ar-gold: #B38238;
   --ar-ghost: #C8BFB0;
   --ar-ghost-light: #EEE8DF;
@@ -109,7 +109,12 @@
   top: calc(var(--header-clear, 96px) + 32px);
   bottom: 48px;
   right: 48px;
-  width: clamp(260px, 30vw, 520px);
+  /* Widened (kept the same top/bottom-driven height) so the frame reads as
+     landscape rather than near-square, filling more of the empty gutter
+     between it and .ar-hero-text instead of leaving it bare. Only `right`
+     is pinned — no `left` — so growing the width extends the panel
+     leftward, toward that gap, exactly where the space was empty. */
+  width: clamp(380px, 46vw, 760px);
   z-index: 2;
   border-radius: var(--radius-2xl);
   overflow: hidden;
@@ -692,7 +697,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin: 0;
+  /* Was `margin: 0` — three classes beats the generic `.prose-content
+     figure { margin: 2em 0 }` rule's specificity (a class+class+figure
+     combinator loses to class+class+class), so the gallery always won
+     with zero top/bottom margin regardless of source order, leaving no
+     gap between it and whatever paragraph follows. Restored the same
+     2em vertical rhythm every other block (single images, figures) uses. */
+  margin: 2em 0;
 }
 .ar-wrap .prose-content .wp-block-gallery.columns-2 { grid-template-columns: repeat(2, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-3 { grid-template-columns: repeat(3, 1fr); }
@@ -1180,7 +1191,7 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
-  .ar-hero-photo { right: 32px; width: clamp(220px, 32vw, 380px); }
+  .ar-hero-photo { right: 32px; width: clamp(280px, 40vw, 480px); }
   .ar-standard-hero { padding: 40px 32px 32px; padding-top: calc(var(--header-clear, 96px) + 40px); }
   /* Rail collapse: the wide/full tiers only mean anything once there's
      enough viewport for a gutter either side of the 680px text column

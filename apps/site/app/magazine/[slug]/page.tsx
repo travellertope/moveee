@@ -491,7 +491,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <rect width="120" height="120" fill="#3d4a2a" />
               <ellipse cx="60" cy="52" rx="32" ry="40" fill="#6b3020" />
               <path d="M 30 44 Q 35 14 60 10 Q 85 14 90 44 Q 84 26 60 24 Q 36 26 30 44 Z" fill="#14110d" />
-              <path d="M 10 120 Q 28 80 44 72 L 76 72 Q 92 80 110 120 Z" fill="#c5491f" />
+              <path d="M 10 120 Q 28 80 44 72 L 76 72 Q 92 80 110 120 Z" fill="#7a241c" />
               <circle cx="49" cy="52" r="4" fill="#14110d" />
               <circle cx="71" cy="52" r="4" fill="#14110d" />
               <path d="M 48 72 Q 60 80 72 72" stroke="#14110d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
@@ -567,7 +567,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                           </linearGradient>
                         </defs>
                         <rect width="400" height="300" fill={`url(#rg-${story.id})`} />
-                        <circle cx="200" cy="150" r="80" fill="#c5491f" opacity="0.35" />
+                        <circle cx="200" cy="150" r="80" fill="#7a241c" opacity="0.35" />
                         <circle cx="200" cy="150" r="50" fill="#b38238" opacity="0.45" />
                       </svg>
                     )}

@@ -32,9 +32,9 @@ const EventHero: React.FC<EventHeroProps> = ({
     // Pattern 0: The Original (Warm Ochre Glow)
     {
       bg: "linear-gradient(to bottom, #2a1208 0%, #14110d 50%, #0c0805 100%)",
-      glow1: "#c5491f",
+      glow1: "#7a241c",
       glow2: "#b38238",
-      accent: "#c5491f"
+      accent: "#7a241c"
     },
     // Pattern 1: Deep Indigo & Moss
     {
@@ -46,9 +46,9 @@ const EventHero: React.FC<EventHeroProps> = ({
     // Pattern 2: Ochre Deep & Paper
     {
       bg: "linear-gradient(to bottom, #4a1d0b 0%, #14110d 60%, #0c0805 100%)",
-      glow1: "#8a2d10",
+      glow1: "#5c1b15",
       glow2: "#ebe1d0",
-      accent: "#c5491f"
+      accent: "#7a241c"
     },
     // Pattern 3: Moss & Gold
     {

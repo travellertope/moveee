@@ -273,7 +273,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                       padding: "0.3rem 0",
                       fontSize: "0.72rem",
                       fontFamily: "var(--font-mono), monospace",
-                      color: "var(--ochre, #c5491f)",
+                      color: "var(--ochre, #7a241c)",
                       textDecoration: "none",
                       letterSpacing: "0.06em",
                     }}

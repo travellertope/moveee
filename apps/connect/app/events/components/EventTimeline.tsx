@@ -111,7 +111,7 @@ function groupByMonth(events: TimelineEvent[]) {
 }
 
 const CAT_DOT: Record<string, string> = {
-  music: "#C5491F",
+  music: "#7a241c",
   film: "#1976D2",
   "visual-arts": "#6B48A8",
   literature: "#78350F",

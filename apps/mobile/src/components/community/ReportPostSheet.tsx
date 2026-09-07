@@ -118,13 +118,13 @@ function createStyles(c: ColorPalette) {
       justifyContent: "center",
     },
     radioActive: {
-      borderColor: "#C5491F",
+      borderColor: "#7a241c",
     },
     radioDot: {
       width: 12,
       height: 12,
       borderRadius: 6,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
     },
     rowLabel: {
       fontFamily: fonts.sans,
@@ -136,7 +136,7 @@ function createStyles(c: ColorPalette) {
     },
     submitBtn: {
       height: 48,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",

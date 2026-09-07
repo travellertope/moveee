@@ -113,7 +113,7 @@ const EVENT_FORMATS = ["All", "In-person", "Virtual"];
 const DISCOVER_TYPES: { slug: string; label: string; color: string }[] = [
   { slug: "person", label: "Person", color: "#B38238" },
   { slug: "place", label: "Place", color: "#2E7D32" },
-  { slug: "food", label: "Food", color: "#C5491F" },
+  { slug: "food", label: "Food", color: "#7a241c" },
   { slug: "book", label: "Book", color: "#78350F" },
   { slug: "film", label: "Film", color: "#1976D2" },
   { slug: "genre", label: "Genre", color: "#6B48A8" },

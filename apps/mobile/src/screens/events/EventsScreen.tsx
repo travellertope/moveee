@@ -130,7 +130,7 @@ function mondayOf(d: Date): Date {
 
 // ── Category styling ─────────────────────────────────────────────────────────
 const CATEGORY_STYLES: { keys: string[]; color: string; label: string }[] = [
-  { keys: ["music"],            color: "#C5491F", label: "Live Music" },
+  { keys: ["music"],            color: "#7a241c", label: "Live Music" },
   { keys: ["night"],            color: "#7B1FA2", label: "Nightlife" },
   { keys: ["food", "drink"],    color: "#B38238", label: "Food & Drink" },
   { keys: ["film"],             color: "#1976D2", label: "Film" },

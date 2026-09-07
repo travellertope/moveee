@@ -112,7 +112,7 @@
 }
 
 .chk-primary-btn:hover:not(:disabled) {
-  background: var(--ochre-deep, #8a2d10);
+  background: var(--ochre-deep, #5c1b15);
 }
 
 .chk-primary-btn:disabled {

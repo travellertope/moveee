@@ -184,7 +184,7 @@ export default function QuoteComments({ postId, initialComments }: Props) {
               outline: "none", padding: "0.65rem 0.85rem", boxSizing: "border-box",
             }}
           />
-          {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{error}</p>}
+          {error && <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{error}</p>}
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.65rem" }}>
             <button
               type="submit"

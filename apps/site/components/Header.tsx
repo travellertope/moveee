@@ -93,31 +93,38 @@ const Header = () => {
     let lastY = window.scrollY;
     let raf: number | null = null;
 
-    function inDarkZone(y: number): boolean {
-      // Re-queried on every call (cheap, and already rAF-throttled below)
-      // rather than cached once at effect-mount time — caching it left a
-      // hydration race where the very first update() (called synchronously
-      // below, before the DOM necessarily reflects the just-hydrated page)
-      // could find zero zones and latch the header solid/dark-text for the
-      // rest of the page's life, never re-scanning until a resize. That's
-      // what caused the homepage hero to render with a solid pill/dark
-      // logo instead of transparent/light on initial load.
+    // Viewport-relative (getBoundingClientRect), not offsetTop/scrollY
+    // arithmetic — offsetTop is measured against the nearest *positioned*
+    // ancestor (not the document), so a page whose dark-hero section sits
+    // inside its own `position: relative` wrapper (e.g. `/magazine/*`'s
+    // `.mg-page-white`) could measure a stale/off-by-wrapper offsetTop and
+    // never resolve to "dark" at all — this bit inner-page heroes (the
+    // homepage's `.hero-full` has no such wrapper, so it worked there and
+    // masked the bug). getBoundingClientRect() always reports the element's
+    // *current* position relative to the viewport regardless of how many
+    // positioned ancestors sit between it and the document, so this can't
+    // drift the same way. Re-queried on every call (cheap, and already
+    // rAF-throttled below) rather than cached once at effect-mount time —
+    // caching left a hydration race where the very first update() (called
+    // synchronously below, before the DOM necessarily reflects the
+    // just-hydrated page) could find zero zones and latch the header
+    // solid/dark-text for the rest of the page's life.
+    function inDarkZone(): boolean {
       const zones = Array.from(document.querySelectorAll<HTMLElement>('[data-header-zone="dark"]'));
-      // Sample a bit below the header's own top edge (same -120/+40
-      // grace the old single-hero check used) rather than bare scrollY,
-      // so the switch happens once the header has genuinely cleared the
-      // zone, not the instant scrollY passes its exact pixel boundary.
-      const sampleY = y + 40;
+      // Sample a band just below the header's own bottom edge (roughly
+      // where the header pill actually sits) — the header counts as "on"
+      // a zone once that zone's top has reached (or passed above) this
+      // band and its bottom hasn't cleared it yet, same ~40/120px grace
+      // the old scrollY-based check used.
       return zones.some((el) => {
-        const top = el.offsetTop;
-        const bottom = top + el.offsetHeight;
-        return sampleY >= top - 40 && sampleY < bottom - 120;
+        const rect = el.getBoundingClientRect();
+        return rect.top <= 40 && rect.bottom > 160;
       });
     }
 
     function update() {
       const y = window.scrollY;
-      const dark = inDarkZone(y);
+      const dark = inDarkZone();
       setOnDark(dark);
       setIsSolid(!dark);
       if (dark) {

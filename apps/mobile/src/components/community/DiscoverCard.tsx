@@ -21,7 +21,7 @@ export interface DiscoverEntry {
 export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: string }> = {
   person:      { emoji: "👤", label: "PERSON",    color: "#B38238" },
   place:       { emoji: "🏛",  label: "PLACE",     color: "#2E7D32" },
-  food:        { emoji: "🍽",  label: "FOOD",      color: "#C5491F" },
+  food:        { emoji: "🍽",  label: "FOOD",      color: "#7a241c" },
   book:        { emoji: "📚", label: "BOOK",      color: "#78350F" },
   film:        { emoji: "🎬", label: "FILM",      color: "#1976D2" },
   genre:       { emoji: "🎵", label: "GENRE",     color: "#6B48A8" },

@@ -144,7 +144,7 @@ export default function PasskeyPrompt({ mode, onSuccess, onDismiss, onStepUpToke
         </p>
       )}
       {message && status !== "done" && (
-        <p style={{ fontSize: "0.82rem", color: "#c5491f", margin: "0 0 12px" }}>{message}</p>
+        <p style={{ fontSize: "0.82rem", color: "#7a241c", margin: "0 0 12px" }}>{message}</p>
       )}
 
       {status !== "done" && (

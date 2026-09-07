@@ -338,7 +338,7 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
               autoCorrect={false}
               style={{
                 flex: 1, height: 44, borderWidth: 1,
-                borderColor: error ? "#c5491f" : c.rule,
+                borderColor: error ? "#7a241c" : c.rule,
                 borderRadius: radius.md, paddingHorizontal: 12,
                 fontFamily: fonts.sans, fontSize: 14, color: c.ink,
                 backgroundColor: c.paper,
@@ -359,7 +359,7 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
             </TouchableOpacity>
           </View>
           {error ? (
-            <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: "#c5491f", marginTop: 6 }}>
+            <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: "#7a241c", marginTop: 6 }}>
               {error}
             </Text>
           ) : null}

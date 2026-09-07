@@ -53,7 +53,7 @@ function createStyles(c: ColorPalette) {
     },
     sparkle: {
       fontSize: 24,
-      color: "#C5491F",
+      color: "#7a241c",
       marginTop: 20,
     },
     title: {
@@ -74,7 +74,7 @@ function createStyles(c: ColorPalette) {
     primaryBtn: {
       width: 280,
       height: 48,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",

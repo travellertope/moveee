@@ -69,7 +69,7 @@
 .mg-nav-tab--active {
   font-weight: 700;
   color: var(--ink);
-  border-bottom-color: #C5491F;
+  border-bottom-color: #7a241c;
 }
 .mg-nav-filters {
   display: flex;
@@ -129,7 +129,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .1em;
   margin-bottom: 12px;
@@ -159,7 +159,7 @@
   text-decoration: none;
   transition: color .15s;
 }
-.mg-hero-title:hover { color: #C5491F; }
+.mg-hero-title:hover { color: #7a241c; }
 .mg-hero-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 15px;
@@ -184,10 +184,10 @@
   font-weight: 700;
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 2px solid #C5491F;
+  border-bottom: 2px solid #7a241c;
   padding-bottom: 2px;
 }
-.mg-hero-read:hover { color: #C5491F; }
+.mg-hero-read:hover { color: #7a241c; }
 
 /* ── MORE THIS WEEK (promoted from the old cramped sidebar list) ── */
 .mg-week-row {
@@ -218,7 +218,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9.5px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .1em;
   margin-bottom: 6px;
@@ -232,7 +232,7 @@
   margin: 0 0 6px;
   transition: color .15s;
 }
-.mg-week-card:hover .mg-week-title { color: #C5491F; }
+.mg-week-card:hover .mg-week-title { color: #7a241c; }
 .mg-week-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -285,7 +285,7 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-decoration: none;
 }
 .mg-band-view-all:hover { text-decoration: underline; }
@@ -325,7 +325,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .12em;
   margin-bottom: 8px;
@@ -339,7 +339,7 @@
   margin: 0 0 8px;
   transition: color .15s;
 }
-.mg-card:hover .mg-card-title { color: #C5491F; }
+.mg-card:hover .mg-card-title { color: #7a241c; }
 .mg-card-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
@@ -394,7 +394,7 @@
   font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: #C5491F;
+  color: #7a241c;
   margin: 0 0 12px;
 }
 .mg-cover-title-link { text-decoration: none; color: inherit; }
@@ -407,7 +407,7 @@
   margin: 0 0 14px;
   transition: color .15s;
 }
-.mg-cover-title-link:hover .mg-cover-title { color: #C5491F; }
+.mg-cover-title-link:hover .mg-cover-title { color: #7a241c; }
 .mg-cover-dek {
   font-family: 'DM Sans', sans-serif;
   font-size: 14.5px;
@@ -421,10 +421,10 @@
   font-weight: 700;
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 2px solid #C5491F;
+  border-bottom: 2px solid #7a241c;
   padding-bottom: 2px;
 }
-.mg-cover-link:hover { color: #C5491F; }
+.mg-cover-link:hover { color: #7a241c; }
 
 @media (min-width: 900px) {
   .mg-cover-grid { grid-template-columns: 1.2fr 1fr; gap: 40px; }
@@ -480,7 +480,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .12em;
   margin-bottom: 8px;
@@ -498,7 +498,7 @@
   overflow: hidden;
   transition: color .15s;
 }
-.mg-portrait-card:hover .mg-portrait-title { color: #C5491F; }
+.mg-portrait-card:hover .mg-portrait-title { color: #7a241c; }
 .mg-portrait-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -561,7 +561,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .1em;
 }
@@ -574,7 +574,7 @@
   margin: 0;
   transition: color .15s;
 }
-.edit-lead:hover .edit-lead-title { color: #C5491F; }
+.edit-lead:hover .edit-lead-title { color: #7a241c; }
 .edit-lead-excerpt {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
@@ -620,7 +620,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .1em;
   margin: 0 0 4px;
@@ -634,7 +634,7 @@
   margin: 0 0 4px;
   transition: color .15s;
 }
-.edit-row:hover .edit-row-title { color: #C5491F; }
+.edit-row:hover .edit-row-title { color: #7a241c; }
 .edit-row-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9.5px;
@@ -686,7 +686,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .12em;
   margin-bottom: 8px;
@@ -700,7 +700,7 @@
   margin: 0 0 8px;
   transition: color .15s;
 }
-.mg-ditem:hover .mg-ditem-title { color: #C5491F; }
+.mg-ditem:hover .mg-ditem-title { color: #7a241c; }
 .mg-ditem-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -754,7 +754,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 9.5px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .12em;
   margin: 0 0 10px;
@@ -768,7 +768,7 @@
   margin: 0 0 10px;
   transition: color .15s;
 }
-.mg-op-card:hover .mg-op-title { color: #C5491F; }
+.mg-op-card:hover .mg-op-title { color: #7a241c; }
 .mg-op-author {
   font-family: 'DM Sans', sans-serif;
   font-size: 12.5px;
@@ -881,8 +881,8 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: #C5491F;
-  border-bottom: 1px solid #C5491F;
+  color: #7a241c;
+  border-bottom: 1px solid #7a241c;
   padding-bottom: 1px;
   text-decoration: none;
 }
@@ -984,7 +984,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-transform: uppercase;
   letter-spacing: .12em;
   display: block;
@@ -1078,7 +1078,7 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #C5491F;
+  color: #7a241c;
   text-decoration: none;
 }
 .mg-sec-all:hover { text-decoration: underline; }
@@ -1087,8 +1087,8 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: #C5491F;
-  border-bottom: 1px solid #C5491F;
+  color: #7a241c;
+  border-bottom: 1px solid #7a241c;
   padding-bottom: 1px;
   text-decoration: none;
   flex-shrink: 0;

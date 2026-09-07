@@ -26,8 +26,8 @@ export const lightColors = {
   ruleDark:    'rgba(20,17,13,0.15)',
 
   // Actions & accents
-  ochre:       '#C5491F',   // Primary action
-  ochreDark:   '#8A2D10',   // Primary action pressed
+  ochre:       '#7a241c',   // Primary action
+  ochreDark:   '#5c1b15',   // Primary action pressed
 
   // Pro tier accent
   gold:        '#B38238',
@@ -48,7 +48,7 @@ export const lightColors = {
   badgePulseBg:      '#FEF3E2',
   badgePulseText:    '#B38238',   // colors.gold
   badgeEditorialBg:  '#FFF0EB',
-  badgeEditorialText:'#C5491F',   // colors.ochre
+  badgeEditorialText:'#7a241c',   // colors.ochre
   badgeHappeningBg:  '#EDE9FE',
   badgeHappeningText:'#4C1D95',
   badgeDirectoryBg:  '#E8F5EE',
@@ -106,8 +106,8 @@ export const darkColors = {
   ruleDark:    '#3D3530',
 
   // Actions & accents
-  ochre:       '#D4603A',
-  ochreDark:   '#A83F20',
+  ochre:       '#954f49',
+  ochreDark:   '#7d4944',
 
   // Pro tier accent
   gold:        '#C9963F',
@@ -128,7 +128,7 @@ export const darkColors = {
   badgePulseBg:      '#2A2210',
   badgePulseText:    '#C9963F',
   badgeEditorialBg:  '#2A1810',
-  badgeEditorialText:'#D4603A',
+  badgeEditorialText:'#954f49',
   badgeHappeningBg:  '#1A1530',
   badgeHappeningText:'#A78BFA',
   badgeDirectoryBg:  '#0F1F15',
@@ -251,7 +251,7 @@ export const shadows = {
     elevation: 8,
   },
   fab: {
-    shadowColor: '#C5491F',
+    shadowColor: '#7a241c',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

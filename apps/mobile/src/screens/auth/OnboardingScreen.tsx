@@ -32,9 +32,9 @@ function TextileIllustration({ height }: { height: number }) {
   const blockW = W / 3;
   const blockH = height / 3;
   const palette = [
-    "#C5491F", "#B38238", "#3A1A08",
-    "#5C2A0E", "#C5491F", "#B38238",
-    "#B38238", "#4A1A06", "#C5491F",
+    "#7a241c", "#B38238", "#3A1A08",
+    "#5C2A0E", "#7a241c", "#B38238",
+    "#B38238", "#4A1A06", "#7a241c",
   ];
   const circleXs = [blockW / 2, blockW + blockW / 2, blockW * 2 + blockW / 2];
 
@@ -87,7 +87,7 @@ function GridIllustration({ height }: { height: number }) {
   const colW = W / 2;
   const rowH = height / 3;
   const cards = [
-    { fill: "#C5491F", label: "Editorial" },
+    { fill: "#7a241c", label: "Editorial" },
     { fill: "#4C1D95", label: "Happening" },
     { fill: "#92400E", label: "Place" },
     { fill: "#14110D", label: "Pulse" },

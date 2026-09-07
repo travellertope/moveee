@@ -431,7 +431,7 @@ function createStyles(c: ColorPalette) {
     errorText: {
       fontFamily: fonts.sans,
       fontSize: fontSize.xs,
-      color: "#C5491F",
+      color: "#7a241c",
       marginTop: 4,
       marginBottom: 8,
     },
@@ -466,7 +466,7 @@ function createStyles(c: ColorPalette) {
 
     primaryBtn: {
       height: 56,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",

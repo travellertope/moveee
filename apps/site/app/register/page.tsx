@@ -121,7 +121,7 @@ function RegisterForm() {
         <form onSubmit={handleSubmit} noValidate>
           <div style={styles.field}>
             <label style={styles.label} htmlFor="email">
-              Email <span style={{ color: "#c5491f" }}>*</span>
+              Email <span style={{ color: "#7a241c" }}>*</span>
             </label>
             <input
               id="email"
@@ -137,7 +137,7 @@ function RegisterForm() {
 
           <div style={styles.field}>
             <label style={styles.label} htmlFor="username">
-              Username <span style={{ color: "#c5491f" }}>*</span>
+              Username <span style={{ color: "#7a241c" }}>*</span>
             </label>
             <input
               id="username"
@@ -153,7 +153,7 @@ function RegisterForm() {
 
           <div style={styles.field}>
             <label style={styles.label} htmlFor="password">
-              Password <span style={{ color: "#c5491f" }}>*</span>
+              Password <span style={{ color: "#7a241c" }}>*</span>
             </label>
             <input
               id="password"

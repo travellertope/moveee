@@ -7,7 +7,7 @@ import type { FeedItem } from "../../types";
 import HappeningDetailModal from "./HappeningDetailModal";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  music: "#C5491F",
+  music: "#7a241c",
   nightlife: "#7B1FA2",
   food: "#B38238",
   film: "#1976D2",

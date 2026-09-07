@@ -82,7 +82,7 @@ function AvatarUpload({ initial, currentUrl }: { initial: string; currentUrl?: s
         </div>
         <div>
           <div className="mem-field-label">Profile photo</div>
-          {error && <div style={{ color: "#c5491f", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</div>}
+          {error && <div style={{ color: "#7a241c", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</div>}
         </div>
       </div>
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFile} style={{ display: "none" }} />

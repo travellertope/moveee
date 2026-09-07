@@ -1434,7 +1434,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                         type="button"
                         onClick={() => setBookGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
                         className="composer-guide-chip"
-                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                        style={active ? { background: "#7a241c", color: "#fff", borderColor: "#7a241c" } : undefined}
                       >
                         {g}
                       </button>
@@ -1446,7 +1446,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       type="button"
                       onClick={() => setBookGenres(prev => prev.filter(x => x !== g))}
                       className="composer-guide-chip"
-                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                      style={{ background: "#7a241c", color: "#fff", borderColor: "#7a241c" }}
                     >
                       {g} ×
                     </button>
@@ -1540,7 +1540,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                         type="button"
                         onClick={() => setMusicGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
                         className="composer-guide-chip"
-                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                        style={active ? { background: "#7a241c", color: "#fff", borderColor: "#7a241c" } : undefined}
                       >
                         {g}
                       </button>
@@ -1552,7 +1552,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       type="button"
                       onClick={() => setMusicGenres(prev => prev.filter(x => x !== g))}
                       className="composer-guide-chip"
-                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                      style={{ background: "#7a241c", color: "#fff", borderColor: "#7a241c" }}
                     >
                       {g} ×
                     </button>
@@ -1646,7 +1646,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                         type="button"
                         onClick={() => setFilmGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
                         className="composer-guide-chip"
-                        style={active ? { background: "#c5491f", color: "#fff", borderColor: "#c5491f" } : undefined}
+                        style={active ? { background: "#7a241c", color: "#fff", borderColor: "#7a241c" } : undefined}
                       >
                         {g}
                       </button>
@@ -1658,7 +1658,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                       type="button"
                       onClick={() => setFilmGenres(prev => prev.filter(x => x !== g))}
                       className="composer-guide-chip"
-                      style={{ background: "#c5491f", color: "#fff", borderColor: "#c5491f" }}
+                      style={{ background: "#7a241c", color: "#fff", borderColor: "#7a241c" }}
                     >
                       {g} ×
                     </button>

@@ -819,7 +819,8 @@ this section instead of (or in addition to) the standard one.
 var(--ink)        /* #14110d — primary dark text / dark backgrounds */
 var(--paper)      /* #f3ece0 — primary light background */
 var(--paper-deep) /* slightly deeper paper, for card backgrounds */
-var(--ochre)      /* #c5491f — accent rust (NOT amber — corrected June 2026, see note below) */
+var(--ochre)      /* #7a241c — accent brick/oxblood red (changed from rust #c5491f — see note below) */
+var(--ochre-deep) /* #5c1b15 — deeper/hover shade of --ochre, same value as --lit-oxblood-deep */
 var(--gold)       /* #b38238 — accent gold/amber, distinct from ochre */
 var(--rule)       /* border colour, subtle */
 var(--mute)       /* muted text */
@@ -827,12 +828,32 @@ var(--ink-soft)   /* softer body text */
 ```
 
 **Correction (June 2026):** this table previously listed `var(--ochre)` as `#b38238`
-(amber) — that was wrong. The actual definitions in `apps/connect/app/globals.css`
-are `--ochre: #c5491f` (rust) and `--gold: #b38238` (amber) — two distinct tokens.
-This matches the Figma Make mockups' own Tailwind config (`ochre: '#C5491F'`,
-`gold: '#B38238'`) exactly. If a future rebuild pass seems to find an "ochre vs gold
-mismatch" between mockups and the live CSS, check the real `globals.css` values first
-— they likely already match; don't assume the stale value once documented here.
+(amber) — that was wrong. `--ochre` and `--gold` are two distinct tokens. This matches
+the Figma Make mockups' own Tailwind config exactly. If a future rebuild pass seems to
+find an "ochre vs gold mismatch" between mockups and the live CSS, check the real
+`globals.css` values first — they likely already match; don't assume the stale value
+once documented here.
+
+**Ochre recolored from rust to brick/oxblood (September 2026).** `--ochre`/`--color-ochre`
+(and their Tailwind `ochre.DEFAULT` mirrors) changed from `#c5491f` (rust) to `#7a241c`
+(a dark brick/oxblood — the same hue already used as `--lit-oxblood` for The Moveee
+Literary vertical, see that section below) across `apps/site`, `apps/connect`,
+`packages/shared`, and `apps/mobile`'s `theme.ts` (`colors.ochre`) — this is the
+site-wide heading/accent/CTA color, not just a Literary-section-specific one. `--ochre-deep`
+(hover/pressed shade) changed from `#8a2d10` to `#5c1b15` — reusing `--lit-oxblood-deep`'s
+exact value for the same reason. `apps/connect/app/globals.css`'s dark-mode override block
+(`--ochre`/`--ochre-deep` at a lighter value for legibility against a dark background) was
+recalculated proportionally: `#954f49`/`#7d4944` (was `#d4603a`/`#a83f20`). Every literal
+hex occurrence of the four old values (`#c5491f`, `#8a2d10`, `#d4603a`, `#a83f20`) across
+`apps/site`, `apps/connect`, `apps/mobile`, and `packages/shared` — not just the CSS
+variable definitions — was swept and replaced with its new counterpart, including
+`packages/shared/lib/gemini.ts`'s illustration-generation prompt (which names the brand
+palette literally, so AI-generated art keeps matching the new accent). `--gold` (`#b38238`,
+amber) is unrelated and untouched — this only recolors the ochre/rust token, not every
+warm accent on the site. A handful of one-off literal fallback hexes on `var(--ochre-deep,
+#a83d18)`-style CSS fallbacks (a slightly different literal than the four swept above)
+were left as-is — harmless, since `--ochre-deep` is always defined at `:root` so the
+fallback never actually triggers.
 
 The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.
@@ -2502,6 +2523,64 @@ image-then-text-with-no-chrome layout.
   `editorial.css` (190/190). Re-check pixel fidelity — especially the mobile hero and the
   `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
   considering this fully closed.
+
+### Header dark-zone detection was measuring the wrong coordinate space (fixed September 2026) + hero photo panel widened to landscape
+
+**Bug**: user-reported — on page load, the floating header should render transparent with the
+white logo variant whenever it's sitting over a page's dark hero (homepage's `.hero-full`, or an
+inner page's own `[data-header-zone="dark"]` section, e.g. `/magazine/[slug]`'s `.ar-hero`) — it
+worked on the homepage but not on inner pages. Root cause in `Header.tsx`'s `inDarkZone()`: it
+measured each zone element's `offsetTop`/`offsetHeight` and compared against `window.scrollY`.
+`offsetTop` is relative to the element's nearest **positioned** ancestor, not the document — a
+page whose hero sits inside its own `position: relative` wrapper (`/magazine/*`'s `.mg-page-white`,
+added by the "plain-white magazine background" fix earlier in this file) measures `offsetTop`
+relative to *that* wrapper, not the viewport/document `scrollY` the code was comparing it against.
+The homepage's `.hero-full` has no such wrapper, so the arithmetic happened to still line up there
+and masked the bug everywhere else. **Fixed** by switching `inDarkZone()` to
+`element.getBoundingClientRect()` (always viewport-relative, regardless of how many positioned
+ancestors sit between the element and the document) instead of reconstructing document position
+from `offsetTop`/`scrollY` — the header now just checks `rect.top <= 40 && rect.bottom > 160` on
+each dark-zone element, no coordinate-space conversion to get wrong. **If a future page's dark
+hero doesn't trigger the transparent header, check first whether it sits inside a `position:
+relative`/`absolute` wrapper** — that's the exact class of bug this was.
+
+**Also, same session, unrelated**: `/magazine/[slug]`'s `.ar-hero-photo` (the framed featured-image
+panel on the right side of the hero) widened from `clamp(260px, 30vw, 520px)` to `clamp(380px,
+46vw, 760px)` (tablet breakpoint: `clamp(220px, 32vw, 380px)` → `clamp(280px, 40vw, 480px)`) per
+explicit user request — same `top`/`bottom` (height) as before, only `width` grew, so the panel
+reads as landscape instead of near-square and fills more of the empty gutter between it and
+`.ar-hero-text`. Only `right` is pinned on this element (no `left`), so growing the width extends
+the panel leftward into that gap, which is exactly the effect asked for.
+
+**Not visually verified in a browser** — no `node_modules` installed this session, so neither
+`next dev` nor `tsc --noEmit` could run. Verified via a CSS brace-balance check on `editorial.css`
+(237/237) and a manual read-through of `Header.tsx`'s edited `useLayoutEffect`. Re-check both —
+the header on a real `/magazine/[slug]` page load, and the widened photo panel at desktop/tablet
+widths — in a real environment before considering this fully closed.
+
+### Article body — zero spacing after a `wp-block-gallery` (fixed September 2026)
+
+User-reported: a 2-up (or any N-up) Gutenberg gallery in an article body ran flush into the
+paragraph directly below it, no gap at all — every other block (single images, `<figure>`,
+tables) had normal spacing. Root cause in `editorial.css`: `.ar-wrap .prose-content
+.wp-block-gallery { margin: 0; }` (needed so gallery images don't inherit the generic
+`figure { margin: 2em 0 }` rule's spacing *between grid items*) has three classes in its selector
+— higher specificity than `.ar-wrap .prose-content figure`'s two-classes-plus-a-type-selector —
+so it always won regardless of source order, zeroing the gallery's own *outer* top/bottom margin
+too, not just what was intended (the margin on the `figure.wp-block-image` wrappers nested inside
+it, which is a separate, correctly-scoped rule at `.wp-block-gallery figure.wp-block-image {
+margin: 0; }`). Fixed by changing the outer rule to `margin: 2em 0` — same vertical rhythm every
+other prose block already uses; the inner per-image-inside-the-grid rule is untouched, so gallery
+images still don't get individual spacing between each other, only the gallery block as a whole
+gets space above/below it again. **This is the same "unexpectedly-more-specific selector zeroes
+a margin that a more general rule was supposed to set" bug class** — if a future block-level
+element in `.prose-content` (a new Gutenberg block type, say) reads as flush against its
+neighbors despite `figure`/`img`'s generic 2em rule existing, check whether that block has its
+own zero-margin override winning on specificity before assuming the generic rule isn't applying
+at all.
+
+**Not visually verified in a browser** — same `node_modules` gap as every other pass in this
+file this session. Verified via a CSS brace-balance check on `editorial.css` (238/238).
 
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 

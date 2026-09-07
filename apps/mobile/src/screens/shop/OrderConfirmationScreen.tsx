@@ -116,8 +116,8 @@ function createStyles(c: ColorPalette) {
 }
 
 const PLACEHOLDER_GRADIENTS: [string, string][] = [
-  ["#B38238", "#C5491F"],
-  ["#C5491F", "#8A2D10"],
+  ["#B38238", "#7a241c"],
+  ["#7a241c", "#5c1b15"],
   ["#14110D", "#3A342B"],
 ];
 

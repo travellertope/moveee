@@ -492,7 +492,7 @@
   background: var(--ochre);
   color: var(--ink);
 }
-.mco-tier-btn--pro:hover { background: #c5491f; color: var(--paper); }
+.mco-tier-btn--pro:hover { background: #7a241c; color: var(--paper); }
 .mco-tier-status {
   display: inline-block;
   margin-top: 32px;

@@ -171,7 +171,7 @@ export default function TheEditScreen() {
                 {heroPick.image ? (
                   <Image source={{ uri: heroPick.image }} style={styles.featureImage} resizeMode="cover" />
                 ) : (
-                  <LinearGradient colors={["#E27D60", "#C5491F"]} style={styles.featureImage} />
+                  <LinearGradient colors={["#E27D60", "#7a241c"]} style={styles.featureImage} />
                 )}
                 {heroPick.storySlug && (
                   <TouchableOpacity
@@ -413,7 +413,7 @@ function createStyles(c: ColorPalette) {
       position: "absolute",
       top: -4,
       right: -4,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: 8,
       minWidth: 16,
       height: 16,
@@ -483,7 +483,7 @@ function createStyles(c: ColorPalette) {
     featureMaker: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
     quoteBlock: {
       borderLeftWidth: 2,
-      borderLeftColor: "#C5491F",
+      borderLeftColor: "#7a241c",
       backgroundColor: c.paperWarm,
       padding: 12,
       borderRadius: 4,
@@ -494,7 +494,7 @@ function createStyles(c: ColorPalette) {
     featureProPrice: { fontFamily: fonts.sansBold, fontSize: 12, color: c.gold },
     addToBagBtn: {
       height: 44,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",
@@ -534,7 +534,7 @@ function createStyles(c: ColorPalette) {
     pickAddBtn: {
       height: 32,
       paddingHorizontal: 14,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",
@@ -553,7 +553,7 @@ function createStyles(c: ColorPalette) {
     },
     storyImage: { width: 120, height: 100 },
     storyContent: { flex: 1, padding: 12, gap: 4 },
-    storyCat: { fontFamily: fonts.monoBold, fontSize: 9, color: "#C5491F", textTransform: "uppercase", letterSpacing: 1 },
+    storyCat: { fontFamily: fonts.monoBold, fontSize: 9, color: "#7a241c", textTransform: "uppercase", letterSpacing: 1 },
     storyTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
     storyTime: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
 
@@ -580,7 +580,7 @@ function createStyles(c: ColorPalette) {
       paddingVertical: 2,
       borderRadius: 4,
     },
-    gridBadgeNew: { backgroundColor: "#C5491F" },
+    gridBadgeNew: { backgroundColor: "#7a241c" },
     gridBadgeLow: { backgroundColor: "rgba(20,17,13,0.7)" },
     gridBadgeSale: { backgroundColor: "#C62828" },
     gridBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },

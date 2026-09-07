@@ -1312,7 +1312,7 @@ function DirectoryCard({ item }: FeedCardProps) {
           {item.image ? (
             <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
           ) : (
-            <LinearGradient colors={["#E2B19B", "#C5491F"]} style={{ width: "100%", height: "100%" }} />
+            <LinearGradient colors={["#E2B19B", "#7a241c"]} style={{ width: "100%", height: "100%" }} />
           )}
         </View>
       </View>

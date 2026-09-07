@@ -90,7 +90,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
               <stop offset="100%" stopColor="#2a1a0a"/>
             </linearGradient>
             <radialGradient id="jHeroGlow1" cx="20%" cy="70%" r="45%">
-              <stop offset="0%" stopColor="#c5491f" stopOpacity=".22"/>
+              <stop offset="0%" stopColor="#7a241c" stopOpacity=".22"/>
               <stop offset="100%" stopColor="#0c0a07" stopOpacity="0"/>
             </radialGradient>
             <radialGradient id="jHeroGlow2" cx="75%" cy="25%" r="35%">

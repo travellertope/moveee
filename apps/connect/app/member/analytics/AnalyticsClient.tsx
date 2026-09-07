@@ -270,7 +270,7 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
           <BarChart
             data={data.credit_days}
             bars={["earned", "spent"]}
-            colors={["#b38238", "#c5491f"]}
+            colors={["#b38238", "#7a241c"]}
             labels={["Earned", "Spent"]}
           />
         )}

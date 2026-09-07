@@ -120,7 +120,7 @@ function createStyles(c: ColorPalette) {
       borderColor: c.ghost,
     },
     confirmBtn: {
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
     },
     destructiveBtn: {
       backgroundColor: "#C62828",
