@@ -38,7 +38,16 @@
   color: var(--lit-ink);
   font-family: var(--font-lit-body), Georgia, serif;
 }
-.lit-page a { color: inherit; text-decoration: none; }
+/* :where() zeroes this selector's specificity — a plain `.lit-page a`
+   would be (0,1,1), which beats every single-class button/link color rule
+   below it (e.g. .lit-btn-pill, .lit-piece-kicker, .lit-util-link — all
+   (0,1,0)) regardless of source order, silently forcing every link back
+   to inherited ink text. That's exactly why "Submit" (ink-filled) was
+   rendering invisible black-on-black text and "Subscribe" was rendering
+   dark, not truly white, text — both were losing to this rule. With
+   :where(), this only ever acts as the *default* for a link with no more
+   specific color rule of its own. */
+:where(.lit-page) a { color: inherit; text-decoration: none; }
 .lit-page h1, .lit-page h2, .lit-page h3 { margin: 0; }
 
 .lit-wrap {
