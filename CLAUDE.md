@@ -2524,6 +2524,40 @@ image-then-text-with-no-chrome layout.
   `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
   considering this fully closed.
 
+### Header dark-zone detection was measuring the wrong coordinate space (fixed September 2026) + hero photo panel widened to landscape
+
+**Bug**: user-reported — on page load, the floating header should render transparent with the
+white logo variant whenever it's sitting over a page's dark hero (homepage's `.hero-full`, or an
+inner page's own `[data-header-zone="dark"]` section, e.g. `/magazine/[slug]`'s `.ar-hero`) — it
+worked on the homepage but not on inner pages. Root cause in `Header.tsx`'s `inDarkZone()`: it
+measured each zone element's `offsetTop`/`offsetHeight` and compared against `window.scrollY`.
+`offsetTop` is relative to the element's nearest **positioned** ancestor, not the document — a
+page whose hero sits inside its own `position: relative` wrapper (`/magazine/*`'s `.mg-page-white`,
+added by the "plain-white magazine background" fix earlier in this file) measures `offsetTop`
+relative to *that* wrapper, not the viewport/document `scrollY` the code was comparing it against.
+The homepage's `.hero-full` has no such wrapper, so the arithmetic happened to still line up there
+and masked the bug everywhere else. **Fixed** by switching `inDarkZone()` to
+`element.getBoundingClientRect()` (always viewport-relative, regardless of how many positioned
+ancestors sit between the element and the document) instead of reconstructing document position
+from `offsetTop`/`scrollY` — the header now just checks `rect.top <= 40 && rect.bottom > 160` on
+each dark-zone element, no coordinate-space conversion to get wrong. **If a future page's dark
+hero doesn't trigger the transparent header, check first whether it sits inside a `position:
+relative`/`absolute` wrapper** — that's the exact class of bug this was.
+
+**Also, same session, unrelated**: `/magazine/[slug]`'s `.ar-hero-photo` (the framed featured-image
+panel on the right side of the hero) widened from `clamp(260px, 30vw, 520px)` to `clamp(380px,
+46vw, 760px)` (tablet breakpoint: `clamp(220px, 32vw, 380px)` → `clamp(280px, 40vw, 480px)`) per
+explicit user request — same `top`/`bottom` (height) as before, only `width` grew, so the panel
+reads as landscape instead of near-square and fills more of the empty gutter between it and
+`.ar-hero-text`. Only `right` is pinned on this element (no `left`), so growing the width extends
+the panel leftward into that gap, which is exactly the effect asked for.
+
+**Not visually verified in a browser** — no `node_modules` installed this session, so neither
+`next dev` nor `tsc --noEmit` could run. Verified via a CSS brace-balance check on `editorial.css`
+(237/237) and a manual read-through of `Header.tsx`'s edited `useLayoutEffect`. Re-check both —
+the header on a real `/magazine/[slug]` page load, and the widened photo panel at desktop/tablet
+widths — in a real environment before considering this fully closed.
+
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
 User request: "create more width for the post body area" by removing the left sidebar on the
