@@ -726,7 +726,10 @@
    CMS tables previously rendered unstyled and overflowed. */
 .ar-wrap .prose-content .wp-block-table,
 .ar-wrap .prose-content figure.wp-block-table {
-  margin: 0;
+  /* Same specificity bug as the gallery block above: this 3-class selector
+     was beating the generic `.prose-content figure { margin: 2em 0 }` rule,
+     zeroing the table's own outer margin and leaving no gap before/after it. */
+  margin: 2em 0;
   overflow-x: auto;
   border: 1px solid var(--ar-ghost-light);
   border-radius: 8px;
