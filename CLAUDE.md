@@ -1462,6 +1462,25 @@ convention.
 `/logo-white.png` to unify on the new asset — don't assume the two are already in sync just
 because they used to share a filename.
 
+### Shop/Makers ("Lifestyle") logo updated (September 2026)
+
+Same update, second asset — the "Lifestyle" wordmark used on every `/shop` and `/makers`
+page (`Header.tsx`'s `isLifestylePage = isShopPage || isMakersPage` branch, the **only**
+consumer of this asset in the codebase). New files: `apps/site/public/logo-lifestyle-black.png`
+(light/solid header state) and `logo-lifestyle-white.png` (transparent-over-dark state) —
+cropped to their alpha bounding box (~551×184px, same "no dead transparent margin" treatment
+as the main header logo above) and repointed via `onDark ? "/logo-lifestyle-white.png" :
+"/logo-lifestyle-black.png"`. The old `logo-lifestyle-dark.png`/`logo-lifestyle-light.png`
+(428×97px) are now unused — left in `public/`, not deleted, same "kept in case needed again"
+convention as the main header logo swap. No footer-logo conflict here (unlike the main header
+logo) — the shared `Footer.tsx` doesn't reference either lifestyle file, so there was no
+"leave X untouched" constraint to observe on this one.
+
+**Not visually verified in a browser** — no `node_modules` installed in this session
+(recurring sandbox gap noted throughout this file), so `tsc --noEmit` couldn't run;
+verified instead via a repo-wide grep confirming `Header.tsx` line ~221 is the only
+`logo-lifestyle-*` reference before and after the edit.
+
 **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
 every other pass in this file. Verified via a repo-wide grep confirming no other consumer of
 the old filenames was missed, and `tsc --noEmit` (only pre-existing, unrelated errors —

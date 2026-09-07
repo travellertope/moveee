@@ -218,7 +218,7 @@ const Header = () => {
               <img
                 src={
                   isLifestylePage
-                    ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
+                    ? onDark ? "/logo-lifestyle-white.png" : "/logo-lifestyle-black.png"
                     : onDark ? "/logo-white.png" : "/logo-black.png"
                 }
                 alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
