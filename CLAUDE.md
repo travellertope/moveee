@@ -2582,6 +2582,61 @@ at all.
 **Not visually verified in a browser** — same `node_modules` gap as every other pass in this
 file this session. Verified via a CSS brace-balance check on `editorial.css` (238/238).
 
+**Same bug recurred on tables (fixed September 2026)** — user-reported: a Gutenberg table also
+ran flush into the paragraph below it. Identical root cause: `.ar-wrap .prose-content
+.wp-block-table, .ar-wrap .prose-content figure.wp-block-table { margin: 0; ... }` (also 3
+classes) beat the generic `figure { margin: 2em 0 }` rule the same way the gallery rule did.
+Fixed the same way — changed to `margin: 2em 0`.
+
+### Article body — Gutenberg "Wide width" not applying to galleries/tables (fixed September 2026)
+
+User-reported, with a screenshot: a 2-photo gallery set to "Wide width" in the WordPress editor
+rendered at the same width as the surrounding text column instead of extending into the wide
+grid track. The CSS itself (`.ar-wrap > .prose-content > .wp-block-gallery { grid-column: wide;
+}` in `editorial.css`) was correct and unconflicted on inspection — the bug was in the DOM shape
+reaching that selector, not the selector itself.
+
+**Root cause**: WordPress's legacy `wpautop()` filter (still applied to `the_content` even for
+Gutenberg block output when there's a blank line around a block in the raw post) wraps a
+block-level element like a gallery figure or a table in a stray `<p>...</p>`. Because
+`.prose-content` is `display: contents` (see the "width-tier rail" system documented above),
+only `.prose-content`'s own *direct children* get promoted into real CSS Grid items — a `<p>`
+that wraps the gallery becomes the grid item instead (landing on the default `text` track via
+the `.ar-wrap > .prose-content > *` catch-all), and the actual `.wp-block-gallery`/`<table>`
+inside it just stretches to fill that paragraph's width, silently ignoring its own `alignwide`/
+`wp-block-gallery` class since the width-tier selector requires a *direct-child* match
+(`.ar-wrap > .prose-content > .wp-block-gallery`) that this extra `<p>` breaks. This is also why
+the margin fix above kept working the whole time — that rule uses a plain descendant selector
+(`.ar-wrap .prose-content .wp-block-gallery`), which matches regardless of how deep the element
+is nested, so it was never affected by this same bug.
+
+**Fixed** in `apps/site/app/magazine/[slug]/page.tsx`'s `cleanContent()`: a new
+`unwrapBlockParagraphs()` step (run first, before the existing CMS-link rewrite) strips a `<p>`
+wrapper when its entire content is exactly one `<figure class="...wp-block-gallery...">`,
+`<figure class="...wp-block-table...">`, or bare `<table>...</table>` — restoring the real
+element as a genuine direct child of `.prose-content` before it ever reaches the grid. Verified
+against representative WP markup (a 2-image gallery with nested `wp-block-image` figures, plus a
+standalone table) in a scratch Node script: both unwrap cleanly, adjacent unrelated paragraphs
+are left untouched, and two separate galleries in the same content unwrap independently without
+one match's greedy matching bleeding into the other (uses a lazy `[\s\S]*?` up to the first
+`</figure>\s*</p>`/`</table>\s*</p>` sequence, not a greedy one, to avoid over-matching across
+paragraph boundaries).
+
+**If a future "block doesn't get its wide/full width" report comes in for some other Gutenberg
+block type**, check first whether the block is arriving wrapped in a stray `<p>` (view source /
+log `post.content` and look for `<p><figure` or `<p><table` immediately preceding the block) —
+this is now a known, recurring WordPress content-pipeline quirk, not a one-off. Extend
+`unwrapBlockParagraphs()`'s pattern list rather than touching the grid CSS, which is already
+correct as long as the element reaching it is a genuine direct child.
+
+**Not visually verified in a browser** — same `node_modules`/WordPress-credentials gap as every
+other pass in this file; this fix in particular could not be checked against the real live HTML
+`cms.themoveee.com` actually emits for this specific post, since the CMS isn't reachable from
+this sandbox. Verified via a brace-balance check on the edited `.tsx` file and standalone Node
+regex tests against representative Gutenberg gallery/table markup (see above). Re-check the live
+`themoveee.com/magazine/the-eid-clay-is-growing-roots-in-clay` (and any other post using a
+wide-width gallery/table) in a real environment before considering this fully closed.
+
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
 User request: "create more width for the post body area" by removing the left sidebar on the

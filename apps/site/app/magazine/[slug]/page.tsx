@@ -180,10 +180,34 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     }
   );
 
+  // WordPress's legacy wpautop() filter (still run over Gutenberg output in
+  // some content paths) wraps a block-level element in a stray <p> when
+  // there's a blank line around it in the raw editor content — most visibly
+  // for gallery/table blocks. `.ar-wrap`'s width-tier CSS (see editorial.css)
+  // needs the wide-width block (a `.wp-block-gallery`/`.wp-block-table`/
+  // `<table>`) to be a genuine *direct child* of `.prose-content` for its
+  // `grid-column: wide` rule to apply — display:contents only promotes
+  // `.prose-content`'s own children into real grid items, so a wrapping <p>
+  // becomes the grid item instead (stuck at the default text-width track)
+  // and the block inside it just stretches to fill that <p>, rendering at
+  // reading width even when the editor set it to "Wide width". Unwrap any
+  // <p> whose entire content is exactly one such block before it reaches the
+  // grid, so the real element ends up as the direct child the CSS expects.
+  const unwrapBlockParagraphs = (html: string) =>
+    html
+      .replace(
+        /<p(?:\s[^>]*)?>\s*(<figure\b[^>]*\bclass="[^"]*\bwp-block-(?:gallery|table)\b[^"]*"[\s\S]*?<\/figure>)\s*<\/p>/gi,
+        (_match: string, inner: string) => inner
+      )
+      .replace(
+        /<p(?:\s[^>]*)?>\s*(<table\b[\s\S]*?<\/table>)\s*<\/p>/gi,
+        (_match: string, inner: string) => inner
+      );
+
   const cleanContent = (html: string) => {
     if (!html) return html;
     const appRoutes = ["quote", "directory", "events", "origins", "connect", "register", "login", "member", "shop", "newsletter", "contact", "privacy", "terms"];
-    return html.replace(
+    return unwrapBlockParagraphs(html).replace(
       /href="https?:\/\/(?:18\.175\.121\.188|cms\.themoveee\.com)\/([^"]*)"/gi,
       (match, path) => {
         if (path.startsWith("wp-content/")) return match;
