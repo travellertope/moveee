@@ -1432,6 +1432,40 @@ desktop widths that used to be wide enough for the old 3-item nav. If the nav ev
 again, re-check this breakpoint (and consider whether the ticker should just move out of the
 centered-absolute pattern instead of chasing the breakpoint each time).
 
+### Site A header logo updated (September 2026) — footer logo deliberately untouched
+
+The user supplied an updated Moveee wordmark (a fuller lockup — "The" + bold "moveee." + a
+"BEST IN CULTURE" tagline line, vs. the prior header logo's bare "moveee." wordmark with no
+tagline) in two color variants. **New files**: `apps/site/public/logo-black.png` (dark
+wordmark, for light/solid header states) and `apps/site/public/logo-white.png` (light
+wordmark, for the header's transparent-over-dark state) — 667×283px each, a much more
+square-ish aspect ratio than the old banner-shaped logos, which is fine since
+`.toolbar-logo-img` is height-constrained (`height: 40px; width: auto`) in `header.css`.
+
+**Old `logo-dark.png`/`logo-light.png` were deliberately left alone, not overwritten** — per
+explicit user instruction not to touch the footer logo. `packages/shared/components/
+Footer.tsx` renders `logo-light.png` directly, and before this change `Header.tsx`'s
+transparent-header state used that same file — overwriting it in place would have changed
+the footer's logo too. Instead, three call sites were repointed to the two new filenames
+(`Header.tsx`'s main toolbar image — `onDark ? "/logo-white.png" : "/logo-black.png"` — its
+menu-overlay logo, always `/logo-black.png` since the overlay body is always light; and
+`SearchOverlay.tsx`'s logo, same always-`/logo-black.png` reasoning) while `Footer.tsx` still
+reads the old `/logo-light.png`, completely unchanged. **The old `logo-dark.png`/
+`logo-light.png` files are now unused by the header** (still referenced by the footer only)
+— left in `public/`, not deleted, per this file's usual "kept in case needed again"
+convention.
+
+**If a future logo update needs to touch the footer too**, either update `Footer.tsx`'s own
+`/logo-light.png` reference directly (a real, deliberate footer-logo change) or point it at
+`/logo-white.png` to unify on the new asset — don't assume the two are already in sync just
+because they used to share a filename.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file. Verified via a repo-wide grep confirming no other consumer of
+the old filenames was missed, and `tsc --noEmit` (only pre-existing, unrelated errors —
+missing `@types/node`, `@vercel/kv`, Next.js `fetch`'s `next` option — none touching
+`Header.tsx`/`SearchOverlay.tsx`/`header.css`).
+
 ## Connect App build phases
 
 | Phase | Status | Scope |

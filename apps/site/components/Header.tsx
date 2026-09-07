@@ -219,7 +219,7 @@ const Header = () => {
                 src={
                   isLifestylePage
                     ? onDark ? "/logo-lifestyle-light.png" : "/logo-lifestyle-dark.png"
-                    : onDark ? "/logo-light.png" : "/logo-dark.png"
+                    : onDark ? "/logo-white.png" : "/logo-black.png"
                 }
                 alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
                 className="toolbar-logo-img"
@@ -262,7 +262,7 @@ const Header = () => {
           <Link href="/" className="toolbar-logo" onClick={() => setMenuOpen(false)}>
             {/* Overlay body is always the light `--paper` background,
                 regardless of onDark — always the dark wordmark. */}
-            <img src="/logo-dark.png" alt="Moveee" className="toolbar-logo-img" />
+            <img src="/logo-black.png" alt="Moveee" className="toolbar-logo-img" />
           </Link>
           <span />
         </div>
