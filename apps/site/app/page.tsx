@@ -187,15 +187,19 @@ export default async function Home() {
         viewAllHref="/magazine"
         viewAllLabel="View all stories"
         stories={featuredPool}
+        sectionType="Feed"
       />
 
-      <section className="band band--tint">
+      <section className="arc-section">
         <div className="wrap">
-          <div className="band-head">
+          <div className="arc-hdr">
+            <span className="arc-type">Shop</span>
             <h2>From The <em>Shop</em></h2>
-            <p className="subtitle">Handmade pieces from Moveee&rsquo;s maker community — new drops, restocks, and one-offs.</p>
-            <a className="view-all" href="/shop">Shop all products</a>
+            <span className="arc-count">
+              {shopProducts.length} {shopProducts.length === 1 ? "piece" : "pieces"} · <a href="/shop">Shop all products →</a>
+            </span>
           </div>
+          <p className="arc-sub">Handmade pieces from Moveee&rsquo;s maker community — new drops, restocks, and one-offs.</p>
           <ShopRail products={shopProducts} />
         </div>
       </section>
@@ -204,6 +208,7 @@ export default async function Home() {
         eyebrowTitle={<>The <em>Lane</em></>}
         subtitle="Portraits from the people who make the culture, not just cover it."
         stories={portraitStories}
+        sectionType="Series"
       />
 
       <MasonryRandomSection
@@ -212,20 +217,21 @@ export default async function Home() {
         viewAllHref="/magazine/category/news"
         viewAllLabel="All news"
         stories={editorialStories}
-        tint
+        sectionType="Category"
       />
 
       <MasonryRandomSection
         eyebrowTitle={<>The Free <em>Critics</em></>}
         subtitle="Unbought, unfiltered verdicts on the films, books, and records everyone's asking about."
         stories={digestStories}
+        sectionType="Series"
       />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
         subtitle="Arguments worth having, from writers who'll actually take a side."
         stories={opinionStories}
-        tint
+        sectionType="Category"
       />
 
       <JoinSection edition={edition} featureStory={featureStory} />

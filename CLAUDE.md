@@ -2637,6 +2637,80 @@ explicit `typeof x === "string"` check instead of relying on `||`/`??`/`?.` alon
 one stack trace you have doesn't mean the bug class is gone — grep for the same fragile
 pattern repo-wide before considering it closed, the same way this pass eventually did.
 
+### Homepage sections — pastel/tint chrome retired in favour of the Issue Archive style (September 2026)
+
+**Supersedes the colour treatment described throughout the "WePresent concept" entry above** —
+that entry (and its mockup) is still accurate for the hero, masthead, carousel, and footer; only
+the five repeating body sections (The Front Page, From The Shop, The Lane, The Edit, The Free
+Critics, Opinions & Essays) changed. Documenting the retired version here since the CSS/classnames
+it used (`.band`, `.band--tint`, `.band-head`, `.masonry-rand`, `.wcard`/`.wcard--sq`/
+`.wcard--rect`, `colorForCard()`) are still live elsewhere in the codebase — anyone touching those
+class names on the homepage again should know they were deliberately replaced, not missed.
+
+**What the homepage looked like before this pass** (kept for reference, since the classes below
+are still real and still rendering on other pages): each section was a centered `.band-head`
+(serif `<h2>`, centered subtitle, centered "view all" link) above a 4-column `.masonry-rand` grid
+of `.wcard` cards — each card's whole background was a random pastel fill from
+`lib/cardColors.ts`'s `LIGHT_COLORS` (`colorForCard(seed)`, seeded off the story's `databaseId`),
+with a rounded-corner (22px) shadow-lift card and the caption centered below the photo. Every
+other section alternated a plain white background with `.band--tint` (`var(--paper-deep)`,
+`#F2F2F2`) — Front Page white, Shop tinted, Lane white, Edit tinted, Free Critics white, Opinions
+tinted. This was a deliberate design choice at the time (see the WePresent-concept entry above,
+and `lib/cardColors.ts`'s own comment: "what makes the homepage read as colourful rather than a
+wall of plain cards") — it's being retired here at explicit user request in favour of a calmer,
+more editorial page, not because it was a bug.
+
+**What it looks like now**: every homepage section (including the shop rail) renders on plain
+white, using the exact header/card language already shipping on `/magazine/issues/[slug]`
+(`.mag-issue-section-hdr`/`.mag-issue-post` in `magazine.css`) — a small mono type label (Series /
+Category / Feed / Shop) + serif `<h2>` + item count, all on one hairline-ruled row, then a flush
+3-column grid of plain image cards (no colour fill, no shadow/hover-lift): 4:3 photo, serif title,
+one-line dek, mono "Read →". No new page — same route, same data, same section order.
+
+- **New classes, homepage-scoped**: `.arc-section`/`.arc-hdr`/`.arc-type`/`.arc-count`/`.arc-sub`/
+  `.arc-grid`/`.arc-card`/`.arc-card-img`/`.arc-cta` in `apps/site/app/homepage-v2.css` — a
+  parallel set to `magazine.css`'s `.mag-issue-*` rather than a reuse of those classes directly,
+  since `magazine.css` isn't loaded on `/`. `.arc-shop-card`/`.arc-shop-vendor`/`.arc-shop-price`
+  are the shop rail's own variant (flush 1:1 image, vendor mono caption, serif title, mono price
+  below — no floating price badge on the photo anymore).
+- **`MasonryRandomSection.tsx` rewritten** — dropped `shapeForRow()`/`LAYOUTS`/the `tint` boolean
+  prop/`colorForCard` entirely; now renders the archive-style header + a plain 3-column grid (was
+  a 4-column grid with randomised square/rectangle shapes). New `sectionType` prop (`"Feed"` /
+  `"Series"` / `"Category"`) replaces `tint`, feeding the small mono label — Front Page is `"Feed"`
+  (a general top pool, not a taxonomy), Lane and Free Critics are `"Series"`, Edit and Opinions are
+  `"Category"`, matching how the Issue Archive itself distinguishes Series vs Category sections.
+  Cards now show a real excerpt dek (`story.excerpt`, stripped via a local `plainExcerpt()` — same
+  `typeof x === "string"` guard as everywhere else in this file, see the crash-lesson entry above)
+  where before there was only a centered title caption.
+- **`ShopRail.tsx`** — kept its horizontal arrow-paged rail mechanism (`step()`, scroll-snap)
+  unchanged, only restyled the card itself off `.wcard`/`colorForCard` onto `.arc-shop-card`. The
+  `step()` function's `querySelector` was updated from `.shop-card` to `.arc-shop-card` to match.
+- **`app/page.tsx`** — the Shop section's wrapper changed from `<section className="band
+  band--tint">` (centered `.band-head`) to a hand-written `.arc-section`/`.arc-hdr` block (Shop
+  has no magazine-post `excerpt` to reuse `MasonryRandomSection` for, so its header is written
+  inline rather than through that component) — count line reads "N pieces · Shop all products →"
+  in the same eyebrow-row position as `MasonryRandomSection`'s own count/view-all line, for visual
+  consistency between the two.
+- **`.band`/`.band--tint`/`.band-head`/`.masonry-rand`/`.wcard`/`.wcard--sq`/`.wcard--rect` are
+  left in `homepage-v2.css`, unused by the homepage now** — deliberately not deleted.
+  `.wcard`/`.wcard-photo`/`.wcard-caption` are still load-bearing for `JoinSection.tsx`'s single
+  "latest issue" feature card (the rotated preview card in the closing newsletter CTA — a
+  different, single-card use, not one of the six repeating sections this pass touched), and
+  `.masonry-rand`/`.wcard--sq`/`.wcard--rect`/`.band`/`.band-head` are still real, in-use classes
+  on `SeriesLandingPage.tsx`, `MagazineArchiveWrapper.tsx` (the `/magazine` archive and its
+  category/tag/series/country/industry sub-routes), and `author/[slug]/page.tsx` — none of those
+  pages were in scope for this pass, and they share these exact class names, so the CSS had to
+  stay. `lib/cardColors.ts`/`colorForCard()` is likewise untouched and still used by all three of
+  those pages. **If a future pass wants the archive-style treatment on `/magazine` or the author
+  page too, extend `.arc-*` (or promote it into `magazine.css` proper) rather than repurposing
+  `.mag-issue-*`/`.masonry-rand` in place** — those still serve pages this pass didn't touch.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap (and,
+  this session specifically, no `node_modules` installed for `apps/site`) as every other mockup
+  pass in this file. Verified via a CSS brace-balance check on `homepage-v2.css` and a manual
+  read-through of the three edited files. Re-check pixel fidelity against the approved mockup
+  (`https://claude.ai/code/artifact/714cfb13-03ae-4a60-9741-19f1edd22ea9` at the time of writing)
+  in a real environment before considering this fully closed.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
