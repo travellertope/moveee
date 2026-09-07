@@ -119,7 +119,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
         <Link href="/" className="toolbar-logo" onClick={onClose}>
           {/* Search overlay body is always the light background — always
               the dark wordmark, same as the menu overlay's own logo. */}
-          <img src="/logo-dark.png" alt="Moveee" className="toolbar-logo-img" />
+          <img src="/logo-black.png" alt="Moveee" className="toolbar-logo-img" />
         </Link>
         <span className="toolbar-icon" aria-hidden="true">
           <Search size={16} strokeWidth={1.5} />

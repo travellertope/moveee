@@ -1432,6 +1432,61 @@ desktop widths that used to be wide enough for the old 3-item nav. If the nav ev
 again, re-check this breakpoint (and consider whether the ticker should just move out of the
 centered-absolute pattern instead of chasing the breakpoint each time).
 
+### Site A header logo updated (September 2026) — footer logo deliberately untouched
+
+The user supplied an updated Moveee wordmark (a fuller lockup — "The" + bold "moveee." + a
+"BEST IN CULTURE" tagline line, vs. the prior header logo's bare "moveee." wordmark with no
+tagline) in two color variants. **New files**: `apps/site/public/logo-black.png` (dark
+wordmark, for light/solid header states) and `apps/site/public/logo-white.png` (light
+wordmark, for the header's transparent-over-dark state) — both cropped tight to their alpha
+bounding box (~552×183px, down from the source files' 667×283px, which had dead transparent
+margin on all sides) so `.toolbar-logo-img`'s `height: 40px; width: auto` sizing in
+`header.css` doesn't leave extra blank space around the mark. Still a much more square-ish
+aspect ratio than the old banner-shaped logos.
+
+**Old `logo-dark.png`/`logo-light.png` were deliberately left alone, not overwritten** — per
+explicit user instruction not to touch the footer logo. `packages/shared/components/
+Footer.tsx` renders `logo-light.png` directly, and before this change `Header.tsx`'s
+transparent-header state used that same file — overwriting it in place would have changed
+the footer's logo too. Instead, three call sites were repointed to the two new filenames
+(`Header.tsx`'s main toolbar image — `onDark ? "/logo-white.png" : "/logo-black.png"` — its
+menu-overlay logo, always `/logo-black.png` since the overlay body is always light; and
+`SearchOverlay.tsx`'s logo, same always-`/logo-black.png` reasoning) while `Footer.tsx` still
+reads the old `/logo-light.png`, completely unchanged. **The old `logo-dark.png`/
+`logo-light.png` files are now unused by the header** (still referenced by the footer only)
+— left in `public/`, not deleted, per this file's usual "kept in case needed again"
+convention.
+
+**If a future logo update needs to touch the footer too**, either update `Footer.tsx`'s own
+`/logo-light.png` reference directly (a real, deliberate footer-logo change) or point it at
+`/logo-white.png` to unify on the new asset — don't assume the two are already in sync just
+because they used to share a filename.
+
+### Shop/Makers ("Lifestyle") logo updated (September 2026)
+
+Same update, second asset — the "Lifestyle" wordmark used on every `/shop` and `/makers`
+page (`Header.tsx`'s `isLifestylePage = isShopPage || isMakersPage` branch, the **only**
+consumer of this asset in the codebase). New files: `apps/site/public/logo-lifestyle-black.png`
+(light/solid header state) and `logo-lifestyle-white.png` (transparent-over-dark state) —
+cropped to their alpha bounding box (~551×184px, same "no dead transparent margin" treatment
+as the main header logo above) and repointed via `onDark ? "/logo-lifestyle-white.png" :
+"/logo-lifestyle-black.png"`. The old `logo-lifestyle-dark.png`/`logo-lifestyle-light.png`
+(428×97px) are now unused — left in `public/`, not deleted, same "kept in case needed again"
+convention as the main header logo swap. No footer-logo conflict here (unlike the main header
+logo) — the shared `Footer.tsx` doesn't reference either lifestyle file, so there was no
+"leave X untouched" constraint to observe on this one.
+
+**Not visually verified in a browser** — no `node_modules` installed in this session
+(recurring sandbox gap noted throughout this file), so `tsc --noEmit` couldn't run;
+verified instead via a repo-wide grep confirming `Header.tsx` line ~221 is the only
+`logo-lifestyle-*` reference before and after the edit.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file. Verified via a repo-wide grep confirming no other consumer of
+the old filenames was missed, and `tsc --noEmit` (only pre-existing, unrelated errors —
+missing `@types/node`, `@vercel/kv`, Next.js `fetch`'s `next` option — none touching
+`Header.tsx`/`SearchOverlay.tsx`/`header.css`).
+
 ## Connect App build phases
 
 | Phase | Status | Scope |
@@ -2833,6 +2888,41 @@ than the CSS-duplicated-track marquee pattern documented elsewhere in this file 
 `.evt-ticker-track`/`["a","b"].map(...)` pattern) — that one is pure-CSS and can't be
 paused/nudged by user interaction, which this rail needed. Not visually verified in a
 browser — same credentials gap as every other pass in this file.
+
+**Follow-up, same month — "From The Shop" (`ShopRail.tsx`) given the identical
+continuous-autoscroll/infinite-loop treatment.** Per explicit user request, the shop rail now
+uses byte-for-byte the same mechanism as `HeroCarousel.tsx` above — product list rendered
+**twice** back-to-back (`looped = [...products, ...products]`), a `requestAnimationFrame` loop
+incrementing `rail.scrollLeft` at the same `AUTO_SCROLL_SPEED = 0.035px/ms`, wrapping at
+`rail.scrollWidth / 2`, `pausedRef`-based pause state (hover/touch/`RESUME_DELAY` 2.2s after an
+arrow click), and arrow buttons still using `rail.scrollBy({ behavior: "smooth" })`. `.shop-rail`'s
+`scroll-snap-type: x mandatory` and `.arc-shop-card`'s `scroll-snap-align: start` were removed
+from `homepage-v2.css` for the same reason documented for `.hero-rail` above. **This supersedes
+the component's old design rationale** — its previous comment explicitly argued the shop rail
+should *not* loop/center like the hero carousel ("reaching the real ends of a product rail is
+expected, not something to hide"); that reasoning is now retired per the user's direct ask, and
+the component's header comment has been rewritten to describe the new loop mechanism instead. Not
+visually verified in a browser — same credentials gap as every other pass in this file.
+
+**Follow-up, same month — "Right Now" heading/"More →" link removed, divider kept; all
+homepage section spacing halved.** Per explicit user direction: the `.arc-hdr` row above the
+"Right Now" carousel (`app/page.tsx`'s masthead section) no longer renders an `<h2>`/`Link` —
+it's now an empty `<div className="arc-hdr" />`, which still draws the hairline divider (the
+`border-bottom` lives on `.arc-hdr` itself, in `homepage-v2.css`) with the same spacing, just
+with nothing above it. The now-unused `Link` import was removed from `page.tsx`. Separately, the
+vertical padding driving the gap between every homepage section was halved: `.arc-section`
+(`clamp(48px,6vw,72px)` → `clamp(24px,3vw,36px)` — this is the section every
+`MasonryRandomSection`/the Shop-rail section renders into, so halving it tightens every repeating
+section's top+bottom gap), `.join-section` (`clamp(56px,7vw,96px)` → `clamp(28px,3.5vw,48px)`),
+and `.masthead`'s top padding (`clamp(28px,5vw,56px)` → `clamp(14px,2.5vw,28px)`, the gap between
+the full-bleed hero and the masthead/Right Now content below it). `.band`/`.band-head` (confirmed
+dead CSS, unused by the homepage — see the "ARCHIVE-STYLE SECTIONS" comment above `.arc-section`
+in the same file) were left untouched. Not visually verified in a browser — same credentials gap
+as every other pass in this file.
+
+**Follow-up, same month — masthead `<h1>` size reduced.** `.masthead h1`'s `font-size` clamp
+(`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
+a straightforward size-only tweak, no layout/structure change.
 
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
