@@ -2711,6 +2711,35 @@ one-line dek, mono "Read →". No new page — same route, same data, same secti
   (`https://claude.ai/code/artifact/714cfb13-03ae-4a60-9741-19f1edd22ea9` at the time of writing)
   in a real environment before considering this fully closed.
 
+**Follow-up density/copy pass (same month)** — after seeing it live, several more things were
+stripped from these same sections:
+- **`.arc-type` (the Series/Category/Feed mono label) and `.arc-count`/`.arc-sub` (post count +
+  subtitle line) are all gone from `MasonryRandomSection.tsx`** — the header is now just the
+  `<h2>` and, when the section has one, a short "More →" link on a `justify-content:
+  space-between` row (`sectionType`/`subtitle` props removed from the component entirely, not
+  just left unpassed). The Shop section's hand-written header in `page.tsx` matches: no "Shop"
+  label, no piece count, just the `<h2>` and a "Shop all →" link. **`viewAllLabel` copy shortened
+  site-wide** — "View all stories"/"All news" became the component's own default "More →" (Front
+  Page and The Edit no longer pass an explicit label at all).
+- **Grid bumped from 3 columns to 4** (`.arc-grid`, `MasonryRandomSection`'s default `max` 6→8) so
+  every section shows a full 4×2 grid of 8 posts — added a 3-column tier at `max-width: 1100px`
+  and moved the 2-column drop to `780px` so the new 4-up grid still degrades gracefully instead of
+  jumping straight from 4 to 2 columns. `ShopRail` is unchanged structurally (still the
+  horizontal arrow-paged rail, not a grid — "5 columns" was already how many cards are visible at
+  once) but `shopProducts` is now sliced to 10 products instead of 8 (`app/page.tsx`'s
+  `loadHomeSections()`), so the rail has more to scroll through.
+- **HTML-entity rendering bug fixed** — CMS titles/excerpts/product names come back from
+  WPGraphQL/WooCommerce with numeric entities (`&#8217;s`), and `plainExcerpt()`'s old
+  regex-only tag-strip never decoded them, so an apostrophe rendered as the literal text
+  `&#8217;s` in every excerpt (and would have in `ShopRail`'s product names too, once decoded
+  titles started rendering as plain text instead of `dangerouslySetInnerHTML`). Both
+  `MasonryRandomSection.tsx` and `ShopRail.tsx` now run title/excerpt/vendor/product-name
+  strings through `packages/utils/decode-html.ts`'s `decodeHtml()` (the same helper
+  `/magazine/issues/[slug]` already uses) before rendering — titles are plain `<h3>{title}</h3>`
+  now instead of `dangerouslySetInnerHTML`, since `decodeHtml()` already strips any stray tags.
+- **Not visually verified in a browser** — same gap as above. Verified via a CSS brace-balance
+  check on `homepage-v2.css` (146/146) and a manual read-through of all four touched files.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
