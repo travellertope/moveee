@@ -88,7 +88,7 @@
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
 /* ── MASTHEAD ── */
-.masthead { padding: clamp(28px, 5vw, 56px) 0 0; text-align: center; }
+.masthead { padding: clamp(14px, 2.5vw, 28px) 0 0; text-align: center; }
 .masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(34px, 5vw, 58px); letter-spacing: -.025em; line-height: 1.05; text-wrap: balance; }
 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
@@ -142,7 +142,7 @@
    file's `.arc-grid`/`.arc-card` classes directly (homepage-v2.css loads
    site-wide via the root layout) for the same treatment on
    SeriesLandingPage/MagazineArchiveWrapper/the author archive. */
-.arc-section { padding: clamp(48px, 6vw, 72px) 0; background: var(--paper); }
+.arc-section { padding: clamp(24px, 3vw, 36px) 0; background: var(--paper); }
 .arc-hdr {
   display: flex;
   align-items: baseline;
@@ -216,7 +216,7 @@
 
 /* Shop rail's own card variant — same flush/no-fill treatment as .arc-card,
    sized for the horizontal-scroll rail instead of a static grid. */
-.arc-shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); scroll-snap-align: start; display: block; text-decoration: none; color: inherit; }
+.arc-shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); display: block; text-decoration: none; color: inherit; }
 .arc-shop-card .arc-card-img { aspect-ratio: 1/1; margin-bottom: 12px; }
 .arc-shop-vendor {
   display: block;
@@ -252,7 +252,9 @@
 
 /* ── SHOP RAIL ── */
 .shop-rail-wrap { position: relative; }
-.shop-rail { display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 4px 2px 8px; }
+/* No scroll-snap here (deliberately, unlike other rails) — this rail auto-scrolls
+   continuously via JS (ShopRail.tsx), same reasoning as .hero-rail above. */
+.shop-rail { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 8px; }
 .shop-rail::-webkit-scrollbar { display: none; }
 .shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); scroll-snap-align: start; }
 .shop-card .wcard-photo { aspect-ratio: 1 / 1.08; }
@@ -276,7 +278,7 @@
 @media (max-width: 860px) { .shop-arrow { display: none; } }
 
 /* ── NEWSLETTER "JOIN THE CLUB" ── */
-.join-section { padding: clamp(56px, 7vw, 96px) 0; }
+.join-section { padding: clamp(28px, 3.5vw, 48px) 0; }
 .join-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
 .join-grid > * { min-width: 0; }
 @media (min-width: 900px) { .join-grid { grid-template-columns: 1.25fr 0.75fr; } }

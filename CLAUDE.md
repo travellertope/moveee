@@ -2834,6 +2834,37 @@ than the CSS-duplicated-track marquee pattern documented elsewhere in this file 
 paused/nudged by user interaction, which this rail needed. Not visually verified in a
 browser — same credentials gap as every other pass in this file.
 
+**Follow-up, same month — "From The Shop" (`ShopRail.tsx`) given the identical
+continuous-autoscroll/infinite-loop treatment.** Per explicit user request, the shop rail now
+uses byte-for-byte the same mechanism as `HeroCarousel.tsx` above — product list rendered
+**twice** back-to-back (`looped = [...products, ...products]`), a `requestAnimationFrame` loop
+incrementing `rail.scrollLeft` at the same `AUTO_SCROLL_SPEED = 0.035px/ms`, wrapping at
+`rail.scrollWidth / 2`, `pausedRef`-based pause state (hover/touch/`RESUME_DELAY` 2.2s after an
+arrow click), and arrow buttons still using `rail.scrollBy({ behavior: "smooth" })`. `.shop-rail`'s
+`scroll-snap-type: x mandatory` and `.arc-shop-card`'s `scroll-snap-align: start` were removed
+from `homepage-v2.css` for the same reason documented for `.hero-rail` above. **This supersedes
+the component's old design rationale** — its previous comment explicitly argued the shop rail
+should *not* loop/center like the hero carousel ("reaching the real ends of a product rail is
+expected, not something to hide"); that reasoning is now retired per the user's direct ask, and
+the component's header comment has been rewritten to describe the new loop mechanism instead. Not
+visually verified in a browser — same credentials gap as every other pass in this file.
+
+**Follow-up, same month — "Right Now" heading/"More →" link removed, divider kept; all
+homepage section spacing halved.** Per explicit user direction: the `.arc-hdr` row above the
+"Right Now" carousel (`app/page.tsx`'s masthead section) no longer renders an `<h2>`/`Link` —
+it's now an empty `<div className="arc-hdr" />`, which still draws the hairline divider (the
+`border-bottom` lives on `.arc-hdr` itself, in `homepage-v2.css`) with the same spacing, just
+with nothing above it. The now-unused `Link` import was removed from `page.tsx`. Separately, the
+vertical padding driving the gap between every homepage section was halved: `.arc-section`
+(`clamp(48px,6vw,72px)` → `clamp(24px,3vw,36px)` — this is the section every
+`MasonryRandomSection`/the Shop-rail section renders into, so halving it tightens every repeating
+section's top+bottom gap), `.join-section` (`clamp(56px,7vw,96px)` → `clamp(28px,3.5vw,48px)`),
+and `.masthead`'s top padding (`clamp(28px,5vw,56px)` → `clamp(14px,2.5vw,28px)`, the gap between
+the full-bleed hero and the masthead/Right Now content below it). `.band`/`.band-head` (confirmed
+dead CSS, unused by the homepage — see the "ARCHIVE-STYLE SECTIONS" comment above `.arc-section`
+in the same file) were left untouched. Not visually verified in a browser — same credentials gap
+as every other pass in this file.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
