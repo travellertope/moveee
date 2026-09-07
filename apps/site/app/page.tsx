@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Metadata } from "next";
 import { headers, cookies } from "next/headers";
 import { editionFromCountry, isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
@@ -103,7 +104,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       alt: s.featuredImage?.node?.altText || s.title || "",
     }));
 
-    const shopProducts = (products || []).slice(0, 8).map((p: any) => ({
+    const shopProducts = (products || []).slice(0, 10).map((p: any) => ({
       slug: p.slug,
       name: p.name,
       price: p.price || p.regularPrice || "",
@@ -178,60 +179,50 @@ export default async function Home() {
             cities, kitchens, and studios where it&rsquo;s actually made.
           </p>
         </div>
-        <HeroCarousel stories={carouselStories} />
+        <div className="wrap">
+          <div className="arc-hdr">
+            <h2>Right Now</h2>
+            <Link href="/magazine" className="arc-viewall">More →</Link>
+          </div>
+          <HeroCarousel stories={carouselStories} />
+        </div>
       </section>
 
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Front</em> Page</>}
-        subtitle="The strongest reporting and photography from the last two weeks, in one place."
         viewAllHref="/magazine"
-        viewAllLabel="View all stories"
         stories={featuredPool}
-        sectionType="Feed"
       />
 
       <section className="arc-section">
         <div className="wrap">
           <div className="arc-hdr">
-            <span className="arc-type">Shop</span>
             <h2>From The <em>Shop</em></h2>
-            <span className="arc-count">
-              {shopProducts.length} {shopProducts.length === 1 ? "piece" : "pieces"} · <a href="/shop">Shop all products →</a>
-            </span>
+            <a href="/shop" className="arc-viewall">Shop all →</a>
           </div>
-          <p className="arc-sub">Handmade pieces from Moveee&rsquo;s maker community — new drops, restocks, and one-offs.</p>
           <ShopRail products={shopProducts} />
         </div>
       </section>
 
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Lane</em></>}
-        subtitle="Portraits from the people who make the culture, not just cover it."
         stories={portraitStories}
-        sectionType="Series"
       />
 
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Edit</em></>}
-        subtitle="The news, arguments, and small print worth knowing about this week."
         viewAllHref="/magazine/category/news"
-        viewAllLabel="All news"
         stories={editorialStories}
-        sectionType="Category"
       />
 
       <MasonryRandomSection
         eyebrowTitle={<>The Free <em>Critics</em></>}
-        subtitle="Unbought, unfiltered verdicts on the films, books, and records everyone's asking about."
         stories={digestStories}
-        sectionType="Series"
       />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
-        subtitle="Arguments worth having, from writers who'll actually take a side."
         stories={opinionStories}
-        sectionType="Category"
       />
 
       <JoinSection edition={edition} featureStory={featureStory} />

@@ -4,10 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import "@/app/magazine.css";
-import { sanitizeHtml } from "@/lib/sanitize";
-import { decodeHtml } from "@/lib/decode-html";
-import { tileMasonryShapes } from "@/lib/masonryShapes";
-import { colorForCard } from "@/lib/cardColors";
+import ArchiveCardGrid from "@/components/ArchiveCardGrid";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -107,35 +104,10 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
         </div>
 
         {stories.length > 0 ? (
-          // Same masonry treatment as the homepage sections and the
-          // category/industry/country/tag archives — see
-          // MagazineArchiveWrapper.tsx for the full rationale.
-          <div className="masonry-rand">
-            {tileMasonryShapes(stories).map(({ item: story, shape }: any) => {
-              const image = story.featuredImage?.node?.sourceUrl || null;
-              const alt = story.featuredImage?.node?.altText || story.title || "";
-              return (
-                <Link
-                  key={story.id}
-                  href={`/magazine/${story.slug}`}
-                  className={`wcard wcard--${shape}`}
-                  style={{ background: colorForCard(story.databaseId ?? story.id) }}
-                >
-                  <div className="wcard-photo">
-                    {image ? (
-                      <img src={image} alt={alt} />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                    )}
-                  </div>
-                  <p
-                    className="wcard-caption"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                  />
-                </Link>
-              );
-            })}
-          </div>
+          // Same flush, colourless card grid as the homepage sections and
+          // the category/industry/country/tag archives — see
+          // ArchiveCardGrid.tsx for the full rationale.
+          <ArchiveCardGrid stories={stories} />
         ) : (
           <p className="mg-empty">No stories published yet.</p>
         )}

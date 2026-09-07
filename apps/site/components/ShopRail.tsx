@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { decodeHtml } from "@/lib/decode-html";
 
 interface ShopRailProduct {
   slug: string;
@@ -39,14 +40,18 @@ export default function ShopRail({ products }: { products: ShopRailProduct[] }) 
         </svg>
       </button>
       <div className="shop-rail" ref={railRef}>
-        {products.map((p) => (
-          <Link key={p.slug} href={`/shop/${p.slug}`} className="arc-shop-card">
-            <div className="arc-card-img">{p.image && <img src={p.image} alt={p.name} />}</div>
-            {p.vendor && <span className="arc-shop-vendor">{p.vendor}</span>}
-            <h3>{p.name}</h3>
-            {p.price && <span className="arc-shop-price" dangerouslySetInnerHTML={{ __html: p.price }} />}
-          </Link>
-        ))}
+        {products.map((p) => {
+          const name = decodeHtml(p.name || "");
+          const vendor = p.vendor ? decodeHtml(p.vendor) : null;
+          return (
+            <Link key={p.slug} href={`/shop/${p.slug}`} className="arc-shop-card">
+              <div className="arc-card-img">{p.image && <img src={p.image} alt={name} />}</div>
+              {vendor && <span className="arc-shop-vendor">{vendor}</span>}
+              <h3>{name}</h3>
+              {p.price && <span className="arc-shop-price" dangerouslySetInnerHTML={{ __html: p.price }} />}
+            </Link>
+          );
+        })}
       </div>
       <button className="shop-arrow shop-arrow--next" aria-label="Next products" onClick={() => step(1)}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
