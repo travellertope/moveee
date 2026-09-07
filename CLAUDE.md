@@ -2740,6 +2740,62 @@ stripped from these same sections:
 - **Not visually verified in a browser** — same gap as above. Verified via a CSS brace-balance
   check on `homepage-v2.css` (146/146) and a manual read-through of all four touched files.
 
+**Site-wide colourful-card sweep, same month — every remaining `colorForCard()` usage
+retired.** Mockup-first as usual (Artifact, before/after toggle) for the "Right Now" hero
+carousel specifically, then extended to every other page still rendering the pastel-fill
+card system once it was clear the pattern was site-wide, not homepage-only.
+
+- **`HeroCarousel.tsx` rewritten** — the dark, perforated "film canister" band
+  (`.index-strip`/`.strip-sprockets`/`.carousel-track`) and its 6-colour rotating `.frame--*`
+  card fills are gone, along with the centre-snap/infinite-loop clone-and-jump scroll
+  mechanics that made this component's own bespoke carousel algorithm. It's now an
+  arrow-paged rail — same mechanism as `ShopRail.tsx` (`step()`, scroll-snap, reused
+  `.shop-arrow`/`--prev`/`--next` button classes directly rather than duplicating them) —
+  rendering flush cards (`.hero-rail-card`, reusing `.arc-card-img`) with a mono category
+  kicker + serif title, no colour fill. `app/page.tsx`'s masthead section gained a plain
+  `.arc-hdr` header ("Right Now" + "More →" to `/magazine`) above the rail, matching every
+  other homepage section's header language.
+- **New shared component: `apps/site/components/ArchiveCardGrid.tsx`** — the flush,
+  colourless `.arc-grid`/`.arc-card` treatment (title + excerpt + "Read →", no per-card
+  category kicker, same as `MasonryRandomSection.tsx`'s cards) factored out so every
+  open-ended story listing on the site can reuse one implementation instead of each
+  hand-rolling its own copy of the retired `wcard`/`colorForCard()`/`tileMasonryShapes()`
+  pastel-masonry grid. Works because `homepage-v2.css` (where `.arc-*` lives) loads
+  site-wide via the root `layout.tsx`, not just on `/`. Wired into:
+  - `MagazineArchiveWrapper.tsx`'s filtered-view grid (`/magazine/category/[slug]` etc.)
+  - `SeriesLandingPage.tsx`'s "More from {series}" remainder grid
+  - `author/[slug]/page.tsx`'s "Stories by {author}" grid
+- **`MagazineHub.tsx`** (the default, unfiltered `/magazine` view) — the "Browse by
+  Section" and "Recurring Series" tile grids (`.mgh-cat-box`/`.mgh-series-box`) also used
+  `colorForCard()` for a random pastel tile fill; these aren't story cards (no image, just
+  a category/series name + arrow/CTA) so they weren't candidates for `ArchiveCardGrid` —
+  instead flattened in place to `background: var(--paper); border: 1px solid var(--rule)`
+  with the arrow/CTA text recoloured to `var(--ochre)` and the resting shadow moved to a
+  hover-only `border-color: var(--ochre)` + `box-shadow` state, keeping the existing
+  `--radius-xl` card shape.
+- **`lib/cardColors.ts` (`colorForCard()`/`LIGHT_COLORS`) and `lib/masonryShapes.ts`
+  (`tileMasonryShapes()`/`shapeForRow()`) deleted outright, not left as dead code** — after
+  this sweep neither has any remaining call site anywhere in the codebase (confirmed via
+  repo-wide grep before removing), unlike the narrower `.wcard`/`.wcard-photo`/
+  `.wcard-caption` base rules in `homepage-v2.css`, which stay because `JoinSection.tsx`'s
+  single "latest issue" feature card still renders with them (a plain, colourless rotated
+  preview card — never part of the colourful-card pattern this sweep targeted). The
+  `.wcard--sq`/`.wcard--rect`/`.masonry-rand` grid-column-span rules that sized the old
+  variable-shape masonry layout were removed along with them, since nothing produces a
+  `sq`/`rect` shape anymore on any page.
+- **Confirmed genuinely dead, left untouched**: `IssueCarousel.tsx`/`ShopCarousel.tsx`
+  (zero importers anywhere) and the pre-existing dead `.shop-card`/`.shop-price-tag`/
+  `.shop-caption*` CSS in `homepage-v2.css` (already superseded by `.arc-shop-card` in the
+  earlier ShopRail restyle, left in place then per the usual "kept in case needed again"
+  convention) — neither was in scope for this pass.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  (and no `node_modules` this session) as every other pass in this file. Verified via CSS
+  brace-balance checks (`homepage-v2.css` 108/108, `magazine.css` 416/416) and a repo-wide
+  grep confirming zero remaining `colorForCard`/`tileMasonryShapes`/`wcard--*`/
+  `masonry-rand` references outside comments. Re-check pixel fidelity against the approved
+  mockup (`https://claude.ai/code/artifact/b5d2819a-ec94-4577-9691-f519f6195839` at the
+  time of writing) in a real environment before considering this fully closed.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an

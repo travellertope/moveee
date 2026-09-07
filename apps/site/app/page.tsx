@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Metadata } from "next";
 import { headers, cookies } from "next/headers";
 import { editionFromCountry, isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
@@ -178,7 +179,13 @@ export default async function Home() {
             cities, kitchens, and studios where it&rsquo;s actually made.
           </p>
         </div>
-        <HeroCarousel stories={carouselStories} />
+        <div className="wrap">
+          <div className="arc-hdr">
+            <h2>Right Now</h2>
+            <Link href="/magazine" className="arc-viewall">More →</Link>
+          </div>
+          <HeroCarousel stories={carouselStories} />
+        </div>
       </section>
 
       <MasonryRandomSection

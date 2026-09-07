@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { colorForCard } from "@/lib/cardColors";
 import JoinSection from "./JoinSection";
 import type { IssueTerm } from "@/lib/wp";
 import type { EditionSlug } from "@/lib/editions";
@@ -125,12 +124,11 @@ export default function MagazineHub({ issues, categories, series, edition, featu
             </div>
 
             <div className="mgh-cat-grid">
-              {categories.map((cat, i) => (
+              {categories.map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/magazine/category/${cat.slug}`}
                   className="mgh-cat-box"
-                  style={{ background: colorForCard(cat.slug.length + i) }}
                 >
                   <h3>{cat.name}</h3>
                   <span className="mgh-cat-box-arrow">→</span>
@@ -152,12 +150,11 @@ export default function MagazineHub({ issues, categories, series, edition, featu
             </div>
 
             <div className="mgh-series-grid">
-              {series.map((s, i) => (
+              {series.map((s) => (
                 <Link
                   key={s.slug}
                   href={`/magazine/series/${s.slug}`}
                   className="mgh-series-box"
-                  style={{ background: colorForCard(s.slug.length + i + 3) }}
                 >
                   <h3>{s.name}</h3>
                   {s.description && <p>{s.description}</p>}

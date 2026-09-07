@@ -1974,14 +1974,15 @@
   min-width: 0;
   padding: 20px;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
+  background: var(--paper);
+  border: 1px solid var(--rule);
   text-decoration: none;
   color: var(--ink);
-  transition: box-shadow .25s, transform .25s;
+  transition: box-shadow .25s, transform .25s, border-color .25s;
 }
-.mgh-cat-box:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
+.mgh-cat-box:hover { box-shadow: var(--shadow-card, 0 6px 14px -8px rgba(20,17,13,.10)); border-color: var(--ochre); transform: translateY(-3px); }
 .mgh-cat-box h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 21px; margin: 0; letter-spacing: -.01em; overflow-wrap: break-word; }
-.mgh-cat-box-arrow { align-self: flex-end; font-size: 17px; }
+.mgh-cat-box-arrow { align-self: flex-end; font-size: 17px; color: var(--ochre); }
 
 /* ── SERIES ── */
 .mgh-series-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -1991,15 +1992,16 @@
   min-width: 0;
   padding: 24px 26px;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
+  background: var(--paper);
+  border: 1px solid var(--rule);
   min-height: 160px;
   text-decoration: none;
   color: var(--ink);
-  transition: box-shadow .25s, transform .25s;
+  transition: box-shadow .25s, transform .25s, border-color .25s;
 }
-.mgh-series-box:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
+.mgh-series-box:hover { box-shadow: var(--shadow-card, 0 6px 14px -8px rgba(20,17,13,.10)); border-color: var(--ochre); transform: translateY(-3px); }
 .mgh-series-box h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; margin: 0; letter-spacing: -.01em; }
-.mgh-series-box p { margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; max-width: 42ch; flex: 1; }
+.mgh-series-box p { margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; max-width: 42ch; flex: 1; color: var(--mute); }
 .mgh-series-box-cta {
   margin-top: 14px;
   font-family: 'JetBrains Mono', monospace;
@@ -2007,6 +2009,7 @@
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
+  color: var(--ochre);
 }
 
 @media (max-width: 900px) {

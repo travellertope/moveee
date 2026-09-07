@@ -8,42 +8,22 @@
    already defined in globals.css.
    ============================================================ */
 
-.hpv2 {
-  /* Accent frame colors for the hero carousel's rotating card backgrounds —
-     copied from the mockup's :root (never ported over; only --paper/--ink/
-     etc. made it into globals.css, which is why every carousel card was
-     hardcoded to the same frame--cream instead of cycling through these). */
-  --accent-plum: #4a2f45;
-  --accent-teal: #1f3b3b;
-  --accent-clay: #7a4a2c;
-  --accent-gold-frame: #e8d59a;
-  --accent-gold-frame-ink: #2c2007;
-  /* Film-strip carousel band — deliberately near-pure black (not the
-     warm editorial-hero gradient used elsewhere on this page), matching
-     an approved mockup's own "film stock" palette rather than reusing
-     the site's dark-hero convention, which reads as a different thing
-     (an editorial mood wash, not a physical film canister). */
-  --film-band: #0c0b09;
-  --film-band-2: #1a1712;
-}
-
 /* Widened from 1176px so the masonry sections below can go from 3 to 4
    columns without squeezing each card too narrow. */
 .hpv2 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 /* The masthead (welcome text) + carousel section keeps the old, wider
    column — only the card-grid sections below it were asked to narrow to
-   1024px. The carousel itself (.index-strip/.carousel-track) never used
-   .wrap at all, so it's already unaffected either way. */
+   1024px. */
 .masthead .wrap { max-width: 1328px; }
 
 /* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
    none; }`) — this port never carried that reset over, so every card here
-   (.fcell/.wcard/.shop-card, all <a>-wrapped) rendered its title/kicker/dek text
-   with the browser's default blue underlined link style, on top of each
-   component's own color rules. That's what made the sections under the hero
-   read as "jumbled together" rather than as distinct cards. Scoped to .hpv2
-   rather than added globally, since other pages already style their own links
-   explicitly and don't need this reset. */
+   (.hero-rail-card/.wcard/.arc-shop-card, all <a>-wrapped) rendered its title/
+   kicker/dek text with the browser's default blue underlined link style, on
+   top of each component's own color rules. That's what made the sections
+   under the hero read as "jumbled together" rather than as distinct cards.
+   Scoped to .hpv2 rather than added globally, since other pages already
+   style their own links explicitly and don't need this reset. */
 .hpv2 a { color: inherit; text-decoration: none; }
 
 /* ── FULL-BLEED OPENING HERO ── */
@@ -115,173 +95,28 @@
 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
 
-/* ── HERO CAROUSEL — film strip ──
-   Rebuilt from an approved Artifact mockup: the carousel now sits in a
-   dark, full-bleed "film canister" band (.index-strip is already a
-   sibling of .masthead .wrap, so it's naturally full-width with no
-   extra markup needed) with a perforated sprocket-hole row above and
-   below, and a fade-to-black vignette at each edge so the strip reads
-   as a physical object rather than a plain rectangle. The cards
-   themselves (.fcell) and the carousel's centre-snap/infinite-loop
-   scroll mechanics (HeroCarousel.tsx) are unchanged — only the band
-   they sit in, and the cards' own padding/radius, changed. */
-.index-strip {
-  margin: clamp(56px, 7vw, 76px) 0 clamp(32px, 4vw, 48px);
-  position: relative;
-  background: linear-gradient(180deg, var(--film-band) 0%, var(--film-band-2) 100%);
-  padding: 22px 0;
-  overflow: hidden;
+/* ── HERO CAROUSEL — "Right Now" rail ──
+   Retired (September 2026) the dark, perforated "film canister" band and
+   its rotating pastel colorForCard-style frames — see CLAUDE.md's homepage
+   restyle entries — in favour of the exact same flush, colourless rail
+   language ShopRail.tsx already uses for "From The Shop": a plain
+   .arc-hdr title + "More →" row, then an arrow-paged strip of flush
+   cards (image, mono category kicker, serif title, no colour fill). */
+.hero-rail-wrap { position: relative; }
+.hero-rail { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 2px 8px; }
+.hero-rail::-webkit-scrollbar { display: none; }
+.hero-rail-card { flex: 0 0 auto; width: clamp(200px, 19vw, 250px); scroll-snap-align: start; display: block; text-decoration: none; color: inherit; }
+.hero-rail-card .arc-card-img { margin-bottom: 12px; }
+.hero-rail-kicker {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre);
 }
-.strip-sprockets {
-  display: flex;
-  gap: 22px;
-  padding: 0 40px;
-  position: relative;
-  z-index: 2;
-  overflow: hidden;
-}
-.strip-sprockets .sprocket {
-  width: 12px;
-  height: 18px;
-  border-radius: 4px;
-  background: var(--film-band);
-  border: 1.5px solid rgba(255, 255, 255, .14);
-  flex-shrink: 0;
-}
-.strip-sprockets.bottom { margin-top: 14px; }
-.strip-sprockets.top { margin-bottom: 14px; }
-/* Fade-to-black vignette at each edge, over the scrollable track only —
-   sits above the cards (z-index 2) but doesn't intercept scroll/click,
-   matching the mockup's own ::before/::after treatment. */
-.index-strip::before, .index-strip::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  z-index: 2;
-  pointer-events: none;
-}
-.index-strip::before { left: 0; background: linear-gradient(90deg, var(--film-band), transparent); }
-.index-strip::after { right: 0; background: linear-gradient(270deg, var(--film-band), transparent); }
-
-.carousel-track {
-  display: flex;
-  /* stretch, not center — every card in the row is stretched to match the
-     tallest card's natural content height (the flex algorithm's own
-     equal-height mechanism), so titles never need truncating: a card with
-     a short title just gets some blank space below it instead of the row
-     sitting at mismatched heights. See .fcell's height: 100% below for the
-     other half of this. */
-  align-items: stretch;
-  /* Matches the GAP constant HeroCarousel.tsx's scroll/centering math is
-     already built around (card-width + GAP per "step") — this was
-     previously 0, so the JS scroll math reserved 20px of spacing between
-     cards that the CSS never actually rendered, leaving the cards flush
-     against each other. */
-  gap: 20px;
-  overflow-x: auto;
-  position: relative;
-  z-index: 1;
-  /* Reserve-height estimate: the photo's own height (card width * the
-     3/2 aspect ratio) plus the kicker/title text block + padding below
-     it (~90px). Approximate on purpose — this is only a layout-shift-
-     avoiding floor, not a hard height; a real title wrapping to a 3rd
-     line just grows the row past it. */
-  min-height: calc(var(--carousel-card-w, 300px) * .68 + 90px);
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  /* x-only, not the shorthand `overscroll-behavior: contain` — the
-     shorthand also contains the *vertical* axis, and since this element
-     has no vertical scroll room at all (overflow-y: hidden), containing
-     it stops a mouse-wheel's vertical delta from chaining up to the page
-     the instant the cursor is over the carousel — the page reads as
-     "stuck" until the mouse moves off. Vertical scroll should always
-     chain to the page; only horizontal overscroll (the rubber-band glow
-     past the first/last card) needs containing. */
-  overscroll-behavior-x: contain;
-  /* Without this, a touch swipe that starts on the carousel is ambiguous
-     to mobile browsers (this element scrolls horizontally, so a diagonal
-     or even mostly-vertical swipe beginning here can get captured trying
-     to resolve which axis it belongs to) — the reported "scroll just
-     stops right after the hero" bug. Declaring the element's own touch
-     handling as horizontal-only tells the browser to hand any vertical
-     component of the gesture straight to the page immediately, with no
-     ambiguity/capture at all. */
-  touch-action: pan-x;
-}
-.carousel-track::-webkit-scrollbar { display: none; }
-.strip-card {
-  scroll-snap-align: center;
-  flex: 0 0 auto;
-  width: var(--carousel-card-w, min(80vw, 340px));
-  /* All cards render at the same size/opacity now — the old scale(.94)/
-     scale(1.04) active-card bump (and the .48-opacity/0.8-vs-1.16 spread
-     before that) read as a distracting "pop" every time the carousel
-     settled on a new card, per explicit user feedback. Removed outright
-     rather than just shrinking the delta further. */
-  opacity: 1;
-}
-.strip-card.is-active {
-  z-index: 2;
-}
-/* .fcell is the *whole card* (photo + kicker + title + dek stacked in a
-   column) — forcing it to 1/1 only capped the card's total height, and
-   the actual image (.fcell-photo, flex: 1) got squeezed into whatever
-   was left over after the text rows, landing on a landscape crop instead
-   of a square one. The aspect ratio belongs on .fcell-photo itself. */
-.strip-card .fcell-photo { aspect-ratio: 3/2; flex: none; }
-
-/* ── UNIFIED FRAMED CARD ── */
-.fcell {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  /* .strip-card is now stretched by .carousel-track's align-items: stretch
-     to the tallest card's natural height in the row — that's a real,
-     resolved height (not content-circular the way it was under
-     align-items: center), so .fcell can safely fill it. A shorter card's
-     photo/kicker/title stack just leaves blank space below itself inside
-     this box; nothing crops, since .fcell never has less room than its
-     own content needs, only ever more. */
-  height: 100%;
-  border-radius: 0;
-  padding: 10px 10px 12px;
-  box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10));
-  transition: box-shadow .3s, transform .3s;
-  overflow: hidden;
-  isolation: isolate;
-}
-.strip-card.is-active .fcell { box-shadow: 0 18px 40px -14px rgba(0,0,0,.55); }
-a.fcell:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
-.fcell-photo { position: relative; flex: 1; min-height: 56px; border-radius: 0; overflow: hidden; background: var(--ink); }
-.fcell-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
-a.fcell:hover .fcell-photo img { transform: scale(1.08); }
-.fcell-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; flex-shrink: 0; color: var(--ochre); }
-.fcell h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 17px; line-height: 1.22; margin-top: 5px; flex-shrink: 0; color: var(--ink); }
-.fcell p.dek { font-size: 14px; margin-top: 7px; line-height: 1.5; flex-shrink: 0; color: var(--mute); }
-/* Rotating card backgrounds — matches the mockup's 6-color cycle (only
-   frame--paper/--cream were ported originally, so every carousel card was
-   stuck on the same cream background instead of rotating). See
-   HeroCarousel.tsx's FRAMES array for the rotation itself.
-   frame--paper (plain var(--paper), i.e. white) and frame--cream
-   (var(--paper-warm), #faf7f2 — visually indistinguishable from white in
-   a screenshot) were dropped from the rotation entirely and replaced
-   with frame--peach/--sky — two real pastel tints pulled from the same
-   palette family lib/cardColors.ts already uses for the homepage's
-   masonry cards — since together they made a third of the carousel read
-   as "just a white card" with no visible color at all. */
-.frame--peach { background: #e3c9ae; }
-.frame--sky { background: #c9dce0; }
-.frame--gold { background: var(--accent-gold-frame); }
-.frame--gold .fcell-kicker { color: var(--ochre-deep); }
-.frame--gold h3 { color: var(--accent-gold-frame-ink); }
-.frame--plum, .frame--teal, .frame--clay { color: #f3ece0; }
-.frame--plum { background: var(--accent-plum); }
-.frame--teal { background: var(--accent-teal); }
-.frame--clay { background: var(--accent-clay); }
-.frame--plum h3, .frame--teal h3, .frame--clay h3 { color: #f3ece0; }
-.frame--plum .fcell-kicker, .frame--teal .fcell-kicker, .frame--clay .fcell-kicker { color: var(--gold); }
+.hero-rail-card h3 { font-family: "Fraunces", serif; font-weight: 700; font-size: 16px; line-height: 1.3; margin: 5px 0 0; color: var(--ink); }
 
 /* ── SECTION HEADER ── */
 .band { padding: clamp(52px, 6.5vw, 88px) 0; }
@@ -294,14 +129,17 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 
 /* ── ARCHIVE-STYLE SECTIONS (homepage restyle, September 2026) ──
    Retires the pastel colorForCard() card fills and the alternating
-   white/#F2F2F2 band tint (.band/.band--tint/.masonry-rand/.wcard above
-   — kept in place, unused by the homepage now, since SeriesLandingPage/
-   MagazineArchiveWrapper/the author page and JoinSection's single
-   feature card still render with those classes) in favour of the plain,
-   hairline-ruled treatment already shipping on
+   white/#F2F2F2 band tint (.band/.band--tint above — kept in place, unused
+   by the homepage now; nothing else in the codebase renders them either
+   after the site-wide colourful-card sweep, but they're left as dead CSS
+   per the usual "kept in case needed again" convention) in favour of the
+   plain, hairline-ruled treatment already shipping on
    /magazine/issues/[slug] — mirrors .mag-issue-section-hdr/.mag-issue-post
    in magazine.css almost exactly, just under a homepage-scoped name
-   since magazine.css isn't loaded on `/`. */
+   since magazine.css isn't loaded on `/`. `ArchiveCardGrid.tsx` reuses this
+   file's `.arc-grid`/`.arc-card` classes directly (homepage-v2.css loads
+   site-wide via the root layout) for the same treatment on
+   SeriesLandingPage/MagazineArchiveWrapper/the author archive. */
 .arc-section { padding: clamp(48px, 6vw, 72px) 0; background: var(--paper); }
 .arc-hdr {
   display: flex;
@@ -391,33 +229,23 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .arc-shop-card h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 16px; line-height: 1.3; color: var(--ink); margin: 0; }
 .arc-shop-price { display: block; margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ochre); }
 
-/* ── RANDOMISED-LOOKING MASONRY (deterministic shape per index, so
-   server + client render identically — no client Math.random) — retired
-   from the homepage by the archive-style restyle above, but still used
-   by SeriesLandingPage/MagazineArchiveWrapper/the author page, which
-   share this file's class names. ── */
-.masonry-rand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-.wcard--rect { grid-column: span 2; }
-.wcard--sq { grid-column: span 1; }
-@media (max-width: 1100px) {
-  .masonry-rand { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 780px) {
-  .masonry-rand { grid-template-columns: 1fr; }
-  .wcard--rect, .wcard--sq { grid-column: span 1; }
-  .wcard--rect .wcard-photo, .wcard--sq .wcard-photo { aspect-ratio: 4/3; }
-}
-/* text-decoration: none set directly here (not just relying on the .hpv2 a
-   reset above) — .wcard is also reused outside .hpv2, on the magazine
-   category/industry/country/tag filtered listing pages
-   (MagazineArchiveWrapper.tsx), which have no such reset of their own. */
+/* .wcard/.wcard-photo/.wcard-caption are the one surviving piece of the
+   old pastel masonry-card system — still load-bearing for JoinSection.tsx's
+   single "latest issue" feature card (a rotated preview, no colour fill).
+   The variable-shape .wcard--sq/--rect grid-column spans and the
+   .masonry-rand wrapper that used to size them are gone — every listing
+   that used to render that grid (the homepage, SeriesLandingPage,
+   MagazineArchiveWrapper, the author archive) now renders ArchiveCardGrid's
+   plain .arc-grid instead, so there's no remaining consumer of the shape
+   variants to keep this CSS "just in case" for. text-decoration: none is
+   set directly here (not just relying on the .hpv2 a reset above) — .wcard
+   is also reused outside .hpv2, on JoinSection's own page contexts, which
+   have no such reset of their own. */
 .wcard { display: block; border-radius: 22px; padding: 18px 18px 34px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow-1, 0 6px 14px -8px rgba(20,17,13,.10)); transition: box-shadow .3s, transform .3s; background: var(--paper-warm); }
 .wcard:hover { box-shadow: var(--shadow-2, 0 18px 34px -14px rgba(20,17,13,.16)); transform: translateY(-3px); }
 .wcard-photo { position: relative; width: 100%; border-radius: 13px; overflow: hidden; background: var(--ink); }
 .wcard-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 .wcard:hover .wcard-photo img { transform: scale(1.08); }
-.wcard--rect .wcard-photo { aspect-ratio: 2.15 / 1; }
-.wcard--sq .wcard-photo { aspect-ratio: 1 / 1; }
 .wcard-caption { margin-top: 22px; text-align: center; font-family: "Fraunces", serif; font-size: 18.5px; line-height: 1.55; max-width: 34ch; margin-left: auto; margin-right: auto; }
 
 /* ── SHOP RAIL ── */

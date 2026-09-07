@@ -3,8 +3,7 @@ import Link from "next/link";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import CultureDropBand from "./CultureDropBand";
-import { tileMasonryShapes } from "@/lib/masonryShapes";
-import { colorForCard } from "@/lib/cardColors";
+import ArchiveCardGrid from "./ArchiveCardGrid";
 
 interface Story {
   id: string;
@@ -138,35 +137,10 @@ export default function SeriesLandingPage({ name, description, stories }: Series
             <div className="sr-grid-header">
               <span className="sr-grid-label">More from {name}</span>
             </div>
-            {/* Same masonry treatment as the homepage sections and the
-                category/industry/country/tag/author archives — see
-                MagazineArchiveWrapper.tsx for the full rationale. */}
-            <div className="masonry-rand">
-              {tileMasonryShapes(remainder).map(({ item: story, shape }) => {
-                const image = story.featuredImage?.node?.sourceUrl || null;
-                const alt = story.featuredImage?.node?.altText || story.title || "";
-                return (
-                  <Link
-                    key={story.id}
-                    href={`/magazine/${story.slug}`}
-                    className={`wcard wcard--${shape}`}
-                    style={{ background: colorForCard((story as any).databaseId ?? story.id) }}
-                  >
-                    <div className="wcard-photo">
-                      {image ? (
-                        <img src={image} alt={alt} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
-                      )}
-                    </div>
-                    <p
-                      className="wcard-caption"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }}
-                    />
-                  </Link>
-                );
-              })}
-            </div>
+            {/* Same flush, colourless card grid as the homepage sections and
+                the category/industry/country/tag/author archives — see
+                ArchiveCardGrid.tsx for the full rationale. */}
+            <ArchiveCardGrid stories={remainder} />
           </div>
         </section>
       )}
