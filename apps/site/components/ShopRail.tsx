@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { colorForCard } from "@/lib/cardColors";
 
 interface ShopRailProduct {
   slug: string;
@@ -16,13 +15,15 @@ interface ShopRailProduct {
 // Monocle-style horizontal shop strip — arrow-paged one card at a time
 // (not centre-focus/looping like the hero carousel), since reaching the
 // real ends of a product rail is expected, not something to hide.
+// Cards are the plain, flush "archive style" card (.arc-shop-card) — see
+// the homepage restyle that retired the pastel colorForCard() fills.
 export default function ShopRail({ products }: { products: ShopRailProduct[] }) {
   const railRef = useRef<HTMLDivElement>(null);
 
   function step(dir: 1 | -1) {
     const rail = railRef.current;
     if (!rail) return;
-    const card = rail.querySelector<HTMLElement>(".shop-card");
+    const card = rail.querySelector<HTMLElement>(".arc-shop-card");
     const gap = parseFloat(getComputedStyle(rail).columnGap || "22") || 22;
     const w = card ? card.getBoundingClientRect().width + gap : 220;
     rail.scrollLeft += dir * w;
@@ -38,21 +39,12 @@ export default function ShopRail({ products }: { products: ShopRailProduct[] }) 
         </svg>
       </button>
       <div className="shop-rail" ref={railRef}>
-        {products.map((p, i) => (
-          <Link
-            key={p.slug}
-            href={`/shop/${p.slug}`}
-            className="wcard shop-card"
-            style={{ background: colorForCard(p.databaseId ?? p.slug?.length ?? i) }}
-          >
-            <div className="wcard-photo">
-              {p.image && <img src={p.image} alt={p.name} />}
-              {p.price && <span className="shop-price-tag" dangerouslySetInnerHTML={{ __html: p.price }} />}
-            </div>
-            <div className="shop-caption">
-              {p.vendor && <div className="shop-caption-maker">{p.vendor}</div>}
-              <div className="shop-caption-title">{p.name}</div>
-            </div>
+        {products.map((p) => (
+          <Link key={p.slug} href={`/shop/${p.slug}`} className="arc-shop-card">
+            <div className="arc-card-img">{p.image && <img src={p.image} alt={p.name} />}</div>
+            {p.vendor && <span className="arc-shop-vendor">{p.vendor}</span>}
+            <h3>{p.name}</h3>
+            {p.price && <span className="arc-shop-price" dangerouslySetInnerHTML={{ __html: p.price }} />}
           </Link>
         ))}
       </div>

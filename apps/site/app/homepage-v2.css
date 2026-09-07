@@ -292,8 +292,115 @@ a.fcell:hover .fcell-photo img { transform: scale(1.08); }
 .band-head p.subtitle { margin-top: 14px; font-size: 15px; color: var(--mute); line-height: 1.6; }
 .band-head a.view-all { margin-top: 18px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre); padding-bottom: 3px; border-bottom: 1px solid var(--ochre); }
 
+/* ── ARCHIVE-STYLE SECTIONS (homepage restyle, September 2026) ──
+   Retires the pastel colorForCard() card fills and the alternating
+   white/#F2F2F2 band tint (.band/.band--tint/.masonry-rand/.wcard above
+   — kept in place, unused by the homepage now, since SeriesLandingPage/
+   MagazineArchiveWrapper/the author page and JoinSection's single
+   feature card still render with those classes) in favour of the plain,
+   hairline-ruled treatment already shipping on
+   /magazine/issues/[slug] — mirrors .mag-issue-section-hdr/.mag-issue-post
+   in magazine.css almost exactly, just under a homepage-scoped name
+   since magazine.css isn't loaded on `/`. */
+.arc-section { padding: clamp(48px, 6vw, 72px) 0; background: var(--paper); }
+.arc-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 14px;
+  margin-bottom: 8px;
+}
+.arc-type {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.arc-hdr h2 {
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  font-size: clamp(22px, 2.4vw, 27px);
+  line-height: 1.15;
+  color: var(--ink);
+  flex: 1;
+}
+.arc-hdr h2 em { font-style: italic; color: var(--ochre); font-weight: 400; }
+.arc-count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.arc-count a { color: var(--ochre); text-decoration: none; }
+.arc-count a:hover { text-decoration: underline; }
+.arc-sub { margin: 18px 0 28px; font-size: 14.5px; color: var(--mute); line-height: 1.6; max-width: 60ch; }
+
+.arc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.arc-card { display: block; text-decoration: none; color: inherit; }
+.arc-card-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-lg, 6px);
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--paper-deep);
+}
+.arc-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.arc-card h3 {
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.arc-card p { font-size: 13px; color: var(--mute); line-height: 1.5; margin: 0; }
+.arc-cta {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ochre);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+@media (max-width: 900px) {
+  .arc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .arc-grid { grid-template-columns: 1fr; }
+  .arc-hdr { flex-wrap: wrap; }
+}
+
+/* Shop rail's own card variant — same flush/no-fill treatment as .arc-card,
+   sized for the horizontal-scroll rail instead of a static grid. */
+.arc-shop-card { flex: 0 0 auto; width: clamp(190px, 19vw, 246px); scroll-snap-align: start; display: block; text-decoration: none; color: inherit; }
+.arc-shop-card .arc-card-img { aspect-ratio: 1/1; margin-bottom: 12px; }
+.arc-shop-vendor {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+.arc-shop-card h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 16px; line-height: 1.3; color: var(--ink); margin: 0; }
+.arc-shop-price { display: block; margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ochre); }
+
 /* ── RANDOMISED-LOOKING MASONRY (deterministic shape per index, so
-   server + client render identically — no client Math.random) ── */
+   server + client render identically — no client Math.random) — retired
+   from the homepage by the archive-style restyle above, but still used
+   by SeriesLandingPage/MagazineArchiveWrapper/the author page, which
+   share this file's class names. ── */
 .masonry-rand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .wcard--rect { grid-column: span 2; }
 .wcard--sq { grid-column: span 1; }
