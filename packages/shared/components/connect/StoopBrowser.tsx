@@ -36,7 +36,7 @@ interface ClusterMember {
 // same stable-hash-of-id approach, kept as a separate copy since there's no
 // shared source of truth for these small per-component color helpers.
 const AVATAR_COLORS = [
-  "#c5491f", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
+  "#7a241c", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
   "#7b1fa2", "#c2185b", "#00695c", "#37474f", "#283593", "#5d4037",
 ];
 function avatarColor(id: number | string): string {

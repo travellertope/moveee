@@ -80,7 +80,7 @@ function createStyles(c: ColorPalette) {
     retryBtn: {
       width: 140,
       height: 44,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",

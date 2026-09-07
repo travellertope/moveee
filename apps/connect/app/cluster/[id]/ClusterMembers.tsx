@@ -9,7 +9,7 @@ interface ClusterMember {
 // Mirrors StoopBrowser.tsx's avatarColor() — no shared source of truth for
 // this small per-component color helper, same caveat as elsewhere.
 const AVATAR_COLORS = [
-  "#c5491f", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
+  "#7a241c", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
   "#7b1fa2", "#c2185b", "#00695c", "#37474f", "#283593", "#5d4037",
 ];
 function avatarColor(id: number): string {

@@ -2343,7 +2343,7 @@ function createStyles(c: ColorPalette) {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
-    recommendNoActive: { backgroundColor: "#C5491F", borderColor: "#C5491F" },
+    recommendNoActive: { backgroundColor: "#7a241c", borderColor: "#7a241c" },
     recommendText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
     recommendNoText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
 

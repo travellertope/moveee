@@ -819,7 +819,8 @@ this section instead of (or in addition to) the standard one.
 var(--ink)        /* #14110d — primary dark text / dark backgrounds */
 var(--paper)      /* #f3ece0 — primary light background */
 var(--paper-deep) /* slightly deeper paper, for card backgrounds */
-var(--ochre)      /* #c5491f — accent rust (NOT amber — corrected June 2026, see note below) */
+var(--ochre)      /* #7a241c — accent brick/oxblood red (changed from rust #c5491f — see note below) */
+var(--ochre-deep) /* #5c1b15 — deeper/hover shade of --ochre, same value as --lit-oxblood-deep */
 var(--gold)       /* #b38238 — accent gold/amber, distinct from ochre */
 var(--rule)       /* border colour, subtle */
 var(--mute)       /* muted text */
@@ -827,12 +828,32 @@ var(--ink-soft)   /* softer body text */
 ```
 
 **Correction (June 2026):** this table previously listed `var(--ochre)` as `#b38238`
-(amber) — that was wrong. The actual definitions in `apps/connect/app/globals.css`
-are `--ochre: #c5491f` (rust) and `--gold: #b38238` (amber) — two distinct tokens.
-This matches the Figma Make mockups' own Tailwind config (`ochre: '#C5491F'`,
-`gold: '#B38238'`) exactly. If a future rebuild pass seems to find an "ochre vs gold
-mismatch" between mockups and the live CSS, check the real `globals.css` values first
-— they likely already match; don't assume the stale value once documented here.
+(amber) — that was wrong. `--ochre` and `--gold` are two distinct tokens. This matches
+the Figma Make mockups' own Tailwind config exactly. If a future rebuild pass seems to
+find an "ochre vs gold mismatch" between mockups and the live CSS, check the real
+`globals.css` values first — they likely already match; don't assume the stale value
+once documented here.
+
+**Ochre recolored from rust to brick/oxblood (September 2026).** `--ochre`/`--color-ochre`
+(and their Tailwind `ochre.DEFAULT` mirrors) changed from `#c5491f` (rust) to `#7a241c`
+(a dark brick/oxblood — the same hue already used as `--lit-oxblood` for The Moveee
+Literary vertical, see that section below) across `apps/site`, `apps/connect`,
+`packages/shared`, and `apps/mobile`'s `theme.ts` (`colors.ochre`) — this is the
+site-wide heading/accent/CTA color, not just a Literary-section-specific one. `--ochre-deep`
+(hover/pressed shade) changed from `#8a2d10` to `#5c1b15` — reusing `--lit-oxblood-deep`'s
+exact value for the same reason. `apps/connect/app/globals.css`'s dark-mode override block
+(`--ochre`/`--ochre-deep` at a lighter value for legibility against a dark background) was
+recalculated proportionally: `#954f49`/`#7d4944` (was `#d4603a`/`#a83f20`). Every literal
+hex occurrence of the four old values (`#c5491f`, `#8a2d10`, `#d4603a`, `#a83f20`) across
+`apps/site`, `apps/connect`, `apps/mobile`, and `packages/shared` — not just the CSS
+variable definitions — was swept and replaced with its new counterpart, including
+`packages/shared/lib/gemini.ts`'s illustration-generation prompt (which names the brand
+palette literally, so AI-generated art keeps matching the new accent). `--gold` (`#b38238`,
+amber) is unrelated and untouched — this only recolors the ochre/rust token, not every
+warm accent on the site. A handful of one-off literal fallback hexes on `var(--ochre-deep,
+#a83d18)`-style CSS fallbacks (a slightly different literal than the four swept above)
+were left as-is — harmless, since `--ochre-deep` is always defined at `:root` so the
+fallback never actually triggers.
 
 The `/newsletter` page and all newsletter-related pages must use paper
 backgrounds only. No `var(--ink)` background on any section of the list page.

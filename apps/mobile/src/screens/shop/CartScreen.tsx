@@ -133,7 +133,7 @@ export default function CartScreen() {
                 onPress={() => removeItem(item.id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="remove-circle" size={24} color="#C5491F" />
+                <Ionicons name="remove-circle" size={24} color="#7a241c" />
               </TouchableOpacity>
             )}
             <View style={styles.itemImageBox}>
@@ -202,7 +202,7 @@ export default function CartScreen() {
           )}
         </View>
         {couponError ? (
-          <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.tiny, color: "#C5491F", paddingHorizontal: space[4], marginBottom: space[2] }}>
+          <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.tiny, color: "#7a241c", paddingHorizontal: space[4], marginBottom: space[2] }}>
             {couponError}
           </Text>
         ) : null}
@@ -285,7 +285,7 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.lg,
       color: c.ink,
     },
-    editText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: "#C5491F" },
+    editText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: "#7a241c" },
 
     scroll: { flex: 1 },
     scrollContent: { padding: space[4], gap: 12 },
@@ -331,7 +331,7 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.sm,
       color: c.ink,
     },
-    removeLink: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: "#C5491F" },
+    removeLink: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: "#7a241c" },
     itemPrice: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, alignSelf: "flex-start" },
 
     voucherCard: {
@@ -354,7 +354,7 @@ function createStyles(c: ColorPalette) {
       borderRadius: 8,
       paddingHorizontal: 12,
     },
-    applyBtn: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: "#C5491F" },
+    applyBtn: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: "#7a241c" },
     removeVoucherBtn: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 
     summaryCard: {
@@ -399,7 +399,7 @@ function createStyles(c: ColorPalette) {
     },
     checkoutBtn: {
       height: 56,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",
@@ -432,14 +432,14 @@ function createStyles(c: ColorPalette) {
     browseBtn: {
       width: 280,
       height: 52,
-      backgroundColor: "#C5491F",
+      backgroundColor: "#7a241c",
       borderRadius: radius.full,
       alignItems: "center",
       justifyContent: "center",
       marginTop: 8,
     },
     browseBtnText: { fontFamily: fonts.sansBold, fontSize: 15, color: "#fff" },
-    editLink: { fontFamily: fonts.sans, fontSize: 13, color: "#C5491F" },
+    editLink: { fontFamily: fonts.sans, fontSize: 13, color: "#7a241c" },
 
   });
 }

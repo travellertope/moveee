@@ -30,7 +30,7 @@ const TYPE_CONFIG: Record<
 > = {
   success:  { color: "#2D6A4F", icon: "checkmark-circle-outline" },
   error:    { color: "#C62828", icon: "close-circle-outline" },
-  info:     { color: "#C5491F", icon: "information-circle-outline" },
+  info:     { color: "#7a241c", icon: "information-circle-outline" },
   warning:  { color: "#E65100", icon: "warning-outline" },
 };
 

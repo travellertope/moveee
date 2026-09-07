@@ -271,7 +271,7 @@ function MiniPostCard({
         <Text style={styles.postTimeAgo}>{timeAgo(post.publishedAt)}</Text>
         {isSelf && onTogglePin && (
           <TouchableOpacity onPress={onTogglePin} style={styles.pinBtn} hitSlop={8}>
-            <Ionicons name={isPinned ? "bookmark" : "bookmark-outline"} size={16} color={isPinned ? "#C5491F" : styles.postMeta.color as string} />
+            <Ionicons name={isPinned ? "bookmark" : "bookmark-outline"} size={16} color={isPinned ? "#7a241c" : styles.postMeta.color as string} />
           </TouchableOpacity>
         )}
       </View>
@@ -467,7 +467,7 @@ export default function MemberProfileScreen() {
           <Image source={{ uri: profile.coverPhotoUrl }} style={styles.hero} resizeMode="cover" />
         ) : (
           <LinearGradient
-            colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
+            colors={["#F3ECE0", "#E8D3BA", "#7a241c"]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={styles.hero}
           />

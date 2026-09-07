@@ -210,7 +210,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
               position: "absolute",
               top: 1,
               right: 1,
-              background: "#c5491f",
+              background: "#7a241c",
               borderRadius: "50%",
               width: 8,
               height: 8,
@@ -223,7 +223,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
             <span style={{ fontSize: 14, fontWeight: 500, flex: 1, textAlign: "left" }}>Notifications</span>
             {unread > 0 && (
               <span style={{
-                background: "#c5491f",
+                background: "#7a241c",
                 color: "#fff",
                 borderRadius: 9999,
                 minWidth: 18,
@@ -286,7 +286,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
             background: "#fff",
           }}>
             <span style={{ fontWeight: 700, fontSize: "0.82rem", color: "#14110d" }}>
-              Notifications {unread > 0 && <span style={{ color: "#c5491f" }}>({unread})</span>}
+              Notifications {unread > 0 && <span style={{ color: "#7a241c" }}>({unread})</span>}
             </span>
             {unread > 0 && (
               <button
@@ -298,7 +298,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
                   cursor: "pointer",
                   fontSize: "0.72rem",
                   fontWeight: 700,
-                  color: "#c5491f",
+                  color: "#7a241c",
                   fontFamily: "inherit",
                   padding: 0,
                 }}
@@ -365,7 +365,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
                     </div>
                   </div>
                   {isUnread && (
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c5491f", flexShrink: 0, marginTop: 6 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7a241c", flexShrink: 0, marginTop: 6 }} />
                   )}
                 </div>
               );

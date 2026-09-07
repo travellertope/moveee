@@ -241,7 +241,7 @@ export default function CommunityPostClient({
             </span>
           )}
           {templateType === "food-review" && (
-            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(197,73,31,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
               Food Review{foodDishName ? ` · ${foodDishName}` : ""}
             </span>
           )}
@@ -409,7 +409,7 @@ export default function CommunityPostClient({
                 outline: "none", padding: "0.65rem 0.85rem", boxSizing: "border-box",
               }}
             />
-            {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{error}</p>}
+            {error && <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{error}</p>}
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.65rem" }}>
               <button
                 type="submit"

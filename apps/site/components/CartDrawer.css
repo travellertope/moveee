@@ -204,7 +204,7 @@
   align-self: start;
   margin-top: 2px;
 }
-.cart-item-remove:hover:not(:disabled) { color: var(--ochre, #c5491f); }
+.cart-item-remove:hover:not(:disabled) { color: var(--ochre, #7a241c); }
 .cart-item-remove:disabled { opacity: 0.4; }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
@@ -254,7 +254,7 @@
   transition: background 0.2s;
   border-radius: var(--radius-lg);
 }
-.cart-checkout-btn:hover { background: var(--ochre, #c5491f); }
+.cart-checkout-btn:hover { background: var(--ochre, #7a241c); }
 .cart-continue-btn {
   background: none;
   border: none;
@@ -276,7 +276,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--ochre, #c5491f), var(--gold, #b38238));
+  background: linear-gradient(90deg, var(--ochre, #7a241c), var(--gold, #b38238));
   animation: cart-bar-pulse 1.2s ease-in-out infinite alternate;
   z-index: 1;
 }

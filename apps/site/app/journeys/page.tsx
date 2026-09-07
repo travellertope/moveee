@@ -288,7 +288,7 @@ export default async function OriginsPage() {
           <svg viewBox="0 0 400 533" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
             <defs>
               <radialGradient id="cbGlow" cx="40%" cy="60%" r="50%">
-                <stop offset="0%" stopColor="#c5491f" stopOpacity=".25"/>
+                <stop offset="0%" stopColor="#7a241c" stopOpacity=".25"/>
                 <stop offset="100%" stopColor="#0c0a07" stopOpacity="0"/>
               </radialGradient>
             </defs>

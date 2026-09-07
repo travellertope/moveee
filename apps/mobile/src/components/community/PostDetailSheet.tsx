@@ -140,7 +140,7 @@ const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string
   "post":              { label: "POST",             emoji: "✏️", bg: "rgba(100,100,100,0.08)", color: "#555" },
   "hidden-gem":        { label: "PLACE",             emoji: "💎", bg: "rgba(98,0,238,0.08)",   color: "#6200EE" },
   "cultural-take":     { label: "CULTURAL TAKE",    emoji: "🎯", bg: "rgba(183,28,28,0.08)",  color: "#B71C1C" },
-  "food-review":       { label: "FOOD REVIEW",      emoji: "🍽️", bg: "rgba(197,73,31,0.08)",  color: "#C5491F" },
+  "food-review":       { label: "FOOD REVIEW",      emoji: "🍽️", bg: "rgba(197,73,31,0.08)",  color: "#7a241c" },
   "creative-showcase": { label: "CREATIVE SHOWCASE",emoji: "🎨", bg: "rgba(25,118,210,0.08)", color: "#1976D2" },
   "poll":              { label: "POLL",              emoji: "📊", bg: "rgba(255,143,0,0.08)",  color: "#E65100" },
   "itinerary":         { label: "ITINERARY",        emoji: "🗺️", bg: "rgba(46,125,50,0.08)",  color: "#2E7D32" },

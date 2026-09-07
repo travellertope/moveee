@@ -20,8 +20,8 @@ const config: Config = {
         mute: "#7a6f5c",
         rule: "#2a241c",
         ochre: {
-          DEFAULT: "#c5491f",
-          deep: "#8a2d10",
+          DEFAULT: "#7a241c",
+          deep: "#5c1b15",
         },
         moss: "#3d4a2a",
         gold: "#b38238",

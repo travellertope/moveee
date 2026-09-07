@@ -45,7 +45,7 @@ export default function StoopReminderCard() {
         background: "var(--paper-deep, #f2f2f2)",
         borderRadius: 12,
         boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
-        borderLeft: "4px solid var(--ochre, #c5491f)",
+        borderLeft: "4px solid var(--ochre, #7a241c)",
         padding: "20px",
         textDecoration: "none",
         marginBottom: "1.25rem",
@@ -78,7 +78,7 @@ export default function StoopReminderCard() {
       </div>
       <span style={{
         flexShrink: 0, fontFamily: "var(--font-sans, 'DM Sans', sans-serif)",
-        fontSize: "0.85rem", fontWeight: 700, color: "var(--ochre, #c5491f)",
+        fontSize: "0.85rem", fontWeight: 700, color: "var(--ochre, #7a241c)",
         whiteSpace: "nowrap",
       }}>
         View →

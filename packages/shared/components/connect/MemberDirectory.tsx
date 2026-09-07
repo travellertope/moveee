@@ -40,7 +40,7 @@ const INDUSTRY_COLORS: Record<string, string> = {
 // Purely decorative — no per-member color stored server-side, so a stable
 // hash of the member id picks a consistent avatar color across renders.
 const AVATAR_COLORS = [
-  "#c5491f", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
+  "#7a241c", "#1976d2", "#2e7d32", "#b38238", "#6b48a8", "#8d6e63",
   "#7b1fa2", "#c2185b", "#00695c", "#37474f", "#283593", "#5d4037",
 ];
 function avatarColor(id: string): string {

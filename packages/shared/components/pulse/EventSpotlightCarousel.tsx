@@ -9,7 +9,7 @@ const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { s
 const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
 
 const CATEGORY_COLORS: Record<string, string> = {
-  music: "#C5491F",
+  music: "#7a241c",
   nightlife: "#7B1FA2",
   food: "#B38238",
   film: "#1976D2",
@@ -74,7 +74,7 @@ function SpotlightCard({ item, onOpen }: { item: FeedItem; onOpen: () => void })
         {item.isFeatured && <span style={{ color: "var(--gold, #b38238)", fontSize: 12 }}>★</span>}
       </div>
       <div style={{ padding: "0 12px", display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}>
-        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, fontWeight: 700, color: "var(--ochre, #c5491f)", textTransform: "uppercase" }}>
+        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, fontWeight: 700, color: "var(--ochre, #7a241c)", textTransform: "uppercase" }}>
           {date}
         </span>
         {time && <span style={{ fontSize: 11, color: "var(--mute, #7a6f5c)" }}>{time}</span>}
@@ -104,7 +104,7 @@ function SpotlightCard({ item, onOpen }: { item: FeedItem; onOpen: () => void })
       </div>
       <div style={{ margin: "10px 12px 12px", paddingTop: 8, borderTop: "1px solid var(--rule, #e8e2d8)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: isFree ? 400 : 700, color: isFree ? "var(--ink-soft, #3a342b)" : "var(--ochre, #c5491f)" }}>
+          <span style={{ fontSize: 12, fontWeight: isFree ? 400 : 700, color: isFree ? "var(--ink-soft, #3a342b)" : "var(--ochre, #7a241c)" }}>
             {isFree ? "Free" : item.admission}
           </span>
           {isCommunity && (
@@ -134,7 +134,7 @@ export default function EventSpotlightCarousel({ events }: { events: FeedItem[] 
         <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink, #14110d)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           📅 Upcoming Near You
         </h2>
-        <Link href="/events" style={{ fontSize: 12, fontWeight: 700, color: "var(--ochre, #c5491f)", textDecoration: "none" }}>
+        <Link href="/events" style={{ fontSize: 12, fontWeight: 700, color: "var(--ochre, #7a241c)", textDecoration: "none" }}>
           See all →
         </Link>
       </div>

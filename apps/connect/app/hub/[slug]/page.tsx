@@ -78,7 +78,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
               <p style={{ fontSize: "0.95rem", color: "#3a342b", margin: "0 0 0.5rem" }}>
                 This Hub doesn't exist or has been removed.
               </p>
-              <Link href="/hub" style={{ color: "#c5491f", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
+              <Link href="/hub" style={{ color: "#7a241c", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
                 ← Back to Hubs
               </Link>
             </div>
@@ -130,7 +130,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
                 {hub.isOfficial && (
                   <span style={{
-                    background: "var(--ochre, #c5491f)", color: "#fff",
+                    background: "var(--ochre, #7a241c)", color: "#fff",
                     fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em",
                     textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px",
                   }}>

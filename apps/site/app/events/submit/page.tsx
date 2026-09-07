@@ -297,7 +297,7 @@ export default function EventSubmitPage() {
                   </button>
                 )}
                 {imageError && (
-                  <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>{imageError}</p>
+                  <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>{imageError}</p>
                 )}
               </div>
 
@@ -314,7 +314,7 @@ export default function EventSubmitPage() {
               </div>
 
               {error && (
-                <p style={{ color: "#c5491f", fontSize: "0.82rem", margin: 0 }}>{error}</p>
+                <p style={{ color: "#7a241c", fontSize: "0.82rem", margin: 0 }}>{error}</p>
               )}
 
               <button

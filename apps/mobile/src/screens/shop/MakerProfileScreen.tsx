@@ -127,7 +127,7 @@ function ProductCard({
           <Image source={{ uri: product.image }} style={s.image} resizeMode="cover" />
         ) : (
           <LinearGradient
-            colors={["#D4B896", "#A67C52", "#C5491F"]}
+            colors={["#D4B896", "#A67C52", "#7a241c"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.image}
@@ -402,7 +402,7 @@ export default function MakerProfileScreen() {
         {/* ── Hero ── */}
         <View style={s.hero}>
           <LinearGradient
-            colors={["#A66C52", "#C5491F", "#E2B19B"]}
+            colors={["#A66C52", "#7a241c", "#E2B19B"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}

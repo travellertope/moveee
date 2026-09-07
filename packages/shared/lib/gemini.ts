@@ -287,8 +287,8 @@ function extractJson(raw: string): string {
  * while maintaining a strict premium palette.
  */
 const STYLE_MODIFIERS =
-  "strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), " +
-  "dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), " +
+  "strictly restricted palette: deep ink (#14110d), burnt ochre (#7a241c), " +
+  "dark ochre (#5c1b15), gold brass (#b38238), moss green (#3d4a2a), " +
   "cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
   "Premium editorial magazine illustration style. Flat geometric shapes with " +
   "intentional textures: dry-brush paper grain, coarse stippling, or fine ink bleeds. " +
@@ -335,7 +335,7 @@ const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing a
 
 Given a directory entry, write a single illustration brief (2–4 sentences) describing WHAT TO DRAW. Be highly specific to this exact subject — extract concrete visual elements from the content: specific objects, garments, architecture, instruments, landscapes, gestures, cultural symbols, time period, geography. No generic descriptions.
 
-The illustration must always use: flat geometric shapes, dry-brush paper grain, coarse stippling, ink bleeds, sharp geometric shadow blocks, matte finish, generous negative space. Palette locked to: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42). No photorealism, no gradients, no white.
+The illustration must always use: flat geometric shapes, dry-brush paper grain, coarse stippling, ink bleeds, sharp geometric shadow blocks, matte finish, generous negative space. Palette locked to: deep ink (#14110d), burnt ochre (#7a241c), dark ochre (#5c1b15), gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42). No photorealism, no gradients, no white.
 
 For PORTRAIT entries: describe the figure's specific pose, their distinctive clothing or signature look, a meaningful object they're associated with, and a background that references their world (not generic).
 For OBJECT entries: describe the object's specific form, texture, cultural markings or details, and a setting or arrangement that places it in cultural context.
@@ -365,7 +365,7 @@ async function buildImagePromptWithAI(
       if (brief.length <= 30) return null;
       const fullPrompt =
         brief + " " +
-        "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
+        "Strictly restricted palette: deep ink (#14110d), burnt ochre (#7a241c), dark ochre (#5c1b15), " +
         "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
         "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
         "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";

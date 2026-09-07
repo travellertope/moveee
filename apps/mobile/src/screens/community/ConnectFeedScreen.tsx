@@ -102,7 +102,7 @@ function matchesCategory(item: FeedItem, category: string): boolean {
   return false;
 }
 
-const TRENDING_COLORS = ["#C5491F", "#7C3AED", "#065F46"];
+const TRENDING_COLORS = ["#7a241c", "#7C3AED", "#065F46"];
 
 export default function ConnectFeedScreen() {
   const nav = useNav();

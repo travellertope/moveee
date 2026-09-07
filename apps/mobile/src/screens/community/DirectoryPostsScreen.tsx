@@ -31,7 +31,7 @@ interface Post {
 const TEMPLATE_BADGE: Record<string, { label: string; color: string }> = {
   post:                { label: "💬 Post",             color: "#3A342B" },
   "cultural-take":     { label: "🔥 Cultural Take",    color: "#6B48A8" },
-  "food-review":       { label: "🍽️ Food Review",      color: "#C5491F" },
+  "food-review":       { label: "🍽️ Food Review",      color: "#7a241c" },
   "hidden-gem":        { label: "💎 Place",              color: "#2D9CDB" },
   "book-review":       { label: "📖 Book Review",       color: "#3A342B" },
   "creative-showcase": { label: "🎨 Creative Showcase", color: "#1976D2" },
@@ -40,7 +40,7 @@ const TEMPLATE_BADGE: Record<string, { label: string; color: string }> = {
 };
 
 const AVATAR_PALETTE: Array<[string, string]> = [
-  ["#9b51e0", "#f2994a"], ["#2D9CDB", "#9b51e0"], ["#C5491F", "#E2A684"],
+  ["#9b51e0", "#f2994a"], ["#2D9CDB", "#9b51e0"], ["#7a241c", "#E2A684"],
   ["#B38238", "#E2A684"], ["#8E54E9", "#4776E6"], ["#00695C", "#4B6CB7"],
 ];
 

@@ -215,7 +215,7 @@ function CompleteProfileForm() {
             <div style={styles.row}>
               <div style={{ ...styles.field, flex: 1 }}>
                 <label style={styles.label} htmlFor="dob">
-                  Date of Birth <span style={{ color: "#c5491f" }}>*</span>
+                  Date of Birth <span style={{ color: "#7a241c" }}>*</span>
                 </label>
                 <input
                   id="dob"
@@ -228,7 +228,7 @@ function CompleteProfileForm() {
               </div>
               <div style={{ ...styles.field, flex: 1 }}>
                 <label style={styles.label} htmlFor="country">
-                  Country of Residence <span style={{ color: "#c5491f" }}>*</span>
+                  Country of Residence <span style={{ color: "#7a241c" }}>*</span>
                 </label>
                 <CountrySelect
                   id="country"
@@ -243,7 +243,7 @@ function CompleteProfileForm() {
             <div style={styles.row}>
               <div style={{ ...styles.field, flex: 1 }}>
                 <label style={styles.label} htmlFor="city">
-                  City <span style={{ color: "#c5491f" }}>*</span>
+                  City <span style={{ color: "#7a241c" }}>*</span>
                 </label>
                 <CitySelect
                   id="city"
@@ -487,7 +487,7 @@ const styles: Record<string, React.CSSProperties> = {
   input: { display: "block", width: "100%", padding: "10px 14px", border: "1px solid #d4cbbf", borderRadius: 3, fontSize: 15, color: "#14110d", background: "#fff", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" },
   billingToggle: { display: "flex", alignItems: "center", gap: 8, marginBottom: 20, background: "#f0ede6", padding: 4, borderRadius: 6, width: "fit-content", transition: "opacity 0.2s" },
   cycleBtn: { padding: "6px 16px", border: "none", borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" },
-  savingsTag: { fontSize: 11, fontWeight: 700, color: "#c5491f", background: "#fdf2f0", padding: "2px 8px", borderRadius: 10, marginLeft: 4 },
+  savingsTag: { fontSize: 11, fontWeight: 700, color: "#7a241c", background: "#fdf2f0", padding: "2px 8px", borderRadius: 10, marginLeft: 4 },
   tierGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 8 },
   tierCard: { cursor: "pointer", padding: "20px 18px", border: "2px solid #d4cbbf", borderRadius: 4, transition: "border-color 0.2s, box-shadow 0.2s", display: "block", position: "relative" as const },
   tierLabel: { margin: "0 0 4px", fontSize: 17, fontWeight: 600, color: "#14110d" },

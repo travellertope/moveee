@@ -24,7 +24,7 @@ interface Props {
 }
 
 const AVATAR_PALETTE: Array<[string, string]> = [
-  ["#9b51e0", "#f2994a"], ["#2D9CDB", "#9b51e0"], ["#C5491F", "#E2A684"],
+  ["#9b51e0", "#f2994a"], ["#2D9CDB", "#9b51e0"], ["#7a241c", "#E2A684"],
   ["#B38238", "#E2A684"], ["#8E54E9", "#4776E6"], ["#00695C", "#4B6CB7"],
 ];
 function avatarGradient(name: string): [string, string] {
