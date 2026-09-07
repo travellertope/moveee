@@ -8,13 +8,11 @@
    already defined in globals.css.
    ============================================================ */
 
-/* Widened from 1176px so the masonry sections below can go from 3 to 4
-   columns without squeezing each card too narrow. */
-.hpv2 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
-/* The masthead (welcome text) + carousel section keeps the old, wider
-   column — only the card-grid sections below it were asked to narrow to
-   1024px. */
-.masthead .wrap { max-width: 1328px; }
+/* Column width matches the masthead/"Right Now" section (1328px) — every
+   .arc-section below it was previously 1440px, which visibly misaligned
+   against the masthead's own .wrap. Standardized to one width, per explicit
+   user direction, rather than widening the masthead to match the sections. */
+.hpv2 .wrap { max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 64px); box-sizing: border-box; }
 
 /* The mockup resets every link site-wide (`a { color: inherit; text-decoration:
    none; }`) — this port never carried that reset over, so every card here

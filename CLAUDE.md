@@ -2796,6 +2796,22 @@ card system once it was clear the pattern was site-wide, not homepage-only.
   mockup (`https://claude.ai/code/artifact/b5d2819a-ec94-4577-9691-f519f6195839` at the
   time of writing) in a real environment before considering this fully closed.
 
+**Follow-up, same month — column-width mismatch fixed by standardizing on the narrower
+width, not the wider one.** User-reported: "Right Now" (the masthead/hero-carousel
+section) didn't align with the sections below it. Root cause: `.hpv2 .wrap` (the base
+rule every `.arc-section` on the homepage uses) was `max-width: 1440px`, while a
+second, more specific rule, `.masthead .wrap`, overrode it to `1328px` — but that
+override only applied inside `<section className="masthead">`, which wraps **both**
+the h1/subhead block *and* the "Right Now" header+carousel block (they're two sibling
+`.wrap` divs inside the same `<section>`). Every other section (`.arc-section`, a
+top-level sibling of `.masthead`, not nested inside it) never got the override and
+stayed at 1440px — so "Right Now" was narrower than every section below it. Fixed by
+collapsing to one rule: `.hpv2 .wrap { max-width: 1328px; ... }`, with the now-
+redundant `.masthead .wrap` override deleted entirely — every section on the page
+(masthead/Right Now included) now shares the same 1328px column. CSS brace-balance
+checked at 107/107 (one rule removed). Not visually verified in a browser — same
+`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
