@@ -697,7 +697,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin: 0;
+  /* Was `margin: 0` — three classes beats the generic `.prose-content
+     figure { margin: 2em 0 }` rule's specificity (a class+class+figure
+     combinator loses to class+class+class), so the gallery always won
+     with zero top/bottom margin regardless of source order, leaving no
+     gap between it and whatever paragraph follows. Restored the same
+     2em vertical rhythm every other block (single images, figures) uses. */
+  margin: 2em 0;
 }
 .ar-wrap .prose-content .wp-block-gallery.columns-2 { grid-template-columns: repeat(2, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-3 { grid-template-columns: repeat(3, 1fr); }

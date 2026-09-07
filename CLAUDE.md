@@ -2558,6 +2558,30 @@ the panel leftward into that gap, which is exactly the effect asked for.
 the header on a real `/magazine/[slug]` page load, and the widened photo panel at desktop/tablet
 widths — in a real environment before considering this fully closed.
 
+### Article body — zero spacing after a `wp-block-gallery` (fixed September 2026)
+
+User-reported: a 2-up (or any N-up) Gutenberg gallery in an article body ran flush into the
+paragraph directly below it, no gap at all — every other block (single images, `<figure>`,
+tables) had normal spacing. Root cause in `editorial.css`: `.ar-wrap .prose-content
+.wp-block-gallery { margin: 0; }` (needed so gallery images don't inherit the generic
+`figure { margin: 2em 0 }` rule's spacing *between grid items*) has three classes in its selector
+— higher specificity than `.ar-wrap .prose-content figure`'s two-classes-plus-a-type-selector —
+so it always won regardless of source order, zeroing the gallery's own *outer* top/bottom margin
+too, not just what was intended (the margin on the `figure.wp-block-image` wrappers nested inside
+it, which is a separate, correctly-scoped rule at `.wp-block-gallery figure.wp-block-image {
+margin: 0; }`). Fixed by changing the outer rule to `margin: 2em 0` — same vertical rhythm every
+other prose block already uses; the inner per-image-inside-the-grid rule is untouched, so gallery
+images still don't get individual spacing between each other, only the gallery block as a whole
+gets space above/below it again. **This is the same "unexpectedly-more-specific selector zeroes
+a margin that a more general rule was supposed to set" bug class** — if a future block-level
+element in `.prose-content` (a new Gutenberg block type, say) reads as flush against its
+neighbors despite `figure`/`img`'s generic 2em rule existing, check whether that block has its
+own zero-margin override winning on specificity before assuming the generic rule isn't applying
+at all.
+
+**Not visually verified in a browser** — same `node_modules` gap as every other pass in this
+file this session. Verified via a CSS brace-balance check on `editorial.css` (238/238).
+
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
 User request: "create more width for the post body area" by removing the left sidebar on the
