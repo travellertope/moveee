@@ -278,6 +278,11 @@
    The Paris Review's article template — see the approved mockup this was
    built from. Supersedes the old single centered 660px column. */
 .lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; max-width: 780px; }
+.lit-piece-featured-img {
+  width: 100%; aspect-ratio: 16/8.5; object-fit: cover; display: block;
+  margin: clamp(28px, 4vw, 44px) 0;
+}
+@media (max-width: 640px) { .lit-piece-featured-img { aspect-ratio: 4/3; } }
 .lit-piece-kicker {
   display: inline-block;
   font-family: var(--font-lit-meta), "Inter", sans-serif;
