@@ -2812,6 +2812,28 @@ redundant `.masthead .wrap` override deleted entirely — every section on the p
 checked at 107/107 (one rule removed). Not visually verified in a browser — same
 `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+**Follow-up, same month — "Right Now" made a continuous, seamlessly-looping auto-scroll
+carousel.** `HeroCarousel.tsx` previously only moved on arrow click (discrete,
+scroll-snapped steps). Per explicit user request it now auto-scrolls continuously at a
+slow, ambient drift (`AUTO_SCROLL_SPEED = 0.035px/ms`), loops infinitely, and still
+supports the arrow buttons (smooth-scroll a card width, pausing autoplay briefly) and
+hover/touch-to-pause. Mechanism: the story list renders **twice** back-to-back
+(`looped = [...stories, ...stories]`); a single `requestAnimationFrame` loop increments
+`rail.scrollLeft` every frame, and once it reaches exactly one set's width
+(`rail.scrollWidth / 2`), it's wound back by that same width — since both halves are
+identical, the reset is invisible, producing an infinite loop with no jump. `.hero-rail`'s
+`scroll-snap-type: x mandatory`/`.hero-rail-card`'s `scroll-snap-align: start` were
+**removed** from `homepage-v2.css` — snap-on-scroll-end fights a script that's
+continuously setting `scrollLeft` every frame, yanking the rail back to the nearest card
+the instant the loop pauses. Autoplay pauses (via a `pausedRef`, not React state, to avoid
+a re-render every frame) on hover, touch, and for `RESUME_DELAY` (2.2s) after an arrow
+click, then resumes automatically. If a future section wants this same "auto-scroll +
+loop + still arrow-controllable" rail treatment, copy this component's pattern rather
+than the CSS-duplicated-track marquee pattern documented elsewhere in this file (e.g. the
+`.evt-ticker-track`/`["a","b"].map(...)` pattern) — that one is pure-CSS and can't be
+paused/nudged by user interaction, which this rail needed. Not visually verified in a
+browser — same credentials gap as every other pass in this file.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an

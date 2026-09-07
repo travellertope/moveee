@@ -101,9 +101,13 @@
    .arc-hdr title + "More →" row, then an arrow-paged strip of flush
    cards (image, mono category kicker, serif title, no colour fill). */
 .hero-rail-wrap { position: relative; }
-.hero-rail { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 2px 8px; }
+/* No scroll-snap here (deliberately, unlike other rails) — this rail auto-scrolls
+   continuously via JS (HeroCarousel.tsx), and snap-on-end fights a JS-driven
+   scrollLeft by yanking it back to the nearest card the moment the script stops
+   nudging it each frame. */
+.hero-rail { display: flex; gap: 24px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
 .hero-rail::-webkit-scrollbar { display: none; }
-.hero-rail-card { flex: 0 0 auto; width: clamp(200px, 19vw, 250px); scroll-snap-align: start; display: block; text-decoration: none; color: inherit; }
+.hero-rail-card { flex: 0 0 auto; width: clamp(200px, 19vw, 250px); display: block; text-decoration: none; color: inherit; }
 .hero-rail-card .arc-card-img { margin-bottom: 12px; }
 .hero-rail-kicker {
   display: block;
