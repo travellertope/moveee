@@ -53,12 +53,12 @@
 /* Logo lockup — sized via class, not an inline style, so it can shrink at
    mobile widths instead of the fixed 52px desktop height crowding the
    masthead row (logo + Submit + Subscribe + search icon) into overflow. */
-.lit-logo-img { height: 52px; width: auto; display: block; }
-.lit-logo-img--compact { height: 34px; }
+.lit-logo-img { height: 60px; width: auto; display: block; }
+.lit-logo-img--compact { height: 38px; }
 .lit-logo-img--inverted { filter: brightness(0) invert(1); }
 @media (max-width: 640px) {
-  .lit-logo-img { height: 34px; }
-  .lit-logo-img--compact { height: 26px; }
+  .lit-logo-img { height: 38px; }
+  .lit-logo-img--compact { height: 29px; }
 }
 
 /* Generic genre/section metadata tag — real taxonomy (genre, "Series",
