@@ -53,12 +53,12 @@
 /* Logo lockup — sized via class, not an inline style, so it can shrink at
    mobile widths instead of the fixed 52px desktop height crowding the
    masthead row (logo + Submit + Subscribe + search icon) into overflow. */
-.lit-logo-img { height: 52px; width: auto; display: block; }
-.lit-logo-img--compact { height: 34px; }
+.lit-logo-img { height: 60px; width: auto; display: block; }
+.lit-logo-img--compact { height: 38px; }
 .lit-logo-img--inverted { filter: brightness(0) invert(1); }
 @media (max-width: 640px) {
-  .lit-logo-img { height: 34px; }
-  .lit-logo-img--compact { height: 26px; }
+  .lit-logo-img { height: 38px; }
+  .lit-logo-img--compact { height: 29px; }
 }
 
 /* Generic genre/section metadata tag — real taxonomy (genre, "Series",
@@ -106,10 +106,14 @@
 }
 .lit-util-link { color: var(--lit-mute); }
 .lit-util-link:hover { color: var(--lit-oxblood); }
-.lit-btn-pill { border: 1px solid var(--lit-ink); padding: 7px 16px; border-radius: 999px; color: var(--lit-ink); }
-.lit-btn-pill:hover { background: var(--lit-ink); color: var(--lit-ivory); }
+/* Any solid-filled pill (oxblood or ink) always carries ivory text — never
+   black, never oxblood-on-oxblood. Submit is ink-filled, Subscribe is
+   oxblood-filled, so the two read as distinct actions rather than
+   duplicating each other's color. */
+.lit-btn-pill { background: var(--lit-ink); border: 1px solid var(--lit-ink); padding: 7px 16px; border-radius: 999px; color: var(--lit-ivory); }
+.lit-btn-pill:hover { background: var(--lit-oxblood); border-color: var(--lit-oxblood); color: var(--lit-ivory); }
 .lit-btn-pill--fill { background: var(--lit-oxblood); color: var(--lit-ivory); border-color: var(--lit-oxblood); }
-.lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); }
+.lit-btn-pill--fill:hover { background: var(--lit-oxblood-deep); border-color: var(--lit-oxblood-deep); color: var(--lit-ivory); }
 .lit-search-icon {
   width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--lit-rule-strong);
   display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--lit-mute);
@@ -127,14 +131,21 @@
 .lit-nav-inner {
   display: flex; align-items: center; gap: 30px; overflow-x: auto;
   font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600;
-  letter-spacing: 0.06em; text-transform: uppercase; padding: 13px 0;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  /* Longhand, not `padding: 13px 0` — this class shares an element with
+     .lit-wrap (see the JSX), and a shorthand here would silently reset
+     .lit-wrap's left/right padding to 0 since it's declared later in the
+     cascade. Every class below combined onto a .lit-wrap element has the
+     same rule: padding-top/padding-bottom only, never the shorthand. */
+  padding-top: 13px;
+  padding-bottom: 13px;
 }
 .lit-nav-inner a { color: var(--lit-mute); white-space: nowrap; padding-bottom: 3px; border-bottom: 2px solid transparent; }
 .lit-nav-inner a:hover, .lit-nav-inner a.is-current { color: var(--lit-ink); border-bottom-color: var(--lit-oxblood); }
 .lit-nav-inner a.is-current { color: var(--lit-oxblood); }
 
 /* ── HERO ── */
-.lit-hero { padding: 44px 0 8px; }
+.lit-hero { padding-top: 44px; padding-bottom: 8px; }
 .lit-hero-row {
   position: relative;
   display: grid; grid-template-columns: 1.05fr 1fr; gap: 52px; align-items: center;
@@ -257,7 +268,7 @@
    carried through: full lit-wrap width, a body/sidebar split) inspired by
    The Paris Review's article template — see the approved mockup this was
    built from. Supersedes the old single centered 660px column. */
-.lit-piece-header { padding: clamp(40px, 6vw, 64px) 0 8px; max-width: 780px; }
+.lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; max-width: 780px; }
 .lit-piece-kicker {
   display: inline-block;
   font-family: var(--font-lit-meta), "Inter", sans-serif;
@@ -411,7 +422,8 @@
    this section doesn't have with a real, honest subscribe CTA) ── */
 .lit-piece-nlbreak { margin-top: 56px; }
 .lit-piece-nlbreak-inner {
-  padding: 44px 0;
+  padding-top: 44px;
+  padding-bottom: 44px;
   display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;
 }
 .lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-italic), Georgia, serif; font-weight: 500; font-style: italic; font-size: 27px; color: var(--lit-ink); }
@@ -462,7 +474,7 @@
 
 /* ── FOOTER ── */
 .lit-foot { background: var(--lit-ink); color: var(--lit-ivory); margin-top: 8px; }
-.lit-foot-top { padding: 56px 0 40px; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 40px; }
+.lit-foot-top { padding-top: 56px; padding-bottom: 40px; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 40px; }
 @media (max-width: 820px) { .lit-foot-top { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .lit-foot-top { grid-template-columns: 1fr; } }
 .lit-foot-tag { font-family: var(--font-lit-italic), Georgia, serif; font-style: italic; font-size: 15px; color: rgba(245, 239, 228, 0.62); margin: 10px 0 0; max-width: 26ch; }
@@ -482,7 +494,7 @@
 }
 .lit-nl-btn:hover { background: var(--lit-oxblood-deep); }
 .lit-foot-bottom {
-  border-top: 1px solid rgba(245, 239, 228, 0.14); padding: 20px 0;
+  border-top: 1px solid rgba(245, 239, 228, 0.14); padding-top: 20px; padding-bottom: 20px;
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
   font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; color: rgba(245, 239, 228, 0.55);
 }
