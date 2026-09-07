@@ -1438,9 +1438,11 @@ The user supplied an updated Moveee wordmark (a fuller lockup — "The" + bold "
 "BEST IN CULTURE" tagline line, vs. the prior header logo's bare "moveee." wordmark with no
 tagline) in two color variants. **New files**: `apps/site/public/logo-black.png` (dark
 wordmark, for light/solid header states) and `apps/site/public/logo-white.png` (light
-wordmark, for the header's transparent-over-dark state) — 667×283px each, a much more
-square-ish aspect ratio than the old banner-shaped logos, which is fine since
-`.toolbar-logo-img` is height-constrained (`height: 40px; width: auto`) in `header.css`.
+wordmark, for the header's transparent-over-dark state) — both cropped tight to their alpha
+bounding box (~552×183px, down from the source files' 667×283px, which had dead transparent
+margin on all sides) so `.toolbar-logo-img`'s `height: 40px; width: auto` sizing in
+`header.css` doesn't leave extra blank space around the mark. Still a much more square-ish
+aspect ratio than the old banner-shaped logos.
 
 **Old `logo-dark.png`/`logo-light.png` were deliberately left alone, not overwritten** — per
 explicit user instruction not to touch the footer logo. `packages/shared/components/
