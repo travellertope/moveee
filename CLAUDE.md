@@ -2796,6 +2796,44 @@ card system once it was clear the pattern was site-wide, not homepage-only.
   mockup (`https://claude.ai/code/artifact/b5d2819a-ec94-4577-9691-f519f6195839` at the
   time of writing) in a real environment before considering this fully closed.
 
+**Follow-up, same month — column-width mismatch fixed by standardizing on the narrower
+width, not the wider one.** User-reported: "Right Now" (the masthead/hero-carousel
+section) didn't align with the sections below it. Root cause: `.hpv2 .wrap` (the base
+rule every `.arc-section` on the homepage uses) was `max-width: 1440px`, while a
+second, more specific rule, `.masthead .wrap`, overrode it to `1328px` — but that
+override only applied inside `<section className="masthead">`, which wraps **both**
+the h1/subhead block *and* the "Right Now" header+carousel block (they're two sibling
+`.wrap` divs inside the same `<section>`). Every other section (`.arc-section`, a
+top-level sibling of `.masthead`, not nested inside it) never got the override and
+stayed at 1440px — so "Right Now" was narrower than every section below it. Fixed by
+collapsing to one rule: `.hpv2 .wrap { max-width: 1328px; ... }`, with the now-
+redundant `.masthead .wrap` override deleted entirely — every section on the page
+(masthead/Right Now included) now shares the same 1328px column. CSS brace-balance
+checked at 107/107 (one rule removed). Not visually verified in a browser — same
+`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
+**Follow-up, same month — "Right Now" made a continuous, seamlessly-looping auto-scroll
+carousel.** `HeroCarousel.tsx` previously only moved on arrow click (discrete,
+scroll-snapped steps). Per explicit user request it now auto-scrolls continuously at a
+slow, ambient drift (`AUTO_SCROLL_SPEED = 0.035px/ms`), loops infinitely, and still
+supports the arrow buttons (smooth-scroll a card width, pausing autoplay briefly) and
+hover/touch-to-pause. Mechanism: the story list renders **twice** back-to-back
+(`looped = [...stories, ...stories]`); a single `requestAnimationFrame` loop increments
+`rail.scrollLeft` every frame, and once it reaches exactly one set's width
+(`rail.scrollWidth / 2`), it's wound back by that same width — since both halves are
+identical, the reset is invisible, producing an infinite loop with no jump. `.hero-rail`'s
+`scroll-snap-type: x mandatory`/`.hero-rail-card`'s `scroll-snap-align: start` were
+**removed** from `homepage-v2.css` — snap-on-scroll-end fights a script that's
+continuously setting `scrollLeft` every frame, yanking the rail back to the nearest card
+the instant the loop pauses. Autoplay pauses (via a `pausedRef`, not React state, to avoid
+a re-render every frame) on hover, touch, and for `RESUME_DELAY` (2.2s) after an arrow
+click, then resumes automatically. If a future section wants this same "auto-scroll +
+loop + still arrow-controllable" rail treatment, copy this component's pattern rather
+than the CSS-duplicated-track marquee pattern documented elsewhere in this file (e.g. the
+`.evt-ticker-track`/`["a","b"].map(...)` pattern) — that one is pure-CSS and can't be
+paused/nudged by user interaction, which this rail needed. Not visually verified in a
+browser — same credentials gap as every other pass in this file.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
