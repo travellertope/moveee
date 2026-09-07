@@ -184,6 +184,16 @@ async function PiecePage({ slug }: { slug: string }) {
         </div>
       </div>
 
+      {post.featuredImage?.node?.sourceUrl && (
+        <div className="lit-wrap">
+          <img
+            className="lit-piece-featured-img"
+            src={post.featuredImage.node.sourceUrl}
+            alt={post.featuredImage.node.altText || ""}
+          />
+        </div>
+      )}
+
       <div className="lit-piece-layout">
         <article className="lit-piece-body-col">
           <div
