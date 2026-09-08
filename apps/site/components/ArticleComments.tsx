@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { sanitizeHtml } from "@/lib/sanitize";
 
@@ -25,13 +25,19 @@ interface Props {
   content?: string;
 }
 
+function initial(name: string) {
+  return (name || "?").trim().charAt(0).toUpperCase() || "?";
+}
+
 export default function ArticleComments({ postId, content }: Props) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -43,6 +49,21 @@ export default function ArticleComments({ postId, content }: Props) {
   }, [postId]);
 
   useEffect(() => { fetchComments(); }, [fetchComments]);
+
+  const autoGrow = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+  };
+
+  useEffect(() => { autoGrow(); }, [newComment]);
+
+  const resetComposer = () => {
+    setNewComment("");
+    setIsFocused(false);
+    textareaRef.current?.blur();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +81,7 @@ export default function ArticleComments({ postId, content }: Props) {
         setError(data.error ?? "Something went wrong.");
       } else {
         setSuccess(true);
-        setNewComment("");
+        resetComposer();
         fetchComments();
         setTimeout(() => setSuccess(false), 3000);
       }
@@ -81,6 +102,9 @@ export default function ArticleComments({ postId, content }: Props) {
     return `${Math.floor(h / 24)}d ago`;
   };
 
+  const displayName = session?.user?.displayName || session?.user?.name || "You";
+  const composerActive = isFocused || newComment.length > 0;
+
   return (
     <>
       {content && (
@@ -90,57 +114,78 @@ export default function ArticleComments({ postId, content }: Props) {
         />
       )}
 
-      <section className="article-comments" id="comments">
-        <h3 className="article-comments-heading">
-          {comments.length > 0 ? `${comments.length} Comment${comments.length !== 1 ? "s" : ""}` : "Comments"}
-        </h3>
+      <section className="comments" id="comments">
+        <div className="comments-head">
+          <h3 className="comments-title">
+            Comments
+            {comments.length > 0 && <span className="comments-count">({comments.length})</span>}
+          </h3>
+        </div>
 
         {session ? (
-          <form className="article-comments-form" onSubmit={handleSubmit}>
-            <textarea
-              className="article-comments-textarea"
-              placeholder="Share your thoughts…"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              rows={4}
-              maxLength={2000}
-              disabled={isSubmitting}
-            />
-            {error && <p className="article-comments-error">{error}</p>}
-            {success && <p className="article-comments-success">Comment posted!</p>}
-            <button
-              type="submit"
-              className="article-comments-submit"
-              disabled={isSubmitting || !newComment.trim()}
-            >
-              {isSubmitting ? "Posting…" : "Post comment"}
-            </button>
+          <form className="composer" onSubmit={handleSubmit}>
+            <div className="composer-avatar" aria-hidden="true">{initial(displayName)}</div>
+            <div className="composer-body">
+              <div className={`composer-field${composerActive ? " is-active" : ""}`}>
+                <textarea
+                  ref={textareaRef}
+                  placeholder="Add a comment…"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  rows={1}
+                  maxLength={2000}
+                  disabled={isSubmitting}
+                />
+              </div>
+              {error && <p className="comments-error">{error}</p>}
+              {success && <p className="comments-success">Comment posted!</p>}
+              <div className={`composer-actions${composerActive ? " force-open" : ""}`}>
+                <span className="composer-hint">
+                  Commenting as <strong>{displayName}</strong>
+                </span>
+                <div className="composer-btns">
+                  <button type="button" className="comment-btn-ghost" onClick={resetComposer} disabled={isSubmitting}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="comment-btn-primary" disabled={isSubmitting || !newComment.trim()}>
+                    {isSubmitting ? "Posting…" : "Post"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </form>
         ) : (
-          <p className="article-comments-auth">
-            <a href="/login">Sign in</a> to leave a comment.
-          </p>
+          <div className="signin-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21v-1a8 8 0 0116 0v1" />
+            </svg>
+            <span><a href="/login">Sign in</a> to join the conversation.</span>
+          </div>
         )}
 
-        {comments.length > 0 && (
-          <ul className="article-comments-list">
+        {comments.length > 0 ? (
+          <div className="comment-list">
             {comments.map((c) => (
-              <li key={c.id} className="article-comment">
-                <div className="article-comment-meta">
-                  <span className="article-comment-author">{c.author}</span>
-                  <span className="article-comment-date">{timeAgo(c.date)}</span>
+              <div key={c.id} className="comment-item">
+                <div className="c-avatar" aria-hidden="true">{initial(c.author)}</div>
+                <div className="c-body">
+                  <div className="c-meta">
+                    <span className="c-author">{c.author}</span>
+                    <span className="c-dot" aria-hidden="true" />
+                    <span className="c-date">{timeAgo(c.date)}</span>
+                  </div>
+                  <div
+                    className="c-text"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
+                  />
                 </div>
-                <div
-                  className="article-comment-body"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
-                />
-              </li>
+              </div>
             ))}
-          </ul>
-        )}
-
-        {comments.length === 0 && (
-          <p className="article-comments-empty">No comments yet. Be the first to share your thoughts.</p>
+          </div>
+        ) : (
+          <p className="comments-empty">No comments yet — be the first to share your thoughts.</p>
         )}
       </section>
     </>
