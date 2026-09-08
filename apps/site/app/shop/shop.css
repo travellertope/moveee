@@ -2628,9 +2628,9 @@
   margin-bottom: 16px;
 }
 .edit-headline {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: clamp(36px, 6vw, 64px);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--paper);
   margin: 0 0 16px;
   line-height: 1.05;
@@ -2667,7 +2667,8 @@
   margin-bottom: 20px;
 }
 .edit-empty h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 28px;
   color: var(--ink);
   margin: 0 0 12px;
@@ -2727,7 +2728,7 @@
   color: var(--ochre);
 }
 .edit-feature-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: clamp(18px, 2.5vw, 24px);
   font-weight: 700;
   color: var(--ink);
@@ -2824,9 +2825,9 @@
   margin: 0 auto;
 }
 .edit-browse-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: clamp(26px, 4vw, 40px);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--paper);
   margin: 0 0 12px;
 }

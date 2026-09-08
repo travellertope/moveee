@@ -1817,10 +1817,26 @@ proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `He
   confirmed dead (zero JSX references anywhere in `apps/site/app/shop`) leftover CSS from sections
   already removed in earlier passes (Editor's Pick split-strip, Shop by Category, Meet the Makers
   — see those entries above), so there was nothing live left to convert.
+- **Follow-up, same pass — checkout, order confirmation, and The Edit swept too** (user asked to
+  "verify the checkout and edit pages too"). Both `/shop/checkout` and `/shop/edit` (plus
+  `/shop/order-confirmation`, which shares `checkout.css`) were confirmed to already inherit
+  `ShopHeader`/`ShopFooter` correctly (neither imports `Header`/`Footer` directly, and neither has
+  any leftover `--header-clear`-style padding — both only ever existed on the sitewide floating
+  pill, which these pages never used even before this identity build). Typography gaps found and
+  fixed: `checkout.css`'s `.chk-title` and `.chk-confirm-title` were still `Georgia, serif` at
+  `font-weight: 300` — converted to `var(--font-lfs-display, var(--font-serif))` at `700`, matching
+  every other page-level heading's weight tier in this identity. `shop.css`'s `.edit-*` classes (The
+  Edit — `/shop/edit`, editorial-story-linked products) had four genuine headings still on
+  `var(--font-serif)`: `.edit-headline` and `.edit-browse-title` (bumped to `800`, matching the
+  archive/product-page hero-title tier) and `.edit-empty h2`/`.edit-feature-title` (kept at `700`).
+  No `em` emphasis elements exist anywhere in either page's JSX, so the italic→normal+bold+ochre
+  conversion didn't apply here. Everything else in both files (mono eyebrows, sans body/meta text,
+  the `.chk-step`/`.edit-eyebrow` labels) was already sans/mono, not serif, and needed no change.
 - **This closes the "nothing from the old lifestyle page should survive" ask for typography** —
   every genuinely-visible heading across the whole `/shop/*` tree (archive, category/tag/brand
-  archives, and the product detail page) now uses the identity's Bricolage Grotesque display face;
-  only intentional editorial-serif body copy and confirmed-dead CSS remain on the old face.
+  archives, the product detail page, checkout, order confirmation, and The Edit) now uses the
+  identity's Bricolage Grotesque display face; only intentional editorial-serif body copy and
+  confirmed-dead CSS remain on the old face.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other pass in this file. Verified via CSS brace-balance checks (`shop-chrome.css` 53/53,
   `shop.css` 608/608, `shop-lifestyle.css` 75/75) and a full read-through confirming: `Header.tsx`
