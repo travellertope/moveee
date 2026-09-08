@@ -472,113 +472,216 @@ h1, h2, h3, h4 {
   position: relative;
 }
 
-.article-comments {
+/* Redesigned September 2026 — sleek/minimal, replaces the old boxed-textarea
+   + bordered-card-per-comment look (ArticleComments.tsx). Shared by both the
+   magazine article page and the newsletter single-issue reader (same
+   component, see the Props doc comment on ArticleComments.tsx). */
+.comments {
   margin-top: 56px;
   padding-top: 40px;
-  border-top: 1px solid rgba(20, 17, 13, 0.1);
+  border-top: 1px solid var(--rule, #e7e1d6);
   max-width: 680px;
 }
-.article-comments-heading {
-  font-family: 'Fraunces', serif;
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ink);
-  margin: 0 0 28px;
+.comments-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 28px;
 }
-.article-comments-form {
+.comments-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 21px;
+  color: var(--ink);
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.comments-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+/* Composer */
+.composer {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.composer-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e7d9c2, #c9b48e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.composer-body { flex: 1; min-width: 0; }
+.composer-field {
+  position: relative;
+  border: 1px solid var(--rule, #e7e1d6);
+  border-radius: 6px;
+  background: var(--paper);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.composer-field.is-active,
+.composer-field:focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(20, 17, 13, 0.05);
+}
+.composer textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  padding: 13px 14px;
+  min-height: 22px;
+  max-height: 220px;
+}
+.composer textarea::placeholder { color: var(--mute); }
+.composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-top: 0;
+  gap: 10px;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity .18s ease, max-height .18s ease, margin-top .18s ease;
+}
+.composer-actions.force-open {
+  opacity: 1;
+  max-height: 60px;
+  margin-top: 10px;
+}
+.composer-hint {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--mute);
+}
+.composer-hint strong { color: var(--ink); font-weight: 600; }
+.composer-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.comment-btn-ghost {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+.comment-btn-ghost:hover { color: var(--ink); background: var(--paper-deep); }
+.comment-btn-primary {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 999px;
+  transition: background .15s ease;
+}
+.comment-btn-primary:hover { background: var(--ochre); }
+.comment-btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+
+.comments-error { font-size: 13px; color: #c0392b; margin: 8px 0 0; }
+.comments-success { font-size: 13px; color: #27ae60; margin: 8px 0 0; }
+
+.signin-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--rule, #e7e1d6);
+  border-radius: 6px;
+  margin-bottom: 36px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  color: var(--mute);
+}
+.signin-row svg { flex-shrink: 0; }
+.signin-row a { color: var(--ink); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--ochre); }
+
+/* Comment list */
+.comment-list {
   display: flex;
   flex-direction: column;
+}
+.comment-item {
+  display: flex;
   gap: 12px;
-  margin-bottom: 40px;
+  padding: 20px 0;
+  border-top: 1px solid var(--rule, #e7e1d6);
 }
-.article-comments-textarea {
-  width: 100%;
-  padding: 14px 16px;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  font-family: 'DM Sans', sans-serif;
+.comment-item:first-child { border-top: none; padding-top: 0; }
+.c-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f0e4d0, #d8c19a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
   font-size: 14px;
-  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.c-body { flex: 1; min-width: 0; }
+.c-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.c-author {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13.5px;
   color: var(--ink);
-  resize: vertical;
 }
-.article-comments-textarea:focus {
-  outline: none;
-  border-color: var(--ochre);
-  background: var(--paper);
+.c-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--rule, #e7e1d6);
 }
-.article-comments-submit {
-  align-self: flex-start;
-  background: var(--ink);
-  color: var(--paper);
-  border: none;
-  padding: 11px 24px;
+.c-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  transition: background .2s;
-}
-.article-comments-submit:hover { background: var(--ochre); }
-.article-comments-submit:disabled { opacity: .45; cursor: not-allowed; }
-.article-comments-error  { font-size: 13px; color: #c0392b; margin: 0; }
-.article-comments-success { font-size: 13px; color: #27ae60; margin: 0; }
-.article-comments-auth {
-  font-size: 14px;
-  color: var(--mute);
-  margin-bottom: 40px;
-}
-.article-comments-auth a { color: var(--ochre); text-decoration: underline; }
-.article-comments-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-.article-comment {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid rgba(20, 17, 13, 0.1);
-}
-.article-comment:last-child { border-bottom: none; padding-bottom: 0; }
-.article-comment-meta {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-}
-.article-comment-author {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  font-weight: 600;
-}
-.article-comment-date {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .08em;
   color: var(--mute);
 }
-.article-comment-body {
+.c-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
-.article-comment-body p { margin: 0; }
-.article-comments-empty {
+.c-text p { margin: 0; }
+
+.comments-empty {
   font-family: 'Fraunces', serif;
-  font-size: 15px;
   font-style: italic;
+  font-size: 15px;
   color: var(--mute);
   margin: 0;
+  text-align: center;
+  padding: 24px 0;
 }
 
 /* ── Cart badge on header icon ────────────────────────────────────────────── */

@@ -1516,13 +1516,21 @@ on scroll, solid blurred pill elsewhere) is unchanged, only its shape/sizing:
 
 - **Less rounded**: `.toolbar-shell`'s `border-radius` went from `var(--radius-full)` (9999px,
   a true pill) to `var(--radius-2xl)` (20px) — per the canonical radius scale documented above.
-- **Full section width**: `.toolbar-shell`'s `width` cap went from `min(100%, 460px)` to
-  `min(100%, 1328px)` — `1328px` is the site's established section column width (`.hpv2 .wrap`
-  in `homepage-v2.css`, the same max-width every homepage `.arc-section`/masthead uses), so the
-  header now spans the same width as the page content below it instead of floating as a small
-  centered capsule. `.toolbar-pill`'s existing `justify-content`-via-`margin-left:auto` layout
-  (logo left, icons pushed to the far right) already reads correctly at this width with no
-  further JSX/layout changes needed.
+- **Full section width, later reverted (September 2026)**: `.toolbar-shell`'s `width` cap
+  originally went from `min(100%, 460px)` to `min(100%, 1328px)` — `1328px` is the site's
+  established section column width (`.hpv2 .wrap` in `homepage-v2.css`), so the header spanned
+  the same width as the page content below it instead of floating as a small centered capsule.
+  **This was reverted the same month, per explicit user follow-up** ("i know i was the one who
+  said i wanted the header to be as wide as the page body... but it is too big") — seeing it live
+  on an inner page (a magazine article) made clear the full-width pill read as oversized, not as
+  a floating pill anymore. `.toolbar-shell`'s `width` is now `min(100%, 620px)` — a standard
+  floating-pill width, applied sitewide via the shared `Header.tsx`/`header.css` (i.e. everywhere
+  except `/literary`, which already renders its own `LiteraryMasthead` instead of this header —
+  see that section above). **If a future pass wants the header to span the full column width
+  again, don't just restore `1328px` blindly — re-check with the user first, since this has now
+  been tried and explicitly reversed once.** `/shop`/`/makers` ("lifestyle") pages were flagged
+  by the user as an area that will eventually get their own dedicated header, similar to
+  `/literary` — not built as of this entry, still rendering the shared header/pill for now.
 - **Bigger mobile logo, same pill height**: `.toolbar-logo-img`'s mobile-breakpoint (`max-width:
   640px`) height went from `22px` to `28px` — the user flagged it as "too tiny." This didn't
   need any height-compensating padding change to hold the "don't increase header height" rule:
@@ -2790,6 +2798,55 @@ own padding, `.rd-issue-badge`'s `top: 20px`) against `--header-clear`'s documen
 confirm the fix's numbers actually clear the header rather than under- or over-shooting it.
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
+
+### Article/newsletter comment box — sleek/minimal redesign (September 2026)
+
+`apps/site/components/ArticleComments.tsx` + its CSS in `apps/site/app/globals.css` (previously
+`.article-comments-*`, now `.comments`/`.composer`/`.comment-list`/`.c-*`) rebuilt from a
+user-approved Artifact mockup — replaces the old boxed textarea + separate grey "Post Comment"
+button + bordered-card-per-comment look. **One component, two surfaces**: this is the same
+component the magazine article page and the newsletter single-issue reader both render (see the
+`content` prop's doc comment on why) — the redesign applies to both automatically, no per-surface
+work needed.
+
+- **Composer**: flat inline field (no boxed textarea sitting above a separate button) — a
+  circular initial-avatar next to a bordered `.composer-field` that highlights on focus.
+  Cancel/Post only fade in once focused or typed into (`.composer-actions.force-open`), matching
+  a modern "add a comment" pattern instead of always showing action buttons. Auto-growing
+  textarea (`rows={1}`, JS `scrollHeight`-driven height, capped at 220px) replaces the old fixed
+  `rows={4}` box.
+- **Comment rows**: circular initial-avatars (no real avatar URL exists on `Comment` — computed
+  as the first letter of `author`), hairline top-border dividers between rows instead of an
+  individually bordered/padded card per comment, name+time on one line (mono time, sans bold
+  name) instead of a separate uppercase-mono author label.
+- **No reactions/replies were added** — the mockup showed like/reply icon rows, but the real
+  backend (`GET/POST /api/comments`, `Comment` interface: `id`/`author`/`content`/`date`) has no
+  per-comment like or threaded-reply concept at all. Building that UI without a backend would
+  have been fake, non-functional chrome, so it was deliberately left out of the real
+  implementation — flag this as a real follow-up if per-comment reactions/replies are ever
+  wanted, since it needs new REST endpoints + DB columns first, not just UI.
+- **Sign-in prompt**: dashed-border row with an inline lock-ish person icon, replacing a plain
+  `<p>` with an underlined link.
+- **Empty state**: centered italic serif line, unchanged copy ("No comments yet — be the first to
+  share your thoughts."), just recentered/repadded to sit better under the new composer.
+- **Class-name collision avoided**: the mockup's button classes were literally `.btn-ghost`/
+  `.btn-primary`, but `apps/site/app/globals.css` already defines **global**, differently-shaped
+  `.btn-ghost`/`.btn-primary` classes used site-wide (quotes archive, event RSVP CTA, etc.) — a
+  same-named second definition later in the cascade would have silently overridden every other
+  use of those classes on the site. Renamed to `.comment-btn-ghost`/`.comment-btn-primary`
+  instead. **If you ever port a mockup's class names verbatim into `globals.css`, grep for an
+  existing definition first** — this file already has multiple unrelated components sharing the
+  `.btn-*` prefix.
+- `QuoteComments.tsx` (a separate, inline-`style`-only comment component on `/quotes/[slug]`) was
+  deliberately left untouched — it shares no class names with this redesign and wasn't part of
+  what was asked ("posts and newsletters").
+- **Not visually verified in a browser** — no `node_modules` installed this session, so neither
+  `next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
+  Verified via a CSS brace-balance check on `globals.css` (299/299) and a brace/paren-balance
+  check on the edited component, plus a repo-wide grep confirming no other file referenced the
+  old `.article-comments-*` classnames and no other file used the new class names in a way that
+  would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
+  and a newsletter issue page in a real environment before considering this fully closed.
 
 ### Homepage hero — only shows posts tagged "Featured" (September 2026)
 
