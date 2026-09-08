@@ -18,8 +18,8 @@
 }
 
 .chk-title {
-  font-family: Georgia, serif;
-  font-weight: 300;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: clamp(24px, 4vw, 32px);
   color: var(--ink);
   margin: 6px 0 0;
@@ -243,8 +243,8 @@
 }
 
 .chk-confirm-title {
-  font-family: Georgia, serif;
-  font-weight: 300;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: clamp(22px, 4vw, 30px);
   color: var(--ink);
   margin: 0 0 8px;
