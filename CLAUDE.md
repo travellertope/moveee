@@ -2715,6 +2715,49 @@ confirm the fix's numbers actually clear the header rather than under- or over-s
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
 
+### Header transparent-on-dark-hero: never recovered after a root `loading.tsx` Suspense swap (fixed September 2026)
+
+User-reported, on a fresh (non-scrolled) load of `/newsletter/africa`: the floating header rendered
+solid instead of transparent-over-dark, even though `EditionNewsletterHub.tsx`'s hero still carries
+`data-header-zone="dark"` and was never touched by the `.rd-layout` fix directly above (that fix
+only edited `.rd-layout` in `newsletter.css`, used exclusively by the unrelated `/newsletter/[slug]`
+single-issue reader — confirmed by re-reading `EditionNewsletterHub.tsx`, `newsletter-hub.css`, and
+`Header.tsx` line-by-line before concluding this was a separate, pre-existing bug rather than a
+regression from that fix).
+
+**Root cause**: `apps/site/app/loading.tsx` is a **root-level** `loading.tsx` — Next.js App Router
+treats this as a Suspense fallback wrapping every routed page's content, including on a genuine
+hard/fresh load via streaming SSR, not just client-side transitions. It renders a plain white
+shimmer skeleton with zero `[data-header-zone="dark"]` elements in it.
+`EditionNewsletterHub.tsx` is an async Server Component (`await getNewslettersWithFallback(...)`)
+— if that WordPress fetch takes any real time, Next.js streams this white skeleton in first, then
+swaps in the real page (with `.nlh-hero`) once the data resolves. `Header.tsx`'s dark-zone
+detection (`inDarkZone()`, see the September 2026 `getBoundingClientRect()` fix above) only
+re-checks on mount, scroll, resize, the `load` event, and two rAF ticks right after mount — none of
+which fire when React swaps a Suspense boundary's content in place. So the header's early checks
+can all run and find zero dark zones (the loading skeleton has none) before the real `.nlh-hero`
+has streamed in, latch `isSolid` to true, and then have nothing left to trigger a recheck once the
+real dark hero appears underneath — until the user happens to scroll. This isn't specific to
+`/newsletter/africa` or to anything from this session's work — it's a gap in the header's own
+recovery mechanism that can affect **any** page with a `data-header-zone="dark"` section behind a
+slow enough async Server Component fetch; it just hadn't been reported before now.
+
+**Fixed** by adding a rAF-throttled `MutationObserver` on `document.body` (`childList`/`subtree`)
+inside the same `useLayoutEffect` in `Header.tsx`, alongside the existing scroll/resize/load
+listeners — any DOM change (including a Suspense boundary's fallback-to-real-content swap) now
+triggers the same throttled `update()` the scroll handler already uses. This is a general fix, not
+a per-page one: it doesn't depend on knowing which pages are slow enough to trip the root
+`loading.tsx`, and it also covers any other future async-content-swap scenario the header's
+existing event listeners don't hear about.
+
+**Not visually verified in a browser** — same Chromium-can't-reach-`themoveee.com` sandbox
+limitation as the fixes above it. Verified via a brace-balance check on `Header.tsx` and a manual
+trace of the mechanism (confirmed `app/loading.tsx` renders no dark-zone element, confirmed
+`EditionNewsletterHub.tsx` is exclusively async-server-rendered with no Suspense boundary of its
+own beyond the root one). Re-check `/newsletter/africa` (and any other dark-hero page) on a fresh,
+non-cached load in a real browser — ideally by artificially slowing the WordPress fetch to reliably
+trigger the root loading skeleton — before considering this fully closed.
+
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
 User request: "create more width for the post body area" by removing the left sidebar on the
