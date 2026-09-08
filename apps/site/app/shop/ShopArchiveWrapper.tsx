@@ -18,7 +18,10 @@ import Image from "next/image";
 import { ShopFilterProvider } from "./components/ShopFilterContext";
 import { getShopCountryParam } from "./components/shopCountry";
 import ShopProductGrid from "./components/ShopProductGrid";
+import SubscribeForm from "@/components/SubscribeForm";
+import { sanitizeHtml } from "@/lib/sanitize";
 import "./shop.css";
+import "./shop-lifestyle.css";
 
 const DEFAULT_PRO_DISCOUNT_PERCENT = 10;
 
@@ -60,10 +63,6 @@ function extractVendors(products: any[]): VendorCard[] {
     }
   }
   return [...map.values()].slice(0, 4);
-}
-
-function isNew(p: any): boolean {
-  return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
 }
 
 const FALLBACK_CATEGORIES = [
@@ -122,6 +121,7 @@ export default async function ShopArchiveWrapper({
       return {
         ...p,
         vendorProfile: extra.vendorProfile,
+        moveeeMeta: extra.moveeeMeta,
         averageRating: extra.averageRating,
         reviewCount: extra.reviewCount,
         productMaterials: extra.productMaterials,
@@ -145,19 +145,21 @@ export default async function ShopArchiveWrapper({
   const isFiltered = !!(category || tag || brand);
   const activeLabel = category || tag || brand || "Lifestyle";
 
-  // Editor's Pick = 1 hero + 2 companions in "Featured Products". Prefers
-  // WooCommerce-Featured products (Products → Catalog visibility → Featured);
-  // falls back to the first 3 in default catalog order when nothing is
-  // marked Featured, so the section never goes empty just because no one
-  // has curated it yet.
+  // Hero pick = the current Editor's Pick. Prefers WooCommerce-Featured
+  // products (Products → Catalog visibility → Featured); falls back to the
+  // first product in default catalog order when nothing is marked Featured,
+  // so the hero never goes empty just because no one has curated it yet.
   const featuredProducts = products.filter((p: any) => p.featured);
-  const editorialPicks = (featuredProducts.length > 0 ? featuredProducts : products).slice(0, 3);
-  const heroPick = editorialPicks[0];
-  const companionPicks = editorialPicks.slice(1);
-  const heroLede = heroPick?.shortDescription
-    ? heroPick.shortDescription.replace(/<[^>]*>/g, "").trim()
+  const heroPick = (featuredProducts.length > 0 ? featuredProducts : products)[0];
+
+  const makerStoryHtml: string = heroPick?.moveeeMeta?.makerStory
+    ? sanitizeHtml(heroPick.moveeeMeta.makerStory)
     : "";
-  const heroProPrice: string = heroPick?.proPrice ?? "";
+  const makerBio: string = heroPick?.vendorProfile?.bio || "";
+  const makerName: string = vendorName(heroPick || {});
+  const makerLocation = [heroPick?.vendorProfile?.city, heroPick?.vendorProfile?.country]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <>
@@ -169,100 +171,94 @@ export default async function ShopArchiveWrapper({
           different, off-white colour from the rest of the page. */}
       <div className="sl-header-spacer" />
 
-      {/* ── 0. TRUST LINE — slim dark bar, sits right under the header ── */}
-      <section className="sl-trust">
-        <p className="sl-trust-line">
-          <strong>Vetted Makers</strong>
-          <span className="sl-trust-rating"> · <strong>4.8 average rating</strong></span>
-          {" "}· <strong>Moveee Pro</strong> saves {proDiscountPercent}%
-        </p>
-      </section>
+      {/* ── TICKER — shared sitewide component (globals.css), real copy ── */}
+      <div className="ticker-wrap">
+        <div className="ticker-track">
+          {[0, 1].map((i) => (
+            <React.Fragment key={i}>
+              <span className="a">Vetted Makers</span>
+              <span>Moveee Pro saves {proDiscountPercent}% storewide</span>
+              <span>Earn Culture Credits on every order</span>
+              {products[0] && <span>New: {products[0].name}</span>}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
 
-      {/* Title/subtitle head removed — the header's own logo now reads
-          "Moveee Lifestyle" on shop routes, so a repeated "Lifestyle Shop"
-          title here was redundant. isFiltered/activeLabel context (used
-          elsewhere on this page) is unaffected. */}
+      {/* ── CATEGORY NAV — a dropdown beside the grid label instead of a
+          horizontal strip, per the approved identity mockup. Desktop opens
+          on hover/focus (pure CSS, no client component needed); mobile gets
+          a <details> disclosure with the same links, since :hover doesn't
+          fire on touch. ── */}
+      <div className="lfs-nav-wrap">
+        <div className="lfs-nav">
+          <nav className="lfs-cat">
+            <button type="button" className="lfs-cat-btn" aria-haspopup="true">
+              Browse
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            <div className="lfs-cat-panel">
+              {categories.map((c: any) => (
+                <Link key={c.slug} href={`/shop/category/${c.slug}`} className="lfs-cat-item">
+                  <span>{c.name}</span>
+                  {typeof c.count === "number" && c.count > 0 && (
+                    <span className="lfs-cat-count">{c.count}</span>
+                  )}
+                </Link>
+              ))}
+              <Link href="/shop" className="lfs-cat-all">All Products →</Link>
+            </div>
+          </nav>
+          <details className="lfs-cat-mobile">
+            <summary className="lfs-cat-btn" aria-label="Browse categories">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="7" x2="20" y2="7" /><circle cx="9" cy="7" r="2" fill="var(--paper)" /><line x1="4" y1="17" x2="20" y2="17" /><circle cx="16" cy="17" r="2" fill="var(--paper)" /></svg>
+            </summary>
+            <div className="lfs-cat-panel">
+              {categories.map((c: any) => (
+                <Link key={c.slug} href={`/shop/category/${c.slug}`} className="lfs-cat-item">
+                  <span>{c.name}</span>
+                  {typeof c.count === "number" && c.count > 0 && (
+                    <span className="lfs-cat-count">{c.count}</span>
+                  )}
+                </Link>
+              ))}
+              <Link href="/shop" className="lfs-cat-all">All Products →</Link>
+            </div>
+          </details>
+          <span className="lfs-nav-label">{isFiltered ? activeLabel : "The full Index"}</span>
+        </div>
+      </div>
 
-      {/* ── 2. EDITOR'S PICK — single split strip, hairline rules ── */}
+      {/* ── HERO — centered, oxblood scrim over the current Editor's Pick's
+          own photo (real product image, not a stock photo) ── */}
       {heroPick && (
-        <section className="sl-pick">
-          <div className="sl-pick-inner">
-            <div className="sl-pick-body">
-              <span className="sl-pick-eyebrow">Editor&rsquo;s Pick</span>
-              <Link href={`/shop/${heroPick.slug}`}>
-                <h2 className="sl-pick-title">{heroPick.name}</h2>
-              </Link>
-              {heroLede && <p className="sl-pick-desc">{heroLede}</p>}
-              {heroPick.price && (
-                <div className="sl-pick-price-row">
-                  <span className="sl-pick-price">{heroPick.price}</span>
-                  {heroProPrice && <span className="sl-pick-pro-price">{heroProPrice} with Pro</span>}
-                </div>
-              )}
-              <Link href={`/shop/${heroPick.slug}`} className="sl-pick-cta">
-                Shop this piece →
-              </Link>
+        <section className="lfs-hero">
+          {heroPick.image?.sourceUrl && (
+            <Image
+              src={heroPick.image.sourceUrl}
+              alt={heroPick.image.altText || heroPick.name}
+              fill
+              className="lfs-hero-bg"
+              style={{ objectFit: "cover" }}
+              priority
+            />
+          )}
+          <div className="lfs-hero-scrim" />
+          <div className="lfs-hero-copy">
+            <h1 className="lfs-hero-title">
+              The Index of things<br />worth <em>owning.</em>
+            </h1>
+            <p className="lfs-hero-dek">
+              Curated lifestyle goods from vetted makers — objects and
+              editions reviewed for craft, integrity, and lasting quality.
+            </p>
+            <div className="lfs-hero-ctas">
+              <Link href="#lfs-grid" className="lfs-btn-primary">Shop the Index →</Link>
+              <Link href="/register?tier=patron" className="lfs-btn-secondary">Moveee Pro Perks →</Link>
             </div>
-            <Link href={`/shop/${heroPick.slug}`} className="sl-pick-media-link">
-              <div className="sl-pick-media">
-                {heroPick.image?.sourceUrl ? (
-                  <Image
-                    src={heroPick.image.sourceUrl}
-                    alt={heroPick.image.altText || heroPick.name}
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
-                ) : (
-                  <div style={{ width: "100%", height: "100%", background: "var(--paper-deep)" }} />
-                )}
-                {vendorName(heroPick) && (
-                  <span className="sl-pick-media-tag">{vendorName(heroPick)}</span>
-                )}
-                {isNew(heroPick) && <span className="sl-pick-media-new">New</span>}
-              </div>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* ── 3. FEATURED PRODUCTS — flush 2-up grid, no card chrome ── */}
-      {companionPicks.length > 0 && (
-        <section className="sl-featured">
-          <div className="sl-featured-inner">
-            <div className="sl-sec-head">
-              <p className="sl-sec-title">Featured Products</p>
-              <span className="sl-sec-count">{companionPicks.length} pieces</span>
-            </div>
-            <div className="sl-featured-grid">
-              {companionPicks.map((p) => {
-                const proPrice: string = p.proPrice ?? "";
-                return (
-                  <Link key={p.id} href={`/shop/${p.slug}`} className="sl-featured-card">
-                    <div className="sl-featured-img">
-                      {p.image?.sourceUrl ? (
-                        <Image
-                          src={p.image.sourceUrl}
-                          alt={p.image.altText || p.name}
-                          fill
-                          style={{ objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", background: "var(--paper-deep)" }} />
-                      )}
-                      {isNew(p) && <span className="sl-featured-new">New</span>}
-                    </div>
-                    {vendorName(p) && <p className="sl-featured-kicker">{vendorName(p)}</p>}
-                    <p className="sl-featured-name">{p.name}</p>
-                    {p.price && (
-                      <p className="sl-featured-price">
-                        {p.price}
-                        {proPrice && <span className="sl-featured-pro"> · {proPrice} Pro</span>}
-                      </p>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+            <p className="lfs-hero-trust">
+              Secure Checkout by Stripe and Paystack. Moveee Pro members save {proDiscountPercent}% storewide.
+            </p>
           </div>
         </section>
       )}
@@ -289,6 +285,65 @@ export default async function ShopArchiveWrapper({
         {/* ── 5. MAIN PRODUCT GRID ── */}
         <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
       </ShopFilterProvider>
+
+      {/* ── EMAIL CAPTURE — real Culture Drop subscribe form ── */}
+      <section className="lfs-email">
+        <div className="lfs-email-inner">
+          <div className="lfs-email-copy">
+            <h3>Be first to shop new drops.</h3>
+            <p>
+              New makers, limited runs, and Moveee Pro early access — through
+              Culture Drop, Moveee&rsquo;s weekly newsletter.
+            </p>
+          </div>
+          <div className="lfs-email-form">
+            <SubscribeForm
+              list="culture-drop"
+              placeholder="you@email.com"
+              buttonLabel="Subscribe →"
+              inputClassName="lfs-email-input"
+              buttonClassName="lfs-email-btn"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── MAKER STORY — spotlights the current hero pick's own maker;
+          deliberately not a bulk grid, see CLAUDE.md's "Shop by Category +
+          Meet the Makers sections removed" for why that was retired. ── */}
+      {heroPick && makerName && (
+        <section className="lfs-maker">
+          <div className="lfs-maker-inner">
+            <div className="lfs-maker-media">
+              {heroPick.vendorProfile?.avatarUrl ? (
+                <Image
+                  src={heroPick.vendorProfile.avatarUrl}
+                  alt={makerName}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              ) : (
+                <div className="lfs-maker-media-fallback">{makerName.charAt(0)}</div>
+              )}
+            </div>
+            <div className="lfs-maker-body">
+              <span className="lfs-maker-eyebrow">Meet the Maker</span>
+              <h3>{makerName}</h3>
+              {makerLocation && <p className="lfs-maker-loc">{makerLocation}</p>}
+              {makerStoryHtml ? (
+                <div className="lfs-maker-story" dangerouslySetInnerHTML={{ __html: makerStoryHtml }} />
+              ) : makerBio ? (
+                <p className="lfs-maker-story">{makerBio}</p>
+              ) : null}
+              {heroPick.vendorProfile?.slug && (
+                <Link href={`/shop/brand/${heroPick.vendorProfile.slug}`} className="lfs-maker-link">
+                  Shop {makerName} →
+                </Link>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── 6. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
       <div className="sl-member-wrap">

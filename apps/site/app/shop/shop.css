@@ -685,11 +685,13 @@
   color: inherit;
 }
 
-/* Product image area — this is where the signature rounded corners live */
+/* Product image area — square per The Moveee Lifestyle identity (every
+   card the same shape, no portrait/landscape mismatch across a grid) —
+   was 3:4 portrait with a smaller radius before that rebuild. */
 .sl-pcard-img {
   position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   background: var(--paper-deep, #f2f2f2);
   margin-bottom: 12px;
