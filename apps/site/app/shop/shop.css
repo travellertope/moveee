@@ -33,9 +33,9 @@
   margin-bottom: 8px;
 }
 .sl-head-inner h1 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: -.02em;
   color: var(--ink);
@@ -52,14 +52,6 @@
 }
 
 /* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
-.sl-header-spacer {
-  /* Solid paper block filling the header's clearance space — see the
-     comment at its JSX call site for why this replaced a plain
-     margin-top (which let body's own radial-gradient wash show through
-     and read as a visibly different colour from the rest of the page). */
-  height: var(--header-clear, 96px);
-  background: var(--paper);
-}
 .sl-trust {
   background: var(--ink);
 }
@@ -616,7 +608,8 @@
   white-space: nowrap;
 }
 .sl-bridge-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 17px;
   color: var(--ink);
 }
@@ -751,9 +744,9 @@
   margin: 0;
 }
 .sl-pcard-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 15.5px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--ink);
   line-height: 1.3;
   margin: 2px 0 4px;
@@ -817,7 +810,8 @@
   padding: 80px 24px;
 }
 .sl-empty-text {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 22px;
   color: var(--mute);
   margin-bottom: 20px;
@@ -1087,15 +1081,15 @@
   justify-content: center;
 }
 .sl-member-left h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 42px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--paper);
   margin: 0 0 16px;
   line-height: 1;
   text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
-.sl-member-left h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sl-member-left h3 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sl-member-left > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
@@ -1166,9 +1160,9 @@
   backdrop-filter: blur(2px);
 }
 .sl-member-stat-num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
   line-height: 1;
   text-shadow: 0 1px 4px rgba(0,0,0,.45);
@@ -1236,14 +1230,14 @@
 }
 .sl-origins-label::before { content: ''; width: 32px; height: 1px; background: var(--ochre); }
 .sl-origins-content h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 40px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink);
   line-height: 1.05;
   margin: 0 0 20px;
 }
-.sl-origins-content h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sl-origins-content h3 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sl-origins-content > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
@@ -1408,12 +1402,11 @@
 .sp-product-hero {
   max-width: 1440px;
   margin: 0 auto;
+  /* No more --header-clear top padding — the Moveee Lifestyle's own
+     ShopHeader (app/shop/layout.tsx) renders in normal document flow, not
+     fixed/floating like the old sitewide pill, so there's no clearance gap
+     left to reserve here. */
   padding: 50px 40px 80px;
-  /* This is now the page's first element (the breadcrumb it used to
-     sit below never had header-clear applied either, so this is a
-     genuine gap, not a regression) — see the --header-clear comment
-     in globals.css. */
-  padding-top: calc(var(--header-clear, 96px) + 50px);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 70px;
@@ -1650,11 +1643,11 @@
 .sp-vendor-link::before { content: ''; width: 24px; height: 1px; background: var(--ochre); }
 
 .sp-product-name {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(42px, 4.2vw, 64px);
-  font-weight: 400;
-  line-height: .95;
-  letter-spacing: -.025em;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-size: clamp(38px, 3.8vw, 56px);
+  font-weight: 800;
+  line-height: .98;
+  letter-spacing: -.02em;
   margin-bottom: 20px;
 }
 .sp-product-name em { font-style: italic; font-weight: 300; color: var(--ochre); }
@@ -1714,7 +1707,8 @@
   margin-bottom: 28px;
 }
 .sp-reviews-head h2 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 800;
   font-size: 26px;
   margin: 0;
 }
@@ -1744,7 +1738,7 @@
   margin-bottom: 24px;
 }
 .sp-rs-num { text-align: center; border-right: 1px solid var(--rule); padding-right: 24px; }
-.sp-rs-avg { font-family: 'Fraunces', serif; font-size: 42px; line-height: 1; }
+.sp-rs-avg { font-family: var(--font-lfs-display, var(--font-serif)); font-weight: 800; font-size: 42px; line-height: 1; }
 .sp-rs-stars { color: var(--ochre); font-size: 14px; letter-spacing: 2px; margin-top: 6px; }
 .sp-rs-count { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); margin-top: 6px; }
 .sp-rs-bars { display: flex; flex-direction: column; gap: 6px; }
@@ -1768,7 +1762,8 @@
   margin-bottom: 24px;
 }
 .sp-review-form h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 18px;
   margin: 0 0 14px;
 }
@@ -2045,7 +2040,8 @@
   text-align: left;
 }
 .sp-acc-header .title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 15.5px;
   color: var(--ink);
 }
@@ -2149,11 +2145,12 @@
   white-space: nowrap;
 }
 .sp-seen-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 16px;
   color: var(--ink);
 }
-.sp-seen-title em { font-style: italic; color: var(--ochre); }
+.sp-seen-title em { font-style: normal; font-weight: 700; color: var(--ochre); }
 .sp-seen-cta {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px;
@@ -2189,8 +2186,8 @@
   color: var(--ochre);
   margin-bottom: 10px;
 }
-.sp-story-header h2 { font-size: 32px; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
-.sp-story-header h2 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sp-story-header h2 { font-family: var(--font-lfs-display, var(--font-serif)); font-size: 32px; font-weight: 800; line-height: 1.1; margin-bottom: 8px; }
+.sp-story-header h2 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sp-story-header p {
   font-family: 'DM Sans', sans-serif;
   font-size: 13.5px;
@@ -2273,8 +2270,8 @@
   margin-bottom: 10px;
   display: block;
 }
-.sp-process-header h2 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-.sp-process-header h2 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sp-process-header h2 { font-family: var(--font-lfs-display, var(--font-serif)); font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+.sp-process-header h2 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sp-process-header p {
   font-family: 'DM Sans', sans-serif;
   font-size: 13.5px;
@@ -2304,7 +2301,7 @@
   font-weight: 700;
   color: var(--ochre);
 }
-.sp-process-step h4 { font-size: 15.5px; font-weight: 500; font-family: 'Fraunces', serif; }
+.sp-process-step h4 { font-size: 15.5px; font-weight: 700; font-family: var(--font-lfs-display, var(--font-serif)); }
 .sp-process-step h4 em { font-style: italic; font-weight: 400; }
 .sp-process-step p { font-size: 12.5px; line-height: 1.55; color: var(--mute); }
 .sp-process-step .duration {
@@ -2367,7 +2364,8 @@
   margin: 6px 0 24px;
 }
 .sp-vendor-stat .num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 800;
   font-size: 26px;
 }
 .sp-vendor-stat .label {
@@ -2422,8 +2420,8 @@
   align-items: flex-end;
   margin-bottom: 32px;
 }
-.sp-more-from-header h2 { font-size: 26px; font-weight: 700; }
-.sp-more-from-header h2 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sp-more-from-header h2 { font-family: var(--font-lfs-display, var(--font-serif)); font-size: 26px; font-weight: 800; }
+.sp-more-from-header h2 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sp-more-from-header a {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -2467,9 +2465,9 @@
   color: var(--mute);
 }
 .mini-product .name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.25;
 }
 .mini-product .name em { font-style: italic; }

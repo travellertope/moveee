@@ -1,0 +1,216 @@
+/* ============================================================
+   THE MOVEEE LIFESTYLE — standalone header + footer chrome
+   Rebuilt verbatim from the approved identity mockup
+   (moveee-lifestyle-identity.html)'s own `.masthead`/`.mast-*`/`.foot`
+   system, remapped from the mockup's own token names onto the real site's
+   tokens:
+     --bg → --paper        --text → --ink         --text-mute → --mute
+     --line → --rule       --line-strong → --rule-strong (falls back to
+     --rule where that token isn't defined)        --accent → --ochre
+     --surface → --paper-deep     --surface-raised → --paper
+     --shadow-plate → --shadow-card
+   Mounted once from app/shop/layout.tsx (ShopHeader/ShopFooter) around
+   every /shop route — this is the ONLY header/footer any page under /shop
+   renders; the sitewide Header.tsx returns null and ConditionalFooter.tsx
+   excludes /shop entirely (see each file's own comment). Nothing here
+   should ever be scoped to the archive page alone — every class in this
+   file is real chrome shared by every /shop/* route.
+   ============================================================ */
+
+/* ── TICKER — reuses the shared sitewide .ticker-wrap/.ticker-track
+   component (globals.css) — no chrome-specific ticker CSS needed here. ── */
+
+/* ── MASTHEAD ── */
+.masthead {
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule-strong, var(--rule));
+  position: relative;
+  z-index: 30;
+}
+.masthead-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: nowrap;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 13px 28px;
+}
+@media (max-width: 640px) {
+  .masthead-row { padding: 11px 20px; gap: 14px; }
+}
+
+.mast-left { display: flex; align-items: center; gap: 28px; min-width: 0; }
+.mast-logo { display: flex; align-items: center; flex-shrink: 0; }
+.mast-logo-img { display: block; height: 38px; width: auto; }
+
+.mast-icons { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
+@media (max-width: 640px) { .mast-icons { gap: 12px; } }
+
+.mast-cat { position: relative; }
+.mast-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 2px;
+  cursor: pointer;
+}
+.mast-cat-btn svg { transition: transform 160ms ease; }
+.mast-cat:hover .mast-cat-btn svg,
+.mast-cat:focus-within .mast-cat-btn svg { transform: rotate(180deg); }
+.mast-cat-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 10px;
+  width: 240px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card, 0 12px 30px -8px rgba(20,17,13,0.14));
+  padding: 8px;
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
+}
+.mast-cat:hover .mast-cat-panel,
+.mast-cat:focus-within .mast-cat-panel { opacity: 1; visibility: visible; transform: translateY(0); }
+.mast-cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  text-decoration: none;
+}
+.mast-cat-item:hover { background: var(--paper-deep); }
+.mast-cat-lbl { font-size: 13.5px; font-weight: 500; }
+.mast-cat-soon {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--mute);
+  letter-spacing: .04em;
+}
+.mast-cat-all {
+  display: block;
+  margin-top: 4px;
+  padding: 10px 10px 6px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ochre);
+  text-decoration: none;
+}
+@media (max-width: 900px) { .mast-cat { display: none; } }
+
+.mast-filter { position: relative; display: none; }
+@media (max-width: 900px) { .mast-filter { display: block; } }
+.mast-filter summary { list-style: none; cursor: pointer; }
+.mast-filter summary::-webkit-details-marker { display: none; }
+.mast-filter[open] summary { color: var(--ochre); }
+.mast-filter[open] .mast-cat-panel { opacity: 1; visibility: visible; transform: none; }
+.mast-cat-panel--right { left: auto; right: 0; }
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--ink);
+  display: flex;
+  padding: 4px;
+  cursor: pointer;
+}
+.icon-btn:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+.bag-btn { position: relative; }
+.bag-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--ochre);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── FOOTER ── */
+.lfs-foot {
+  background: var(--paper);
+  border-top: 1px solid var(--rule-strong, var(--rule));
+}
+.lfs-foot-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 50px 64px 28px;
+}
+.lfs-foot-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 40px;
+}
+.lfs-foot-logo { display: block; height: 42px; width: auto; }
+.lfs-foot-brand p {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  max-width: 30ch;
+  margin: 14px 0 0;
+}
+.lfs-foot-col h5 {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 14px;
+}
+.lfs-foot-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lfs-foot-col a {
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.lfs-foot-col a:hover { color: var(--ochre); }
+.lfs-foot-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid var(--rule);
+  padding-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mute);
+}
+.lfs-foot-bottom a { color: var(--mute); text-decoration: none; }
+.lfs-foot-bottom a:hover { color: var(--ochre); }
+
+@media (max-width: 900px) {
+  .lfs-foot-inner { padding: 44px 24px 24px; }
+  .lfs-foot-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+}
+@media (max-width: 640px) {
+  .lfs-foot-inner { padding: 36px 20px 20px; }
+  .lfs-foot-grid { grid-template-columns: 1fr; gap: 24px; }
+}

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
-import ShopSearchModal from "./ShopSearchModal";
 import { useCart } from "@/context/CartContext";
 
 const CONNECT_URL = "https://web.themoveee.com";
@@ -33,18 +32,18 @@ const Header = () => {
   const pathname = usePathname();
   const active = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
-  // Shop pages get a dedicated search+filter modal instead of the generic
-  // sitewide one — see ShopSearchModal.tsx / apps/site/lib/shopFiltersBus.ts.
+  // The Moveee Lifestyle (/shop) is now its own standalone mini-site — own
+  // masthead/ticker/nav and footer (ShopHeader.tsx/ShopFooter.tsx, rendered
+  // from app/shop/layout.tsx), same shape as The Moveee Literary below. The
+  // sitewide floating pill has no role on any /shop route at all anymore —
+  // this used to only swap the wordmark and hand off to a shop-specific
+  // search modal; both of those now live inside ShopHeader.tsx instead.
   const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
   const isMakersPage = pathname === "/makers" || pathname.startsWith("/makers/");
-  // Logo-branding scope only — deliberately broader than isShopPage (which
-  // also gates the shop-specific search modal further below; /makers pages
-  // still get the generic SearchOverlay, only the wordmark itself changes).
-  const isLifestylePage = isShopPage || isMakersPage;
   // The Moveee Literary is its own standalone mini-site with its own
   // masthead, section nav, and footer (LiteraryMasthead.tsx/LiteraryFooter.tsx,
   // rendered from app/literary/layout.tsx) — the sitewide floating pill has
-  // no role there at all, unlike Shop/Makers which only swap the wordmark.
+  // no role there at all, unlike Makers which only swaps the wordmark.
   const isLiteraryPage = pathname === "/literary" || pathname.startsWith("/literary/");
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -238,24 +237,25 @@ const Header = () => {
     .filter(Boolean)
     .join(" ");
 
-  // The Moveee Literary renders its own masthead/nav/footer (see the
-  // comment on isLiteraryPage above) — every hook above still runs
-  // unconditionally (Rules of Hooks), only the render is skipped.
-  if (isLiteraryPage) return null;
+  // The Moveee Literary and The Moveee Lifestyle (/shop) both render their
+  // own standalone masthead/nav/footer (see the comments above) — every
+  // hook above still runs unconditionally (Rules of Hooks), only the
+  // render is skipped.
+  if (isLiteraryPage || isShopPage) return null;
 
   return (
     <>
       <div className={toolbarClass}>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <Link href={isLifestylePage ? (isMakersPage ? "/makers" : "/shop") : "/"} className="toolbar-logo">
+            <Link href={isMakersPage ? "/makers" : "/"} className="toolbar-logo">
               <img
                 src={
-                  isLifestylePage
+                  isMakersPage
                     ? onDark ? "/logo-lifestyle-white.png" : "/logo-lifestyle-black.png"
                     : onDark ? "/logo-white.png" : "/logo-black.png"
                 }
-                alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
+                alt={isMakersPage ? "Moveee Lifestyle" : "Moveee"}
                 className="toolbar-logo-img"
               />
             </Link>
@@ -395,11 +395,7 @@ const Header = () => {
         <div className="menu-overlay-foot">Best in Culture</div>
       </div>
 
-      {isShopPage ? (
-        <ShopSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      ) : (
-        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      )}
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 };
