@@ -2637,6 +2637,84 @@ regex tests against representative Gutenberg gallery/table markup (see above). R
 `themoveee.com/magazine/the-eid-clay-is-growing-roots-in-clay` (and any other post using a
 wide-width gallery/table) in a real environment before considering this fully closed.
 
+**Follow-up investigation (same month) — the `unwrapBlockParagraphs()` fix above turned out to be
+solving a bug that didn't exist; the wide-width mechanism itself was never actually broken.**
+User reported it was still broken after the fix above shipped. Investigation this time pulled the
+*real* production HTML+CSS directly from `themoveee.com` (this sandbox can reach the live Vercel
+site over `curl`, unlike `cms.themoveee.com`) for three live articles with real galleries, and
+rendered them offline in the pre-installed headless Chromium against the exact deployed CSS
+bundle:
+- None of the three galleries were wrapped in a stray `<p>` — `wpautop` isn't doing this to this
+  site's content, at least not for galleries. The September 2026 fix above is harmless (a no-op
+  on real content) but wasn't addressing a real defect.
+- The production CSS already forces every `.wp-block-gallery`/table onto the `wide` grid track
+  unconditionally (no `alignwide` class required) — confirmed by grepping the live, deployed
+  `editorial.css` bundle directly.
+- Measured directly in a headless render of `saelem-hasnt-released-his-best-song-yet`'s real
+  markup against its real CSS: the gallery computed to `width: 1080px`, `grid-column:
+  wide/wide`; the paragraph beside it computed to `width: 680px`, `grid-column: text/text`. The
+  full ancestor chain (`figure.wp-block-gallery > div.prose-content(display:contents) >
+  div.ar-wrap > … > main`) was walked and confirmed nothing constrains it. **In this isolated,
+  reconstructed render, the mechanism works exactly as designed.**
+- The user's own browser screenshot of the *same* live URL still shows the gallery rendering
+  narrow (only slightly wider than the text column, not the full ~1080px wide track) — a direct
+  contradiction of the above that was not resolved before this session ended. This sandbox's
+  headless Chromium cannot reach `themoveee.com` over its own network stack (the agent-proxy
+  tunnel used by `curl`/raw HTTP works, but Chromium's connections through it fail with
+  `ws_closed_mid_exchange` / `ERR_CONNECTION_RESET` — tried both the default and an explicit
+  `proxy: { server: ... }` launch option), so a true apples-to-apples live-browser repro was not
+  possible from here.
+- **Open question for whoever picks this back up**: since the code-level mechanism checks out in
+  isolation, the two most likely explanations are (a) the user's browser was showing a stale
+  cached CSS/JS bundle from before some earlier fix, or (b) something real-browser-specific
+  (actual viewport width, an actual image failing to load and affecting the gallery's own
+  intrinsic sizing, a client-side hydration quirk) that an offline reconstruction with blocked
+  network can't reproduce. **Before touching the CSS again**, get the user to open DevTools on
+  the live page and check the computed `grid-column-start` value on the `.wp-block-gallery`
+  element directly, and their actual browser viewport width — that's more diagnostic than another
+  screenshot.
+
+### Newsletter single-issue reader (`/newsletter/[slug]`) — `.rd-layout` never cleared the floating header (fixed September 2026)
+
+User-reported, with a screenshot: on `/newsletter/{slug}` (the full-viewport "reader" UI —
+`IssueReaderClient.tsx`, sidebar + reading pane), the sitewide floating header pill visibly
+overlapped page content — the logo/search icons sat on top of the sidebar's own logo and "Browse
+all N issues…" text, and the sticky "Issue N°X" badge in the top-right of the reading pane sat
+directly behind the header's cart/menu icons.
+
+**Root cause**: `.rd-layout` (`apps/site/app/newsletter.css`) is a full-viewport app-shell —
+`height: calc(100svh - 64px); overflow: hidden`, with the sidebar and reading pane as `height:
+100%` flex children — that predates the "WePresent concept" floating-pill header redesign (see
+that section above). Every other page's first section on this site carries an explicit
+`padding-top: var(--header-clear, 96px)` (documented at length in `globals.css`, right where
+`--header-clear: 96px` is defined) specifically because the header is `position: fixed` with no
+layout space reserved for it — `.rd-layout` never got this treatment on desktop; only the
+`max-width: 768px` mobile override had a (correct, working) `padding-top: var(--header-clear,
+96px)`. Since `.rd-sidebar-header` and the sticky `.rd-issue-badge` (`position: sticky; top: 20px`
+inside `.rd-pane`) both anchor to the very top of this uncleared box, they rendered directly under
+the fixed header instead of below it — the `- 64px` in the old height calc was a stale leftover
+from some earlier, shorter, non-floating header design, not a header-clearance offset at all.
+
+**Fixed** by giving `.rd-layout` `margin-top: var(--header-clear, 96px)` and changing its height
+calc to `calc(100svh - var(--header-clear, 96px))` (was `- 64px`) — margin (not padding) so the
+box's own `height: 100%` children still fill exactly down to the bottom of the viewport, just
+starting below the header instead of at `y: 0`. The existing `max-width: 768px` override's own
+`padding-top: var(--header-clear, 96px)` was removed (would have doubled the offset once stacked
+with the new base-rule `margin-top`) — that breakpoint now only needs to flip the layout from a
+fixed-height flex row to a normal-flow column; the base rule's `margin-top` already does the
+clearance work for it too.
+
+**Not visually verified in a live browser** — same Chromium-can't-reach-`themoveee.com` sandbox
+limitation as the investigation directly above. Verified via: confirming this page is fully
+client-rendered (its SSR HTML has zero `rd-layout`/`rd-sidebar` occurrences, so an offline/
+network-blocked harness can't reproduce it at all — this is why the gallery investigation's
+technique doesn't transfer directly here), a CSS brace-balance check on `newsletter.css`
+(774/774), and a manual trace of the exact sticky-positioning mechanics (`.rd-sidebar-header`'s
+own padding, `.rd-issue-badge`'s `top: 20px`) against `--header-clear`'s documented 96px value to
+confirm the fix's numbers actually clear the header rather than under- or over-shooting it.
+Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
+breakpoint, before considering this fully closed.
+
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
 User request: "create more width for the post body area" by removing the left sidebar on the

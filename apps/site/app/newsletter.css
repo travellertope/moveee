@@ -3228,10 +3228,23 @@
    ══════════════════════════════════════════════════════════════ */
 
 /* ── SPLIT-PANE LAYOUT ── */
+/* Clears the floating header — see the --header-clear comment in
+   globals.css. This whole layout is a full-viewport app-shell (sidebar +
+   reader pane, both `height: 100%`) that predates the floating-pill header
+   redesign; it never got the header-clear treatment every other page's top
+   section has, so the fixed header rendered directly on top of the sidebar
+   title/logo and the sticky "Issue N°X" badge — both start at the very top
+   of this layout's own box with no room reserved above them. Was
+   `height: calc(100svh - 64px)` with no offset at all (a stale leftover
+   from an old, non-floating header of a different height) — margin-top
+   pushes the whole shell below the floating header, and the height
+   calc is adjusted by the same amount so it still fills exactly down to
+   the bottom of the viewport. */
 .rd-layout {
   display: flex;
   width: 100%;
-  height: calc(100svh - 64px);
+  margin-top: var(--header-clear, 96px);
+  height: calc(100svh - var(--header-clear, 96px));
   overflow: hidden;
 }
 
@@ -3813,8 +3826,12 @@
      globals.css. .rd-mobile-strip is the first visible content on
      mobile (the sidebar is hidden below), and being `position: sticky;
      top: 0` it would otherwise sit flush under the fixed header pill
-     on initial load, with the issue title/tabs hidden behind it. */
-  .rd-layout { flex-direction: column; height: auto; overflow: visible; padding-top: var(--header-clear, 96px); }
+     on initial load, with the issue title/tabs hidden behind it.
+     margin-top already came along from the base .rd-layout rule above
+     (that's what clears the desktop sidebar/pane too) — this override
+     only needs to swap the layout from a fixed-height flex row to a
+     normal-flow column, not add a second clearance on top of it. */
+  .rd-layout { flex-direction: column; height: auto; overflow: visible; }
   .rd-sidebar { display: none; }
   .rd-mobile-strip { display: flex; }
   .rd-pane { height: auto; overflow: visible; }
