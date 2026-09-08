@@ -1516,13 +1516,21 @@ on scroll, solid blurred pill elsewhere) is unchanged, only its shape/sizing:
 
 - **Less rounded**: `.toolbar-shell`'s `border-radius` went from `var(--radius-full)` (9999px,
   a true pill) to `var(--radius-2xl)` (20px) — per the canonical radius scale documented above.
-- **Full section width**: `.toolbar-shell`'s `width` cap went from `min(100%, 460px)` to
-  `min(100%, 1328px)` — `1328px` is the site's established section column width (`.hpv2 .wrap`
-  in `homepage-v2.css`, the same max-width every homepage `.arc-section`/masthead uses), so the
-  header now spans the same width as the page content below it instead of floating as a small
-  centered capsule. `.toolbar-pill`'s existing `justify-content`-via-`margin-left:auto` layout
-  (logo left, icons pushed to the far right) already reads correctly at this width with no
-  further JSX/layout changes needed.
+- **Full section width, later reverted (September 2026)**: `.toolbar-shell`'s `width` cap
+  originally went from `min(100%, 460px)` to `min(100%, 1328px)` — `1328px` is the site's
+  established section column width (`.hpv2 .wrap` in `homepage-v2.css`), so the header spanned
+  the same width as the page content below it instead of floating as a small centered capsule.
+  **This was reverted the same month, per explicit user follow-up** ("i know i was the one who
+  said i wanted the header to be as wide as the page body... but it is too big") — seeing it live
+  on an inner page (a magazine article) made clear the full-width pill read as oversized, not as
+  a floating pill anymore. `.toolbar-shell`'s `width` is now `min(100%, 620px)` — a standard
+  floating-pill width, applied sitewide via the shared `Header.tsx`/`header.css` (i.e. everywhere
+  except `/literary`, which already renders its own `LiteraryMasthead` instead of this header —
+  see that section above). **If a future pass wants the header to span the full column width
+  again, don't just restore `1328px` blindly — re-check with the user first, since this has now
+  been tried and explicitly reversed once.** `/shop`/`/makers` ("lifestyle") pages were flagged
+  by the user as an area that will eventually get their own dedicated header, similar to
+  `/literary` — not built as of this entry, still rendering the shared header/pill for now.
 - **Bigger mobile logo, same pill height**: `.toolbar-logo-img`'s mobile-breakpoint (`max-width:
   640px`) height went from `22px` to `28px` — the user flagged it as "too tiny." This didn't
   need any height-compensating padding change to hold the "don't increase header height" rule:

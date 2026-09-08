@@ -37,7 +37,7 @@
    content-body area, and disappears again the moment you're back over
    a dark hero. No JS change needed, this only had to come back in CSS. */
 .toolbar-shell {
-  width: min(100%, 1328px);
+  width: min(100%, 620px);
   border-radius: var(--radius-2xl);
   overflow: hidden;
   background: transparent;
