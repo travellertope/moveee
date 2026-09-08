@@ -2715,6 +2715,40 @@ confirm the fix's numbers actually clear the header rather than under- or over-s
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
 
+### Homepage hero — only shows posts tagged "Featured" (September 2026)
+
+`FullBleedHero` (`app/page.tsx`) renders whatever `fetchHomepageData()` sets as `coverStory` —
+previously just `pool[0]`, i.e. whichever post happened to sort first out of the latest-14/
+edition-scoped pool, with no editorial control over what lands in the hero. Per explicit user
+request, `coverStory` is now sourced from a dedicated fetch, `getWPData(GET_STORIES, { first: 8,
+tag: "featured" })` in `fetchHomepageData.ts` — `GET_STORIES` already supported a `tag` where-arg
+(same param the shop's edition-tagged products already used), so no query changes were needed,
+only a new call site. To put a post in the hero, tag it `Featured` in WP Admin (slug `featured`).
+
+- **Edition-scoped (`/uk`, `/us`, `/africa`)**: prefers a featured post whose `countries.nodes`
+  matches that edition's country slugs, then a featured post with no country tag at all
+  (universal), then any featured post regardless of edition — same fallback shape the pre-existing
+  "universal filler" logic already used for the `stories` row, for consistency.
+- **Global (`/`)**: just `featuredPool[0]`.
+- **Deliberate fallback, not a strict requirement**: if literally nothing is tagged `Featured` yet
+  (a brand-new/unconfigured site), `coverStory` falls back to the old `pool[0]` behaviour rather
+  than rendering a blank hero — `FullBleedHero` has no empty-state design of its own to fall back
+  to, so an empty hero would look broken, not intentional. This mirrors the project's usual
+  "degrade gracefully rather than break" convention (see e.g. the Discover/Literary "omit the
+  section entirely when empty" pattern) applied to a single required slot instead of a whole
+  section.
+- The featured pool is fetched **separately** from the general stories pool and never contributes
+  to the `stories`/carousel rows below the hero — it exists solely to pick the hero post.
+  `stories` (the pool used for the row directly under the hero, itself currently unused
+  downstream — see the pre-existing "computed-but-unused" note elsewhere in this file) now
+  excludes whatever `coverStory` resolved to, by slug, instead of assuming it was always `pool[0]`.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file (this fix additionally needs a real post actually tagged
+  `Featured` in WP Admin to see the hero change at all). Verified via a brace-balance check on
+  `fetchHomepageData.ts` and a manual trace of the edition-matching logic against the pre-existing
+  `universalPosts` pattern it mirrors. Re-check `/`, `/uk`, `/us`, and `/africa` after tagging at
+  least one post `Featured` in a real environment before considering this fully closed.
+
 ### Header transparent-on-dark-hero: never recovered after a root `loading.tsx` Suspense swap (fixed September 2026)
 
 User-reported, on a fresh (non-scrolled) load of `/newsletter/africa`: the floating header rendered
