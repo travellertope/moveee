@@ -1625,7 +1625,83 @@ mobile-only or web-only wrapper alone, or the two clients will drift.
   real environment (including the Paystack NGN path specifically, since `resolve_shop_currency()`
   keys off a raw `country` string match) before considering this fully closed.
 
+### "The Moveee Lifestyle" identity wired into the real `/shop` archive (September 2026)
+
+A standalone brand-identity mockup ("The Moveee Lifestyle" — Bricolage Grotesque display type,
+a centered oxblood-scrim hero, a "Browse" category dropdown beside the grid label, square
+product images) was built and iterated as a Claude Artifact first, approved, then wired into
+the real `apps/site/app/shop/ShopArchiveWrapper.tsx` — same route (`/shop`, plus its
+`category`/`tag`/`brand` archive variants, all of which already funnel through this one
+component), real WPGraphQL/WooCommerce data throughout, no mock content. This **supersedes the
+archive-page section order described immediately below** (steps 0–4 of that list); the Editor's
+Pick split-strip and the separate "Featured Products" companion grid are gone, folded into one
+hero (from the current Editor's Pick) + the existing main grid. **Untouched by this pass**: the
+Magazine bridge (`.sl-bridge`), the Moveee Pro member band (`.sl-member`), and the Origins
+closing bridge (`.sl-origins`) — all three already matched this identity's brand tokens
+(`--ochre`/`--gold`/`--paper`) and needed no restyling, so their `.sl-*` classes and JSX are
+exactly as described below. The product **detail** page (`/shop/[slug]`) was deliberately left
+out of scope for this pass — it still renders with Fraunces headings; only the archive page's
+visual identity changed.
+
+- **New files**: `apps/site/app/shop/layout.tsx` (loads Bricolage Grotesque via
+  `next/font/google`, scoped to the whole `/shop` route tree as `--font-lfs-display` — same
+  "nested layout, not the root one" pattern as `apps/site/app/literary/layout.tsx`, so the rest
+  of Site A's font bundle is unaffected) and `apps/site/app/shop/shop-lifestyle.css` (new
+  `lfs-*`-prefixed classes only — imported *after* `shop.css` in `ShopArchiveWrapper.tsx`, and
+  deliberately additive: it never redefines an existing `.sl-*` selector wholesale, so nothing
+  in `shop.css` needed renaming). One surgical exception lives directly in `shop.css`:
+  `.sl-pcard-img`'s `aspect-ratio` changed `3/4` → `1/1` (every grid card is now square, the
+  identity's signature look) and its radius bumped to `var(--radius-xl)`.
+- **Ticker** — reuses the shared sitewide `.ticker-wrap`/`.ticker-track` (`globals.css`, the
+  same component `/journeys` and `/events` already use), not a bespoke one — real copy: "Vetted
+  Makers" (accent-colored via the shared `span.a` convention), "Moveee Pro saves {live
+  discount}% storewide", "Earn Culture Credits on every order", and "New: {the newest fetched
+  product's real name}".
+- **Category nav** (`.lfs-nav`, new) — a "Browse" dropdown (hover/focus-within, pure CSS, no
+  client component) listing the real fetched `categories`, sitting where the old horizontal
+  category strip used to be conceptually; a `<details>`-based mobile equivalent opens the same
+  list via tap, since `:hover` doesn't fire on touch — same disclosure-widget trick used
+  elsewhere in this codebase for JS-free mobile menus. No "coming soon" states — every category
+  returned by `GET_PRODUCT_CATEGORIES` is a live link.
+- **Hero** (`.lfs-hero`, new) — centered copy over the current Editor's Pick's own real product
+  photo (not a stock image), with the identity's oxblood radial-gradient scrim. Headline is
+  static brand copy ("The Index of things worth *owning*."); the trust line reads "Secure
+  Checkout by Stripe and Paystack. Moveee Pro members save {live discount}% storewide." — same
+  wording locked in on the standalone mockup. "Shop the Index →" anchors to `#lfs-grid`, a new
+  `id` added directly to `ShopProductGrid.tsx`'s `<section>`.
+- **Email capture** (`.lfs-email`, new) — a real `<SubscribeForm list="culture-drop">`
+  (`apps/site/components/SubscribeForm.tsx` — note `@/components/*` resolves to
+  `packages/shared/components/*` first per this app's tsconfig paths, so this actually renders
+  the `packages/shared` copy; both are functionally identical, same `/api/newsletter/subscribe`
+  call), not a decorative `onsubmit="return false"` form. This section didn't exist on the
+  archive page before this pass.
+- **Maker Story** (`.lfs-maker`, new) — spotlights the current hero pick's own maker (real
+  `vendorProfile`/`moveeeMeta.makerStory`, sanitized via `sanitizeHtml()`, falling back to
+  `vendorProfile.bio` when no per-product story is set — same fallback chain already documented
+  for the product detail page's own Maker Story section). **Deliberately not a bulk all-makers
+  grid** — that pattern was intentionally removed sitewide (see "Shop by Category + Meet the
+  Makers sections removed" above); this pass didn't reintroduce it, it built a single spotlight
+  card instead. Added `moveeeMeta` to `ShopArchiveWrapper.tsx`'s extra-data merge (it was already
+  being fetched by `GET_PRODUCTS_EXTRA`'s `PRODUCT_EXTRA_TYPE_FIELDS`, just never copied onto
+  the merged product object before this pass).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  (and no `node_modules` installed) as every other mockup-to-real pass in this file; also
+  couldn't verify that "Bricolage Grotesque" resolves via this exact Next.js version's
+  `next/font/google` (it's a real, long-established Google Font, expected to work, but
+  unconfirmed against this repo's actual Next.js version). Verified via a CSS brace-balance
+  check on both `shop.css` (609/609) and the new `shop-lifestyle.css` (75/75), a
+  parens/braces-balance check on `ShopArchiveWrapper.tsx`, and a full read-through confirming
+  every `lfs-*` class referenced in the JSX has a matching CSS rule. Re-check pixel fidelity
+  against the approved mockup, and confirm the mobile category-dropdown panel doesn't overflow
+  a narrow viewport, in a real environment before considering this fully closed.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
+
+**Superseded by the September 2026 identity rebuild directly above for the archive page's own
+section order (steps 0–4 below) — the Editor's Pick strip and Featured Products companion grid
+described here no longer exist in the JSX.** The Magazine bridge, member band, and Origins
+closing sections below (steps 5 onward, i.e. `.sl-bridge`/`.sl-member`/`.sl-origins`) are still
+exactly as described. Kept for reference on those still-accurate parts.
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
 `products`/`categories` via `getWPData`) renders the page in this order

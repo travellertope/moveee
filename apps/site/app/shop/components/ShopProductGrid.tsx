@@ -22,7 +22,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
   const { filtered } = useShopFilter();
 
   return (
-    <section className="sl-grid">
+    <section id="lfs-grid" className="sl-grid">
       <div className="sl-grid-inner">
         <div className="sl-grid-header">
           <div className="sl-grid-label">
