@@ -28,6 +28,19 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
 
   const OPT = { revalidate: 600 };
 
+  // ── 0. Featured hero pool (tag: "featured") ──────────────────────────────
+  // The homepage hero (FullBleedHero) must only ever show a post an editor
+  // has explicitly tagged "Featured" in WP Admin — not just whatever
+  // happened to sort first in the latest-posts pool. Fetched once, up front,
+  // separately from the general stories fetch below so the two pools stay
+  // decoupled (this one only ever feeds coverStory; it never contributes to
+  // the `stories` row).
+  let featuredPool: any[] = [];
+  try {
+    const featuredData = await getWPData(GET_STORIES, { first: 8, tag: "featured" }, OPT);
+    featuredPool = featuredData?.posts?.nodes || [];
+  } catch (err) { console.error("Featured pool fetch error:", err); }
+
   // ── 1. Stories ────────────────────────────────────────────────────────────
   // Edition-scoped by the `country` taxonomy (not Tags) — see
   // getStoriesByCountrySlugs()/EDITIONS[...].countrySlugs in packages/utils/
@@ -58,13 +71,25 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
       });
 
       const pool = [...editionPosts, ...universalPosts];
-      coverStory = pool[0] || null;
-      stories = pool.slice(1, 14);
+
+      // Prefer a featured post scoped to this edition's countries, then any
+      // featured post with no country tag at all (universal), then any
+      // featured post regardless of edition — only falling back to the
+      // general pool if literally nothing has been tagged "Featured" yet
+      // (so the hero degrades to the old behaviour rather than going blank
+      // on a brand-new/unconfigured edition).
+      const editionCountrySlugs = new Set(countrySlugs as unknown as string[]);
+      const featuredForEdition = featuredPool.find((p: any) =>
+        (p.countries?.nodes ?? []).some((c: any) => editionCountrySlugs.has(c.slug))
+      );
+      const featuredUniversal = featuredPool.find((p: any) => !(p.countries?.nodes?.length));
+      coverStory = featuredForEdition || featuredUniversal || featuredPool[0] || pool[0] || null;
+      stories = pool.filter((s: any) => s.slug !== coverStory?.slug).slice(0, 13);
     } else {
       const data = await getWPData(GET_STORIES, { first: 14 }, OPT);
       const pool: any[] = data?.posts?.nodes || [];
-      coverStory = pool[0] || null;
-      stories = pool.slice(1, 14);
+      coverStory = featuredPool[0] || pool[0] || null;
+      stories = pool.filter((s: any) => s.slug !== coverStory?.slug).slice(0, 13);
     }
   } catch (err) { console.error("Stories fetch error:", err); }
 
