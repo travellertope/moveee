@@ -1778,14 +1778,49 @@ proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `He
   children switched from `font-style: italic` to `font-style: normal; font-weight: 800; color:
   var(--ochre)` — Bricolage Grotesque is a sans display face with no distinct italic cut in this
   identity's usage (mirrors `.lfs-hero-title em`'s own `font-style: normal` precedent), so italicizing
-  it would have looked like a font-fallback bug, not a deliberate emphasis style. **The product
-  detail page's own ~25 remaining `font-family: 'Fraunces', serif` declarations (`.sp-*` in
-  `shop.css`) were deliberately left untouched in this pass** — a full typographic rebrand of every
-  heading on that page (as opposed to true section-level headings vs. numeric displays like
-  `.sp-rs-avg`'s 42px rating average) is a larger, separate visual-parity pass; the explicit,
-  highest-priority ask this pass addressed was the header/footer chrome swap across the whole route
-  tree, which is now complete. If a future pass wants full typographic parity on `/shop/[slug]`
-  too, that's the next place to look.
+  it would have looked like a font-fallback bug, not a deliberate emphasis style.
+- **Follow-up, same pass — the product detail page (`/shop/[slug]`) got the same treatment too**,
+  closing the gap flagged above. Every genuine heading/title/large-display-number on that page
+  moved from `'Fraunces', serif` to `var(--font-lfs-display, var(--font-serif))` at `font-weight:
+  700`/`800` (matching each element's prior weight tier), with any `em` emphasis child switched
+  from italic to `font-style: normal` + bold + `var(--ochre)`, same convention as the archive-page
+  fixes above: `.sp-product-name` (the h1 product title — also tightened its size clamp from
+  `42–64px` to `38–56px` and dropped its unusually light `font-weight: 400` base, since Bricolage
+  at 400 reads thin compared to the rest of the identity's bold display type), `.sp-reviews-head
+  h2` ("Reviews"), `.sp-rs-avg` (the big review-average number — same "large display number"
+  treatment as `.sl-member-stat-num`), `.sp-review-form h3` ("Write a review"), `.sp-acc-header
+  .title` (the accordion tab labels — Description/Specifications/Materials & Care/etc.),
+  `.sp-seen-title` ("As Seen In" bridge), `.sp-story-header h2` / `.sp-process-header h2` /
+  `.sp-more-from-header h2` (the Origins Journal/How It's Made/More From This Category section
+  heads — these three had no `font-family` override before this pass at all, so they were already
+  rendering in the sitewide sans body font rather than the old Fraunces branding; upgraded to the
+  identity's display face anyway for consistency with every other section heading on the page,
+  not because they were "old design" specifically), `.sp-process-step h4` (the 01–04 step titles),
+  `.sp-vendor-stat .num`, and `.mini-product .name` (the "More From This Category" card titles —
+  the product-detail-page mirror of the archive grid's own `.sl-pcard-name` fix below).
+- **The two most-repeated pieces of shop typography were also fixed, sitewide across every
+  `/shop/*` route** — not page-specific, since both classes render everywhere their section
+  appears: `.sl-pcard-name` (every product card's title, on the archive, every category/tag/brand
+  archive, and the "More From This Category" grid's sibling class `.mini-product .name` above) and
+  `.sl-member-stat-num`/`.sl-empty-text` (the Moveee Pro band's stat number and the empty-grid
+  "No products found" message, both rendered wherever `ShopArchiveWrapper`/`ShopProductGrid` are).
+  These were arguably the single most-visible remaining trace of the old design, since a product
+  card's title is the one piece of typography a visitor sees dozens of times per page.
+- **Deliberately left as editorial serif body copy, not converted** — these are genuine reading
+  text or decorative letterforms, not brand headings, so switching them to the sans display face
+  would have made the page read worse, not more "on-identity": `.sp-product-lede` (the short-
+  description standfirst under the product title), `.sp-story-text p` and its drop-cap
+  `::first-letter` + the maker-story pull-quote (`blockquote`), `.sp-selector-label .value` (the
+  small inline "Blue"/"Large" selected-variant value next to a swatch), and `.sp-review-avatar-
+  fallback` (a single decorative initial letter in an avatar circle). Also left alone: `.sl-pick-
+  title`/`.sl-featured-name`/`.sl-cat-title`/`.sl-cat-name`/`.sl-makers-label`/`.sl-mcard-name` —
+  confirmed dead (zero JSX references anywhere in `apps/site/app/shop`) leftover CSS from sections
+  already removed in earlier passes (Editor's Pick split-strip, Shop by Category, Meet the Makers
+  — see those entries above), so there was nothing live left to convert.
+- **This closes the "nothing from the old lifestyle page should survive" ask for typography** —
+  every genuinely-visible heading across the whole `/shop/*` tree (archive, category/tag/brand
+  archives, and the product detail page) now uses the identity's Bricolage Grotesque display face;
+  only intentional editorial-serif body copy and confirmed-dead CSS remain on the old face.
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other pass in this file. Verified via CSS brace-balance checks (`shop-chrome.css` 53/53,
   `shop.css` 608/608, `shop-lifestyle.css` 75/75) and a full read-through confirming: `Header.tsx`
