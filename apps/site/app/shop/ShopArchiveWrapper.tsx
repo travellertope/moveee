@@ -1,4 +1,3 @@
-import React from "react";
 import {
   getWPData,
   getProductsWithFallback,
@@ -163,27 +162,11 @@ export default async function ShopArchiveWrapper({
 
   return (
     <>
-      {/* Header-clearance spacer, painted solid paper — the floating header
-          is fixed/transparent and reserves no layout space of its own, so
-          the true top of the viewport needs an explicit block here. Without
-          it this gap shows body's own radial-gradient wash (globals.css),
-          which is tinted rust near the top-left and reads as a visibly
-          different, off-white colour from the rest of the page. */}
-      <div className="sl-header-spacer" />
-
-      {/* ── TICKER — shared sitewide component (globals.css), real copy ── */}
-      <div className="ticker-wrap">
-        <div className="ticker-track">
-          {[0, 1].map((i) => (
-            <React.Fragment key={i}>
-              <span className="a">Vetted Makers</span>
-              <span>Moveee Pro saves {proDiscountPercent}% storewide</span>
-              <span>Earn Culture Credits on every order</span>
-              {products[0] && <span>New: {products[0].name}</span>}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
+      {/* No header-clearance spacer and no inline ticker here anymore — the
+          Moveee Lifestyle's own standalone ShopHeader (app/shop/layout.tsx)
+          renders the ticker once for the whole /shop route tree, and it
+          sits in normal document flow (not fixed/floating), so there's no
+          gap left to fill. */}
 
       {/* ── CATEGORY NAV — a dropdown beside the grid label instead of a
           horizontal strip, per the approved identity mockup. Desktop opens

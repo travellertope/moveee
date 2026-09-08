@@ -33,9 +33,9 @@
   margin-bottom: 8px;
 }
 .sl-head-inner h1 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: -.02em;
   color: var(--ink);
@@ -52,14 +52,6 @@
 }
 
 /* ── 0. TRUST LINE — single slim mono line, very top of the page, dark bar ── */
-.sl-header-spacer {
-  /* Solid paper block filling the header's clearance space — see the
-     comment at its JSX call site for why this replaced a plain
-     margin-top (which let body's own radial-gradient wash show through
-     and read as a visibly different colour from the rest of the page). */
-  height: var(--header-clear, 96px);
-  background: var(--paper);
-}
 .sl-trust {
   background: var(--ink);
 }
@@ -616,7 +608,8 @@
   white-space: nowrap;
 }
 .sl-bridge-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
+  font-weight: 700;
   font-size: 17px;
   color: var(--ink);
 }
@@ -1087,15 +1080,15 @@
   justify-content: center;
 }
 .sl-member-left h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 42px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--paper);
   margin: 0 0 16px;
   line-height: 1;
   text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
-.sl-member-left h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sl-member-left h3 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sl-member-left > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
@@ -1236,14 +1229,14 @@
 }
 .sl-origins-label::before { content: ''; width: 32px; height: 1px; background: var(--ochre); }
 .sl-origins-content h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 40px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink);
   line-height: 1.05;
   margin: 0 0 20px;
 }
-.sl-origins-content h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+.sl-origins-content h3 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sl-origins-content > p {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px;
@@ -1408,12 +1401,11 @@
 .sp-product-hero {
   max-width: 1440px;
   margin: 0 auto;
+  /* No more --header-clear top padding — the Moveee Lifestyle's own
+     ShopHeader (app/shop/layout.tsx) renders in normal document flow, not
+     fixed/floating like the old sitewide pill, so there's no clearance gap
+     left to reserve here. */
   padding: 50px 40px 80px;
-  /* This is now the page's first element (the breadcrumb it used to
-     sit below never had header-clear applied either, so this is a
-     genuine gap, not a regression) — see the --header-clear comment
-     in globals.css. */
-  padding-top: calc(var(--header-clear, 96px) + 50px);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 70px;

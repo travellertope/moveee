@@ -1695,6 +1695,108 @@ visual identity changed.
   against the approved mockup, and confirm the mobile category-dropdown panel doesn't overflow
   a narrow viewport, in a real environment before considering this fully closed.
 
+### The Moveee Lifestyle becomes a fully standalone mini-site — own header + footer, every `/shop/*` route (September 2026, follow-up)
+
+**Corrects a scope gap in the pass above.** The prior pass only rebuilt the archive page's own
+body content — it left the sitewide floating `Header.tsx` pill and the sitewide `Footer.tsx`
+rendering on every `/shop` route, same as any other Site A page. The user explicitly rejected
+this as "half" the implementation: the whole point of a from-scratch brand identity for the shop
+is that `/shop` and everything under it should feel like its own distinct mini-website, with
+**nothing** from the rest of the site's chrome — or the old (pre-identity) shop design — surviving
+anywhere in the tree. This pass makes the identity's own masthead and footer the *only* header/
+footer any `/shop/*` route renders, using the exact same "standalone mini-site" mechanism already
+proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `Header.tsx` returning
+`null`, `ConditionalFooter.tsx` excluding the path) rather than inventing a new pattern:
+
+- **`apps/site/components/Header.tsx`** — added `isShopPage = pathname === "/shop" ||
+  pathname.startsWith("/shop/")` and changed the existing literary-only early return to
+  `if (isLiteraryPage || isShopPage) return null;`. The dead `isLifestylePage`/`ShopSearchModal`
+  branches that used to make the sitewide pill *look* shop-flavoured on `/shop` (before this pass,
+  the sitewide header still rendered there, just re-skinned) were removed entirely — the sitewide
+  header has no role on `/shop` at all anymore, so there's nothing left to re-skin.
+  `isMakersPage` is untouched and still drives the sitewide header's own lifestyle-flavoured logo
+  on `/makers` — that route is a *sibling* of `/shop`, not nested under it, so it's out of scope
+  for this pass and still uses the shared sitewide chrome.
+- **`apps/site/components/ConditionalFooter.tsx`** — added `isShopPath()` (same shape as
+  `isLiteraryPath()`) to the exclusion condition, so the sitewide dark `Footer.tsx` never renders
+  on any `/shop` route.
+- **New: `apps/site/components/ShopHeader.tsx`** (client) — the identity's own masthead, rebuilt
+  verbatim from the approved mockup's `.masthead`/`.mast-*` markup: the shared ticker
+  (`.ticker-wrap`/`.ticker-track`, now living here instead of duplicated per-page — see below),
+  the real Moveee Lifestyle logo (`/logo-lifestyle-black.png`), a "Categories" dropdown (desktop
+  hover, mobile `<details>`) sourced from a new small client fetch, and search/account/bag icons —
+  live cart count from `useCart()`, a session-aware account link (`useSession()`), and the existing
+  `ShopSearchModal` wired to the search icon (moved here from `Header.tsx`, which no longer needs
+  it since it never renders on `/shop`).
+- **New: `apps/site/components/ShopFooter.tsx`** (client) — the identity's own footer, rebuilt
+  verbatim from the mockup's `.foot`/`.foot-*` markup: brand blurb + logo, and three link columns
+  (Shop / Makers / Account). Every link points at a real destination — the mockup's own "Gift
+  Cards" and "Meet the Makers" items were dropped rather than kept as dead links, since neither has
+  a real feature/page behind it (no gift-card system exists anywhere in the codebase; the bulk
+  all-makers grid was deliberately removed sitewide, see "Shop by Category + Meet the Makers
+  sections removed" above) — same "never fabricate" rule applied to the mockup's bottom-bar "Index
+  last updated {date}" line, which was dropped since there's no real data source backing it.
+- **New: `apps/site/app/api/shop/categories/route.ts`** — a small client-fetchable proxy (same
+  "global chrome slot" pattern as the pre-existing `/api/header/featured-product`), returning both
+  the real product categories (for the header's dropdown) and the live `proDiscountPercent` (for
+  the header's ticker's "Moveee Pro saves X% storewide" line) in one response, cached 5 minutes.
+- **New: `apps/site/app/shop/shop-chrome.css`** — the masthead/footer CSS, remapped from the
+  mockup's own token names onto the real site's tokens (`--bg`→`--paper`, `--text`→`--ink`,
+  `--text-mute`→`--mute`, `--line`→`--rule`, `--line-strong`→`--rule-strong` with a `--rule`
+  fallback, `--accent`→`--ochre`, `--surface`→`--paper-deep`, `--surface-raised`→`--paper`,
+  `--shadow-plate`→`--shadow-card`) — same remapping convention already used by
+  `shop-lifestyle.css`'s own header comment.
+- **`apps/site/app/shop/layout.tsx`** now mounts `<ShopHeader />` before `{children}` and
+  `<ShopFooter />` after, inside the existing Bricolage Grotesque font-variable wrapper — this is
+  the **only** place either component is mounted, so it's automatically inherited by every nested
+  route under `/shop` (archive, `category`/`tag`/`brand` archives, `[slug]` product detail,
+  `checkout`, `edit`, `shipping`, `order-confirmation`) with zero per-page changes, the same way
+  Next.js layouts always propagate.
+- **Ticker de-duplicated, not left doubled** — `ShopArchiveWrapper.tsx` previously rendered its own
+  inline `.ticker-wrap` (with live "New: {product name}" copy) *in addition to* the header's now
+  owning the ticker sitewide; that inline copy and the now-meaningless `.sl-header-spacer` clearance
+  block (a hack that only made sense when the sitewide header was a fixed/floating pill reserving
+  no layout space of its own — `ShopHeader` renders in normal document flow, so there's no gap to
+  fill) were both removed from `ShopArchiveWrapper.tsx`. The "New: {product}" line was not carried
+  over to `ShopHeader`'s ticker — the header is one shared component across every `/shop/*` route
+  (including pages with no "current product" concept, like the archive or checkout), so its ticker
+  copy is deliberately generic ("Vetted Makers · Moveee Pro saves X% storewide · Earn Culture
+  Credits on every order · Free returns within 14 days" — the 14-day figure matches the real,
+  canonical policy on `/shop/shipping`, not the unrelated stale "30 days" copy that still exists on
+  the product detail page's own buy box, `ProductSelectors.tsx` — that pre-existing mismatch is out
+  of scope for this pass).
+- **`.sp-product-hero`'s `padding-top: calc(var(--header-clear, 96px) + 50px)` removed**
+  (`shop.css`, product detail page) — same "no more fixed/floating header to clear" reasoning as
+  the archive page's spacer above; left in place it would have added a large dead gap under the
+  new normal-flow `ShopHeader`.
+- **A handful of the archive page's own Fraunces headings switched to the identity's Bricolage
+  Grotesque display face**, per "nothing from the old lifestyle page should survive": `.sl-head-inner
+  h1` (dead — no longer rendered by `ShopArchiveWrapper.tsx`, kept in case needed again, per this
+  file's usual convention), `.sl-bridge-title`, `.sl-member-left h3`, and `.sl-origins-content h3`
+  — each moved to `font-family: var(--font-lfs-display, var(--font-serif))` at `font-weight: 800`
+  (Bricolage's own bold weight, matching `.lfs-hero-title`'s existing treatment), with their `em`
+  children switched from `font-style: italic` to `font-style: normal; font-weight: 800; color:
+  var(--ochre)` — Bricolage Grotesque is a sans display face with no distinct italic cut in this
+  identity's usage (mirrors `.lfs-hero-title em`'s own `font-style: normal` precedent), so italicizing
+  it would have looked like a font-fallback bug, not a deliberate emphasis style. **The product
+  detail page's own ~25 remaining `font-family: 'Fraunces', serif` declarations (`.sp-*` in
+  `shop.css`) were deliberately left untouched in this pass** — a full typographic rebrand of every
+  heading on that page (as opposed to true section-level headings vs. numeric displays like
+  `.sp-rs-avg`'s 42px rating average) is a larger, separate visual-parity pass; the explicit,
+  highest-priority ask this pass addressed was the header/footer chrome swap across the whole route
+  tree, which is now complete. If a future pass wants full typographic parity on `/shop/[slug]`
+  too, that's the next place to look.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via CSS brace-balance checks (`shop-chrome.css` 53/53,
+  `shop.css` 608/608, `shop-lifestyle.css` 75/75) and a full read-through confirming: `Header.tsx`
+  has no leftover `ShopSearchModal`/`isLifestylePage` references, `ConditionalFooter.tsx`'s new
+  `isShopPath()` matches the existing `isLiteraryPath()` shape exactly, `CartDrawer` (mounted
+  independently at the root layout, not inside `Header.tsx`) still renders on `/shop` so the bag
+  icon's `openDrawer()` call has something to open, and no page under `/shop` imports `Header`/
+  `Footer` directly. Re-check pixel fidelity against the approved mockup — the masthead's category
+  dropdown, the ticker, and the footer's three link columns in particular — in a real environment
+  before considering this fully closed.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
