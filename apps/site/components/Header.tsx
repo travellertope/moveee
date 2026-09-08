@@ -165,11 +165,38 @@ const Header = () => {
     const onResize = () => update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
+
+    // Also re-check whenever the page's own content changes shape — the
+    // app has a root `app/loading.tsx`, which Next.js treats as a Suspense
+    // fallback wrapping every routed page (including on a hard/fresh load,
+    // via streaming SSR), not just client-side transitions. That fallback
+    // has no `[data-header-zone="dark"]` element in it, so on any page
+    // whose data fetch is slow enough to actually show it (e.g. an async
+    // Server Component awaiting a WordPress fetch), the checks above can
+    // all run and find zero dark zones *before* the real page — with its
+    // dark hero — has streamed in and replaced the fallback. None of
+    // scroll/resize/load fire when React swaps that Suspense boundary's
+    // content, so the header was staying solid until the next scroll. A
+    // rAF-throttled MutationObserver on the body catches that swap (and
+    // any other async content change) the same way onScroll already
+    // throttles scroll-triggered checks.
+    let mutRaf: number | null = null;
+    const observer = new MutationObserver(() => {
+      if (mutRaf) return;
+      mutRaf = requestAnimationFrame(() => {
+        update();
+        mutRaf = null;
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("load", update);
       cleanupRafs.forEach((id) => cancelAnimationFrame(id));
+      observer.disconnect();
+      if (mutRaf) cancelAnimationFrame(mutRaf);
     };
   }, [pathname]);
 
