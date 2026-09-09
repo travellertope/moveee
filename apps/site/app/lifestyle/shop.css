@@ -630,13 +630,18 @@
 /* ── 7. MAIN PRODUCT GRID ── */
 .sl-grid {
   background: #fff;
-  padding: 80px 0;
+  /* Top padding kept small so a glimpse of the grid shows in the hero's
+     own viewport — bottom padding is the section's real breathing room. */
+  padding: 24px 0 80px;
 }
 .sl-grid-inner {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 64px;
 }
+/* Dead — the "Recent"/active-filter label + divider row above the grid was
+   removed at explicit user request (September 2026) so the grid itself sits
+   closer to the hero; kept in case a section header is wanted here again. */
 .sl-grid-header {
   display: flex;
   align-items: baseline;
@@ -1387,7 +1392,7 @@
   .sl-pick-inner { padding: 32px 20px; }
   .sl-featured { padding: 32px 0; }
   .sl-featured-inner { padding: 0 20px; }
-  .sl-grid { padding: 48px 0; }
+  .sl-grid { padding: 16px 0 48px; }
   .sl-grid-inner { padding: 0 20px; }
   .sl-cat { padding: 48px 0; }
   .sl-cat-inner { padding: 0 20px; }

@@ -2002,6 +2002,19 @@ Not visually verified in a browser — no `node_modules` installed this session.
 paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
 `makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
 
+### Lifestyle product grid — "Recent" label + divider removed, hero-to-grid gap tightened (September 2026)
+
+Per explicit user request, so a glimpse of the grid shows within the hero's own viewport height:
+`ShopProductGrid.tsx`'s `.sl-grid-header` block (the "Recent"/active-filter label row + its
+hairline divider, directly above the grid) was removed from the JSX entirely — `isFiltered`/
+`activeLabel` props are still passed by `ShopArchiveWrapper.tsx` but no longer read inside this
+component (harmless — this repo's `tsconfig.json` doesn't enable `noUnusedParameters`). `.sl-grid`'s
+top padding was cut from `80px`/`48px` (mobile) to `24px`/`16px` — its bottom padding is unchanged,
+so the section still has its usual closing breathing room, only the gap right under the hero
+shrank. `.sl-grid-header`/`.sl-grid-label` CSS is now dead, kept per this file's usual convention.
+Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+brace-balance (612/612) and paren/brace-balance on `ShopProductGrid.tsx`.
+
 ### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
 
 Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
