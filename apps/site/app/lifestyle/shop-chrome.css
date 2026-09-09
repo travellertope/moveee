@@ -41,9 +41,17 @@
   .masthead-row { padding: 11px 20px; gap: 14px; }
 }
 
-.mast-left { display: flex; align-items: center; min-width: 0; }
+.mast-left { display: flex; align-items: center; gap: 26px; min-width: 0; }
 .mast-logo { display: flex; align-items: center; flex-shrink: 0; }
 .mast-logo-img { display: block; height: 38px; width: auto; }
+
+/* Categories menu, beside the logo (September 2026) — plain inline links
+   reusing .mast-nav/.mast-nav-link, same shape/hiding behavior as the
+   right-hand text nav (hidden below 900px). Deliberately not a dropdown —
+   see .mast-cat/.mast-cat-panel/.mast-filter further below, which are dead
+   now that Categories no longer uses them (kept in case needed again). */
+.mast-cat-nav { overflow-x: auto; scrollbar-width: none; }
+.mast-cat-nav::-webkit-scrollbar { display: none; }
 
 /* Right-hand cluster: text nav, Categories menu, then the icon group —
    kept as one flex group (rather than three siblings of .masthead-row) so
@@ -67,6 +75,8 @@
 @media (max-width: 640px) { .mast-icons { gap: 12px; } }
 @media (max-width: 900px) { .mast-right { gap: 16px; } }
 
+/* Dead — Categories no longer renders as a dropdown (see .mast-cat-nav
+   above); kept in case a dropdown treatment is wanted again later. */
 .mast-cat { position: relative; }
 .mast-cat-btn {
   display: flex;
@@ -135,6 +145,8 @@
 }
 @media (max-width: 900px) { .mast-cat { display: none; } }
 
+/* Dead — mobile Categories now falls under .mast-nav's own <900px
+   display:none, same as the right-hand nav; no mobile disclosure anymore. */
 .mast-filter { position: relative; display: none; }
 @media (max-width: 900px) { .mast-filter { display: block; } }
 .mast-filter summary {

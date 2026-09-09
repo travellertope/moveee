@@ -2215,6 +2215,27 @@ above:
   logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
   CSS until this pass revived it).
 
+### Shop masthead — Categories moved beside the logo as a plain link list, not a dropdown (September 2026, second follow-up)
+
+**Supersedes the dropdown/`<details>` treatment from the pass directly above.** Per explicit user
+direction, Categories moved (1) to a distinct block right beside the logo on the left, and (2)
+from a hover dropdown/mobile `<details>` disclosure to a normal inline link list — the same shape
+as the right-hand `.mast-nav` (Edit/Magazine), not a popover.
+
+- **`ShopHeader.tsx`**: the `<div className="mast-cat">`/`<details className="mast-filter">` pair
+  (in `.mast-right`) was replaced with `<nav className="mast-nav mast-cat-nav">` rendered inside
+  `.mast-left`, right after the logo — one plain `.mast-nav-link` per fetched category, no panel,
+  no "View All →" trailer.
+- **`shop-chrome.css`**: `.mast-left` gained `gap: 26px` (previously only held the logo, no gap
+  needed); new `.mast-cat-nav` just adds horizontal scroll-without-a-visible-scrollbar in case the
+  category list is long, reusing `.mast-nav`'s existing font/hover/900px-hide styling wholesale
+  rather than defining new link styles. `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  are dead again (marked as such in the CSS, kept per this file's usual "kept in case needed
+  again" convention) — Categories no longer uses any of them.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via a
+  CSS brace-balance check on `shop-chrome.css` (63/63) and a paren/brace-balance check on
+  `ShopHeader.tsx`.
+
 Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
 brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
 `ShopHeader.tsx`.
