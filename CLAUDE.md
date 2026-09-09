@@ -1980,6 +1980,25 @@ Two more mockup-fidelity/scope fixes, caught live from a screenshot of the deplo
   Re-check pixel fidelity against `moveee-lifestyle-identity.html`'s `.email-capture` band in a
   real environment before considering this fully closed.
 
+### Shop masthead — narrower column + a real nav menu next to the logo (September 2026)
+
+Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
+
+- **`.masthead-row`'s `max-width` reduced from `1440px` to `1240px`** — the header row felt too
+  wide/spread-out with just the logo on the left and the icon cluster on the right and nothing in
+  between. The rest of `/shop`'s sections (hero, grid, footer) are untouched and still `1440px` —
+  this was a header-specific width complaint, not a full-page column-width change, so no other
+  file was touched.
+- **New `.mast-nav` text-link row, right after the logo inside `.mast-left`** — three real
+  destinations (Shop → `/shop`, The Edit → `/shop/edit`, Makers → `/makers`), plain sans links,
+  ochre on hover, hidden below `900px` (same breakpoint the old Categories dropdown used to hide
+  at, before it was removed — see "Shop header — Categories dropdown removed" above). This is a
+  different thing from that removed Categories dropdown — it's a small destination nav, not a
+  category filter, and doesn't reintroduce any filtering UI into the header.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (58/58).
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
