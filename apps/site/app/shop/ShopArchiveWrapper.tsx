@@ -168,50 +168,6 @@ export default async function ShopArchiveWrapper({
           sits in normal document flow (not fixed/floating), so there's no
           gap left to fill. */}
 
-      {/* ── CATEGORY NAV — a dropdown beside the grid label instead of a
-          horizontal strip, per the approved identity mockup. Desktop opens
-          on hover/focus (pure CSS, no client component needed); mobile gets
-          a <details> disclosure with the same links, since :hover doesn't
-          fire on touch. ── */}
-      <div className="lfs-nav-wrap">
-        <div className="lfs-nav">
-          <nav className="lfs-cat">
-            <button type="button" className="lfs-cat-btn" aria-haspopup="true">
-              Browse
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <div className="lfs-cat-panel">
-              {categories.map((c: any) => (
-                <Link key={c.slug} href={`/shop/category/${c.slug}`} className="lfs-cat-item">
-                  <span>{c.name}</span>
-                  {typeof c.count === "number" && c.count > 0 && (
-                    <span className="lfs-cat-count">{c.count}</span>
-                  )}
-                </Link>
-              ))}
-              <Link href="/shop" className="lfs-cat-all">All Products →</Link>
-            </div>
-          </nav>
-          <details className="lfs-cat-mobile">
-            <summary className="lfs-cat-btn" aria-label="Browse categories">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="7" x2="20" y2="7" /><circle cx="9" cy="7" r="2" fill="var(--paper)" /><line x1="4" y1="17" x2="20" y2="17" /><circle cx="16" cy="17" r="2" fill="var(--paper)" /></svg>
-            </summary>
-            <div className="lfs-cat-panel">
-              {categories.map((c: any) => (
-                <Link key={c.slug} href={`/shop/category/${c.slug}`} className="lfs-cat-item">
-                  <span>{c.name}</span>
-                  {typeof c.count === "number" && c.count > 0 && (
-                    <span className="lfs-cat-count">{c.count}</span>
-                  )}
-                </Link>
-              ))}
-              <Link href="/shop" className="lfs-cat-all">All Products →</Link>
-            </div>
-          </details>
-          <span className="lfs-nav-label">{isFiltered ? activeLabel : "The full Index"}</span>
-        </div>
-      </div>
-
       {/* ── HERO — centered, oxblood scrim over a fixed brand photo (never
           a product photo — the hero must read as the shop's own identity,
           not an ad for whichever item happens to be featured) ── */}

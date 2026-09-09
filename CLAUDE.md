@@ -1937,6 +1937,19 @@ file's usual "kept in case needed again" convention — confirmed via grep that 
 `ShopSearchModal`** — if a future pass wants an on-page category control again, don't
 reintroduce it in the header; either add it back there deliberately or extend the modal.
 
+### Shop archive — "Browse" category-nav bar removed (September 2026)
+
+The `.lfs-nav-wrap`/`.lfs-nav` bar directly under the masthead on `/shop` (a "Browse ▾"
+category dropdown + mobile `<details>` disclosure + a section label, sitting above the hero)
+was removed entirely from `ShopArchiveWrapper.tsx`'s JSX at explicit user request — not hidden,
+deleted. This is the same page-level category control the header's own Categories dropdown was
+removed for earlier (see "Shop header — Categories dropdown removed" above) — category filtering
+on `/shop` now lives exclusively inside `ShopSearchModal`. `categories`/`isFiltered`/
+`activeLabel` are all still computed and used elsewhere in the file (passed into
+`ShopFilterProvider`/`ShopProductGrid`), so no other cleanup was needed. The `.lfs-nav*`/
+`.lfs-cat*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept in
+case needed again" convention.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
