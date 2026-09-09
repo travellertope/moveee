@@ -252,6 +252,20 @@ export default async function ProductPage({
         </>
       ),
     }] : []),
+    // Reviews — moved into the accordion (was a standalone full-width section
+    // below the Process block) so it sits alongside Description/Materials/
+    // About the Maker as one more right-column tab. Always included — the
+    // component itself renders its own zero-review empty state.
+    {
+      title: "Reviews",
+      content: (
+        <ProductReviews
+          productId={parseInt(product.databaseId)}
+          averageRating={parseFloat(product.averageRating) || 0}
+          reviewCount={product.reviewCount || 0}
+        />
+      ),
+    },
   ];
 
   const firstCat = product.productCategories?.nodes?.[0];
@@ -387,13 +401,6 @@ export default async function ProductPage({
           </div>
         </section>
       )}
-
-      {/* ── REVIEWS ── */}
-      <ProductReviews
-        productId={parseInt(product.databaseId)}
-        averageRating={parseFloat(product.averageRating) || 0}
-        reviewCount={product.reviewCount || 0}
-      />
 
       {/* ── MORE FROM THIS CATEGORY ── */}
       {relatedProducts.length > 0 && (

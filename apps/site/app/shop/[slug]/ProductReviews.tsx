@@ -100,105 +100,102 @@ export default function ProductReviews({ productId, averageRating, reviewCount }
   }
 
   return (
-    <section className="sp-reviews">
-      <div className="sp-reviews-inner">
-        <div className="sp-reviews-head">
-          <h2>Reviews</h2>
-          <button type="button" className="sp-write-review" onClick={() => setFormOpen((v) => !v)}>
-            {formOpen ? "Close" : "Write a review"}
-          </button>
-        </div>
+    <div className="sp-reviews-panel">
+      <div className="sp-reviews-head">
+        <button type="button" className="sp-write-review" onClick={() => setFormOpen((v) => !v)}>
+          {formOpen ? "Close" : "Write a review"}
+        </button>
+      </div>
 
-        {reviewCount > 0 && (
-          <div className="sp-reviews-summary">
-            <div className="sp-rs-num">
-              <div className="sp-rs-avg">{averageRating.toFixed(1)}</div>
-              <div className="sp-rs-stars">{"★".repeat(Math.round(averageRating))}{"☆".repeat(5 - Math.round(averageRating))}</div>
-              <div className="sp-rs-count">Based on {reviewCount} review{reviewCount === 1 ? "" : "s"}</div>
-            </div>
-            <div className="sp-rs-bars">
-              {distribution.map((d) => (
-                <div key={d.stars} className="sp-rs-bar-row">
-                  <span>{d.stars} star{d.stars === 1 ? "" : "s"}</span>
-                  <div className="sp-rs-bar-track">
-                    <div className="sp-rs-bar-fill" style={{ width: `${d.pct}%` }} />
-                  </div>
-                  <span>{d.count}</span>
-                </div>
-              ))}
-            </div>
+      {reviewCount > 0 && (
+        <div className="sp-reviews-summary">
+          <div className="sp-rs-num">
+            <div className="sp-rs-avg">{averageRating.toFixed(1)}</div>
+            <div className="sp-rs-stars">{"★".repeat(Math.round(averageRating))}{"☆".repeat(5 - Math.round(averageRating))}</div>
+            <div className="sp-rs-count">Based on {reviewCount} review{reviewCount === 1 ? "" : "s"}</div>
           </div>
-        )}
-
-        {formOpen && (
-          <div className="sp-review-form-wrap">
-            {isLoggedIn ? (
-              success ? (
-                <p className="sp-review-success">Thanks — your review has been posted.</p>
-              ) : (
-                <form className="sp-review-form" onSubmit={handleSubmit}>
-                  <h3>Write a review</h3>
-                  <div className="sp-review-star-input" role="radiogroup" aria-label="Rating">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        aria-label={`${n} star${n === 1 ? "" : "s"}`}
-                        className={`star-btn${n <= rating ? " active" : ""}`}
-                        onClick={() => setRating(n)}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Share your experience with this product…"
-                    rows={4}
-                  />
-                  {error && <p className="sp-review-error">{error}</p>}
-                  <button type="submit" className="btn-filled" disabled={submitting}>
-                    {submitting ? "Posting…" : "Post Review"}
-                  </button>
-                </form>
-              )
-            ) : (
-              <p className="sp-review-login-prompt">
-                <a href="/login">Sign in</a> to write a review.
-              </p>
-            )}
-          </div>
-        )}
-
-        {!loading && reviews.length > 0 && (
-          <div className="sp-review-grid">
-            {reviews.map((r) => (
-              <div key={r.id} className="sp-review-card">
-                <div className="sp-review-top">
-                  {r.avatarUrl ? (
-                    <Image src={r.avatarUrl} alt={r.author} width={38} height={38} className="sp-review-avatar" />
-                  ) : (
-                    <div className="sp-review-avatar-fallback" style={{ background: avatarTone(r.author) }}>
-                      {r.author.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <div className="sp-review-name">{r.author}</div>
-                    <div className="sp-review-date">{timeAgo(r.date)}</div>
-                  </div>
+          <div className="sp-rs-bars">
+            {distribution.map((d) => (
+              <div key={d.stars} className="sp-rs-bar-row">
+                <span>{d.stars} star{d.stars === 1 ? "" : "s"}</span>
+                <div className="sp-rs-bar-track">
+                  <div className="sp-rs-bar-fill" style={{ width: `${d.pct}%` }} />
                 </div>
-                <div className="sp-review-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
-                <p className="sp-review-text">{r.content}</p>
+                <span>{d.count}</span>
               </div>
             ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {!loading && reviewCount === 0 && !formOpen && (
-          <p className="sp-reviews-empty">No reviews yet — be the first.</p>
-        )}
-      </div>
-    </section>
+      {formOpen && (
+        <div className="sp-review-form-wrap">
+          {isLoggedIn ? (
+            success ? (
+              <p className="sp-review-success">Thanks — your review has been posted.</p>
+            ) : (
+              <form className="sp-review-form" onSubmit={handleSubmit}>
+                <h3>Write a review</h3>
+                <div className="sp-review-star-input" role="radiogroup" aria-label="Rating">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                      className={`star-btn${n <= rating ? " active" : ""}`}
+                      onClick={() => setRating(n)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Share your experience with this product…"
+                  rows={4}
+                />
+                {error && <p className="sp-review-error">{error}</p>}
+                <button type="submit" className="btn-filled" disabled={submitting}>
+                  {submitting ? "Posting…" : "Post Review"}
+                </button>
+              </form>
+            )
+          ) : (
+            <p className="sp-review-login-prompt">
+              <a href="/login">Sign in</a> to write a review.
+            </p>
+          )}
+        </div>
+      )}
+
+      {!loading && reviews.length > 0 && (
+        <div className="sp-review-grid">
+          {reviews.map((r) => (
+            <div key={r.id} className="sp-review-card">
+              <div className="sp-review-top">
+                {r.avatarUrl ? (
+                  <Image src={r.avatarUrl} alt={r.author} width={38} height={38} className="sp-review-avatar" />
+                ) : (
+                  <div className="sp-review-avatar-fallback" style={{ background: avatarTone(r.author) }}>
+                    {r.author.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <div className="sp-review-name">{r.author}</div>
+                  <div className="sp-review-date">{timeAgo(r.date)}</div>
+                </div>
+              </div>
+              <div className="sp-review-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+              <p className="sp-review-text">{r.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && reviewCount === 0 && !formOpen && (
+        <p className="sp-reviews-empty">No reviews yet — be the first.</p>
+      )}
+    </div>
   );
 }
