@@ -1950,6 +1950,55 @@ on `/shop` now lives exclusively inside `ShopSearchModal`. `categories`/`isFilte
 `.lfs-cat*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept in
 case needed again" convention.
 
+### Shop email-capture band recolored to match the mockup; Maker Story section removed (September 2026)
+
+Two more mockup-fidelity/scope fixes, caught live from a screenshot of the deployed `/shop` page:
+
+- **Email capture band didn't match `moveee-lifestyle-identity.html`'s `.email-capture` at all** —
+  the mockup is a full-bleed **ochre-background band** with white heading/copy and a white pill
+  form floating on top of it; the live page had it as a plain `--paper-deep` (light grey) section
+  with dark text and a bordered white pill — visually indistinguishable from any other neutral
+  section on the page, when the mockup clearly wants it to read as a bold accent break. Fixed in
+  `shop-lifestyle.css`: `.lfs-email` background is now `var(--ochre)`; `.lfs-email-copy h3`/`p` are
+  white/`rgba(255,255,255,.82)` (matching the mockup's literal color values); the form's border was
+  dropped (the mockup's white pill has no border, it doesn't need one against the ochre backdrop).
+- **The single-maker "Meet the Maker" spotlight section (`.lfs-maker`, between the email band and
+  the Moveee Pro member band) was removed entirely, at explicit user request** — this was a
+  different section from the bulk all-makers grid that "Shop by Category + Meet the Makers
+  sections removed" (above) already retired; that one never came back, but this narrower
+  single-maker spotlight (added by "The Moveee Lifestyle becomes a fully standalone mini-site")
+  was still live and the user wants it gone too. Removed the whole `<section className="lfs-maker">`
+  block plus its now-unused `makerStoryHtml`/`makerBio`/`makerName`/`makerLocation` derived
+  variables and the now-unused `sanitizeHtml` import from `ShopArchiveWrapper.tsx`. `vendorName()`
+  and `Image` are both still used elsewhere in the file, so those imports/helpers stayed. The
+  `.lfs-maker*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept
+  in case needed again" convention.
+- **Not visually verified in a browser** — no `node_modules` installed this session, so `tsc`
+  couldn't run cleanly (only pre-existing "module not found" noise, no real type errors from this
+  edit). Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75) and a grep
+  confirming zero remaining `lfs-maker`/`sanitizeHtml` references in `ShopArchiveWrapper.tsx`.
+  Re-check pixel fidelity against `moveee-lifestyle-identity.html`'s `.email-capture` band in a
+  real environment before considering this fully closed.
+
+### Shop masthead — narrower column + a real nav menu next to the logo (September 2026)
+
+Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
+
+- **`.masthead-row`'s `max-width` reduced from `1440px` to `1240px`** — the header row felt too
+  wide/spread-out with just the logo on the left and the icon cluster on the right and nothing in
+  between. The rest of `/shop`'s sections (hero, grid, footer) are untouched and still `1440px` —
+  this was a header-specific width complaint, not a full-page column-width change, so no other
+  file was touched.
+- **New `.mast-nav` text-link row, right after the logo inside `.mast-left`** — three real
+  destinations (Shop → `/shop`, The Edit → `/shop/edit`, Makers → `/makers`), plain sans links,
+  ochre on hover, hidden below `900px` (same breakpoint the old Categories dropdown used to hide
+  at, before it was removed — see "Shop header — Categories dropdown removed" above). This is a
+  different thing from that removed Categories dropdown — it's a small destination nav, not a
+  category filter, and doesn't reintroduce any filtering UI into the header.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (58/58).
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own

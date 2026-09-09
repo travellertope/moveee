@@ -69,6 +69,18 @@ export default function ShopHeader() {
                 priority
               />
             </Link>
+
+            <nav className="mast-nav">
+              <Link href="/shop" className="mast-nav-link">
+                Shop
+              </Link>
+              <Link href="/shop/edit" className="mast-nav-link">
+                The Edit
+              </Link>
+              <Link href="/makers" className="mast-nav-link">
+                Makers
+              </Link>
+            </nav>
           </div>
 
           <div className="mast-icons">
