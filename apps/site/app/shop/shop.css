@@ -734,19 +734,17 @@
   pointer-events: none;
 }
 
-/* Floating circular quick-add — hover-reveal on desktop, always visible on
-   touch (see the mobile override below; a hover-only control is invisible
-   on devices that never fire :hover). */
+/* Floating circular quick-add — always faintly visible per the mockup
+   (opacity .85), brightening to full opacity + a slight scale on hover. */
 .sl-pcard-quickadd {
   position: absolute;
   bottom: 10px;
   right: 10px;
   z-index: 2;
-  opacity: 0;
-  transform: scale(.85);
+  opacity: .85;
   transition: opacity .16s ease, transform .16s ease;
 }
-.sl-pcard:hover .sl-pcard-quickadd { opacity: 1; transform: scale(1); }
+.sl-pcard:hover .sl-pcard-quickadd { opacity: 1; transform: scale(1.08); }
 .sl-pcard-quickadd-btn {
   width: 32px;
   height: 32px;

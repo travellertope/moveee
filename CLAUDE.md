@@ -1887,6 +1887,29 @@ identity mockup at all.
   and `.sl-pcard-quickadd`/`.sl-pcard-quickadd-btn` (a circular button, reusing `AddToCartButton`
   which gained an optional `children` override for this — previously hardcoded to always render
   "Add to Cart →" text).
+- **Follow-up, same day — the first pass still didn't match the mockup's card content/behavior,
+  caught by actually screenshotting the mockup in Chromium (`playwright`, a local `file://` load —
+  no network needed since it's a self-contained HTML file with base64-embedded images) instead of
+  only reading its CSS.** Three concrete mismatches, all now fixed in `ShopProductGrid.tsx`/
+  `shop.css`:
+  1. **Quick-add button defaulted to `opacity: 0`** (hover-only, invisible until moused over) —
+     the mockup's own CSS has it at `opacity: .85` by default, brightening to `1` + `scale(1.08)`
+     on hover. It's meant to be always faintly visible, not hidden.
+  2. **Price row order and content were backwards.** The mockup renders the strikethrough
+     original price *first*, then the discounted price *second* with "Pro" baked directly into
+     that string (`Pro ₦60,750.00`, one span) — mine rendered the discounted price first with no
+     "Pro" prefix and the strikethrough price second.
+  3. **The middle meta line (between title and price) was dropped for products with no reviews**
+     — previously conditional (`{hasReviews && <p>...</p>}`), so a product with zero reviews had
+     nothing there at all, losing the card's vertical rhythm. The mockup always renders something
+     in that slot (its own demo data uses a static "INDEX 00X · New listing" caption). Fixed to
+     always render: real `★ rating (count)` when reviews exist, else a "New listing" fallback —
+     matching this codebase's own pre-existing documented convention for the pre-identity grid,
+     which had the same fallback and was lost in the rebuild.
+  Verified via a Playwright screenshot of `moveee-lifestyle-identity.html`'s "04 — Application"
+  section (the real page-layout mockup, not the earlier "01 — Mark"/"02 — Palette" brand-guide
+  frames at the top of the same file, which are a different part of the document) and a direct
+  read of its `.prod-card`/`.prod-price-row` HTML to get the exact markup shape.
 - **Lesson, stated directly by the user and worth internalizing**: "implement exactly as is in the
   mockup" means literally — don't leave old-design classes/values in place under a plausible-
   sounding excuse, and don't substitute a provided asset for something else (a product photo,
