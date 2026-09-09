@@ -1957,6 +1957,51 @@ above is unaffected — it targets coverage, not the section's size. Verified vi
 brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
 `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+### `/makers` brought onto the Moveee Lifestyle standalone chrome (September 2026)
+
+Per explicit user request ("the new design convention for Moveee Lifestyle needs to extend to
+Maker pages — from header to footer especially"), `/makers` (archive + `[slug]` profile) now
+shares the exact same standalone mini-site chrome as `/lifestyle` — new **`apps/site/app/makers/
+layout.tsx`** mounts `ShopHeader`/`ShopFooter` (same components, same `shop-chrome.css` import,
+same Bricolage Grotesque `--font-lfs-display` font load) around `{children}`, identical shape to
+`app/lifestyle/layout.tsx`/`app/literary/layout.tsx`. Previously `/makers` was only a *sibling* of
+the Lifestyle identity, still rendering the sitewide floating pill (with a special-cased logo
+swap) and the sitewide dark `Footer.tsx` — that's gone now.
+
+- **`Header.tsx`**: `isMakersPage` was added to the early-return (`if (isLiteraryPage ||
+  isLifestylePage || isMakersPage) return null;`) alongside the existing Literary/Lifestyle
+  checks — the sitewide pill no longer renders on `/makers` at all. This made the old
+  `isMakersPage ? ... : ...` ternaries for the toolbar logo (swap to the Lifestyle wordmark,
+  link to `/makers` instead of `/`) unreachable dead code, so they were simplified back to the
+  plain always-`/`/`Moveee` case rather than left as unreachable conditionals.
+- **`ConditionalFooter.tsx`**: `isLifestylePath()` now also matches `/makers`/`/makers/*`, so the
+  sitewide `Footer.tsx` is excluded there the same way it already was for `/lifestyle`.
+- **`makers.css`**: every `--header-clear` top-padding rule was removed (`.makers-header`,
+  `.maker-hero`, and the `768px` mobile override of `.makers-header`) — same "no more fixed/
+  floating header to clear" reasoning as every other page that gained a standalone header in this
+  file. (`.maker-breadcrumb`'s own `--header-clear` padding was left alone — confirmed dead CSS,
+  that element isn't rendered in the JSX at all, per its own pre-existing comment.)
+- **Typography** — every genuine heading/title/stat-number on both pages moved from
+  `var(--font-serif)` (Fraunces) to `var(--font-lfs-display, var(--font-serif))` (Bricolage
+  Grotesque), matching the exact treatment the shop archive/product pages already got: weight
+  bumped to `700`/`800` per element's size tier, and every `em` emphasis child switched from
+  `font-style: italic` to `font-style: normal; font-weight: 800; color: var(--ochre)` (Bricolage
+  has no distinct italic cut in this identity's usage, same reasoning documented for the shop
+  pages) — `.makers-title`, `.maker-card-name`, `.maker-hero-name`, `.maker-stat-num`,
+  `.maker-products-title`, `.maker-editorial-title`, `.maker-editorial-post-title`, and
+  `.maker-not-found h1`.
+- **Product-count removal, same ask as the Lifestyle grid change directly above** — the maker
+  profile page had two of its own "total number of products" displays that weren't caught by
+  that pass since they're a different file: the stats row's `{productCount} Products` tile
+  (removed entirely, leaving "Maker since"/rating) and the products section header's
+  `{productCount} pieces` span (removed). The now-unused `productCount` const was deleted too.
+  `.maker-stat-num`/`.maker-products-count`'s CSS is untouched/still real (the former still
+  renders "Maker since"/rating, the latter is now dead, kept per convention).
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
+`makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
+
 ### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
 
 Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:

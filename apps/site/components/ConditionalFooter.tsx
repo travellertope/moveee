@@ -36,9 +36,17 @@ function isLiteraryPath(pathname: string): boolean {
 // The Moveee Lifestyle (/lifestyle) is its own standalone mini-site with its own
 // footer (ShopFooter.tsx, via app/lifestyle/layout.tsx) — same reasoning as
 // Literary above. Every route under /lifestyle (archive, category/tag/brand,
-// product detail, checkout, edit) shares this one layout.
+// product detail, checkout, edit) shares this one layout. /makers now shares
+// the same standalone chrome too (its own app/makers/layout.tsx mounting the
+// identical ShopHeader/ShopFooter) — the maker profile pages are part of the
+// Lifestyle identity, not ordinary editorial content.
 function isLifestylePath(pathname: string): boolean {
-  return pathname === "/lifestyle" || pathname.startsWith("/lifestyle/");
+  return (
+    pathname === "/lifestyle" ||
+    pathname.startsWith("/lifestyle/") ||
+    pathname === "/makers" ||
+    pathname.startsWith("/makers/")
+  );
 }
 
 export default function ConditionalFooter() {

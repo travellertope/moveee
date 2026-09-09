@@ -87,7 +87,6 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
   const yearsActive  = maker.yearsActive  || maker.years_active  || "";
   const directorySlug = maker.directorySlug || "";
   const location     = [city, country].filter(Boolean).join(", ");
-  const productCount = products.length;
 
   return (
     <div className="maker-single">
@@ -123,10 +122,6 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
                 <div className="maker-stat-label">Maker since</div>
               </div>
             )}
-            <div className="maker-stat">
-              <div className="maker-stat-num">{productCount}</div>
-              <div className="maker-stat-label">{productCount === 1 ? "Product" : "Products"}</div>
-            </div>
             <div className="maker-stat">
               <div className="maker-stat-num">{rating ? `★ ${rating}` : "★ New"}</div>
               <div className="maker-stat-label">Moveee rating</div>
@@ -171,7 +166,6 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
         <section className="maker-products-section">
           <div className="maker-products-header">
             <h2 className="maker-products-title">Work by <em>{storeName}</em></h2>
-            <span className="maker-products-count">{productCount} {productCount === 1 ? "piece" : "pieces"}</span>
           </div>
           <div className="maker-products-grid">
             {products.map((p: any) => (

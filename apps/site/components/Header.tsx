@@ -39,6 +39,11 @@ const Header = () => {
   // this used to only swap the wordmark and hand off to a shop-specific
   // search modal; both of those now live inside ShopHeader.tsx instead.
   const isLifestylePage = pathname === "/lifestyle" || pathname.startsWith("/lifestyle/");
+  // /makers is now part of the same Moveee Lifestyle standalone mini-site as
+  // /lifestyle itself (own header/footer via app/makers/layout.tsx mounting
+  // ShopHeader/ShopFooter) — previously this route stayed on the sitewide
+  // pill and only swapped its wordmark/logo for the Lifestyle one; that
+  // swap is gone now that the sitewide pill never renders here at all.
   const isMakersPage = pathname === "/makers" || pathname.startsWith("/makers/");
   // The Moveee Literary is its own standalone mini-site with its own
   // masthead, section nav, and footer (LiteraryMasthead.tsx/LiteraryFooter.tsx,
@@ -241,21 +246,17 @@ const Header = () => {
   // own standalone masthead/nav/footer (see the comments above) — every
   // hook above still runs unconditionally (Rules of Hooks), only the
   // render is skipped.
-  if (isLiteraryPage || isLifestylePage) return null;
+  if (isLiteraryPage || isLifestylePage || isMakersPage) return null;
 
   return (
     <>
       <div className={toolbarClass}>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <Link href={isMakersPage ? "/makers" : "/"} className="toolbar-logo">
+            <Link href="/" className="toolbar-logo">
               <img
-                src={
-                  isMakersPage
-                    ? onDark ? "/logo-lifestyle-white.png" : "/logo-lifestyle-black.png"
-                    : onDark ? "/logo-white.png" : "/logo-black.png"
-                }
-                alt={isMakersPage ? "Moveee Lifestyle" : "Moveee"}
+                src={onDark ? "/logo-white.png" : "/logo-black.png"}
+                alt="Moveee"
                 className="toolbar-logo-img"
               />
             </Link>
