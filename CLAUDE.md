@@ -4019,14 +4019,17 @@ the same value does on desktop. Added a `@media (max-width: 640px)` override
 (`.masthead { padding-top: 14px; }`) — mobile now gets its own smaller flat value instead of
 inheriting the desktop clamp's floor.
 
-**Follow-up, September 2026 — the whole hero-to-masthead gap experiment reverted to `padding: 0`
-across every screen size, per explicit user request** ("please return it to 0px across all
-screens"). Both the `clamp(28px, 4vw, 56px)` desktop value and the `@media (max-width: 640px)`
-mobile override above are gone — `.masthead` is back to `padding: 0; text-align: center;`, its
-pre-this-session state. Documented here (rather than silently deleted) so the history of what was
-tried — add a gap, fix its mobile/desktop disproportion, then remove it entirely — isn't lost. If
-a hero-to-masthead visual separation is wanted again in the future, don't just restore the old
-clamp value blindly; it was tried twice and reverted both times.
+**Correction, September 2026 — a "return .masthead padding to 0px" request was briefly (and
+wrongly) applied here.** A user complaint about a `.masthead` element with excess top padding
+(referencing "56px") turned out to be about the **`/lifestyle` system's own `.masthead`**
+(`apps/site/app/lifestyle/shop-chrome.css`, `ShopHeader.tsx`'s standalone header bar) — a
+completely different, unrelated `.masthead` class — not this homepage one. This file's
+`.masthead` was briefly reverted to `padding: 0` under that misunderstanding, then restored back
+to the `clamp(28px, 4vw, 56px) 0 0` + mobile-override shape documented directly above once the
+mixup was caught. **If a future request mentions ".masthead" ambiguously, check which page's
+`.masthead` is meant first** — this codebase has at least two same-named classes in different
+files (this one, homepage-scoped; and `/lifestyle`'s own, in `shop-chrome.css`) that are easy to
+conflate.
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
 Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit

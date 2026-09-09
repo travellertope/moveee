@@ -88,7 +88,14 @@
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
 /* ── MASTHEAD ── */
-.masthead { padding: 0; text-align: center; }
+.masthead { padding: clamp(28px, 4vw, 56px) 0 0; text-align: center; }
+@media (max-width: 640px) {
+  /* clamp()'s floor (28px) is the same fixed value at every mobile width
+     since 4vw never exceeds it below ~700px — reads as too much gap on a
+     short mobile viewport right under the hero. Give mobile its own,
+     smaller flat value instead of inheriting the desktop clamp's floor. */
+  .masthead { padding-top: 14px; }
+}
 .masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.025em; line-height: 1.05; text-wrap: balance; }
 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
