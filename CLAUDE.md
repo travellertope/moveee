@@ -1922,6 +1922,21 @@ identity mockup at all.
   against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
   against the approved mockup in a real environment before considering this fully closed.
 
+### Shop header — Categories dropdown removed (September 2026)
+
+`ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
+disclosure (both rendering the same `categoryList` of category `<Link>`s) were removed at
+explicit user request, since `ShopSearchModal` (opened by the header's search icon) already
+provides category filtering as a real facet — the header's own dropdown was a pure duplicate.
+The `categories` fetch/state was removed along with it (the `categoryList` JSX is now gone
+entirely); the `proDiscountPercent` fetch from the same `/api/shop/categories` response is kept,
+since the ticker's "Moveee Pro saves {proDiscountPercent}% storewide" line still needs it. The
+`.mast-cat*`/`.mast-filter` CSS rules in `shop-chrome.css` were left in place, unused, per this
+file's usual "kept in case needed again" convention — confirmed via grep that nothing else in
+`apps/site` references them. **Category filtering on `/shop` now lives exclusively inside
+`ShopSearchModal`** — if a future pass wants an on-page category control again, don't
+reintroduce it in the header; either add it back there deliberately or extend the modal.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own

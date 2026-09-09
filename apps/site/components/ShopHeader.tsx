@@ -9,24 +9,18 @@ import ShopSearchModal from "./ShopSearchModal";
 
 const CONNECT_URL = "https://web.themoveee.com";
 
-interface Category {
-  name: string;
-  slug: string;
-  count: number;
-}
-
-// The Moveee Lifestyle's own standalone masthead — ticker + logo + a
-// "Categories" dropdown + search/account/bag icons — rebuilt verbatim from
-// the approved identity mockup (moveee-lifestyle-identity.html). Mounted
-// once from app/shop/layout.tsx around every /shop route, replacing the
-// sitewide floating pill entirely (Header.tsx returns null on /shop paths —
-// see its own comment). Real data throughout: live cart count, a session-
-// aware account link, and real fetched categories — no mockup placeholders.
+// The Moveee Lifestyle's own standalone masthead — ticker + logo +
+// search/account/bag icons — rebuilt verbatim from the approved identity
+// mockup (moveee-lifestyle-identity.html). Mounted once from
+// app/shop/layout.tsx around every /shop route, replacing the sitewide
+// floating pill entirely (Header.tsx returns null on /shop paths — see its
+// own comment). Real data throughout: live cart count, a session-aware
+// account link. Category filtering lives exclusively inside ShopSearchModal
+// (opened by the search icon) — the header itself no longer duplicates it.
 export default function ShopHeader() {
   const { itemCount, openDrawer } = useCart();
   const { data: session } = useSession();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [proDiscountPercent, setProDiscountPercent] = useState(10);
 
   useEffect(() => {
@@ -35,7 +29,6 @@ export default function ShopHeader() {
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
-        setCategories(d.categories || []);
         if (typeof d.proDiscountPercent === "number") setProDiscountPercent(d.proDiscountPercent);
       })
       .catch(() => {});
@@ -47,20 +40,6 @@ export default function ShopHeader() {
   const accountHref = session?.user
     ? `${CONNECT_URL}/member`
     : `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com/shop")}`;
-
-  const categoryList = (
-    <>
-      {categories.map((c) => (
-        <Link key={c.slug} href={`/shop/category/${c.slug}`} className="mast-cat-item">
-          <span className="mast-cat-lbl">{c.name}</span>
-          {c.count > 0 && <span className="mast-cat-soon">{c.count}</span>}
-        </Link>
-      ))}
-      <Link href="/shop" className="mast-cat-all">
-        Full index →
-      </Link>
-    </>
-  );
 
   return (
     <>
@@ -90,30 +69,9 @@ export default function ShopHeader() {
                 priority
               />
             </Link>
-            <nav className="mast-cat">
-              <button className="mast-cat-btn" type="button" aria-haspopup="true" aria-expanded="false">
-                Categories
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-              <div className="mast-cat-panel">{categoryList}</div>
-            </nav>
           </div>
 
           <div className="mast-icons">
-            <details className="mast-filter">
-              <summary className="icon-btn" aria-label="Browse categories">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="4" y1="7" x2="20" y2="7" />
-                  <circle cx="9" cy="7" r="2" fill="var(--paper)" />
-                  <line x1="4" y1="17" x2="20" y2="17" />
-                  <circle cx="16" cy="17" r="2" fill="var(--paper)" />
-                </svg>
-              </summary>
-              <div className="mast-cat-panel mast-cat-panel--right">{categoryList}</div>
-            </details>
-
             <button className="icon-btn" type="button" aria-label="Search" onClick={() => setSearchOpen(true)}>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="7" />
