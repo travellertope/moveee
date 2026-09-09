@@ -1957,6 +1957,16 @@ above is unaffected — it targets coverage, not the section's size. Verified vi
 brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
 `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+### Shop masthead nav — Shop/Makers dropped, Magazine added (September 2026)
+
+`.mast-nav` (the small text-link row moved next to the icons in "Shop masthead — nav moved next
+to the icons + a real Categories menu re-added" above) changed from Shop/The Edit/Makers to just
+**The Edit** and **Magazine** — Shop was removed since `/shop` is already the page the header
+sits on, Makers was dropped per explicit request, and Magazine is a brand-new destination linking
+out to `https://themoveee.com` (Moveee Magazine's own homepage, not back into any `/shop/*`
+route). Not visually verified in a browser — no `node_modules` installed this session. Verified
+via a paren/brace-balance check on `ShopHeader.tsx`.
+
 ### Shop header — Categories dropdown removed (September 2026)
 
 `ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon

@@ -22,6 +22,11 @@ const CONNECT_URL = "https://web.themoveee.com";
 // account link, real fetched product categories. ShopSearchModal (opened by
 // the search icon) still owns full search + price/material/etc. facets —
 // this menu is a lightweight category-jump shortcut, not a duplicate of it.
+// The .mast-nav destination list (The Edit, Magazine) is deliberately short
+// and hand-picked, not auto-derived from anything — Shop/Makers were dropped
+// per explicit user request (Shop is already the current page; Makers isn't
+// a shop destination) and Magazine links out to the Moveee Magazine
+// homepage rather than back into /shop.
 export default function ShopHeader() {
   const { itemCount, openDrawer } = useCart();
   const { data: session } = useSession();
@@ -80,14 +85,11 @@ export default function ShopHeader() {
 
           <div className="mast-right">
             <nav className="mast-nav">
-              <Link href="/shop" className="mast-nav-link">
-                Shop
-              </Link>
               <Link href="/shop/edit" className="mast-nav-link">
                 The Edit
               </Link>
-              <Link href="/makers" className="mast-nav-link">
-                Makers
+              <Link href="https://themoveee.com" className="mast-nav-link">
+                Magazine
               </Link>
             </nav>
 
