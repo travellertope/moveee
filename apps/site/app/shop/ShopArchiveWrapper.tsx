@@ -192,21 +192,6 @@ export default async function ShopArchiveWrapper({
       )}
 
       <ShopFilterProvider products={products} categories={categories.slice(0, 8)} activeCategorySlug={category}>
-        {/* ── 4. SLIM MAGAZINE BRIDGE — merges the old Magazine + Origins bridges ── */}
-        <div className="sl-bridge">
-          <div className="sl-bridge-inner">
-            <div className="sl-bridge-left">
-              <span className="sl-bridge-label">From The Magazine</span>
-              <span className="sl-bridge-title">Issue 014 · Craft &amp; Makers</span>
-            </div>
-            <div className="sl-bridge-links">
-              <Link href="/magazine" className="sl-bridge-cta">
-                Read The Edit →
-              </Link>
-            </div>
-          </div>
-        </div>
-
         {/* ── 5. MAIN PRODUCT GRID ── */}
         <ShopProductGrid isFiltered={isFiltered} activeLabel={activeLabel} />
       </ShopFilterProvider>
