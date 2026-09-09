@@ -2285,6 +2285,33 @@ Not visually verified in a browser — no `node_modules` installed this session.
 brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
 `ShopHeader.tsx`.
 
+### Lifestyle Edit closing bridge — shorter image, eyebrow removed (September 2026)
+
+Per explicit user request against the `.sl-origins` band (the closing "The stories behind the
+objects" section, woodworking-workshop photo left / copy right, directly below the Moveee Pro
+member band): the `<div className="sl-origins-label">The Lifestyle Edit</div>` eyebrow above the
+heading was removed from `ShopArchiveWrapper.tsx`'s JSX, and `.sl-origins`/`.sl-origins-img`'s
+`min-height` was reduced at every breakpoint the section defines — desktop `480px` → `320px`
+(both the outer `.sl-origins` and `.sl-origins-img` itself, which drive each other via
+`align-items: stretch`), the `900px` breakpoint's stacked-image `min-height` `280px` → `200px`,
+and the `640px` breakpoint's `220px` → `160px`. `.sl-origins-label`'s CSS
+(and its `::before` hairline-tick pseudo-element) was left in `shop.css`, marked dead with a
+comment, per this file's usual "kept in case needed again" convention — nothing else in the
+section references it. No other property on this section (copy, CTA, photo attribution comment,
+gradient tint) was touched.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop.css` (612/612) and a paren/brace-balance check on
+`ShopArchiveWrapper.tsx` (50/50 parens, 55/55 braces).
+
+### Shop footer — top padding reduced (September 2026)
+
+`ShopFooter.tsx`'s `.lfs-foot-inner` top padding was cut per explicit user request:
+desktop `50px` → `24px`, the `900px` breakpoint `44px` → `20px`, the `640px` breakpoint `36px` →
+`18px` — bottom/horizontal padding at every breakpoint is unchanged, only the gap above the
+brand/link-column grid shrank. Not visually verified in a browser — no `node_modules` installed
+this session. Verified via a CSS brace-balance check on `shop-chrome.css` (63/63).
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own

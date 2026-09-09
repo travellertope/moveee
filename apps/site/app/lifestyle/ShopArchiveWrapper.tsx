@@ -258,7 +258,6 @@ export default async function ShopArchiveWrapper({
           {/* Photo: "Woodworking workshop" by wengenroad on Unsplash, CC0, via Wikimedia Commons — no attribution required under CC0. */}
           <div className="sl-origins-img" />
           <div className="sl-origins-content">
-            <div className="sl-origins-label">The Lifestyle Edit</div>
             <h3>The stories <em>behind</em> the objects</h3>
             <p>
               Every maker in the shop has a story. We travel to document them —
