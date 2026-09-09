@@ -1922,6 +1922,31 @@ identity mockup at all.
   against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
   against the approved mockup in a real environment before considering this fully closed.
 
+### Shop hero — washed-out "white gap" at the top of the photo fixed (September 2026)
+
+User-reported from a live screenshot: a visible band of white/blown-out space at the very top of
+`.lfs-hero` (right where the photo meets the masthead), noticeably lighter than the bottom of the
+same hero. This was never a layout/spacing bug — there is no extra DOM element or margin between
+`ShopHeader`'s `.masthead` and `ShopArchiveWrapper.tsx`'s `<section className="lfs-hero">` (they're
+adjacent siblings, confirmed by reading both files directly); `shop.css`/`shop-lifestyle.css` both
+already document that no `--header-clear` spacer is used here since `ShopHeader` renders in normal
+document flow. The real cause was `.lfs-hero-scrim`'s gradient coverage in `shop-lifestyle.css`:
+the radial spotlight faded to as low as `.1` opacity at its outer edge, and the only linear
+gradient (`linear-gradient(0deg, rgba(...) 0%, transparent 55%)`) only darkens the **bottom** half
+of the section (needed to keep the trust line legible) — the top strip of the hero photo had
+almost no oxblood tint over it at all, so a bright section of `/shop-hero.jpg` (the boutique
+interior) showed through there, reading as a blank white gap under the header.
+
+Fixed by adding a mirrored top-anchored `linear-gradient(180deg, rgba(122,36,28,.3) 0%,
+rgba(122,36,28,0) 45%)` and raising the radial gradient's two outer stops (`.22`→`.34`,
+`.1`→`.26`) so the scrim reads as one even wash top-to-bottom instead of a vignette with a
+blown-out edge. The bottom-anchored gradient is unchanged — it's still what makes the trust-line
+copy legible. **If a future hero/scrim-over-photo section shows the same "one edge looks washed
+out" symptom, check whether its gradient stops actually cover every edge of the section, not just
+the one nearest the text** — a radial-plus-single-direction-linear combo can leave a real gap.
+Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a
+browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
 ### Shop header — Categories dropdown removed (September 2026)
 
 `ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon

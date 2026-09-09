@@ -139,9 +139,19 @@
 .lfs-hero-scrim {
   position: absolute;
   inset: 0;
+  /* The radial spotlight fades out well before it reaches the section's
+     edges (down to .1 opacity at 100%), and the old single bottom-anchored
+     linear-gradient only darkened the lower half — leaving the top strip
+     (right where the photo meets the masthead) almost fully exposed. On a
+     bright section of the source photo that read as a stray "white gap"
+     under the header rather than part of the hero. The bottom gradient is
+     kept (it's what makes the trust line legible); a mirrored top gradient
+     and a stronger radial floor close the gap so the scrim reads as one
+     even wash top-to-bottom instead of a vignette with a blown-out edge. */
   background:
-    radial-gradient(ellipse 60% 75% at center, rgba(122,36,28,.7) 0%, rgba(122,36,28,.52) 45%, rgba(122,36,28,.22) 78%, rgba(122,36,28,.1) 100%),
-    linear-gradient(0deg, rgba(122,36,28,.35) 0%, rgba(122,36,28,0) 55%);
+    radial-gradient(ellipse 60% 75% at center, rgba(122,36,28,.7) 0%, rgba(122,36,28,.52) 45%, rgba(122,36,28,.34) 78%, rgba(122,36,28,.26) 100%),
+    linear-gradient(0deg, rgba(122,36,28,.35) 0%, rgba(122,36,28,0) 55%),
+    linear-gradient(180deg, rgba(122,36,28,.3) 0%, rgba(122,36,28,0) 45%);
 }
 .lfs-hero-copy {
   position: relative;
