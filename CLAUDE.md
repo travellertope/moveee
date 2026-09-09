@@ -3895,6 +3895,12 @@ as every other pass in this file.
 (`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
 a straightforward size-only tweak, no layout/structure change.
 
+**Follow-up, same month — leftover top padding removed.** `.masthead`'s own `padding` was still
+`clamp(14px, 2.5vw, 28px) 0 0` (padding-bottom already `0`) — a leftover from before the earlier
+"all homepage section spacing halved" pass, which halved every *other* section's padding but
+missed this one since it's set directly on `.masthead`, not inherited from `.arc-section`.
+User-reported as unnecessary space at the top of the header/hero area — fixed to `padding: 0`.
+
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
