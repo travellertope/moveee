@@ -1957,6 +1957,23 @@ above is unaffected — it targets coverage, not the section's size. Verified vi
 brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
 `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
+
+Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
+
+- The grid header's default (unfiltered) label changed from **"All Products"** to **"Recent"**
+  — the filtered case (`isFiltered ? activeLabel : ...`) is unchanged, so a category/tag/brand
+  view still shows its own label.
+- **Every visible product-count display on the page was removed**, not just this one: the grid
+  header's `— {filtered.length} pieces` count span, and `ShopSearchModal.tsx`'s filter-panel
+  footer button, which changed from `` `View {resultCount} Results` `` to a plain **"Show
+  Results"** with no number. `resultCount` itself is still computed in `ShopFilterContext.tsx`
+  and carried on the `shopFiltersBus.ts` meta type — left in place since removing the field
+  entirely would mean touching the shared type for no functional benefit, it's just no longer
+  rendered anywhere. `.sl-grid-count`'s CSS in `shop.css` is now dead, kept per this file's usual
+  "leave it in case needed again" convention. Not visually verified in a browser — no
+  `node_modules` installed this session. Verified via paren/brace-balance checks on both files.
+
 ### The Moveee Lifestyle route renamed from `/shop` to `/lifestyle` (September 2026)
 
 Every page under `apps/site/app/shop/` was moved (`git mv`) to `apps/site/app/lifestyle/` — archive,

@@ -26,8 +26,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
       <div className="sl-grid-inner">
         <div className="sl-grid-header">
           <div className="sl-grid-label">
-            {isFiltered ? activeLabel : "All Products"}{" "}
-            <span className="sl-grid-count">— {filtered.length} pieces</span>
+            {isFiltered ? activeLabel : "Recent"}
           </div>
         </div>
 

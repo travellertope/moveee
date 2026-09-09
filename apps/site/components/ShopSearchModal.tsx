@@ -226,7 +226,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
               </button>
             )}
             <button type="button" className="shop-search-view-btn" onClick={onClose}>
-              View {meta.resultCount} {meta.resultCount === 1 ? "Result" : "Results"}
+              Show Results
             </button>
           </div>
         </div>
