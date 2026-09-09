@@ -1856,6 +1856,49 @@ proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `He
   dropdown, the ticker, and the footer's three link columns in particular — in a real environment
   before considering this fully closed.
 
+### Shop hero photo + product grid corrected to match the mockup exactly (September 2026)
+
+Two real fidelity bugs, both user-reported directly from a live screenshot: the hero was still
+using a product photo as its background, and the product grid didn't resemble the approved
+identity mockup at all.
+
+- **Hero background was never fixed** — despite being told not to, `.lfs-hero` in
+  `ShopArchiveWrapper.tsx` rendered `heroPick.image.sourceUrl` (whatever product happens to be the
+  current Editor's Pick) as the full-bleed hero background, effectively turning the hero into an
+  ad for one item. **Fixed**: the hero now always renders a fixed brand photo,
+  `apps/site/public/shop-hero.jpg` (a boutique/maker-studio interior shot, supplied directly by
+  the user), never a product image. If this photo is ever replaced, swap the file at that same
+  path — don't reintroduce a per-product/per-pick background.
+- **Product grid was still the old, pre-identity "Monocle-style" design** — individually rounded
+  (`--radius-xl`) + gapped (32px/26px) cards, portrait captions below a square image, a plain-text
+  "Add to Cart →" link. The identity mockup (`moveee-lifestyle-identity.html`'s `.prod-grid`)
+  specifies a completely different, flat trade-catalog grid: one bordered/radiused **outer**
+  container, cards butted flush against each other with only a 1px hairline between them (a
+  `background` colour showing through a 1px grid `gap`, not individual card borders/shadows), a
+  padded caption body with the price row pinned to the card's bottom behind a hairline
+  `border-top`, and a small floating circular "+" quick-add button bottom-right of the photo
+  (hover-reveal on desktop, always visible on touch — same convention as every other
+  hover-revealed control in this codebase). Rebuilt `ShopProductGrid.tsx` and the
+  `.sl-product-grid`/`.sl-pcard*` rules in `shop.css` to match this exactly: `grid-template-columns:
+  repeat(auto-fit, minmax(230px, 1fr))` with a 1px `background`/`border` hairline grid (no more
+  fixed 4-column/3-column/2-column breakpoint overrides — auto-fit already reflows correctly, same
+  as the mockup, which has no breakpoint rules for this grid at all), `.sl-pcard-price-row` with
+  `border-top` + a strikethrough "was" price beside the ochre "now" price when a Pro price applies,
+  and `.sl-pcard-quickadd`/`.sl-pcard-quickadd-btn` (a circular button, reusing `AddToCartButton`
+  which gained an optional `children` override for this — previously hardcoded to always render
+  "Add to Cart →" text).
+- **Lesson, stated directly by the user and worth internalizing**: "implement exactly as is in the
+  mockup" means literally — don't leave old-design classes/values in place under a plausible-
+  sounding excuse, and don't substitute a provided asset for something else (a product photo,
+  a stock photo, anything) without checking whether the user already supplied the real one. The
+  photo in this case had been supplied earlier in the session and was sitting unused in the
+  session scratchpad the whole time — always check there before assuming an asset doesn't exist.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap, and
+  no `node_modules` installed this session so `tsc`/`next build` couldn't run either. Verified via
+  a CSS brace-balance check on `shop.css` (611/611) and a manual read-through of the new grid JSX
+  against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
+  against the approved mockup in a real environment before considering this fully closed.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
