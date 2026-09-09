@@ -3994,7 +3994,14 @@ a straightforward size-only tweak, no layout/structure change.
 missed this one since it's set directly on `.masthead`, not inherited from `.arc-section`.
 User-reported as unnecessary space at the top of the header/hero area — fixed to `padding: 0`.
 
-### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
+**Follow-up, September 2026 — a deliberate gap reintroduced, specifically for the hero-to-masthead
+transition.** `.masthead`'s `padding: 0` above meant the full-bleed hero (`.hero-full`) ran directly
+into the masthead's "Culture, curated. Movers, platformed." heading with zero visual separation —
+user-reported from a live screenshot. Fixed by giving `.masthead` a `clamp(28px, 4vw, 56px)` top
+padding (bottom still `0`) — this is not a reversion of the fix directly above: that one removed
+padding that existed for no reason tied to any specific transition (a stale leftover from an
+unrelated spacing-halving pass); this one exists specifically to separate the hero from the
+masthead copy below it.
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
 Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit

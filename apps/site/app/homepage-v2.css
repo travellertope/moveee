@@ -88,7 +88,7 @@
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
 /* ── MASTHEAD ── */
-.masthead { padding: 0; text-align: center; }
+.masthead { padding: clamp(28px, 4vw, 56px) 0 0; text-align: center; }
 .masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.025em; line-height: 1.05; text-wrap: balance; }
 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
 .masthead p.sub { max-width: 46ch; margin: 20px auto 0; font-size: 16px; color: var(--mute); line-height: 1.65; }
