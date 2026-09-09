@@ -70,37 +70,36 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
                         <span>Sold Out</span>
                       </div>
                     )}
+                    {!outOfStock && p.databaseId && (
+                      <div className="sl-pcard-quickadd">
+                        <AddToCartButton productId={p.databaseId} className="sl-pcard-quickadd-btn">
+                          +
+                        </AddToCartButton>
+                      </div>
+                    )}
                   </div>
 
                   <div className={`sl-pcard-body${outOfStock ? " sl-pcard-body--muted" : ""}`}>
                     {vname && <p className="sl-pcard-vendor">{vname}</p>}
                     <p className="sl-pcard-name">{p.name}</p>
-                    {p.price && (
-                      <p className="sl-pcard-price">
-                        {p.price}
-                        {!outOfStock && proPrice && (
-                          <span className="sl-pcard-pro-price"> · {proPrice} Pro</span>
-                        )}
-                      </p>
-                    )}
-                    {hasReviews && (
-                      <p className="sl-pcard-rating">
-                        ★ {averageRating(p).toFixed(1)} ({reviewCount(p)})
-                      </p>
-                    )}
+                    <p className="sl-pcard-rating">
+                      {hasReviews
+                        ? `★ ${averageRating(p).toFixed(1)} (${reviewCount(p)})`
+                        : "New listing"}
+                    </p>
+                    <div className="sl-pcard-price-row">
+                      {outOfStock ? (
+                        <span className="sl-pcard-price-now">Sold out</span>
+                      ) : (
+                        <>
+                          {proPrice && <span className="sl-pcard-price-was">{p.price}</span>}
+                          <span className="sl-pcard-price-now">
+                            {proPrice ? `Pro ${proPrice}` : p.price}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-
-                  {outOfStock ? (
-                    <button type="button" className="sl-pcard-sold-btn" disabled>
-                      Sold out
-                    </button>
-                  ) : (
-                    p.databaseId && (
-                      <div className="sl-pcard-add">
-                        <AddToCartButton productId={p.databaseId} />
-                      </div>
-                    )
-                  )}
                 </Link>
               );
             })}

@@ -212,20 +212,19 @@ export default async function ShopArchiveWrapper({
         </div>
       </div>
 
-      {/* ── HERO — centered, oxblood scrim over the current Editor's Pick's
-          own photo (real product image, not a stock photo) ── */}
+      {/* ── HERO — centered, oxblood scrim over a fixed brand photo (never
+          a product photo — the hero must read as the shop's own identity,
+          not an ad for whichever item happens to be featured) ── */}
       {heroPick && (
         <section className="lfs-hero">
-          {heroPick.image?.sourceUrl && (
-            <Image
-              src={heroPick.image.sourceUrl}
-              alt={heroPick.image.altText || heroPick.name}
-              fill
-              className="lfs-hero-bg"
-              style={{ objectFit: "cover" }}
-              priority
-            />
-          )}
+          <Image
+            src="/shop-hero.jpg"
+            alt="Inside a Moveee maker's studio"
+            fill
+            className="lfs-hero-bg"
+            style={{ objectFit: "cover" }}
+            priority
+          />
           <div className="lfs-hero-scrim" />
           <div className="lfs-hero-copy">
             <h1 className="lfs-hero-title">

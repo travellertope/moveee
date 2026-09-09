@@ -1856,6 +1856,87 @@ proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `He
   dropdown, the ticker, and the footer's three link columns in particular — in a real environment
   before considering this fully closed.
 
+### Shop hero photo + product grid corrected to match the mockup exactly (September 2026)
+
+Two real fidelity bugs, both user-reported directly from a live screenshot: the hero was still
+using a product photo as its background, and the product grid didn't resemble the approved
+identity mockup at all.
+
+- **Hero background was never fixed** — despite being told not to, `.lfs-hero` in
+  `ShopArchiveWrapper.tsx` rendered `heroPick.image.sourceUrl` (whatever product happens to be the
+  current Editor's Pick) as the full-bleed hero background, effectively turning the hero into an
+  ad for one item. **Fixed**: the hero now always renders a fixed brand photo,
+  `apps/site/public/shop-hero.jpg` (a boutique/maker-studio interior shot, supplied directly by
+  the user), never a product image. If this photo is ever replaced, swap the file at that same
+  path — don't reintroduce a per-product/per-pick background.
+- **Product grid was still the old, pre-identity "Monocle-style" design** — individually rounded
+  (`--radius-xl`) + gapped (32px/26px) cards, portrait captions below a square image, a plain-text
+  "Add to Cart →" link. The identity mockup (`moveee-lifestyle-identity.html`'s `.prod-grid`)
+  specifies a completely different, flat trade-catalog grid: one bordered/radiused **outer**
+  container, cards butted flush against each other with only a 1px hairline between them (a
+  `background` colour showing through a 1px grid `gap`, not individual card borders/shadows), a
+  padded caption body with the price row pinned to the card's bottom behind a hairline
+  `border-top`, and a small floating circular "+" quick-add button bottom-right of the photo
+  (hover-reveal on desktop, always visible on touch — same convention as every other
+  hover-revealed control in this codebase). Rebuilt `ShopProductGrid.tsx` and the
+  `.sl-product-grid`/`.sl-pcard*` rules in `shop.css` to match this exactly: `grid-template-columns:
+  repeat(auto-fit, minmax(230px, 1fr))` with a 1px `background`/`border` hairline grid (no more
+  fixed 4-column/3-column/2-column breakpoint overrides — auto-fit already reflows correctly, same
+  as the mockup, which has no breakpoint rules for this grid at all), `.sl-pcard-price-row` with
+  `border-top` + a strikethrough "was" price beside the ochre "now" price when a Pro price applies,
+  and `.sl-pcard-quickadd`/`.sl-pcard-quickadd-btn` (a circular button, reusing `AddToCartButton`
+  which gained an optional `children` override for this — previously hardcoded to always render
+  "Add to Cart →" text).
+- **Follow-up, same day — the first pass still didn't match the mockup's card content/behavior,
+  caught by actually screenshotting the mockup in Chromium (`playwright`, a local `file://` load —
+  no network needed since it's a self-contained HTML file with base64-embedded images) instead of
+  only reading its CSS.** Three concrete mismatches, all now fixed in `ShopProductGrid.tsx`/
+  `shop.css`:
+  1. **Quick-add button defaulted to `opacity: 0`** (hover-only, invisible until moused over) —
+     the mockup's own CSS has it at `opacity: .85` by default, brightening to `1` + `scale(1.08)`
+     on hover. It's meant to be always faintly visible, not hidden.
+  2. **Price row order and content were backwards.** The mockup renders the strikethrough
+     original price *first*, then the discounted price *second* with "Pro" baked directly into
+     that string (`Pro ₦60,750.00`, one span) — mine rendered the discounted price first with no
+     "Pro" prefix and the strikethrough price second.
+  3. **The middle meta line (between title and price) was dropped for products with no reviews**
+     — previously conditional (`{hasReviews && <p>...</p>}`), so a product with zero reviews had
+     nothing there at all, losing the card's vertical rhythm. The mockup always renders something
+     in that slot (its own demo data uses a static "INDEX 00X · New listing" caption). Fixed to
+     always render: real `★ rating (count)` when reviews exist, else a "New listing" fallback —
+     matching this codebase's own pre-existing documented convention for the pre-identity grid,
+     which had the same fallback and was lost in the rebuild.
+  Verified via a Playwright screenshot of `moveee-lifestyle-identity.html`'s "04 — Application"
+  section (the real page-layout mockup, not the earlier "01 — Mark"/"02 — Palette" brand-guide
+  frames at the top of the same file, which are a different part of the document) and a direct
+  read of its `.prod-card`/`.prod-price-row` HTML to get the exact markup shape.
+- **Lesson, stated directly by the user and worth internalizing**: "implement exactly as is in the
+  mockup" means literally — don't leave old-design classes/values in place under a plausible-
+  sounding excuse, and don't substitute a provided asset for something else (a product photo,
+  a stock photo, anything) without checking whether the user already supplied the real one. The
+  photo in this case had been supplied earlier in the session and was sitting unused in the
+  session scratchpad the whole time — always check there before assuming an asset doesn't exist.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap, and
+  no `node_modules` installed this session so `tsc`/`next build` couldn't run either. Verified via
+  a CSS brace-balance check on `shop.css` (611/611) and a manual read-through of the new grid JSX
+  against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
+  against the approved mockup in a real environment before considering this fully closed.
+
+### Shop header — Categories dropdown removed (September 2026)
+
+`ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
+disclosure (both rendering the same `categoryList` of category `<Link>`s) were removed at
+explicit user request, since `ShopSearchModal` (opened by the header's search icon) already
+provides category filtering as a real facet — the header's own dropdown was a pure duplicate.
+The `categories` fetch/state was removed along with it (the `categoryList` JSX is now gone
+entirely); the `proDiscountPercent` fetch from the same `/api/shop/categories` response is kept,
+since the ticker's "Moveee Pro saves {proDiscountPercent}% storewide" line still needs it. The
+`.mast-cat*`/`.mast-filter` CSS rules in `shop-chrome.css` were left in place, unused, per this
+file's usual "kept in case needed again" convention — confirmed via grep that nothing else in
+`apps/site` references them. **Category filtering on `/shop` now lives exclusively inside
+`ShopSearchModal`** — if a future pass wants an on-page category control again, don't
+reintroduce it in the header; either add it back there deliberately or extend the modal.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own

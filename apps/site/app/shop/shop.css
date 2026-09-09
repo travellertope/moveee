@@ -659,11 +659,20 @@
   color: var(--mute);
 }
 
-/* Product grid / list layout — flush caption-stack cards, Monocle-style */
+/* Product grid — flat, edge-to-edge trade-catalog grid per The Moveee
+   Lifestyle identity mockup: one bordered/radiused container, cards butted
+   together with a 1px hairline between them (achieved via a background
+   colour showing through a 1px gap, not individual card borders). Do not
+   reintroduce individually rounded/shadowed cards here — that was the old,
+   pre-identity "Monocle-style" grid this replaced. */
 .sl-product-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 32px 26px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 .sl-product-list {
   display: flex;
@@ -671,26 +680,24 @@
   gap: 16px;
 }
 
-/* Product card — no background/shadow/fixed height; just image + caption */
+/* Product card — flat, flush against its neighbours; the hairline between
+   cards comes from the grid's own 1px gap above, not a per-card border. */
 .sl-pcard {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
   text-decoration: none;
   color: inherit;
 }
 
-/* Product image area — square per The Moveee Lifestyle identity (every
-   card the same shape, no portrait/landscape mismatch across a grid) —
-   was 3:4 portrait with a smaller radius before that rebuild. */
 .sl-pcard-img {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: var(--radius-xl);
   overflow: hidden;
   background: var(--paper-deep, #f2f2f2);
-  margin-bottom: 12px;
 }
-.sl-pcard-img img { transition: transform .4s ease; }
-.sl-pcard:hover .sl-pcard-img img { transform: scale(1.03); }
+.sl-pcard-img img { transition: transform .22s ease; }
+.sl-pcard:hover .sl-pcard-img img { transform: scale(1.035); }
 .sl-pcard--sold .sl-pcard-img { opacity: .6; }
 
 /* New pip */
@@ -698,14 +705,13 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: var(--paper);
-  color: var(--ink);
-  border-radius: 100px;
-  padding: 4px 10px;
+  background: var(--ochre);
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 4px 8px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   z-index: 2;
   pointer-events: none;
@@ -728,80 +734,92 @@
   pointer-events: none;
 }
 
-/* Card body — plain caption stack, no padding box */
+/* Floating circular quick-add — always faintly visible per the mockup
+   (opacity .85), brightening to full opacity + a slight scale on hover. */
+.sl-pcard-quickadd {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 2;
+  opacity: .85;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.sl-pcard:hover .sl-pcard-quickadd { opacity: 1; transform: scale(1.08); }
+.sl-pcard-quickadd-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(20,17,13,.18);
+  cursor: pointer;
+}
+.sl-pcard-quickadd-btn:hover { background: var(--ochre); color: #fff; }
+
+/* Card body — padded caption stack, price row pinned to the bottom with a
+   hairline divider above it (matches the mockup's .prod-body/.prod-price-row). */
 .sl-pcard-body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  flex: 1;
+  padding: 16px 18px 18px;
 }
 .sl-pcard-body--muted { opacity: .55; }
 .sl-pcard-vendor {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px;
-  letter-spacing: .1em;
+  font-size: 10.5px;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: var(--mute);
   margin: 0;
 }
 .sl-pcard-name {
   font-family: var(--font-lfs-display, var(--font-serif));
-  font-size: 15.5px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--ink);
   line-height: 1.3;
-  margin: 2px 0 4px;
+  margin: 4px 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .sl-pcard:hover .sl-pcard-name { color: var(--ochre); }
-.sl-pcard-price {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12.5px;
-  color: var(--ink);
-  margin: 0;
-}
-.sl-pcard-price * { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; }
-.sl-pcard-pro-price { color: var(--gold); }
 .sl-pcard-rating {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   color: var(--mute);
-  margin: 3px 0 0;
+  margin: 6px 0 0;
 }
-
-/* Add to bag — plain text-style control, always visible (no hover-reveal overlay) */
-.sl-pcard-add { margin-top: 8px; }
-.sl-pcard-add button {
-  display: inline-block;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--mute);
+.sl-pcard-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.sl-pcard-price-now {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color .15s;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ochre);
 }
-.sl-pcard-add button:hover { color: var(--ochre); }
-
-/* Sold-out button */
-.sl-pcard-sold-btn {
-  display: inline-block;
-  padding: 0;
-  background: none;
-  color: var(--mute);
-  border: none;
+.sl-pcard-price-now * { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; }
+.sl-pcard-price-was {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  cursor: not-allowed;
-  margin-top: 8px;
+  font-size: 11.5px;
+  text-decoration: line-through;
+  color: var(--mute);
 }
+.sl-pcard-price-was * { font-family: inherit; font-size: inherit; color: inherit; }
 
 /* Empty state */
 .sl-empty {
@@ -1265,7 +1283,6 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
-  .sl-product-grid { grid-template-columns: repeat(3, 1fr); }
   .sl-cat-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
@@ -1273,7 +1290,6 @@
   .sl-pick-inner { grid-template-columns: 1fr; gap: 24px; }
   .sl-pick-media-link { order: -1; }
   .sl-featured-grid { grid-template-columns: 1fr 1fr; }
-  .sl-product-grid { grid-template-columns: 1fr 1fr; }
   .sl-cat-grid { grid-template-columns: repeat(2, 1fr); }
   .sl-makers-grid { grid-template-columns: 1fr 1fr; }
   .sl-member { flex-direction: column; }
@@ -1328,10 +1344,17 @@
   .sl-filter-right { flex-shrink: 0; }
   .sl-filter-count { display: none; }
 
-  /* Product grid — 2-up on mobile */
-  .sl-product-grid { grid-template-columns: 1fr 1fr; gap: 22px 14px; }
+  /* Product grid on mobile — still the flat auto-fit hairline grid, just a
+     narrower minmax floor so it settles at 2-up rather than 1-up. */
+  .sl-product-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
   .sl-pcard-name { font-size: 13.5px; }
-  .sl-pcard-price { font-size: 11.5px; }
+  .sl-pcard-price-now { font-size: 12.5px; }
+  .sl-pcard-price-was { font-size: 10.5px; }
+  .sl-pcard-body { padding: 12px 14px 14px; }
+  /* Quick-add never fires :hover on touch — always show it on mobile
+     rather than leaving it permanently invisible (see the lesson on
+     hover-revealed elements documented elsewhere in this codebase). */
+  .sl-pcard-quickadd { opacity: 1; transform: scale(1); }
 
   /* Category grid — 2-up */
   .sl-cat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
