@@ -4003,6 +4003,14 @@ padding that existed for no reason tied to any specific transition (a stale left
 unrelated spacing-halving pass); this one exists specifically to separate the hero from the
 masthead copy below it.
 
+**Follow-up, same day — mobile got a disproportionate amount of the new gap.** The `clamp(28px,
+4vw, 56px)` above resolves to its 28px floor at every viewport under ~700px (`4vw` never exceeds
+28px below that width), so mobile silently got the clamp's fixed minimum while desktop scaled up
+to 56px — 28px reads as noticeably more gap on a short mobile viewport right under the hero than
+the same value does on desktop. Added a `@media (max-width: 640px)` override
+(`.masthead { padding-top: 14px; }`) — mobile now gets its own smaller flat value instead of
+inheriting the desktop clamp's floor.
+
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
 Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit
 feedback (removing the hero eyebrow badge and trust line, the "backed by Moveee Magazine…"
