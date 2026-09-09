@@ -40,11 +40,11 @@ async function fetchVendorProducts(slug: string): Promise<any[]> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const vendor = await fetchVendor(slug);
-  if (!vendor) return { title: { absolute: "Brand Not Found | Moveee Magazine" } };
+  if (!vendor) return { title: { absolute: "Brand Not Found | The Moveee Lifestyle" } };
   const name = vendor.storeName || vendor.store_name || vendor.display_name || "Brand";
   return {
-    title: { absolute: `${name} | Shop | Moveee Magazine` },
-    description: vendor.bio || vendor.shop_description || `Shop all products by ${name} on Moveee Magazine.`,
+    title: { absolute: `${name} | The Moveee Lifestyle` },
+    description: vendor.bio || vendor.shop_description || `Shop all products by ${name} on The Moveee Lifestyle.`,
   };
 }
 
@@ -121,7 +121,7 @@ export default async function ShopBrandPage({ params }: { params: Promise<{ slug
         {products.length > 0 ? (
           <div className="brand-products-grid">
             {products.map((p: any) => (
-              <Link key={p.id || p.slug} href={`/shop/${p.slug}`} className="brand-product-card">
+              <Link key={p.id || p.slug} href={`/lifestyle/${p.slug}`} className="brand-product-card">
                 <div className="brand-product-img">
                   {(p.imageUrl || p.image?.sourceUrl) && (
                     <Image
@@ -145,7 +145,7 @@ export default async function ShopBrandPage({ params }: { params: Promise<{ slug
         ) : (
           <div className="brand-empty">
             <p>No products listed yet. Check back soon.</p>
-            <Link href="/shop" className="brand-empty-link">Browse all products →</Link>
+            <Link href="/lifestyle" className="brand-empty-link">Browse all products →</Link>
           </div>
         )}
       </section>

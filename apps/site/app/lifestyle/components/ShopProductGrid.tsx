@@ -26,8 +26,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
       <div className="sl-grid-inner">
         <div className="sl-grid-header">
           <div className="sl-grid-label">
-            {isFiltered ? activeLabel : "All Products"}{" "}
-            <span className="sl-grid-count">— {filtered.length} pieces</span>
+            {isFiltered ? activeLabel : "Recent"}
           </div>
         </div>
 
@@ -48,7 +47,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
               return (
                 <Link
                   key={p.id}
-                  href={`/shop/${p.slug}`}
+                  href={`/lifestyle/${p.slug}`}
                   className={`sl-pcard${outOfStock ? " sl-pcard--sold" : ""}`}
                 >
                   <div className="sl-pcard-img">

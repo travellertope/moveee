@@ -59,7 +59,7 @@ function CheckoutContent() {
   const currentUrl =
     typeof window !== "undefined"
       ? window.location.origin + window.location.pathname
-      : "https://themoveee.com/shop/checkout";
+      : "https://themoveee.com/lifestyle/checkout";
 
   const handleGetTotals = async () => {
     if (!canSubmitAddress || items.length === 0) return;
@@ -148,7 +148,7 @@ function CheckoutContent() {
       <div className="chk-wrap">
         <div className="chk-empty">
           <p>Your cart is empty.</p>
-          <Link href="/shop">Browse the Shop →</Link>
+          <Link href="/lifestyle">Browse the Shop →</Link>
         </div>
       </div>
     );
@@ -157,7 +157,7 @@ function CheckoutContent() {
   return (
     <div className="chk-wrap">
       <Link
-        href="/shop"
+        href="/lifestyle"
         className="chk-back-link"
         onClick={(e) => {
           if (step === "review") {

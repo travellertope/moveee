@@ -5,7 +5,7 @@
 // search+filter UI now lives in <ShopSearchModal> (mounted globally from
 // Header.tsx), while the actual product list/derived filter facets
 // (categories, locations, price bands) live inside <ShopFilterProvider>
-// deep in the /shop page tree. Neither can reach the other via props, so
+// deep in the /lifestyle page tree. Neither can reach the other via props, so
 // the bus is the shared source of truth: the page pushes its computed meta
 // in, the modal reads it and pushes filter changes back out, and
 // ShopFilterContext applies them to the product list.

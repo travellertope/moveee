@@ -70,7 +70,7 @@ function OrderConfirmationContent() {
     return (
       <div className="chk-confirm-wrap">
         <p className="chk-confirm-sub">No order reference was provided.</p>
-        <Link href="/shop">← Back to Shop</Link>
+        <Link href="/lifestyle">← Back to Shop</Link>
       </div>
     );
   }
@@ -105,7 +105,7 @@ function OrderConfirmationContent() {
           Your payment is taking longer than expected to confirm. We&apos;ll email you once it&apos;s complete.
         </p>
         <div className="chk-confirm-actions">
-          <Link href="/shop" className="chk-secondary-btn" style={{ textDecoration: "none", display: "block", textAlign: "center", lineHeight: "44px" }}>
+          <Link href="/lifestyle" className="chk-secondary-btn" style={{ textDecoration: "none", display: "block", textAlign: "center", lineHeight: "44px" }}>
             ← Back to Shop
           </Link>
         </div>
@@ -149,7 +149,7 @@ function OrderConfirmationContent() {
       )}
 
       <div className="chk-confirm-actions">
-        <Link href="/shop" className="chk-primary-btn" style={{ textDecoration: "none", display: "block", textAlign: "center", lineHeight: "52px", boxSizing: "border-box" }}>
+        <Link href="/lifestyle" className="chk-primary-btn" style={{ textDecoration: "none", display: "block", textAlign: "center", lineHeight: "52px", boxSizing: "border-box" }}>
           Continue Shopping
         </Link>
       </div>

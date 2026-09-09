@@ -1426,7 +1426,7 @@
   max-width: 1440px;
   margin: 0 auto;
   /* No more --header-clear top padding — the Moveee Lifestyle's own
-     ShopHeader (app/shop/layout.tsx) renders in normal document flow, not
+     ShopHeader (app/lifestyle/layout.tsx) renders in normal document flow, not
      fixed/floating like the old sitewide pill, so there's no clearance gap
      left to reserve here. */
   padding: 50px 40px 80px;
@@ -1714,26 +1714,36 @@
   color: var(--ink-soft);
 }
 
-/* ── REVIEWS — tinted section, distribution-bar summary, review cards ── */
+/* ── REVIEWS — now one of the buy-box accordion tabs (see ProductAccordion/
+   ProductReviews), not a standalone full-width section — `.sp-reviews`/
+   `.sp-reviews-inner` are dead, kept in case a full-width layout is wanted
+   again. `.sp-reviews-panel` is the real wrapper now: a plain block with no
+   tint/max-width of its own (`.sp-acc-body-inner` already provides padding),
+   and the summary/card grids below are forced to a single column since the
+   accordion column is narrow at every viewport width, not just mobile. ── */
 .sp-reviews {
   background: var(--paper-deep, #f2f2f2);
   border-top: 1px solid var(--rule);
   padding: 64px 40px;
 }
 .sp-reviews-inner { max-width: 1440px; margin: 0 auto; }
+.sp-reviews-panel .sp-reviews-summary,
+.sp-reviews-panel .sp-review-grid {
+  grid-template-columns: 1fr;
+}
+.sp-reviews-panel .sp-rs-num {
+  border-right: none;
+  border-bottom: 1px solid var(--rule);
+  padding-right: 0;
+  padding-bottom: 16px;
+}
 .sp-reviews-head {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 28px;
-}
-.sp-reviews-head h2 {
-  font-family: var(--font-lfs-display, var(--font-serif));
-  font-weight: 800;
-  font-size: 26px;
-  margin: 0;
+  margin-bottom: 16px;
 }
 .sp-write-review {
   background: var(--ink);
@@ -2976,7 +2986,7 @@
 }
 .sp-btn-add--gated:hover { opacity: 0.85; }
 
-/* ══ BRAND STOREFRONT (/shop/brand/[slug]) ══════════════════════════════════ */
+/* ══ BRAND STOREFRONT (/lifestyle/brand/[slug]) ══════════════════════════════════ */
 
 .brand-page {
   max-width: 1280px;

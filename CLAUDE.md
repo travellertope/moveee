@@ -1922,6 +1922,196 @@ identity mockup at all.
   against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
   against the approved mockup in a real environment before considering this fully closed.
 
+### Shop hero — washed-out "white gap" at the top of the photo fixed (September 2026)
+
+User-reported from a live screenshot: a visible band of white/blown-out space at the very top of
+`.lfs-hero` (right where the photo meets the masthead), noticeably lighter than the bottom of the
+same hero. This was never a layout/spacing bug — there is no extra DOM element or margin between
+`ShopHeader`'s `.masthead` and `ShopArchiveWrapper.tsx`'s `<section className="lfs-hero">` (they're
+adjacent siblings, confirmed by reading both files directly); `shop.css`/`shop-lifestyle.css` both
+already document that no `--header-clear` spacer is used here since `ShopHeader` renders in normal
+document flow. The real cause was `.lfs-hero-scrim`'s gradient coverage in `shop-lifestyle.css`:
+the radial spotlight faded to as low as `.1` opacity at its outer edge, and the only linear
+gradient (`linear-gradient(0deg, rgba(...) 0%, transparent 55%)`) only darkens the **bottom** half
+of the section (needed to keep the trust line legible) — the top strip of the hero photo had
+almost no oxblood tint over it at all, so a bright section of `/shop-hero.jpg` (the boutique
+interior) showed through there, reading as a blank white gap under the header.
+
+Fixed by adding a mirrored top-anchored `linear-gradient(180deg, rgba(122,36,28,.3) 0%,
+rgba(122,36,28,0) 45%)` and raising the radial gradient's two outer stops (`.22`→`.34`,
+`.1`→`.26`) so the scrim reads as one even wash top-to-bottom instead of a vignette with a
+blown-out edge. The bottom-anchored gradient is unchanged — it's still what makes the trust-line
+copy legible. **If a future hero/scrim-over-photo section shows the same "one edge looks washed
+out" symptom, check whether its gradient stops actually cover every edge of the section, not just
+the one nearest the text** — a radial-plus-single-direction-linear combo can leave a real gap.
+Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a
+browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
+### Shop hero — height reduced (September 2026)
+
+`.lfs-hero` shrunk per explicit user request: `aspect-ratio` `16/7` → `16/9`, `min-height`
+`420px` → `320px`, `max-height` `600px` → `460px`; the mobile (`max-width: 640px`) override's
+`max-height` went `560px` → `420px` (its `aspect-ratio: 4/5` portrait ratio was left as-is —
+only the cap shrunk). The scrim/gradient fix documented in "Shop hero — washed-out 'white gap'"
+above is unaffected — it targets coverage, not the section's size. Verified via a CSS
+brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
+`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
+### `/makers` brought onto the Moveee Lifestyle standalone chrome (September 2026)
+
+Per explicit user request ("the new design convention for Moveee Lifestyle needs to extend to
+Maker pages — from header to footer especially"), `/makers` (archive + `[slug]` profile) now
+shares the exact same standalone mini-site chrome as `/lifestyle` — new **`apps/site/app/makers/
+layout.tsx`** mounts `ShopHeader`/`ShopFooter` (same components, same `shop-chrome.css` import,
+same Bricolage Grotesque `--font-lfs-display` font load) around `{children}`, identical shape to
+`app/lifestyle/layout.tsx`/`app/literary/layout.tsx`. Previously `/makers` was only a *sibling* of
+the Lifestyle identity, still rendering the sitewide floating pill (with a special-cased logo
+swap) and the sitewide dark `Footer.tsx` — that's gone now.
+
+- **`Header.tsx`**: `isMakersPage` was added to the early-return (`if (isLiteraryPage ||
+  isLifestylePage || isMakersPage) return null;`) alongside the existing Literary/Lifestyle
+  checks — the sitewide pill no longer renders on `/makers` at all. This made the old
+  `isMakersPage ? ... : ...` ternaries for the toolbar logo (swap to the Lifestyle wordmark,
+  link to `/makers` instead of `/`) unreachable dead code, so they were simplified back to the
+  plain always-`/`/`Moveee` case rather than left as unreachable conditionals.
+- **`ConditionalFooter.tsx`**: `isLifestylePath()` now also matches `/makers`/`/makers/*`, so the
+  sitewide `Footer.tsx` is excluded there the same way it already was for `/lifestyle`.
+- **`makers.css`**: every `--header-clear` top-padding rule was removed (`.makers-header`,
+  `.maker-hero`, and the `768px` mobile override of `.makers-header`) — same "no more fixed/
+  floating header to clear" reasoning as every other page that gained a standalone header in this
+  file. (`.maker-breadcrumb`'s own `--header-clear` padding was left alone — confirmed dead CSS,
+  that element isn't rendered in the JSX at all, per its own pre-existing comment.)
+- **Typography** — every genuine heading/title/stat-number on both pages moved from
+  `var(--font-serif)` (Fraunces) to `var(--font-lfs-display, var(--font-serif))` (Bricolage
+  Grotesque), matching the exact treatment the shop archive/product pages already got: weight
+  bumped to `700`/`800` per element's size tier, and every `em` emphasis child switched from
+  `font-style: italic` to `font-style: normal; font-weight: 800; color: var(--ochre)` (Bricolage
+  has no distinct italic cut in this identity's usage, same reasoning documented for the shop
+  pages) — `.makers-title`, `.maker-card-name`, `.maker-hero-name`, `.maker-stat-num`,
+  `.maker-products-title`, `.maker-editorial-title`, `.maker-editorial-post-title`, and
+  `.maker-not-found h1`.
+- **Product-count removal, same ask as the Lifestyle grid change directly above** — the maker
+  profile page had two of its own "total number of products" displays that weren't caught by
+  that pass since they're a different file: the stats row's `{productCount} Products` tile
+  (removed entirely, leaving "Maker since"/rating) and the products section header's
+  `{productCount} pieces` span (removed). The now-unused `productCount` const was deleted too.
+  `.maker-stat-num`/`.maker-products-count`'s CSS is untouched/still real (the former still
+  renders "Maker since"/rating, the latter is now dead, kept per convention).
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
+`makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
+
+### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
+
+Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
+
+- The grid header's default (unfiltered) label changed from **"All Products"** to **"Recent"**
+  — the filtered case (`isFiltered ? activeLabel : ...`) is unchanged, so a category/tag/brand
+  view still shows its own label.
+- **Every visible product-count display on the page was removed**, not just this one: the grid
+  header's `— {filtered.length} pieces` count span, and `ShopSearchModal.tsx`'s filter-panel
+  footer button, which changed from `` `View {resultCount} Results` `` to a plain **"Show
+  Results"** with no number. `resultCount` itself is still computed in `ShopFilterContext.tsx`
+  and carried on the `shopFiltersBus.ts` meta type — left in place since removing the field
+  entirely would mean touching the shared type for no functional benefit, it's just no longer
+  rendered anywhere. `.sl-grid-count`'s CSS in `shop.css` is now dead, kept per this file's usual
+  "leave it in case needed again" convention. Not visually verified in a browser — no
+  `node_modules` installed this session. Verified via paren/brace-balance checks on both files.
+
+### The Moveee Lifestyle route renamed from `/shop` to `/lifestyle` (September 2026)
+
+Every page under `apps/site/app/shop/` was moved (`git mv`) to `apps/site/app/lifestyle/` — archive,
+`[slug]` product detail, `category`/`tag`/`brand` archives, `checkout`, `edit`, `shipping`,
+`order-confirmation`, `layout.tsx`, and the three CSS files (`shop.css`/`shop-chrome.css`/
+`shop-lifestyle.css` — filenames themselves were **not** renamed, only their parent directory, so
+every `import "./shop.css"`-style relative import inside the moved tree still resolves with zero
+changes). Every internal `href="/shop"`/`` href={`/shop/${x}`} ``-style link across the codebase
+(`ShopHeader.tsx`, `ShopFooter.tsx`, `Header.tsx`'s menu overlay, `ConditionalFooter.tsx`,
+`CartDrawer.tsx`, `SearchOverlay.tsx`, `ShopSearchModal.tsx`, `ShopCarousel.tsx`/`ShopRail.tsx`,
+`Hero.tsx`, the homepage, `/makers/[slug]`, `/magazine/[slug]`'s Shop-the-Edit strip, `/terms`,
+and every page inside the moved tree itself) was updated to `/lifestyle`, along with
+`sitemap.ts`'s two `/shop`/`/shop/${slug}` entries and `api/revalidate/route.ts`'s revalidation
+path list. **`/api/shop/*` (the Next.js proxy API namespace — categories, reviews, etc.) was
+deliberately left unchanged** — that's an internal fetch path, not a public page route, and
+renaming it would have meant touching every `fetch("/api/shop/...")` call site for zero user-
+facing benefit; same reasoning for WordPress's own `culture/v1/shop/checkout/*` and
+`mobile/shop/products` REST namespaces (`app/api/checkout/*`, `app/api/mobile/shop/search`) —
+those are WordPress-side API paths, unrelated to this Next.js page rename.
+
+**Old `/shop/*` URLs 301-redirect to their `/lifestyle/*` equivalent** — `proxy.ts` gained a
+dedicated block (`pathname === '/shop' || pathname.startsWith('/shop/')` →
+`pathname.replace(/^\/shop/, '/lifestyle')`) placed **before** the existing `ROUTE_ALIASES` map,
+since that map only ever matches a single whole path segment with no internal slashes (confirmed
+by reading its `cleanPath.includes('/')` guard) and so could never have handled a nested URL like
+`/shop/category/ceramics` on its own — only the bare `/shop` path. The pre-existing
+`ROUTE_ALIASES['lifestyle'] = '/shop'` entry (a stale, backwards-looking alias that had been
+sitting unused, redirecting the *not-yet-real* `/lifestyle` to `/shop`) was removed along with it.
+`APP_ROUTES` now lists `'lifestyle'` instead of `'shop'`. **If a genuinely new page is ever added
+back at `/shop` for some unrelated reason, this redirect will swallow it** — check `proxy.ts`
+first if that ever comes up.
+
+**SEO/branding — every title/description under this route dropped the "| Moveee Magazine"
+suffix in favour of "The Moveee Lifestyle" as its own standalone brand**, mirroring how The
+Moveee Literary handles its own section branding (`siteName: "Moveee Magazine"` kept only for
+OG/schema.org attribution, never in the visible title) rather than the sitewide "always suffix
+with Moveee Magazine" convention documented elsewhere in this file — this section is a standalone
+mini-site with its own identity, not ordinary editorial/shop content:
+- `/lifestyle` (root): title `"The Moveee Lifestyle"` (was `"Shop | Moveee Magazine"`).
+- `/lifestyle/{slug}` (product): title `` `${product.name} | The Moveee Lifestyle` `` (was
+  `` `${product.name} — Moveee Magazine Shop` ``); the Product JSON-LD's `brand`/`seller` fallback
+  and `openGraph.siteName` were deliberately **left** as `"Moveee Magazine"` — those name the real
+  owning organization for structured data, not the visible page title, same distinction Literary
+  draws.
+- `/lifestyle/category/{slug}`, `/lifestyle/tag/{slug}`, `/lifestyle/brand/{slug}`,
+  `/lifestyle/edit`, `/lifestyle/shipping` — all switched from `"... | Shop | Moveee Magazine"`/
+  `"... | Moveee Magazine"` to `"... | The Moveee Lifestyle"`.
+- Visible UI copy updated to match: the sitewide header menu's nav link ("Shop" → "The Moveee
+  Lifestyle", matching how "The Moveee Literary" is written in that same list), its "From the
+  Shop"/"Visit the Shop" column labels, `ShopFooter.tsx`'s "Shop" link-column heading (→
+  "Lifestyle"), and the product page's breadcrumb JSON-LD ("Shop" → "The Moveee Lifestyle").
+  `isShopPage`/`isShopPath` identifiers in `Header.tsx`/`ConditionalFooter.tsx` were renamed to
+  `isLifestylePage`/`isLifestylePath` for the same consistency reason, not because the old names
+  were broken.
+- Every doc-comment across the touched files that said "`app/shop/layout.tsx`"/"`/shop route`"/
+  "`/shop path`"/etc. was updated to say `/lifestyle` — these were purely explanatory and had no
+  functional effect, but a stale path in a comment is exactly the kind of thing that misleads the
+  next person to touch this code.
+
+**Deliberately left as literal "shop" everywhere else, not renamed**: the `shopFiltersBus.ts`/
+`shopHelpers.ts`/`shopCountry.ts`/`ShopHeader.tsx`/`ShopFooter.tsx`/`ShopArchiveWrapper.tsx`/
+`ShopSearchModal.tsx`/`ShopProductGrid.tsx`/`ShopFilterContext.tsx`/`ShopCarousel.tsx`/
+`ShopRail.tsx` **filenames and component/export names** — only the public route path and visible
+copy changed; renaming every internal identifier too would have been a much larger, purely
+cosmetic diff for no functional or SEO benefit. The `/shop-hero.jpg` public asset path is
+unrelated (a static image filename, not a route) and was never touched.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks across every touched `.tsx`/`.ts` file and CSS brace-balance checks on
+`header.css` (83/83), `getmelit.css` (65/65), `shop.css` (612/612), `shop-chrome.css` (61/61), and
+`shop-lifestyle.css` (75/75) — all unchanged from before this pass, confirming no CSS rule was
+accidentally clipped by the file move. Re-check the `/shop` → `/lifestyle` redirect and every
+renamed metadata title in a real environment before considering this fully closed.
+
+### Shop masthead nav — Shop/Makers dropped, Magazine added (September 2026)
+
+`.mast-nav` (the small text-link row moved next to the icons in "Shop masthead — nav moved next
+to the icons + a real Categories menu re-added" above) changed from Shop/The Edit/Makers to just
+**The Edit** and **Magazine** — Shop was removed since `/shop` is already the page the header
+sits on, Makers was dropped per explicit request, and Magazine is a brand-new destination linking
+out to `https://themoveee.com` (Moveee Magazine's own homepage, not back into any `/shop/*`
+route). Not visually verified in a browser — no `node_modules` installed this session. Verified
+via a paren/brace-balance check on `ShopHeader.tsx`.
+
+### Shop Magazine bridge — "Explore Origins Journal" link removed (September 2026)
+
+The `.sl-bridge` ("From The Magazine" band, between the hero and the product grid) used to show
+two CTAs side by side — "Read The Edit →" (`/magazine`) and "Explore Origins Journal →"
+(`/journeys`). The second link was removed at explicit user request; `.sl-bridge-links` now holds
+just the one CTA (its CSS is a plain flex row with `gap`, so it degrades cleanly to a single
+child with no layout changes needed). Not visually verified in a browser — no `node_modules`
+installed this session. Verified via a paren/brace-balance check on `ShopArchiveWrapper.tsx`.
+
 ### Shop header — Categories dropdown removed (September 2026)
 
 `ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
@@ -1998,6 +2188,36 @@ Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
 
 Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
 brace-balance check on `shop-chrome.css` (58/58).
+
+### Shop masthead — nav moved next to the icons + a real Categories menu re-added (September 2026, follow-up)
+
+Two more explicit user changes to `ShopHeader.tsx`/`shop-chrome.css`, on top of the pass directly
+above:
+
+- **`.mast-nav` moved out of `.mast-left`** (which now holds only the logo) **into a new
+  `.mast-right` flex group** that also wraps the Categories menu and `.mast-icons` — since
+  `.masthead-row` is `justify-content: space-between` with exactly two children (`.mast-left` and
+  `.mast-right`), the nav now sits immediately to the left of the icon cluster on the far right of
+  the row, instead of next to the logo on the far left.
+- **A real "Categories" menu is back**, distinct from the destination nav next to it — this is
+  **not** the same dropdown "Shop header — Categories dropdown removed" (above) took out; that
+  removal was because the old dropdown duplicated `ShopSearchModal`'s category *filter*.
+  `ShopSearchModal` still owns full search/filtering; this new menu is a lightweight
+  category-*jump* shortcut (plain links to `/shop/category/{slug}`, no filter-bus state). Rather
+  than write new CSS, it reuses the `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  rules that were left in `shop-chrome.css` "unused, kept in case needed again" from that same
+  earlier removal — desktop gets the hover dropdown (`.mast-cat`), `<900px` swaps to a `<details>`
+  disclosure (`.mast-filter`) via the same breakpoint `.mast-nav` already hides at. `ShopHeader.tsx`
+  now also reads `categories` off the existing `/api/shop/categories` response (previously only
+  `proDiscountPercent` was consumed from it).
+- **New `.mast-right` CSS** — a plain flex row (`gap: 28px`, tightened to `16px` below `900px`)
+  grouping nav + categories + icons; `.mast-left` dropped its now-unneeded `gap` (it only holds the
+  logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
+  CSS until this pass revived it).
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
+`ShopHeader.tsx`.
 
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 

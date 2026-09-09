@@ -194,7 +194,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="arc-hdr">
             <h2>From The <em>Shop</em></h2>
-            <a href="/shop" className="arc-viewall">Shop all →</a>
+            <a href="/lifestyle" className="arc-viewall">Shop all →</a>
           </div>
           <ShopRail products={shopProducts} />
         </div>

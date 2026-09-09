@@ -87,7 +87,6 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
   const yearsActive  = maker.yearsActive  || maker.years_active  || "";
   const directorySlug = maker.directorySlug || "";
   const location     = [city, country].filter(Boolean).join(", ");
-  const productCount = products.length;
 
   return (
     <div className="maker-single">
@@ -124,17 +123,13 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
               </div>
             )}
             <div className="maker-stat">
-              <div className="maker-stat-num">{productCount}</div>
-              <div className="maker-stat-label">{productCount === 1 ? "Product" : "Products"}</div>
-            </div>
-            <div className="maker-stat">
               <div className="maker-stat-num">{rating ? `★ ${rating}` : "★ New"}</div>
               <div className="maker-stat-label">Moveee rating</div>
             </div>
           </div>
 
           <div className="maker-hero-actions">
-            <Link href={`/shop/brand/${slug}`} className="maker-hero-cta">
+            <Link href={`/lifestyle/brand/${slug}`} className="maker-hero-cta">
               Shop all products →
             </Link>
             {directorySlug && (
@@ -171,11 +166,10 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
         <section className="maker-products-section">
           <div className="maker-products-header">
             <h2 className="maker-products-title">Work by <em>{storeName}</em></h2>
-            <span className="maker-products-count">{productCount} {productCount === 1 ? "piece" : "pieces"}</span>
           </div>
           <div className="maker-products-grid">
             {products.map((p: any) => (
-              <Link key={p.id || p.slug} href={`/shop/${p.slug}`} className="maker-product-card">
+              <Link key={p.id || p.slug} href={`/lifestyle/${p.slug}`} className="maker-product-card">
                 <div className="maker-product-img">
                   {(p.imageUrl || p.image?.sourceUrl) && (
                     <Image

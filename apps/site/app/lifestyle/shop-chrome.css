@@ -9,12 +9,12 @@
      --rule where that token isn't defined)        --accent → --ochre
      --surface → --paper-deep     --surface-raised → --paper
      --shadow-plate → --shadow-card
-   Mounted once from app/shop/layout.tsx (ShopHeader/ShopFooter) around
-   every /shop route — this is the ONLY header/footer any page under /shop
+   Mounted once from app/lifestyle/layout.tsx (ShopHeader/ShopFooter) around
+   every /lifestyle route — this is the ONLY header/footer any page under /lifestyle
    renders; the sitewide Header.tsx returns null and ConditionalFooter.tsx
-   excludes /shop entirely (see each file's own comment). Nothing here
+   excludes /lifestyle entirely (see each file's own comment). Nothing here
    should ever be scoped to the archive page alone — every class in this
-   file is real chrome shared by every /shop/* route.
+   file is real chrome shared by every /lifestyle/* route.
    ============================================================ */
 
 /* ── TICKER — reuses the shared sitewide .ticker-wrap/.ticker-track
@@ -41,9 +41,15 @@
   .masthead-row { padding: 11px 20px; gap: 14px; }
 }
 
-.mast-left { display: flex; align-items: center; gap: 28px; min-width: 0; }
+.mast-left { display: flex; align-items: center; min-width: 0; }
 .mast-logo { display: flex; align-items: center; flex-shrink: 0; }
 .mast-logo-img { display: block; height: 38px; width: auto; }
+
+/* Right-hand cluster: text nav, Categories menu, then the icon group —
+   kept as one flex group (rather than three siblings of .masthead-row) so
+   `justify-content: space-between` on .masthead-row only ever splits it
+   from .mast-left, and the nav/categories/icons stay visually adjacent. */
+.mast-right { display: flex; align-items: center; gap: 28px; }
 
 .mast-nav { display: flex; align-items: center; gap: 22px; }
 .mast-nav-link {
@@ -59,6 +65,7 @@
 
 .mast-icons { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
 @media (max-width: 640px) { .mast-icons { gap: 12px; } }
+@media (max-width: 900px) { .mast-right { gap: 16px; } }
 
 .mast-cat { position: relative; }
 .mast-cat-btn {
@@ -130,7 +137,14 @@
 
 .mast-filter { position: relative; display: none; }
 @media (max-width: 900px) { .mast-filter { display: block; } }
-.mast-filter summary { list-style: none; cursor: pointer; }
+.mast-filter summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
 .mast-filter summary::-webkit-details-marker { display: none; }
 .mast-filter[open] summary { color: var(--ochre); }
 .mast-filter[open] .mast-cat-panel { opacity: 1; visibility: visible; transform: none; }

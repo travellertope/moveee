@@ -130,7 +130,7 @@ export function ShopFilterProvider({
   }, [categories, activeCategorySlug, availableLocations, priceBands, filtered.length]);
 
   // Reset any leftover filters from a previous shop page the moment a new
-  // one mounts (e.g. navigating from /shop to /shop/category/ceramics) —
+  // one mounts (e.g. navigating from /lifestyle to /lifestyle/category/ceramics) —
   // otherwise a search term or filter picked earlier would silently keep
   // narrowing a page the visitor never applied it to.
   useEffect(() => {

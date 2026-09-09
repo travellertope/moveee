@@ -158,7 +158,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
             <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"  onClose={onClose} />
             <ResultSection label="Quotes"            items={results!.quotes}     basePath="/quotes"    onClose={onClose} />
             <ResultSection label="Culture Directory" items={results!.directory}  basePath="/directory" onClose={onClose} />
-            <ResultSection label="Shop"              items={results!.products}   basePath="/shop"      isProduct onClose={onClose} />
+            <ResultSection label="Shop"              items={results!.products}   basePath="/lifestyle"      isProduct onClose={onClose} />
           </div>
         )}
 

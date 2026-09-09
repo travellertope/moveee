@@ -28,20 +28,20 @@ export async function generateMetadata({
 
   if (!product) return {};
 
-  const title = `${product.name} — Moveee Magazine Shop`;
+  const title = `${product.name} | The Moveee Lifestyle`;
   const description = product.shortDescription
     ? product.shortDescription.replace(/<[^>]*>/g, "").trim().slice(0, 155)
-    : `${product.name} — curated by Moveee Magazine.`;
+    : `${product.name} — curated by The Moveee Lifestyle.`;
   const image = product.image?.sourceUrl ?? "/og-fallback.png";
 
   return {
     title: { absolute: title },
     description,
-    alternates: { canonical: `https://themoveee.com/shop/${slug}` },
+    alternates: { canonical: `https://themoveee.com/lifestyle/${slug}` },
     openGraph: {
       title,
       description,
-      url: `https://themoveee.com/shop/${slug}`,
+      url: `https://themoveee.com/lifestyle/${slug}`,
       siteName: "Moveee Magazine",
       type: "website",
       images: [{ url: image, width: 1200, height: 630, alt: product.name }],
@@ -252,10 +252,24 @@ export default async function ProductPage({
         </>
       ),
     }] : []),
+    // Reviews — moved into the accordion (was a standalone full-width section
+    // below the Process block) so it sits alongside Description/Materials/
+    // About the Maker as one more right-column tab. Always included — the
+    // component itself renders its own zero-review empty state.
+    {
+      title: "Reviews",
+      content: (
+        <ProductReviews
+          productId={parseInt(product.databaseId)}
+          averageRating={parseFloat(product.averageRating) || 0}
+          reviewCount={product.reviewCount || 0}
+        />
+      ),
+    },
   ];
 
   const firstCat = product.productCategories?.nodes?.[0];
-  const productUrl = `https://themoveee.com/shop/${slug}`;
+  const productUrl = `https://themoveee.com/lifestyle/${slug}`;
   const productPrice = product.price?.replace(/<[^>]*>/g, "").replace(/[^0-9.]/g, "") || "";
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -281,8 +295,8 @@ export default async function ProductPage({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
-      { "@type": "ListItem", position: 2, name: "Shop", item: "https://themoveee.com/shop" },
-      ...(firstCat ? [{ "@type": "ListItem", position: 3, name: firstCat.name, item: `https://themoveee.com/shop/category/${firstCat.slug}` }] : []),
+      { "@type": "ListItem", position: 2, name: "The Moveee Lifestyle", item: "https://themoveee.com/lifestyle" },
+      ...(firstCat ? [{ "@type": "ListItem", position: 3, name: firstCat.name, item: `https://themoveee.com/lifestyle/category/${firstCat.slug}` }] : []),
       { "@type": "ListItem", position: firstCat ? 4 : 3, name: product.name, item: productUrl },
     ],
   };
@@ -388,25 +402,18 @@ export default async function ProductPage({
         </section>
       )}
 
-      {/* ── REVIEWS ── */}
-      <ProductReviews
-        productId={parseInt(product.databaseId)}
-        averageRating={parseFloat(product.averageRating) || 0}
-        reviewCount={product.reviewCount || 0}
-      />
-
       {/* ── MORE FROM THIS CATEGORY ── */}
       {relatedProducts.length > 0 && (
         <section className="sp-more-from">
           <div className="sp-more-from-header">
             <h2>More from <em>{firstCat?.name ?? "the Shop"}</em></h2>
-            <Link href={firstCat ? `/shop/category/${firstCat.slug}` : "/shop"}>
+            <Link href={firstCat ? `/lifestyle/category/${firstCat.slug}` : "/lifestyle"}>
               View all →
             </Link>
           </div>
           <div className="sp-more-from-grid">
             {relatedProducts.map((p: any) => (
-              <Link key={p.id} href={`/shop/${p.slug}`} className="mini-product">
+              <Link key={p.id} href={`/lifestyle/${p.slug}`} className="mini-product">
                 <div className="img">
                   {p.image?.sourceUrl ? (
                     <Image
