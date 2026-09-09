@@ -1967,6 +1967,15 @@ out to `https://themoveee.com` (Moveee Magazine's own homepage, not back into an
 route). Not visually verified in a browser — no `node_modules` installed this session. Verified
 via a paren/brace-balance check on `ShopHeader.tsx`.
 
+### Shop Magazine bridge — "Explore Origins Journal" link removed (September 2026)
+
+The `.sl-bridge` ("From The Magazine" band, between the hero and the product grid) used to show
+two CTAs side by side — "Read The Edit →" (`/magazine`) and "Explore Origins Journal →"
+(`/journeys`). The second link was removed at explicit user request; `.sl-bridge-links` now holds
+just the one CTA (its CSS is a plain flex row with `gap`, so it degrades cleanly to a single
+child with no layout changes needed). Not visually verified in a browser — no `node_modules`
+installed this session. Verified via a paren/brace-balance check on `ShopArchiveWrapper.tsx`.
+
 ### Shop header — Categories dropdown removed (September 2026)
 
 `ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon

@@ -203,9 +203,6 @@ export default async function ShopArchiveWrapper({
               <Link href="/magazine" className="sl-bridge-cta">
                 Read The Edit →
               </Link>
-              <Link href="/journeys" className="sl-bridge-cta">
-                Explore Origins Journal →
-              </Link>
             </div>
           </div>
         </div>
