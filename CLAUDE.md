@@ -2024,6 +2024,36 @@ Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
 Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
 brace-balance check on `shop-chrome.css` (58/58).
 
+### Shop masthead — nav moved next to the icons + a real Categories menu re-added (September 2026, follow-up)
+
+Two more explicit user changes to `ShopHeader.tsx`/`shop-chrome.css`, on top of the pass directly
+above:
+
+- **`.mast-nav` moved out of `.mast-left`** (which now holds only the logo) **into a new
+  `.mast-right` flex group** that also wraps the Categories menu and `.mast-icons` — since
+  `.masthead-row` is `justify-content: space-between` with exactly two children (`.mast-left` and
+  `.mast-right`), the nav now sits immediately to the left of the icon cluster on the far right of
+  the row, instead of next to the logo on the far left.
+- **A real "Categories" menu is back**, distinct from the destination nav next to it — this is
+  **not** the same dropdown "Shop header — Categories dropdown removed" (above) took out; that
+  removal was because the old dropdown duplicated `ShopSearchModal`'s category *filter*.
+  `ShopSearchModal` still owns full search/filtering; this new menu is a lightweight
+  category-*jump* shortcut (plain links to `/shop/category/{slug}`, no filter-bus state). Rather
+  than write new CSS, it reuses the `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  rules that were left in `shop-chrome.css` "unused, kept in case needed again" from that same
+  earlier removal — desktop gets the hover dropdown (`.mast-cat`), `<900px` swaps to a `<details>`
+  disclosure (`.mast-filter`) via the same breakpoint `.mast-nav` already hides at. `ShopHeader.tsx`
+  now also reads `categories` off the existing `/api/shop/categories` response (previously only
+  `proDiscountPercent` was consumed from it).
+- **New `.mast-right` CSS** — a plain flex row (`gap: 28px`, tightened to `16px` below `900px`)
+  grouping nav + categories + icons; `.mast-left` dropped its now-unneeded `gap` (it only holds the
+  logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
+  CSS until this pass revived it).
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
+`ShopHeader.tsx`.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
