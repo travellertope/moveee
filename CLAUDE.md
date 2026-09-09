@@ -2312,6 +2312,14 @@ desktop `50px` → `24px`, the `900px` breakpoint `44px` → `20px`, the `640px`
 brand/link-column grid shrank. Not visually verified in a browser — no `node_modules` installed
 this session. Verified via a CSS brace-balance check on `shop-chrome.css` (63/63).
 
+**Follow-up, September 2026 — `padding-top: 40px` added directly to the outer `.lfs-foot`
+element** (not `.lfs-foot-inner`), per explicit user request naming `.lfs-foot` specifically.
+`.lfs-foot` previously had no padding of its own at all (just `background`/`border-top`) — all
+spacing lived on the nested `.lfs-foot-inner` (see directly above). This adds a second, additive
+40px gap above `.lfs-foot-inner`'s own top padding — the two are independent, not a replacement
+of one by the other. If the footer's total top gap ever looks larger than expected, check both
+rules, not just `.lfs-foot-inner`.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
@@ -4010,6 +4018,15 @@ to 56px — 28px reads as noticeably more gap on a short mobile viewport right u
 the same value does on desktop. Added a `@media (max-width: 640px)` override
 (`.masthead { padding-top: 14px; }`) — mobile now gets its own smaller flat value instead of
 inheriting the desktop clamp's floor.
+
+**Follow-up, September 2026 — the whole hero-to-masthead gap experiment reverted to `padding: 0`
+across every screen size, per explicit user request** ("please return it to 0px across all
+screens"). Both the `clamp(28px, 4vw, 56px)` desktop value and the `@media (max-width: 640px)`
+mobile override above are gone — `.masthead` is back to `padding: 0; text-align: center;`, its
+pre-this-session state. Documented here (rather than silently deleted) so the history of what was
+tried — add a gap, fix its mobile/desktop disproportion, then remove it entirely — isn't lost. If
+a hero-to-masthead visual separation is wanted again in the future, don't just restore the old
+clamp value blindly; it was tried twice and reverted both times.
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
 Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit

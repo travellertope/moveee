@@ -193,6 +193,7 @@
 .lfs-foot {
   background: var(--paper);
   border-top: 1px solid var(--rule-strong, var(--rule));
+  padding-top: 40px;
 }
 .lfs-foot-inner {
   max-width: 1440px;
