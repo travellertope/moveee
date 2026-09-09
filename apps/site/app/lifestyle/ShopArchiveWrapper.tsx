@@ -222,7 +222,9 @@ export default async function ShopArchiveWrapper({
       <div className="sl-member-wrap">
         <section className="sl-member">
           <div className="sl-member-left">
-            <div className="sl-member-eyebrow">Moveee Pro</div>
+            <div className="sl-member-eyebrow">
+              Moveee Pro <span className="sl-member-stat-inline">· 2,400 members and growing</span>
+            </div>
             <h3>Shop smarter, <em>save more</em></h3>
             <p>
               Upgrade to Moveee Pro for early access to new makers, exclusive
@@ -245,12 +247,6 @@ export default async function ShopArchiveWrapper({
             <Link href="/register?tier=patron" className="sl-member-cta">
               Join Moveee Pro →
             </Link>
-          </div>
-          <div className="sl-member-right">
-            <div className="sl-member-stat">
-              <div className="sl-member-stat-num">2,400</div>
-              <div className="sl-member-stat-label">Members &amp; growing</div>
-            </div>
           </div>
           <span className="sl-member-photo-credit">Photo: Gannu03 / Wikimedia Commons, CC BY-SA 4.0</span>
         </section>

@@ -1054,11 +1054,15 @@
   color: var(--ochre);
 }
 
-/* ── 10. MEMBER BAND — rounded dark card w/ a radial gold glow, not a flush strip ── */
+/* ── 10. MEMBER BAND — rounded dark card w/ a radial gold glow, not a flush strip.
+   September 2026: tightened per explicit user request — the floating "2,400
+   Members" stat card (.sl-member-right/.sl-member-stat*, now dead, kept below)
+   is gone, folded into the eyebrow line via .sl-member-stat-inline instead, and
+   the perks grid is a single tight row rather than a spacious 2×2. ── */
 .sl-member-wrap {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 72px 64px;
+  padding: 40px 64px;
 }
 .sl-member {
   position: relative;
@@ -1072,7 +1076,6 @@
     url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg/1920px-Potter_shaping_clay_on_a_traditional_manual_potter%E2%80%99s_wheel_in_India_01.jpg') center/cover;
   border-radius: 20px;
   overflow: hidden;
-  min-height: 460px;
   display: flex;
   align-items: stretch;
 }
@@ -1097,53 +1100,71 @@
 .sl-member-left {
   position: relative;
   z-index: 1;
-  flex: 0 0 60%;
-  padding: 64px;
+  flex: 1 1 auto;
+  padding: 36px 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+/* Was completely unstyled (a bare div with no CSS at all, inheriting the
+   page's default dark ink text color onto a dark photo band — effectively
+   invisible) until this pass added it a real label style, needed now that
+   it also carries the folded-in member-count stat. */
+.sl-member-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(243,236,224,.65);
+  margin-bottom: 8px;
+}
+.sl-member-stat-inline {
+  color: var(--gold);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
 .sl-member-left h3 {
   font-family: var(--font-lfs-display, var(--font-serif));
-  font-size: 42px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--paper);
-  margin: 0 0 16px;
-  line-height: 1;
+  margin: 0 0 8px;
+  line-height: 1.05;
   text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-left h3 em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .sl-member-left > p {
   font-family: 'DM Sans', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   color: rgba(243,236,224,.85);
-  line-height: 1.6;
-  max-width: 440px;
-  margin: 0 0 36px;
+  line-height: 1.5;
+  max-width: 640px;
+  margin: 0 0 16px;
   text-shadow: 0 1px 4px rgba(0,0,0,.45);
 }
 .sl-member-perks {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px 40px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 24px;
+  margin-bottom: 18px;
 }
 .sl-mperk-icon {
-  font-size: 17px;
+  font-size: 15px;
   color: var(--ochre);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .sl-mperk-title {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--paper);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   text-shadow: 0 1px 3px rgba(0,0,0,.45);
 }
 .sl-mperk-desc {
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(243,236,224,.7);
   line-height: 1.4;
   text-shadow: 0 1px 3px rgba(0,0,0,.4);
@@ -1155,7 +1176,7 @@
   background: var(--ochre);
   color: var(--paper);
   border-radius: 100px;
-  padding: 14px 28px;
+  padding: 10px 20px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   letter-spacing: .12em;
@@ -1165,6 +1186,9 @@
   transition: background .2s;
 }
 .sl-member-cta:hover { background: #9a3918; }
+/* Dead — the floating stat card was removed from the band; the member count
+   now lives inline in .sl-member-eyebrow via .sl-member-stat-inline above.
+   Kept in case a separate stat card is wanted again later. */
 .sl-member-right {
   position: relative;
   z-index: 1;
@@ -1297,9 +1321,8 @@
   .sl-featured-grid { grid-template-columns: 1fr 1fr; }
   .sl-cat-grid { grid-template-columns: repeat(2, 1fr); }
   .sl-makers-grid { grid-template-columns: 1fr 1fr; }
-  .sl-member { flex-direction: column; }
-  .sl-member-left { flex: none; width: 100%; padding: 56px 40px; }
-  .sl-member-right { flex: none; width: 100%; min-height: 200px; padding: 32px; }
+  .sl-member-left { padding: 32px 32px; }
+  .sl-member-perks { grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
   .sl-origins { flex-direction: column; min-height: auto; }
   .sl-origins-inner { flex-direction: column; padding: 0 24px; }
   .sl-origins-img { flex: none; min-height: 280px; }
@@ -1311,7 +1334,7 @@
   .sl-cat-inner,
   .sl-makers-inner { padding-left: 24px; padding-right: 24px; }
   .sl-head { padding-left: 0; padding-right: 0; }
-  .sl-member-wrap { padding: 56px 24px; }
+  .sl-member-wrap { padding: 28px 24px; }
   .sl-trust-line,
   .sl-bridge-inner { padding-left: 24px; padding-right: 24px; }
   .sl-filter-row1,
@@ -1371,11 +1394,10 @@
   .sl-mcard-img { height: 110px; }
 
   /* Member band */
-  .sl-member-wrap { padding: 40px 16px; }
+  .sl-member-wrap { padding: 24px 16px; }
   .sl-member { border-radius: 16px; }
-  .sl-member-left { padding: 40px 20px; }
-  .sl-member-right { padding: 28px 20px; min-height: 200px; }
-  .sl-member-perks { grid-template-columns: 1fr; gap: 16px; }
+  .sl-member-left { padding: 28px 20px; }
+  .sl-member-perks { grid-template-columns: 1fr; gap: 12px; }
   .sl-member-cta { align-self: stretch; justify-content: center; }
 
   /* Origins bridge */

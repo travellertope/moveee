@@ -2002,6 +2002,38 @@ Not visually verified in a browser — no `node_modules` installed this session.
 paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
 `makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
 
+### Email-capture + Moveee Pro bands tightened (September 2026)
+
+Mockup-first (Artifact, before/after comparison at real content/widths) — both bands sat far
+taller than their content needed, per explicit user request. Implemented in
+`ShopArchiveWrapper.tsx` + `shop-lifestyle.css` (`.lfs-email*`) + `shop.css` (`.sl-member*`):
+
+- **Email band** (`.lfs-email-inner`) — vertical padding cut `56px`→`22px` (900px breakpoint
+  `40px`→`20px`, 640px `40px`→`20px`); heading `clamp(24–32px)`→`clamp(17–20px)`; form input/button
+  padding trimmed to match. Copy/layout unchanged, only sizing.
+- **Moveee Pro band** (`.sl-member*`) — the floating "2,400 Members & growing" stat card
+  (`.sl-member-right`/`.sl-member-stat*`) is **removed from the JSX**, its number folded straight
+  into the eyebrow line instead via a new `.sl-member-stat-inline` span ("Moveee Pro · 2,400
+  members and growing") — CSS for the old stat card is left in place, unused, per this file's
+  usual "kept in case needed again" convention. `.sl-member-left` dropped its `flex: 0 0 60%` split
+  (now `flex: 1 1 auto`, full width) since there's no right column left to share space with.
+  `.sl-member`'s `min-height: 460px` was removed so the card sizes to its (now much shorter)
+  content instead of a fixed floor. `.sl-member-wrap` padding `72px`→`40px` (900px `56px`→`28px`,
+  640px `40px`→`24px`); `.sl-member-left` padding `64px`→`36px 44px`; heading `42px`→`26px`; body
+  copy `16px`→`14px`; the perks grid went from a spacious 2×2 (`20px 40px` gap) to one tight row of
+  4 (`repeat(4, 1fr)`, `8px 24px` gap, dropping to 2-up at 900px and 1-up at 640px, same as before);
+  every title→sub→perks→CTA margin was roughly halved; CTA padding `14px 28px`→`10px 20px`.
+- **Bonus fix, same pass**: `.sl-member-eyebrow` ("Moveee Pro") had **zero CSS anywhere in the
+  codebase** — a bare, unstyled `<div>` inheriting the page's default dark ink text color onto a
+  dark photo band, so it rendered at near-invisible contrast. Since this pass was already adding
+  real content to that element (the folded-in member count), it got a real style too: mono
+  uppercase label, `rgba(243,236,224,.65)`. **If a similar low-contrast/invisible-text report ever
+  comes up on a dark band, grep for the class first** — an element with no matching CSS rule
+  anywhere is exactly this bug, not a color-token mismatch.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+  brace-balance checks (`shop.css` 612/612, `shop-lifestyle.css` 75/75) and a paren/brace-balance
+  check on `ShopArchiveWrapper.tsx`.
+
 ### Lifestyle product grid — "Recent" label + divider removed, hero-to-grid gap tightened (September 2026)
 
 Per explicit user request, so a glimpse of the grid shows within the hero's own viewport height:
