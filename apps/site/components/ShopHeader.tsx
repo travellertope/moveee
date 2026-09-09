@@ -10,23 +10,25 @@ import ShopSearchModal from "./ShopSearchModal";
 const CONNECT_URL = "https://web.themoveee.com";
 
 // The Moveee Lifestyle's own standalone masthead — ticker + logo + a
-// right-hand cluster (text nav, Categories menu, search/account/bag icons)
-// — rebuilt verbatim from the approved identity mockup
-// (moveee-lifestyle-identity.html), then reworked (September 2026) to move
-// the text nav next to the icon group and reintroduce a dedicated
-// Categories menu (desktop hover dropdown / mobile <details> disclosure —
-// see .mast-cat/.mast-filter in shop-chrome.css). Mounted once from
-// app/lifestyle/layout.tsx around every /lifestyle route, replacing the sitewide
-// floating pill entirely (Header.tsx returns null on /lifestyle paths — see its
-// own comment). Real data throughout: live cart count, a session-aware
-// account link, real fetched product categories. ShopSearchModal (opened by
-// the search icon) still owns full search + price/material/etc. facets —
-// this menu is a lightweight category-jump shortcut, not a duplicate of it.
-// The .mast-nav destination list (The Edit, Magazine) is deliberately short
-// and hand-picked, not auto-derived from anything — Shop/Makers were dropped
-// per explicit user request (Shop is already the current page; Makers isn't
-// a shop destination) and Magazine links out to the Moveee Magazine
-// homepage rather than back into /lifestyle.
+// left-hand Categories menu, then a right-hand cluster (text nav,
+// search/account/bag icons) — rebuilt verbatim from the approved identity
+// mockup (moveee-lifestyle-identity.html), then reworked (September 2026)
+// to move the text nav next to the icon group, and again (same month) to
+// move Categories to a plain inline link list beside the logo instead of a
+// hover dropdown/mobile <details> disclosure — the old .mast-cat/.mast-filter
+// dropdown markup is gone; Categories now just reuses .mast-nav-link styling
+// like the right-hand nav does. Mounted once from app/lifestyle/layout.tsx
+// around every /lifestyle route, replacing the sitewide floating pill
+// entirely (Header.tsx returns null on /lifestyle paths — see its own
+// comment). Real data throughout: live cart count, a session-aware account
+// link, real fetched product categories. ShopSearchModal (opened by the
+// search icon) still owns full search + price/material/etc. facets — this
+// menu is a lightweight category-jump shortcut, not a duplicate of it.
+// The right-hand .mast-nav destination list (The Edit, Magazine) is
+// deliberately short and hand-picked, not auto-derived from anything —
+// Shop/Makers were dropped per explicit user request (Shop is already the
+// current page; Makers isn't a shop destination) and Magazine links out to
+// the Moveee Magazine homepage rather than back into /lifestyle.
 export default function ShopHeader() {
   const { itemCount, openDrawer } = useCart();
   const { data: session } = useSession();
@@ -81,6 +83,16 @@ export default function ShopHeader() {
                 priority
               />
             </Link>
+
+            {categories.length > 0 && (
+              <nav className="mast-nav mast-cat-nav">
+                {categories.map((c) => (
+                  <Link key={c.slug} href={`/lifestyle/category/${c.slug}`} className="mast-nav-link">
+                    {c.name}
+                  </Link>
+                ))}
+              </nav>
+            )}
           </div>
 
           <div className="mast-right">
@@ -92,43 +104,6 @@ export default function ShopHeader() {
                 Magazine
               </Link>
             </nav>
-
-            {categories.length > 0 && (
-              <>
-                <div className="mast-cat">
-                  <button className="mast-cat-btn" type="button">
-                    Categories
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </button>
-                  <div className="mast-cat-panel">
-                    {categories.map((c) => (
-                      <Link key={c.slug} href={`/lifestyle/category/${c.slug}`} className="mast-cat-item">
-                        <span className="mast-cat-lbl">{c.name}</span>
-                      </Link>
-                    ))}
-                    <Link href="/lifestyle" className="mast-cat-all">
-                      View All →
-                    </Link>
-                  </div>
-                </div>
-
-                <details className="mast-filter">
-                  <summary>Categories</summary>
-                  <div className="mast-cat-panel mast-cat-panel--right">
-                    {categories.map((c) => (
-                      <Link key={c.slug} href={`/lifestyle/category/${c.slug}`} className="mast-cat-item">
-                        <span className="mast-cat-lbl">{c.name}</span>
-                      </Link>
-                    ))}
-                    <Link href="/lifestyle" className="mast-cat-all">
-                      View All →
-                    </Link>
-                  </div>
-                </details>
-              </>
-            )}
 
             <div className="mast-icons">
               <button className="icon-btn" type="button" aria-label="Search" onClick={() => setSearchOpen(true)}>

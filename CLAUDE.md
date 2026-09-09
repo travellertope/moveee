@@ -2002,6 +2002,51 @@ Not visually verified in a browser — no `node_modules` installed this session.
 paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
 `makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
 
+### Email-capture + Moveee Pro bands tightened (September 2026)
+
+Mockup-first (Artifact, before/after comparison at real content/widths) — both bands sat far
+taller than their content needed, per explicit user request. Implemented in
+`ShopArchiveWrapper.tsx` + `shop-lifestyle.css` (`.lfs-email*`) + `shop.css` (`.sl-member*`):
+
+- **Email band** (`.lfs-email-inner`) — vertical padding cut `56px`→`22px` (900px breakpoint
+  `40px`→`20px`, 640px `40px`→`20px`); heading `clamp(24–32px)`→`clamp(17–20px)`; form input/button
+  padding trimmed to match. Copy/layout unchanged, only sizing.
+- **Moveee Pro band** (`.sl-member*`) — the floating "2,400 Members & growing" stat card
+  (`.sl-member-right`/`.sl-member-stat*`) is **removed from the JSX**, its number folded straight
+  into the eyebrow line instead via a new `.sl-member-stat-inline` span ("Moveee Pro · 2,400
+  members and growing") — CSS for the old stat card is left in place, unused, per this file's
+  usual "kept in case needed again" convention. `.sl-member-left` dropped its `flex: 0 0 60%` split
+  (now `flex: 1 1 auto`, full width) since there's no right column left to share space with.
+  `.sl-member`'s `min-height: 460px` was removed so the card sizes to its (now much shorter)
+  content instead of a fixed floor. `.sl-member-wrap` padding `72px`→`40px` (900px `56px`→`28px`,
+  640px `40px`→`24px`); `.sl-member-left` padding `64px`→`36px 44px`; heading `42px`→`26px`; body
+  copy `16px`→`14px`; the perks grid went from a spacious 2×2 (`20px 40px` gap) to one tight row of
+  4 (`repeat(4, 1fr)`, `8px 24px` gap, dropping to 2-up at 900px and 1-up at 640px, same as before);
+  every title→sub→perks→CTA margin was roughly halved; CTA padding `14px 28px`→`10px 20px`.
+- **Bonus fix, same pass**: `.sl-member-eyebrow` ("Moveee Pro") had **zero CSS anywhere in the
+  codebase** — a bare, unstyled `<div>` inheriting the page's default dark ink text color onto a
+  dark photo band, so it rendered at near-invisible contrast. Since this pass was already adding
+  real content to that element (the folded-in member count), it got a real style too: mono
+  uppercase label, `rgba(243,236,224,.65)`. **If a similar low-contrast/invisible-text report ever
+  comes up on a dark band, grep for the class first** — an element with no matching CSS rule
+  anywhere is exactly this bug, not a color-token mismatch.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+  brace-balance checks (`shop.css` 612/612, `shop-lifestyle.css` 75/75) and a paren/brace-balance
+  check on `ShopArchiveWrapper.tsx`.
+
+### Lifestyle product grid — "Recent" label + divider removed, hero-to-grid gap tightened (September 2026)
+
+Per explicit user request, so a glimpse of the grid shows within the hero's own viewport height:
+`ShopProductGrid.tsx`'s `.sl-grid-header` block (the "Recent"/active-filter label row + its
+hairline divider, directly above the grid) was removed from the JSX entirely — `isFiltered`/
+`activeLabel` props are still passed by `ShopArchiveWrapper.tsx` but no longer read inside this
+component (harmless — this repo's `tsconfig.json` doesn't enable `noUnusedParameters`). `.sl-grid`'s
+top padding was cut from `80px`/`48px` (mobile) to `24px`/`16px` — its bottom padding is unchanged,
+so the section still has its usual closing breathing room, only the gap right under the hero
+shrank. `.sl-grid-header`/`.sl-grid-label` CSS is now dead, kept per this file's usual convention.
+Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+brace-balance (612/612) and paren/brace-balance on `ShopProductGrid.tsx`.
+
 ### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
 
 Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
@@ -2214,6 +2259,27 @@ above:
   grouping nav + categories + icons; `.mast-left` dropped its now-unneeded `gap` (it only holds the
   logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
   CSS until this pass revived it).
+
+### Shop masthead — Categories moved beside the logo as a plain link list, not a dropdown (September 2026, second follow-up)
+
+**Supersedes the dropdown/`<details>` treatment from the pass directly above.** Per explicit user
+direction, Categories moved (1) to a distinct block right beside the logo on the left, and (2)
+from a hover dropdown/mobile `<details>` disclosure to a normal inline link list — the same shape
+as the right-hand `.mast-nav` (Edit/Magazine), not a popover.
+
+- **`ShopHeader.tsx`**: the `<div className="mast-cat">`/`<details className="mast-filter">` pair
+  (in `.mast-right`) was replaced with `<nav className="mast-nav mast-cat-nav">` rendered inside
+  `.mast-left`, right after the logo — one plain `.mast-nav-link` per fetched category, no panel,
+  no "View All →" trailer.
+- **`shop-chrome.css`**: `.mast-left` gained `gap: 26px` (previously only held the logo, no gap
+  needed); new `.mast-cat-nav` just adds horizontal scroll-without-a-visible-scrollbar in case the
+  category list is long, reusing `.mast-nav`'s existing font/hover/900px-hide styling wholesale
+  rather than defining new link styles. `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  are dead again (marked as such in the CSS, kept per this file's usual "kept in case needed
+  again" convention) — Categories no longer uses any of them.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via a
+  CSS brace-balance check on `shop-chrome.css` (63/63) and a paren/brace-balance check on
+  `ShopHeader.tsx`.
 
 Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
 brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
@@ -3894,6 +3960,12 @@ as every other pass in this file.
 **Follow-up, same month — masthead `<h1>` size reduced.** `.masthead h1`'s `font-size` clamp
 (`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
 a straightforward size-only tweak, no layout/structure change.
+
+**Follow-up, same month — leftover top padding removed.** `.masthead`'s own `padding` was still
+`clamp(14px, 2.5vw, 28px) 0 0` (padding-bottom already `0`) — a leftover from before the earlier
+"all homepage section spacing halved" pass, which halved every *other* section's padding but
+missed this one since it's set directly on `.masthead`, not inherited from `.arc-section`.
+User-reported as unnecessary space at the top of the header/hero area — fixed to `padding: 0`.
 
 ### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
 

@@ -24,12 +24,6 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
   return (
     <section id="lfs-grid" className="sl-grid">
       <div className="sl-grid-inner">
-        <div className="sl-grid-header">
-          <div className="sl-grid-label">
-            {isFiltered ? activeLabel : "Recent"}
-          </div>
-        </div>
-
         {filtered.length === 0 ? (
           <div className="sl-empty">
             <p className="sl-empty-text">No products found.</p>
