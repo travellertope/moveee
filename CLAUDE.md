@@ -1947,6 +1947,16 @@ the one nearest the text** — a radial-plus-single-direction-linear combo can l
 Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a
 browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+### Shop hero — height reduced (September 2026)
+
+`.lfs-hero` shrunk per explicit user request: `aspect-ratio` `16/7` → `16/9`, `min-height`
+`420px` → `320px`, `max-height` `600px` → `460px`; the mobile (`max-width: 640px`) override's
+`max-height` went `560px` → `420px` (its `aspect-ratio: 4/5` portrait ratio was left as-is —
+only the cap shrunk). The scrim/gradient fix documented in "Shop hero — washed-out 'white gap'"
+above is unaffected — it targets coverage, not the section's size. Verified via a CSS
+brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
+`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
 ### Shop header — Categories dropdown removed (September 2026)
 
 `ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
