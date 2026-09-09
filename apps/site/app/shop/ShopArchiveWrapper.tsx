@@ -18,7 +18,6 @@ import { ShopFilterProvider } from "./components/ShopFilterContext";
 import { getShopCountryParam } from "./components/shopCountry";
 import ShopProductGrid from "./components/ShopProductGrid";
 import SubscribeForm from "@/components/SubscribeForm";
-import { sanitizeHtml } from "@/lib/sanitize";
 import "./shop.css";
 import "./shop-lifestyle.css";
 
@@ -151,15 +150,6 @@ export default async function ShopArchiveWrapper({
   const featuredProducts = products.filter((p: any) => p.featured);
   const heroPick = (featuredProducts.length > 0 ? featuredProducts : products)[0];
 
-  const makerStoryHtml: string = heroPick?.moveeeMeta?.makerStory
-    ? sanitizeHtml(heroPick.moveeeMeta.makerStory)
-    : "";
-  const makerBio: string = heroPick?.vendorProfile?.bio || "";
-  const makerName: string = vendorName(heroPick || {});
-  const makerLocation = [heroPick?.vendorProfile?.city, heroPick?.vendorProfile?.country]
-    .filter(Boolean)
-    .join(", ");
-
   return (
     <>
       {/* No header-clearance spacer and no inline ticker here anymore — the
@@ -245,43 +235,6 @@ export default async function ShopArchiveWrapper({
           </div>
         </div>
       </section>
-
-      {/* ── MAKER STORY — spotlights the current hero pick's own maker;
-          deliberately not a bulk grid, see CLAUDE.md's "Shop by Category +
-          Meet the Makers sections removed" for why that was retired. ── */}
-      {heroPick && makerName && (
-        <section className="lfs-maker">
-          <div className="lfs-maker-inner">
-            <div className="lfs-maker-media">
-              {heroPick.vendorProfile?.avatarUrl ? (
-                <Image
-                  src={heroPick.vendorProfile.avatarUrl}
-                  alt={makerName}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-              ) : (
-                <div className="lfs-maker-media-fallback">{makerName.charAt(0)}</div>
-              )}
-            </div>
-            <div className="lfs-maker-body">
-              <span className="lfs-maker-eyebrow">Meet the Maker</span>
-              <h3>{makerName}</h3>
-              {makerLocation && <p className="lfs-maker-loc">{makerLocation}</p>}
-              {makerStoryHtml ? (
-                <div className="lfs-maker-story" dangerouslySetInnerHTML={{ __html: makerStoryHtml }} />
-              ) : makerBio ? (
-                <p className="lfs-maker-story">{makerBio}</p>
-              ) : null}
-              {heroPick.vendorProfile?.slug && (
-                <Link href={`/shop/brand/${heroPick.vendorProfile.slug}`} className="lfs-maker-link">
-                  Shop {makerName} →
-                </Link>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── 6. MOVEEE PRO MEMBER BAND — rounded dark card, not a flush full-bleed strip ── */}
       <div className="sl-member-wrap">

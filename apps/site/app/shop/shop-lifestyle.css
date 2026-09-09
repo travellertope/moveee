@@ -206,34 +206,36 @@
    .sl-grid-label) — a single override, not a redefinition of the rule. */
 .sl-grid-label { font-family: var(--font-lfs-display, var(--font-serif)); }
 
-/* ── EMAIL CAPTURE ── */
+/* ── EMAIL CAPTURE — full-bleed accent band, verbatim from the mockup's
+   .email-capture (ochre background, white copy, white pill form) — this
+   was previously a plain paper-deep/dark-text section, which didn't match
+   the mockup's accent-band treatment at all. ── */
 .lfs-email {
-  background: var(--paper-deep);
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
+  background: var(--ochre);
 }
 .lfs-email-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 48px 64px;
+  padding: 56px 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 32px;
 }
 .lfs-email-copy h3 {
   font-family: var(--font-lfs-display, var(--font-serif));
   font-weight: 800;
-  font-size: 24px;
-  color: var(--ink);
+  font-size: clamp(24px, 3.2vw, 32px);
+  color: #fff;
+  max-width: 16ch;
   margin: 0 0 6px;
 }
 .lfs-email-copy p {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--mute);
-  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 40ch;
   margin: 0;
 }
 .lfs-email-form {
@@ -244,7 +246,6 @@
   padding: 4px;
   min-width: 340px;
   flex: 0 1 420px;
-  border: 1px solid var(--rule);
 }
 .lfs-email-input {
   flex: 1;
