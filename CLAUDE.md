@@ -2304,6 +2304,14 @@ Not visually verified in a browser — no `node_modules` installed this session.
 brace-balance check on `shop.css` (612/612) and a paren/brace-balance check on
 `ShopArchiveWrapper.tsx` (50/50 parens, 55/55 braces).
 
+### Shop footer — top padding reduced (September 2026)
+
+`ShopFooter.tsx`'s `.lfs-foot-inner` top padding was cut per explicit user request:
+desktop `50px` → `24px`, the `900px` breakpoint `44px` → `20px`, the `640px` breakpoint `36px` →
+`18px` — bottom/horizontal padding at every breakpoint is unchanged, only the gap above the
+brand/link-column grid shrank. Not visually verified in a browser — no `node_modules` installed
+this session. Verified via a CSS brace-balance check on `shop-chrome.css` (63/63).
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
 
 **Superseded by the September 2026 identity rebuild directly above for the archive page's own
