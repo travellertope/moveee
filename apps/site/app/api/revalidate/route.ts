@@ -22,7 +22,7 @@ const CONTENT_PATHS = [
   "/quotes",
   "/magazine",
   "/newsletters",
-  "/shop",
+  "/lifestyle",
 ];
 
 export async function POST(req: NextRequest) {

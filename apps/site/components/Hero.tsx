@@ -31,7 +31,7 @@ const Hero = () => {
             <Link href="/magazine" className="bg-ochre text-paper px-8 py-4 text-[11px] uppercase font-bold tracking-[0.15em] hover:bg-ochre-deep transition-all flex items-center gap-3">
               Read the Magazine <ArrowRight size={16} />
             </Link>
-            <Link href="/shop" className="border-b border-ink py-4 text-[11px] uppercase font-bold tracking-[0.15em] hover:text-ochre hover:border-ochre transition-all">
+            <Link href="/lifestyle" className="border-b border-ink py-4 text-[11px] uppercase font-bold tracking-[0.15em] hover:text-ochre hover:border-ochre transition-all">
               Shop Vetted Makers
             </Link>
           </div>

@@ -9,8 +9,8 @@ const CONNECT_URL = "https://web.themoveee.com";
 
 // The Moveee Lifestyle's own standalone footer — rebuilt verbatim from the
 // approved identity mockup (moveee-lifestyle-identity.html). Mounted once
-// from app/shop/layout.tsx around every /shop route, replacing the sitewide
-// Footer entirely (ConditionalFooter.tsx excludes /shop paths — see its own
+// from app/lifestyle/layout.tsx around every /lifestyle route, replacing the sitewide
+// Footer entirely (ConditionalFooter.tsx excludes /lifestyle paths — see its own
 // comment). Every link points at a real destination; the mockup's "Gift
 // Cards" and "Meet the Makers" links were dropped rather than kept as dead
 // links — neither has a real feature/page behind it (see CLAUDE.md's "Shop
@@ -21,7 +21,7 @@ export default function ShopFooter() {
   const { data: session } = useSession();
   const accountHref = session?.user
     ? `${CONNECT_URL}/member`
-    : `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com/shop")}`;
+    : `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com/lifestyle")}`;
 
   return (
     <footer className="lfs-foot">
@@ -42,11 +42,11 @@ export default function ShopFooter() {
           </div>
 
           <div className="lfs-foot-col">
-            <h5>Shop</h5>
+            <h5>Lifestyle</h5>
             <ul>
-              <li><Link href="/shop">Full Index</Link></li>
-              <li><Link href="/shop">New Arrivals</Link></li>
-              <li><Link href="/shop/edit">The Edit</Link></li>
+              <li><Link href="/lifestyle">Full Index</Link></li>
+              <li><Link href="/lifestyle">New Arrivals</Link></li>
+              <li><Link href="/lifestyle/edit">The Edit</Link></li>
             </ul>
           </div>
 

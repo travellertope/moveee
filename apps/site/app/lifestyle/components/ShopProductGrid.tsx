@@ -48,7 +48,7 @@ export default function ShopProductGrid({ isFiltered, activeLabel }: Props) {
               return (
                 <Link
                   key={p.id}
-                  href={`/shop/${p.slug}`}
+                  href={`/lifestyle/${p.slug}`}
                   className={`sl-pcard${outOfStock ? " sl-pcard--sold" : ""}`}
                 >
                   <div className="sl-pcard-img">

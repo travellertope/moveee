@@ -134,7 +134,7 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
           </div>
 
           <div className="maker-hero-actions">
-            <Link href={`/shop/brand/${slug}`} className="maker-hero-cta">
+            <Link href={`/lifestyle/brand/${slug}`} className="maker-hero-cta">
               Shop all products →
             </Link>
             {directorySlug && (
@@ -175,7 +175,7 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
           </div>
           <div className="maker-products-grid">
             {products.map((p: any) => (
-              <Link key={p.id || p.slug} href={`/shop/${p.slug}`} className="maker-product-card">
+              <Link key={p.id || p.slug} href={`/lifestyle/${p.slug}`} className="maker-product-card">
                 <div className="maker-product-img">
                   {(p.imageUrl || p.image?.sourceUrl) && (
                     <Image

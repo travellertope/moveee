@@ -7,7 +7,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const title = decodeURIComponent(slug).charAt(0).toUpperCase() + decodeURIComponent(slug).slice(1);
-  return { title: `Tagged: ${title} | Shop | Moveee Magazine` };
+  return { title: `Tagged: ${title} | The Moveee Lifestyle` };
 }
 
 export default async function ShopTagPage({ params }: { params: Promise<{ slug: string }> }) {

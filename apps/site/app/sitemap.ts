@@ -42,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/newsletter`,   changeFrequency: "weekly"  as const, priority: 0.8, lastModified: new Date() },
     { url: `${BASE}/newsletter/culture-drop`, changeFrequency: "weekly" as const, priority: 0.7, lastModified: new Date() },
     { url: `${BASE}/newsletter/getmelit`,     changeFrequency: "weekly" as const, priority: 0.7, lastModified: new Date() },
-    { url: `${BASE}/shop`,         changeFrequency: "daily"   as const, priority: 0.8, lastModified: new Date() },
+    { url: `${BASE}/lifestyle`,         changeFrequency: "daily"   as const, priority: 0.8, lastModified: new Date() },
     { url: `${BASE}/journeys`,     changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
     { url: `${BASE}/makers`,       changeFrequency: "weekly"  as const, priority: 0.6, lastModified: new Date() },
     { url: `${BASE}/visuals`,      changeFrequency: "monthly" as const, priority: 0.5, lastModified: new Date() },
@@ -89,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   const productUrls: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${BASE}/shop/${p.slug}`,
+    url: `${BASE}/lifestyle/${p.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,

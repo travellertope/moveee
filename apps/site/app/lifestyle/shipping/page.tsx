@@ -3,8 +3,8 @@ import "../../sections.css";
 import "../../legal.css";
 
 export const metadata = {
-  title: { absolute: "Shipping & Returns | Moveee Magazine" },
-  description: "Shipping rates, delivery timelines, and returns policy for orders from the Moveee shop.",
+  title: { absolute: "Shipping & Returns | The Moveee Lifestyle" },
+  description: "Shipping rates, delivery timelines, and returns policy for orders from The Moveee Lifestyle.",
 };
 
 export default function ShippingPage() {
@@ -56,7 +56,7 @@ export default function ShippingPage() {
         </section>
 
         <div style={{ marginTop: 40 }}>
-          <Link href="/shop" className="sec-back">← Back to Shop</Link>
+          <Link href="/lifestyle" className="sec-back">← Back to Shop</Link>
         </div>
       </div>
     </>

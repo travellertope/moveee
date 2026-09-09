@@ -16,8 +16,8 @@ const CONNECT_URL = "https://web.themoveee.com";
 // the text nav next to the icon group and reintroduce a dedicated
 // Categories menu (desktop hover dropdown / mobile <details> disclosure —
 // see .mast-cat/.mast-filter in shop-chrome.css). Mounted once from
-// app/shop/layout.tsx around every /shop route, replacing the sitewide
-// floating pill entirely (Header.tsx returns null on /shop paths — see its
+// app/lifestyle/layout.tsx around every /lifestyle route, replacing the sitewide
+// floating pill entirely (Header.tsx returns null on /lifestyle paths — see its
 // own comment). Real data throughout: live cart count, a session-aware
 // account link, real fetched product categories. ShopSearchModal (opened by
 // the search icon) still owns full search + price/material/etc. facets —
@@ -26,7 +26,7 @@ const CONNECT_URL = "https://web.themoveee.com";
 // and hand-picked, not auto-derived from anything — Shop/Makers were dropped
 // per explicit user request (Shop is already the current page; Makers isn't
 // a shop destination) and Magazine links out to the Moveee Magazine
-// homepage rather than back into /shop.
+// homepage rather than back into /lifestyle.
 export default function ShopHeader() {
   const { itemCount, openDrawer } = useCart();
   const { data: session } = useSession();
@@ -51,7 +51,7 @@ export default function ShopHeader() {
 
   const accountHref = session?.user
     ? `${CONNECT_URL}/member`
-    : `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com/shop")}`;
+    : `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com/lifestyle")}`;
 
   return (
     <>
@@ -71,7 +71,7 @@ export default function ShopHeader() {
       <div className="masthead">
         <div className="masthead-row">
           <div className="mast-left">
-            <Link href="/shop" className="mast-logo">
+            <Link href="/lifestyle" className="mast-logo">
               <Image
                 src="/logo-lifestyle-black.png"
                 alt="Moveee Lifestyle"
@@ -85,7 +85,7 @@ export default function ShopHeader() {
 
           <div className="mast-right">
             <nav className="mast-nav">
-              <Link href="/shop/edit" className="mast-nav-link">
+              <Link href="/lifestyle/edit" className="mast-nav-link">
                 The Edit
               </Link>
               <Link href="https://themoveee.com" className="mast-nav-link">
@@ -104,11 +104,11 @@ export default function ShopHeader() {
                   </button>
                   <div className="mast-cat-panel">
                     {categories.map((c) => (
-                      <Link key={c.slug} href={`/shop/category/${c.slug}`} className="mast-cat-item">
+                      <Link key={c.slug} href={`/lifestyle/category/${c.slug}`} className="mast-cat-item">
                         <span className="mast-cat-lbl">{c.name}</span>
                       </Link>
                     ))}
-                    <Link href="/shop" className="mast-cat-all">
+                    <Link href="/lifestyle" className="mast-cat-all">
                       View All →
                     </Link>
                   </div>
@@ -118,11 +118,11 @@ export default function ShopHeader() {
                   <summary>Categories</summary>
                   <div className="mast-cat-panel mast-cat-panel--right">
                     {categories.map((c) => (
-                      <Link key={c.slug} href={`/shop/category/${c.slug}`} className="mast-cat-item">
+                      <Link key={c.slug} href={`/lifestyle/category/${c.slug}`} className="mast-cat-item">
                         <span className="mast-cat-lbl">{c.name}</span>
                       </Link>
                     ))}
-                    <Link href="/shop" className="mast-cat-all">
+                    <Link href="/lifestyle" className="mast-cat-all">
                       View All →
                     </Link>
                   </div>

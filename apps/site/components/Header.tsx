@@ -32,13 +32,13 @@ const Header = () => {
   const pathname = usePathname();
   const active = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
-  // The Moveee Lifestyle (/shop) is now its own standalone mini-site — own
+  // The Moveee Lifestyle (/lifestyle) is now its own standalone mini-site — own
   // masthead/ticker/nav and footer (ShopHeader.tsx/ShopFooter.tsx, rendered
-  // from app/shop/layout.tsx), same shape as The Moveee Literary below. The
-  // sitewide floating pill has no role on any /shop route at all anymore —
+  // from app/lifestyle/layout.tsx), same shape as The Moveee Literary below. The
+  // sitewide floating pill has no role on any /lifestyle route at all anymore —
   // this used to only swap the wordmark and hand off to a shop-specific
   // search modal; both of those now live inside ShopHeader.tsx instead.
-  const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
+  const isLifestylePage = pathname === "/lifestyle" || pathname.startsWith("/lifestyle/");
   const isMakersPage = pathname === "/makers" || pathname.startsWith("/makers/");
   // The Moveee Literary is its own standalone mini-site with its own
   // masthead, section nav, and footer (LiteraryMasthead.tsx/LiteraryFooter.tsx,
@@ -69,7 +69,7 @@ const Header = () => {
   // `[data-header-zone="dark"]` element on the current page each time the
   // route changes (not just `.hero-full` — any page's dark first section,
   // e.g. .ar-hero on an article, .sr-hero on a series landing page,
-  // .sl-trust on /shop, opts in the same way) and, on every scroll tick,
+  // .sl-trust on /lifestyle, opts in the same way) and, on every scroll tick,
   // checks whether the header's own vertical position currently falls
   // inside ANY of them — so the header stays transparent (with light
   // logo/icon colours) for as long as it's floating over a dark zone,
@@ -237,11 +237,11 @@ const Header = () => {
     .filter(Boolean)
     .join(" ");
 
-  // The Moveee Literary and The Moveee Lifestyle (/shop) both render their
+  // The Moveee Literary and The Moveee Lifestyle (/lifestyle) both render their
   // own standalone masthead/nav/footer (see the comments above) — every
   // hook above still runs unconditionally (Rules of Hooks), only the
   // render is skipped.
-  if (isLiteraryPage || isShopPage) return null;
+  if (isLiteraryPage || isLifestylePage) return null;
 
   return (
     <>
@@ -312,18 +312,18 @@ const Header = () => {
                 <a href={`${CONNECT_URL}/events`}>Events</a>
                 <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
                 <Link href="/literary" data-active={active("/literary") || undefined}>The Moveee Literary</Link>
-                <Link href="/shop" data-active={active("/shop") || undefined}>Shop</Link>
+                <Link href="/lifestyle" data-active={active("/lifestyle") || undefined}>The Moveee Lifestyle</Link>
                 <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
               </nav>
             </div>
 
             {/* Column 2 — featured product */}
             <div>
-              <p className="menu-col-label">From the Shop</p>
+              <p className="menu-col-label">From The Moveee Lifestyle</p>
               {featuredLoading ? (
                 <div className="menu-feature-card menu-feature-card--loading" />
               ) : featuredProduct ? (
-                <Link href={`/shop/${featuredProduct.slug}`} className="menu-feature-card" onClick={() => setMenuOpen(false)}>
+                <Link href={`/lifestyle/${featuredProduct.slug}`} className="menu-feature-card" onClick={() => setMenuOpen(false)}>
                   <div className="menu-feature-photo">
                     {featuredProduct.image && <img src={featuredProduct.image} alt={featuredProduct.name} />}
                   </div>
@@ -337,8 +337,8 @@ const Header = () => {
                   <span className="menu-feature-cta">Shop now →</span>
                 </Link>
               ) : (
-                <Link href="/shop" className="menu-feature-card menu-feature-card--fallback" onClick={() => setMenuOpen(false)}>
-                  <p className="menu-feature-title">Visit the Shop</p>
+                <Link href="/lifestyle" className="menu-feature-card menu-feature-card--fallback" onClick={() => setMenuOpen(false)}>
+                  <p className="menu-feature-title">Visit The Moveee Lifestyle</p>
                   <span className="menu-feature-cta">Browse all products →</span>
                 </Link>
               )}

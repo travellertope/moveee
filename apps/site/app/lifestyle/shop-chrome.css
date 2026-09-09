@@ -9,12 +9,12 @@
      --rule where that token isn't defined)        --accent → --ochre
      --surface → --paper-deep     --surface-raised → --paper
      --shadow-plate → --shadow-card
-   Mounted once from app/shop/layout.tsx (ShopHeader/ShopFooter) around
-   every /shop route — this is the ONLY header/footer any page under /shop
+   Mounted once from app/lifestyle/layout.tsx (ShopHeader/ShopFooter) around
+   every /lifestyle route — this is the ONLY header/footer any page under /lifestyle
    renders; the sitewide Header.tsx returns null and ConditionalFooter.tsx
-   excludes /shop entirely (see each file's own comment). Nothing here
+   excludes /lifestyle entirely (see each file's own comment). Nothing here
    should ever be scoped to the archive page alone — every class in this
-   file is real chrome shared by every /shop/* route.
+   file is real chrome shared by every /lifestyle/* route.
    ============================================================ */
 
 /* ── TICKER — reuses the shared sitewide .ticker-wrap/.ticker-track

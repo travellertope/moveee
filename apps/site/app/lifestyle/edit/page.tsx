@@ -7,7 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 export const revalidate = 1800;
 
 export const metadata = {
-  title: "The Edit — Curated Shop | Moveee Magazine",
+  title: "The Edit | The Moveee Lifestyle",
   description: "Products handpicked by the Moveee editorial team — straight from the stories we love.",
 };
 
@@ -37,7 +37,7 @@ export default async function MoveeeEditPage() {
             Products picked by our writers and editors — straight from the stories we tell.
             Every item is connected to a piece of culture.
           </p>
-          <Link href="/shop" className="edit-hero-link">Browse the full shop →</Link>
+          <Link href="/lifestyle" className="edit-hero-link">Browse the full shop →</Link>
         </div>
       </section>
 
@@ -47,7 +47,7 @@ export default async function MoveeeEditPage() {
             <div className="edit-empty-icon">✦</div>
             <h2>Curation coming soon</h2>
             <p>Our editors are building the first edit. Check back shortly — or browse the full shop.</p>
-            <Link href="/shop" className="edit-btn-primary">Browse the shop →</Link>
+            <Link href="/lifestyle" className="edit-btn-primary">Browse the shop →</Link>
           </div>
         </section>
       ) : (
@@ -84,7 +84,7 @@ export default async function MoveeeEditPage() {
                     <div className="edit-products-label">From this story</div>
                     <div className="edit-products-grid">
                       {products.slice(0, 4).map((p: any) => (
-                        <Link key={p.id} href={`/shop/${p.slug}`} className="edit-product-card">
+                        <Link key={p.id} href={`/lifestyle/${p.slug}`} className="edit-product-card">
                           <div className="edit-product-img">
                             {p.imageUrl ? (
                               <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="160px" />
@@ -111,7 +111,7 @@ export default async function MoveeeEditPage() {
           <h2 className="edit-browse-title">Want more?</h2>
           <p className="edit-browse-sub">Explore everything in the Moveee shop — vetted makers, all culture-connected.</p>
           <div className="edit-browse-actions">
-            <Link href="/shop" className="edit-btn-primary">Browse the shop</Link>
+            <Link href="/lifestyle" className="edit-btn-primary">Browse the shop</Link>
             <Link href="/makers" className="edit-btn-outline">Meet the makers</Link>
           </div>
         </div>

@@ -267,7 +267,7 @@
 /* ============================================================
    SEARCH OVERLAY — shared full-screen white shell, two consumers:
    SearchOverlay.tsx (generic, every non-shop page) and
-   ShopSearchModal.tsx (/shop* pages, its own filter body). These
+   ShopSearchModal.tsx (/lifestyle* pages, its own filter body). These
    rules override the older dropdown-panel-with-dark-scrim styling
    still defined in homepage.css (loaded earlier, so this wins on
    the cascade).

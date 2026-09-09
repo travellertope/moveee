@@ -153,8 +153,8 @@ export default async function ShopArchiveWrapper({
   return (
     <>
       {/* No header-clearance spacer and no inline ticker here anymore — the
-          Moveee Lifestyle's own standalone ShopHeader (app/shop/layout.tsx)
-          renders the ticker once for the whole /shop route tree, and it
+          Moveee Lifestyle's own standalone ShopHeader (app/lifestyle/layout.tsx)
+          renders the ticker once for the whole /lifestyle route tree, and it
           sits in normal document flow (not fixed/floating), so there's no
           gap left to fill. */}
 
@@ -268,7 +268,7 @@ export default async function ShopArchiveWrapper({
               Every maker in the shop has a story. We travel to document them —
               from mountain workshops to coastal studios.
             </p>
-            <Link href="/shop/edit" className="sl-origins-cta">
+            <Link href="/lifestyle/edit" className="sl-origins-cta">
               Read The Edit →
             </Link>
           </div>

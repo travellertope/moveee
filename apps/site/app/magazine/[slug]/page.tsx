@@ -417,7 +417,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                     <span className="ar-band-label">Shop the Edit</span>
                     <div className="ar-band-shop-row">
                       {(post.featuredProducts as any[]).map((p: any) => (
-                        <Link key={p.id} href={`/shop/${p.slug}`} className="ar-band-shop-item">
+                        <Link key={p.id} href={`/lifestyle/${p.slug}`} className="ar-band-shop-item">
                           <div className="ar-band-shop-img" style={{ position: "relative" }}>
                             {p.imageUrl ? (
                               <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="180px" />

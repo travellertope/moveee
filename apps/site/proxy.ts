@@ -69,7 +69,7 @@ const APP_ROUTES = new Set([
   'literary',
   'journeys',
   'newsletter',
-  'shop',
+  'lifestyle',
   'visuals',
   'makers',
   'author',
@@ -94,7 +94,6 @@ const APP_ROUTES = new Set([
 // to their canonical Next.js route.
 const ROUTE_ALIASES: Record<string, string> = {
   'tours': '/journeys',
-  'lifestyle': '/shop',
 }
 
 const EDITION_COOKIE = 'moveee-edition'
@@ -303,7 +302,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/magazine', request.url), 301)
   }
 
-  // ── Route aliases (e.g. /tours → /origins, /shop → /lifestyle) ──
+  // ── The Moveee Lifestyle renamed from /shop to /lifestyle (Sept 2026) —
+  // preserve every already-indexed /shop/* URL (archive, product, category/
+  // tag/brand, checkout, edit, shipping, order-confirmation) with a 301 to
+  // its /lifestyle equivalent, not just the bare /shop path. This has to run
+  // before ROUTE_ALIASES below, which only ever matches a single whole
+  // path segment (no internal slashes), so it can't handle nested routes
+  // like /shop/category/ceramics on its own. ──
+  if (pathname === '/shop' || pathname.startsWith('/shop/')) {
+    return NextResponse.redirect(
+      new URL(pathname.replace(/^\/shop/, '/lifestyle'), request.url),
+      301
+    )
+  }
+
+  // ── Route aliases (e.g. /tours → /journeys) ──
   const cleanPath = pathname.replace(/^\/|\/$/g, '')
   const aliasTarget = ROUTE_ALIASES[cleanPath.toLowerCase()]
   if (aliasTarget) {

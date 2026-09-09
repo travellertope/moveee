@@ -1957,6 +1957,80 @@ above is unaffected — it targets coverage, not the section's size. Verified vi
 brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
 `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
 
+### The Moveee Lifestyle route renamed from `/shop` to `/lifestyle` (September 2026)
+
+Every page under `apps/site/app/shop/` was moved (`git mv`) to `apps/site/app/lifestyle/` — archive,
+`[slug]` product detail, `category`/`tag`/`brand` archives, `checkout`, `edit`, `shipping`,
+`order-confirmation`, `layout.tsx`, and the three CSS files (`shop.css`/`shop-chrome.css`/
+`shop-lifestyle.css` — filenames themselves were **not** renamed, only their parent directory, so
+every `import "./shop.css"`-style relative import inside the moved tree still resolves with zero
+changes). Every internal `href="/shop"`/`` href={`/shop/${x}`} ``-style link across the codebase
+(`ShopHeader.tsx`, `ShopFooter.tsx`, `Header.tsx`'s menu overlay, `ConditionalFooter.tsx`,
+`CartDrawer.tsx`, `SearchOverlay.tsx`, `ShopSearchModal.tsx`, `ShopCarousel.tsx`/`ShopRail.tsx`,
+`Hero.tsx`, the homepage, `/makers/[slug]`, `/magazine/[slug]`'s Shop-the-Edit strip, `/terms`,
+and every page inside the moved tree itself) was updated to `/lifestyle`, along with
+`sitemap.ts`'s two `/shop`/`/shop/${slug}` entries and `api/revalidate/route.ts`'s revalidation
+path list. **`/api/shop/*` (the Next.js proxy API namespace — categories, reviews, etc.) was
+deliberately left unchanged** — that's an internal fetch path, not a public page route, and
+renaming it would have meant touching every `fetch("/api/shop/...")` call site for zero user-
+facing benefit; same reasoning for WordPress's own `culture/v1/shop/checkout/*` and
+`mobile/shop/products` REST namespaces (`app/api/checkout/*`, `app/api/mobile/shop/search`) —
+those are WordPress-side API paths, unrelated to this Next.js page rename.
+
+**Old `/shop/*` URLs 301-redirect to their `/lifestyle/*` equivalent** — `proxy.ts` gained a
+dedicated block (`pathname === '/shop' || pathname.startsWith('/shop/')` →
+`pathname.replace(/^\/shop/, '/lifestyle')`) placed **before** the existing `ROUTE_ALIASES` map,
+since that map only ever matches a single whole path segment with no internal slashes (confirmed
+by reading its `cleanPath.includes('/')` guard) and so could never have handled a nested URL like
+`/shop/category/ceramics` on its own — only the bare `/shop` path. The pre-existing
+`ROUTE_ALIASES['lifestyle'] = '/shop'` entry (a stale, backwards-looking alias that had been
+sitting unused, redirecting the *not-yet-real* `/lifestyle` to `/shop`) was removed along with it.
+`APP_ROUTES` now lists `'lifestyle'` instead of `'shop'`. **If a genuinely new page is ever added
+back at `/shop` for some unrelated reason, this redirect will swallow it** — check `proxy.ts`
+first if that ever comes up.
+
+**SEO/branding — every title/description under this route dropped the "| Moveee Magazine"
+suffix in favour of "The Moveee Lifestyle" as its own standalone brand**, mirroring how The
+Moveee Literary handles its own section branding (`siteName: "Moveee Magazine"` kept only for
+OG/schema.org attribution, never in the visible title) rather than the sitewide "always suffix
+with Moveee Magazine" convention documented elsewhere in this file — this section is a standalone
+mini-site with its own identity, not ordinary editorial/shop content:
+- `/lifestyle` (root): title `"The Moveee Lifestyle"` (was `"Shop | Moveee Magazine"`).
+- `/lifestyle/{slug}` (product): title `` `${product.name} | The Moveee Lifestyle` `` (was
+  `` `${product.name} — Moveee Magazine Shop` ``); the Product JSON-LD's `brand`/`seller` fallback
+  and `openGraph.siteName` were deliberately **left** as `"Moveee Magazine"` — those name the real
+  owning organization for structured data, not the visible page title, same distinction Literary
+  draws.
+- `/lifestyle/category/{slug}`, `/lifestyle/tag/{slug}`, `/lifestyle/brand/{slug}`,
+  `/lifestyle/edit`, `/lifestyle/shipping` — all switched from `"... | Shop | Moveee Magazine"`/
+  `"... | Moveee Magazine"` to `"... | The Moveee Lifestyle"`.
+- Visible UI copy updated to match: the sitewide header menu's nav link ("Shop" → "The Moveee
+  Lifestyle", matching how "The Moveee Literary" is written in that same list), its "From the
+  Shop"/"Visit the Shop" column labels, `ShopFooter.tsx`'s "Shop" link-column heading (→
+  "Lifestyle"), and the product page's breadcrumb JSON-LD ("Shop" → "The Moveee Lifestyle").
+  `isShopPage`/`isShopPath` identifiers in `Header.tsx`/`ConditionalFooter.tsx` were renamed to
+  `isLifestylePage`/`isLifestylePath` for the same consistency reason, not because the old names
+  were broken.
+- Every doc-comment across the touched files that said "`app/shop/layout.tsx`"/"`/shop route`"/
+  "`/shop path`"/etc. was updated to say `/lifestyle` — these were purely explanatory and had no
+  functional effect, but a stale path in a comment is exactly the kind of thing that misleads the
+  next person to touch this code.
+
+**Deliberately left as literal "shop" everywhere else, not renamed**: the `shopFiltersBus.ts`/
+`shopHelpers.ts`/`shopCountry.ts`/`ShopHeader.tsx`/`ShopFooter.tsx`/`ShopArchiveWrapper.tsx`/
+`ShopSearchModal.tsx`/`ShopProductGrid.tsx`/`ShopFilterContext.tsx`/`ShopCarousel.tsx`/
+`ShopRail.tsx` **filenames and component/export names** — only the public route path and visible
+copy changed; renaming every internal identifier too would have been a much larger, purely
+cosmetic diff for no functional or SEO benefit. The `/shop-hero.jpg` public asset path is
+unrelated (a static image filename, not a route) and was never touched.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks across every touched `.tsx`/`.ts` file and CSS brace-balance checks on
+`header.css` (83/83), `getmelit.css` (65/65), `shop.css` (612/612), `shop-chrome.css` (61/61), and
+`shop-lifestyle.css` (75/75) — all unchanged from before this pass, confirming no CSS rule was
+accidentally clipped by the file move. Re-check the `/shop` → `/lifestyle` redirect and every
+renamed metadata title in a real environment before considering this fully closed.
+
 ### Shop masthead nav — Shop/Makers dropped, Magazine added (September 2026)
 
 `.mast-nav` (the small text-link row moved next to the icons in "Shop masthead — nav moved next

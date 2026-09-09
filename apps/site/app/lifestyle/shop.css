@@ -1426,7 +1426,7 @@
   max-width: 1440px;
   margin: 0 auto;
   /* No more --header-clear top padding — the Moveee Lifestyle's own
-     ShopHeader (app/shop/layout.tsx) renders in normal document flow, not
+     ShopHeader (app/lifestyle/layout.tsx) renders in normal document flow, not
      fixed/floating like the old sitewide pill, so there's no clearance gap
      left to reserve here. */
   padding: 50px 40px 80px;
@@ -2986,7 +2986,7 @@
 }
 .sp-btn-add--gated:hover { opacity: 0.85; }
 
-/* ══ BRAND STOREFRONT (/shop/brand/[slug]) ══════════════════════════════════ */
+/* ══ BRAND STOREFRONT (/lifestyle/brand/[slug]) ══════════════════════════════════ */
 
 .brand-page {
   max-width: 1280px;
