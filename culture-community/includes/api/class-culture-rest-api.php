@@ -181,6 +181,24 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Front-end (Next.js) draft preview — resolves a signed token from
+        // Culture_Preview into the actual draft post/product payload. Public:
+        // the token itself is the credential (verified + expiry-checked
+        // server-side in Culture_Preview::verify_token()), so no separate
+        // api_key_permission secret needs to also live in the Next.js env.
+        register_rest_route( 'culture/v1', '/preview/resolve', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_preview_resolve' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -2620,6 +2638,30 @@ class Culture_REST_API {
         }
 
         return false;
+    }
+
+    /**
+     * Resolve a Culture_Preview token into the actual draft post/product
+     * payload — see class-culture-preview.php for the full trust model.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_preview_resolve( $request ) {
+        $verified = Culture_Preview::verify_token( $request->get_param( 'token' ) );
+        if ( is_wp_error( $verified ) ) {
+            return $verified;
+        }
+
+        $payload = Culture_Preview::resolve( $verified['id'], $verified['type'] );
+        if ( is_wp_error( $payload ) ) {
+            return $payload;
+        }
+
+        return rest_ensure_response( array(
+            'type' => $verified['type'],
+            'item' => $payload,
+        ) );
     }
 
     /**

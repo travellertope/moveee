@@ -5512,6 +5512,90 @@ reports "Failed (timeout)" even when the underlying serverless function may
 still complete fine server-side. When keeping a job on cron-job.org, set its
 timeout to match or exceed the route's `maxDuration`.
 
+## Front-end draft preview — Next.js Draft Mode for magazine articles + Lifestyle products (September 2026)
+
+Editors can now preview a draft/pending `post` (magazine article) or a draft WooCommerce
+`product` through the real Next.js page (`/magazine/[slug]`, `/lifestyle/[slug]`) instead of
+only WordPress's own theme-rendered preview — which never worked properly for a headless
+frontend anyway, since WP's native preview requires a logged-in WP auth cookie that never
+reaches the separate `apps/site` origin. Scope for this pass: magazine articles + Lifestyle
+products only (newsletters/community posts/events are not wired up — extend the same pattern
+if/when those need it).
+
+**Trust model — no new secret to keep in sync.** WordPress signs a short-lived (1hr) HMAC
+token (`post_id|post_type|expiry`, signed with the existing `culture_api_secret` option — the
+same secret already used everywhere else in this plugin as the `Authorization: Bearer` REST
+secret, see `Culture_REST_API::verify_bearer_token()`) and verifies it entirely server-side.
+Next.js never needs to hold the secret itself, only the token it's handed — this is why the
+resolve endpoint is public (`__return_true` permission callback, same pattern as
+`/newsletter-unsubscribe`), not gated by `api_key_permission`.
+
+**WordPress side** (`culture-community/includes/core/class-culture-preview.php`,
+`Culture_Preview`):
+- `add_filter('preview_post_link', ...)` overrides WP Admin's native "Preview"/"Preview
+  Changes" button for `post` and `product` post types only (`SUPPORTED_TYPES`) — any other
+  post type's Preview button is untouched, still WP's own theme preview.
+- `make_token()`/`verify_token()` — base64url(`id|type|expiry`) + a `hash_hmac('sha256', ...)`
+  signature, `hash_equals()`-checked, expiry-checked. Falls back to WP's own preview link
+  (doesn't touch the filter) if `culture_api_secret` isn't set yet, rather than generating a
+  token nothing could ever verify.
+- The overridden link points at `{culture_preview_frontend_url}/api/preview?token=...&type=...
+  &slug=...` — `culture_preview_frontend_url` defaults to `https://themoveee.com` (no WP Admin
+  UI for this option yet; set it via `wp option update` or `update_option()` if it's ever
+  wrong for a given environment).
+- `Culture_Preview::resolve($id, $type)` builds the actual payload — shaped as closely as
+  practical to match `STORY_FIELDS_FRAGMENT`/`ProductFields` in `packages/shared/lib/wp.ts` so
+  the existing page components need minimal branching to render it. Deliberately best-effort
+  on secondary fields: `seoTitle`/`seoDescription` are always `null` in preview (a draft rarely
+  has SEO set yet, and `generateMetadata()` already falls back gracefully to `"{title} | Moveee
+  Magazine"` when absent — this is a safe default, not a gap), and taxonomy lookups
+  (`series`/`industry`/`country`) degrade to `[]` if the taxonomy isn't registered rather than
+  erroring.
+- New public REST endpoint: `GET /culture/v1/preview/resolve?token=...`
+  (`Culture_REST_API::handle_preview_resolve()`) — verifies the token via `Culture_Preview` and
+  returns `{ type, item }`.
+
+**Next.js side** (`apps/site` only — this feature doesn't exist on `apps/connect`):
+- `packages/shared/lib/wp.ts`'s `getPreviewItem(token)` — a plain REST `fetch()` against
+  `{WP_BASE_URL}/wp-json/culture/v1/preview/resolve`, deliberately **bypassing `getWPData()`
+  entirely**: this must never hit the KV cache (a draft's content changes on every save) or the
+  CMS circuit breaker (a preview is a rare, editor-only, time-sensitive action that should fail
+  fast and visibly, not silently wait out a 60s cooldown meant for public-traffic protection).
+- `app/api/preview/route.ts` — the entry point WordPress's overridden Preview button opens.
+  Calls `getPreviewItem(token)` (this both verifies the token *and* fetches the content in one
+  round trip — the route never trusts the caller-supplied `type`/`slug` query params on their
+  own, only what the verified response says); on success, enables Next.js Draft Mode
+  (`(await draftMode()).enable()`) and stashes the raw token in its own httpOnly
+  `culture_preview_token` cookie (Draft Mode's own cookie only marks "draft mode is on" — it
+  carries no payload, so the actual page still needs the token to refetch the draft on its own,
+  separate request), then redirects to the real `/magazine/{slug}` or `/lifestyle/{slug}`.
+- `app/api/preview/disable/route.ts` — disables Draft Mode, clears the cookie, redirects back
+  (`?redirect=` param, set by `PreviewBanner`).
+- `components/PreviewBanner.tsx` — a small sticky ochre bar ("Preview mode — this is a draft,
+  not the live page" + an Exit preview link) rendered at the top of the page only when
+  `isPreview` is true.
+- **Page wiring** (`app/magazine/[slug]/page.tsx`, `app/lifestyle/[slug]/page.tsx`): both
+  already fetch their content via GraphQL first, same as before — GraphQL only ever returns
+  published content, so a draft always comes back `null`. Only when that happens **and** Draft
+  Mode is enabled **and** the resolved preview item's slug matches the requested slug does the
+  page fall back to the preview payload (`isPreview = true`) instead of `notFound()`-ing. This
+  means the normal, published-content render path is completely unchanged; preview is purely an
+  additive fallback that only ever engages for an actual 404 while previewing.
+- **If a future pass extends this to another content type** (newsletters, community posts):
+  add its post type to `Culture_Preview::SUPPORTED_TYPES`, a `resolve_{type}()` branch in
+  `Culture_Preview::resolve()`, and the same "GraphQL null → check Draft Mode → fall back to
+  `getPreviewItem()`" pattern in that type's own `[slug]/page.tsx` — don't invent a second
+  token/verification scheme, reuse `Culture_Preview` as-is.
+- **Not verified end-to-end against a live WordPress + Vercel deploy** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file (this feature
+  additionally needs a real `culture_api_secret` set and the plugin redeployed — see "Plugin DB
+  table auto-upgrade" for why a code push alone isn't enough — before the Preview button in WP
+  Admin actually points anywhere useful). Verified via `php -l` on all three touched/new PHP
+  files and a brace/paren-balance check on every touched TS/TSX file (no `node_modules`
+  installed this session, so `tsc --noEmit` couldn't run). Re-check the full round trip — click
+  Preview on a real draft article and a real draft product — in a real environment before
+  considering this fully closed.
+
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
 This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.
