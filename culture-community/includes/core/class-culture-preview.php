@@ -88,7 +88,7 @@ class Culture_Preview {
 			array(
 				'token' => $token,
 				'type'  => $post->post_type,
-				'slug'  => $post->post_name,
+				'slug'  => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
 			),
 			$frontend_base . '/api/preview'
 		);
@@ -135,13 +135,30 @@ class Culture_Preview {
 			array(
 				'token' => $token,
 				'type'  => $post->post_type,
-				// Slug may still be empty on a brand-new, never-saved draft —
-				// the resolve endpoint falls back to the post ID either way,
-				// so an empty slug here is harmless, not a broken link.
-				'slug'  => $post->post_name,
+				'slug'  => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
 			),
 			$frontend_base . '/api/preview'
 		);
+	}
+
+	/**
+	 * WordPress does NOT populate `post_name` for draft/pending posts unless
+	 * the slug is explicitly edited by hand — it's only auto-generated from
+	 * the title once the post is published (or, for products, once
+	 * WooCommerce assigns one). A "Save Draft" click alone leaves it empty,
+	 * which is exactly the state a preview click happens in — so this can't
+	 * be treated as an edge case, it's the common case. Falls back to a
+	 * title-derived slug, then the raw post ID as a last resort, so the
+	 * frontend never receives a genuinely empty slug.
+	 */
+	private static function resolve_slug( $post_name, $post_title, $post_id ) {
+		if ( ! empty( $post_name ) ) {
+			return $post_name;
+		}
+		if ( ! empty( $post_title ) ) {
+			return sanitize_title( $post_title );
+		}
+		return (string) $post_id;
 	}
 
 	/**
@@ -243,7 +260,7 @@ class Culture_Preview {
 			'id'            => (string) $post->ID,
 			'databaseId'    => $post->ID,
 			'title'         => get_the_title( $post ),
-			'slug'          => $post->post_name,
+			'slug'          => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
 			'date'          => get_post_time( 'c', true, $post ),
 			'status'        => $post->post_status,
 			'excerpt'       => self::apply_excerpt_filters( $post ),
@@ -300,7 +317,7 @@ class Culture_Preview {
 			'id'               => (string) $product->get_id(),
 			'databaseId'       => $product->get_id(),
 			'name'             => $product->get_name(),
-			'slug'             => $product->get_slug(),
+			'slug'             => self::resolve_slug( $product->get_slug(), $product->get_name(), $product->get_id() ),
 			'status'           => $product->get_status(),
 			'description'      => apply_filters( 'the_content', $product->get_description() ),
 			'shortDescription' => apply_filters( 'woocommerce_short_description', $product->get_short_description() ),
