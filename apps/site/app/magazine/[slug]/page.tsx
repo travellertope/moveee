@@ -1,6 +1,8 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
+import { draftMode, cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import PreviewBanner from "@/components/PreviewBanner";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
@@ -80,7 +82,25 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   } catch (err: any) {
     console.error("StoryPage getWPData error:", err);
   }
-  const post = data?.post;
+  let post = data?.post;
+  let isPreview = false;
+
+  // GraphQL only ever returns published content — a draft/pending article
+  // always comes back null here. When Draft Mode is on (the visitor arrived
+  // via WP Admin's overridden Preview button, see app/api/preview/route.ts),
+  // fall back to the signed-token resolver instead of 404ing.
+  if (!post) {
+    const draft = await draftMode();
+    if (draft.isEnabled) {
+      const cookieStore = await cookies();
+      const token = cookieStore.get("culture_preview_token")?.value;
+      const preview = token ? await getPreviewItem(token) : null;
+      if (preview?.type === "post" && preview.item?.slug === resolvedParams.slug) {
+        post = preview.item;
+        isPreview = true;
+      }
+    }
+  }
 
   if (!post) {
     notFound();
@@ -291,6 +311,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   return (
     <>
+      {isPreview && <PreviewBanner redirectTo={`/magazine/${resolvedParams.slug}`} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProgressBar />

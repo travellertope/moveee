@@ -157,6 +157,37 @@ export async function getWPData(query: string, variables = {}, options: any = {}
   return getWPDataFromCMS(query, variables, options);
 }
 
+/**
+ * Front-end draft preview — resolves a Culture_Preview token (minted by
+ * WordPress's overridden "Preview" button, see class-culture-preview.php)
+ * into the real draft post/product payload. Deliberately bypasses getWPData()
+ * entirely: this is a REST call, not GraphQL, and must never be cached (a
+ * draft's content changes on every save) or gated by the CMS circuit
+ * breaker (a preview is a rare, editor-only, time-sensitive action — it
+ * should fail fast and visibly, not silently wait out a 60s cooldown meant
+ * for public-traffic protection).
+ *
+ * Returns `{ type: "post" | "product", item }` shaped to match the
+ * equivalent GraphQL fragment closely enough for the existing page
+ * components to render it with minimal branching — see the PHP resolver
+ * for exactly which fields are (and aren't) populated.
+ */
+export async function getPreviewItem(token: string): Promise<{ type: "post" | "product"; item: any } | null> {
+  if (!token) return null;
+  const { signal, clear } = wpSignal();
+  try {
+    const url = `${WP_BASE_URL}/wp-json/culture/v1/preview/resolve?token=${encodeURIComponent(token)}`;
+    const res = await fetch(url, { signal, cache: "no-store" });
+    clear();
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err: any) {
+    clear();
+    console.error("getPreviewItem error:", err?.message || err);
+    return null;
+  }
+}
+
 function mapRestEventToFrontendShape(item: any) {
   const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
   const acf = item?.acf || {};

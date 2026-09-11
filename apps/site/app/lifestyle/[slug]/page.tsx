@@ -1,6 +1,8 @@
 import { Fragment } from "react";
-import { getWPData, getProductsWithFallback, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_UNORDERED, GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, GET_POST_BY_ID } from "@/lib/wp";
+import { getWPData, getProductsWithFallback, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_UNORDERED, GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, GET_POST_BY_ID, getPreviewItem } from "@/lib/wp";
+import { draftMode, cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import PreviewBanner from "@/components/PreviewBanner";
 import Link from "next/link";
 import Image from "next/image";
 import ProductGallery from "./ProductGallery";
@@ -98,6 +100,25 @@ export default async function ProductPage({
       }
     }
   } catch { /* CMS unreachable */ }
+
+  let isPreview = false;
+
+  // GraphQL only ever returns published products — a draft product comes
+  // back null here. When Draft Mode is on (arrived via WP Admin's overridden
+  // Preview button on the product edit screen, see app/api/preview/route.ts),
+  // fall back to the signed-token resolver instead of 404ing.
+  if (!product) {
+    const draft = await draftMode();
+    if (draft.isEnabled) {
+      const cookieStore = await cookies();
+      const token = cookieStore.get("culture_preview_token")?.value;
+      const preview = token ? await getPreviewItem(token) : null;
+      if (preview?.type === "product" && preview.item?.slug === slug) {
+        product = preview.item;
+        isPreview = true;
+      }
+    }
+  }
 
   if (!product) notFound();
 
@@ -303,6 +324,7 @@ export default async function ProductPage({
 
   return (
     <>
+      {isPreview && <PreviewBanner redirectTo={`/lifestyle/${slug}`} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productBreadcrumbJsonLd) }} />
 

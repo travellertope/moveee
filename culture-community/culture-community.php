@@ -51,6 +51,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-account-deletion.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-play-billing.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-country-cleanup.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-preview.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -159,6 +160,7 @@ function culture_community_init() {
     Culture_Follows::init();
     Culture_Hubs::init();
     Culture_Country_Cleanup::init();
+    Culture_Preview::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {
