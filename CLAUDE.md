@@ -5596,6 +5596,38 @@ resolve endpoint is public (`__return_true` permission callback, same pattern as
   Preview on a real draft article and a real draft product — in a real environment before
   considering this fully closed.
 
+**Gotcha found in live testing, fixed same month: the `preview_post_link` filter alone never
+fires from the block editor.** The plugin's `culture_api_secret` was already correctly set, the
+new plugin code was correctly uploaded, and clicking "Preview in new tab" still landed on
+`cms.themoveee.com`'s own theme-rendered preview. Root cause: `preview_post_link` is only read by
+code that calls `get_preview_post_link()` **server-side** — the classic editor did this, but the
+block editor's "Preview in new tab" button builds its URL **client-side in JS**, straight from
+the post's own permalink plus `?preview=true`, and never touches this PHP filter at all. So the
+filter was dead code for the one UI path anyone actually uses to click Preview.
+
+**Fixed** by adding a second, more robust mechanism in `Culture_Preview::init()`: a
+`template_redirect` hook (`maybe_redirect_preview_request()`) that intercepts *any* incoming
+preview request server-side via `is_preview()`, regardless of how the URL that got there was
+built — this is what actually fixes the reported bug, since it doesn't care whether the request
+came from the classic editor, the block editor, or someone pasting a preview URL directly. Gated
+by the same `current_user_can( 'edit_post', $post->ID )` check as an extra safety net alongside
+`is_preview()`'s own nonce verification, so it can never leak a draft's real content to someone
+who couldn't already see it via WP's own preview. The original `filter_preview_link()`/
+`preview_post_link` filter is kept alongside it (harmless, not a competing mechanism — same
+token, same destination) in case some other caller ever does read that filter server-side.
+**If this class of "preview button" or "edit link" feature is ever extended, don't trust a single
+WordPress hook/filter to fire from every UI surface that can reach the same outcome — verify
+against the actual button being clicked (here, the block editor specifically bypassed the
+filter this whole feature was originally built around) or intercept the eventual HTTP request
+server-side instead, the way `template_redirect` does here.**
+
+Plugin header `Version:` bumped to `2.2.0` in the same pass specifically so a redeploy is
+visually confirmable on the WP Admin Plugins list — the original build left this at `2.1.0`
+unchanged, so there was no way to tell from WP Admin alone whether an upload had actually taken
+effect. `CULTURE_VERSION` (the dbDelta-gate constant, unrelated to the plugin header) was **not**
+bumped — this fix adds no new tables, so there's nothing for `culture_community_maybe_upgrade()`
+to run.
+
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
 This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.
