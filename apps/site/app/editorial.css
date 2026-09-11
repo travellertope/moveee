@@ -675,7 +675,7 @@
   line-height: 1.55;
   color: var(--mute);
   margin-top: 13px;
-  text-align: left;
+  text-align: center;
 }
 .ar-wrap .prose-content figcaption b,
 .ar-wrap .prose-content figcaption strong {
@@ -691,11 +691,18 @@
 }
 
 /* ── WP GALLERY BLOCK ── grid, gap, per-column count from Gutenberg's own
-   `columns-N` class. Each image is already wrapped in its own
-   `figure.wp-block-image` by the block — no markup changes needed. */
+   `columns-N` class when the editor picks one explicitly. The Gallery
+   block's default "Automatic" column setting emits no `columns-N` class at
+   all, though — a fixed `repeat(3, 1fr)` fallback here left an empty,
+   awkward-looking cell for any gallery with fewer than 3 images (a 2-photo
+   gallery rendered as two photos plus a bare gap where a third would go).
+   `auto-fit` sizes the fallback case to however many images actually exist
+   instead of assuming 3, while the explicit `.columns-N` overrides below
+   (same specificity precedence either way, since they add a class) still
+   win whenever an editor sets a real column count. */
 .ar-wrap .prose-content .wp-block-gallery {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   /* Was `margin: 0` — three classes beats the generic `.prose-content
      figure { margin: 2em 0 }` rule's specificity (a class+class+figure
