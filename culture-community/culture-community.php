@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     2.2.0
+ * Version:     2.2.1
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
