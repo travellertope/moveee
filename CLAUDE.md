@@ -422,6 +422,102 @@ language into this vertical's user-facing copy unless a real print product is co
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
 
+### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
+
+Pro-only Literary pieces are folded into the **existing** Moveee Pro mechanism — no separate
+"Literary Club" membership tier was built, per an explicit decision against that ("fold it into
+Moveee Pro" beats a second paid tier splitting the audience). All non-logged-in readers are also
+metered: a limited number of free Literary reads per rolling 30 days, enforced server-side
+(genuine truncation of the HTML that's sent, not a client-hidden soft gate), with a compact inline
+email/OTP box doing double duty as both the unlock mechanism and the list-building funnel.
+
+**Prerequisite bug fixed first**: `STORY_FIELDS_FRAGMENT` in `packages/shared/lib/wp.ts` was
+missing `cultureAccesses { nodes { slug } } }` entirely — `getAccessLevel()` (`lib/access.ts`)
+always silently returned `"public"` for anything fetched via `GET_STORY_BY_SLUG`, so Pro-gating
+never actually worked on `/magazine` either, only on pages using a different query. Fixed by
+adding the field to the shared fragment — this incidentally fixes magazine Pro-gating too, not
+just Literary.
+
+**Why the existing `ArticleContentGate` pattern couldn't be reused as-is**: it's a client
+component (`"use client"`) that receives the full article HTML as a `fullContent` prop and only
+conditionally *renders* it based on `useSession()` — the full content is still present in the
+RSC payload sent to every visitor regardless of access, just hidden client-side. That's fine for
+a soft nudge but not for genuine enforcement, so Literary's gate does real server-side truncation
+instead (see below) and only ever ships the withheld remainder over the wire once verified.
+
+**Backend** (`culture-community/includes/core/class-culture-literary-access.php`,
+`Culture_Literary_Access`) — same HMAC-signed-token trust model as `Culture_Preview`
+(`base64url(email|access|expiry) + "." + hash_hmac('sha256', ..., culture_api_secret)`), so no
+new secret to keep in sync:
+- `request_code($email)` — generates a 6-digit code, stores only its `wp_hash()` in a 10-minute
+  transient (never the code itself), rate-limited (3 requests / 10 min per email), emails it via
+  a new `Culture_Emails::send_literary_otp_email()`.
+- `verify_code($email, $code)` — checks the code (max 5 wrong attempts before it's invalidated),
+  then resolves access: an email matching an existing WP user with `_culture_membership_tier =
+  patron` gets `access: 'pro'`; anything else gets `access: 'free'` **and** is added to the
+  `culture_newsletter_subscribers` option under a `literary-club` list tag (the list-building
+  mechanism — mirrors `handle_newsletter_subscribe()`'s find-or-create shape rather than calling
+  it, since `Culture_Subscribers::merge_subscribers()` is private). Issues the signed token.
+- REST: `POST /culture/v1/literary/request-code`, `POST /culture/v1/literary/verify-code` (both
+  public — the code/token themselves are the credential).
+
+**Next.js verifies the token locally, not via a round trip to WordPress** —
+`apps/site/lib/literary-access.ts`'s `verifyLiteraryToken()` re-implements the same HMAC check in
+Node using `process.env.CULTURE_API_SECRET` (the same value as the `culture_api_secret` WP
+option, already the shared secret for the Bearer-auth REST surface). Also in that file:
+- `truncateHtmlByPercent(html, percent)` — splits sanitized HTML on top-level block-tag
+  boundaries (`p`/`h1-6`/`blockquote`/`figure`/`ul`/`ol`/`table`/`div`), accumulates each block's
+  plain-text length until the target percentage is reached, and cuts there — never mid-paragraph.
+  Degrades to "show everything, no gate" when the content is a single block (too short/flat to
+  split sensibly) rather than gating something that can't be partially shown.
+- `isCrawlerUserAgent()` — known search-engine/social-preview bots always get the full piece,
+  untracked, ungated. This is a list-building mechanism, not an anti-indexing wall.
+- Free-read metering — `moveee_lit_reads` cookie (JSON array of `{slug, ts}`, pruned to a 30-day
+  window, deduped by slug so re-reading the same piece doesn't cost another credit). Written by
+  a Route Handler (`app/api/literary/track-read/route.ts`), not `page.tsx` itself — a Server
+  Component can't set a cookie during render in this Next.js version, only a Route
+  Handler/Server Action can, so the piece page calls a tiny client component
+  (`LiteraryReadTracker.tsx`, fire-and-forget `useEffect` POST) to write it after mount instead.
+  `LITERARY_FREE_READ_LIMIT = 3` per 30 days.
+
+**Cross-origin cookie relay**: WordPress can't set a cookie on `themoveee.com` directly (different
+origin), so `app/api/literary/verify-code/route.ts` is what actually sets the first-party
+`moveee_lit_token` httpOnly cookie (30-day `maxAge`) after relaying the verify call to WordPress —
+same relay pattern `/api/preview` already uses for the draft-preview token.
+
+**`apps/site/app/literary/[slug]/page.tsx`'s `PiecePage` computes access server-side** on every
+request (session via `getServerSession(authOptions)`, the verified-token cookie, the free-reads
+cookie, and the crawler check) and branches three ways:
+1. **Patron-only piece, not authorized, logged in** (any tier but Pro) → real server-side
+   truncation at 30%, then a plain static "Upgrade to Moveee Pro" block (not the email box — they
+   already have an account, the box is specifically for anonymous readers).
+2. **Patron-only piece, not authorized, anonymous** → truncated at 30%, `LiteraryPieceGate`
+   (`mode="pro"`, `blocking`) — verifying with an email that isn't a Pro account still joins them
+   to the free list but leaves this specific piece gated with an upgrade nudge.
+3. **Public piece, anonymous, free-read quota exhausted** → truncated at 30%,
+   `LiteraryPieceGate` (`mode="meter"`, `blocking`) — verifying (free or Pro either way) unlocks
+   it via one AJAX fetch to `app/api/literary/remainder/route.ts`, which re-derives authorization
+   server-side (never trusts the client) and returns just the withheld HTML, injected in place —
+   no page reload, so scroll position/reading state is never disturbed.
+4. **Public piece, anonymous, quota still has reads left** → full content ships as normal, but a
+   **non-blocking** `LiteraryPieceGate` (`mode="meter"`, `blocking={false}`) is still inserted at
+   the 30% mark as a dismissible "Join The Moveee Literary Club" nudge — this is the literal
+   "compact box after every 30% read for non-logged-in users" ask, independent of metering
+   enforcement. A "Skip for now" link just hides it; nothing is withheld in this case since the
+   whole point is the content's already fully present.
+5. **Logged in (any tier) on a public piece, or already carrying a valid verified-token cookie**
+   → full content, no box at all — the box only ever renders when the page decides to render it
+   (there's no client-side "hide if logged in" check needed inside `LiteraryPieceGate` itself).
+
+**If all articles were ever made fully paid** (raised and rejected in this same design pass): it
+would kill the entire free/discovery/SEO/organic-sharing loop this vertical depends on — an
+all-paid model was explicitly not built. Keep the metered model; don't remove the free tier of
+reads without a deliberate, separate decision.
+
+**Not built in this pass**: a WP Admin UI for adjusting `LITERARY_FREE_READ_LIMIT`/code TTLs (both
+are code constants, not options); the mobile app has no equivalent gating (Literary isn't
+surfaced on `apps/mobile` at all yet, per the rest of this section).
+
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
 changes — and, critically, reuses an existing WordPress category rather than inventing one.**
 An initial draft of this feature assumed a brand-new "literary" category tree didn't exist yet

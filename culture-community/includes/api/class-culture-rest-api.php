@@ -199,6 +199,38 @@ class Culture_REST_API {
             ),
         ) );
 
+        // The Moveee Literary — email/OTP verification (metered soft-paywall +
+        // Pro-gating for Literary pieces). See class-culture-literary-access.php.
+        register_rest_route( 'culture/v1', '/literary/request-code', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_literary_request_code' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/literary/verify-code', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_literary_verify_code' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'code' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -2647,6 +2679,22 @@ class Culture_REST_API {
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
      */
+    public static function handle_literary_request_code( $request ) {
+        $result = Culture_Literary_Access::request_code( $request->get_param( 'email' ) );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_literary_verify_code( $request ) {
+        $result = Culture_Literary_Access::verify_code( $request->get_param( 'email' ), $request->get_param( 'code' ) );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array_merge( array( 'success' => true ), $result ) );
+    }
+
     public static function handle_preview_resolve( $request ) {
         $verified = Culture_Preview::verify_token( $request->get_param( 'token' ) );
         if ( is_wp_error( $verified ) ) {

@@ -804,6 +804,14 @@ const STORY_FIELDS_FRAGMENT = `
     eventStatus: status
     isFeatured
     admission
+    # Pro/member gating — was missing here, which silently made
+    # getAccessLevel() always return "public" for any post fetched via
+    # GET_STORY_BY_SLUG (see the Literary section in CLAUDE.md).
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
   }
 `;
 
