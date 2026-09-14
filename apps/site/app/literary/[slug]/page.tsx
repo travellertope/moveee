@@ -181,11 +181,11 @@ async function PiecePage({ slug }: { slug: string }) {
           visibleBodyHtml = visibleHtml;
           gateBlock = isLoggedIn ? (
             <div className="lit-email-gate">
-              <h3>This piece is Moveee Pro</h3>
+              <div className="lit-gate-eyebrow">★ The Moveee Literary</div>
+              <h3>There&rsquo;s more to read.</h3>
               <p>
-                The rest of this piece is part of our Moveee Pro archive — extended reads,
-                exclusive translations, and long-form work reserved for members who want to go
-                further with The Moveee Literary.
+                This piece continues in the Moveee Pro archive — extended fiction, poetry, and
+                essays for members going further with The Moveee Literary.
               </p>
               <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=patron">
                 Upgrade to Moveee Pro →
@@ -308,6 +308,32 @@ async function PiecePage({ slug }: { slug: string }) {
               </a>
             </div>
           </div>
+
+          {post.author?.node?.name && (
+            <div className="lit-piece-author">
+              <div className="lit-piece-author-avatar">
+                {post.author.node.avatar?.url ? (
+                  <img src={post.author.node.avatar.url} alt={post.author.node.name} />
+                ) : (
+                  <span className="lit-piece-author-initial">
+                    {post.author.node.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <div className="lit-piece-author-info">
+                <div className="lit-piece-author-label">Written by</div>
+                <div className="lit-piece-author-name">{post.author.node.name}</div>
+                <p className="lit-piece-author-bio">
+                  {post.author.node.description || "Contributing writer, The Moveee Literary."}
+                </p>
+              </div>
+              {post.author.node.slug && (
+                <Link href={`/author/${post.author.node.slug}`} className="lit-piece-author-cta">
+                  More by {post.author.node.name.split(" ")[0]} →
+                </Link>
+              )}
+            </div>
+          )}
         </article>
 
         <aside>

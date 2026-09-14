@@ -518,6 +518,39 @@ reads without a deliberate, separate decision.
 are code constants, not options); the mobile app has no equivalent gating (Literary isn't
 surfaced on `apps/mobile` at all yet, per the rest of this section).
 
+**Gate copy re-branded to The Moveee Literary's own voice (September 2026, follow-up)** — the
+gate boxes originally used generic sitewide "Moveee Pro" copy (`"This piece is Moveee Pro"`,
+`"Verify your Moveee Pro membership"`) with no Literary framing at all. Every gate state (the
+logged-in-non-Pro static block in `page.tsx`, and all three `LiteraryPieceGate.tsx` stages —
+email, otp, pro-needed) now leads with a `★ The Moveee Literary` eyebrow (`.lit-gate-eyebrow`,
+gold, mono uppercase — mirrors `ContentGate.tsx`'s `★ {tierLabel}` pattern but in the Literary
+palette) and rewritten headings/body copy in the section's own restrained voice (no hype words,
+no "we don't have X" negative framing, per the Voice/copy constraints documented above) — e.g.
+`"There's more to read."` / `"This piece continues in the Moveee Pro archive..."` instead of the
+generic `"This piece is Moveee Pro"`. **The underlying mechanism is completely unchanged** — this
+is copy/branding only, same as the Hidden Gem→Place and Route→Itinerary renames elsewhere in
+this file; the fold-into-Moveee-Pro decision, the metering, and the token/verification flow are
+untouched.
+
+**End-of-piece author bio (September 2026)** — `PiecePage` now renders a `.lit-piece-author` band
+at the end of the article body (after the share-icons row, inside `<article>`), reusing
+`post.author.node`'s existing `avatar.url`/`description`/`name`/`slug` fields (already fetched by
+`STORY_FIELDS_FRAGMENT` — no query change needed, same fields `/magazine/[slug]`'s own
+`.ar-author` band already reads). Circular photo (initial-letter fallback when no avatar is set),
+name, a real bio when `description` is set, or a plain `"Contributing writer, The Moveee
+Literary."` fallback when it isn't (never fabricated personal copy), and a `"More by {first
+name} →"` link to `/author/{slug}` (the shared, sitewide author-archive route) when the author
+has a slug. Mirrors `/magazine/[slug]`'s `.ar-author` pattern but restyled with the Literary
+palette/type system (`.lit-piece-author-*` in `literary.css`) rather than reusing `.ar-author`
+directly, since `editorial.css` isn't loaded on `/literary` routes at all.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file. Verified via a CSS brace-balance check on `literary.css` (235/235) and a
+brace/paren-balance check on `page.tsx` (155/155, 114/114) and `LiteraryPieceGate.tsx` (50/50,
+61/61). Re-check pixel fidelity — the author band's mobile wrap and the gate eyebrow's color
+against the parchment background in particular — in a real environment before considering this
+fully closed.
+
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
 changes — and, critically, reuses an existing WordPress category rather than inventing one.**
 An initial draft of this feature assumed a brand-new "literary" category tree didn't exist yet
