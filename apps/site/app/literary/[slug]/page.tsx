@@ -221,19 +221,17 @@ async function PiecePage({ slug }: { slug: string }) {
     }
   }
 
-  // Sidebar's "also in {genre}" teaser and the closing grid share one
-  // genre-scoped pool, deduped by slug so the same piece never appears in
-  // both places — the sidebar pick is excluded from the grid below it.
+  // Feeds the closing "More In {genre}" grid — the sidebar's own "Browse by
+  // Section" nav + genre teaser was removed (the top nav already covers the
+  // same six genres), so the whole genre-scoped pool goes to that grid now
+  // instead of reserving its first pick for a sidebar teaser.
   let genrePool: any[] = [];
   if (genre) {
     genrePool = (await getLiteraryPieces(genre.tagSlug, 8)).filter((p: any) => p.slug !== slug);
   }
-  const sidebarPick = genrePool[0];
-  const moreFromGenre = genrePool.slice(1, 4);
+  const moreFromGenre = genrePool.slice(0, 3);
 
-  const usedSlugs = new Set(
-    [slug, sidebarPick?.slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean)
-  );
+  const usedSlugs = new Set([slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean));
   const widerPool = await getLiteraryPieces(undefined, 12);
   const alsoLike = widerPool.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 3);
 
@@ -291,30 +289,6 @@ async function PiecePage({ slug }: { slug: string }) {
         <ArticleShareFab />
 
         <aside>
-          <div className="lit-piece-sb-block">
-            <div className="lit-piece-sb-h">Browse by Section</div>
-            {LITERARY_GENRES.map((g) => {
-              const isCurrent = genre?.slug === g.slug;
-              return (
-                <div key={g.slug}>
-                  <Link
-                    href={`/literary/${g.slug}`}
-                    className={`lit-piece-genre-row${isCurrent ? " is-current" : ""}`}
-                  >
-                    <span>{g.label}</span>
-                    <span className="chev">›</span>
-                  </Link>
-                  {isCurrent && sidebarPick && (
-                    <Link href={`/literary/${sidebarPick.slug}`} className="lit-piece-genre-pick">
-                      <div className="piece-title" dangerouslySetInnerHTML={{ __html: sidebarPick.title || "" }} />
-                      <div className="piece-byline">{sidebarPick.author?.node?.name || "The Moveee Literary"}</div>
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
           <div className="lit-piece-sb-block lit-piece-sb-block--flush">
             <div className="lit-piece-subscribe">
               <div className="lit-piece-subscribe-rule" />
