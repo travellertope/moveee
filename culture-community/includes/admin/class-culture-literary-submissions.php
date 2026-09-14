@@ -931,7 +931,10 @@ class Culture_Literary_Submissions {
             function parseSubject() {
                 var val = (subjectEl.value || '').trim();
                 if (!val) return;
-                var m = val.match(/^\s*(\w+)\s+submission\s*[-—–:]\s*(.+)$/i);
+                // Accepts any run of dash-like characters (hyphen, en dash, em dash,
+                // horizontal bar, minus sign) or a colon as the separator, so
+                // "Poetry Submission - Ada", "— Ada", "-- Ada", ": Ada" all parse.
+                var m = val.match(/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i);
                 if (!m) return;
                 var slug = SECTION_ALIASES[m[1].toLowerCase()];
                 if (slug) {

@@ -840,7 +840,9 @@ this same storage rather than duplicating it (see "Storage" below).
   how old it is.
 - **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
   "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
-  via a regex (`/^\s*(\w+)\s+submission\s*[-—–:]\s*(.+)$/i`) and pre-fills the Section dropdown
+  via a regex accepting any run of dash-like separators — hyphen, en dash, em dash, horizontal
+  bar, minus sign — or a colon (`/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i`)
+  and pre-fills the Section dropdown
   and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
   edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
   the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
