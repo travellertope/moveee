@@ -2,12 +2,13 @@
 
 import { useRef } from "react";
 import Link from "next/link";
+import LiteraryGenreArt from "./LiteraryGenreArt";
 
 export interface LiteraryShelfItem {
   href: string;
   label: string;
   sub: string;
-  gradient: string;
+  slug: string;
 }
 
 // Horizontally-scrolling "shelf" of section tiles — the real, backend-safe
@@ -27,7 +28,8 @@ export default function LiteraryShelf({ items }: { items: LiteraryShelfItem[] })
       <div className="lit-shelf-track" ref={trackRef}>
         {items.map((item) => (
           <Link key={item.href} href={item.href} className="lit-shelf-item">
-            <div className="lit-shelf-cover" style={{ background: item.gradient }}>
+            <div className="lit-shelf-cover">
+              <LiteraryGenreArt slug={item.slug} />
               <span>{item.sub}</span>
             </div>
             <div className="lit-shelf-name">{item.label}</div>
