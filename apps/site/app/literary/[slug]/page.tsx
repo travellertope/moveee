@@ -195,7 +195,7 @@ async function PiecePage({ slug }: { slug: string }) {
           visibleBodyHtml = visibleHtml;
           gateBlock = isLoggedIn ? (
             <div className="lit-email-gate">
-              <div className="lit-gate-eyebrow">★ The Moveee Literary</div>
+              <div className="lit-gate-eyebrow">★ Subscribe to Continue</div>
               <h3>There&rsquo;s more to read.</h3>
               <p>
                 This piece continues in the Moveee Pro archive — extended fiction, poetry, and

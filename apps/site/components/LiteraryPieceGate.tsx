@@ -95,7 +95,9 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
 
   return (
     <div className={`lit-email-gate${blocking ? " lit-email-gate--blocking" : ""}`}>
-      <div className="lit-gate-eyebrow">★ The Moveee Literary</div>
+      <div className="lit-gate-eyebrow">
+        ★ {mode === "pro" ? "Subscribe to Continue" : "The Moveee Literary"}
+      </div>
       {stage === "pro-needed" ? (
         <div>
           <h3>This piece continues in Moveee Pro</h3>
