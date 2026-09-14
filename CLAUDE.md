@@ -897,10 +897,8 @@ posture:
   - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
     empty) or the `literary` category doesn't exist on the target site.
 - **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
-  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()` — not
-  the admin-configurable `Culture_Email_Templates` system, kept simple since these two emails
-  aren't expected to need per-installation customization). Fired from
-  `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
+  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()`). Fired
+  from `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
   change — the full edit form's `handle_save()` and the list table's one-click quick-status
   links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
   never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
@@ -914,6 +912,40 @@ posture:
 - Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
   instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
   publish round trip and both email sends against a real inbox before considering this closed.
+
+**Follow-up, same month — accept/reject email content is now WP Admin-editable.** Both emails'
+subject/heading/body/button were moved onto the plugin's existing admin-configurable
+`Culture_Email_Templates` system (`class-culture-email-templates.php` — the same mechanism
+already used for the welcome/referral/payment-receipt/grace-period/downgrade/event-RSVP emails)
+as two new template slugs, **`literary_accepted`** and **`literary_rejected`**, editable at
+**WP Admin → Culture Community → Email Templates** (a `wp_editor()` WYSIWYG for the body, plain
+text fields for subject/header-heading/button-text, a merge-tag reference table, and a
+"Reset to Default" button — same UI every other template in that list already uses). Storage:
+`wp_options` rows `culture_email_tpl_literary_accepted`/`culture_email_tpl_literary_rejected`
+(only written once an admin actually saves a customization — an unedited template keeps
+rendering the code-defined default with no options row at all).
+- **Merge tags**: `{writer_name}`, `{piece}` (the title in curly quotes, or literally "your
+  piece" if the submission has no title — computed in PHP before merging, not something an
+  admin can express in the editor), `{section}`, and (accepted only) `{payment_label}`.
+  `send_literary_submission_decision()` in `class-culture-emails.php` now just builds this
+  merge-tag map and calls `Culture_Email_Templates::get_template()`/`::merge()` — identical
+  shape to `send_referral_confirmation()`/`send_payment_receipt()` in the same file.
+  **This is a straight rewire, not a new mechanism** — the actual copy (both subject lines,
+  both `<h1>` headings, both bodies) is unchanged from the hardcoded version, now stored as
+  each template's `default_*` fields so a fresh install without any admin customization sends
+  byte-for-byte the same emails as before.
+- Both templates render through a live CTA button (new — the hardcoded version had none),
+  labelled "Visit The Moveee Literary" by default and linking to `{frontend_url}/literary`
+  (`Culture_Emails::get_frontend_url()`, the same Next.js-frontend-not-WordPress URL every
+  other templated email's button already points at).
+- **If accept/reject copy is ever wrong or needs a wording change, this is now the one place to
+  fix it** — don't go back to editing `send_literary_submission_decision()`'s PHP for a pure
+  copy change; that method should only need touching again if the merge-tag set itself changes.
+- Verified via `php -l` on both edited files. Not deployment-tested against a live WP Admin
+  (can't render `wp_editor()`/save a real option from this sandbox) or a real mail transport —
+  same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file. Re-check
+  that the Email Templates admin page actually lists and edits both new tabs, and that a saved
+  customization actually reaches a real accept/reject email, in a live environment.
 
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 
