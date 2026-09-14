@@ -801,6 +801,393 @@ also added — there was no About page under `/literary` before this.
   files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
   tweaks at this volume of content) in a real environment before considering this fully closed.
 
+## Literary Submissions Manager — WP Admin only, intake stays email (September 2026, SUPERSEDED)
+
+**Superseded by "Literary Submissions — real payment-integrated online form" further below.**
+This entry originally documented an email-only intake model — kept here for history since the
+manual-logging admin tool it describes is still exactly how it was built; only the intake
+channel changed. If you're looking for how writers actually submit today, skip to that later
+entry.
+
+Per explicit user decision: writers keep submitting by emailing `literary@themoveee.com` with
+the section + name in the subject line (`/literary/submit`'s documented convention, e.g.
+"Poetry Submission — Ada Nwosu") — **no new writer-facing form was built**, this is purely an
+internal editorial tool for logging and tracking those emailed submissions through decision.
+No public submissions portal exists as of this entry; if one is ever built, it should write into
+this same storage rather than duplicating it (see "Storage" below).
+
+- **New file**: `culture-community/includes/admin/class-culture-literary-submissions.php`
+  (`Culture_Literary_Submissions`), registered as a submenu under the existing top-level
+  "Culture Community" menu (`admin.php?page=culture-literary-submissions`) — required in
+  `culture-community.php` and initialized in `culture_community_init()`, same wiring as every
+  other admin tool in this plugin.
+- **Storage**: a single `culture_literary_submissions` wp_options row (array of submission
+  objects) — same pattern as `Culture_Redirects` (`culture_redirects` option), chosen over a
+  dbDelta table since this is a small, manually-curated editorial list, not something written
+  at volume by a webhook (contrast with `wp_culture_tickets`, a real table, which is).
+- **Fields tracked per submission**: writer name/email, section, piece title, the raw email
+  subject line, status (Received/In Review/Accepted/Rejected/Published), submission-fee status
+  (Pending/Paid/Waived/N-A), contributor-payment status (Unpaid/Paid), an assigned reviewer (a
+  WP user with `edit_posts`, via `get_users()`), received date, and free-text internal notes.
+- **Terms are hardcoded per section in `Culture_Literary_Submissions::SECTIONS`**, mirroring
+  `/literary/submit`'s real, confirmed policy (see that page's "Real, confirmed policy" note):
+  quarterly sections (Fiction/Poetry/Essays/Conversations/In Translation/Notes) get a $3
+  submission fee, a $15–$25 contributor payment, and a 12-week (84-day) response window; The
+  Moveee Flash gets no submission fee, a flat $10 payment, and a 4-week (28-day) window. **If
+  these figures ever change on the submissions page, update this constant to match** — there's
+  no shared source of truth between the PHP admin tool and the Next.js copy, same caveat as
+  every other PHP/TS duplication called out elsewhere in this file.
+- **Response-time tracking**: `deadline_state()` computes `received_at + response_days` and
+  flags a still-open submission (Received/In Review) as "Overdue" once past that date or "Due
+  soon" within 7 days of it — shown as a colored deadline column in the list table, summarized
+  in a page-header count, and surfaced as a red bubble on the submenu label (the same
+  `awaiting-mod`/`pending-count` WP core CSS classes used for the native comments-pending
+  bubble). A decided submission (Accepted/Rejected/Published) is never flagged, regardless of
+  how old it is.
+- **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
+  "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
+  via a regex accepting any run of dash-like separators — hyphen, en dash, em dash, horizontal
+  bar, minus sign — or a colon (`/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i`)
+  and pre-fills the Section dropdown
+  and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
+  edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
+  the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
+  to keep fee data honest, not a hard validation.
+- **Row-level quick actions**: each row has one-click links to jump straight to In
+  Review/Accepted/Rejected/Published (`admin-post.php?action=culture_lit_submission_status`,
+  nonce'd per-row) alongside the full Edit form and a Delete button — mirrors the
+  check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
+- **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
+  current filters show, same convention as Ticket Sales' own CSV export.
+- **Deliberately out of scope**: no REST endpoints, no frontend/mobile surface, no automated
+  email ingestion (an editor still manually creates each row after reading the email) — this is
+  a manual logging tool, not an inbox parser. If automated ingestion from the literary@ inbox is
+  ever wanted, that's a separate, larger project (an email-parsing webhook/cron), not a small
+  extension of this file.
+- Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
+  against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
+  other pass in this file; this feature additionally needs the plugin redeployed (manual
+  zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
+  since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
+
+**Follow-up, same month — WordPress push + accept/reject emails.** Two explicit requests, both
+built on top of the manager above without changing its email-only intake or its manual-logging
+posture:
+
+- **Piece content + "Push to WordPress"** — a submission now has a `content` field, edited via a
+  real `wp_editor()` (TinyMCE, `teeny` toolbar — bold/italic/lists/link, matching the ACF
+  wysiwyg treatment given to other short rich-text fields elsewhere in this plugin) in the
+  add/edit form. A row whose status is Accepted or Published gets a **"Push to WordPress"**
+  button (`Culture_Literary_Submissions::push_to_wordpress()`,
+  `admin_post_culture_lit_submission_push`) that creates a real `post` — title, content
+  (`wp_kses_post`'d), status **`draft`** (never auto-published — "processing into publishing"
+  still means an editor finishes it: featured image, final formatting, and the actual Publish
+  click all still happen by hand), category = the existing `literary` category (by slug,
+  `LITERARY_CATEGORY_SLUG = 'literary'`, matching `packages/shared/lib/wp.ts`'s constant of the
+  same name), and a genre tag matching the submission's section (`GENRE_TAG_NAMES` — same label
+  strings as that file's `LITERARY_GENRES[].label`, so the draft lands on the right
+  `/literary/{genre}` archive the moment it's published). **The Moveee Flash gets no genre tag**
+  — there's no dedicated Flash genre page, so a pushed Flash piece surfaces in the main
+  `/literary` feed only, same graceful "untagged post" behaviour that section's own docs already
+  describe.
+  - **Author**: looks up the writer's email against `get_user_by('email', ...)` — if they have a
+    real WP account, the draft is authored as them (a real byline); otherwise the editor doing
+    the push is the author of record until someone reassigns it in the normal post editor. This
+    is a deliberate, documented limitation, not an oversight — there's no guest-author system in
+    this codebase to map an external contributor onto without a WP account.
+  - **Re-pushing is update-in-place, not duplication** — the submission stores `wp_post_id` once
+    a push succeeds; a second push (after the editor pastes further edits into the `content`
+    field) calls `wp_update_post()` against that same post ID instead of creating a new one. The
+    list table's "WordPress" column shows "Edit draft →" (linking to the real post editor) plus
+    "Re-push edits" once linked, or a "Push to WordPress" button before that.
+  - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
+    empty) or the `literary` category doesn't exist on the target site.
+- **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
+  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()`). Fired
+  from `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
+  change — the full edit form's `handle_save()` and the list table's one-click quick-status
+  links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
+  never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
+  sends when the submission has a `writer_email` on file — if not, the status change still
+  applies but an admin notice ("wasn't notified") tells the editor to follow up manually instead
+  of the email silently never going out. The acceptance email references the section's real
+  payment terms (`payment_label`, e.g. "$15–$25" or "$10 flat") pulled from the same `SECTIONS`
+  constant the rest of the manager already uses — **if those figures ever change on
+  `/literary/submit`, update `SECTIONS` here too**, same cross-file caveat as everywhere else
+  fee/payment terms are duplicated in this codebase.
+- Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
+  instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
+  publish round trip and both email sends against a real inbox before considering this closed.
+
+**Follow-up, same month — accept/reject email content is now WP Admin-editable.** Both emails'
+subject/heading/body/button were moved onto the plugin's existing admin-configurable
+`Culture_Email_Templates` system (`class-culture-email-templates.php` — the same mechanism
+already used for the welcome/referral/payment-receipt/grace-period/downgrade/event-RSVP emails)
+as two new template slugs, **`literary_accepted`** and **`literary_rejected`**, editable at
+**WP Admin → Culture Community → Email Templates** (a `wp_editor()` WYSIWYG for the body, plain
+text fields for subject/header-heading/button-text, a merge-tag reference table, and a
+"Reset to Default" button — same UI every other template in that list already uses). Storage:
+`wp_options` rows `culture_email_tpl_literary_accepted`/`culture_email_tpl_literary_rejected`
+(only written once an admin actually saves a customization — an unedited template keeps
+rendering the code-defined default with no options row at all).
+- **Merge tags**: `{writer_name}`, `{piece}` (the title in curly quotes, or literally "your
+  piece" if the submission has no title — computed in PHP before merging, not something an
+  admin can express in the editor), `{section}`, and (accepted only) `{payment_label}`.
+  `send_literary_submission_decision()` in `class-culture-emails.php` now just builds this
+  merge-tag map and calls `Culture_Email_Templates::get_template()`/`::merge()` — identical
+  shape to `send_referral_confirmation()`/`send_payment_receipt()` in the same file.
+  **This is a straight rewire, not a new mechanism** — the actual copy (both subject lines,
+  both `<h1>` headings, both bodies) is unchanged from the hardcoded version, now stored as
+  each template's `default_*` fields so a fresh install without any admin customization sends
+  byte-for-byte the same emails as before.
+- Both templates render through a live CTA button (new — the hardcoded version had none),
+  labelled "Visit The Moveee Literary" by default and linking to `{frontend_url}/literary`
+  (`Culture_Emails::get_frontend_url()`, the same Next.js-frontend-not-WordPress URL every
+  other templated email's button already points at).
+- **If accept/reject copy is ever wrong or needs a wording change, this is now the one place to
+  fix it** — don't go back to editing `send_literary_submission_decision()`'s PHP for a pure
+  copy change; that method should only need touching again if the merge-tag set itself changes.
+- Verified via `php -l` on both edited files. Not deployment-tested against a live WP Admin
+  (can't render `wp_editor()`/save a real option from this sandbox) or a real mail transport —
+  same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file. Re-check
+  that the Email Templates admin page actually lists and edits both new tabs, and that a saved
+  customization actually reaches a real accept/reject email, in a live environment.
+
+## Literary Submissions — real payment-integrated online form replaces email intake entirely (September 2026)
+
+**This supersedes every earlier "intake stays email" decision documented above.** After the
+manual Submissions Manager and its email-based intake shipped, the user asked directly: if
+writers submit by email, how do they even pay the $3 quarterly submission fee? The answer was
+to build a real public submission form with payment integrated end-to-end, reusing the exact
+same Paystack/Stripe machinery already powering event tickets and membership subscriptions —
+not a new payment system. **Email intake is gone.** `literary@themoveee.com` is now only for
+questions and waiver-code requests, not submissions.
+
+**The form collects the finished piece as pasted rich text, not a file upload — deliberately,
+per explicit user steer mid-build.** An earlier draft of this feature planned a manuscript
+file upload (.docx/.doc/PDF) plus server-side DOCX→HTML parsing (a whole planned
+`Culture_Literary_Inbox` class, `webklex/php-imap` + `phpoffice/phpword` Composer dependencies,
+blocked in this sandbox by `api.github.com` being unreachable through the agent proxy) so an
+editor's "Push to WordPress" button would have real body text to work with. **That entire plan
+was abandoned, not just deferred** — the user pointed out a simpler design: let the writer
+paste their formatted piece directly into a rich-text field on the form itself. This sidesteps
+file uploads, R2 storage, and DOCX parsing entirely, and the pasted content lands **directly**
+in the same `content` field the admin's existing `wp_editor()`/"Push to WordPress" flow already
+expects (see the "WordPress push" follow-up documented in the superseded entry above) — an
+editor now gets real, submission-ready body text from the moment a submission arrives, with
+zero parsing code needed anywhere. If a future request ever wants file-upload intake back
+instead, this is a deliberate, explicit reversal to revisit, not a gap that was missed.
+
+**Manuscript-format copy on `/literary/submit` was rewritten to match** — the old
+"we accept .doc, .docx, and PDF files, font size 12, double spacing, Garamond" paragraph
+described a manuscript that no longer exists; it now just says the piece is pasted directly
+into the online form's editor.
+
+### Payment — mirrors `Culture_Ticket_Payment` almost line-for-line
+
+`Culture_Literary_Submissions` (same file as the admin manager) gained the payment machinery
+directly, rather than a new class, since it already owns `add_submission()`'s one true
+creation path:
+
+- **New dbDelta table**: `wp_culture_literary_payments` (`payment_table()`/
+  `create_payments_table()`, wired into `Culture_Activator::create_tables()`,
+  `CULTURE_VERSION` bumped `2.8.0` → `2.9.0` to trigger it — see "Plugin DB table
+  auto-upgrade" above). Holds `writer_name`/`writer_email`/`section`/`title`/`content`
+  (the pasted rich text, held here until payment clears) plus the usual `payment_code`/
+  `payment_gateway`/`payment_reference`/`payment_status`/`status` fields, unique-keyed on
+  `payment_code`. **Deliberately a real table, not the option-array store** the confirmed
+  Submissions Manager list uses — this one is written at real public-webhook volume, exactly
+  the same "option array is for a small curated list, a dbDelta table is for volume" reasoning
+  `Culture_Ticket_Payment`'s own docblock gives for `wp_culture_tickets`.
+- **Three-way fee routing in `handle_submission_initiate()`** (`POST
+  /culture/v1/literary/submission/initiate`, public): (1) **The Moveee Flash**
+  (`SECTIONS['flash']['fee'] === 0`) → `add_submission()` fires immediately, `fee_status =
+  'n_a'`, no payment step at all. (2) **A waiver code** → `redeem_waiver()` validates it (see
+  below), then the same immediate `add_submission()` with `fee_status = 'waived'`.
+  (3) **Otherwise** → a pending row is inserted into the new payments table and a real
+  Paystack (`Culture_Paystack::charge_initiate()`) or Stripe
+  (`Culture_Stripe::payment_session()`) charge is initiated — same `NGN → Paystack, else →
+  Stripe` routing `Culture_Ticket_Payment::handle_initiate()` already uses, same
+  reference-prefix-then-metadata pattern (`LIT-{payment_code}` here, vs. `TKT-{ticket_code}`
+  there) so the two payment flows can share one Paystack account/webhook secret without
+  colliding.
+- **New REST routes** (all public, `__return_true`, `rest_api_init` — first time this class
+  registers REST routes; `init()` gained `add_action('rest_api_init', ...)` alongside its
+  existing `admin_post_*` hooks): `POST literary/submission/initiate`, `GET
+  literary/submission/status` (poll by `payment_code` — used by the Stripe success-redirect
+  path below), `GET literary/submission/callback` (Paystack's browser redirect back),
+  `POST literary/submission/webhook/paystack`, `POST literary/submission/webhook/stripe`.
+  Webhook signature verification (`x-paystack-signature` HMAC-SHA512, Stripe's `t=/v1=`
+  HMAC-SHA256 scheme) is copied verbatim from `Culture_Ticket_Payment` — same secrets
+  (`culture_paystack_secret_key`, `culture_stripe_webhook_secret`), no new WP Admin fields
+  needed.
+- **`confirm_payment($payment_code, $reference, $gateway)`** — idempotent (checked via
+  `status === 'confirmed'`, same pattern as `Culture_Ticket_Payment::confirm_ticket()`),
+  called from both the Paystack browser callback and either gateway's webhook (whichever
+  fires first wins; the other is a no-op). On first confirmation it calls `add_submission()`
+  with `fee_status = 'paid'`, stores the resulting submission id back on the payment row, and
+  sends the new `literary_received` email (below).
+- **Stripe's async confirmation gap, handled the same way the shop checkout flow already
+  does**: Stripe's `success_url` lands the browser back on `/literary/submit/form?
+  submission_pending={code}&session_id=...` *before* the webhook may have fired, so the page
+  polls `GET /api/literary/submission/status` every 3s (cap 40 attempts, ~2 minutes — same
+  numbers `CheckoutScreen.tsx`'s order-confirmation poll already uses) until the payment row
+  flips to `confirmed`. Paystack's flow doesn't need this — its own browser callback
+  (`handle_paystack_callback()`) verifies the transaction and calls `confirm_payment()`
+  synchronously before redirecting, landing straight on `?submission_confirmed={code}`.
+
+### Waiver codes — admin-issued, single-use, 100/quarter (per explicit user decision)
+
+Per the second AskUserQuestion answer collected for this feature: a writer who can't afford
+the $3 fee still emails to ask (the guidelines page's FAQ already said this), but an editor now
+issues a real single-use code from WP Admin rather than trusting a self-serve checkbox.
+
+- **Storage**: `culture_literary_waiver_codes` wp_options row (array of `{code, quarter, used,
+  used_by, created_at}`) — same small-array-option pattern as everything else in this class,
+  not a table, since codes are admin-generated in small batches, not written by a webhook.
+- **`current_quarter()`** — `{Y}-Q{1-4}` derived from the current month (`ceil(month/3)`).
+  A code is only redeemable in the quarter it was issued for — `redeem_waiver()` rejects a
+  stale code from a prior quarter with `waiver_expired`, distinct from `waiver_used`
+  (already redeemed) and `waiver_invalid` (doesn't exist).
+- **`generate_waiver_codes($count)`** enforces the 100-per-quarter cap by counting existing
+  codes tagged with `current_quarter()` before generating more (caps the requested count down
+  to whatever's left, or returns a `quota_reached` `WP_Error` if the quarter is already full)
+  — codes are `WAIVE-{8 hex chars}`.
+- **Admin UI**: a new "Submission Fee Waivers" panel appended to the bottom of the existing
+  Submissions Manager page (`admin.php?page=culture-literary-submissions`) — current
+  quarter's issued/remaining count, a "Generate Code(s)" form (capped to the remaining quota),
+  and a table of this quarter's codes (code / Used-or-Available / used-by email / created) with
+  a Delete link on unused codes only (`handle_waiver_delete()`'s filter explicitly refuses to
+  remove an already-used code, so redemption history for a quarter can't be erased by
+  accident).
+
+### New editable email: "Literary Submission — Received"
+
+A third template alongside the existing `literary_accepted`/`literary_rejected` pair (see the
+superseded entry above for how those work) — **`literary_received`**, added to
+`Culture_Email_Templates::templates()` and sent via the new
+`Culture_Emails::send_literary_submission_received()` the moment a submission is actually
+created (Flash: instantly; waived: instantly; paid: once `confirm_payment()` runs) — distinct
+from the accept/reject emails, which still only fire later once an editor makes a decision.
+Same merge-tag shape (`{writer_name}`, `{piece}`, `{section}`), same WP Admin → Culture
+Community → Email Templates editing surface.
+
+### Frontend (`apps/site` only)
+
+- **`app/literary/submit/form/page.tsx`** (new, client component) — the real form: name/email/
+  section/optional-title fields, a `contentEditable` rich-text box (a small Bold/Italic
+  toolbar via `document.execCommand` — no editor library dependency, matching in spirit the
+  admin's own `teeny`-toolbar `wp_editor()`) for the piece body, and (only shown for a
+  fee-bearing section) an optional waiver-code field. A local `SECTIONS` map mirrors the PHP
+  constant's `label`/`fee`/`paymentLabel` fields for display — **no shared source of truth
+  across the PHP/TS boundary**, same caveat as every other duplicated constant in this
+  codebase; keep both in sync if the fee/terms ever change.
+  - Submitting calls `POST /api/literary/submission/initiate`; a `'confirmed'` response shows
+    a plain "It's In" confirmation screen inline; a `'payment_required'` response does a full
+    `window.location.href` redirect to the returned Paystack/Stripe hosted checkout page —
+    same "normal browser tab, no in-app WebView" reasoning the shop checkout flow already
+    documents for why this is the right pattern on web (vs. mobile, which does have a WebView).
+  - On mount, reads `?submission_confirmed=`/`?submission_pending=`/`?submission_failed=`/
+    `?submission_cancelled=` off the URL (the four outcomes the PHP redirect targets can land
+    on) and branches into the matching state — including the Stripe polling loop described
+    above.
+- **New proxy routes**: `app/api/literary/submission/initiate/route.ts` and
+  `.../status/route.ts` — thin passthroughs to the two public WP REST endpoints (no secret
+  needed, same as `app/api/events/ticket/route.ts`'s equivalent proxy for
+  `/culture/v1/ticket/initiate`).
+- **`app/literary/submit/page.tsx`** (the guidelines page) — the "Send Us Your Work" section's
+  mailto instructions were replaced with a "Start Your Submission →" card linking to
+  `/literary/submit/form`; `literary@themoveee.com` is now framed purely as "questions or a
+  waiver-code request," not a submission address. The manuscript-format FAQ/guidelines
+  paragraph was rewritten to describe pasting into the online editor instead of file formats.
+- **New CSS**: `.lit-form-*` classes appended to `apps/site/app/literary.css`, built on the
+  section's existing `--lit-*` token palette (ivory/ink/oxblood/parchment/rule) — no new
+  tokens, no dependency on `.lit-submit-*` beyond the page wrapper it already provides.
+
+### Magic-code verification gate — closes The Moveee Flash's no-fee abuse gap (September 2026, follow-up)
+
+Per explicit user follow-up ("How about the free submissions for The Moveee: Flash? … we need
+to ensure only logged in users (perhaps via magic code) can submit"): every submission branch —
+Flash's no-fee path, a waiver-code redemption, and the real Paystack/Stripe payment path alike —
+now requires a verified email first. This is the same email/OTP "magic code" mechanism already
+built for `/literary` and `/magazine` content gating (`Culture_Literary_Access`), reused as-is,
+not a new auth system. It's what actually closes the Flash abuse gap: Flash has no payment
+barrier at all, so verifying real ownership of an email address is the only gate it can have.
+
+- **PHP**: `handle_submission_initiate()` now requires a `verified_token` param as its very
+  first check, before any of the `writer_name`/`section`/fee-routing validation — calls
+  `Culture_Literary_Access::verify_token($token)` (already built, previously unused from PHP;
+  its own docblock flagged it as "kept … for any future server-side need," which this is) and
+  returns 401 `not_verified` if it's missing or invalid/expired. **The verified token's own
+  email is authoritative** — `writer_email` is derived from `$verified['email']`, not from a
+  client-supplied param; the frontend no longer sends a `writer_email` field at all. This
+  applies uniformly across all three fee branches (Flash, waiver, paid), so there's no longer a
+  path to `add_submission()` that skips verification.
+- **Next.js proxy** (`app/api/literary/submission/initiate/route.ts`): reads the existing
+  `moveee_lit_token` httpOnly cookie server-side (`cookies()` from `next/headers`, same cookie
+  `/api/literary/verify-code` already sets) and forwards it as `verified_token` — short-circuits
+  with a 401 before ever reaching WordPress if the cookie is missing, so an unverified visitor
+  gets a fast, clear failure rather than a round trip that WP would reject anyway.
+- **New: `app/api/literary/verify-status/route.ts`** — lets the submission page skip the gate
+  UI entirely when a valid `moveee_lit_token` cookie already exists (e.g. the visitor verified
+  earlier in the same browser session unlocking a gated `/literary` or `/magazine` piece).
+  Verifies locally via `verifyLiteraryToken()` (`lib/literary-access.ts`) — no round trip to
+  WordPress needed, same as every other client-side literary-access check on this side.
+- **Frontend gate UI** (`app/literary/submit/form/page.tsx`): a new `verifyStep` state
+  (`checking` → `email` → `code` → `verified`) renders before the actual submission form at
+  all — on mount it silently checks `verify-status`; if not already verified, it shows a plain
+  email-then-code flow reusing the exact same two existing API routes
+  (`/api/literary/request-code`, `/api/literary/verify-code`) that `/literary`'s and
+  `/magazine`'s own gates already use. Only once `verifyStep === "verified"` does the real form
+  render — the form's own "Your email" field is now a read-only display of the verified address
+  (with a small "Verified" badge, `.lit-form-verified-badge`) rather than an editable input, and
+  the submit payload no longer includes an email field at all (the server derives it from the
+  cookie).
+- **New CSS**: `.lit-form-verified-badge` and `.lit-form-linklike` (a plain-button "Use a
+  different email" link inside the code step) appended to `apps/site/app/literary.css`'s
+  existing `.lit-form-*` block — same `--lit-*` token palette, no new tokens.
+- Verified via `php -l` on the edited PHP file and a brace/paren-balance check on all three
+  edited/new TS/TSX files and `literary.css`. **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this change
+  additionally needs the plugin redeployed before `verified_token` enforcement takes effect in
+  production (the class file itself has no new dbDelta table, so no `CULTURE_VERSION` bump was
+  needed for this follow-up specifically). Re-check the full email → code → submit round trip
+  for all three fee branches (Flash, waiver, paid) in a real environment before considering this
+  closed.
+
+**Route renamed to `/literary/submit/form` (September 2026, follow-up)** — the submission form
+originally shipped at `/literary/submit/new`; moved (`git mv`) to `/literary/submit/form` per
+explicit user request. Every reference was updated in the same pass: the two in-page `Link`s
+(the guidelines page's "Start Your Submission" card, and the form's own "Try again" link on
+payment failure), the PHP payment success/cancel redirect URLs and Paystack callback base URL in
+`handle_submission_initiate()`/`init_stripe_payment()`/`init_paystack_payment()`, and the
+doc-comments in `literary.css`/`verify-status/route.ts`. No functional/logic changes — purely a
+path rename, same pattern as the `/shop` → `/lifestyle` rename elsewhere in this file.
+
+### Deliberately out of scope for this pass
+
+- **No mobile submission flow** — The Moveee Literary isn't surfaced on `apps/mobile` at all
+  (per the section's own original scope note), so this form is web-only, same as every other
+  Literary page.
+- **No file-upload fallback** — a writer who genuinely can't paste plain-formatted text (a
+  complex layout, embedded images) has no upload path; they'd need to email
+  `literary@themoveee.com` and have an editor manually log the submission via the existing
+  admin "Log a New Submission" form, which still exists and still accepts pasted content the
+  same way.
+- **No currency selection UI** — the form always requests `USD`, routing every real charge to
+  Stripe; the PHP side's `NGN → Paystack` branch exists (mirroring the ticket flow) but is
+  currently unreachable from this form since nothing sends `currency: "NGN"`. If Naira pricing
+  is ever wanted for Nigerian writers, add a currency toggle to the form — the backend routing
+  is already there.
+- Verified via `php -l` on all five touched/new PHP files and a brace/paren-balance check on
+  the new TS/TSX files and `literary.css` (330/330). **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file, and this
+  feature additionally needs the plugin redeployed (the new table only gets created via
+  `culture_community_maybe_upgrade()`'s version-bump check — see "Plugin DB table
+  auto-upgrade" above) and real Paystack/Stripe keys configured before a real payment can be
+  tested end to end. Re-check the full paste → pay → webhook → confirmation round trip (both
+  gateways) and a waiver-code redemption in a real environment before considering this closed.
+
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 
 An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired
