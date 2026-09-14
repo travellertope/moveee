@@ -15,8 +15,6 @@ function plainExcerpt(html: string | undefined | null, max = 220): string {
   return text.length > max ? text.slice(0, max).trim() + "…" : text;
 }
 
-const SHELF_GRADIENT = "linear-gradient(150deg, #17130f, #7a241c 65%, #8b4d2e 140%)";
-
 // A one-time "start the homepage fresh" reset, per explicit request — the
 // homepage's own story pools (hero/Latest/In Translation/More From) only
 // ever show pieces published on or after this date; nothing published
@@ -73,7 +71,7 @@ export default async function LiteraryLandingPage() {
     href: `/literary/${g.slug}`,
     label: g.label,
     sub: g.label.slice(0, 3).toUpperCase(),
-    gradient: SHELF_GRADIENT,
+    slug: g.slug,
   }));
 
   return (
