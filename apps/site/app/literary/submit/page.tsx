@@ -160,9 +160,9 @@ export default function LiterarySubmitPage() {
         <p>
           <strong>Do you pay contributors?</strong>
           <br />
-          Yes, for the quarterly magazine. The proposed contributor payment is $15&ndash;$25 per
-          accepted piece, scaled by category and/or length. The monthly Moveee Flash category is
-          currently unpaid, although we hope to pay in the near future.
+          Yes. For the quarterly magazine, the proposed contributor payment is $15&ndash;$25 per
+          accepted piece, scaled by category and/or length. For The Moveee Flash, we pay a flat
+          fee of $10 per accepted piece.
         </p>
         <p>
           <strong>Do you publish translations?</strong>
