@@ -19,13 +19,26 @@ const SECTIONS: Record<string, { label: string; fee: number; paymentLabel: strin
 };
 
 type Status = "form" | "submitting" | "waiting_payment" | "confirmed" | "cancelled" | "failed";
+type VerifyStep = "checking" | "email" | "code" | "verified";
 
 export default function LiterarySubmitNewPage() {
   const [status, setStatus] = useState<Status>("form");
   const [error, setError] = useState<string>("");
 
+  // Every submission — paid, waived, or free Moveee Flash — requires a
+  // verified email first (a "magic code," same email/OTP mechanism already
+  // built for /literary and /magazine content gating, see
+  // Culture_Literary_Access). This is what actually stops Flash's no-fee
+  // section from being spammable, and confirms a writer owns the address
+  // they're submitting under before anything is created.
+  const [verifyStep, setVerifyStep] = useState<VerifyStep>("checking");
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verifyEmailInput, setVerifyEmailInput] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifyError, setVerifyError] = useState("");
+  const [verifyBusy, setVerifyBusy] = useState(false);
+
   const [writerName, setWriterName] = useState("");
-  const [writerEmail, setWriterEmail] = useState("");
   const [section, setSection] = useState("fiction");
   const [title, setTitle] = useState("");
   const [waiverCode, setWaiverCode] = useState("");
@@ -33,6 +46,80 @@ export default function LiterarySubmitNewPage() {
 
   const sectionMeta = SECTIONS[section] ?? SECTIONS.fiction;
   const needsFee = sectionMeta.fee > 0;
+
+  // Skip the gate if a valid moveee_lit_token cookie already exists (e.g.
+  // the visitor verified earlier this session unlocking a gated piece).
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/literary/verify-status", { cache: "no-store" });
+        const data = await res.json();
+        if (data?.verified) {
+          setVerifiedEmail(data.email ?? "");
+          setVerifyStep("verified");
+          return;
+        }
+      } catch {
+        // fall through to the email step
+      }
+      setVerifyStep("email");
+    })();
+  }, []);
+
+  async function handleRequestCode(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifyError("");
+    if (!/\S+@\S+\.\S+/.test(verifyEmailInput)) {
+      setVerifyError("Please enter a valid email address.");
+      return;
+    }
+    setVerifyBusy(true);
+    try {
+      const res = await fetch("/api/literary/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verifyEmailInput }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVerifyError(data?.error ?? "Couldn't send a code. Please try again.");
+        return;
+      }
+      setVerifyStep("code");
+    } catch {
+      setVerifyError("Couldn't reach the server — try again.");
+    } finally {
+      setVerifyBusy(false);
+    }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifyError("");
+    if (!verifyCode.trim()) {
+      setVerifyError("Enter the code we emailed you.");
+      return;
+    }
+    setVerifyBusy(true);
+    try {
+      const res = await fetch("/api/literary/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verifyEmailInput, code: verifyCode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVerifyError(data?.error ?? "That code didn't work.");
+        return;
+      }
+      setVerifiedEmail(verifyEmailInput);
+      setVerifyStep("verified");
+    } catch {
+      setVerifyError("Couldn't reach the server — try again.");
+    } finally {
+      setVerifyBusy(false);
+    }
+  }
 
   // Handle the return trip from Paystack/Stripe.
   useEffect(() => {
@@ -86,8 +173,8 @@ export default function LiterarySubmitNewPage() {
   };
 
   const canSubmit = useMemo(() => {
-    return writerName.trim().length > 0 && /\S+@\S+\.\S+/.test(writerEmail) && !!section;
-  }, [writerName, writerEmail, section]);
+    return writerName.trim().length > 0 && !!section;
+  }, [writerName, section]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -106,7 +193,6 @@ export default function LiterarySubmitNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           writerName,
-          writerEmail,
           section,
           title,
           content,
@@ -179,6 +265,82 @@ export default function LiterarySubmitNewPage() {
     );
   }
 
+  if (verifyStep === "checking") {
+    return (
+      <div className="lit-submit-wrap">
+        <h1>Submit Your Work</h1>
+        <p className="lit-sub">One moment&hellip;</p>
+      </div>
+    );
+  }
+
+  if (verifyStep === "email" || verifyStep === "code") {
+    return (
+      <div className="lit-submit-wrap">
+        <h1>Verify Your Email</h1>
+        <p className="lit-sub">
+          We ask every writer to verify their email before submitting — it&rsquo;s quick, and it
+          keeps The Moveee Flash&rsquo;s free call fair for everyone.
+        </p>
+
+        {verifyStep === "email" && (
+          <form className="lit-form" onSubmit={handleRequestCode}>
+            <div className="lit-form-field">
+              <label htmlFor="lit-verify-email">Your email</label>
+              <input
+                id="lit-verify-email"
+                type="email"
+                value={verifyEmailInput}
+                onChange={(e) => setVerifyEmailInput(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            {verifyError && <p className="lit-form-error">{verifyError}</p>}
+            <button type="submit" className="lit-form-submit" disabled={verifyBusy}>
+              {verifyBusy ? "Sending…" : "Send Code →"}
+            </button>
+          </form>
+        )}
+
+        {verifyStep === "code" && (
+          <form className="lit-form" onSubmit={handleVerifyCode}>
+            <p className="lit-form-hint">We sent a code to {verifyEmailInput}.</p>
+            <div className="lit-form-field">
+              <label htmlFor="lit-verify-code">Verification code</label>
+              <input
+                id="lit-verify-code"
+                type="text"
+                inputMode="numeric"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            {verifyError && <p className="lit-form-error">{verifyError}</p>}
+            <button type="submit" className="lit-form-submit" disabled={verifyBusy}>
+              {verifyBusy ? "Verifying…" : "Verify →"}
+            </button>
+            <p className="lit-form-hint" style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                className="lit-form-linklike"
+                onClick={() => {
+                  setVerifyStep("email");
+                  setVerifyCode("");
+                  setVerifyError("");
+                }}
+              >
+                Use a different email
+              </button>
+            </p>
+          </form>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="lit-submit-wrap">
       <h1>Submit Your Work</h1>
@@ -201,14 +363,10 @@ export default function LiterarySubmitNewPage() {
         </div>
 
         <div className="lit-form-field">
-          <label htmlFor="lit-writer-email">Your email</label>
-          <input
-            id="lit-writer-email"
-            type="email"
-            value={writerEmail}
-            onChange={(e) => setWriterEmail(e.target.value)}
-            required
-          />
+          <label>Your email</label>
+          <p className="lit-form-hint">
+            {verifiedEmail} <span className="lit-form-verified-badge">Verified</span>
+          </p>
         </div>
 
         <div className="lit-form-field">

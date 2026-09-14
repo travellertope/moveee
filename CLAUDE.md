@@ -1104,6 +1104,57 @@ Community → Email Templates editing surface.
   section's existing `--lit-*` token palette (ivory/ink/oxblood/parchment/rule) — no new
   tokens, no dependency on `.lit-submit-*` beyond the page wrapper it already provides.
 
+### Magic-code verification gate — closes The Moveee Flash's no-fee abuse gap (September 2026, follow-up)
+
+Per explicit user follow-up ("How about the free submissions for The Moveee: Flash? … we need
+to ensure only logged in users (perhaps via magic code) can submit"): every submission branch —
+Flash's no-fee path, a waiver-code redemption, and the real Paystack/Stripe payment path alike —
+now requires a verified email first. This is the same email/OTP "magic code" mechanism already
+built for `/literary` and `/magazine` content gating (`Culture_Literary_Access`), reused as-is,
+not a new auth system. It's what actually closes the Flash abuse gap: Flash has no payment
+barrier at all, so verifying real ownership of an email address is the only gate it can have.
+
+- **PHP**: `handle_submission_initiate()` now requires a `verified_token` param as its very
+  first check, before any of the `writer_name`/`section`/fee-routing validation — calls
+  `Culture_Literary_Access::verify_token($token)` (already built, previously unused from PHP;
+  its own docblock flagged it as "kept … for any future server-side need," which this is) and
+  returns 401 `not_verified` if it's missing or invalid/expired. **The verified token's own
+  email is authoritative** — `writer_email` is derived from `$verified['email']`, not from a
+  client-supplied param; the frontend no longer sends a `writer_email` field at all. This
+  applies uniformly across all three fee branches (Flash, waiver, paid), so there's no longer a
+  path to `add_submission()` that skips verification.
+- **Next.js proxy** (`app/api/literary/submission/initiate/route.ts`): reads the existing
+  `moveee_lit_token` httpOnly cookie server-side (`cookies()` from `next/headers`, same cookie
+  `/api/literary/verify-code` already sets) and forwards it as `verified_token` — short-circuits
+  with a 401 before ever reaching WordPress if the cookie is missing, so an unverified visitor
+  gets a fast, clear failure rather than a round trip that WP would reject anyway.
+- **New: `app/api/literary/verify-status/route.ts`** — lets the submission page skip the gate
+  UI entirely when a valid `moveee_lit_token` cookie already exists (e.g. the visitor verified
+  earlier in the same browser session unlocking a gated `/literary` or `/magazine` piece).
+  Verifies locally via `verifyLiteraryToken()` (`lib/literary-access.ts`) — no round trip to
+  WordPress needed, same as every other client-side literary-access check on this side.
+- **Frontend gate UI** (`app/literary/submit/new/page.tsx`): a new `verifyStep` state
+  (`checking` → `email` → `code` → `verified`) renders before the actual submission form at
+  all — on mount it silently checks `verify-status`; if not already verified, it shows a plain
+  email-then-code flow reusing the exact same two existing API routes
+  (`/api/literary/request-code`, `/api/literary/verify-code`) that `/literary`'s and
+  `/magazine`'s own gates already use. Only once `verifyStep === "verified"` does the real form
+  render — the form's own "Your email" field is now a read-only display of the verified address
+  (with a small "Verified" badge, `.lit-form-verified-badge`) rather than an editable input, and
+  the submit payload no longer includes an email field at all (the server derives it from the
+  cookie).
+- **New CSS**: `.lit-form-verified-badge` and `.lit-form-linklike` (a plain-button "Use a
+  different email" link inside the code step) appended to `apps/site/app/literary.css`'s
+  existing `.lit-form-*` block — same `--lit-*` token palette, no new tokens.
+- Verified via `php -l` on the edited PHP file and a brace/paren-balance check on all three
+  edited/new TS/TSX files and `literary.css`. **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this change
+  additionally needs the plugin redeployed before `verified_token` enforcement takes effect in
+  production (the class file itself has no new dbDelta table, so no `CULTURE_VERSION` bump was
+  needed for this follow-up specifically). Re-check the full email → code → submit round trip
+  for all three fee branches (Flash, waiver, paid) in a real environment before considering this
+  closed.
+
 ### Deliberately out of scope for this pass
 
 - **No mobile submission flow** — The Moveee Literary isn't surfaced on `apps/mobile` at all

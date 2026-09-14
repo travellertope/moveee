@@ -219,10 +219,38 @@ class Culture_Literary_Submissions {
         ) );
     }
 
-    /** Entry point: create/charge for a new online submission. */
+    /**
+     * Entry point: create/charge for a new online submission.
+     *
+     * Gated behind Culture_Literary_Access's existing email/OTP "magic code"
+     * verification (the same mechanism already built for /literary and
+     * /magazine content gating — see that class) — this closes two gaps at
+     * once: (1) The Moveee Flash's free tier had no anti-abuse barrier at
+     * all (no fee, so anyone could spam it), and (2) nothing verified a
+     * submitter actually owns the email address they typed, for any
+     * section. The verified token's own email is authoritative — the
+     * client-supplied writer_email param is ignored once a token is
+     * present (kept only as the pre-verification fallback error path
+     * would never reach it, since verification now runs first).
+     */
     public static function handle_submission_initiate( WP_REST_Request $req ) {
+        $verified_token = sanitize_text_field( wp_unslash( $req->get_param( 'verified_token' ) ?? '' ) );
+        if ( ! $verified_token ) {
+            return self::cors( new WP_REST_Response( array(
+                'error'   => 'not_verified',
+                'message' => 'Please verify your email address before submitting.',
+            ), 401 ) );
+        }
+        $verified = Culture_Literary_Access::verify_token( $verified_token );
+        if ( is_wp_error( $verified ) ) {
+            return self::cors( new WP_REST_Response( array(
+                'error'   => 'not_verified',
+                'message' => 'Your verification has expired — please verify your email again.',
+            ), 401 ) );
+        }
+
         $writer_name  = sanitize_text_field( wp_unslash( $req->get_param( 'writer_name' ) ?? '' ) );
-        $writer_email = sanitize_email( wp_unslash( $req->get_param( 'writer_email' ) ?? '' ) );
+        $writer_email = sanitize_email( $verified['email'] );
         $section      = sanitize_key( wp_unslash( $req->get_param( 'section' ) ?? '' ) );
         $title        = sanitize_text_field( wp_unslash( $req->get_param( 'title' ) ?? '' ) );
         $content      = wp_kses_post( wp_unslash( $req->get_param( 'content' ) ?? '' ) );
@@ -231,7 +259,7 @@ class Culture_Literary_Submissions {
         if ( ! $writer_name || ! is_email( $writer_email ) || ! isset( self::SECTIONS[ $section ] ) ) {
             return self::cors( new WP_REST_Response( array(
                 'error'   => 'invalid_request',
-                'message' => 'Your name, a valid email address, and a section are required.',
+                'message' => 'Your name and a section are required.',
             ), 400 ) );
         }
         if ( '' === trim( wp_strip_all_tags( $content ) ) ) {
