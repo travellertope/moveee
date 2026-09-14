@@ -736,6 +736,26 @@
 .ar-wrap .prose-content .wp-block-gallery.columns-4 { grid-template-columns: repeat(4, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-5 { grid-template-columns: repeat(5, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-6 { grid-template-columns: repeat(6, 1fr); }
+/* `auto-fit` above is silently broken the moment a gallery has a caption
+   (see the figcaption rule below): the caption's `grid-column: 1 / -1`
+   always touches whatever last column line `auto-fit` happens to generate
+   for the container's width, and a spanning item touching a track means
+   that track is never "empty" — so auto-fit's empty-track collapse (the
+   thing that's supposed to shrink unused trailing columns to 0 and let the
+   real images grow to fill the space) never fires. Confirmed live: a
+   1080px-wide, 2-image, captioned gallery generated 5 equal ~208px auto-fit
+   tracks with 3 of them permanently uncollapsed, stranding both images at
+   ~208px instead of growing to fill the row. `:has()` gives the exact real
+   image count instead of guessing from container width, so these override
+   the `columns-default` case the same way the manual `.columns-N` rules
+   above override an editor-set count — scoped to `.columns-default`
+   specifically so the two categories can never fight over specificity. */
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(1)):not(:has(> figure.wp-block-image:nth-child(2))) { grid-template-columns: repeat(1, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(2)):not(:has(> figure.wp-block-image:nth-child(3))) { grid-template-columns: repeat(2, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(3)):not(:has(> figure.wp-block-image:nth-child(4))) { grid-template-columns: repeat(3, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(4)):not(:has(> figure.wp-block-image:nth-child(5))) { grid-template-columns: repeat(4, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(5)):not(:has(> figure.wp-block-image:nth-child(6))) { grid-template-columns: repeat(5, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(6)) { grid-template-columns: repeat(6, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery figure.wp-block-image { margin: 0; }
 .ar-wrap .prose-content .wp-block-gallery img {
   width: 100%; height: 100%;
