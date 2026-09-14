@@ -1,6 +1,8 @@
 import React from "react";
 import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
-import { draftMode, cookies } from "next/headers";
+import { draftMode, cookies, headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import PreviewBanner from "@/components/PreviewBanner";
 import Image from "next/image";
@@ -10,7 +12,7 @@ import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
 import HideIfSubscribed from "@/components/HideIfSubscribed";
 import ArticleActions from "@/components/ArticleActions";
-import ArticleContentGate from "@/components/ArticleContentGate";
+import MagazinePieceGate from "@/components/MagazinePieceGate";
 import ImageLightbox from "@/components/ImageLightbox";
 import ArticleToc from "@/components/ArticleToc";
 import ArticleShareFab from "@/components/ArticleShareFab";
@@ -18,8 +20,20 @@ import JoinSection from "@/components/JoinSection";
 import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
+import {
+  LITERARY_TOKEN_COOKIE,
+  verifyLiteraryToken,
+  truncateHtmlByPercent,
+  isCrawlerUserAgent,
+} from "@/lib/literary-access";
 
-export const revalidate = 600;
+// PiecePage-equivalent gating (see MagazinePieceGate.tsx) needs cookies()/
+// headers()/getServerSession() on every request, and this route also has
+// generateStaticParams — the same combination that threw DYNAMIC_SERVER_USAGE
+// on /literary/[slug] for any slug outside that pre-generated list (see
+// CLAUDE.md's "Fix 500 on /literary/{slug}" entry). Forcing the whole route
+// dynamic sidesteps it here too, for every article, gated or not.
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   try {
@@ -116,6 +130,28 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   }
 
   const accessLevel = getAccessLevel(post);
+
+  // ── Access: same magic-code mechanism as /literary (MagazinePieceGate.tsx
+  // reuses its request-code/verify-code/remainder endpoints and its cookie
+  // verbatim), swapped in for the old ArticleContentGate sign-in/sign-up
+  // wall. No free-read metering — a member-only/patron-only article gates
+  // immediately, same as before; verifying always fully satisfies
+  // member-only, and must resolve to a Pro account specifically for
+  // patron-only. Crawlers always get the full piece, same as /literary.
+  const gateSession = await getServerSession(authOptions);
+  const gateHeaders = await headers();
+  const gateCookies = await cookies();
+  const isBot = isCrawlerUserAgent(gateHeaders.get("user-agent"));
+  const isPatronSession = gateSession?.user?.tier === "patron";
+  const magicToken = verifyLiteraryToken(gateCookies.get(LITERARY_TOKEN_COOKIE)?.value);
+
+  let isAuthorized = true;
+  if (accessLevel === "patron-only") {
+    isAuthorized = isPatronSession || magicToken?.access === "pro";
+  } else if (accessLevel === "member-only") {
+    isAuthorized = !!gateSession?.user || !!magicToken;
+  }
+  isAuthorized = isAuthorized || isBot;
 
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
   let relatedStories: any[] = [];
@@ -242,6 +278,18 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     );
   };
   const processedContent = cleanContent(contentWithIds);
+  const sanitizedContent = sanitizeHtml(processedContent);
+
+  // Real server-side truncation (not a client-hidden soft gate) for a
+  // non-authorized visitor — see the "Access:" block above. Degrades to
+  // showing everything when the body is too short/flat to split sensibly
+  // (truncateHtmlByPercent's own "single block" fallback), same as
+  // /literary, rather than gating something that can't be partially shown.
+  const needsGate = accessLevel !== "public" && !isAuthorized;
+  const { visibleHtml: gatedContent, hasMore: gateHasMore } = needsGate
+    ? truncateHtmlByPercent(sanitizedContent, 0.3)
+    : { visibleHtml: sanitizedContent, hasMore: false };
+  const showGate = needsGate && gateHasMore;
 
   const articleUrl = `https://themoveee.com/magazine/${resolvedParams.slug}`;
   const articleJsonLd = {
@@ -418,84 +466,82 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <ArticleActions postId={parseInt(post.databaseId)} className="ar-actions--standard" />
           </div>
 
-          <ArticleContentGate
-            accessLevel={accessLevel}
-            callbackUrl={`/magazine/${resolvedParams.slug}`}
-            previewHtml={sanitizeHtml(
-              (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
-              post.excerpt ||
-              ""
-            )}
-            fullContent={
-              <>
-                <div
-                  className="prose-content"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
-                />
-
-                {(post.featuredProducts ?? []).length > 0 && (
-                  <div className="ar-band t-wide">
-                    <span className="ar-band-label">Shop the Edit</span>
-                    <div className="ar-band-shop-row">
-                      {(post.featuredProducts as any[]).map((p: any) => (
-                        <Link key={p.id} href={`/lifestyle/${p.slug}`} className="ar-band-shop-item">
-                          <div className="ar-band-shop-img" style={{ position: "relative" }}>
-                            {p.imageUrl ? (
-                              <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="180px" />
-                            ) : null}
-                          </div>
-                          <div className="ar-band-shop-name">{p.name}</div>
-                          <div className="ar-band-shop-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Culture Drop — the homepage JoinSection component itself,
-                    not a lookalike, per explicit request. featureStory reuses
-                    the first already-fetched related story (real slug/title/
-                    excerpt/featuredImage — same shape JoinSection expects on
-                    the homepage) rather than firing a second newsletter-issue
-                    fetch just for this card. */}
-                <HideIfSubscribed>
-                  <div className="t-wide">
-                    <JoinSection edition="global" featureStory={relatedStories[0] ?? null} />
-                  </div>
-                </HideIfSubscribed>
-
-                {postIssue && (
-                  <div className="t-wide">
-                    <Link href={`/magazine/issues/${postIssue.slug}`} className="ar-issue-card">
-                      <div className="ar-issue-card-photo" style={{ position: "relative" }}>
-                        {postIssue.meta?.issue_cover_image_url && (
-                          <Image
-                            src={postIssue.meta.issue_cover_image_url}
-                            alt={postIssue.name}
-                            fill
-                            style={{ objectFit: "cover" }}
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <span className="ar-band-label">This piece is from</span>
-                        <p className="ar-issue-card-num">
-                          {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
-                        </p>
-                        {postIssue.meta?.issue_subtitle && (
-                          <p className="ar-issue-card-sub">{postIssue.meta.issue_subtitle}</p>
-                        )}
-                        <span className="ar-sc-read">Read the full issue →</span>
-                      </div>
-                    </Link>
-                  </div>
-                )}
-
-                <ArticleComments postId={parseInt(post.databaseId)} />
-                <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
-              </>
-            }
+          <div
+            className="prose-content"
+            dangerouslySetInnerHTML={{ __html: gatedContent }}
           />
+
+          {showGate && (
+            <MagazinePieceGate
+              slug={resolvedParams.slug}
+              mode={accessLevel === "patron-only" ? "patron" : "member"}
+            />
+          )}
+
+          {!showGate && (
+            <>
+              {(post.featuredProducts ?? []).length > 0 && (
+                <div className="ar-band t-wide">
+                  <span className="ar-band-label">Shop the Edit</span>
+                  <div className="ar-band-shop-row">
+                    {(post.featuredProducts as any[]).map((p: any) => (
+                      <Link key={p.id} href={`/lifestyle/${p.slug}`} className="ar-band-shop-item">
+                        <div className="ar-band-shop-img" style={{ position: "relative" }}>
+                          {p.imageUrl ? (
+                            <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="180px" />
+                          ) : null}
+                        </div>
+                        <div className="ar-band-shop-name">{p.name}</div>
+                        <div className="ar-band-shop-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Culture Drop — the homepage JoinSection component itself,
+                  not a lookalike, per explicit request. featureStory reuses
+                  the first already-fetched related story (real slug/title/
+                  excerpt/featuredImage — same shape JoinSection expects on
+                  the homepage) rather than firing a second newsletter-issue
+                  fetch just for this card. */}
+              <HideIfSubscribed>
+                <div className="t-wide">
+                  <JoinSection edition="global" featureStory={relatedStories[0] ?? null} />
+                </div>
+              </HideIfSubscribed>
+
+              {postIssue && (
+                <div className="t-wide">
+                  <Link href={`/magazine/issues/${postIssue.slug}`} className="ar-issue-card">
+                    <div className="ar-issue-card-photo" style={{ position: "relative" }}>
+                      {postIssue.meta?.issue_cover_image_url && (
+                        <Image
+                          src={postIssue.meta.issue_cover_image_url}
+                          alt={postIssue.name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <span className="ar-band-label">This piece is from</span>
+                      <p className="ar-issue-card-num">
+                        {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
+                      </p>
+                      {postIssue.meta?.issue_subtitle && (
+                        <p className="ar-issue-card-sub">{postIssue.meta.issue_subtitle}</p>
+                      )}
+                      <span className="ar-sc-read">Read the full issue →</span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+
+              <ArticleComments postId={parseInt(post.databaseId)} />
+              <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
+            </>
+          )}
         </div>
       </ImageLightbox>
 

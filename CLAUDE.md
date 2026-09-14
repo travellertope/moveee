@@ -765,6 +765,81 @@ read-through, a CSS brace-balance check on `literary.css` (157/157), and a diff 
 mockup and the real logo asset's rendering in a real environment before considering this fully
 closed.
 
+## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
+
+`/magazine/[slug]` articles used to gate member-only/patron-only content with `ArticleContentGate`/
+`ContentGate` (`packages/shared/components/`) — a client-only soft gate (full content shipped in the
+RSC payload, hidden via `useSession()`) offering a "Join free" / "Sign in" wall. Per explicit
+request, this was replaced with The Moveee Literary's real email/OTP magic-code mechanism — reused
+as-is, not duplicated: same PHP class (`Culture_Literary_Access`), same signed HMAC token, same
+`moveee_lit_token` cookie, same `/api/literary/request-code` and `/api/literary/verify-code` routes.
+**Verifying once unlocks gated content on both `/literary` and `/magazine`** — the token only ever
+encodes an email + access level, nothing section-specific, so there was no reason to mint a second,
+parallel token system.
+
+- **The only thing that differs by caller**: which newsletter list a "free" (non-Pro) verifier joins.
+  `Culture_Literary_Access::NEWSLETTER_LIST_BY_CONTEXT` maps `'literary' => 'literary-club'` and
+  `'magazine' => 'culture-drop'` (per explicit decision — Magazine content already belongs to Culture
+  Drop editorially). `verify_code()` takes an optional `$context` param (default `'literary'`);
+  `handle_literary_verify_code()` in `class-culture-rest-api.php` validates it against that map's
+  keys before passing it through. The Next.js `/api/literary/verify-code/route.ts` forwards an
+  optional `context: "magazine"` body field the same way — no new REST namespace, no new PHP class.
+- **New: `apps/site/components/MagazinePieceGate.tsx`** — a Magazine-branded rebuild of
+  `LiteraryPieceGate.tsx`'s email → OTP flow, simplified to two modes (`"member"` | `"patron"`,
+  matching `AccessLevel`'s `member-only`/`patron-only`) and always blocking (no free-read metering —
+  see below), styled onto the existing `.ar-gate` card family in `editorial.css` (new `.ar-gate-form`/
+  `.ar-gate-input`/`.ar-gate-error`/`.ar-gate-resend` rules alongside it) rather than `literary.css`'s
+  `.lit-email-gate`, since `literary.css` isn't loaded on `/magazine` routes.
+- **New: `apps/site/app/api/magazine/remainder/route.ts`** — the same shape as
+  `/api/literary/remainder`, generalized: no `isLiteraryPost()` check (any `post` works), and no
+  metering branch, since Magazine's gate is decision **b)** below.
+- **Deliberate decisions made explicitly, not inferred** (asked directly, since getting any of these
+  wrong changes who can read what):
+  a) **Verifying a magic code alone fully satisfies `member-only`** — it does not create a real
+     WordPress account or session, it just proves the email is real. This intentionally loosens
+     "member-only" from "has a free account" to "gave a verified email," matching how Literary's own
+     free tier already works. `patron-only` still requires the verified email to belong to an
+     existing Pro (`patron`) account, or a real Pro session — magic-code verification never grants
+     Pro on its own.
+  b) **No free-read metering** — unlike Literary's public pieces (a few free reads per rolling
+     window before the gate appears), a gated Magazine article always shows the gate immediately,
+     matching the site's existing hard-wall behavior. `MagazinePieceGate` has no "Skip for now" /
+     non-blocking mode at all.
+  c) **`export const dynamic = "force-dynamic"` on the whole route**, not just the gated path — this
+     page also has `generateStaticParams()` (top 100 recent posts), the exact same combination that
+     threw `DYNAMIC_SERVER_USAGE` on `/literary/[slug]` for any slug outside its own pre-generated
+     list (see that fix's own CLAUDE.md entry above) the moment `cookies()`/`headers()`/
+     `getServerSession()` are used. This was a known, explicit tradeoff, not an oversight — every
+     article (gated or not) now renders fresh per request instead of via the previous `revalidate =
+     600` ISR, a real latency/compute cost accepted for correctness on a first ship. The lighter
+     alternative (truncate identically for everyone in the cached HTML, verify client-side after
+     load) was considered and explicitly not chosen — revisit if this page's compute cost becomes a
+     real problem.
+- **Real server-side truncation, not a client-hidden gate** — `sanitizeHtml(processedContent)` is
+  truncated to 30% via `truncateHtmlByPercent()` (`lib/literary-access.ts` — despite the filename,
+  nothing in it is actually Literary-specific) before it ever reaches the client for a non-authorized
+  visitor; the withheld remainder is fetched only after verification, via the new remainder route,
+  and injected in place inside another `.prose-content` div (preserving the width-tier grid system —
+  `.ar-wrap > .prose-content { display: contents }`, see the "width-tier rail" section above — since
+  the injected HTML still needs `alignwide`/`wp-block-gallery`/etc. to size correctly). Crawlers
+  always get the full, untruncated piece (`isCrawlerUserAgent()`, same helper Literary uses) so this
+  change doesn't regress SEO on gated articles the way real truncation otherwise would.
+- **Everything after the gate — Shop the Edit, the Culture Drop `JoinSection`, the "This piece is
+  from {Issue}" card, comments, and Finish Reading — stays hidden until authorized**, matching
+  `ArticleContentGate`'s old behavior (all of it used to live inside `fullContent`, only rendered
+  when `canView` was true).
+- **Scope: `/magazine` only.** `ArticleContentGate`/`ContentGate` are untouched and still used
+  exactly as before on `/directory/[slug]` (both `apps/site` and `apps/connect`) and the newsletter
+  single-issue reader (`/newsletter/[slug]`, `IssueReaderClient.tsx`) — those were never in scope for
+  this change and still show the original sign-in/sign-up wall.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+  other pass in this file (this feature additionally needs the plugin redeployed — see "Plugin DB
+  table auto-upgrade" — before `verify-code`'s new `context` param takes effect in production).
+  Verified via `php -l` on both touched PHP files and brace/paren-balance checks on every touched
+  TS/TSX file and `editorial.css`. Re-check the full request-code → verify-code → remainder-fetch
+  round trip against a real member-only and a real patron-only article, logged out, in a real
+  environment before considering this fully closed.
+
 ## Process: adding a new newsletter
 
 Follow every step in order. Each step lists the exact file and what to change.

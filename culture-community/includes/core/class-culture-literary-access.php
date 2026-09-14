@@ -1,8 +1,17 @@
 <?php
 /**
- * The Moveee Literary — email/OTP verification for the metered soft-paywall.
+ * Email/OTP magic-code verification — originally built for The Moveee
+ * Literary's metered soft-paywall, and reused as-is (same class, same
+ * signed token, same cookie) to gate Moveee Magazine's member-only/
+ * patron-only articles too (see apps/site/app/magazine/[slug]/page.tsx and
+ * components/MagazinePieceGate.tsx) — verifying once unlocks both, since
+ * the token only ever encodes an email + access level, nothing
+ * section-specific. The one difference between the two callers is which
+ * newsletter list a "free" verifier joins, controlled by verify_code()'s
+ * $context param — see NEWSLETTER_LIST_BY_CONTEXT.
  *
- * Two things this backs, both reached from apps/site's /literary/[slug] page:
+ * Two things this backs on /literary specifically, reached from apps/site's
+ * /literary/[slug] page:
  *
  * 1. Anonymous readers get a limited number of free Literary reads per
  *    rolling 30-day window (tracked client-side via a cookie, see
@@ -35,6 +44,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Culture_Literary_Access {
+
+	/**
+	 * Which newsletter list a "free" (non-Pro) verified email joins, keyed
+	 * by the calling surface's context — /magazine reuses this exact same
+	 * class/token/cookie (see verify_code()'s $context param) rather than a
+	 * second parallel implementation, since the underlying mechanism (HMAC
+	 * token, OTP, rate limiting) has nothing Literary-specific about it,
+	 * only the list a verifier joins differs.
+	 */
+	const NEWSLETTER_LIST_BY_CONTEXT = array(
+		'literary' => 'literary-club',
+		'magazine' => 'culture-drop',
+	);
 
 	/** How long a requested code stays valid, in seconds. */
 	const CODE_TTL = 600;
@@ -87,9 +109,12 @@ class Culture_Literary_Access {
 	 *
 	 * @param string $email
 	 * @param string $code
+	 * @param string $context Which newsletter list a free verifier joins —
+	 *                         see NEWSLETTER_LIST_BY_CONTEXT. Defaults to
+	 *                         'literary' for the original caller.
 	 * @return array|WP_Error { access: 'free'|'pro', token: string }
 	 */
-	public static function verify_code( $email, $code ) {
+	public static function verify_code( $email, $code, $context = 'literary' ) {
 		$email = sanitize_email( $email );
 		if ( ! is_email( $email ) ) {
 			return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
@@ -124,7 +149,8 @@ class Culture_Literary_Access {
 		}
 
 		if ( 'free' === $access ) {
-			self::add_to_literary_club( $email );
+			$list = self::NEWSLETTER_LIST_BY_CONTEXT[ $context ] ?? self::NEWSLETTER_LIST_BY_CONTEXT['literary'];
+			self::add_to_list( $email, $list );
 		}
 
 		$token = self::make_token( $email, $access );
@@ -136,15 +162,18 @@ class Culture_Literary_Access {
 	}
 
 	/**
-	 * Add (or update) a subscriber record for the "literary-club" list —
+	 * Add (or update) a subscriber record for the given newsletter list —
 	 * the list-building side of this feature. Mirrors
 	 * Culture_REST_API::handle_newsletter_subscribe()'s find-or-create
 	 * shape rather than calling into it (that logic lives on the public
 	 * newsletter-subscribe endpoint and isn't reusable as a plain
 	 * function), since Culture_Subscribers::merge_subscribers() is private
 	 * to that class.
+	 *
+	 * @param string $email
+	 * @param string $list One of NEWSLETTER_LIST_BY_CONTEXT's values.
 	 */
-	private static function add_to_literary_club( $email ) {
+	private static function add_to_list( $email, $list ) {
 		$subscribers = get_option( 'culture_newsletter_subscribers', array() );
 
 		foreach ( $subscribers as $i => $sub ) {
@@ -152,8 +181,8 @@ class Culture_Literary_Access {
 			if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
 				if ( is_array( $sub ) ) {
 					$lists = $sub['lists'] ?? array();
-					if ( ! in_array( 'literary-club', $lists, true ) ) {
-						$lists[] = 'literary-club';
+					if ( ! in_array( $list, $lists, true ) ) {
+						$lists[] = $list;
 						$subscribers[ $i ]['lists'] = $lists;
 						update_option( 'culture_newsletter_subscribers', $subscribers, false );
 					}
@@ -162,7 +191,7 @@ class Culture_Literary_Access {
 						'email'   => $email,
 						'name'    => '',
 						'date'    => current_time( 'mysql' ),
-						'lists'   => array( 'getmelit', 'literary-club', 'announcements' ),
+						'lists'   => array( 'getmelit', $list, 'announcements' ),
 						'segment' => '',
 					);
 					update_option( 'culture_newsletter_subscribers', $subscribers, false );
@@ -175,7 +204,7 @@ class Culture_Literary_Access {
 			'email'   => $email,
 			'name'    => '',
 			'date'    => current_time( 'mysql' ),
-			'lists'   => array( 'literary-club', 'announcements' ),
+			'lists'   => array( $list, 'announcements' ),
 			'segment' => '',
 		);
 		update_option( 'culture_newsletter_subscribers', $subscribers, false );

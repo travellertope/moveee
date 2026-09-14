@@ -1245,6 +1245,59 @@
 .ar-gate-footnote a { color: var(--ar-ochre); text-decoration: none; }
 .ar-gate-footnote a:hover { text-decoration: underline; }
 
+/* ── CONTENT GATE — email/OTP form (MagazinePieceGate.tsx) ──
+   Same .ar-gate card as above; these rules style the email/code input +
+   submit row that replaces the register/sign-in link pair for a magic-code
+   verification instead. */
+.ar-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  text-align: left;
+}
+.ar-gate-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--ar-ghost-light);
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+.ar-gate-input:focus { outline: none; border-color: var(--ar-ochre); }
+.ar-gate--patron .ar-gate-input:focus { border-color: var(--ar-gold); }
+.ar-gate-input--code {
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+}
+.ar-gate-form .ar-gate-btn-primary { border: none; }
+.ar-gate-error {
+  font-size: 12.5px;
+  color: #c0392b;
+  margin: 8px 0 0;
+  text-align: left;
+}
+.ar-gate-resend {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ar-gate-resend:hover { color: var(--ink); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .ar-hero-text { padding: 0 32px 48px; max-width: 560px; }
