@@ -30,3 +30,8 @@ next-env.d.ts
 .env*
 .claude/
 **/.turbo/
+
+# PHP (culture-community plugin) — composer build artifact, never committed;
+# the plugin zip for deployment is built on demand (composer install + zip),
+# not checked into source control.
+culture-community/vendor/
