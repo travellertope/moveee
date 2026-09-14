@@ -851,16 +851,67 @@ this same storage rather than duplicating it (see "Storage" below).
   check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
 - **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
   current filters show, same convention as Ticket Sales' own CSV export.
-- **Deliberately out of scope for this pass**: no REST endpoints, no frontend/mobile surface,
-  no automated email ingestion (an editor still manually creates each row after reading the
-  email) — this is a manual logging tool, not an inbox parser. If automated ingestion from the
-  literary@ inbox is ever wanted, that's a separate, larger project (an email-parsing
-  webhook/cron), not a small extension of this file.
+- **Deliberately out of scope**: no REST endpoints, no frontend/mobile surface, no automated
+  email ingestion (an editor still manually creates each row after reading the email) — this is
+  a manual logging tool, not an inbox parser. If automated ingestion from the literary@ inbox is
+  ever wanted, that's a separate, larger project (an email-parsing webhook/cron), not a small
+  extension of this file.
 - Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
   against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
   other pass in this file; this feature additionally needs the plugin redeployed (manual
   zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
   since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
+
+**Follow-up, same month — WordPress push + accept/reject emails.** Two explicit requests, both
+built on top of the manager above without changing its email-only intake or its manual-logging
+posture:
+
+- **Piece content + "Push to WordPress"** — a submission now has a `content` field, edited via a
+  real `wp_editor()` (TinyMCE, `teeny` toolbar — bold/italic/lists/link, matching the ACF
+  wysiwyg treatment given to other short rich-text fields elsewhere in this plugin) in the
+  add/edit form. A row whose status is Accepted or Published gets a **"Push to WordPress"**
+  button (`Culture_Literary_Submissions::push_to_wordpress()`,
+  `admin_post_culture_lit_submission_push`) that creates a real `post` — title, content
+  (`wp_kses_post`'d), status **`draft`** (never auto-published — "processing into publishing"
+  still means an editor finishes it: featured image, final formatting, and the actual Publish
+  click all still happen by hand), category = the existing `literary` category (by slug,
+  `LITERARY_CATEGORY_SLUG = 'literary'`, matching `packages/shared/lib/wp.ts`'s constant of the
+  same name), and a genre tag matching the submission's section (`GENRE_TAG_NAMES` — same label
+  strings as that file's `LITERARY_GENRES[].label`, so the draft lands on the right
+  `/literary/{genre}` archive the moment it's published). **The Moveee Flash gets no genre tag**
+  — there's no dedicated Flash genre page, so a pushed Flash piece surfaces in the main
+  `/literary` feed only, same graceful "untagged post" behaviour that section's own docs already
+  describe.
+  - **Author**: looks up the writer's email against `get_user_by('email', ...)` — if they have a
+    real WP account, the draft is authored as them (a real byline); otherwise the editor doing
+    the push is the author of record until someone reassigns it in the normal post editor. This
+    is a deliberate, documented limitation, not an oversight — there's no guest-author system in
+    this codebase to map an external contributor onto without a WP account.
+  - **Re-pushing is update-in-place, not duplication** — the submission stores `wp_post_id` once
+    a push succeeds; a second push (after the editor pastes further edits into the `content`
+    field) calls `wp_update_post()` against that same post ID instead of creating a new one. The
+    list table's "WordPress" column shows "Edit draft →" (linking to the real post editor) plus
+    "Re-push edits" once linked, or a "Push to WordPress" button before that.
+  - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
+    empty) or the `literary` category doesn't exist on the target site.
+- **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
+  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()` — not
+  the admin-configurable `Culture_Email_Templates` system, kept simple since these two emails
+  aren't expected to need per-installation customization). Fired from
+  `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
+  change — the full edit form's `handle_save()` and the list table's one-click quick-status
+  links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
+  never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
+  sends when the submission has a `writer_email` on file — if not, the status change still
+  applies but an admin notice ("wasn't notified") tells the editor to follow up manually instead
+  of the email silently never going out. The acceptance email references the section's real
+  payment terms (`payment_label`, e.g. "$15–$25" or "$10 flat") pulled from the same `SECTIONS`
+  constant the rest of the manager already uses — **if those figures ever change on
+  `/literary/submit`, update `SECTIONS` here too**, same cross-file caveat as everywhere else
+  fee/payment terms are duplicated in this codebase.
+- Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
+  instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
+  publish round trip and both email sends against a real inbox before considering this closed.
 
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 

@@ -94,12 +94,33 @@ class Culture_Literary_Submissions {
         'paid'   => 'Paid',
     );
 
+    /**
+     * The literary category (see packages/shared/lib/wp.ts's LITERARY_CATEGORY_SLUG)
+     * and the plain WP tag each section maps to when pushed to WordPress —
+     * same tag names as LITERARY_GENRES[].label in that file, so a pushed post
+     * shows up on the matching /literary/{genre} archive automatically.
+     * 'flash' deliberately has no tag: there is no dedicated Flash genre page,
+     * so a pushed Flash piece surfaces in the main /literary feed only, same
+     * as any other untagged literary post (documented, graceful behaviour).
+     */
+    const LITERARY_CATEGORY_SLUG = 'literary';
+    const GENRE_TAG_NAMES        = array(
+        'fiction'       => 'Fiction',
+        'poetry'        => 'Poetry',
+        'essays'        => 'Essays',
+        'conversations' => 'Conversations',
+        'translation'   => 'In Translation',
+        'notes'         => 'Notes',
+        'flash'         => null,
+    );
+
     public static function init(): void {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_post_culture_lit_submission_save',   array( __CLASS__, 'handle_save' ) );
         add_action( 'admin_post_culture_lit_submission_delete', array( __CLASS__, 'handle_delete' ) );
         add_action( 'admin_post_culture_lit_submission_status', array( __CLASS__, 'handle_quick_status' ) );
         add_action( 'admin_post_culture_lit_submission_export', array( __CLASS__, 'handle_export' ) );
+        add_action( 'admin_post_culture_lit_submission_push',   array( __CLASS__, 'handle_push' ) );
     }
 
     // ── Storage helpers ───────────────────────────────────────────────────────
@@ -145,6 +166,98 @@ class Culture_Literary_Submissions {
             }
         }
         return $n;
+    }
+
+    /**
+     * Email the writer when a status change lands on 'accepted'/'rejected' —
+     * called from handle_save()/handle_quick_status() with the status as it
+     * was *before* this request, so an unrelated edit (notes, reviewer, etc.)
+     * that leaves status unchanged never re-fires the email.
+     *
+     * @return string 'sent' | 'skipped_no_change' | 'skipped_no_email'
+     */
+    private static function maybe_notify_writer( array $submission, string $old_status ): string {
+        $new_status = $submission['status'] ?? '';
+        if ( $new_status === $old_status || ! in_array( $new_status, array( 'accepted', 'rejected' ), true ) ) {
+            return 'skipped_no_change';
+        }
+        if ( empty( $submission['writer_email'] ) ) {
+            return 'skipped_no_email';
+        }
+
+        $section_meta = self::SECTIONS[ $submission['section'] ] ?? self::SECTIONS['fiction'];
+        Culture_Emails::send_literary_submission_decision(
+            $submission['writer_email'],
+            $submission['writer_name'] ?? '',
+            $section_meta['label'],
+            $submission['title'] ?? '',
+            $new_status,
+            $section_meta['payment_label']
+        );
+
+        return 'sent';
+    }
+
+    /**
+     * Create or update the linked WordPress draft post from a submission's
+     * title/content — "processing into publishing" stops here on purpose:
+     * this hands the editor a real draft in the `literary` category with the
+     * right genre tag pre-set, not a finished, auto-published piece. Author,
+     * featured image, and the final publish click still happen by hand in
+     * the normal post editor.
+     *
+     * @return int|WP_Error New/updated post ID, or an error to show the editor.
+     */
+    private static function push_to_wordpress( array $submission ) {
+        if ( empty( $submission['content'] ) ) {
+            return new WP_Error( 'no_content', 'Add the piece content before pushing to WordPress.' );
+        }
+
+        $literary_term = get_term_by( 'slug', self::LITERARY_CATEGORY_SLUG, 'category' );
+        if ( ! $literary_term ) {
+            return new WP_Error( 'no_category', 'The "literary" category does not exist on this site yet — create it first.' );
+        }
+
+        // Prefer the submitting writer's own WP account, if they have one, so
+        // the byline is real; otherwise the editor doing the push is the
+        // author of record until someone reassigns it in the post editor.
+        $author_id = get_current_user_id();
+        if ( ! empty( $submission['writer_email'] ) ) {
+            $writer_user = get_user_by( 'email', $submission['writer_email'] );
+            if ( $writer_user ) {
+                $author_id = $writer_user->ID;
+            }
+        }
+
+        $postarr = array(
+            'post_title'   => $submission['title'] ?: ( $submission['writer_name'] . ' — untitled' ),
+            'post_content' => wp_kses_post( $submission['content'] ),
+            'post_status'  => 'draft',
+            'post_type'    => 'post',
+            'post_author'  => $author_id,
+            'post_category' => array( (int) $literary_term->term_id ),
+        );
+
+        if ( ! empty( $submission['wp_post_id'] ) && get_post( $submission['wp_post_id'] ) ) {
+            $postarr['ID'] = (int) $submission['wp_post_id'];
+            $post_id       = wp_update_post( $postarr, true );
+        } else {
+            $post_id = wp_insert_post( $postarr, true );
+        }
+
+        if ( is_wp_error( $post_id ) ) {
+            return $post_id;
+        }
+
+        $genre_tag = self::GENRE_TAG_NAMES[ $submission['section'] ] ?? null;
+        if ( $genre_tag ) {
+            wp_set_post_tags( $post_id, array( $genre_tag ), true );
+        }
+
+        update_post_meta( $post_id, '_lit_submission_id', $submission['id'] );
+        update_post_meta( $post_id, '_lit_submission_writer_name', $submission['writer_name'] ?? '' );
+
+        return $post_id;
     }
 
     // ── Menu ──────────────────────────────────────────────────────────────────
@@ -217,16 +330,24 @@ class Culture_Literary_Submissions {
             'reviewer_id'    => absint( $_POST['reviewer_id'] ?? 0 ),
             'received_at'    => $received_at,
             'notes'          => sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) ),
+            // The edited manuscript, pasted in by the editor — this is what
+            // push_to_wordpress() sends over as the draft post_content.
+            'content'        => wp_kses_post( wp_unslash( $_POST['content'] ?? '' ) ),
         );
 
         $submissions = self::get_all();
         $edit_id     = sanitize_text_field( wp_unslash( $_POST['edit_id'] ?? '' ) );
         $found       = false;
+        $old_status  = 'received';
 
         if ( $edit_id ) {
             foreach ( $submissions as &$s ) {
                 if ( $s['id'] === $edit_id ) {
+                    $old_status          = $s['status'] ?? 'received';
                     $entry['created_at'] = $s['created_at'] ?? current_time( 'mysql' );
+                    // wp_post_id is only ever set by handle_push() — never a
+                    // form field — so a plain edit save can't clear the link.
+                    $entry['wp_post_id'] = $s['wp_post_id'] ?? 0;
                     $s                   = array_merge( $s, $entry );
                     $found               = true;
                     break;
@@ -237,11 +358,19 @@ class Culture_Literary_Submissions {
 
         if ( ! $found ) {
             $entry['created_at'] = current_time( 'mysql' );
+            $entry['wp_post_id'] = 0;
             $submissions[]       = $entry;
         }
 
         self::save_all( $submissions );
-        wp_redirect( add_query_arg( 'saved', '1', admin_url( 'admin.php?page=culture-literary-submissions' ) ) );
+
+        $notify_result = self::maybe_notify_writer( $entry, $old_status );
+        $redirect_args = array( 'saved' => '1' );
+        if ( 'skipped_no_email' === $notify_result ) {
+            $redirect_args['notice'] = 'no_email';
+        }
+
+        wp_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php?page=culture-literary-submissions' ) ) );
         exit;
     }
 
@@ -272,17 +401,66 @@ class Culture_Literary_Submissions {
             wp_die( 'Invalid status' );
         }
 
-        $submissions = self::get_all();
+        $submissions   = self::get_all();
+        $old_status    = 'received';
+        $updated_entry = null;
+
         foreach ( $submissions as &$s ) {
             if ( $s['id'] === $id ) {
-                $s['status'] = $status;
+                $old_status    = $s['status'] ?? 'received';
+                $s['status']   = $status;
+                $updated_entry = $s;
                 break;
             }
         }
         unset( $s );
 
         self::save_all( $submissions );
-        wp_safe_redirect( admin_url( 'admin.php?' . self::redirect_qs() ) );
+
+        $notify_result = $updated_entry ? self::maybe_notify_writer( $updated_entry, $old_status ) : 'skipped_no_change';
+        $qs            = self::redirect_qs();
+        if ( 'skipped_no_email' === $notify_result ) {
+            $qs .= '&notice=no_email';
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?' . $qs ) );
+        exit;
+    }
+
+    /** Create/update the linked WordPress draft post from a submission's content. */
+    public static function handle_push(): void {
+        $id = sanitize_text_field( wp_unslash( $_GET['id'] ?? '' ) );
+        check_admin_referer( 'culture_lit_submission_push_' . $id );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Forbidden' );
+        }
+
+        $submissions = self::get_all();
+        $target      = null;
+        foreach ( $submissions as &$s ) {
+            if ( $s['id'] === $id ) {
+                $target = &$s;
+                break;
+            }
+        }
+        unset( $s );
+
+        if ( ! $target ) {
+            wp_die( 'Submission not found' );
+        }
+
+        $result = self::push_to_wordpress( $target );
+
+        $qs = self::redirect_qs();
+        if ( is_wp_error( $result ) ) {
+            wp_safe_redirect( admin_url( 'admin.php?' . $qs . '&push_error=' . rawurlencode( $result->get_error_message() ) ) );
+            exit;
+        }
+
+        $target['wp_post_id'] = (int) $result;
+        self::save_all( $submissions );
+
+        wp_safe_redirect( admin_url( 'admin.php?' . $qs . '&pushed=1' ) );
         exit;
     }
 
@@ -419,6 +597,15 @@ class Culture_Literary_Submissions {
             <?php if ( $saved )   : ?><div class="notice notice-success is-dismissible"><p>Submission saved.</p></div><?php endif; ?>
             <?php if ( $deleted ) : ?><div class="notice notice-success is-dismissible"><p>Submission deleted.</p></div><?php endif; ?>
             <?php if ( $error === 'missing' ) : ?><div class="notice notice-error is-dismissible"><p>Writer name and received date are required.</p></div><?php endif; ?>
+            <?php if ( isset( $_GET['pushed'] ) ) : ?>
+                <div class="notice notice-success is-dismissible"><p>Pushed to WordPress as a draft.</p></div>
+            <?php endif; ?>
+            <?php if ( ! empty( $_GET['push_error'] ) ) : ?>
+                <div class="notice notice-error is-dismissible"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['push_error'] ) ) ); ?></p></div>
+            <?php endif; ?>
+            <?php if ( 'no_email' === sanitize_text_field( wp_unslash( $_GET['notice'] ?? '' ) ) ) : ?>
+                <div class="notice notice-warning is-dismissible"><p>Status updated, but there's no email address on file — the writer wasn't notified.</p></div>
+            <?php endif; ?>
 
             <!-- Add / Edit form -->
             <div style="background:#fff;border:1px solid #ccd0d4;padding:24px 28px;max-width:820px;margin-bottom:30px;">
@@ -491,6 +678,28 @@ class Culture_Literary_Submissions {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <p class="description">Saving with this changed to Accepted or Rejected emails the writer automatically.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="padding:8px 0;vertical-align:top;">Piece content</th>
+                            <td>
+                                <?php
+                                wp_editor(
+                                    $edit['content'] ?? '',
+                                    'lit_content',
+                                    array(
+                                        'textarea_name' => 'content',
+                                        'textarea_rows' => 14,
+                                        'media_buttons' => false,
+                                        'teeny'         => true,
+                                    )
+                                );
+                                ?>
+                                <p class="description">
+                                    Paste the (edited) manuscript here — this is what "Push to WordPress" sends over as
+                                    the draft post body. Leave blank if you're only tracking the submission for now.
+                                </p>
                             </td>
                         </tr>
                         <tr>
@@ -604,6 +813,7 @@ class Culture_Literary_Submissions {
                             <th>Reviewer</th>
                             <th>Received</th>
                             <th>Deadline</th>
+                            <th>WordPress</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -650,6 +860,24 @@ class Culture_Literary_Submissions {
                                         <?php echo esc_html( gmdate( 'd M Y', self::deadline_ts( $s ) ) ); ?>
                                         <?php if ( $dl_label ) : ?><br><small><?php echo esc_html( $dl_label ); ?></small><?php endif; ?>
                                     </span>
+                                </td>
+                                <td style="white-space:nowrap;font-size:12px;">
+                                    <?php $wp_post = ! empty( $s['wp_post_id'] ) ? get_post( $s['wp_post_id'] ) : null; ?>
+                                    <?php if ( $wp_post ) : ?>
+                                        <a href="<?php echo esc_url( get_edit_post_link( $wp_post->ID ) ); ?>">Edit draft &rarr;</a>
+                                        <br><span style="color:#999;"><?php echo esc_html( ucfirst( $wp_post->post_status ) ); ?></span>
+                                        <br>
+                                        <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=culture_lit_submission_push&' . $row_qs ), 'culture_lit_submission_push_' . $s['id'] ) ); ?>">
+                                            Re-push edits
+                                        </a>
+                                    <?php elseif ( in_array( $s['status'], array( 'accepted', 'published' ), true ) ) : ?>
+                                        <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=culture_lit_submission_push&' . $row_qs ), 'culture_lit_submission_push_' . $s['id'] ) ); ?>"
+                                           class="button button-small">
+                                            Push to WordPress
+                                        </a>
+                                    <?php else : ?>
+                                        <span style="color:#bbb;">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td style="white-space:nowrap;">
                                     <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'culture-literary-submissions', 'edit' => $s['id'] ), admin_url( 'admin.php' ) ) ); ?>">Edit</a>

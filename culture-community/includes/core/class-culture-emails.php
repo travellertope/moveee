@@ -193,6 +193,50 @@ class Culture_Emails {
     }
 
     /**
+     * Notify a Moveee Literary contributor that their emailed submission has
+     * been accepted or rejected. Fired by Culture_Literary_Submissions on a
+     * status transition into 'accepted'/'rejected' — never on every save, and
+     * never when the writer left no email address (nothing to send to).
+     *
+     * @param string $email         Writer's email address.
+     * @param string $writer_name
+     * @param string $section_label e.g. "Poetry" or "The Moveee Flash".
+     * @param string $title         Piece title, may be blank.
+     * @param string $status        'accepted' | 'rejected'.
+     * @param string $payment_label e.g. "$15–$25" or "$10 flat" — only used on acceptance.
+     */
+    public static function send_literary_submission_decision( $email, $writer_name, $section_label, $title, $status, $payment_label = '' ) {
+        if ( ! is_email( $email ) ) {
+            return false;
+        }
+
+        $piece = $title ? '&ldquo;' . esc_html( $title ) . '&rdquo;' : 'your piece';
+
+        if ( 'accepted' === $status ) {
+            $subject = 'Your submission to The Moveee Literary has been accepted';
+            $body    = self::get_header( 'You\'re in.' );
+            $body   .= '<p style="margin:0 0 16px;">Hi ' . esc_html( $writer_name ) . ',</p>';
+            $body   .= '<p style="margin:0 0 16px;">We\'re glad to tell you that ' . $piece . ', submitted to <strong>' . esc_html( $section_label ) . '</strong>, has been accepted for The Moveee Literary.</p>';
+            $body   .= '<p style="margin:0 0 16px;">We\'ll be in touch shortly with a contributor agreement and next steps'
+                . ( $payment_label ? ' &mdash; contributor payment for this section is ' . esc_html( $payment_label ) . ', confirmed in that agreement' : '' )
+                . '.</p>';
+            $body   .= '<p style="margin:0;">Thank you for trusting us with your work.</p>';
+            $body   .= self::get_footer();
+        } elseif ( 'rejected' === $status ) {
+            $subject = 'An update on your Moveee Literary submission';
+            $body    = self::get_header( 'Thank you for sending this our way.' );
+            $body   .= '<p style="margin:0 0 16px;">Hi ' . esc_html( $writer_name ) . ',</p>';
+            $body   .= '<p style="margin:0 0 16px;">After careful reading, we won\'t be moving forward with ' . $piece . ' for <strong>' . esc_html( $section_label ) . '</strong> at this time. This was a genuinely close call, not a reflection of the work\'s worth &mdash; we read every submission on its own terms and can only publish a small number of what we receive.</p>';
+            $body   .= '<p style="margin:0;">We\'d welcome future submissions. Thank you for sending us your work.</p>';
+            $body   .= self::get_footer();
+        } else {
+            return false;
+        }
+
+        return self::send( $email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id
