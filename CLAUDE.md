@@ -801,6 +801,67 @@ also added — there was no About page under `/literary` before this.
   files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
   tweaks at this volume of content) in a real environment before considering this fully closed.
 
+## Literary Submissions Manager — WP Admin only, intake stays email (September 2026)
+
+Per explicit user decision: writers keep submitting by emailing `literary@themoveee.com` with
+the section + name in the subject line (`/literary/submit`'s documented convention, e.g.
+"Poetry Submission — Ada Nwosu") — **no new writer-facing form was built**, this is purely an
+internal editorial tool for logging and tracking those emailed submissions through decision.
+No public submissions portal exists as of this entry; if one is ever built, it should write into
+this same storage rather than duplicating it (see "Storage" below).
+
+- **New file**: `culture-community/includes/admin/class-culture-literary-submissions.php`
+  (`Culture_Literary_Submissions`), registered as a submenu under the existing top-level
+  "Culture Community" menu (`admin.php?page=culture-literary-submissions`) — required in
+  `culture-community.php` and initialized in `culture_community_init()`, same wiring as every
+  other admin tool in this plugin.
+- **Storage**: a single `culture_literary_submissions` wp_options row (array of submission
+  objects) — same pattern as `Culture_Redirects` (`culture_redirects` option), chosen over a
+  dbDelta table since this is a small, manually-curated editorial list, not something written
+  at volume by a webhook (contrast with `wp_culture_tickets`, a real table, which is).
+- **Fields tracked per submission**: writer name/email, section, piece title, the raw email
+  subject line, status (Received/In Review/Accepted/Rejected/Published), submission-fee status
+  (Pending/Paid/Waived/N-A), contributor-payment status (Unpaid/Paid), an assigned reviewer (a
+  WP user with `edit_posts`, via `get_users()`), received date, and free-text internal notes.
+- **Terms are hardcoded per section in `Culture_Literary_Submissions::SECTIONS`**, mirroring
+  `/literary/submit`'s real, confirmed policy (see that page's "Real, confirmed policy" note):
+  quarterly sections (Fiction/Poetry/Essays/Conversations/In Translation/Notes) get a $3
+  submission fee, a $15–$25 contributor payment, and a 12-week (84-day) response window; The
+  Moveee Flash gets no submission fee, a flat $10 payment, and a 4-week (28-day) window. **If
+  these figures ever change on the submissions page, update this constant to match** — there's
+  no shared source of truth between the PHP admin tool and the Next.js copy, same caveat as
+  every other PHP/TS duplication called out elsewhere in this file.
+- **Response-time tracking**: `deadline_state()` computes `received_at + response_days` and
+  flags a still-open submission (Received/In Review) as "Overdue" once past that date or "Due
+  soon" within 7 days of it — shown as a colored deadline column in the list table, summarized
+  in a page-header count, and surfaced as a red bubble on the submenu label (the same
+  `awaiting-mod`/`pending-count` WP core CSS classes used for the native comments-pending
+  bubble). A decided submission (Accepted/Rejected/Published) is never flagged, regardless of
+  how old it is.
+- **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
+  "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
+  via a regex (`/^\s*(\w+)\s+submission\s*[-—–:]\s*(.+)$/i`) and pre-fills the Section dropdown
+  and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
+  edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
+  the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
+  to keep fee data honest, not a hard validation.
+- **Row-level quick actions**: each row has one-click links to jump straight to In
+  Review/Accepted/Rejected/Published (`admin-post.php?action=culture_lit_submission_status`,
+  nonce'd per-row) alongside the full Edit form and a Delete button — mirrors the
+  check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
+- **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
+  current filters show, same convention as Ticket Sales' own CSV export.
+- **Deliberately out of scope for this pass**: no REST endpoints, no frontend/mobile surface,
+  no automated email ingestion (an editor still manually creates each row after reading the
+  email) — this is a manual logging tool, not an inbox parser. If automated ingestion from the
+  literary@ inbox is ever wanted, that's a separate, larger project (an email-parsing
+  webhook/cron), not a small extension of this file.
+- Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
+  against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
+  other pass in this file; this feature additionally needs the plugin redeployed (manual
+  zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
+  since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
+
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 
 An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired

@@ -87,6 +87,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-literary-submissions.php';
 
 /**
  * Plugin activation hook.
@@ -162,6 +163,7 @@ function culture_community_init() {
     Culture_Hubs::init();
     Culture_Country_Cleanup::init();
     Culture_Preview::init();
+    Culture_Literary_Submissions::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {
