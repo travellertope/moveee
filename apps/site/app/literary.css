@@ -372,6 +372,42 @@
 .lit-piece-body em { font-style: italic; font-family: var(--font-lit-italic), Georgia, serif; }
 .lit-piece-body strong { font-weight: 700; }
 
+/* ── SINGLE PIECE — EMAIL/OTP GATE (metered soft-paywall + Pro-gating) ──
+   Inline "join the club" box, ~30% into the piece. Blocking variant IS the
+   cut point (nothing past it exists in the DOM until verified); non-blocking
+   is a dismissible nudge sitting inside otherwise-full content. */
+.lit-email-gate {
+  background: var(--lit-parchment); border: 1px solid var(--lit-rule-strong); border-left: 3px solid var(--lit-oxblood);
+  padding: 28px 26px; margin: 8px 0 32px;
+}
+.lit-email-gate--blocking { margin-bottom: 0; }
+.lit-email-gate h3 {
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 20px; color: var(--lit-ink); margin: 0 0 8px;
+}
+.lit-email-gate p {
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6; color: var(--lit-mute); margin: 0 0 18px; max-width: 46ch;
+}
+.lit-email-gate-form { max-width: 380px; }
+.lit-email-gate-input {
+  flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+}
+.lit-email-gate-input::placeholder { color: var(--lit-mute); }
+.lit-email-gate-input--code { letter-spacing: 0.3em; font-family: var(--font-lit-meta), "Inter", sans-serif; font-weight: 700; text-align: center; }
+.lit-email-gate-btn {
+  background: var(--lit-oxblood); color: var(--lit-ivory); border: 1px solid var(--lit-oxblood); padding: 0 18px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+.lit-email-gate-btn:hover:not(:disabled) { background: var(--lit-oxblood-deep); }
+.lit-email-gate-btn:disabled { opacity: 0.6; cursor: default; }
+.lit-gate-error { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; color: var(--lit-oxblood); margin: 10px 0 0; }
+.lit-gate-skip, .lit-gate-resend {
+  display: block; margin-top: 12px; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; color: var(--lit-mute); text-decoration: underline; text-underline-offset: 3px;
+}
+.lit-gate-skip:hover, .lit-gate-resend:hover { color: var(--lit-ink); }
+.lit-gate-remainder { margin-top: 8px; }
+
 .lit-piece-share {
   display: flex; align-items: center; gap: 14px; margin-top: 38px; padding-top: 22px;
   border-top: 1px solid var(--lit-rule);

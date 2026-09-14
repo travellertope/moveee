@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   getWPData,
   GET_STORY_BY_SLUG,
@@ -9,10 +12,24 @@ import {
   literaryGenreOfPost,
   LITERARY_GENRES,
 } from "@/lib/wp";
+import { getAccessLevel } from "@/lib/access";
+import {
+  LITERARY_TOKEN_COOKIE,
+  LITERARY_READS_COOKIE,
+  LITERARY_FREE_READ_LIMIT,
+  isCrawlerUserAgent,
+  parseReadsCookie,
+  verifyLiteraryToken,
+  truncateHtmlByPercent,
+} from "@/lib/literary-access";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
+import LiteraryPieceGate from "@/components/LiteraryPieceGate";
+import LiteraryReadTracker from "@/components/LiteraryReadTracker";
 import SubscribeForm from "@/components/SubscribeForm";
+
+const LITERARY_READ_PERCENT = 0.3;
 
 // One dynamic segment serves two different things — a genre archive
 // (/literary/poetry) or a single piece (/literary/some-poem-slug) — since
@@ -135,6 +152,76 @@ async function PiecePage({ slug }: { slug: string }) {
   const pieceUrl = `https://themoveee.com/literary/${slug}`;
   const plainTitle = decodeHtml(post.title || "");
 
+  // ── Access: fold Literary Pro-gating into the existing Moveee Pro
+  // mechanism (culture_access taxonomy), and meter free reads for
+  // anonymous visitors — see the Literary gating notes in CLAUDE.md and
+  // lib/literary-access.ts. Crawlers always get the full piece: this is a
+  // soft paywall for list-building, not a wall against being indexed.
+  const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  const hdrs = await headers();
+  const isBot = isCrawlerUserAgent(hdrs.get("user-agent"));
+  const isLoggedIn = !!session?.user;
+  const isPatron = session?.user?.tier === "patron";
+  const accessLevel = getAccessLevel(post);
+  const litToken = verifyLiteraryToken(cookieStore.get(LITERARY_TOKEN_COOKIE)?.value);
+
+  const bodyHtml = sanitizeHtml(post.content || "");
+  let visibleBodyHtml = bodyHtml;
+  let trailingBodyHtml = "";
+  let gateBlock: React.ReactNode = null;
+  let shouldTrackRead = false;
+
+  if (!isBot) {
+    if (accessLevel === "patron-only") {
+      const proAuthorized = isPatron || litToken?.access === "pro";
+      if (!proAuthorized) {
+        const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          gateBlock = isLoggedIn ? (
+            <div className="lit-email-gate">
+              <h3>This piece is Moveee Pro</h3>
+              <p>
+                The rest of this piece is part of our Moveee Pro archive — extended reads,
+                exclusive translations, and long-form work reserved for members who want to go
+                further with The Moveee Literary.
+              </p>
+              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=patron">
+                Upgrade to Moveee Pro →
+              </Link>
+            </div>
+          ) : (
+            <LiteraryPieceGate slug={slug} mode="pro" blocking />
+          );
+        }
+      }
+    } else if (!isLoggedIn && !litToken) {
+      const reads = parseReadsCookie(cookieStore.get(LITERARY_READS_COOKIE)?.value);
+      const hasFreeReadsLeft =
+        reads.length < LITERARY_FREE_READ_LIMIT || reads.some((r) => r.slug === slug);
+
+      if (hasFreeReadsLeft) {
+        shouldTrackRead = true;
+        const { visibleHtml, remainderHtml, hasMore } = truncateHtmlByPercent(
+          bodyHtml,
+          LITERARY_READ_PERCENT
+        );
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          trailingBodyHtml = remainderHtml;
+          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />;
+        }
+      } else {
+        const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking />;
+        }
+      }
+    }
+  }
+
   // Sidebar's "also in {genre}" teaser and the closing grid share one
   // genre-scoped pool, deduped by slug so the same piece never appears in
   // both places — the sidebar pick is excluded from the grid below it.
@@ -196,10 +283,12 @@ async function PiecePage({ slug }: { slug: string }) {
 
       <div className="lit-piece-layout">
         <article className="lit-piece-body-col">
-          <div
-            className="lit-piece-body"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || "") }}
-          />
+          {shouldTrackRead && <LiteraryReadTracker slug={slug} />}
+          <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: visibleBodyHtml }} />
+          {gateBlock}
+          {trailingBodyHtml && (
+            <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: trailingBodyHtml }} />
+          )}
           <div className="lit-piece-share">
             <span className="lit-piece-share-label">Share</span>
             <div className="lit-piece-share-icons">
