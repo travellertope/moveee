@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { LITERARY_TOKEN_COOKIE, verifyLiteraryToken } from "@/lib/literary-access";
 
 /**
- * Lets a page (e.g. /literary/submit/new) skip the email/OTP gate when the
+ * Lets a page (e.g. /literary/submit/form) skip the email/OTP gate when the
  * visitor already carries a valid moveee_lit_token cookie from verifying
  * elsewhere on the site (e.g. unlocking a gated /literary or /magazine
  * piece earlier in the same browser). Verified locally, same as every other

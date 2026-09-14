@@ -597,7 +597,7 @@
 .lit-submit-card a { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600; color: var(--lit-oxblood); text-decoration: none; }
 .lit-submit-card a:hover { text-decoration: underline; }
 
-/* ── SUBMISSION FORM (/literary/submit/new) ── */
+/* ── SUBMISSION FORM (/literary/submit/form) ── */
 .lit-form { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; }
 .lit-form-field { display: flex; flex-direction: column; gap: 8px; }
 .lit-form-field label {

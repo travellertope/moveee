@@ -136,7 +136,7 @@ class Culture_Literary_Submissions {
     // ── Online submission intake (public form → payment → this manager) ───────
     //
     // Writers no longer submit by email — they use the real, payment-integrated
-    // form at /literary/submit/new (apps/site). A writer pastes their formatted
+    // form at /literary/submit/form (apps/site). A writer pastes their formatted
     // piece straight into a rich-text field (no file upload, no DOCX/PDF parsing
     // needed at all — the content lands here exactly as it'll be pushed to
     // WordPress). Fee handling:
@@ -390,8 +390,8 @@ class Culture_Literary_Submissions {
 
     private static function init_stripe_payment( int $payment_id, string $payment_code, string $name, string $email, int $amount, string $currency, string $section_label ) {
         $frontend_url = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
-        $success_url  = $frontend_url . '/literary/submit/new?submission_pending=' . $payment_code . '&session_id={CHECKOUT_SESSION_ID}';
-        $cancel_url   = $frontend_url . '/literary/submit/new?submission_cancelled=1';
+        $success_url  = $frontend_url . '/literary/submit/form?submission_pending=' . $payment_code . '&session_id={CHECKOUT_SESSION_ID}';
+        $cancel_url   = $frontend_url . '/literary/submit/form?submission_cancelled=1';
 
         $response = Culture_Stripe::payment_session( array(
             'mode'                => 'payment',
@@ -433,7 +433,7 @@ class Culture_Literary_Submissions {
         $reference    = sanitize_text_field( $req->get_param( 'reference' ) ?: $req->get_param( 'trxref' ) ?: '' );
         $payment_code = sanitize_text_field( $req->get_param( 'payment_code' ) ?: '' );
         $frontend     = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
-        $base         = $frontend . '/literary/submit/new';
+        $base         = $frontend . '/literary/submit/form';
 
         if ( ! $reference ) {
             wp_safe_redirect( $base . '?submission_failed=1' ); exit;
@@ -1192,7 +1192,7 @@ class Culture_Literary_Submissions {
             <hr class="wp-header-end">
 
             <p style="color:#666;max-width:760px;">
-                Writers submit through the online form at <code>/literary/submit/new</code> — payment
+                Writers submit through the online form at <code>/literary/submit/form</code> — payment
                 (or a waiver code, see below) is collected there before a submission lands in this
                 list, so every row here is already square on fees. Use the form below only to log a
                 submission manually (e.g. one that arrived some other way).

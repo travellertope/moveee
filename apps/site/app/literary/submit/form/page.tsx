@@ -256,7 +256,7 @@ export default function LiterarySubmitNewPage() {
         <p className="lit-sub">Nothing was charged.</p>
         <div className="lit-submit-body">
           <p>
-            <Link href="/literary/submit/new">Try again &rarr;</Link> or email{" "}
+            <Link href="/literary/submit/form">Try again &rarr;</Link> or email{" "}
             <a href="mailto:literary@themoveee.com">literary@themoveee.com</a> if this keeps
             happening.
           </p>

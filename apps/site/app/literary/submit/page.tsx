@@ -238,7 +238,7 @@ export default function LiterarySubmitPage() {
           <div className="lit-submit-card">
             <h3>Start Your Submission</h3>
             <p>Fiction, flash fiction, essays, poetry, conversations, and translation.</p>
-            <Link href="/literary/submit/new">Submit your work &rarr;</Link>
+            <Link href="/literary/submit/form">Submit your work &rarr;</Link>
           </div>
           <div className="lit-submit-card">
             <h3>Not sure where to start?</h3>

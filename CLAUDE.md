@@ -1028,7 +1028,7 @@ creation path:
   with `fee_status = 'paid'`, stores the resulting submission id back on the payment row, and
   sends the new `literary_received` email (below).
 - **Stripe's async confirmation gap, handled the same way the shop checkout flow already
-  does**: Stripe's `success_url` lands the browser back on `/literary/submit/new?
+  does**: Stripe's `success_url` lands the browser back on `/literary/submit/form?
   submission_pending={code}&session_id=...` *before* the webhook may have fired, so the page
   polls `GET /api/literary/submission/status` every 3s (cap 40 attempts, ~2 minutes — same
   numbers `CheckoutScreen.tsx`'s order-confirmation poll already uses) until the payment row
@@ -1074,7 +1074,7 @@ Community → Email Templates editing surface.
 
 ### Frontend (`apps/site` only)
 
-- **`app/literary/submit/new/page.tsx`** (new, client component) — the real form: name/email/
+- **`app/literary/submit/form/page.tsx`** (new, client component) — the real form: name/email/
   section/optional-title fields, a `contentEditable` rich-text box (a small Bold/Italic
   toolbar via `document.execCommand` — no editor library dependency, matching in spirit the
   admin's own `teeny`-toolbar `wp_editor()`) for the piece body, and (only shown for a
@@ -1097,7 +1097,7 @@ Community → Email Templates editing surface.
   `/culture/v1/ticket/initiate`).
 - **`app/literary/submit/page.tsx`** (the guidelines page) — the "Send Us Your Work" section's
   mailto instructions were replaced with a "Start Your Submission →" card linking to
-  `/literary/submit/new`; `literary@themoveee.com` is now framed purely as "questions or a
+  `/literary/submit/form`; `literary@themoveee.com` is now framed purely as "questions or a
   waiver-code request," not a submission address. The manuscript-format FAQ/guidelines
   paragraph was rewritten to describe pasting into the online editor instead of file formats.
 - **New CSS**: `.lit-form-*` classes appended to `apps/site/app/literary.css`, built on the
@@ -1133,7 +1133,7 @@ barrier at all, so verifying real ownership of an email address is the only gate
   earlier in the same browser session unlocking a gated `/literary` or `/magazine` piece).
   Verifies locally via `verifyLiteraryToken()` (`lib/literary-access.ts`) — no round trip to
   WordPress needed, same as every other client-side literary-access check on this side.
-- **Frontend gate UI** (`app/literary/submit/new/page.tsx`): a new `verifyStep` state
+- **Frontend gate UI** (`app/literary/submit/form/page.tsx`): a new `verifyStep` state
   (`checking` → `email` → `code` → `verified`) renders before the actual submission form at
   all — on mount it silently checks `verify-status`; if not already verified, it shows a plain
   email-then-code flow reusing the exact same two existing API routes
@@ -1154,6 +1154,15 @@ barrier at all, so verifying real ownership of an email address is the only gate
   needed for this follow-up specifically). Re-check the full email → code → submit round trip
   for all three fee branches (Flash, waiver, paid) in a real environment before considering this
   closed.
+
+**Route renamed to `/literary/submit/form` (September 2026, follow-up)** — the submission form
+originally shipped at `/literary/submit/new`; moved (`git mv`) to `/literary/submit/form` per
+explicit user request. Every reference was updated in the same pass: the two in-page `Link`s
+(the guidelines page's "Start Your Submission" card, and the form's own "Try again" link on
+payment failure), the PHP payment success/cancel redirect URLs and Paystack callback base URL in
+`handle_submission_initiate()`/`init_stripe_payment()`/`init_paystack_payment()`, and the
+doc-comments in `literary.css`/`verify-status/route.ts`. No functional/logic changes — purely a
+path rename, same pattern as the `/shop` → `/lifestyle` rename elsewhere in this file.
 
 ### Deliberately out of scope for this pass
 
