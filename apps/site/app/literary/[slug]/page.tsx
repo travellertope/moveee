@@ -39,6 +39,21 @@ const LITERARY_READ_PERCENT = 0.3;
 // is a build error: "different slug names for the same dynamic path").
 // LITERARY_GENRES.slug values are checked first; anything else falls
 // through to a real post lookup.
+//
+// PiecePage calls cookies()/headers()/getServerSession() for anonymous
+// access-gating (see "Access:" below) — combined with generateStaticParams
+// existing on this route (for the six genre paths), Next.js's on-demand
+// render for an unlisted param (a real piece slug) throws DYNAMIC_SERVER_USAGE
+// as a real, uncaught 500 instead of silently falling back to per-request
+// dynamic rendering (a known App Router gotcha when generateStaticParams and
+// Dynamic APIs coexist on one route — confirmed live via Vercel logs: every
+// /literary/{slug} request from an anonymous, non-token reader 500'd with
+// this exact digest, since only that gating branch touches cookies()).
+// Forcing the whole route dynamic sidesteps it — same fix already used
+// elsewhere in this codebase for the same reason, see app/[edition]/page.tsx.
+// Genre archive pages already fetch fresh data every request anyway, so
+// there's no loss from skipping static generation for them too.
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   return LITERARY_GENRES.map((g) => ({ slug: g.slug }));
