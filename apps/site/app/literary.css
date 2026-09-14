@@ -277,7 +277,11 @@
    carried through: full lit-wrap width, a body/sidebar split) inspired by
    The Paris Review's article template — see the approved mockup this was
    built from. Supersedes the old single centered 660px column. */
-.lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; max-width: 780px; }
+/* Full-bleed to .lit-wrap's own 1160px width (no separate narrower cap) —
+   now that the featured image lives inside the article column instead of
+   spanning full width above the layout grid, the title/byline take up
+   that width instead. */
+.lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; }
 .lit-piece-featured-img {
   width: 100%; aspect-ratio: 16/8.5; object-fit: cover; display: block;
   margin: clamp(28px, 4vw, 44px) 0;
@@ -312,9 +316,9 @@
 }
 .lit-piece-byline b { color: var(--lit-ink); font-weight: 700; }
 
-/* A first sketch of the brand guide's own signature motif (§11 — a curved
-   oxblood/gold line), never built until now — used here as the divider
-   under the title block instead of a plain rule. */
+/* Removed from the JSX per explicit request ("remove the scrawly divider")
+   — the brand guide's signature-motif SVG under the byline. CSS kept
+   unused, per this file's usual convention, in case it's wanted back. */
 .lit-piece-motif { margin-top: 26px; }
 .lit-piece-motif svg { display: block; }
 
@@ -412,6 +416,9 @@
 .lit-gate-skip:hover, .lit-gate-resend:hover { color: var(--lit-ink); }
 .lit-gate-remainder { margin-top: 8px; }
 
+/* Superseded by the floating .ar-share-fab pill below (same component
+   /magazine uses) — kept here unused, per this file's usual convention,
+   in case the inline row is ever wanted back. */
 .lit-piece-share {
   display: flex; align-items: center; gap: 14px; margin-top: 38px; padding-top: 22px;
   border-top: 1px solid var(--lit-rule);
@@ -426,6 +433,25 @@
   display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--lit-mute);
 }
 .lit-piece-share-icons a:hover { border-color: var(--lit-oxblood); color: var(--lit-oxblood); }
+
+/* ── FLOATING SHARE — reuses apps/site/components/ArticleShareFab.tsx
+   verbatim (same native-share/clipboard-fallback behaviour /magazine uses),
+   restyled here since editorial.css (where .ar-share-fab's base rule
+   lives) isn't loaded on /literary routes — same "reuse the component,
+   restyle the CSS" pattern as the author band above. Scoped under
+   .lit-page so it can never leak onto /magazine's own .ar-share-fab. */
+.lit-page .ar-share-fab {
+  background: var(--lit-ivory);
+  border-color: var(--lit-rule-strong);
+  color: var(--lit-ink);
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-weight: 600;
+}
+.lit-page .ar-share-fab:hover {
+  background: var(--lit-oxblood);
+  border-color: var(--lit-oxblood);
+  color: var(--lit-ivory);
+}
 
 /* ── SINGLE PIECE — AUTHOR BAND ── */
 .lit-piece-author {
@@ -452,6 +478,9 @@
   font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6;
   color: var(--lit-mute); margin: 6px 0 0; max-width: 60ch;
 }
+/* "More by {author} →" removed from the author band per explicit request
+   (not needed on a single-piece page) — CSS kept unused, per this file's
+   usual convention, in case it's wanted back. */
 .lit-piece-author-cta {
   flex-shrink: 0; font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700;
   letter-spacing: 0.05em; text-transform: uppercase; color: var(--lit-oxblood); white-space: nowrap; margin-top: 4px;

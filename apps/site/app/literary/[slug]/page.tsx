@@ -28,6 +28,7 @@ import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryPieceGate from "@/components/LiteraryPieceGate";
 import LiteraryReadTracker from "@/components/LiteraryReadTracker";
 import SubscribeForm from "@/components/SubscribeForm";
+import ArticleShareFab from "@/components/ArticleShareFab";
 
 const LITERARY_READ_PERCENT = 0.3;
 
@@ -149,8 +150,6 @@ async function PiecePage({ slug }: { slug: string }) {
     year: "numeric",
   });
   const authorName = post.author?.node?.name || "The Moveee Literary";
-  const pieceUrl = `https://themoveee.com/literary/${slug}`;
-  const plainTitle = decodeHtml(post.title || "");
 
   // ── Access: fold Literary Pro-gating into the existing Moveee Pro
   // mechanism (culture_access taxonomy), and meter free reads for
@@ -250,65 +249,23 @@ async function PiecePage({ slug }: { slug: string }) {
         <div className="lit-piece-byline">
           By <b>{authorName}</b> · {publishedDate}
         </div>
-        {/* A first sketch of the brand guide's own signature motif (§11 — a
-            curved oxblood/gold line), used here as the divider under the
-            title block instead of a plain rule. */}
-        <div className="lit-piece-motif" aria-hidden="true">
-          <svg width="150" height="20" viewBox="0 0 150 20" fill="none">
-            <path
-              d="M2 16C28 16 34 2 60 2C86 2 92 16 118 16C130 16 136 10 148 10"
-              stroke="url(#lit-motif-gradient)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-            <defs>
-              <linearGradient id="lit-motif-gradient" x1="0" y1="0" x2="150" y2="0" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#7A241C" />
-                <stop offset="1" stopColor="#B88942" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
       </div>
-
-      {post.featuredImage?.node?.sourceUrl && (
-        <div className="lit-wrap">
-          <img
-            className="lit-piece-featured-img"
-            src={post.featuredImage.node.sourceUrl}
-            alt={post.featuredImage.node.altText || ""}
-          />
-        </div>
-      )}
 
       <div className="lit-piece-layout">
         <article className="lit-piece-body-col">
+          {post.featuredImage?.node?.sourceUrl && (
+            <img
+              className="lit-piece-featured-img"
+              src={post.featuredImage.node.sourceUrl}
+              alt={post.featuredImage.node.altText || ""}
+            />
+          )}
           {shouldTrackRead && <LiteraryReadTracker slug={slug} />}
           <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: visibleBodyHtml }} />
           {gateBlock}
           {trailingBodyHtml && (
             <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: trailingBodyHtml }} />
           )}
-          <div className="lit-piece-share">
-            <span className="lit-piece-share-label">Share</span>
-            <div className="lit-piece-share-icons">
-              <a
-                href={`mailto:?subject=${encodeURIComponent(plainTitle)}&body=${encodeURIComponent(pieceUrl)}`}
-                aria-label="Share by email"
-              >
-                ✉
-              </a>
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(plainTitle)}&url=${encodeURIComponent(pieceUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on X"
-              >
-                𝕏
-              </a>
-            </div>
-          </div>
-
           {post.author?.node?.name && (
             <div className="lit-piece-author">
               <div className="lit-piece-author-avatar">
@@ -327,14 +284,11 @@ async function PiecePage({ slug }: { slug: string }) {
                   {post.author.node.description || "Contributing writer, The Moveee Literary."}
                 </p>
               </div>
-              {post.author.node.slug && (
-                <Link href={`/author/${post.author.node.slug}`} className="lit-piece-author-cta">
-                  More by {post.author.node.name.split(" ")[0]} →
-                </Link>
-              )}
             </div>
           )}
         </article>
+
+        <ArticleShareFab />
 
         <aside>
           <div className="lit-piece-sb-block">
