@@ -500,6 +500,10 @@
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-mute); margin-bottom: 14px;
 }
 
+/* The sidebar's "Browse by Section" nav block (genre list + current-genre
+   pick teaser) was removed from the JSX — the top nav already lists the
+   same six genres, so it was a duplicate. Kept unused, per this file's
+   usual convention, in case it's ever wanted back. */
 .lit-piece-genre-row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
   padding: 11px 0; border-top: 1px solid var(--lit-rule);
