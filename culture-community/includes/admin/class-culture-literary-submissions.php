@@ -114,6 +114,13 @@ class Culture_Literary_Submissions {
         'flash'         => null,
     );
 
+    /** Real, unpaid free call — no submission fee, matches SECTIONS['flash']['fee'] === 0. */
+    const PAYMENT_TABLE = 'culture_literary_payments';
+
+    /** Admin-issued single-use waiver codes that skip the $3 submission fee. */
+    const WAIVER_OPTION             = 'culture_literary_waiver_codes';
+    const WAIVER_QUOTA_PER_QUARTER  = 100;
+
     public static function init(): void {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_post_culture_lit_submission_save',   array( __CLASS__, 'handle_save' ) );
@@ -121,6 +128,575 @@ class Culture_Literary_Submissions {
         add_action( 'admin_post_culture_lit_submission_status', array( __CLASS__, 'handle_quick_status' ) );
         add_action( 'admin_post_culture_lit_submission_export', array( __CLASS__, 'handle_export' ) );
         add_action( 'admin_post_culture_lit_submission_push',   array( __CLASS__, 'handle_push' ) );
+        add_action( 'admin_post_culture_lit_waiver_generate',   array( __CLASS__, 'handle_waiver_generate' ) );
+        add_action( 'admin_post_culture_lit_waiver_delete',     array( __CLASS__, 'handle_waiver_delete' ) );
+        add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+    }
+
+    // ── Online submission intake (public form → payment → this manager) ───────
+    //
+    // Writers no longer submit by email — they use the real, payment-integrated
+    // form at /literary/submit/new (apps/site). A writer pastes their formatted
+    // piece straight into a rich-text field (no file upload, no DOCX/PDF parsing
+    // needed at all — the content lands here exactly as it'll be pushed to
+    // WordPress). Fee handling:
+    //   - The Moveee Flash (SECTIONS['flash']['fee'] === 0) → submission is
+    //     created immediately, no payment step.
+    //   - A valid, unused waiver code for the current quarter → same, immediate.
+    //   - Otherwise → a real Paystack/Stripe charge (same two gateways, same
+    //     charge_initiate()/payment_session() calls already used by
+    //     Culture_Ticket_Payment — mirrored below almost line-for-line) must
+    //     clear before the submission is created.
+    // Pending-payment rows live in their own dbDelta table (payment_table())
+    // rather than the option-array store below, since this is now written at
+    // real volume by a public webhook — the option array stays reserved for
+    // confirmed, editor-curated submissions, per the same reasoning
+    // Culture_Ticket_Payment documents for wp_culture_tickets.
+
+    public static function payment_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::PAYMENT_TABLE;
+    }
+
+    public static function create_payments_table(): void {
+        global $wpdb;
+        $t  = self::payment_table();
+        $cs = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( "CREATE TABLE {$t} (
+            id                bigint(20)   NOT NULL AUTO_INCREMENT,
+            payment_code      varchar(64)  NOT NULL DEFAULT '',
+            writer_name       varchar(200) NOT NULL DEFAULT '',
+            writer_email      varchar(200) NOT NULL DEFAULT '',
+            section           varchar(50)  NOT NULL DEFAULT '',
+            title             varchar(500) NOT NULL DEFAULT '',
+            content           longtext     NOT NULL,
+            amount            int(11)      NOT NULL DEFAULT 0,
+            currency          varchar(10)  NOT NULL DEFAULT 'USD',
+            payment_gateway   varchar(20)  NOT NULL DEFAULT '',
+            payment_reference varchar(200) NOT NULL DEFAULT '',
+            payment_status    varchar(20)  NOT NULL DEFAULT 'pending',
+            status            varchar(20)  NOT NULL DEFAULT 'pending',
+            submission_id     varchar(64)  NOT NULL DEFAULT '',
+            ip_address        varchar(100) NOT NULL DEFAULT '',
+            created_at        datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY payment_code (payment_code),
+            KEY payment_reference (payment_reference),
+            KEY writer_email (writer_email)
+        ) {$cs};" );
+    }
+
+    public static function register_routes(): void {
+        register_rest_route( 'culture/v1', '/literary/submission/initiate', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_submission_initiate' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/literary/submission/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_submission_status' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/literary/submission/callback', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_paystack_callback' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/literary/submission/webhook/paystack', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_paystack_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/literary/submission/webhook/stripe', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_stripe_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+    }
+
+    /** Entry point: create/charge for a new online submission. */
+    public static function handle_submission_initiate( WP_REST_Request $req ) {
+        $writer_name  = sanitize_text_field( wp_unslash( $req->get_param( 'writer_name' ) ?? '' ) );
+        $writer_email = sanitize_email( wp_unslash( $req->get_param( 'writer_email' ) ?? '' ) );
+        $section      = sanitize_key( wp_unslash( $req->get_param( 'section' ) ?? '' ) );
+        $title        = sanitize_text_field( wp_unslash( $req->get_param( 'title' ) ?? '' ) );
+        $content      = wp_kses_post( wp_unslash( $req->get_param( 'content' ) ?? '' ) );
+        $waiver_code  = sanitize_text_field( wp_unslash( $req->get_param( 'waiver_code' ) ?? '' ) );
+
+        if ( ! $writer_name || ! is_email( $writer_email ) || ! isset( self::SECTIONS[ $section ] ) ) {
+            return self::cors( new WP_REST_Response( array(
+                'error'   => 'invalid_request',
+                'message' => 'Your name, a valid email address, and a section are required.',
+            ), 400 ) );
+        }
+        if ( '' === trim( wp_strip_all_tags( $content ) ) ) {
+            return self::cors( new WP_REST_Response( array(
+                'error'   => 'no_content',
+                'message' => 'Please paste your piece before submitting.',
+            ), 400 ) );
+        }
+
+        $section_meta = self::SECTIONS[ $section ];
+        $fee          = (int) $section_meta['fee'];
+
+        // The Moveee Flash (and any future no-fee section) — create right away.
+        if ( $fee <= 0 ) {
+            $submission_id = self::add_submission( array(
+                'writer_name'  => $writer_name,
+                'writer_email' => $writer_email,
+                'section'      => $section,
+                'title'        => $title,
+                'content'      => $content,
+                'fee_status'   => 'n_a',
+            ) );
+            Culture_Emails::send_literary_submission_received( $writer_email, $writer_name, $section_meta['label'], $title );
+            return self::cors( new WP_REST_Response( array( 'status' => 'confirmed', 'submission_id' => $submission_id ), 200 ) );
+        }
+
+        // A valid, unused waiver code for this quarter — same, no charge.
+        if ( $waiver_code ) {
+            $redeemed = self::redeem_waiver( $waiver_code, $writer_email );
+            if ( is_wp_error( $redeemed ) ) {
+                return self::cors( new WP_REST_Response( array(
+                    'error'   => $redeemed->get_error_code(),
+                    'message' => $redeemed->get_error_message(),
+                ), 400 ) );
+            }
+            $submission_id = self::add_submission( array(
+                'writer_name'  => $writer_name,
+                'writer_email' => $writer_email,
+                'section'      => $section,
+                'title'        => $title,
+                'content'      => $content,
+                'fee_status'   => 'waived',
+            ) );
+            Culture_Emails::send_literary_submission_received( $writer_email, $writer_name, $section_meta['label'], $title );
+            return self::cors( new WP_REST_Response( array( 'status' => 'confirmed', 'submission_id' => $submission_id ), 200 ) );
+        }
+
+        // Otherwise — collect the real $3 submission fee before anything is created.
+        global $wpdb;
+        $t            = self::payment_table();
+        $payment_code = strtoupper( bin2hex( random_bytes( 8 ) ) );
+        $currency     = strtoupper( sanitize_text_field( wp_unslash( $req->get_param( 'currency' ) ?? 'USD' ) ) );
+        $gateway      = ( 'NGN' === $currency ) ? 'paystack' : 'stripe';
+        $ip           = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
+
+        $ok = $wpdb->insert( $t, array(
+            'payment_code'    => $payment_code,
+            'writer_name'     => $writer_name,
+            'writer_email'    => $writer_email,
+            'section'         => $section,
+            'title'           => $title,
+            'content'         => $content,
+            'amount'          => $fee,
+            'currency'        => $currency,
+            'payment_gateway' => $gateway,
+            'status'          => 'pending',
+            'payment_status'  => 'pending',
+            'ip_address'      => $ip,
+        ), array( '%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s' ) );
+
+        if ( ! $ok ) {
+            return self::cors( new WP_REST_Response( array( 'error' => 'db_error', 'message' => 'Could not start your submission. Please try again.' ), 500 ) );
+        }
+
+        $payment_id   = (int) $wpdb->insert_id;
+        $amount_minor = $fee * 100;
+
+        $result = ( 'paystack' === $gateway )
+            ? self::init_paystack_payment( $payment_id, $payment_code, $writer_name, $writer_email, $amount_minor, $currency, $section_meta['label'] )
+            : self::init_stripe_payment( $payment_id, $payment_code, $writer_name, $writer_email, $amount_minor, $currency, $section_meta['label'] );
+
+        if ( is_wp_error( $result ) ) {
+            $wpdb->delete( $t, array( 'id' => $payment_id ), array( '%d' ) );
+            return self::cors( new WP_REST_Response( array( 'error' => 'payment_error', 'message' => $result->get_error_message() ), 502 ) );
+        }
+
+        $wpdb->update( $t, array( 'payment_reference' => $result['reference'] ), array( 'id' => $payment_id ), array( '%s' ), array( '%d' ) );
+
+        return self::cors( new WP_REST_Response( array(
+            'status'       => 'payment_required',
+            'payment_url'  => $result['url'],
+            'payment_code' => $payment_code,
+        ), 200 ) );
+    }
+
+    private static function init_paystack_payment( int $payment_id, string $payment_code, string $name, string $email, int $amount, string $currency, string $section_label ) {
+        $callback_url = add_query_arg( array(
+            'gateway'      => 'paystack',
+            'payment_code' => $payment_code,
+        ), rest_url( 'culture/v1/literary/submission/callback' ) );
+
+        $response = Culture_Paystack::charge_initiate( array(
+            'email'        => $email,
+            'amount'       => $amount,
+            'currency'     => $currency,
+            'reference'    => 'LIT-' . $payment_code,
+            'callback_url' => $callback_url,
+            'metadata'     => array(
+                'payment_id'   => $payment_id,
+                'payment_code' => $payment_code,
+                'section'      => $section_label,
+                'writer_name'  => $name,
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+        if ( empty( $response['data']['authorization_url'] ) ) {
+            return new WP_Error( 'paystack_error', 'Could not initialize Paystack payment.' );
+        }
+
+        return array(
+            'url'       => $response['data']['authorization_url'],
+            'reference' => $response['data']['reference'],
+        );
+    }
+
+    private static function init_stripe_payment( int $payment_id, string $payment_code, string $name, string $email, int $amount, string $currency, string $section_label ) {
+        $frontend_url = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
+        $success_url  = $frontend_url . '/literary/submit/new?submission_pending=' . $payment_code . '&session_id={CHECKOUT_SESSION_ID}';
+        $cancel_url   = $frontend_url . '/literary/submit/new?submission_cancelled=1';
+
+        $response = Culture_Stripe::payment_session( array(
+            'mode'                => 'payment',
+            'client_reference_id' => (string) $payment_id,
+            'customer_email'      => $email,
+            'success_url'         => $success_url,
+            'cancel_url'          => $cancel_url,
+            'line_items'          => array( array(
+                'price_data' => array(
+                    'currency'     => strtolower( $currency ),
+                    'unit_amount'  => $amount,
+                    'product_data' => array(
+                        'name'        => 'The Moveee Literary — Submission Fee',
+                        'description' => $section_label . ' submission',
+                    ),
+                ),
+                'quantity' => 1,
+            ) ),
+            'metadata' => array(
+                'payment_id'   => (string) $payment_id,
+                'payment_code' => $payment_code,
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+        if ( empty( $response['url'] ) ) {
+            return new WP_Error( 'stripe_error', 'Could not initialize Stripe payment.' );
+        }
+
+        return array(
+            'url'       => $response['url'],
+            'reference' => $response['id'] ?? '',
+        );
+    }
+
+    public static function handle_paystack_callback( WP_REST_Request $req ) {
+        $reference    = sanitize_text_field( $req->get_param( 'reference' ) ?: $req->get_param( 'trxref' ) ?: '' );
+        $payment_code = sanitize_text_field( $req->get_param( 'payment_code' ) ?: '' );
+        $frontend     = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
+        $base         = $frontend . '/literary/submit/new';
+
+        if ( ! $reference ) {
+            wp_safe_redirect( $base . '?submission_failed=1' ); exit;
+        }
+
+        $verify = Culture_Paystack::verify_transaction( $reference );
+        if ( is_wp_error( $verify ) || ( $verify['data']['status'] ?? '' ) !== 'success' ) {
+            wp_safe_redirect( $base . '?submission_failed=1' ); exit;
+        }
+
+        $meta          = $verify['data']['metadata'] ?? array();
+        $resolved_code = $meta['payment_code'] ?? $payment_code;
+
+        if ( ! $resolved_code || ! self::confirm_payment( $resolved_code, $reference, 'paystack' ) ) {
+            wp_safe_redirect( $base . '?submission_failed=1' ); exit;
+        }
+
+        wp_safe_redirect( $base . '?submission_confirmed=' . rawurlencode( $resolved_code ) );
+        exit;
+    }
+
+    public static function handle_paystack_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $payload   = $req->get_body();
+        $signature = $req->get_header( 'x-paystack-signature' ) ?? '';
+        $secret    = get_option( 'culture_paystack_secret_key', '' );
+
+        if ( $secret && ! hash_equals( hash_hmac( 'sha512', $payload, $secret ), $signature ) ) {
+            return new WP_REST_Response( array( 'error' => 'invalid_signature' ), 403 );
+        }
+
+        $data  = json_decode( $payload, true );
+        $event = $data['event'] ?? '';
+
+        if ( 'charge.success' === $event ) {
+            $d         = $data['data'] ?? array();
+            $reference = $d['reference'] ?? '';
+            $meta      = $d['metadata'] ?? array();
+            $code      = $meta['payment_code'] ?? '';
+
+            if ( $code && str_starts_with( $reference, 'LIT-' ) ) {
+                self::confirm_payment( $code, $reference, 'paystack' );
+            }
+        }
+
+        return new WP_REST_Response( array( 'status' => 'ok' ), 200 );
+    }
+
+    public static function handle_stripe_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $payload = $req->get_body();
+        $data    = json_decode( $payload, true );
+
+        if ( ! $data || ! isset( $data['type'] ) ) {
+            return new WP_REST_Response( array( 'error' => 'invalid_payload' ), 400 );
+        }
+
+        $webhook_secret = get_option( 'culture_stripe_webhook_secret', '' );
+        if ( $webhook_secret ) {
+            $sig = $req->get_header( 'stripe-signature' ) ?? '';
+            if ( ! self::verify_stripe_sig( $payload, $sig, $webhook_secret ) ) {
+                return new WP_REST_Response( array( 'error' => 'invalid_signature' ), 403 );
+            }
+        }
+
+        if ( 'checkout.session.completed' === $data['type'] ) {
+            $session = $data['data']['object'] ?? array();
+            $meta    = $session['metadata'] ?? array();
+            $code    = $meta['payment_code'] ?? '';
+            $ref     = $session['id'] ?? '';
+
+            if ( $code ) {
+                self::confirm_payment( $code, $ref, 'stripe' );
+            }
+        }
+
+        return new WP_REST_Response( array( 'status' => 'ok' ), 200 );
+    }
+
+    public static function handle_submission_status( WP_REST_Request $req ): WP_REST_Response {
+        global $wpdb;
+        $t       = self::payment_table();
+        $payment = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$t} WHERE payment_code = %s LIMIT 1", $req->get_param( 'code' ) ) );
+
+        if ( ! $payment ) {
+            return self::cors( new WP_REST_Response( array( 'error' => 'not_found' ), 404 ) );
+        }
+
+        return self::cors( new WP_REST_Response( array( 'status' => $payment->status ), 200 ) );
+    }
+
+    /** Idempotent — safe to call from both the browser callback and the webhook. */
+    private static function confirm_payment( string $payment_code, string $reference, string $gateway ): bool {
+        global $wpdb;
+        $t = self::payment_table();
+
+        $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t} WHERE payment_code = %s LIMIT 1", $payment_code ) );
+        if ( ! $payment ) {
+            return false;
+        }
+        if ( 'confirmed' === $payment->status ) {
+            return true;
+        }
+
+        $section_meta = self::SECTIONS[ $payment->section ] ?? self::SECTIONS['fiction'];
+
+        $submission_id = self::add_submission( array(
+            'writer_name'  => $payment->writer_name,
+            'writer_email' => $payment->writer_email,
+            'section'      => $payment->section,
+            'title'        => $payment->title,
+            'content'      => $payment->content,
+            'fee_status'   => 'paid',
+        ) );
+
+        $wpdb->update( $t, array(
+            'status'            => 'confirmed',
+            'payment_status'    => 'paid',
+            'payment_reference' => $reference,
+            'payment_gateway'   => $gateway,
+            'submission_id'     => $submission_id,
+        ), array( 'payment_code' => $payment_code ), array( '%s', '%s', '%s', '%s', '%s' ), array( '%s' ) );
+
+        Culture_Emails::send_literary_submission_received( $payment->writer_email, $payment->writer_name, $section_meta['label'], $payment->title );
+
+        return true;
+    }
+
+    private static function verify_stripe_sig( string $payload, string $sig_header, string $secret ): bool {
+        $parts = array();
+        foreach ( explode( ',', $sig_header ) as $part ) {
+            $pair = array_pad( explode( '=', $part, 2 ), 2, '' );
+            $parts[ trim( $pair[0] ) ] = trim( $pair[1] );
+        }
+        $ts  = $parts['t']  ?? '';
+        $sig = $parts['v1'] ?? '';
+        if ( ! $ts || ! $sig ) {
+            return false;
+        }
+        return hash_equals( hash_hmac( 'sha256', "{$ts}.{$payload}", $secret ), $sig );
+    }
+
+    private static function cors( WP_REST_Response $res ): WP_REST_Response {
+        $res->header( 'Access-Control-Allow-Origin', 'https://themoveee.com' );
+        $res->header( 'Access-Control-Allow-Methods', 'GET, POST, OPTIONS' );
+        $res->header( 'Access-Control-Allow-Headers', 'Content-Type' );
+        return $res;
+    }
+
+    /**
+     * Public entry point that actually appends a confirmed submission to the
+     * editorial option-array store — the one place a row can be created,
+     * whether it came in free (Flash), waived, or paid.
+     *
+     * @return string The new submission's id.
+     */
+    public static function add_submission( array $data ): string {
+        $submissions = self::get_all();
+        $id          = uniqid( 'lit_', false );
+        $section     = isset( self::SECTIONS[ $data['section'] ?? '' ] ) ? $data['section'] : 'fiction';
+
+        $submissions[] = array(
+            'id'             => $id,
+            'writer_name'    => $data['writer_name'] ?? '',
+            'writer_email'   => $data['writer_email'] ?? '',
+            'section'        => $section,
+            'title'          => $data['title'] ?? '',
+            'subject_line'   => '',
+            'status'         => 'received',
+            'fee_status'     => $data['fee_status'] ?? 'pending',
+            'payment_status' => 'unpaid',
+            'reviewer_id'    => 0,
+            'received_at'    => current_time( 'mysql' ),
+            'notes'          => '',
+            'content'        => $data['content'] ?? '',
+            'created_at'     => current_time( 'mysql' ),
+            'wp_post_id'     => 0,
+        );
+
+        self::save_all( $submissions );
+        return $id;
+    }
+
+    // ── Waiver codes (admin-issued, single-use, quota per quarter) ────────────
+
+    public static function current_quarter(): string {
+        $month = (int) gmdate( 'n' );
+        $q     = (int) ceil( $month / 3 );
+        return gmdate( 'Y' ) . '-Q' . $q;
+    }
+
+    public static function get_waiver_codes(): array {
+        return (array) get_option( self::WAIVER_OPTION, array() );
+    }
+
+    private static function save_waiver_codes( array $codes ): void {
+        update_option( self::WAIVER_OPTION, array_values( $codes ), false );
+    }
+
+    /**
+     * @return array|WP_Error Newly generated code entries, or an error if the
+     *                         quarterly quota (100) has already been reached.
+     */
+    public static function generate_waiver_codes( int $count ) {
+        $count   = max( 1, min( 50, $count ) );
+        $quarter = self::current_quarter();
+        $codes   = self::get_waiver_codes();
+
+        $issued = count( array_filter( $codes, fn( $c ) => ( $c['quarter'] ?? '' ) === $quarter ) );
+        if ( $issued >= self::WAIVER_QUOTA_PER_QUARTER ) {
+            return new WP_Error( 'quota_reached', 'All ' . self::WAIVER_QUOTA_PER_QUARTER . ' free submission slots for ' . $quarter . ' have already been issued.' );
+        }
+        $count = min( $count, self::WAIVER_QUOTA_PER_QUARTER - $issued );
+
+        $new = array();
+        for ( $i = 0; $i < $count; $i++ ) {
+            $entry = array(
+                'code'       => 'WAIVE-' . strtoupper( bin2hex( random_bytes( 4 ) ) ),
+                'quarter'    => $quarter,
+                'used'       => false,
+                'used_by'    => '',
+                'created_at' => current_time( 'mysql' ),
+            );
+            $codes[] = $entry;
+            $new[]   = $entry;
+        }
+        self::save_waiver_codes( $codes );
+        return $new;
+    }
+
+    /** @return true|WP_Error */
+    public static function redeem_waiver( string $code, string $email ) {
+        $code    = strtoupper( trim( $code ) );
+        $codes   = self::get_waiver_codes();
+        $quarter = self::current_quarter();
+        $found   = false;
+
+        foreach ( $codes as &$c ) {
+            if ( strtoupper( $c['code'] ?? '' ) !== $code ) {
+                continue;
+            }
+            $found = true;
+            if ( ! empty( $c['used'] ) ) {
+                return new WP_Error( 'waiver_used', 'This waiver code has already been used.' );
+            }
+            if ( ( $c['quarter'] ?? '' ) !== $quarter ) {
+                return new WP_Error( 'waiver_expired', 'This waiver code has expired — it was issued for a previous quarter.' );
+            }
+            $c['used']    = true;
+            $c['used_by'] = $email;
+            break;
+        }
+        unset( $c );
+
+        if ( ! $found ) {
+            return new WP_Error( 'waiver_invalid', 'We could not find that waiver code.' );
+        }
+
+        self::save_waiver_codes( $codes );
+        return true;
+    }
+
+    public static function handle_waiver_generate(): void {
+        check_admin_referer( 'culture_lit_waiver_generate' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Forbidden' );
+        }
+
+        $count  = absint( $_POST['count'] ?? 10 );
+        $result = self::generate_waiver_codes( $count );
+
+        $qs = array( 'page' => 'culture-literary-submissions', 'tab' => 'waivers' );
+        if ( is_wp_error( $result ) ) {
+            $qs['waiver_error'] = rawurlencode( $result->get_error_message() );
+        } else {
+            $qs['waiver_generated'] = count( $result );
+        }
+        wp_safe_redirect( add_query_arg( $qs, admin_url( 'admin.php' ) ) );
+        exit;
+    }
+
+    public static function handle_waiver_delete(): void {
+        check_admin_referer( 'culture_lit_waiver_delete' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Forbidden' );
+        }
+
+        $code  = sanitize_text_field( wp_unslash( $_GET['code'] ?? '' ) );
+        $codes = array_filter( self::get_waiver_codes(), fn( $c ) => ( $c['code'] ?? '' ) !== $code || ! empty( $c['used'] ) );
+        self::save_waiver_codes( array_values( $codes ) );
+
+        wp_safe_redirect( add_query_arg( array( 'page' => 'culture-literary-submissions', 'tab' => 'waivers', 'waiver_deleted' => 1 ), admin_url( 'admin.php' ) ) );
+        exit;
     }
 
     // ── Storage helpers ───────────────────────────────────────────────────────
@@ -588,10 +1164,10 @@ class Culture_Literary_Submissions {
             <hr class="wp-header-end">
 
             <p style="color:#666;max-width:760px;">
-                Writers submit by emailing <code>literary@themoveee.com</code> with the section and
-                their name in the subject line — e.g. &ldquo;Poetry Submission &mdash; Ada Nwosu&rdquo;
-                or &ldquo;Flash Submission &mdash; Ada Nwosu.&rdquo; Paste that subject line below and
-                the writer name and section will fill in automatically.
+                Writers submit through the online form at <code>/literary/submit/new</code> — payment
+                (or a waiver code, see below) is collected there before a submission lands in this
+                list, so every row here is already square on fees. Use the form below only to log a
+                submission manually (e.g. one that arrived some other way).
             </p>
 
             <?php if ( $saved )   : ?><div class="notice notice-success is-dismissible"><p>Submission saved.</p></div><?php endif; ?>
@@ -905,6 +1481,76 @@ class Culture_Literary_Submissions {
                     </tbody>
                 </table>
             <?php endif; ?>
+
+            <!-- Submission Fee Waivers -->
+            <?php
+            $quarter       = self::current_quarter();
+            $waiver_codes  = self::get_waiver_codes();
+            $quarter_codes = array_values( array_filter( $waiver_codes, fn( $c ) => ( $c['quarter'] ?? '' ) === $quarter ) );
+            $issued        = count( $quarter_codes );
+            $remaining     = max( 0, self::WAIVER_QUOTA_PER_QUARTER - $issued );
+            ?>
+            <div style="background:#fff;border:1px solid #ccd0d4;padding:24px 28px;max-width:820px;margin-top:30px;">
+                <h2 style="margin-top:0;">Submission Fee Waivers</h2>
+                <p style="color:#666;max-width:640px;">
+                    Writers who can't afford the $3 quarterly submission fee (see the Submissions
+                    page's own FAQ) email to request one of <?php echo esc_html( self::WAIVER_QUOTA_PER_QUARTER ); ?>
+                    free waiver slots per quarter. Generate a code here and send it to them — they
+                    enter it on the online submission form to skip payment. Each code is single-use.
+                    The Moveee Flash never needs one; it has no fee.
+                </p>
+
+                <?php if ( isset( $_GET['waiver_generated'] ) ) : ?>
+                    <div class="notice notice-success is-dismissible"><p><?php echo esc_html( (int) $_GET['waiver_generated'] ); ?> waiver code(s) generated.</p></div>
+                <?php endif; ?>
+                <?php if ( isset( $_GET['waiver_deleted'] ) ) : ?>
+                    <div class="notice notice-success is-dismissible"><p>Waiver code deleted.</p></div>
+                <?php endif; ?>
+                <?php if ( ! empty( $_GET['waiver_error'] ) ) : ?>
+                    <div class="notice notice-error is-dismissible"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['waiver_error'] ) ) ); ?></p></div>
+                <?php endif; ?>
+
+                <p style="margin:16px 0;">
+                    <strong><?php echo esc_html( $quarter ); ?>:</strong>
+                    <?php echo esc_html( $issued ); ?> of <?php echo esc_html( self::WAIVER_QUOTA_PER_QUARTER ); ?> slots issued
+                    &nbsp;·&nbsp; <?php echo esc_html( $remaining ); ?> remaining
+                </p>
+
+                <?php if ( $remaining > 0 ) : ?>
+                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:20px;">
+                        <?php wp_nonce_field( 'culture_lit_waiver_generate' ); ?>
+                        <input type="hidden" name="action" value="culture_lit_waiver_generate">
+                        <input type="number" name="count" value="1" min="1" max="<?php echo esc_attr( min( 50, $remaining ) ); ?>" style="width:80px;">
+                        <?php submit_button( 'Generate Code(s)', 'secondary', 'submit', false ); ?>
+                    </form>
+                <?php else : ?>
+                    <p style="color:#a00;">All slots for this quarter have been issued.</p>
+                <?php endif; ?>
+
+                <?php if ( empty( $quarter_codes ) ) : ?>
+                    <p style="color:#666;">No codes issued yet this quarter.</p>
+                <?php else : ?>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead><tr><th>Code</th><th>Status</th><th>Used by</th><th>Created</th><th></th></tr></thead>
+                        <tbody>
+                            <?php foreach ( array_reverse( $quarter_codes ) as $c ) : ?>
+                                <tr>
+                                    <td><code><?php echo esc_html( $c['code'] ?? '' ); ?></code></td>
+                                    <td><?php echo ! empty( $c['used'] ) ? 'Used' : 'Available'; ?></td>
+                                    <td><?php echo esc_html( $c['used_by'] ?? '—' ) ?: '—'; ?></td>
+                                    <td><?php echo esc_html( $c['created_at'] ?? '' ); ?></td>
+                                    <td>
+                                        <?php if ( empty( $c['used'] ) ) : ?>
+                                            <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=culture_lit_waiver_delete&code=' . rawurlencode( $c['code'] ?? '' ) ), 'culture_lit_waiver_delete' ) ); ?>"
+                                               onclick="return confirm('Delete this unused waiver code?');" style="color:#a00;">Delete</a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
         </div>
 
         <script>

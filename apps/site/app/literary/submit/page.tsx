@@ -189,10 +189,11 @@ export default function LiterarySubmitPage() {
 
         <h2>Submission Guidelines</h2>
         <p>
-          <strong>Manuscript format</strong> &mdash; We accept .doc, .docx, and PDF files. Font
-          size 12, double spacing, Garamond font. Please do not leave any identifying information
-          on your manuscript &mdash; we read blindly, but if your work is accepted, we will reach
-          out for your updated bio in preparation for amplification across our channels.
+          <strong>Manuscript format</strong> &mdash; Submissions are made through our online
+          submission form, where you paste your finished piece directly into the editor there.
+          Please do not leave any identifying information in the piece itself &mdash; we read
+          blindly, but if your work is accepted, we will reach out for your updated bio in
+          preparation for amplification across our channels.
         </p>
         <p>
           <strong>Previously published work / reprints</strong> &mdash; We do not accept
@@ -228,17 +229,16 @@ export default function LiterarySubmitPage() {
           you when you return to it.
         </p>
         <p>
-          Email your submission to{" "}
-          <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>, with the section and
-          your name in the subject line &mdash; for example, &ldquo;Poetry Submission &mdash; Ada
-          Nwosu&rdquo; or &ldquo;Flash Submission &mdash; Ada Nwosu.&rdquo;
+          Submissions go through our online form &mdash; you&rsquo;ll paste your piece straight
+          into it, choose a section, and (for quarterly sections) pay the $3 submission fee right
+          there. The Moveee Flash has no fee.
         </p>
 
         <div className="lit-submit-cards">
           <div className="lit-submit-card">
-            <h3>Submissions</h3>
-            <p>Fiction, flash fiction, essays, poetry, and translation for The Moveee Literary.</p>
-            <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>
+            <h3>Start Your Submission</h3>
+            <p>Fiction, flash fiction, essays, poetry, conversations, and translation.</p>
+            <Link href="/literary/submit/new">Submit your work &rarr;</Link>
           </div>
           <div className="lit-submit-card">
             <h3>Not sure where to start?</h3>
@@ -246,6 +246,10 @@ export default function LiterarySubmitPage() {
             <Link href="/literary">Browse the archive &rarr;</Link>
           </div>
         </div>
+        <p style={{ marginTop: 16 }}>
+          Questions, or need a submission-fee waiver? Email{" "}
+          <a href="mailto:literary@themoveee.com">literary@themoveee.com</a>.
+        </p>
       </div>
     </div>
   );

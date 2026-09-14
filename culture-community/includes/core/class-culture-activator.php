@@ -224,6 +224,10 @@ class Culture_Activator {
         Culture_Hubs::create_members_table();
         Culture_Hubs::create_follows_table();
 
+        // Moveee Literary — pending-payment table for the online submission
+        // form's $3 fee (Paystack/Stripe), added September 2026.
+        Culture_Literary_Submissions::create_payments_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

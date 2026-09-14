@@ -230,6 +230,40 @@ class Culture_Emails {
     }
 
     /**
+     * Confirms receipt of an online Moveee Literary submission — fired the
+     * moment a submission is actually created (Flash: immediately; a paid
+     * section: once payment or a waiver code is confirmed). Distinct from
+     * send_literary_submission_decision() above, which fires later once an
+     * editor accepts/rejects the piece.
+     *
+     * @param string $email
+     * @param string $writer_name
+     * @param string $section_label
+     * @param string $title
+     */
+    public static function send_literary_submission_received( $email, $writer_name, $section_label, $title ) {
+        if ( ! is_email( $email ) ) {
+            return false;
+        }
+
+        $merge = array(
+            '{writer_name}' => esc_html( $writer_name ),
+            '{piece}'       => $title ? '&ldquo;' . esc_html( $title ) . '&rdquo;' : 'your piece',
+            '{section}'     => esc_html( $section_label ),
+        );
+
+        $tpl     = Culture_Email_Templates::get_template( 'literary_received' );
+        $subject = Culture_Email_Templates::merge( $tpl['subject'], $merge );
+
+        $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
+        $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
+        $body .= self::get_button( self::get_frontend_url() . 'literary', Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_footer();
+
+        return self::send( $email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id

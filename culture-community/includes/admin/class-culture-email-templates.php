@@ -219,6 +219,22 @@ class Culture_Email_Templates {
 <p>After careful reading, we won\'t be moving forward with {piece} for <strong>{section}</strong> at this time. This was a genuinely close call, not a reflection of the work\'s worth &mdash; we read every submission on its own terms and can only publish a small number of what we receive.</p>
 <p>We\'d welcome future submissions. Thank you for sending us your work.</p>',
             ),
+
+            'literary_received' => array(
+                'label'           => __( 'Literary Submission — Received', 'culture-community' ),
+                'description'     => __( 'Sent immediately after a writer successfully submits through the online Moveee Literary submission form (once payment, waiver, or the free Moveee Flash call has been confirmed).', 'culture-community' ),
+                'tags'            => array(
+                    '{writer_name}' => __( 'Writer\'s name', 'culture-community' ),
+                    '{piece}'       => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
+                    '{section}'     => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
+                ),
+                'default_subject' => 'We\'ve received your Moveee Literary submission',
+                'default_heading' => 'It\'s in.',
+                'default_button'  => 'Visit The Moveee Literary',
+                'default_body'    => '<p>Hi {writer_name},</p>
+<p>Thank you for sending us {piece} for <strong>{section}</strong> &mdash; we\'ve received it and it\'s now in our reading queue.</p>
+<p>We read every submission blindly, on its own terms, and will follow up by email once a decision has been made. There\'s nothing further you need to do in the meantime.</p>',
+            ),
         );
     }
 
