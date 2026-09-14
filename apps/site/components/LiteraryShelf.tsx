@@ -7,15 +7,16 @@ import LiteraryGenreArt from "./LiteraryGenreArt";
 export interface LiteraryShelfItem {
   href: string;
   label: string;
-  sub: string;
   slug: string;
 }
 
 // Horizontally-scrolling "shelf" of section tiles — the real, backend-safe
 // stand-in for the mockup's back-catalogue shelf (there's no volume/issue
 // taxonomy in the CMS, so this links to the six genre archives instead of
-// fabricated past issues). Arrow buttons nudge the same scroll container
-// CSS already makes swipeable/scrollable on touch.
+// fabricated past issues). Each tile renders a real illustrated cover
+// (LiteraryGenreArt) rather than a flat gradient + abbreviation. Arrow
+// buttons nudge the same scroll container CSS already makes swipeable/
+// scrollable on touch.
 export default function LiteraryShelf({ items }: { items: LiteraryShelfItem[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +31,6 @@ export default function LiteraryShelf({ items }: { items: LiteraryShelfItem[] })
           <Link key={item.href} href={item.href} className="lit-shelf-item">
             <div className="lit-shelf-cover">
               <LiteraryGenreArt slug={item.slug} />
-              <span>{item.sub}</span>
             </div>
             <div className="lit-shelf-name">{item.label}</div>
           </Link>

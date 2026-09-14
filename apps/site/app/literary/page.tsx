@@ -7,6 +7,7 @@ import {
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
 import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
+import LiteraryGenreArt from "@/components/LiteraryGenreArt";
 import { decodeHtml } from "@/lib/decode-html";
 
 function plainExcerpt(html: string | undefined | null, max = 220): string {
@@ -70,7 +71,6 @@ export default async function LiteraryLandingPage() {
   const shelfItems: LiteraryShelfItem[] = LITERARY_GENRES.map((g) => ({
     href: `/literary/${g.slug}`,
     label: g.label,
-    sub: g.label.slice(0, 3).toUpperCase(),
     slug: g.slug,
   }));
 
@@ -157,8 +157,11 @@ export default async function LiteraryLandingPage() {
         <div className="lit-wrap">
           <div className="lit-plug">
             <div className="lit-plug-cover">
-              <span className="lit-plug-cover-label">Submissions</span>
-              <span className="lit-plug-cover-title">Open</span>
+              <LiteraryGenreArt slug="submissions" className="lit-plug-cover-art" />
+              <div className="lit-plug-cover-text">
+                <span className="lit-plug-cover-label">Submissions</span>
+                <span className="lit-plug-cover-title">Open</span>
+              </div>
             </div>
             <div>
               <div className="lit-tag">Now Reading</div>

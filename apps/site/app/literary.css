@@ -248,8 +248,11 @@
 .lit-plug { display: grid; grid-template-columns: 190px 1fr; gap: 38px; align-items: center; padding: 34px; border: 1px solid var(--lit-rule-strong); }
 @media (max-width: 620px) { .lit-plug { grid-template-columns: 1fr; } }
 .lit-plug-cover {
-  aspect-ratio: 2/3; width: 100%;
-  background: linear-gradient(150deg, var(--lit-ink) 0%, var(--lit-oxblood-deep) 55%, var(--lit-umber) 120%);
+  position: relative; aspect-ratio: 2/3; width: 100%; overflow: hidden;
+}
+.lit-plug-cover-art { position: absolute; inset: 0; }
+.lit-plug-cover-text {
+  position: relative; z-index: 1; height: 100%;
   display: flex; flex-direction: column; justify-content: space-between; padding: 16px; color: var(--lit-ivory);
 }
 .lit-plug-cover-label { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lit-gold); }
@@ -262,12 +265,7 @@
 .lit-shelf { position: relative; }
 .lit-shelf-track { display: flex; gap: 26px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
 .lit-shelf-item { flex: 0 0 160px; scroll-snap-align: start; }
-.lit-shelf-cover {
-  position: relative; overflow: hidden; aspect-ratio: 2/3; width: 100%; margin-bottom: 10px;
-  display: flex; align-items: flex-end; padding: 12px; color: var(--lit-ivory);
-  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-}
-.lit-shelf-cover span { position: relative; z-index: 1; }
+.lit-shelf-cover { position: relative; aspect-ratio: 2/3; width: 100%; margin-bottom: 10px; overflow: hidden; }
 .lit-shelf-name { font-family: var(--font-lit-display), Georgia, serif; font-size: 14.5px; color: var(--lit-ink); }
 .lit-shelf-nav {
   position: absolute; top: 38%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%;

@@ -765,6 +765,73 @@ read-through, a CSS brace-balance check on `literary.css` (157/157), and a diff 
 mockup and the real logo asset's rendering in a real environment before considering this fully
 closed.
 
+## Literary About Us + Submissions pages — real copy from The Moveee's editors (September 2026)
+
+`apps/site/app/literary/submit/page.tsx`'s content was previously flagged in this file as
+"reasonable starting defaults, not confirmed editorial policy" — that placeholder is now
+replaced with the real thing, supplied directly by the editors (two Word documents: an About Us
+page and a Submissions Landing Page). A new route, `apps/site/app/literary/about/page.tsx`, was
+also added — there was no About page under `/literary` before this.
+
+- **Both pages reuse the existing `.lit-submit-*` CSS classes** (`literary.css`) as-is — despite
+  the name, that class family is a plain long-form-content layout (eyebrow, h1, body copy with
+  h2 breaks, a closing 2-card row), not literally scoped to the submissions page. No new CSS was
+  needed for either page.
+- **Real, confirmed policy, not placeholders**: quarterly issues pay $15&ndash;$25/piece (The
+  Moveee Flash pays a flat $10), an 8&ndash;12 week response time (4 weeks for Flash), a $3
+  quarterly submission fee with up to 100 free waiver slots per quarter (Flash has no fee),
+  first-publication-and-archival-rights-only (author retains copyright), and prize-nomination
+  language (Pushcart, Caine Prize for African Writing, Best Small Fictions, O. Henry Prize, plus
+  an internal Moveee Editor&rsquo;s Prize). If any of these numbers ever change, this is the one
+  page to update — there's no other copy of them anywhere in the codebase.
+- **The Moveee Flash** (a free monthly flash-fiction call reserved for African writers/stories,
+  distinct from the paid quarterly issues open to writers from anywhere) is documented here for
+  the first time — it didn't exist in the old placeholder copy. If Flash ever gets its own
+  route/CTA beyond a mention on the Submissions page, this is the section to expand from.
+- **`LiteraryFooter.tsx`'s "The Magazine" column** gained an "About Us" link
+  (`/literary/about`), placed between "The Moveee Literary" and "Submit Your Work" — the
+  masthead's top nav (`LiteraryMasthead.tsx`) was deliberately left as-is (genre links only,
+  plus the existing Submit/Subscribe pills) since the user asked specifically for the footer.
+- This section's editorial voice (no hype words, no "we are/aren't X" negative framing — see the
+  Voice/copy constraints entry above) is naturally satisfied by the supplied copy as given; no
+  further rewriting was needed beyond adapting it into JSX (headings, lists, `&mdash;`/`&rsquo;`
+  entities for the site's existing HTML-entity convention).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via a brace/paren-balance check on all three edited
+  files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
+  tweaks at this volume of content) in a real environment before considering this fully closed.
+
+## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
+
+An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired
+rebuild" above) landed a `LiteraryGenreArt.tsx` component but never actually removed the
+3-letter abbreviation caption (`FIC`/`POE`/`ESS`/…) rendered on top of it, and used a single
+monochrome oxblood/ivory/gold palette for every genre — from a live screenshot this read as an
+unillustrated flat gradient with cryptic text. Fixed:
+
+- **`LiteraryGenreArt.tsx` now uses a distinct colour palette per section** (deep burgundy for
+  Fiction, violet for Poetry, teal for Essays, amber for Conversations, blue/gold for
+  Translation, plum for Notes) instead of one shared oxblood tone, and every icon gained real
+  colour-fill accents (a red wax bookmark ribbon, a teal inkwell, a gold nib, etc.) rather than
+  single-tone ivory line art only — genuinely "illustrated," not just a decorative line icon on
+  a dark box.
+- **The abbreviation caption is gone entirely** — `LiteraryShelfItem` dropped its `sub` field,
+  `LiteraryShelf.tsx` no longer renders a `<span>` inside the cover, and `.lit-shelf-cover`'s CSS
+  was simplified to just `position: relative; overflow: hidden` (the illustration is the whole
+  cover; the real label still renders below it via `.lit-shelf-name`, unchanged).
+- **The Submissions spotlight cover** (`.lit-plug-cover`) also got a real illustration — a
+  `slug="submissions"` variant (an open envelope, a rising letter, a gold wax seal) — instead of
+  a plain oxblood gradient; the "Submissions / Open" text now overlays it via a new
+  `.lit-plug-cover-text` wrapper (`position: relative; z-index: 1`) on top of an absolutely
+  positioned `.lit-plug-cover-art`.
+- This pass also merged in `LITERARY_HOMEPAGE_CUTOFF` (a separate, unrelated fix that had landed
+  on `main` in the meantime — filters the homepage's own pools to pieces published on/after a
+  fixed date, see its own code comment in `app/literary/page.tsx`) — no conflict in intent, just
+  two branches touching the same file.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via brace/paren-balance checks on
+  `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
+
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
 `/magazine/[slug]` articles used to gate member-only/patron-only content with `ArticleContentGate`/

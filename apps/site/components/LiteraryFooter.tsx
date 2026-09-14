@@ -38,8 +38,9 @@ export default function LiteraryFooter() {
         <div>
           <div className="lit-foot-h">The Magazine</div>
           <div className="lit-foot-links">
-            <Link href="/literary/submit">Submit Your Work</Link>
             <Link href="/literary">The Moveee Literary</Link>
+            <Link href="/literary/about">About Us</Link>
+            <Link href="/literary/submit">Submit Your Work</Link>
             <Link href="/contact">Contact</Link>
           </div>
         </div>
