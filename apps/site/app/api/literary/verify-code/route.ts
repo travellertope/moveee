@@ -9,6 +9,13 @@ const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
  * token into a first-party httpOnly cookie on themoveee.com (WordPress and
  * apps/site are different origins, so WP can't set this cookie directly —
  * same relay pattern /api/preview uses for the draft-preview token).
+ *
+ * Shared verbatim by /magazine (MagazinePieceGate.tsx) as well as /literary
+ * — the optional `context` field only controls which newsletter list a
+ * free (non-Pro) verifier joins on the WordPress side (Culture Drop for
+ * magazine, the Literary Club list otherwise); everything else about the
+ * token/cookie is identical, so verifying once unlocks gated content in
+ * both sections.
  */
 export async function POST(request: NextRequest) {
   let body: any;
@@ -20,6 +27,7 @@ export async function POST(request: NextRequest) {
 
   const email = typeof body?.email === "string" ? body.email.trim() : "";
   const code = typeof body?.code === "string" ? body.code.trim() : "";
+  const context = body?.context === "magazine" ? "magazine" : "literary";
   if (!email || !code) {
     return NextResponse.json({ error: "Email and code are required." }, { status: 400 });
   }
@@ -28,7 +36,7 @@ export async function POST(request: NextRequest) {
     const res = await fetch(`${WP_BASE_URL}/wp-json/culture/v1/literary/verify-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, context }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json?.token) {

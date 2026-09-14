@@ -2688,7 +2688,9 @@ class Culture_REST_API {
     }
 
     public static function handle_literary_verify_code( $request ) {
-        $result = Culture_Literary_Access::verify_code( $request->get_param( 'email' ), $request->get_param( 'code' ) );
+        $context = $request->get_param( 'context' );
+        $context = in_array( $context, array_keys( Culture_Literary_Access::NEWSLETTER_LIST_BY_CONTEXT ), true ) ? $context : 'literary';
+        $result  = Culture_Literary_Access::verify_code( $request->get_param( 'email' ), $request->get_param( 'code' ), $context );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
