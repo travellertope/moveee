@@ -725,7 +725,15 @@
   border-radius: 6px;
   margin: 0;
 }
-.ar-wrap .prose-content .wp-block-gallery figcaption { text-align: center; }
+/* Without an explicit grid-column, the gallery's trailing figcaption is
+   just another child of the display:grid gallery figure — the browser's
+   auto-placement drops it into whatever grid cell comes next (the same row
+   as the images, in an empty/adjacent column) instead of a row of its own
+   below them. Spanning every column forces it onto a new, full-width row. */
+.ar-wrap .prose-content .wp-block-gallery figcaption {
+  grid-column: 1 / -1;
+  text-align: center;
+}
 
 /* ── WP TABLE BLOCK ── pinned header row + first column, tabular numerals,
    and per-table horizontal scroll — the page body itself never scrolls
