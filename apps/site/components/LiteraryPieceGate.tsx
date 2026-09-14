@@ -95,12 +95,13 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
 
   return (
     <div className={`lit-email-gate${blocking ? " lit-email-gate--blocking" : ""}`}>
+      <div className="lit-gate-eyebrow">★ The Moveee Literary</div>
       {stage === "pro-needed" ? (
         <div>
-          <h3>This piece is Moveee Pro</h3>
+          <h3>This piece continues in Moveee Pro</h3>
           <p>
-            That email isn&rsquo;t linked to a Moveee Pro membership — you&rsquo;re on the free
-            Literary Club list now, but this piece needs Pro.
+            That email isn&rsquo;t linked to a Moveee Pro membership — you&rsquo;re on The Moveee
+            Literary Club list now, but this piece continues there.
           </p>
           <a className="lit-btn-pill lit-btn-pill--fill" href={`/register?tier=patron&next=/literary/${slug}`}>
             Upgrade to Moveee Pro →
@@ -134,15 +135,15 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
           <h3>
             {blocking
               ? mode === "pro"
-                ? "Verify your Moveee Pro membership"
-                : "You've read your free pieces this month"
+                ? "Continue reading The Moveee Literary"
+                : "You've reached this month's free reading"
               : "Join The Moveee Literary Club"}
           </h3>
           <p>
             {blocking
               ? mode === "pro"
-                ? "Enter your email and we'll send a code to confirm your membership."
-                : "Enter your email for a free code and keep reading — no charge."
+                ? "Enter your email and we'll send a code to confirm your Moveee Pro membership."
+                : "Enter your email for a code, then continue reading — free, no charge."
               : "New fiction, poetry, essays and translation, as we publish it — enter your email for a quick code."}
           </p>
           <div className="lit-nl-form lit-email-gate-form">
