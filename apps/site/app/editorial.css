@@ -298,6 +298,25 @@
    dead space between two unrelated paragraphs. Every other former sidebar
    card (Issue, Shop the Edit, Culture Drop) is now an inline band in the
    reading flow instead — see further down this file. */
+/* Line numbers below (used by every `grid-column` in this width-tier
+   system, all the way through the responsive breakpoints further down —
+   the same 6-line shape, just resized) map onto the bracket names one to
+   one: 1 full-start, 2 wide-start, 3 text-start, 4 text-end, 5 wide-end,
+   6 full-end. So text = 3/4, wide = 2/5, full = 1/6.
+
+   Placements below deliberately use these numbers, not `grid-column:
+   wide;`/`text;`/`full;` (a single custom-ident that only works by
+   resolving against the matching `-start`/`-end` bracket names) — Safari
+   was observed rendering a wide-width gallery/table at its collapsed
+   floor width instead of stretching across the wide track, while the
+   identical markup rendered correctly in Chromium; the difference
+   disappeared once the bare-name placement was replaced with numeric
+   line positions here. Numeric `grid-column` values have had uniform,
+   long-standing cross-engine support with no such edge cases, so this
+   sidesteps the interaction entirely rather than depending on it. Keep
+   any future addition to this system on numeric lines too, not the named
+   shorthand — the bracket names in the template below stay only for
+   readability. */
 .ar-wrap {
   display: grid;
   grid-template-columns:
@@ -312,9 +331,9 @@
   padding: 0 24px 80px;
   box-sizing: border-box;
 }
-.ar-wrap > * { grid-column: text; }
-.ar-wrap > .t-wide { grid-column: wide; }
-.ar-wrap > .t-full { grid-column: full; }
+.ar-wrap > * { grid-column: 3 / 4; } /* text */
+.ar-wrap > .t-wide { grid-column: 2 / 5; } /* wide */
+.ar-wrap > .t-full { grid-column: 1 / 6; } /* full */
 
 /* `.prose-content` (the raw, sanitized CMS body — see ArticleComments.tsx's
    former role, now rendered directly in page.tsx) becomes `display:
@@ -323,7 +342,7 @@
    only the box, not the DOM node, so `.ar-wrap > .prose-content > *`
    selectors below still match correctly. */
 .ar-wrap > .prose-content { display: contents; }
-.ar-wrap > .prose-content > * { grid-column: text; }
+.ar-wrap > .prose-content > * { grid-column: 3 / 4; } /* text */
 
 /* Gutenberg's native alignment control maps straight onto the tiers — no
    custom block, no shortcode. Editors pick Wide/Full from the toolbar they
@@ -331,15 +350,15 @@
    culture-theme/functions.php). Tables and galleries default to wide
    without the editor doing anything; `.is-text-width` (Advanced → CSS
    class) is the escape hatch back down to the reading column. */
-.ar-wrap > .prose-content > .alignwide { grid-column: wide; }
-.ar-wrap > .prose-content > .alignfull { grid-column: full; }
-.ar-wrap > .prose-content > .is-text-width { grid-column: text; }
+.ar-wrap > .prose-content > .alignwide { grid-column: 2 / 5; } /* wide */
+.ar-wrap > .prose-content > .alignfull { grid-column: 1 / 6; } /* full */
+.ar-wrap > .prose-content > .is-text-width { grid-column: 3 / 4; } /* text */
 .ar-wrap > .prose-content > table,
 .ar-wrap > .prose-content > .wp-block-table,
 .ar-wrap > .prose-content > .wp-block-gallery,
 .ar-wrap > .prose-content > figure.wp-block-table,
 .ar-wrap > .prose-content > figure.wp-block-gallery {
-  grid-column: wide;
+  grid-column: 2 / 5;
 }
 
 .ar-details {
@@ -385,7 +404,7 @@
    RESPONSIVE below) rather than introducing a second, close-but-different
    threshold to track. */
 @media (min-width: 1025px) {
-  .ar-wrap > .ar-details { grid-column: wide-start / text-start; height: 0; overflow: visible; }
+  .ar-wrap > .ar-details { grid-column: 2 / 3; height: 0; overflow: visible; } /* wide-start to text-start */
 }
 
 /* ── FLOATING SHARE — bottom-left, opposite ArticleToc's bottom-right FAB.
