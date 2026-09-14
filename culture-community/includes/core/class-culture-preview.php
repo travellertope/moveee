@@ -33,11 +33,78 @@ class Culture_Preview {
 
 	public static function init() {
 		add_filter( 'preview_post_link', array( __CLASS__, 'filter_preview_link' ), 10, 2 );
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_redirect_preview_request' ) );
+	}
+
+	/**
+	 * Server-side catch-all for any incoming preview request, regardless of
+	 * how the URL that got here was built.
+	 *
+	 * `filter_preview_link()` above only helps callers that actually read
+	 * `get_preview_post_link()` server-side (the classic editor did). The
+	 * block editor's "Preview in new tab" button does not — it builds the
+	 * preview URL client-side in JS straight from the post's own permalink
+	 * plus `?preview=true`, never touching the `preview_post_link` filter at
+	 * all. That request still lands on WordPress like any other preview
+	 * request, so intercepting it here on `template_redirect` (after WP has
+	 * resolved `$post` and confirmed this is a genuine preview via
+	 * `is_preview()`, which already implies the nonce/capability check WP
+	 * itself performed to decide whether to show the draft) works
+	 * regardless of which UI path generated the incoming URL.
+	 */
+	public static function maybe_redirect_preview_request() {
+		if ( ! is_preview() ) {
+			return;
+		}
+
+		global $post;
+		if ( ! $post instanceof WP_Post || ! in_array( $post->post_type, self::SUPPORTED_TYPES, true ) ) {
+			return;
+		}
+
+		// Extra safety net alongside is_preview()'s own nonce check — never
+		// redirect someone who can't actually edit this post to a URL that
+		// would resolve draft content.
+		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+			return;
+		}
+
+		$secret = get_option( 'culture_api_secret', '' );
+		if ( empty( $secret ) ) {
+			// No secret configured — fall through to WP's own preview render.
+			return;
+		}
+
+		$token = self::make_token( $post->ID, $post->post_type, $secret );
+		if ( ! $token ) {
+			return;
+		}
+
+		$frontend_base = untrailingslashit(
+			get_option( 'culture_preview_frontend_url', 'https://themoveee.com' )
+		);
+
+		$url = add_query_arg(
+			array(
+				'token' => $token,
+				'type'  => $post->post_type,
+				'slug'  => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
+			),
+			$frontend_base . '/api/preview'
+		);
+
+		wp_redirect( $url );
+		exit;
 	}
 
 	/**
 	 * Redirect WP Admin's native "Preview" / "Preview Changes" button to the
 	 * Next.js preview entry point instead of the WP theme's own preview URL.
+	 *
+	 * Kept alongside maybe_redirect_preview_request() above for any caller
+	 * that still reads get_preview_post_link()/this filter server-side (the
+	 * classic editor did) — harmless overlap, not a competing mechanism:
+	 * whichever fires, the destination is identical.
 	 *
 	 * @param string  $link
 	 * @param WP_Post $post
@@ -68,13 +135,30 @@ class Culture_Preview {
 			array(
 				'token' => $token,
 				'type'  => $post->post_type,
-				// Slug may still be empty on a brand-new, never-saved draft —
-				// the resolve endpoint falls back to the post ID either way,
-				// so an empty slug here is harmless, not a broken link.
-				'slug'  => $post->post_name,
+				'slug'  => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
 			),
 			$frontend_base . '/api/preview'
 		);
+	}
+
+	/**
+	 * WordPress does NOT populate `post_name` for draft/pending posts unless
+	 * the slug is explicitly edited by hand — it's only auto-generated from
+	 * the title once the post is published (or, for products, once
+	 * WooCommerce assigns one). A "Save Draft" click alone leaves it empty,
+	 * which is exactly the state a preview click happens in — so this can't
+	 * be treated as an edge case, it's the common case. Falls back to a
+	 * title-derived slug, then the raw post ID as a last resort, so the
+	 * frontend never receives a genuinely empty slug.
+	 */
+	private static function resolve_slug( $post_name, $post_title, $post_id ) {
+		if ( ! empty( $post_name ) ) {
+			return $post_name;
+		}
+		if ( ! empty( $post_title ) ) {
+			return sanitize_title( $post_title );
+		}
+		return (string) $post_id;
 	}
 
 	/**
@@ -176,7 +260,7 @@ class Culture_Preview {
 			'id'            => (string) $post->ID,
 			'databaseId'    => $post->ID,
 			'title'         => get_the_title( $post ),
-			'slug'          => $post->post_name,
+			'slug'          => self::resolve_slug( $post->post_name, $post->post_title, $post->ID ),
 			'date'          => get_post_time( 'c', true, $post ),
 			'status'        => $post->post_status,
 			'excerpt'       => self::apply_excerpt_filters( $post ),
@@ -233,7 +317,7 @@ class Culture_Preview {
 			'id'               => (string) $product->get_id(),
 			'databaseId'       => $product->get_id(),
 			'name'             => $product->get_name(),
-			'slug'             => $product->get_slug(),
+			'slug'             => self::resolve_slug( $product->get_slug(), $product->get_name(), $product->get_id() ),
 			'status'           => $product->get_status(),
 			'description'      => apply_filters( 'the_content', $product->get_description() ),
 			'shortDescription' => apply_filters( 'woocommerce_short_description', $product->get_short_description() ),

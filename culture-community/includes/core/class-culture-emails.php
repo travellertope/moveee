@@ -172,6 +172,27 @@ class Culture_Emails {
     }
 
     /**
+     * Send a Moveee Literary reading-verification code — sent to a raw
+     * email address, not a WP user (the reader may not have an account at
+     * all). See class-culture-literary-access.php for the request/verify
+     * flow this is one step of.
+     *
+     * @param string $email
+     * @param string $code Plain 6-digit code (never stored in the clear).
+     */
+    public static function send_literary_otp_email( $email, $code ) {
+        $subject = 'Your Moveee Literary code: ' . $code;
+
+        $body  = self::get_header( 'Your reading code' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Enter this code to keep reading:</p>';
+        $body .= '<p style="text-align:center;margin:0 0 20px;"><span style="display:inline-block;padding:14px 28px;background:#f4f4f4;border-radius:6px;font-size:28px;font-weight:700;letter-spacing:6px;color:#161412;">' . esc_html( $code ) . '</span></p>';
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:0;">This code expires in 10 minutes. If you didn\'t request this, you can safely ignore this email.</p>';
+        $body .= self::get_footer();
+
+        self::send( $email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id

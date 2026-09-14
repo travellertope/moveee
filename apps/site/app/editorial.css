@@ -298,6 +298,25 @@
    dead space between two unrelated paragraphs. Every other former sidebar
    card (Issue, Shop the Edit, Culture Drop) is now an inline band in the
    reading flow instead — see further down this file. */
+/* Line numbers below (used by every `grid-column` in this width-tier
+   system, all the way through the responsive breakpoints further down —
+   the same 6-line shape, just resized) map onto the bracket names one to
+   one: 1 full-start, 2 wide-start, 3 text-start, 4 text-end, 5 wide-end,
+   6 full-end. So text = 3/4, wide = 2/5, full = 1/6.
+
+   Placements below deliberately use these numbers, not `grid-column:
+   wide;`/`text;`/`full;` (a single custom-ident that only works by
+   resolving against the matching `-start`/`-end` bracket names) — Safari
+   was observed rendering a wide-width gallery/table at its collapsed
+   floor width instead of stretching across the wide track, while the
+   identical markup rendered correctly in Chromium; the difference
+   disappeared once the bare-name placement was replaced with numeric
+   line positions here. Numeric `grid-column` values have had uniform,
+   long-standing cross-engine support with no such edge cases, so this
+   sidesteps the interaction entirely rather than depending on it. Keep
+   any future addition to this system on numeric lines too, not the named
+   shorthand — the bracket names in the template below stay only for
+   readability. */
 .ar-wrap {
   display: grid;
   grid-template-columns:
@@ -312,9 +331,9 @@
   padding: 0 24px 80px;
   box-sizing: border-box;
 }
-.ar-wrap > * { grid-column: text; }
-.ar-wrap > .t-wide { grid-column: wide; }
-.ar-wrap > .t-full { grid-column: full; }
+.ar-wrap > * { grid-column: 3 / 4; } /* text */
+.ar-wrap > .t-wide { grid-column: 2 / 5; } /* wide */
+.ar-wrap > .t-full { grid-column: 1 / 6; } /* full */
 
 /* `.prose-content` (the raw, sanitized CMS body — see ArticleComments.tsx's
    former role, now rendered directly in page.tsx) becomes `display:
@@ -323,7 +342,7 @@
    only the box, not the DOM node, so `.ar-wrap > .prose-content > *`
    selectors below still match correctly. */
 .ar-wrap > .prose-content { display: contents; }
-.ar-wrap > .prose-content > * { grid-column: text; }
+.ar-wrap > .prose-content > * { grid-column: 3 / 4; } /* text */
 
 /* Gutenberg's native alignment control maps straight onto the tiers — no
    custom block, no shortcode. Editors pick Wide/Full from the toolbar they
@@ -331,15 +350,15 @@
    culture-theme/functions.php). Tables and galleries default to wide
    without the editor doing anything; `.is-text-width` (Advanced → CSS
    class) is the escape hatch back down to the reading column. */
-.ar-wrap > .prose-content > .alignwide { grid-column: wide; }
-.ar-wrap > .prose-content > .alignfull { grid-column: full; }
-.ar-wrap > .prose-content > .is-text-width { grid-column: text; }
+.ar-wrap > .prose-content > .alignwide { grid-column: 2 / 5; } /* wide */
+.ar-wrap > .prose-content > .alignfull { grid-column: 1 / 6; } /* full */
+.ar-wrap > .prose-content > .is-text-width { grid-column: 3 / 4; } /* text */
 .ar-wrap > .prose-content > table,
 .ar-wrap > .prose-content > .wp-block-table,
 .ar-wrap > .prose-content > .wp-block-gallery,
 .ar-wrap > .prose-content > figure.wp-block-table,
 .ar-wrap > .prose-content > figure.wp-block-gallery {
-  grid-column: wide;
+  grid-column: 2 / 5;
 }
 
 .ar-details {
@@ -385,7 +404,7 @@
    RESPONSIVE below) rather than introducing a second, close-but-different
    threshold to track. */
 @media (min-width: 1025px) {
-  .ar-wrap > .ar-details { grid-column: wide-start / text-start; height: 0; overflow: visible; }
+  .ar-wrap > .ar-details { grid-column: 2 / 3; height: 0; overflow: visible; } /* wide-start to text-start */
 }
 
 /* ── FLOATING SHARE — bottom-left, opposite ArticleToc's bottom-right FAB.
@@ -675,7 +694,7 @@
   line-height: 1.55;
   color: var(--mute);
   margin-top: 13px;
-  text-align: left;
+  text-align: center;
 }
 .ar-wrap .prose-content figcaption b,
 .ar-wrap .prose-content figcaption strong {
@@ -691,11 +710,18 @@
 }
 
 /* ── WP GALLERY BLOCK ── grid, gap, per-column count from Gutenberg's own
-   `columns-N` class. Each image is already wrapped in its own
-   `figure.wp-block-image` by the block — no markup changes needed. */
+   `columns-N` class when the editor picks one explicitly. The Gallery
+   block's default "Automatic" column setting emits no `columns-N` class at
+   all, though — a fixed `repeat(3, 1fr)` fallback here left an empty,
+   awkward-looking cell for any gallery with fewer than 3 images (a 2-photo
+   gallery rendered as two photos plus a bare gap where a third would go).
+   `auto-fit` sizes the fallback case to however many images actually exist
+   instead of assuming 3, while the explicit `.columns-N` overrides below
+   (same specificity precedence either way, since they add a class) still
+   win whenever an editor sets a real column count. */
 .ar-wrap .prose-content .wp-block-gallery {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   /* Was `margin: 0` — three classes beats the generic `.prose-content
      figure { margin: 2em 0 }` rule's specificity (a class+class+figure
@@ -710,6 +736,26 @@
 .ar-wrap .prose-content .wp-block-gallery.columns-4 { grid-template-columns: repeat(4, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-5 { grid-template-columns: repeat(5, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery.columns-6 { grid-template-columns: repeat(6, 1fr); }
+/* `auto-fit` above is silently broken the moment a gallery has a caption
+   (see the figcaption rule below): the caption's `grid-column: 1 / -1`
+   always touches whatever last column line `auto-fit` happens to generate
+   for the container's width, and a spanning item touching a track means
+   that track is never "empty" — so auto-fit's empty-track collapse (the
+   thing that's supposed to shrink unused trailing columns to 0 and let the
+   real images grow to fill the space) never fires. Confirmed live: a
+   1080px-wide, 2-image, captioned gallery generated 5 equal ~208px auto-fit
+   tracks with 3 of them permanently uncollapsed, stranding both images at
+   ~208px instead of growing to fill the row. `:has()` gives the exact real
+   image count instead of guessing from container width, so these override
+   the `columns-default` case the same way the manual `.columns-N` rules
+   above override an editor-set count — scoped to `.columns-default`
+   specifically so the two categories can never fight over specificity. */
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(1)):not(:has(> figure.wp-block-image:nth-child(2))) { grid-template-columns: repeat(1, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(2)):not(:has(> figure.wp-block-image:nth-child(3))) { grid-template-columns: repeat(2, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(3)):not(:has(> figure.wp-block-image:nth-child(4))) { grid-template-columns: repeat(3, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(4)):not(:has(> figure.wp-block-image:nth-child(5))) { grid-template-columns: repeat(4, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(5)):not(:has(> figure.wp-block-image:nth-child(6))) { grid-template-columns: repeat(5, 1fr); }
+.ar-wrap .prose-content .wp-block-gallery.columns-default:has(> figure.wp-block-image:nth-child(6)) { grid-template-columns: repeat(6, 1fr); }
 .ar-wrap .prose-content .wp-block-gallery figure.wp-block-image { margin: 0; }
 .ar-wrap .prose-content .wp-block-gallery img {
   width: 100%; height: 100%;
@@ -718,7 +764,15 @@
   border-radius: 6px;
   margin: 0;
 }
-.ar-wrap .prose-content .wp-block-gallery figcaption { text-align: center; }
+/* Without an explicit grid-column, the gallery's trailing figcaption is
+   just another child of the display:grid gallery figure — the browser's
+   auto-placement drops it into whatever grid cell comes next (the same row
+   as the images, in an empty/adjacent column) instead of a row of its own
+   below them. Spanning every column forces it onto a new, full-width row. */
+.ar-wrap .prose-content .wp-block-gallery figcaption {
+  grid-column: 1 / -1;
+  text-align: center;
+}
 
 /* ── WP TABLE BLOCK ── pinned header row + first column, tabular numerals,
    and per-table horizontal scroll — the page body itself never scrolls
@@ -1190,6 +1244,59 @@
 }
 .ar-gate-footnote a { color: var(--ar-ochre); text-decoration: none; }
 .ar-gate-footnote a:hover { text-decoration: underline; }
+
+/* ── CONTENT GATE — email/OTP form (MagazinePieceGate.tsx) ──
+   Same .ar-gate card as above; these rules style the email/code input +
+   submit row that replaces the register/sign-in link pair for a magic-code
+   verification instead. */
+.ar-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  text-align: left;
+}
+.ar-gate-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--ar-ghost-light);
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+.ar-gate-input:focus { outline: none; border-color: var(--ar-ochre); }
+.ar-gate--patron .ar-gate-input:focus { border-color: var(--ar-gold); }
+.ar-gate-input--code {
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+}
+.ar-gate-form .ar-gate-btn-primary { border: none; }
+.ar-gate-error {
+  font-size: 12.5px;
+  color: #c0392b;
+  margin: 8px 0 0;
+  text-align: left;
+}
+.ar-gate-resend {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ar-gate-resend:hover { color: var(--ink); }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {

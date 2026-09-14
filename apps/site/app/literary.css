@@ -280,7 +280,11 @@
    carried through: full lit-wrap width, a body/sidebar split) inspired by
    The Paris Review's article template — see the approved mockup this was
    built from. Supersedes the old single centered 660px column. */
-.lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; max-width: 780px; }
+/* Full-bleed to .lit-wrap's own 1160px width (no separate narrower cap) —
+   now that the featured image lives inside the article column instead of
+   spanning full width above the layout grid, the title/byline take up
+   that width instead. */
+.lit-piece-header { padding-top: clamp(40px, 6vw, 64px); padding-bottom: 8px; }
 .lit-piece-featured-img {
   width: 100%; aspect-ratio: 16/8.5; object-fit: cover; display: block;
   margin: clamp(28px, 4vw, 44px) 0;
@@ -315,9 +319,9 @@
 }
 .lit-piece-byline b { color: var(--lit-ink); font-weight: 700; }
 
-/* A first sketch of the brand guide's own signature motif (§11 — a curved
-   oxblood/gold line), never built until now — used here as the divider
-   under the title block instead of a plain rule. */
+/* Removed from the JSX per explicit request ("remove the scrawly divider")
+   — the brand guide's signature-motif SVG under the byline. CSS kept
+   unused, per this file's usual convention, in case it's wanted back. */
 .lit-piece-motif { margin-top: 26px; }
 .lit-piece-motif svg { display: block; }
 
@@ -375,6 +379,49 @@
 .lit-piece-body em { font-style: italic; font-family: var(--font-lit-italic), Georgia, serif; }
 .lit-piece-body strong { font-weight: 700; }
 
+/* ── SINGLE PIECE — EMAIL/OTP GATE (metered soft-paywall + Pro-gating) ──
+   Inline "join the club" box, ~30% into the piece. Blocking variant IS the
+   cut point (nothing past it exists in the DOM until verified); non-blocking
+   is a dismissible nudge sitting inside otherwise-full content. */
+.lit-email-gate {
+  background: var(--lit-parchment); border: 1px solid var(--lit-rule-strong); border-left: 3px solid var(--lit-oxblood);
+  padding: 28px 26px; margin: 8px 0 32px;
+}
+.lit-email-gate--blocking { margin-bottom: 0; }
+.lit-gate-eyebrow {
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-gold); margin-bottom: 10px;
+}
+.lit-email-gate h3 {
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 20px; color: var(--lit-ink); margin: 0 0 8px;
+}
+.lit-email-gate p {
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6; color: var(--lit-mute); margin: 0 0 18px; max-width: 46ch;
+}
+.lit-email-gate-form { max-width: 380px; }
+.lit-email-gate-input {
+  flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+}
+.lit-email-gate-input::placeholder { color: var(--lit-mute); }
+.lit-email-gate-input--code { letter-spacing: 0.3em; font-family: var(--font-lit-meta), "Inter", sans-serif; font-weight: 700; text-align: center; }
+.lit-email-gate-btn {
+  background: var(--lit-oxblood); color: var(--lit-ivory); border: 1px solid var(--lit-oxblood); padding: 0 18px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+.lit-email-gate-btn:hover:not(:disabled) { background: var(--lit-oxblood-deep); }
+.lit-email-gate-btn:disabled { opacity: 0.6; cursor: default; }
+.lit-gate-error { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; color: var(--lit-oxblood); margin: 10px 0 0; }
+.lit-gate-skip, .lit-gate-resend {
+  display: block; margin-top: 12px; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; color: var(--lit-mute); text-decoration: underline; text-underline-offset: 3px;
+}
+.lit-gate-skip:hover, .lit-gate-resend:hover { color: var(--lit-ink); }
+.lit-gate-remainder { margin-top: 8px; }
+
+/* Superseded by the floating .ar-share-fab pill below (same component
+   /magazine uses) — kept here unused, per this file's usual convention,
+   in case the inline row is ever wanted back. */
 .lit-piece-share {
   display: flex; align-items: center; gap: 14px; margin-top: 38px; padding-top: 22px;
   border-top: 1px solid var(--lit-rule);
@@ -390,6 +437,63 @@
 }
 .lit-piece-share-icons a:hover { border-color: var(--lit-oxblood); color: var(--lit-oxblood); }
 
+/* ── FLOATING SHARE — reuses apps/site/components/ArticleShareFab.tsx
+   verbatim (same native-share/clipboard-fallback behaviour /magazine uses),
+   restyled here since editorial.css (where .ar-share-fab's base rule
+   lives) isn't loaded on /literary routes — same "reuse the component,
+   restyle the CSS" pattern as the author band above. Scoped under
+   .lit-page so it can never leak onto /magazine's own .ar-share-fab. */
+.lit-page .ar-share-fab {
+  background: var(--lit-ivory);
+  border-color: var(--lit-rule-strong);
+  color: var(--lit-ink);
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-weight: 600;
+}
+.lit-page .ar-share-fab:hover {
+  background: var(--lit-oxblood);
+  border-color: var(--lit-oxblood);
+  color: var(--lit-ivory);
+}
+
+/* ── SINGLE PIECE — AUTHOR BAND ── */
+.lit-piece-author {
+  display: flex; align-items: flex-start; gap: 18px; margin-top: 34px; padding-top: 28px;
+  border-top: 1px solid var(--lit-rule);
+}
+.lit-piece-author-avatar {
+  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+  background: var(--lit-parchment); display: flex; align-items: center; justify-content: center;
+}
+.lit-piece-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lit-piece-author-initial {
+  font-family: var(--font-lit-display), Georgia, serif; font-size: 24px; color: var(--lit-oxblood);
+}
+.lit-piece-author-info { flex: 1; min-width: 0; }
+.lit-piece-author-label {
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-mute); margin-bottom: 4px;
+}
+.lit-piece-author-name {
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 18px; color: var(--lit-ink);
+}
+.lit-piece-author-bio {
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6;
+  color: var(--lit-mute); margin: 6px 0 0; max-width: 60ch;
+}
+/* "More by {author} →" removed from the author band per explicit request
+   (not needed on a single-piece page) — CSS kept unused, per this file's
+   usual convention, in case it's wanted back. */
+.lit-piece-author-cta {
+  flex-shrink: 0; font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--lit-oxblood); white-space: nowrap; margin-top: 4px;
+}
+.lit-piece-author-cta:hover { color: var(--lit-oxblood-deep); }
+@media (max-width: 640px) {
+  .lit-piece-author { flex-wrap: wrap; }
+  .lit-piece-author-cta { margin-left: 82px; }
+}
+
 /* ── SINGLE PIECE — SIDEBAR ── */
 .lit-piece-sb-block { padding-bottom: 30px; margin-bottom: 30px; border-bottom: 1px solid var(--lit-rule); }
 .lit-piece-sb-block--flush { border-bottom: 0; padding-bottom: 0; }
@@ -399,6 +503,10 @@
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-mute); margin-bottom: 14px;
 }
 
+/* The sidebar's "Browse by Section" nav block (genre list + current-genre
+   pick teaser) was removed from the JSX — the top nav already lists the
+   same six genres, so it was a duplicate. Kept unused, per this file's
+   usual convention, in case it's ever wanted back. */
 .lit-piece-genre-row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
   padding: 11px 0; border-top: 1px solid var(--lit-rule);

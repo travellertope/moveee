@@ -422,6 +422,135 @@ language into this vertical's user-facing copy unless a real print product is co
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
 
+### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
+
+Pro-only Literary pieces are folded into the **existing** Moveee Pro mechanism — no separate
+"Literary Club" membership tier was built, per an explicit decision against that ("fold it into
+Moveee Pro" beats a second paid tier splitting the audience). All non-logged-in readers are also
+metered: a limited number of free Literary reads per rolling 30 days, enforced server-side
+(genuine truncation of the HTML that's sent, not a client-hidden soft gate), with a compact inline
+email/OTP box doing double duty as both the unlock mechanism and the list-building funnel.
+
+**Prerequisite bug fixed first**: `STORY_FIELDS_FRAGMENT` in `packages/shared/lib/wp.ts` was
+missing `cultureAccesses { nodes { slug } } }` entirely — `getAccessLevel()` (`lib/access.ts`)
+always silently returned `"public"` for anything fetched via `GET_STORY_BY_SLUG`, so Pro-gating
+never actually worked on `/magazine` either, only on pages using a different query. Fixed by
+adding the field to the shared fragment — this incidentally fixes magazine Pro-gating too, not
+just Literary.
+
+**Why the existing `ArticleContentGate` pattern couldn't be reused as-is**: it's a client
+component (`"use client"`) that receives the full article HTML as a `fullContent` prop and only
+conditionally *renders* it based on `useSession()` — the full content is still present in the
+RSC payload sent to every visitor regardless of access, just hidden client-side. That's fine for
+a soft nudge but not for genuine enforcement, so Literary's gate does real server-side truncation
+instead (see below) and only ever ships the withheld remainder over the wire once verified.
+
+**Backend** (`culture-community/includes/core/class-culture-literary-access.php`,
+`Culture_Literary_Access`) — same HMAC-signed-token trust model as `Culture_Preview`
+(`base64url(email|access|expiry) + "." + hash_hmac('sha256', ..., culture_api_secret)`), so no
+new secret to keep in sync:
+- `request_code($email)` — generates a 6-digit code, stores only its `wp_hash()` in a 10-minute
+  transient (never the code itself), rate-limited (3 requests / 10 min per email), emails it via
+  a new `Culture_Emails::send_literary_otp_email()`.
+- `verify_code($email, $code)` — checks the code (max 5 wrong attempts before it's invalidated),
+  then resolves access: an email matching an existing WP user with `_culture_membership_tier =
+  patron` gets `access: 'pro'`; anything else gets `access: 'free'` **and** is added to the
+  `culture_newsletter_subscribers` option under a `literary-club` list tag (the list-building
+  mechanism — mirrors `handle_newsletter_subscribe()`'s find-or-create shape rather than calling
+  it, since `Culture_Subscribers::merge_subscribers()` is private). Issues the signed token.
+- REST: `POST /culture/v1/literary/request-code`, `POST /culture/v1/literary/verify-code` (both
+  public — the code/token themselves are the credential).
+
+**Next.js verifies the token locally, not via a round trip to WordPress** —
+`apps/site/lib/literary-access.ts`'s `verifyLiteraryToken()` re-implements the same HMAC check in
+Node using `process.env.CULTURE_API_SECRET` (the same value as the `culture_api_secret` WP
+option, already the shared secret for the Bearer-auth REST surface). Also in that file:
+- `truncateHtmlByPercent(html, percent)` — splits sanitized HTML on top-level block-tag
+  boundaries (`p`/`h1-6`/`blockquote`/`figure`/`ul`/`ol`/`table`/`div`), accumulates each block's
+  plain-text length until the target percentage is reached, and cuts there — never mid-paragraph.
+  Degrades to "show everything, no gate" when the content is a single block (too short/flat to
+  split sensibly) rather than gating something that can't be partially shown.
+- `isCrawlerUserAgent()` — known search-engine/social-preview bots always get the full piece,
+  untracked, ungated. This is a list-building mechanism, not an anti-indexing wall.
+- Free-read metering — `moveee_lit_reads` cookie (JSON array of `{slug, ts}`, pruned to a 30-day
+  window, deduped by slug so re-reading the same piece doesn't cost another credit). Written by
+  a Route Handler (`app/api/literary/track-read/route.ts`), not `page.tsx` itself — a Server
+  Component can't set a cookie during render in this Next.js version, only a Route
+  Handler/Server Action can, so the piece page calls a tiny client component
+  (`LiteraryReadTracker.tsx`, fire-and-forget `useEffect` POST) to write it after mount instead.
+  `LITERARY_FREE_READ_LIMIT = 3` per 30 days.
+
+**Cross-origin cookie relay**: WordPress can't set a cookie on `themoveee.com` directly (different
+origin), so `app/api/literary/verify-code/route.ts` is what actually sets the first-party
+`moveee_lit_token` httpOnly cookie (30-day `maxAge`) after relaying the verify call to WordPress —
+same relay pattern `/api/preview` already uses for the draft-preview token.
+
+**`apps/site/app/literary/[slug]/page.tsx`'s `PiecePage` computes access server-side** on every
+request (session via `getServerSession(authOptions)`, the verified-token cookie, the free-reads
+cookie, and the crawler check) and branches three ways:
+1. **Patron-only piece, not authorized, logged in** (any tier but Pro) → real server-side
+   truncation at 30%, then a plain static "Upgrade to Moveee Pro" block (not the email box — they
+   already have an account, the box is specifically for anonymous readers).
+2. **Patron-only piece, not authorized, anonymous** → truncated at 30%, `LiteraryPieceGate`
+   (`mode="pro"`, `blocking`) — verifying with an email that isn't a Pro account still joins them
+   to the free list but leaves this specific piece gated with an upgrade nudge.
+3. **Public piece, anonymous, free-read quota exhausted** → truncated at 30%,
+   `LiteraryPieceGate` (`mode="meter"`, `blocking`) — verifying (free or Pro either way) unlocks
+   it via one AJAX fetch to `app/api/literary/remainder/route.ts`, which re-derives authorization
+   server-side (never trusts the client) and returns just the withheld HTML, injected in place —
+   no page reload, so scroll position/reading state is never disturbed.
+4. **Public piece, anonymous, quota still has reads left** → full content ships as normal, but a
+   **non-blocking** `LiteraryPieceGate` (`mode="meter"`, `blocking={false}`) is still inserted at
+   the 30% mark as a dismissible "Join The Moveee Literary Club" nudge — this is the literal
+   "compact box after every 30% read for non-logged-in users" ask, independent of metering
+   enforcement. A "Skip for now" link just hides it; nothing is withheld in this case since the
+   whole point is the content's already fully present.
+5. **Logged in (any tier) on a public piece, or already carrying a valid verified-token cookie**
+   → full content, no box at all — the box only ever renders when the page decides to render it
+   (there's no client-side "hide if logged in" check needed inside `LiteraryPieceGate` itself).
+
+**If all articles were ever made fully paid** (raised and rejected in this same design pass): it
+would kill the entire free/discovery/SEO/organic-sharing loop this vertical depends on — an
+all-paid model was explicitly not built. Keep the metered model; don't remove the free tier of
+reads without a deliberate, separate decision.
+
+**Not built in this pass**: a WP Admin UI for adjusting `LITERARY_FREE_READ_LIMIT`/code TTLs (both
+are code constants, not options); the mobile app has no equivalent gating (Literary isn't
+surfaced on `apps/mobile` at all yet, per the rest of this section).
+
+**Gate copy re-branded to The Moveee Literary's own voice (September 2026, follow-up)** — the
+gate boxes originally used generic sitewide "Moveee Pro" copy (`"This piece is Moveee Pro"`,
+`"Verify your Moveee Pro membership"`) with no Literary framing at all. Every gate state (the
+logged-in-non-Pro static block in `page.tsx`, and all three `LiteraryPieceGate.tsx` stages —
+email, otp, pro-needed) now leads with a `★ The Moveee Literary` eyebrow (`.lit-gate-eyebrow`,
+gold, mono uppercase — mirrors `ContentGate.tsx`'s `★ {tierLabel}` pattern but in the Literary
+palette) and rewritten headings/body copy in the section's own restrained voice (no hype words,
+no "we don't have X" negative framing, per the Voice/copy constraints documented above) — e.g.
+`"There's more to read."` / `"This piece continues in the Moveee Pro archive..."` instead of the
+generic `"This piece is Moveee Pro"`. **The underlying mechanism is completely unchanged** — this
+is copy/branding only, same as the Hidden Gem→Place and Route→Itinerary renames elsewhere in
+this file; the fold-into-Moveee-Pro decision, the metering, and the token/verification flow are
+untouched.
+
+**End-of-piece author bio (September 2026)** — `PiecePage` now renders a `.lit-piece-author` band
+at the end of the article body (after the share-icons row, inside `<article>`), reusing
+`post.author.node`'s existing `avatar.url`/`description`/`name`/`slug` fields (already fetched by
+`STORY_FIELDS_FRAGMENT` — no query change needed, same fields `/magazine/[slug]`'s own
+`.ar-author` band already reads). Circular photo (initial-letter fallback when no avatar is set),
+name, a real bio when `description` is set, or a plain `"Contributing writer, The Moveee
+Literary."` fallback when it isn't (never fabricated personal copy), and a `"More by {first
+name} →"` link to `/author/{slug}` (the shared, sitewide author-archive route) when the author
+has a slug. Mirrors `/magazine/[slug]`'s `.ar-author` pattern but restyled with the Literary
+palette/type system (`.lit-piece-author-*` in `literary.css`) rather than reusing `.ar-author`
+directly, since `editorial.css` isn't loaded on `/literary` routes at all.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file. Verified via a CSS brace-balance check on `literary.css` (235/235) and a
+brace/paren-balance check on `page.tsx` (155/155, 114/114) and `LiteraryPieceGate.tsx` (50/50,
+61/61). Re-check pixel fidelity — the author band's mobile wrap and the gate eyebrow's color
+against the parchment background in particular — in a real environment before considering this
+fully closed.
+
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
 changes — and, critically, reuses an existing WordPress category rather than inventing one.**
 An initial draft of this feature assumed a brand-new "literary" category tree didn't exist yet
@@ -671,6 +800,37 @@ also added — there was no About page under `/literary` before this.
   every other pass in this file. Verified via a brace/paren-balance check on all three edited
   files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
   tweaks at this volume of content) in a real environment before considering this fully closed.
+
+## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
+
+An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired
+rebuild" above) landed a `LiteraryGenreArt.tsx` component but never actually removed the
+3-letter abbreviation caption (`FIC`/`POE`/`ESS`/…) rendered on top of it, and used a single
+monochrome oxblood/ivory/gold palette for every genre — from a live screenshot this read as an
+unillustrated flat gradient with cryptic text. Fixed:
+
+- **`LiteraryGenreArt.tsx` now uses a distinct colour palette per section** (deep burgundy for
+  Fiction, violet for Poetry, teal for Essays, amber for Conversations, blue/gold for
+  Translation, plum for Notes) instead of one shared oxblood tone, and every icon gained real
+  colour-fill accents (a red wax bookmark ribbon, a teal inkwell, a gold nib, etc.) rather than
+  single-tone ivory line art only — genuinely "illustrated," not just a decorative line icon on
+  a dark box.
+- **The abbreviation caption is gone entirely** — `LiteraryShelfItem` dropped its `sub` field,
+  `LiteraryShelf.tsx` no longer renders a `<span>` inside the cover, and `.lit-shelf-cover`'s CSS
+  was simplified to just `position: relative; overflow: hidden` (the illustration is the whole
+  cover; the real label still renders below it via `.lit-shelf-name`, unchanged).
+- **The Submissions spotlight cover** (`.lit-plug-cover`) also got a real illustration — a
+  `slug="submissions"` variant (an open envelope, a rising letter, a gold wax seal) — instead of
+  a plain oxblood gradient; the "Submissions / Open" text now overlays it via a new
+  `.lit-plug-cover-text` wrapper (`position: relative; z-index: 1`) on top of an absolutely
+  positioned `.lit-plug-cover-art`.
+- This pass also merged in `LITERARY_HOMEPAGE_CUTOFF` (a separate, unrelated fix that had landed
+  on `main` in the meantime — filters the homepage's own pools to pieces published on/after a
+  fixed date, see its own code comment in `app/literary/page.tsx`) — no conflict in intent, just
+  two branches touching the same file.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via brace/paren-balance checks on
+  `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
 
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
@@ -5706,6 +5866,38 @@ resolve endpoint is public (`__return_true` permission callback, same pattern as
   installed this session, so `tsc --noEmit` couldn't run). Re-check the full round trip — click
   Preview on a real draft article and a real draft product — in a real environment before
   considering this fully closed.
+
+**Gotcha found in live testing, fixed same month: the `preview_post_link` filter alone never
+fires from the block editor.** The plugin's `culture_api_secret` was already correctly set, the
+new plugin code was correctly uploaded, and clicking "Preview in new tab" still landed on
+`cms.themoveee.com`'s own theme-rendered preview. Root cause: `preview_post_link` is only read by
+code that calls `get_preview_post_link()` **server-side** — the classic editor did this, but the
+block editor's "Preview in new tab" button builds its URL **client-side in JS**, straight from
+the post's own permalink plus `?preview=true`, and never touches this PHP filter at all. So the
+filter was dead code for the one UI path anyone actually uses to click Preview.
+
+**Fixed** by adding a second, more robust mechanism in `Culture_Preview::init()`: a
+`template_redirect` hook (`maybe_redirect_preview_request()`) that intercepts *any* incoming
+preview request server-side via `is_preview()`, regardless of how the URL that got there was
+built — this is what actually fixes the reported bug, since it doesn't care whether the request
+came from the classic editor, the block editor, or someone pasting a preview URL directly. Gated
+by the same `current_user_can( 'edit_post', $post->ID )` check as an extra safety net alongside
+`is_preview()`'s own nonce verification, so it can never leak a draft's real content to someone
+who couldn't already see it via WP's own preview. The original `filter_preview_link()`/
+`preview_post_link` filter is kept alongside it (harmless, not a competing mechanism — same
+token, same destination) in case some other caller ever does read that filter server-side.
+**If this class of "preview button" or "edit link" feature is ever extended, don't trust a single
+WordPress hook/filter to fire from every UI surface that can reach the same outcome — verify
+against the actual button being clicked (here, the block editor specifically bypassed the
+filter this whole feature was originally built around) or intercept the eventual HTTP request
+server-side instead, the way `template_redirect` does here.**
+
+Plugin header `Version:` bumped to `2.2.0` in the same pass specifically so a redeploy is
+visually confirmable on the WP Admin Plugins list — the original build left this at `2.1.0`
+unchanged, so there was no way to tell from WP Admin alone whether an upload had actually taken
+effect. `CULTURE_VERSION` (the dbDelta-gate constant, unrelated to the plugin header) was **not**
+bumped — this fix adds no new tables, so there's nothing for `culture_community_maybe_upgrade()`
+to run.
 
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
