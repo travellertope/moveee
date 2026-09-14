@@ -7,6 +7,7 @@ import {
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
 import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
+import LiteraryGenreArt from "@/components/LiteraryGenreArt";
 import { decodeHtml } from "@/lib/decode-html";
 
 function plainExcerpt(html: string | undefined | null, max = 220): string {
@@ -14,8 +15,6 @@ function plainExcerpt(html: string | undefined | null, max = 220): string {
   const text = decodeHtml(html);
   return text.length > max ? text.slice(0, max).trim() + "…" : text;
 }
-
-const SHELF_GRADIENT = "linear-gradient(150deg, #17130f, #7a241c 65%, #8b4d2e 140%)";
 
 // Rebuilt from the approved Granta-inspired mockup — every section below is
 // wired to real getLiteraryPieces() data; sections the mockup showed that
@@ -52,8 +51,7 @@ export default async function LiteraryLandingPage() {
   const shelfItems: LiteraryShelfItem[] = LITERARY_GENRES.map((g) => ({
     href: `/literary/${g.slug}`,
     label: g.label,
-    sub: g.label.slice(0, 3).toUpperCase(),
-    gradient: SHELF_GRADIENT,
+    slug: g.slug,
   }));
 
   return (
@@ -139,8 +137,11 @@ export default async function LiteraryLandingPage() {
         <div className="lit-wrap">
           <div className="lit-plug">
             <div className="lit-plug-cover">
-              <span className="lit-plug-cover-label">Submissions</span>
-              <span className="lit-plug-cover-title">Open</span>
+              <LiteraryGenreArt slug="submissions" className="lit-plug-cover-art" />
+              <div className="lit-plug-cover-text">
+                <span className="lit-plug-cover-label">Submissions</span>
+                <span className="lit-plug-cover-title">Open</span>
+              </div>
             </div>
             <div>
               <div className="lit-tag">Now Reading</div>
