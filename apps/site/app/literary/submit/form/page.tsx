@@ -20,6 +20,7 @@ const SECTIONS: Record<string, { label: string; fee: number; paymentLabel: strin
 
 type Status = "form" | "submitting" | "waiting_payment" | "confirmed" | "cancelled" | "failed";
 type VerifyStep = "checking" | "email" | "code" | "verified";
+type SectionStatus = { open: boolean; reopensAt: string | null };
 
 export default function LiterarySubmitNewPage() {
   const [status, setStatus] = useState<Status>("form");
@@ -44,8 +45,36 @@ export default function LiterarySubmitNewPage() {
   const [waiverCode, setWaiverCode] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
 
+  // Per-section open/closed state (manual or scheduled) — set by an editor
+  // in WP Admin → Culture Community → Literary Submissions. Defaults to
+  // open for every section until the fetch resolves, so the form is never
+  // stuck disabled by a slow/failed request.
+  const [sectionStatus, setSectionStatus] = useState<Record<string, SectionStatus>>({});
+
   const sectionMeta = SECTIONS[section] ?? SECTIONS.fiction;
   const needsFee = sectionMeta.fee > 0;
+  const isSectionClosed = sectionStatus[section]?.open === false;
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/literary/section-status", { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (data && typeof data === "object") {
+          setSectionStatus(data);
+          // If the default/currently-selected section is closed, switch to
+          // the first open one so the form doesn't open on a dead end.
+          if (data[section]?.open === false) {
+            const firstOpen = Object.keys(SECTIONS).find((slug) => data[slug]?.open !== false);
+            if (firstOpen) setSection(firstOpen);
+          }
+        }
+      } catch {
+        // fail open — every section stays selectable
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Skip the gate if a valid moveee_lit_token cookie already exists (e.g.
   // the visitor verified earlier this session unlocking a gated piece).
@@ -167,14 +196,14 @@ export default function LiterarySubmitNewPage() {
     }
   }, []);
 
-  const exec = (cmd: "bold" | "italic") => {
+  const exec = (cmd: string, value?: string) => {
     editorRef.current?.focus();
-    document.execCommand(cmd);
+    document.execCommand(cmd, false, value);
   };
 
   const canSubmit = useMemo(() => {
-    return writerName.trim().length > 0 && !!section;
-  }, [writerName, section]);
+    return writerName.trim().length > 0 && !!section && !isSectionClosed;
+  }, [writerName, section, isSectionClosed]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -373,16 +402,27 @@ export default function LiterarySubmitNewPage() {
           <label htmlFor="lit-section">Section</label>
           <select id="lit-section" value={section} onChange={(e) => setSection(e.target.value)}>
             {Object.entries(SECTIONS).map(([slug, meta]) => (
-              <option key={slug} value={slug}>
+              <option key={slug} value={slug} disabled={sectionStatus[slug]?.open === false}>
                 {meta.label}
+                {sectionStatus[slug]?.open === false ? " (Closed)" : ""}
               </option>
             ))}
           </select>
-          <p className="lit-form-hint">
-            {needsFee
-              ? `$3 submission fee · pays ${sectionMeta.paymentLabel} if accepted.`
-              : `No submission fee · pays ${sectionMeta.paymentLabel} if accepted.`}
-          </p>
+          {isSectionClosed ? (
+            <p className="lit-form-hint lit-form-hint--warn">
+              {sectionStatus[section]?.reopensAt
+                ? `This section is closed — it reopens on ${new Date(
+                    sectionStatus[section].reopensAt as string
+                  ).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}.`
+                : "This section is not currently open for submissions."}
+            </p>
+          ) : (
+            <p className="lit-form-hint">
+              {needsFee
+                ? `$3 submission fee · pays ${sectionMeta.paymentLabel} if accepted.`
+                : `No submission fee · pays ${sectionMeta.paymentLabel} if accepted.`}
+            </p>
+          )}
         </div>
 
         <div className="lit-form-field">
@@ -398,6 +438,26 @@ export default function LiterarySubmitNewPage() {
             </button>
             <button type="button" onClick={() => exec("italic")} aria-label="Italic">
               <em>I</em>
+            </button>
+            <button type="button" onClick={() => exec("underline")} aria-label="Underline">
+              <span style={{ textDecoration: "underline" }}>U</span>
+            </button>
+            <span className="lit-form-toolbar-divider" aria-hidden="true" />
+            <button type="button" onClick={() => exec("formatBlock", "H2")} aria-label="Heading">
+              H2
+            </button>
+            <button type="button" onClick={() => exec("formatBlock", "H3")} aria-label="Subheading">
+              H3
+            </button>
+            <button type="button" onClick={() => exec("formatBlock", "P")} aria-label="Paragraph text">
+              ¶
+            </button>
+            <span className="lit-form-toolbar-divider" aria-hidden="true" />
+            <button type="button" onClick={() => exec("insertUnorderedList")} aria-label="Bulleted list">
+              •—
+            </button>
+            <button type="button" onClick={() => exec("insertOrderedList")} aria-label="Numbered list">
+              1.—
             </button>
           </div>
           <div
