@@ -121,6 +121,19 @@ class Culture_Literary_Submissions {
     const WAIVER_OPTION             = 'culture_literary_waiver_codes';
     const WAIVER_QUOTA_PER_QUARTER  = 100;
 
+    /**
+     * Per-section open/closed state — a small wp_options row (not one field
+     * per SECTIONS entry) keyed by section slug:
+     *   array( 'mode' => 'open'|'closed'|'scheduled', 'open_at' => '', 'close_at' => '' )
+     * A slug missing from the option (or with no row at all, e.g. a fresh
+     * install) defaults to 'open' — closing/scheduling a section is
+     * something an editor opts into, not a state every section starts in.
+     * 'open_at'/'close_at' are datetime-local strings (no timezone suffix),
+     * interpreted in the site's own timezone (wp_timezone()) at read time —
+     * same convention WP core uses for scheduled-post datetime-local inputs.
+     */
+    const SECTION_STATUS_OPTION = 'culture_literary_section_status';
+
     public static function init(): void {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_post_culture_lit_submission_save',   array( __CLASS__, 'handle_save' ) );
@@ -130,7 +143,134 @@ class Culture_Literary_Submissions {
         add_action( 'admin_post_culture_lit_submission_push',   array( __CLASS__, 'handle_push' ) );
         add_action( 'admin_post_culture_lit_waiver_generate',   array( __CLASS__, 'handle_waiver_generate' ) );
         add_action( 'admin_post_culture_lit_waiver_delete',     array( __CLASS__, 'handle_waiver_delete' ) );
+        add_action( 'admin_post_culture_lit_section_status_save', array( __CLASS__, 'handle_section_status_save' ) );
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+    }
+
+    // ── Per-section open/closed state ───────────────────────────────────────
+
+    public static function get_section_statuses(): array {
+        return (array) get_option( self::SECTION_STATUS_OPTION, array() );
+    }
+
+    public static function save_section_statuses( array $statuses ): void {
+        update_option( self::SECTION_STATUS_OPTION, $statuses, false );
+    }
+
+    private static function parse_local_datetime( string $value, DateTimeZone $tz ): ?DateTimeImmutable {
+        if ( '' === trim( $value ) ) {
+            return null;
+        }
+        try {
+            return new DateTimeImmutable( $value, $tz );
+        } catch ( Exception $e ) {
+            return null;
+        }
+    }
+
+    /**
+     * Resolves one section's live open/closed state — manual override wins
+     * outright ('open'/'closed'); 'scheduled' compares the configured
+     * open_at/close_at window against the current time. Computed fresh on
+     * every call (no caching, no cron) — cheap enough (one option read,
+     * shared across every section in a single request via get_section_statuses())
+     * that a scheduled window flips the moment it's crossed, with no
+     * WP-Cron dependency to keep in sync.
+     */
+    public static function section_status( string $slug ): array {
+        $meta  = self::SECTIONS[ $slug ] ?? array();
+        $label = $meta['label'] ?? $slug;
+        $cfg   = self::get_section_statuses()[ $slug ] ?? array();
+        $mode  = $cfg['mode'] ?? 'open';
+
+        if ( 'closed' === $mode ) {
+            return array(
+                'slug' => $slug, 'label' => $label, 'mode' => 'closed',
+                'open' => false, 'reopens_at' => null, 'closes_at' => null,
+            );
+        }
+
+        if ( 'scheduled' !== $mode ) {
+            return array(
+                'slug' => $slug, 'label' => $label, 'mode' => 'open',
+                'open' => true, 'reopens_at' => null, 'closes_at' => null,
+            );
+        }
+
+        $tz       = wp_timezone();
+        $now      = current_datetime();
+        $open_at  = self::parse_local_datetime( $cfg['open_at'] ?? '', $tz );
+        $close_at = self::parse_local_datetime( $cfg['close_at'] ?? '', $tz );
+
+        $is_open    = true;
+        $reopens_at = null;
+        $closes_at  = null;
+
+        if ( $open_at && $now < $open_at ) {
+            $is_open    = false;
+            $reopens_at = $open_at->format( DATE_ATOM );
+        } elseif ( $close_at && $now > $close_at ) {
+            $is_open = false;
+        } elseif ( $close_at ) {
+            $closes_at = $close_at->format( DATE_ATOM );
+        }
+
+        return array(
+            'slug' => $slug, 'label' => $label, 'mode' => 'scheduled',
+            'open' => $is_open, 'reopens_at' => $reopens_at, 'closes_at' => $closes_at,
+        );
+    }
+
+    public static function is_section_open( string $slug ): bool {
+        return (bool) self::section_status( $slug )['open'];
+    }
+
+    public static function handle_section_status(): WP_REST_Response {
+        $out = array();
+        foreach ( self::SECTIONS as $slug => $meta ) {
+            $s               = self::section_status( $slug );
+            $out[ $slug ]    = array(
+                'label'     => $s['label'],
+                'mode'      => $s['mode'],
+                'open'      => $s['open'],
+                'reopensAt' => $s['reopens_at'],
+                'closesAt'  => $s['closes_at'],
+            );
+        }
+        return self::cors( new WP_REST_Response( $out, 200 ) );
+    }
+
+    public static function handle_section_status_save(): void {
+        check_admin_referer( 'culture_lit_section_status_save' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Forbidden' );
+        }
+
+        $input  = (array) ( $_POST['section_status'] ?? array() );
+        $stored = array();
+
+        foreach ( self::SECTIONS as $slug => $meta ) {
+            $row  = (array) ( $input[ $slug ] ?? array() );
+            $mode = sanitize_key( wp_unslash( $row['mode'] ?? 'open' ) );
+            if ( ! in_array( $mode, array( 'open', 'closed', 'scheduled' ), true ) ) {
+                $mode = 'open';
+            }
+
+            $entry = array( 'mode' => $mode );
+            if ( 'scheduled' === $mode ) {
+                $entry['open_at']  = sanitize_text_field( wp_unslash( $row['open_at'] ?? '' ) );
+                $entry['close_at'] = sanitize_text_field( wp_unslash( $row['close_at'] ?? '' ) );
+            }
+            $stored[ $slug ] = $entry;
+        }
+
+        self::save_section_statuses( $stored );
+
+        wp_safe_redirect( add_query_arg(
+            array( 'page' => 'culture-literary-submissions', 'section_status_saved' => 1 ),
+            admin_url( 'admin.php' )
+        ) . '#section-status' );
+        exit;
     }
 
     // ── Online submission intake (public form → payment → this manager) ───────
@@ -191,6 +331,12 @@ class Culture_Literary_Submissions {
         register_rest_route( 'culture/v1', '/literary/submission/initiate', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submission_initiate' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/literary/section-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_section_status' ),
             'permission_callback' => '__return_true',
         ) );
 
@@ -262,6 +408,24 @@ class Culture_Literary_Submissions {
                 'message' => 'Your name and a section are required.',
             ), 400 ) );
         }
+
+        $section_state = self::section_status( $section );
+        if ( ! $section_state['open'] ) {
+            $message = sprintf( '%s is not currently open for submissions.', $section_state['label'] );
+            if ( ! empty( $section_state['reopens_at'] ) ) {
+                $message = sprintf(
+                    '%s reopens on %s.',
+                    $section_state['label'],
+                    date_i18n( 'F j, Y', strtotime( $section_state['reopens_at'] ) )
+                );
+            }
+            return self::cors( new WP_REST_Response( array(
+                'error'     => 'section_closed',
+                'message'   => $message,
+                'reopensAt' => $section_state['reopens_at'],
+            ), 403 ) );
+        }
+
         if ( '' === trim( wp_strip_all_tags( $content ) ) ) {
             return self::cors( new WP_REST_Response( array(
                 'error'   => 'no_content',
@@ -1579,9 +1743,94 @@ class Culture_Literary_Submissions {
                     </table>
                 <?php endif; ?>
             </div>
+
+            <!-- Section Availability — close submissions per section, manually or on a schedule -->
+            <?php $section_statuses = self::get_section_statuses(); ?>
+            <div id="section-status" style="background:#fff;border:1px solid #ccd0d4;padding:24px 28px;max-width:820px;margin-top:30px;">
+                <h2 style="margin-top:0;">Section Availability</h2>
+                <p style="color:#666;max-width:640px;">
+                    Close submissions for one or more sections when you're not reading new work — a
+                    closed section is marked "Closed" on the online submission form and can't be
+                    selected. Set a manual state, or a scheduled open/close window (e.g. a quarterly
+                    reading period) that flips automatically at the times you set.
+                </p>
+
+                <?php if ( isset( $_GET['section_status_saved'] ) ) : ?>
+                    <div class="notice notice-success is-dismissible"><p>Section availability saved.</p></div>
+                <?php endif; ?>
+
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <?php wp_nonce_field( 'culture_lit_section_status_save' ); ?>
+                    <input type="hidden" name="action" value="culture_lit_section_status_save">
+
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th style="width:150px;">Section</th>
+                                <th style="width:170px;">State</th>
+                                <th>Opens</th>
+                                <th>Closes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( self::SECTIONS as $slug => $meta ) :
+                                $cfg  = $section_statuses[ $slug ] ?? array();
+                                $mode = $cfg['mode'] ?? 'open';
+                            ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html( $meta['label'] ); ?></strong></td>
+                                    <td>
+                                        <select name="section_status[<?php echo esc_attr( $slug ); ?>][mode]"
+                                                class="lit-section-status-mode" data-slug="<?php echo esc_attr( $slug ); ?>">
+                                            <option value="open"      <?php selected( $mode, 'open' ); ?>>Open</option>
+                                            <option value="closed"    <?php selected( $mode, 'closed' ); ?>>Closed</option>
+                                            <option value="scheduled" <?php selected( $mode, 'scheduled' ); ?>>Scheduled window</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="datetime-local"
+                                               name="section_status[<?php echo esc_attr( $slug ); ?>][open_at]"
+                                               value="<?php echo esc_attr( $cfg['open_at'] ?? '' ); ?>"
+                                               class="lit-section-status-field" data-slug="<?php echo esc_attr( $slug ); ?>"
+                                               <?php disabled( 'scheduled' !== $mode ); ?>>
+                                    </td>
+                                    <td>
+                                        <input type="datetime-local"
+                                               name="section_status[<?php echo esc_attr( $slug ); ?>][close_at]"
+                                               value="<?php echo esc_attr( $cfg['close_at'] ?? '' ); ?>"
+                                               class="lit-section-status-field" data-slug="<?php echo esc_attr( $slug ); ?>"
+                                               <?php disabled( 'scheduled' !== $mode ); ?>>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+
+                    <p style="margin-top:16px;">
+                        <?php submit_button( 'Save Section Availability', 'primary', 'submit', false ); ?>
+                    </p>
+                    <p class="description">
+                        Times are in the site's timezone (<?php echo esc_html( wp_timezone_string() ); ?>).
+                        Leave Opens or Closes blank to leave that side of the window open-ended (e.g. set
+                        only Closes to keep a section open until a fixed deadline).
+                    </p>
+                </form>
+            </div>
         </div>
 
         <script>
+        (function () {
+            document.querySelectorAll('.lit-section-status-mode').forEach(function (sel) {
+                function sync() {
+                    var slug = sel.getAttribute('data-slug');
+                    var scheduled = sel.value === 'scheduled';
+                    document.querySelectorAll('.lit-section-status-field[data-slug="' + slug + '"]').forEach(function (inp) {
+                        inp.disabled = !scheduled;
+                    });
+                }
+                sel.addEventListener('change', sync);
+            });
+        })();
         (function () {
             var SECTION_TERMS = <?php echo wp_json_encode( array_map( fn( $s ) => array(
                 'fee'     => $s['fee'] > 0 ? '$' . $s['fee'] . ' submission fee' : 'No submission fee',
