@@ -188,7 +188,7 @@ class Culture_Email_Templates {
             ),
             'literary_accepted' => array(
                 'label'           => __( 'Literary Submission — Accepted', 'culture-community' ),
-                'description'     => __( 'Sent to a Moveee Literary contributor when their emailed submission is marked Accepted in the Literary Submissions manager.', 'culture-community' ),
+                'description'     => __( 'Sent to a contributor to The Moveee Literary when their emailed submission is marked Accepted in the Literary Submissions manager.', 'culture-community' ),
                 'tags'            => array(
                     '{writer_name}'    => __( 'Writer\'s name', 'culture-community' ),
                     '{piece}'          => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
@@ -206,13 +206,13 @@ class Culture_Email_Templates {
 
             'literary_rejected' => array(
                 'label'           => __( 'Literary Submission — Rejected', 'culture-community' ),
-                'description'     => __( 'Sent to a Moveee Literary contributor when their emailed submission is marked Rejected in the Literary Submissions manager.', 'culture-community' ),
+                'description'     => __( 'Sent to a contributor to The Moveee Literary when their emailed submission is marked Rejected in the Literary Submissions manager.', 'culture-community' ),
                 'tags'            => array(
                     '{writer_name}' => __( 'Writer\'s name', 'culture-community' ),
                     '{piece}'       => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
                     '{section}'     => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
                 ),
-                'default_subject' => 'An update on your Moveee Literary submission',
+                'default_subject' => 'An update on your submission to The Moveee Literary',
                 'default_heading' => 'Thank you for sending this our way.',
                 'default_button'  => 'Visit The Moveee Literary',
                 'default_body'    => '<p>Hi {writer_name},</p>
@@ -222,13 +222,13 @@ class Culture_Email_Templates {
 
             'literary_received' => array(
                 'label'           => __( 'Literary Submission — Received', 'culture-community' ),
-                'description'     => __( 'Sent immediately after a writer successfully submits through the online Moveee Literary submission form (once payment, waiver, or the free Moveee Flash call has been confirmed).', 'culture-community' ),
+                'description'     => __( 'Sent immediately after a writer successfully submits through the online submission form for The Moveee Literary (once payment, waiver, or the free Moveee Flash call has been confirmed).', 'culture-community' ),
                 'tags'            => array(
                     '{writer_name}' => __( 'Writer\'s name', 'culture-community' ),
                     '{piece}'       => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
                     '{section}'     => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
                 ),
-                'default_subject' => 'We\'ve received your Moveee Literary submission',
+                'default_subject' => 'We\'ve received your submission to The Moveee Literary',
                 'default_heading' => 'It\'s in.',
                 'default_button'  => 'Visit The Moveee Literary',
                 'default_body'    => '<p>Hi {writer_name},</p>
