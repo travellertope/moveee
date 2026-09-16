@@ -2770,6 +2770,26 @@ new `_fields` whitelist. Re-check that the next production build of a page hitti
 path (i.e. one that occurs while WPGraphQL is genuinely down) completes without the 2MB warning
 before considering this fully closed.
 
+**Follow-up — the `_fields`-only fix above was not actually enough (confirmed by a real
+production build failure, September 2026).** A live Vercel build showed the exact same failure
+mode against the exact same, already-`_fields`-trimmed URL: `Failed to set Next.js data cache for
+.../culture_directory?per_page=100&...&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded,
+items over 2MB can not be cached (2944629 bytes)` — down from the original 5.5MB, but still over
+the 2MB ceiling, still uncacheable, and it still cascaded into the identical
+`/directory/[slug]` 60-second-timeout-×3 build failure this section originally documented as
+fixed. **Root cause of the shortfall**: `_fields` only filters *top-level* response fields — it
+has no way to trim what's nested inside an embedded object. `_embed=1`'s `wp:featuredmedia` entry
+is the *entire* attachment object (every registered image size's url/width/height/mime,
+description, caption, author, its own `_links`, etc.), and that alone is enough to push 100 posts
+back over 2MB even with `content`/`guid`/`type` already stripped from the top level. **Actually
+fixed** by capping `per_page` from 100 down to 50 (on top of, not instead of, the `_fields` trim)
+— halving the entry count roughly halves the payload, landing with real margin under the 2MB
+ceiling instead of hovering just over it regardless of which posts happen to be in the batch. If
+this exact "`_fields` is already applied but the response is still uncacheable" symptom recurs
+here or on any of the other `_embed=1` fallback fetches this section already flagged as sharing
+the pattern, don't reach for `_fields` again — it's already doing everything it can; lower
+`per_page` instead.
+
 ### Article/newsletter comment box — sleek/minimal redesign (September 2026)
 
 `apps/site/components/ArticleComments.tsx` + its CSS in `apps/site/app/globals.css` (previously

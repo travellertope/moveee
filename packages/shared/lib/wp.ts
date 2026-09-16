@@ -322,12 +322,21 @@ export async function getDirectoryEntriesWithFallback(first = 200, options: any 
     // `_fields` strips the full `content` body (unused by mapRestDirectoryToFrontendShape
     // below, which only reads id/slug/title/date/excerpt/acf/meta/embedded media+terms) —
     // without it, `_embed=1` on 100 posts routinely exceeds Next's 2MB data-cache limit
-    // (fixed September 2026: a 5.5MB response here made this fetch uncacheable, which
+    // (first fixed September 2026: a 5.5MB response here made this fetch uncacheable, which
     // amplified CMS load during a circuit-breaker-tripped build and contributed to
     // /directory/[slug] static-generation timeouts). `_links`/`_embedded` must stay in the
     // `_fields` list or WP strips the embedded media/terms data along with everything else.
+    //
+    // `_fields` alone wasn't enough — `_embed=1`'s `wp:featuredmedia` entry is the *full*
+    // attachment object (every registered image size's url/width/height/mime, description,
+    // caption, author, its own `_links`, etc.), and `_fields` can't trim fields nested inside
+    // an embedded object, only top-level ones. At 100 posts this still landed at ~2.9MB —
+    // still uncacheable, still re-fetched from WP on every page that hit this fallback during
+    // a build, still able to trip the exact same cascade (confirmed live in a September 2026
+    // production build failure). Capped `per_page` to 50 on top of the `_fields` trim so the
+    // real payload has margin under the 2MB ceiling instead of hovering just over it.
     const fields = "id,slug,title,date,excerpt,acf,meta,_links,_embedded";
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 100)}&status=publish&_embed=1&orderby=date&order=desc&_fields=${fields}`;
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 50)}&status=publish&_embed=1&orderby=date&order=desc&_fields=${fields}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
