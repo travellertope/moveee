@@ -28,6 +28,7 @@ import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate, UPDATE
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 import BottomSheet from "../../components/ui/BottomSheet";
+import Svg, { Circle } from "react-native-svg";
 
 
 interface TemplateMeta {
@@ -203,6 +204,36 @@ const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+// ── Character-count ring — a quiet filling ring next to Post, instead of a
+// "120 / 500" line competing with the compose text for attention. ─────────────
+function CharRing({ progress, color, track }: { progress: number; color: string; track: string }) {
+  const size = 24;
+  const strokeWidth = 2.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(1, progress));
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={size / 2} cy={size / 2} r={radius} stroke={track} strokeWidth={strokeWidth} fill="none" />
+      {clamped > 0 && (
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={circumference * (1 - clamped)}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      )}
+    </Svg>
+  );
+}
 
 // ── Inline photos section ─────────────────────────────────────────────────────
 function InlinePhotosSection({
@@ -819,7 +850,7 @@ const uploadImages = async (): Promise<string[]> => {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
-            name={images.length > 0 ? "camera" : "camera-outline"}
+            name={images.length > 0 ? "images" : "images-outline"}
             size={22}
             color={images.length > 0 ? c.gold : c.inkSoft}
           />
@@ -2089,37 +2120,46 @@ const uploadImages = async (): Promise<string[]> => {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 
-        {/* ── Header ── */}
-        <View style={styles.header}>
+        {/* ── Top bar — close/back icon, a quiet filling ring for how much of
+             the character limit is used, and the Post/Next pill. No title
+             text: the template bar right below already names the format. ── */}
+        <View style={styles.topBar}>
           <TouchableOpacity
             onPress={() => (isWizard && step > 0 ? setStep((s) => s - 1) : nav.goBack())}
-            style={styles.headerSideBtn}
+            style={styles.topBarIconBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.cancelText}>{isWizard && step > 0 ? "← Back" : "Cancel"}</Text>
+            <Ionicons name={isWizard && step > 0 ? "chevron-back" : "close"} size={24} color={c.inkSoft} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New {tmplDef?.label ?? "Post"}</Text>
-          {isWizard && step < totalSteps - 1 ? (
-            <TouchableOpacity
-              style={[styles.postBtn, !canProceedStep && styles.postBtnDisabled]}
-              onPress={() => setStep((s) => s + 1)}
-              disabled={!canProceedStep}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.postBtnText}>Next</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
-              onPress={validateAndSubmit}
-              disabled={isSubmitDisabled}
-              activeOpacity={0.8}
-            >
-              {submitting
-                ? <ActivityIndicator color={c.paper} size="small" />
-                : <Text style={styles.postBtnText}>Post</Text>
-              }
-            </TouchableOpacity>
-          )}
+          <View style={styles.topBarRight}>
+            <CharRing
+              progress={tmpl.maxText > 0 ? text.length / tmpl.maxText : 0}
+              color={remaining < 0 ? c.error : c.ochre}
+              track={c.rule}
+            />
+            {isWizard && step < totalSteps - 1 ? (
+              <TouchableOpacity
+                style={[styles.postBtn, !canProceedStep && styles.postBtnDisabled]}
+                onPress={() => setStep((s) => s + 1)}
+                disabled={!canProceedStep}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.postBtnText}>Next</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
+                onPress={validateAndSubmit}
+                disabled={isSubmitDisabled}
+                activeOpacity={0.8}
+              >
+                {submitting
+                  ? <ActivityIndicator color={c.paper} size="small" />
+                  : <Text style={styles.postBtnText}>Post</Text>
+                }
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* ── Compact template indicator bar ── */}
@@ -2129,7 +2169,7 @@ const uploadImages = async (): Promise<string[]> => {
             <Text style={[styles.templateBarLabel, { color: tmplDef?.color ?? c.ochre }]}>{tmplDef?.label}</Text>
           </View>
           <TouchableOpacity onPress={() => setPickerOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.changeFormatText}>Change format</Text>
+            <Text style={styles.changeFormatText}>Change format ›</Text>
           </TouchableOpacity>
         </View>
 
@@ -2147,23 +2187,16 @@ const uploadImages = async (): Promise<string[]> => {
         {isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}
         {isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}
 
-        {/* ── Step progress — long templates only (WIZARD_STEPS above) ── */}
+        {/* ── Step progress — long templates only (WIZARD_STEPS above). A
+             slim filling bar + "Step N of M" label, not numbered dots — the
+             label does the counting instead of a UI element. ── */}
         {isWizard && (
-          <View style={styles.wizardProgress}>
-            <View style={styles.wizardDots}>
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.wizardDot,
-                    i === step && styles.wizardDotActive,
-                    i < step && styles.wizardDotDone,
-                  ]}
-                />
-              ))}
+          <>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${((step + 1) / totalSteps) * 100}%` }]} />
             </View>
-            <Text style={styles.wizardLabel}>Step {step + 1} of {totalSteps}</Text>
-          </View>
+            <Text style={styles.stepLabel}>Step {step + 1} of {totalSteps}</Text>
+          </>
         )}
 
         {/* ── Template picker sheet ── */}
@@ -2188,6 +2221,9 @@ const uploadImages = async (): Promise<string[]> => {
           <View style={styles.toolbarLeft}>
             {toolbarIcons}
           </View>
+          <Text style={[styles.toolbarCount, remaining < 0 && styles.toolbarCountError]}>
+            {text.length} / {tmpl.maxText}
+          </Text>
         </View>
 
       </KeyboardAvoidingView>
@@ -2208,26 +2244,48 @@ function createStyles(c: ColorPalette) {
     headerSideBtn:    { minWidth: 60, minHeight: 44, justifyContent: "center" },
     headerTitle:      { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
     cancelText:       { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ochre },
+
+    // Top bar — icon-only close/back, a char-limit ring, and the Post pill.
+    topBar: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      height: 52, paddingHorizontal: space[4],
+    },
+    topBarIconBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+    topBarRight:   { flexDirection: "row", alignItems: "center", gap: 12 },
+
     postBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
-      paddingHorizontal: 18, paddingVertical: 8,
+      paddingHorizontal: 20, paddingVertical: 9,
       alignItems: "center", justifyContent: "center",
     },
     postBtnDisabled:  { opacity: 0.4 },
     postBtnText:      { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
-    // Template bar
+    // Template bar — a quiet breadcrumb, not a boxed banner.
     templateBar: {
-      height: 36, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-      paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.rule,
-      backgroundColor: c.paperWarm,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], paddingBottom: space[2],
     },
     templateBarLeft:   { flexDirection: "row", alignItems: "center", gap: 6 },
     templateBarEmoji:  { fontSize: 14, lineHeight: 18 },
     templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: fontSize.sm },
-    changeFormatText:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre },
+    changeFormatText:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.3 },
 
-    // Wizard step progress — dots + "Step N of M" label
+    // Wizard step progress — a slim filling bar + "Step N of M" label,
+    // rather than numbered dots (the label does the counting).
+    progressTrack: {
+      height: 3, borderRadius: 2, backgroundColor: c.rule,
+      marginHorizontal: space[4],
+    },
+    progressFill: { height: "100%", borderRadius: 2, backgroundColor: c.ochre },
+    stepLabel: {
+      fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+      color: c.mute, textTransform: "uppercase", letterSpacing: 0.6,
+      paddingHorizontal: space[4], paddingTop: 8, paddingBottom: 2,
+    },
+
+    // Wizard step progress (superseded by progressTrack/progressFill/
+    // stepLabel above — kept for reference, no longer rendered).
     wizardProgress: {
       flexDirection: "row", alignItems: "center", gap: 10,
       paddingHorizontal: space[4], paddingVertical: 8,
@@ -2247,25 +2305,25 @@ function createStyles(c: ColorPalette) {
     guide:     { paddingHorizontal: space[4], paddingTop: space[3] },
     guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20 },
 
-    // Family subtype tabs (Review and Update families) — plain text +
-    // underline indicator, kept deliberately subtle/simple rather than a
-    // pill/chip row.
+    // Family subtype tabs (Review and Update families) — filled segmented
+    // pills, matching the section-dropdown/price-chip pill language used
+    // everywhere else on this screen.
     subtypeTabs: {
       flexDirection: "row",
+      gap: 6,
       paddingHorizontal: space[4],
-      paddingTop: space[2],
-      borderBottomWidth: 1,
-      borderBottomColor: c.rule,
+      paddingTop: space[1],
+      paddingBottom: space[3],
     },
     subtypeTab: {
       paddingVertical: 8,
-      paddingHorizontal: 10,
-      borderBottomWidth: 2,
-      borderBottomColor: "transparent",
+      paddingHorizontal: 14,
+      borderRadius: radius.full,
+      backgroundColor: c.paperDeep,
     },
-    subtypeTabActive: { borderBottomColor: c.ochre },
-    subtypeTabText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.mute },
-    subtypeTabTextActive: { color: c.ochre },
+    subtypeTabActive: { backgroundColor: c.ink },
+    subtypeTabText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    subtypeTabTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
     // Main textarea
     textarea: {
@@ -2274,9 +2332,9 @@ function createStyles(c: ColorPalette) {
     },
     borderedTextarea: {
       fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
-      lineHeight: 22, minHeight: 120,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      padding: 12, backgroundColor: c.paper,
+      lineHeight: 24, minHeight: 110,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      paddingVertical: 10, paddingHorizontal: 2, backgroundColor: "transparent",
     },
     charCount: {
       fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost,
@@ -2317,13 +2375,14 @@ function createStyles(c: ColorPalette) {
     priceChipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     priceChipTextActive: { color: c.paper },
 
-    // Prefixed input
+    // Prefixed input — borderless with a bottom hairline, matching every
+    // other single-line field on this screen.
     prefixedInputWrap: {
-      flexDirection: "row", alignItems: "center", height: 48,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      backgroundColor: c.paper, paddingHorizontal: 14, gap: 8,
+      flexDirection: "row", alignItems: "center", height: 46,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      backgroundColor: "transparent", paddingHorizontal: 2, gap: 10,
     },
-    prefixIcon: { fontSize: fontSize.md },
+    prefixIcon: { fontSize: fontSize.md, color: c.mute },
     prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
 
     // Creative Showcase upload zone
@@ -2363,39 +2422,37 @@ function createStyles(c: ColorPalette) {
     recommendRow: { flexDirection: "row", gap: 8 },
     recommendYes: {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
-      backgroundColor: "#2D6A4F", justifyContent: "center",
+      backgroundColor: c.success, justifyContent: "center",
     },
     recommendNo: {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
-    recommendNoActive: { backgroundColor: "#7a241c", borderColor: "#7a241c" },
+    recommendNoActive: { backgroundColor: c.ochre, borderColor: c.ochre },
     recommendText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
     recommendNoText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
 
-    // Segmented (poll duration)
-    segmented: {
-      flexDirection: "row", borderWidth: 1, borderColor: c.rule,
-      borderRadius: radius.md, overflow: "hidden",
+    // Segmented (poll duration) — gapped pills, matching the price-chip/
+    // section-tag pill language elsewhere on this screen, instead of a
+    // bordered iOS-style segmented control.
+    segmented: { flexDirection: "row", gap: 8 },
+    segmentedBtn: {
+      flex: 1, height: 36, borderRadius: radius.full,
+      backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center",
     },
-    segmentedBtn: { flex: 1, height: 32, alignItems: "center", justifyContent: "center" },
     segmentedBtnActive: { backgroundColor: c.ink },
-    segmentedBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
+    segmentedBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
     segmentedBtnTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
-    // Quote redesign
-    quoteBox: {
-      backgroundColor: c.paperWarm, borderRadius: radius.xl,
-      borderWidth: 1, borderColor: c.rule,
-      padding: 16, paddingTop: 24, position: "relative", minHeight: 160,
-    },
+    // Quote — borderless, a large serif mark leading straight into the
+    // italic quote text, no card chrome around it.
+    quoteBox: { paddingTop: 4, minHeight: 140 },
     quoteOpenMark: {
-      position: "absolute", top: 8, left: 14,
-      fontFamily: fonts.serif, fontSize: fontSize["2xl"], color: c.ghost, opacity: 0.4, lineHeight: 44,
+      fontFamily: fonts.serif, fontSize: 56, color: c.gold, lineHeight: 56, marginBottom: -16,
     },
     quoteBoxInput: {
       fontFamily: fonts.serifItalic, fontSize: fontSize.lg,
-      color: c.ink, lineHeight: 28, minHeight: 100, textAlignVertical: "top",
+      color: c.ink, lineHeight: 30, minHeight: 100, textAlignVertical: "top", paddingTop: 4,
     },
 
     // Event 2-col date grid
@@ -2441,10 +2498,12 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute,
       letterSpacing: 0.8, textTransform: "uppercase",
     },
+    // Borderless single-line field — a bottom hairline instead of a boxed
+    // border, matching the compose surface's quieter overall language.
     input: {
-      height: 46, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      paddingHorizontal: 14, backgroundColor: c.paper,
+      height: 44, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      paddingHorizontal: 2, backgroundColor: "transparent",
     },
 
     // Section / category tags
@@ -2507,9 +2566,12 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.rule,
       paddingHorizontal: space[4], paddingVertical: space[2],
     },
-    toolbarLeft:       { flexDirection: "row", alignItems: "center", gap: 20 },
-    toolbarIconBtn:    { position: "relative" },
-    toolbarIconActive: {},
+    toolbarLeft:       { flexDirection: "row", alignItems: "center", gap: 6 },
+    toolbarIconBtn:    {
+      position: "relative", width: 40, height: 40, borderRadius: radius.xl,
+      alignItems: "center", justifyContent: "center",
+    },
+    toolbarIconActive: { backgroundColor: c.goldLight },
     iconBadge: {
       position: "absolute", top: -6, right: -8,
       backgroundColor: c.ochre, borderRadius: 8,
@@ -2517,6 +2579,7 @@ function createStyles(c: ColorPalette) {
     },
     iconBadgeText: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: "#fff" },
     toolbarAt:    { fontFamily: fonts.sansBold, fontSize: 18, color: c.inkSoft, lineHeight: 22 },
-    toolbarCount: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.ghost },
+    toolbarCount:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost },
+    toolbarCountError: { color: c.error },
   });
 }

@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Modal, Pressable,
+  Modal, Pressable, Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { useAuthStore } from "../../auth/authStore";
 
 export type TemplateId =
   | "post" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review"
@@ -77,6 +78,19 @@ const UPDATE_CARD_DEF: TemplateDef = {
   desc: "Share a thought, a poll, or a quote", color: "#B38238",
 };
 
+// Reputation-gated top-level tiles — mirrors the server-side gate in
+// handle_submit_post() and packages/shared/components/pulse/SubmitPost.tsx's
+// web-only TEMPLATE_REP_GATE, which mobile never had a picker-level
+// equivalent of (the first sign of the gate used to be a submit-time 403).
+// Only individual, standalone tiles are listed here — Poll lives inside the
+// merged "Updates" tile above, where Update/Quote are ungated, so it can't
+// be gated at this level without also blocking the ungated subtypes; that
+// gate still only surfaces once inside the composer's subtype tabs.
+const TEMPLATE_REP_GATE: Partial<Record<TemplateId, { rep: number; label: string }>> = {
+  itinerary: { rep: 2500, label: "Taste Maker (2,500 rep) or Moveee Pro" },
+  event:     { rep: 500,  label: "Culture Contributor (500 rep) or Moveee Pro" },
+};
+
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -89,6 +103,16 @@ interface Props {
 export default function TemplatePickerSheet({ visible, onClose, onSelect, allowedIds }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const isPro = user?.tier === "patron";
+  const rep = user?.reputation ?? 0;
+  const isLocked = useCallback(
+    (id: TemplateId) => {
+      const gate = TEMPLATE_REP_GATE[id];
+      return !!gate && !isPro && rep < gate.rep;
+    },
+    [isPro, rep]
+  );
   const rawDefs = allowedIds ? TEMPLATE_DEFS.filter((t) => allowedIds.includes(t.id)) : TEMPLATE_DEFS;
   // Collapse the review family into one "Review" card and the update family
   // into one "Updates" card, each inserted at the position of its first
@@ -110,10 +134,17 @@ export default function TemplatePickerSheet({ visible, onClose, onSelect, allowe
   }, [rawDefs]);
 
   const handleSelect = useCallback((id: TemplateId) => {
+    if (isLocked(id)) {
+      Alert.alert(
+        "Not quite yet",
+        `${TEMPLATE_REP_GATE[id]?.label} is needed to post this format.`
+      );
+      return;
+    }
     onClose();
     // Small delay so the sheet closes before the screen pushes
     setTimeout(() => onSelect(id), 120);
-  }, [onClose, onSelect]);
+  }, [onClose, onSelect, isLocked]);
 
   return (
     <Modal
@@ -149,22 +180,27 @@ export default function TemplatePickerSheet({ visible, onClose, onSelect, allowe
           contentContainerStyle={styles.grid}
           showsVerticalScrollIndicator={false}
         >
-          {defs.map((t) => (
-            <TouchableOpacity
-              key={t.id}
-              style={styles.card}
-              onPress={() => handleSelect(t.id)}
-              activeOpacity={0.78}
-            >
-              <View style={styles.iconCircle}>
-                <Text style={styles.iconEmoji}>{t.emoji}</Text>
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardLabel}>{t.label}</Text>
-                <Text style={styles.cardDesc} numberOfLines={2}>{t.desc}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {defs.map((t) => {
+            const locked = isLocked(t.id);
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.card, locked && styles.cardLocked]}
+                onPress={() => handleSelect(t.id)}
+                activeOpacity={0.78}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: `${t.color}1F` }]}>
+                  <Text style={styles.iconEmoji}>{t.emoji}</Text>
+                </View>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardLabel}>{t.label}</Text>
+                  <Text style={styles.cardDesc} numberOfLines={2}>
+                    {locked ? `🔒 ${TEMPLATE_REP_GATE[t.id]?.label}` : t.desc}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
     </Modal>
@@ -242,27 +278,27 @@ function createStyles(c: ColorPalette) {
 
     card: {
       width: "48%",
-      height: 76,
+      height: 78,
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: c.paperWarm,
+      backgroundColor: c.paperDeep,
       borderRadius: radius.xl,
       padding: 12,
       borderWidth: 1,
       borderColor: "transparent",
     },
+    cardLocked: { opacity: 0.55 },
     iconCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: c.paperDeep,
+      width: 42,
+      height: 42,
+      borderRadius: 21,
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
     },
     iconEmoji: {
-      fontSize: 18,
-      lineHeight: 22,
+      fontSize: 19,
+      lineHeight: 23,
     },
     cardText: {
       flex: 1,
