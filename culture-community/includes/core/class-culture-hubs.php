@@ -120,6 +120,9 @@ class Culture_Hubs {
         self::maybe_backfill_section_hub_links();
         self::maybe_merge_duplicate_official_hubs();
         self::maybe_backfill_official_hub_covers();
+        if ( class_exists( 'Culture_Clusters' ) ) {
+            Culture_Clusters::maybe_backfill_companion_hubs();
+        }
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -177,6 +180,68 @@ class Culture_Hubs {
 
     public static function is_official( int $hub_id ) : bool {
         return '1' === get_post_meta( $hub_id, '_hub_is_official', true );
+    }
+
+    /**
+     * Hub categories (added alongside the Section/Hub bridge above) — a
+     * user-created Hub can optionally tag itself with one of the same 11
+     * Section names every official Hub already uses (SECTION_HUB_SLUGS'
+     * keys), so browsing/filtering has a real, consistent vocabulary
+     * instead of a second, diverging taxonomy. Deliberately just this one
+     * shared list, not a free-text field or a new WP taxonomy.
+     */
+    public static function categories() : array {
+        return array_keys( self::SECTION_HUB_SLUGS );
+    }
+
+    /**
+     * Literati Connect events (docs/literati-connect-plan.md — reuses the
+     * editorial culture_event CPT) whose culture_interest term name matches
+     * this Hub's category, so a topic Hub's page can surface "real-world
+     * gatherings near this topic" without any merge of the two systems.
+     * Deliberately returns [] whenever the Hub has no category (most
+     * user-created Hubs) or no matching term/events exist — omitted
+     * entirely by the caller in that case, same graceful-degradation
+     * convention as every other optional section in this codebase.
+     */
+    public static function get_related_events( int $hub_id, int $limit = 3 ) : array {
+        $category = get_post_meta( $hub_id, '_hub_category', true );
+        if ( ! $category ) {
+            return array();
+        }
+        $term = get_term_by( 'name', $category, 'culture_interest' );
+        if ( ! $term || is_wp_error( $term ) ) {
+            return array();
+        }
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => max( 1, min( 10, $limit ) ),
+            'tax_query'      => array( array(
+                'taxonomy' => 'culture_interest',
+                'field'    => 'term_id',
+                'terms'    => $term->term_id,
+            ) ),
+            'meta_key'       => '_culture_event_date',
+            'meta_value'     => gmdate( 'Y-m-d\TH:i' ),
+            'meta_compare'   => '>=',
+            'meta_type'      => 'DATETIME',
+            'orderby'        => 'meta_value',
+            'order'          => 'ASC',
+        ) );
+
+        $events = array();
+        foreach ( $query->posts as $post ) {
+            $events[] = array(
+                'id'        => $post->ID,
+                'title'     => get_the_title( $post ),
+                'slug'      => $post->post_name,
+                'eventDate' => get_post_meta( $post->ID, '_culture_event_date', true ),
+                'imageUrl'  => get_the_post_thumbnail_url( $post->ID, 'medium' ) ?: '',
+            );
+        }
+        return $events;
     }
 
     /**
@@ -527,6 +592,8 @@ class Culture_Hubs {
             'createdAt'         => get_post_meta( $hub_id, '_hub_created_at', true ),
             'pinnedPostId'      => (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) ?: null,
             'isOfficial'        => self::is_official( $hub_id ),
+            'category'          => get_post_meta( $hub_id, '_hub_category', true ) ?: null,
+            'clusterId'         => (int) get_post_meta( $hub_id, '_hub_cluster_id', true ) ?: null,
         );
     }
 
@@ -629,6 +696,7 @@ class Culture_Hubs {
 
         $q        = isset( $params['q'] ) ? sanitize_text_field( $params['q'] ) : '';
         $sort     = isset( $params['sort'] ) ? sanitize_key( $params['sort'] ) : 'popular';
+        $category = isset( $params['category'] ) ? sanitize_text_field( $params['category'] ) : '';
         $page     = max( 1, (int) ( $params['page'] ?? 1 ) );
         $per_page = min( 50, max( 1, (int) ( $params['per_page'] ?? 20 ) ) );
 
@@ -638,6 +706,20 @@ class Culture_Hubs {
         ) );
         if ( ! $active_ids ) {
             return array( 'hubs' => array(), 'total' => 0, 'page' => $page, 'perPage' => $per_page );
+        }
+
+        // Raw-SQL resolve-to-IDs, not a WP_Query meta_query join — see the
+        // project's own "meta_query OR-branches are slow" note elsewhere in
+        // this codebase for why.
+        if ( '' !== $category && in_array( $category, self::categories(), true ) ) {
+            $category_ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_category' AND meta_value = %s",
+                $category
+            ) );
+            $active_ids = array_values( array_intersect( $active_ids, $category_ids ) );
+            if ( ! $active_ids ) {
+                return array( 'hubs' => array(), 'total' => 0, 'page' => $page, 'perPage' => $per_page );
+            }
         }
 
         $args = array(
@@ -758,10 +840,16 @@ class Culture_Hubs {
             $allowed = self::DEFAULT_ALLOWED_TEMPLATES;
         }
 
+        $category = sanitize_text_field( (string) ( $data['category'] ?? '' ) );
+        if ( '' !== $category && ! in_array( $category, self::categories(), true ) ) {
+            $category = '';
+        }
+
         update_post_meta( $post_id, '_hub_name', $name );
         update_post_meta( $post_id, '_hub_slug', $slug );
         update_post_meta( $post_id, '_hub_description', $description );
         update_post_meta( $post_id, '_hub_cover_image_url', esc_url_raw( (string) ( $data['coverImageUrl'] ?? '' ) ) );
+        update_post_meta( $post_id, '_hub_category', $category );
         update_post_meta( $post_id, '_hub_creator_id', $user_id );
         update_post_meta( $post_id, '_hub_status', self::STATUS_ACTIVE );
         update_post_meta( $post_id, '_hub_allowed_templates', wp_json_encode( $allowed ) );
@@ -831,6 +919,14 @@ class Culture_Hubs {
                 self::ALLOWED_TEMPLATES
             ) );
             update_post_meta( $hub_id, '_hub_allowed_templates', wp_json_encode( $allowed ?: self::DEFAULT_ALLOWED_TEMPLATES ) );
+        }
+
+        if ( isset( $data['category'] ) ) {
+            $category = sanitize_text_field( (string) $data['category'] );
+            if ( '' !== $category && ! in_array( $category, self::categories(), true ) ) {
+                return new WP_Error( 'invalid_category', 'Not a valid Hub category.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_category', $category );
         }
 
         return self::get_hub( $hub_id );

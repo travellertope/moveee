@@ -4074,6 +4074,73 @@ confirm the fix's numbers actually clear the header rather than under- or over-s
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
 
+### Directory REST fallback — oversized `_embed=1` response broke Next's data cache and tripped a real production build failure (fixed September 2026)
+
+A live Vercel production build (on `main`) failed outright: WordPress/WPGraphQL calls during
+static generation started timing out (`Network or Parsing Error: This operation was aborted`),
+which tripped the KV-backed circuit breaker (see "Server stability fixes" above —
+`[circuit-breaker] CMS circuit opened (shared) for 60s after 3 failures`). While the CMS was
+struggling, one fetch stood out in the logs: `Failed to set Next.js data cache for
+.../wp-json/wp/v2/culture_directory?per_page=100&_embed=1..., items over 2MB can not be cached
+(5525442 bytes)`. Because that response could never be cached, it was refetched in full on every
+build worker that needed it — real added load on an already-struggling CMS, not just a log
+warning. `/directory/[slug]` pages then blew past their 60s-per-attempt budget three times each
+(`Failed to build /directory/[slug]/page: /directory/spoken-word-poetry after 3 attempts`) and the
+build exited nonzero.
+
+**Root cause**: `getDirectoryEntriesWithFallback()` in `packages/shared/lib/wp.ts` — the REST
+fallback path used only when WPGraphQL returns zero entries (i.e. exactly when the CMS is already
+having trouble, the worst possible time to make the fetch heavier) — requested
+`per_page=100&_embed=1` with no `_fields` filter. `_embed=1` embeds the **full, unstripped**
+`content` field on every one of the 100 posts to pull in featured media + taxonomy terms, but
+`mapRestDirectoryToFrontendShape()` right below it never reads `content` at all — only
+`id`/`slug`/`title`/`date`/`excerpt`/`acf`/`meta` plus the embedded media/term objects. 100 posts'
+worth of full rich-text bodies is exactly the kind of payload that blows past Next's 2MB
+per-entry data-cache ceiling.
+
+**Fixed** by adding `&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded` to the
+fallback URL — WP core REST's `_fields` param whitelists top-level response fields (dropping the
+unused `content`, `guid`, `type`, etc.), which is enough on its own to bring a 100-post response
+back under 2MB. **`_links`/`_embedded` must be listed explicitly in `_fields`** — WP applies field
+filtering *after* embedding, so without those two names in the list, `_fields` strips the embedded
+media/terms data right back out along with everything else, silently breaking every directory
+card's image and type badges.
+
+**The same pattern likely exists in every other `_embed=1` REST-fallback fetch in this file**
+(`culture_newsletter?per_page=${first}&_embed=1`, `posts?country=...&_embed=1`,
+`posts?issues=...&per_page=100&_embed=1`) — none were touched in this pass since only the
+directory one was the one actually observed failing in production, but if a future build failure
+shows the same "`_embed=1`... items over 2MB can not be cached" warning against a different REST
+fallback URL, apply the identical `_fields` fix there rather than re-diagnosing from scratch.
+
+**Not verified against the real CMS response size** — this sandbox can't reach `cms.themoveee.com`
+to measure the actual before/after payload size, same recurring network gap noted throughout this
+file. Verified via a CSS/brace-balance-equivalent check (`wp.ts`'s brace count, 786/786) and a
+manual read confirming every field `mapRestDirectoryToFrontendShape()` touches is present in the
+new `_fields` whitelist. Re-check that the next production build of a page hitting this fallback
+path (i.e. one that occurs while WPGraphQL is genuinely down) completes without the 2MB warning
+before considering this fully closed.
+
+**Follow-up — the `_fields`-only fix above was not actually enough (confirmed by a real
+production build failure, September 2026).** A live Vercel build showed the exact same failure
+mode against the exact same, already-`_fields`-trimmed URL: `Failed to set Next.js data cache for
+.../culture_directory?per_page=100&...&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded,
+items over 2MB can not be cached (2944629 bytes)` — down from the original 5.5MB, but still over
+the 2MB ceiling, still uncacheable, and it still cascaded into the identical
+`/directory/[slug]` 60-second-timeout-×3 build failure this section originally documented as
+fixed. **Root cause of the shortfall**: `_fields` only filters *top-level* response fields — it
+has no way to trim what's nested inside an embedded object. `_embed=1`'s `wp:featuredmedia` entry
+is the *entire* attachment object (every registered image size's url/width/height/mime,
+description, caption, author, its own `_links`, etc.), and that alone is enough to push 100 posts
+back over 2MB even with `content`/`guid`/`type` already stripped from the top level. **Actually
+fixed** by capping `per_page` from 100 down to 50 (on top of, not instead of, the `_fields` trim)
+— halving the entry count roughly halves the payload, landing with real margin under the 2MB
+ceiling instead of hovering just over it regardless of which posts happen to be in the batch. If
+this exact "`_fields` is already applied but the response is still uncacheable" symptom recurs
+here or on any of the other `_embed=1` fallback fetches this section already flagged as sharing
+the pattern, don't reach for `_fields` again — it's already doing everything it can; lower
+`per_page` instead.
+
 ### Article/newsletter comment box — sleek/minimal redesign (September 2026)
 
 `apps/site/components/ArticleComments.tsx` + its CSS in `apps/site/app/globals.css` (previously
@@ -4122,6 +4189,69 @@ work needed.
   old `.article-comments-*` classnames and no other file used the new class names in a way that
   would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
   and a newsletter issue page in a real environment before considering this fully closed.
+
+### `/visuals` retired, then reverted on merge — the feature is still live (September 2026)
+
+**Correction: this section's retirement never actually landed.** It described a real change made
+on one branch, but a large, independent body of work continued shipping to `main` on `/visuals`
+in parallel (Footer link, sitemap entry, `CONTENT_PATHS` in the revalidate route, and the pages
+themselves all still exist on `main`) — none of it ever picked up this retirement. When that
+branch was finally merged, restoring `/visuals` to match `main`'s already-live state (rather than
+letting a stale local deletion silently take out a feature `main` was still actively serving) was
+the only safe call — see the "Directory REST fallback" fix's own git history around the same date
+for the merge this was resolved in. **`/visuals` is not retired. Treat it as a live section** —
+`apps/site/app/visuals/page.tsx` + `[slug]/page.tsx`, `VisualsGrid.tsx`/`VisualsSingleClient.tsx`,
+the Footer link, the sitemap entry, and `'visuals'` in `proxy.ts`'s `APP_ROUTES` and the
+revalidate route's `CONTENT_PATHS` are all real again. The rest of this entry is kept only as a
+record of what was attempted and why it didn't stick — don't act on its "removed"/"redirect"
+claims.
+
+Per explicit user request ("relegate /visuals totally" → clarified as "retire"), the Site A
+illustration gallery at `/visuals` (a public gallery of AI-generated illustrations sourced from
+`culture_directory` entries via `GET /wp-json/culture/v1/visuals`, plus `/visuals/[slug]` single
+pages reusing `GET_DIRECTORY_ENTRY_BY_SLUG`) has been removed **on the web frontend only** — an
+explicit scope choice, confirmed via `AskUserQuestion` before touching anything, since this
+feature also has a WordPress-side admin illustration-generation tool, a `culture/v1/visuals` REST
+endpoint, and a download-credit/gamification tracking system (`_culture_visual_downloads`
+usermeta, `visual_downloads_today` in the mobile/NextAuth session shape) — none of that backend
+was touched, and neither was the unrelated mobile app's own "Visuals" **category** filter on
+`MagazineScreen.tsx` (a magazine-category concept, distinct from this web gallery, confirmed by
+name only — not the same feature).
+
+**Removed**: `apps/site/app/visuals/` (`page.tsx` + `[slug]/page.tsx`), `apps/site/app/
+visuals.css`, `apps/site/components/VisualsGrid.tsx`/`VisualsSingleClient.tsx`, the Footer's
+"Visuals" link (`packages/shared/components/Footer.tsx`, Explore column), the `/visuals`
+sitemap entry, `'visuals'` from `CONTENT_PATHS` in `app/api/revalidate/route.ts` (harmless to
+revalidate a nonexistent path, but cleaned up anyway), and the `/visuals` mention in `app/api/
+wp-health/route.ts`'s doc comment (that endpoint only ever actually probed `directory`/`quotes`
+GraphQL queries — the comment's claim of "three queries" including visuals was already stale
+before this pass, unrelated pre-existing inaccuracy, fixed in passing).
+
+**Redirect**: `'visuals'` was removed from `proxy.ts`'s `APP_ROUTES` set, and a new explicit
+block added — `pathname === '/visuals' || pathname.startsWith('/visuals/')` → 301 `/magazine` —
+placed alongside the other JetEngine-taxonomy prefix-redirects (`/tag/`, `/series/`, `/country/`,
+`/industry/`). **This could not just rely on `ROUTE_ALIASES`** (the existing `{ 'tours':
+'/journeys', 'lifestyle': '/shop' }` map) — that map is only checked against a *single-segment*
+`cleanPath`, so it would have correctly redirected bare `/visuals` but left every individual
+`/visuals/{illustration-slug}` URL to fall through to the routes that no longer exist and 404
+instead of preserving SEO equity via a 301, which is why this got its own dedicated
+`startsWith('/visuals/')` block instead.
+
+**Deliberately out of scope, left running**: the WP Admin illustration-generation tool
+(`class-culture-directory-tools.php`), the `culture/v1/visuals` REST endpoint and its mobile-API
+counterpart, the `_culture_visual_downloads` usermeta/credit-tracking system, and
+`apps/mobile/src/screens/magazine/MagazineScreen.tsx`'s "Visuals" category filter chip. If a
+future pass wants the backend torn down too, treat it as a separate, larger piece of work — it
+has its own admin UI, REST surface, and gamification hooks that a frontend-only removal
+correctly left alone.
+
+**Not visually verified in a browser** — no `node_modules` installed this session, so neither
+`next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
+Verified via a repo-wide grep confirming zero remaining `/visuals` references in `apps/site`/
+`apps/connect`/`packages` outside the new proxy.ts redirect block itself, and a brace-balance
+check on the edited `proxy.ts` (82/82). Re-check that `themoveee.com/visuals` and
+`themoveee.com/visuals/{any-old-slug}` both 301 to `/magazine` in a real environment before
+considering this fully closed.
 
 ### Pull-quote/blockquote — centered treatment, magazine + literary + newsletters (September 2026)
 
@@ -6167,6 +6297,86 @@ The queue processor runs in 50-post batches every 60s via WP-Cron (real cron at 
 Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/etc/memory.conf`
 (NOT www.conf — memory.conf overrides it). Each PHP-FPM worker uses ~90–120MB. Formula:
 `pm.max_children = floor((available_RAM_MB - 512) / 110)`. For 4GB: safe to set to ~30.
+
+---
+
+## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
+
+First step of a longer-term plan to retire the standalone `/quotes` product and make
+`culture_quote` posts fully feed-native — the user's explicit goal, stated as "how can we
+merge web.themoveee.com/quotes to work as part of the feed not a separate product? so we
+can retire /quotes/". Quote cards already rendered natively inline in the unified feed on
+both platforms (`FeedCard.tsx`'s quote branch on web, `QuoteCard` in
+`apps/mobile/src/components/community/FeedItemCard.tsx` on mobile — neither ever linked
+out to `/quotes/[slug]` to render; `href` is only used for the ReactionBar's share URL) —
+so this pass tackled the two specific gaps flagged when the merge was scoped: seeded
+quotes had no valid author identity, and the auto-seeding automation was confirmed
+non-functional and explicitly approved for retirement. The standalone `/quotes` pages
+themselves are **not yet retired** — that's a later step, to be scoped again (same
+`AskUserQuestion` treatment as the `/visuals` retirement) once the author-archive-view and
+other `/quotes`-only functionality (like/report/audit endpoints, sitemap entry, SEO
+`Quotation` JSON-LD, the global `SearchModal`'s quote content-type) have a plan.
+
+**Synthetic system author (`Culture_System_Author`, new class,
+`culture-community/includes/core/class-culture-system-author.php`)** — editorially-seeded
+quotes have no real community submitter; `/api/quotes/auto-populate` (see retirement below)
+always POSTed `user_id: 0`, and `handle_create_quote()`'s fallback chain
+(`user_id → get_current_user_id()`) also resolved to 0 for an unauthenticated API-key
+request, so every seeded quote's `post_author` ended up `0`. `get_userdata(0)` returns
+`false`, so `get_quote_feed_items()`'s `communityAuthor`/`communityAuthorUsername`/
+`communityAuthorAvatar` fields (which mobile's `QuoteCard`/`CommunityQuoteCard` are already
+built to read, same as every other feed item type) silently rendered blank for these.
+Fixed by giving `handle_create_quote()` a third fallback — `Culture_System_Author::get_id()`
+— mirroring `Culture_Account_Deletion::get_placeholder_user_id()`'s exact shape: a
+lazily-created, login-disabled WP user (`moveee-editors`, display name "Moveee", random
+unusable password, `subscriber` role, `_culture_avatar_url` pointed at
+`https://themoveee.com/logo-black.png`), cached by the `culture_system_author_user_id`
+option so it's only ever created once. `Culture_System_Author::maybe_backfill_quote_authors()`
+(hooked on `wp_loaded`, same reasoning as `Culture_Country_Cleanup::init()` — needs the
+`culture_quote` post type already registered) is a one-time migration reassigning every
+pre-existing `post_author = 0` quote to this account, gated by
+`culture_quote_authors_backfilled` — same shape as every other `maybe_backfill_*` in this
+plugin. New quotes submitted through the real composer path (`SubmitPost.tsx`'s Update
+family) are unaffected — they already carry a real submitter.
+
+**Seeding automation retired** — per explicit user instruction ("the seeding dont even
+work autonomously anyways. So I dont mind retiring it"). Removed entirely, not just
+disabled:
+- The WP-Cron "Quotes seed (weekly)" job (`Culture_Cron::HOOK_SEED_QUOTES`/`seed_quotes()`)
+  — removed from `class-culture-cron.php`'s hook registration, `schedule()`/`unschedule()`
+  hook lists, and its handler method. A new one-time `maybe_clear_retired_jobs()` (hooked
+  alongside the others in `init()`, gated by `culture_cron_retired_jobs_cleared`) clears
+  any already-scheduled `culture_seed_quotes` cron-table row on sites that had it —
+  otherwise it would keep firing into a `do_action()` with no listener forever, harmless
+  but cluttering WP Admin's cron views. If a future job is ever retired the same way, add
+  its hook name to `maybe_clear_retired_jobs()`'s list rather than leaving a stale row.
+- `/api/quotes/auto-populate` (both `apps/site` and `apps/connect` — the route + its
+  `data.ts` curated-quote list) — deleted outright.
+- The WP Admin "Quote Seeder" panel on the Directory Tools page (`class-culture-
+  directory-tools.php` — the "Seed Moveee Quotes" button, its `ajax_run_quote_seeder()`
+  handler and `wp_ajax_culture_run_quote_seeder` registration, its `culture_quote_seeder_
+  offset` option, and its JS click handler) — removed, since it called the now-deleted
+  route too. The adjacent **"Bulk Quote Importer" panel (CSV paste/upload) is unrelated
+  and was left untouched** — that's a manual, non-automated import path, not "seeding."
+- `packages/shared/lib/quotes-seeder.ts` trimmed to just `searchSerper()`/
+  `SerperQuoteResult` — still needed by `/api/quotes/audit` (a distinct, still-live
+  concern: fact-checking *existing* quotes for fabrication, not creating new ones).
+  `QUOTE_AUTHORS`, `buildQuoteQueries()`, `fetchVerifiedQuotesForAuthor()`, and
+  `runVerifiedQuotesBatch()` were deleted along with their only caller. `gemini.ts`'s
+  `searchAndExtractQuotes()` is now unused (kept, per this file's "leave dead code that
+  might be needed again" convention) — it has no remaining call site.
+- Manual, admin-curated quote creation still works exactly as before (WP Admin post
+  editor for `culture_quote`, and the Bulk Quote Importer CSV panel) — only the automated
+  discovery/seeding pipeline (curated-list-then-Serper/Gemini-discovery) is gone.
+
+**Not verified against a real WordPress install** — same recurring sandbox gap as every
+other pass in this file (no `cms.themoveee.com` credentials/network access here).
+Verified via `php -l` on every touched PHP file and `tsc --noEmit` on both Next.js apps
+(only pre-existing, environment-level errors — missing `node_modules`/`@types/node` —
+none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
+`culture_quote` created via the post editor with no author picked still resolves
+sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
+Quotes" button, before considering this fully closed.
 
 ---
 

@@ -97,6 +97,8 @@ export interface Cluster {
   meetingDay: string;
   meetingTime: string;
   locationNote: string;
+  hubId?: number | null;
+  hubSlug?: string | null;
 }
 
 export interface ClusterStatus {
@@ -152,6 +154,7 @@ export interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   creatorId: number;
   status: 'active' | 'archived';
   allowedTemplates: string[];
@@ -159,6 +162,9 @@ export interface Hub {
   postCount: number;
   createdAt: string;
   role?: string | null;
+  isOfficial?: boolean;
+  category?: string | null;
+  clusterId?: number | null;
 }
 
 export interface HubStatus {

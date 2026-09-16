@@ -51,6 +51,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-account-deletion.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-play-billing.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-country-cleanup.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-system-author.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-preview.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-literary-access.php';
 
@@ -162,6 +163,7 @@ function culture_community_init() {
     Culture_Follows::init();
     Culture_Hubs::init();
     Culture_Country_Cleanup::init();
+    Culture_System_Author::init();
     Culture_Preview::init();
     Culture_Literary_Submissions::init();
 

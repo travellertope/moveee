@@ -28,6 +28,16 @@ interface Hub {
   memberCount: number;
   postCount: number;
   isOfficial?: boolean;
+  category?: string | null;
+  clusterId?: number | null;
+}
+
+interface RelatedEvent {
+  id: number;
+  title: string;
+  slug: string;
+  eventDate: string;
+  imageUrl: string;
 }
 
 interface HubStatus {
@@ -47,6 +57,20 @@ async function fetchHub(slug: string): Promise<Hub | null> {
     return await res.json();
   } catch {
     return null;
+  }
+}
+
+async function fetchRelatedEvents(hubId: number): Promise<RelatedEvent[]> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubId}/related-events`, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    return data?.events ?? [];
+  } catch {
+    return [];
   }
 }
 
@@ -92,6 +116,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
     ? await fetchStatus(hub.id, Number(session.user.id))
     : { isMember: false, role: null, isFollowing: false, notifyPosts: false };
   const isModerator = status.role === "owner" || status.role === "mod";
+  const relatedEvents = await fetchRelatedEvents(hub.id);
 
   return (
     <div style={{ background: "#ffffff" }}>
@@ -135,6 +160,15 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                     textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px",
                   }}>
                     Official
+                  </span>
+                )}
+                {!hub.isOfficial && hub.category && (
+                  <span style={{
+                    background: "#f7f5f2", color: "#7a6f5c",
+                    fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em",
+                    textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px",
+                  }}>
+                    {hub.category}
                   </span>
                 )}
                 {hub.status === "archived" && (
@@ -183,12 +217,63 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                     initialDescription={hub.description}
                     initialAllowedTemplates={hub.allowedTemplates}
                     initialCoverImageUrl={hub.coverImageUrl}
+                    initialCategory={hub.category}
                     isArchived={hub.status === "archived"}
                     role={status.role === "owner" ? "owner" : "mod"}
                   />
                 </div>
               )}
             </article>
+
+            {hub.clusterId && (
+              <Link
+                href={`/cluster/${hub.clusterId}`}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "0.9rem 1.25rem",
+                  textDecoration: "none", color: "inherit",
+                }}
+              >
+                <div>
+                  <p style={{ margin: "0 0 0.15rem", fontSize: "0.8rem", fontWeight: 700, color: "#14110d" }}>
+                    Discussion for a Stoop
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#7a6f5c" }}>
+                    This Hub is the discussion space for a weekly Stoop — view it →
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {relatedEvents.length > 0 && (
+              <div style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem" }}>
+                <p style={{
+                  color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
+                  letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 0.6rem",
+                }}>
+                  Related events
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                  {relatedEvents.map((ev) => (
+                    <a
+                      key={ev.id}
+                      href={`/events/${ev.slug}`}
+                      style={{ display: "flex", alignItems: "center", gap: "0.6rem", textDecoration: "none", color: "inherit" }}
+                    >
+                      {ev.imageUrl ? (
+                        <img src={ev.imageUrl} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "var(--radius-md, 4px)" }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md, 4px)", background: "#f2f2f2" }} />
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: "0 0 0.15rem", fontSize: "0.82rem", color: "#14110d", fontWeight: 600 }}>{ev.title}</p>
+                        <p style={{ margin: 0, fontFamily: "var(--font-mono), monospace", fontSize: "0.68rem", color: "#7a6f5c" }}>{ev.eventDate}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Posts */}
             <div style={{ padding: "1rem 1.25rem" }}>

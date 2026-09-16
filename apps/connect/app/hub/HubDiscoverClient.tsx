@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { HUB_CATEGORIES } from "@/lib/hubCategories";
 
 interface Hub {
   id: number;
@@ -12,6 +13,7 @@ interface Hub {
   coverImageCredit?: string;
   memberCount: number;
   postCount: number;
+  category?: string | null;
 }
 
 function HubCard({ hub }: { hub: Hub }) {
@@ -49,6 +51,7 @@ function HubCard({ hub }: { hub: Hub }) {
       </span>
       <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: 11, color: "#7a6f5c", marginTop: 4 }}>
         {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
+        {hub.category ? ` · ${hub.category}` : ""}
       </span>
     </Link>
   );
@@ -87,14 +90,16 @@ export default function HubDiscoverClient({
 }) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"popular" | "newest" | "trending">("popular");
+  const [category, setCategory] = useState("");
   const [hubs, setHubs] = useState<Hub[]>(initialHubs);
   const [loading, setLoading] = useState(false);
 
-  const search = useCallback(async (query: string, sortBy: string) => {
+  const search = useCallback(async (query: string, sortBy: string, cat: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ sort: sortBy, per_page: "20" });
       if (query) params.set("q", query);
+      if (cat) params.set("category", cat);
       const res = await fetch(`/api/hub/discover?${params}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       setHubs(data?.hubs ?? []);
@@ -105,10 +110,10 @@ export default function HubDiscoverClient({
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => search(q, sort), 300);
+    const t = setTimeout(() => search(q, sort, category), 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, sort]);
+  }, [q, sort, category]);
 
   const SORTS: { value: typeof sort; label: string }[] = [
     { value: "popular", label: "Popular" },
@@ -163,6 +168,33 @@ export default function HubDiscoverClient({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Category chip row — single-select, tap-to-toggle-off, mirrors the
+          mobile HubsScreen filter row. */}
+      <div style={{
+        padding: "0.75rem 1.25rem", borderBottom: "1px solid #e8e2d8",
+        display: "flex", gap: 6, flexWrap: "wrap",
+      }}>
+        {HUB_CATEGORIES.map((cat) => {
+          const active = category === cat;
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(active ? "" : cat)}
+              style={{
+                background: active ? "#c5491f" : "#fff",
+                color: active ? "#fff" : "#3a342b",
+                border: "1px solid " + (active ? "#c5491f" : "#e8e2d8"),
+                borderRadius: "999px", padding: "6px 12px",
+                fontSize: "0.72rem", fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ padding: "1.25rem" }}>

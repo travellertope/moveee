@@ -424,6 +424,19 @@ export default function ClusterScreen() {
             </Text>
           </View>
 
+          {cluster.hubId && cluster.hubSlug && (
+            <TouchableOpacity
+              style={[styles.card, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+              onPress={() => nav.navigate("HubDetail", { slug: cluster.hubSlug })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Discussion Hub</Text>
+                <Text style={styles.cardBody}>Chat, share updates, and coordinate between meetups.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={c.mute} />
+            </TouchableOpacity>
+          )}
+
           {cluster.status === "forming" && status?.isMember && (
             <View style={styles.card}>
               <Text style={styles.cardLabel}>Getting started</Text>

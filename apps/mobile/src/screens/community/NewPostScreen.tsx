@@ -27,6 +27,8 @@ import MentionInput from "../../components/composer/MentionInput";
 import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate, UPDATE_FAMILY, UPDATE_TAB_META, isUpdateTemplate } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
+import BottomSheet from "../../components/ui/BottomSheet";
+import Svg, { Circle } from "react-native-svg";
 
 
 interface TemplateMeta {
@@ -203,6 +205,36 @@ const fmtDate = (d: Date) =>
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
+// ── Character-count ring — a quiet filling ring next to Post, instead of a
+// "120 / 500" line competing with the compose text for attention. ─────────────
+function CharRing({ progress, color, track }: { progress: number; color: string; track: string }) {
+  const size = 24;
+  const strokeWidth = 2.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(1, progress));
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={size / 2} cy={size / 2} r={radius} stroke={track} strokeWidth={strokeWidth} fill="none" />
+      {clamped > 0 && (
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={circumference * (1 - clamped)}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      )}
+    </Svg>
+  );
+}
+
 // ── Inline photos section ─────────────────────────────────────────────────────
 function InlinePhotosSection({
   images,
@@ -283,6 +315,7 @@ export default function NewPostScreen() {
   const [text, setText] = useState("");
   const [sectionTag, setSectionTag] = useState<string | null>(null);
   const [tagLocked, setTagLocked] = useState(false);
+  const [sectionSheetOpen, setSectionSheetOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [itineraryCity, setItineraryCity] = useState("");
@@ -817,7 +850,7 @@ const uploadImages = async (): Promise<string[]> => {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
-            name={images.length > 0 ? "camera" : "camera-outline"}
+            name={images.length > 0 ? "images" : "images-outline"}
             size={22}
             color={images.length > 0 ? c.gold : c.inkSoft}
           />
@@ -908,46 +941,57 @@ const uploadImages = async (): Promise<string[]> => {
     </View>
   );
 
-  const renderSectionTags = (marginTop?: number) => (
-    <View style={[styles.fieldGroup, marginTop != null ? { marginTop } : undefined]}>
-      <Text style={styles.fieldLabel}>Section</Text>
-      <View style={styles.chipRow}>
-        {SECTION_TAGS.map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.sectionTag, sectionTag === t && styles.sectionTagActive]}
-            onPress={() => {
-              const next = sectionTag === t ? null : t;
-              setSectionTag(next);
-              setTagLocked(next !== null); // clearing resumes auto-detection
-            }}
-          >
-            <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
+  // A compact "Section: X ▾" pill that opens a bottom-sheet picker, instead
+  // of an always-expanded 11-chip row sitting above the compose box. Picking
+  // a section locks it (clearing resumes auto-detection from the post text,
+  // same behavior the old chip row had).
+  const renderSectionDropdown = (marginTop?: number) => (
+    <>
+      <TouchableOpacity
+        style={[
+          styles.sectionDropdownPill,
+          sectionTag && styles.sectionDropdownPillActive,
+          marginTop != null ? { marginTop } : undefined,
+        ]}
+        onPress={() => setSectionSheetOpen(true)}
+      >
+        <Text style={styles.sectionDropdownIcon}>#</Text>
+        <Text style={[styles.sectionDropdownText, sectionTag && styles.sectionDropdownTextActive]}>
+          {sectionTag ?? "Add a section"}
+        </Text>
+        <Text style={styles.sectionDropdownChevron}>▾</Text>
+      </TouchableOpacity>
+      <BottomSheet visible={sectionSheetOpen} onClose={() => setSectionSheetOpen(false)}>
+        <Text style={styles.sectionSheetTitle}>Choose a section</Text>
+        {SECTION_TAGS.map((t) => {
+          const active = sectionTag === t;
+          return (
+            <TouchableOpacity
+              key={t}
+              style={styles.sectionSheetItem}
+              onPress={() => {
+                const next = active ? null : t;
+                setSectionTag(next);
+                setTagLocked(next !== null); // clearing resumes auto-detection
+                setSectionSheetOpen(false);
+              }}
+            >
+              <Text style={[styles.sectionSheetItemText, active && styles.sectionSheetItemTextActive]}>{t}</Text>
+              {active && <Text style={styles.sectionSheetCheck}>✓</Text>}
+            </TouchableOpacity>
+          );
+        })}
+      </BottomSheet>
+    </>
   );
 
   // ── Template body renderers ───────────────────────────────────────────────────
   const renderStandardPost = () => (
     <>
-      {/* Section tags FIRST */}
-      {renderSectionTags(0)}
-      {/* What are you writing about? — optional directory link (July 2026).
-          This is what used to be the standalone Cultural Take template's
-          required directory field; folding Cultural Take into Update made
-          it optional rather than required. */}
-      <View style={[styles.fieldGroup, { marginTop: space[2] }]}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="What are you writing about? (optional)"
-        />
-      </View>
+      {/* Body copy FIRST — the actual thing the user is here to write. */}
       <MentionInput
         inputRef={textRef}
-        style={[styles.textarea, { marginTop: space[2] }]}
+        style={styles.textarea}
         value={text}
         onChangeText={handleTextChange}
         multiline
@@ -955,7 +999,20 @@ const uploadImages = async (): Promise<string[]> => {
         placeholderTextColor={c.ghost}
         maxLength={tmpl.maxText + 50}
         textAlignVertical="top"
+        autoFocus
       />
+      {/* What are you writing about? — optional directory link (July 2026).
+          This is what used to be the standalone Cultural Take template's
+          required directory field; folding Cultural Take into Update made
+          it optional rather than required. */}
+      <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
+        <DirectorySearch
+          selected={linkedEntry}
+          onSelect={setLinkedEntry}
+          label="What are you writing about? (optional)"
+        />
+      </View>
+      {renderSectionDropdown(space[3])}
       <InlinePhotosSection
         images={images}
         onAdd={() => pickImages(true)}
@@ -1214,7 +1271,7 @@ const uploadImages = async (): Promise<string[]> => {
                   style={[styles.sectionTag, bookStatus === s && styles.sectionTagActive, { flex: 1, height: 36 }]}
                   onPress={() => setBookStatus(s)}
                 >
-                  <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: 11 }]}>{s}</Text>
+                  <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: fontSize.xs }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -2063,37 +2120,46 @@ const uploadImages = async (): Promise<string[]> => {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 
-        {/* ── Header ── */}
-        <View style={styles.header}>
+        {/* ── Top bar — close/back icon, a quiet filling ring for how much of
+             the character limit is used, and the Post/Next pill. No title
+             text: the template bar right below already names the format. ── */}
+        <View style={styles.topBar}>
           <TouchableOpacity
             onPress={() => (isWizard && step > 0 ? setStep((s) => s - 1) : nav.goBack())}
-            style={styles.headerSideBtn}
+            style={styles.topBarIconBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.cancelText}>{isWizard && step > 0 ? "← Back" : "Cancel"}</Text>
+            <Ionicons name={isWizard && step > 0 ? "chevron-back" : "close"} size={24} color={c.inkSoft} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New {tmplDef?.label ?? "Post"}</Text>
-          {isWizard && step < totalSteps - 1 ? (
-            <TouchableOpacity
-              style={[styles.postBtn, !canProceedStep && styles.postBtnDisabled]}
-              onPress={() => setStep((s) => s + 1)}
-              disabled={!canProceedStep}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.postBtnText}>Next</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
-              onPress={validateAndSubmit}
-              disabled={isSubmitDisabled}
-              activeOpacity={0.8}
-            >
-              {submitting
-                ? <ActivityIndicator color={c.paper} size="small" />
-                : <Text style={styles.postBtnText}>Post</Text>
-              }
-            </TouchableOpacity>
-          )}
+          <View style={styles.topBarRight}>
+            <CharRing
+              progress={tmpl.maxText > 0 ? text.length / tmpl.maxText : 0}
+              color={remaining < 0 ? c.error : c.ochre}
+              track={c.rule}
+            />
+            {isWizard && step < totalSteps - 1 ? (
+              <TouchableOpacity
+                style={[styles.postBtn, !canProceedStep && styles.postBtnDisabled]}
+                onPress={() => setStep((s) => s + 1)}
+                disabled={!canProceedStep}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.postBtnText}>Next</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
+                onPress={validateAndSubmit}
+                disabled={isSubmitDisabled}
+                activeOpacity={0.8}
+              >
+                {submitting
+                  ? <ActivityIndicator color={c.paper} size="small" />
+                  : <Text style={styles.postBtnText}>Post</Text>
+                }
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* ── Compact template indicator bar ── */}
@@ -2103,7 +2169,7 @@ const uploadImages = async (): Promise<string[]> => {
             <Text style={[styles.templateBarLabel, { color: tmplDef?.color ?? c.ochre }]}>{tmplDef?.label}</Text>
           </View>
           <TouchableOpacity onPress={() => setPickerOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.changeFormatText}>Change format</Text>
+            <Text style={styles.changeFormatText}>Change format ›</Text>
           </TouchableOpacity>
         </View>
 
@@ -2121,23 +2187,16 @@ const uploadImages = async (): Promise<string[]> => {
         {isReviewTemplate(template) && renderSubtypeTabs(REVIEW_FAMILY, REVIEW_TAB_META)}
         {isUpdateTemplate(template) && renderSubtypeTabs(UPDATE_FAMILY, UPDATE_TAB_META)}
 
-        {/* ── Step progress — long templates only (WIZARD_STEPS above) ── */}
+        {/* ── Step progress — long templates only (WIZARD_STEPS above). A
+             slim filling bar + "Step N of M" label, not numbered dots — the
+             label does the counting instead of a UI element. ── */}
         {isWizard && (
-          <View style={styles.wizardProgress}>
-            <View style={styles.wizardDots}>
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.wizardDot,
-                    i === step && styles.wizardDotActive,
-                    i < step && styles.wizardDotDone,
-                  ]}
-                />
-              ))}
+          <>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${((step + 1) / totalSteps) * 100}%` }]} />
             </View>
-            <Text style={styles.wizardLabel}>Step {step + 1} of {totalSteps}</Text>
-          </View>
+            <Text style={styles.stepLabel}>Step {step + 1} of {totalSteps}</Text>
+          </>
         )}
 
         {/* ── Template picker sheet ── */}
@@ -2162,6 +2221,9 @@ const uploadImages = async (): Promise<string[]> => {
           <View style={styles.toolbarLeft}>
             {toolbarIcons}
           </View>
+          <Text style={[styles.toolbarCount, remaining < 0 && styles.toolbarCountError]}>
+            {text.length} / {tmpl.maxText}
+          </Text>
         </View>
 
       </KeyboardAvoidingView>
@@ -2180,28 +2242,50 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper,
     },
     headerSideBtn:    { minWidth: 60, minHeight: 44, justifyContent: "center" },
-    headerTitle:      { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
-    cancelText:       { fontFamily: fonts.sans, fontSize: 14, color: c.ochre },
+    headerTitle:      { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    cancelText:       { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ochre },
+
+    // Top bar — icon-only close/back, a char-limit ring, and the Post pill.
+    topBar: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      height: 52, paddingHorizontal: space[4],
+    },
+    topBarIconBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+    topBarRight:   { flexDirection: "row", alignItems: "center", gap: 12 },
+
     postBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
-      paddingHorizontal: 18, paddingVertical: 8,
+      paddingHorizontal: 20, paddingVertical: 9,
       alignItems: "center", justifyContent: "center",
     },
     postBtnDisabled:  { opacity: 0.4 },
-    postBtnText:      { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    postBtnText:      { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
-    // Template bar
+    // Template bar — a quiet breadcrumb, not a boxed banner.
     templateBar: {
-      height: 36, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-      paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.rule,
-      backgroundColor: c.paperWarm,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], paddingBottom: space[2],
     },
     templateBarLeft:   { flexDirection: "row", alignItems: "center", gap: 6 },
     templateBarEmoji:  { fontSize: 14, lineHeight: 18 },
-    templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: 13 },
-    changeFormatText:  { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
+    templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: fontSize.sm },
+    changeFormatText:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.3 },
 
-    // Wizard step progress — dots + "Step N of M" label
+    // Wizard step progress — a slim filling bar + "Step N of M" label,
+    // rather than numbered dots (the label does the counting).
+    progressTrack: {
+      height: 3, borderRadius: 2, backgroundColor: c.rule,
+      marginHorizontal: space[4],
+    },
+    progressFill: { height: "100%", borderRadius: 2, backgroundColor: c.ochre },
+    stepLabel: {
+      fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+      color: c.mute, textTransform: "uppercase", letterSpacing: 0.6,
+      paddingHorizontal: space[4], paddingTop: 8, paddingBottom: 2,
+    },
+
+    // Wizard step progress (superseded by progressTrack/progressFill/
+    // stepLabel above — kept for reference, no longer rendered).
     wizardProgress: {
       flexDirection: "row", alignItems: "center", gap: 10,
       paddingHorizontal: space[4], paddingVertical: 8,
@@ -2211,7 +2295,7 @@ function createStyles(c: ColorPalette) {
     wizardDot:       { width: 6, height: 6, borderRadius: 999, backgroundColor: c.rule },
     wizardDotActive: { backgroundColor: c.ochre, transform: [{ scale: 1.3 }] },
     wizardDotDone:   { backgroundColor: c.gold },
-    wizardLabel:     { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft, textTransform: "uppercase", letterSpacing: 0.3 },
+    wizardLabel:     { fontFamily: fonts.sansBold, fontSize: fontSize.xs, color: c.inkSoft, textTransform: "uppercase", letterSpacing: 0.3 },
 
     // Scroll body
     body: { padding: space[4], paddingBottom: 32 },
@@ -2221,39 +2305,39 @@ function createStyles(c: ColorPalette) {
     guide:     { paddingHorizontal: space[4], paddingTop: space[3] },
     guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20 },
 
-    // Family subtype tabs (Review and Update families) — plain text +
-    // underline indicator, kept deliberately subtle/simple rather than a
-    // pill/chip row.
+    // Family subtype tabs (Review and Update families) — filled segmented
+    // pills, matching the section-dropdown/price-chip pill language used
+    // everywhere else on this screen.
     subtypeTabs: {
       flexDirection: "row",
+      gap: 6,
       paddingHorizontal: space[4],
-      paddingTop: space[2],
-      borderBottomWidth: 1,
-      borderBottomColor: c.rule,
+      paddingTop: space[1],
+      paddingBottom: space[3],
     },
     subtypeTab: {
       paddingVertical: 8,
-      paddingHorizontal: 10,
-      borderBottomWidth: 2,
-      borderBottomColor: "transparent",
+      paddingHorizontal: 14,
+      borderRadius: radius.full,
+      backgroundColor: c.paperDeep,
     },
-    subtypeTabActive: { borderBottomColor: c.ochre },
-    subtypeTabText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.mute },
-    subtypeTabTextActive: { color: c.ochre },
+    subtypeTabActive: { backgroundColor: c.ink },
+    subtypeTabText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    subtypeTabTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
     // Main textarea
     textarea: {
-      fontFamily: fonts.sans, fontSize: 16, color: c.ink,
+      fontFamily: fonts.sans, fontSize: fontSize.md, color: c.ink,
       lineHeight: 26, minHeight: 120,
     },
     borderedTextarea: {
-      fontFamily: fonts.sans, fontSize: 14, color: c.ink,
-      lineHeight: 22, minHeight: 120,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      padding: 12, backgroundColor: c.paper,
+      fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
+      lineHeight: 24, minHeight: 110,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      paddingVertical: 10, paddingHorizontal: 2, backgroundColor: "transparent",
     },
     charCount: {
-      fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
+      fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost,
       textAlign: "right", marginTop: 4, marginBottom: space[1],
     },
 
@@ -2271,7 +2355,7 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1.5, borderColor: c.ghost, borderStyle: "dashed",
       alignItems: "center", justifyContent: "center", gap: 4,
     },
-    photoAddText: { fontFamily: fonts.sans, fontSize: 10, color: c.mute },
+    photoAddText: { fontFamily: fonts.sans, fontSize: fontSize.tiny, color: c.mute },
     photoThumbWrap: { position: "relative" },
     photoThumb: { width: 80, height: 80, borderRadius: radius.md },
     photoRemoveBtn: {
@@ -2279,7 +2363,7 @@ function createStyles(c: ColorPalette) {
       width: 18, height: 18, backgroundColor: "#fff", borderRadius: 9,
       alignItems: "center", justifyContent: "center",
     },
-    photosHint: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost, marginTop: 6 },
+    photosHint: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.ghost, marginTop: 6 },
 
     // Price chips
     priceChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -2288,17 +2372,18 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
     priceChipActive: { backgroundColor: c.ink, borderColor: c.ink },
-    priceChipText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    priceChipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     priceChipTextActive: { color: c.paper },
 
-    // Prefixed input
+    // Prefixed input — borderless with a bottom hairline, matching every
+    // other single-line field on this screen.
     prefixedInputWrap: {
-      flexDirection: "row", alignItems: "center", height: 48,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      backgroundColor: c.paper, paddingHorizontal: 14, gap: 8,
+      flexDirection: "row", alignItems: "center", height: 46,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      backgroundColor: "transparent", paddingHorizontal: 2, gap: 10,
     },
-    prefixIcon: { fontSize: 16 },
-    prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink },
+    prefixIcon: { fontSize: fontSize.md, color: c.mute },
+    prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
 
     // Creative Showcase upload zone
     showcaseUploadZone: {
@@ -2311,8 +2396,8 @@ function createStyles(c: ColorPalette) {
       borderColor: c.gold, borderStyle: "solid",
       backgroundColor: "rgba(179,130,56,0.06)",
     },
-    showcaseUploadTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.inkSoft },
-    showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    showcaseUploadTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.inkSoft },
+    showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
 
     // Book
     bookRatingsContainer: {
@@ -2324,12 +2409,12 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 12,
       borderBottomWidth: 1, borderBottomColor: c.rule,
     },
-    bookRatingsLabel: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, width: 100 },
+    bookRatingsLabel: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, width: 100 },
 
     // Fav quote
     favQuoteWrap: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 16 },
     favQuoteInput: {
-      fontFamily: fonts.sansItalic, fontSize: 14,
+      fontFamily: fonts.sansItalic, fontSize: fontSize.base,
       color: c.ink, lineHeight: 22, minHeight: 60, textAlignVertical: "top",
     },
 
@@ -2337,39 +2422,37 @@ function createStyles(c: ColorPalette) {
     recommendRow: { flexDirection: "row", gap: 8 },
     recommendYes: {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
-      backgroundColor: "#2D6A4F", justifyContent: "center",
+      backgroundColor: c.success, justifyContent: "center",
     },
     recommendNo: {
       height: 32, paddingHorizontal: 16, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
-    recommendNoActive: { backgroundColor: "#7a241c", borderColor: "#7a241c" },
-    recommendText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
-    recommendNoText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    recommendNoActive: { backgroundColor: c.ochre, borderColor: c.ochre },
+    recommendText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
+    recommendNoText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
 
-    // Segmented (poll duration)
-    segmented: {
-      flexDirection: "row", borderWidth: 1, borderColor: c.rule,
-      borderRadius: radius.md, overflow: "hidden",
+    // Segmented (poll duration) — gapped pills, matching the price-chip/
+    // section-tag pill language elsewhere on this screen, instead of a
+    // bordered iOS-style segmented control.
+    segmented: { flexDirection: "row", gap: 8 },
+    segmentedBtn: {
+      flex: 1, height: 36, borderRadius: radius.full,
+      backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center",
     },
-    segmentedBtn: { flex: 1, height: 32, alignItems: "center", justifyContent: "center" },
     segmentedBtnActive: { backgroundColor: c.ink },
-    segmentedBtnText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
+    segmentedBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
     segmentedBtnTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
-    // Quote redesign
-    quoteBox: {
-      backgroundColor: c.paperWarm, borderRadius: radius.xl,
-      borderWidth: 1, borderColor: c.rule,
-      padding: 16, paddingTop: 24, position: "relative", minHeight: 160,
-    },
+    // Quote — borderless, a large serif mark leading straight into the
+    // italic quote text, no card chrome around it.
+    quoteBox: { paddingTop: 4, minHeight: 140 },
     quoteOpenMark: {
-      position: "absolute", top: 8, left: 14,
-      fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
+      fontFamily: fonts.serif, fontSize: 56, color: c.gold, lineHeight: 56, marginBottom: -16,
     },
     quoteBoxInput: {
-      fontFamily: fonts.serifItalic, fontSize: 18,
-      color: c.ink, lineHeight: 28, minHeight: 100, textAlignVertical: "top",
+      fontFamily: fonts.serifItalic, fontSize: fontSize.lg,
+      color: c.ink, lineHeight: 30, minHeight: 100, textAlignVertical: "top", paddingTop: 4,
     },
 
     // Event 2-col date grid
@@ -2381,7 +2464,7 @@ function createStyles(c: ColorPalette) {
       flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 6,
     },
     eventDateCellEmoji: { fontSize: 16 },
-    eventDateCellText: { fontFamily: fonts.sans, fontSize: 13, color: c.ink, flex: 1 },
+    eventDateCellText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, flex: 1 },
 
     // Event (legacy, kept for compatibility)
     eventBanner: {
@@ -2391,7 +2474,7 @@ function createStyles(c: ColorPalette) {
     },
     eventBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, flex: 1 },
     eventTitleInput: {
-      fontFamily: fonts.serifBold, fontSize: 20, color: c.ink,
+      fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink,
       paddingVertical: 10, borderBottomWidth: 1.5, borderBottomColor: c.rule,
       marginBottom: space[2],
     },
@@ -2412,13 +2495,15 @@ function createStyles(c: ColorPalette) {
     },
     rsvpToggleThumbActive: { alignSelf: "flex-end" },
     fieldLabel: {
-      fontFamily: fonts.mono, fontSize: 11, color: c.mute,
+      fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute,
       letterSpacing: 0.8, textTransform: "uppercase",
     },
+    // Borderless single-line field — a bottom hairline instead of a boxed
+    // border, matching the compose surface's quieter overall language.
     input: {
-      height: 46, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
-      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
-      paddingHorizontal: 14, backgroundColor: c.paper,
+      height: 44, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
+      borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      paddingHorizontal: 2, backgroundColor: "transparent",
     },
 
     // Section / category tags
@@ -2429,12 +2514,37 @@ function createStyles(c: ColorPalette) {
       justifyContent: "center",
     },
     sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
-    sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    sectionTagText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+
+    // Section dropdown pill (replaces the always-expanded chip row on the
+    // plain Update form — see renderSectionDropdown()).
+    sectionDropdownPill: {
+      flexDirection: "row", alignItems: "center", alignSelf: "flex-start",
+      height: 36, paddingHorizontal: 14, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, gap: 6,
+    },
+    sectionDropdownPillActive: { borderColor: c.ochre, backgroundColor: c.goldLight },
+    sectionDropdownIcon: { fontSize: fontSize.sm, color: c.mute },
+    sectionDropdownText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    sectionDropdownTextActive: { color: c.ochre, fontFamily: fonts.sansBold },
+    sectionDropdownChevron: { fontSize: fontSize.tiny, color: c.mute, marginLeft: 2 },
+    sectionSheetTitle: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.md, color: c.ink,
+      paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3],
+    },
+    sectionSheetItem: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    sectionSheetItemText:       { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+    sectionSheetItemTextActive: { fontFamily: fonts.sansBold, color: c.ochre },
+    sectionSheetCheck: { fontSize: fontSize.base, color: c.ochre },
     genreInput: {
       height: 34, paddingHorizontal: 14, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.ochre, backgroundColor: c.paper,
-      fontFamily: fonts.sans, fontSize: 12, color: c.ink, minWidth: 120,
+      fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, minWidth: 120,
     },
 
     // Date picker
@@ -2448,7 +2558,7 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.ink, borderRadius: radius.md,
       paddingHorizontal: 14, paddingVertical: 6,
     },
-    iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
     // Toolbar
     toolbar: {
@@ -2456,16 +2566,20 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.rule,
       paddingHorizontal: space[4], paddingVertical: space[2],
     },
-    toolbarLeft:       { flexDirection: "row", alignItems: "center", gap: 20 },
-    toolbarIconBtn:    { position: "relative" },
-    toolbarIconActive: {},
+    toolbarLeft:       { flexDirection: "row", alignItems: "center", gap: 6 },
+    toolbarIconBtn:    {
+      position: "relative", width: 40, height: 40, borderRadius: radius.xl,
+      alignItems: "center", justifyContent: "center",
+    },
+    toolbarIconActive: { backgroundColor: c.goldLight },
     iconBadge: {
       position: "absolute", top: -6, right: -8,
       backgroundColor: c.ochre, borderRadius: 8,
       minWidth: 16, height: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
     },
-    iconBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+    iconBadgeText: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: "#fff" },
     toolbarAt:    { fontFamily: fonts.sansBold, fontSize: 18, color: c.inkSoft, lineHeight: 22 },
-    toolbarCount: { fontFamily: fonts.mono, fontSize: 12, color: c.ghost },
+    toolbarCount:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost },
+    toolbarCountError: { color: c.error },
   });
 }

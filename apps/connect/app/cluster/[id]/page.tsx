@@ -33,6 +33,8 @@ interface Cluster {
   locationNote: string;
   venueType: string;
   accessible: boolean;
+  hubId?: number | null;
+  hubSlug?: string | null;
 }
 
 interface ClusterStatus {
@@ -240,6 +242,16 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
             <p className="stoop-detail-sec-title">Check-in</p>
             <p className="stoop-detail-sec-sub">Scan your host's code with the Moveee app when you arrive.</p>
             <ClusterCheckin clusterId={cluster.id} isHost={isHost} />
+          </div>
+        )}
+
+        {status.isMember && cluster.hubId && cluster.hubSlug && (
+          <div className="stoop-detail-section">
+            <p className="stoop-detail-sec-title">Discussion Hub</p>
+            <p className="stoop-detail-sec-sub">Chat, share updates, and coordinate between meetups.</p>
+            <Link href={`/hub/${cluster.hubSlug}`} className="stoop-detail-back" style={{ display: "inline-block" }}>
+              Open the Hub →
+            </Link>
           </div>
         )}
 
