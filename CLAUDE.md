@@ -2723,6 +2723,53 @@ confirm the fix's numbers actually clear the header rather than under- or over-s
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
 
+### Directory REST fallback — oversized `_embed=1` response broke Next's data cache and tripped a real production build failure (fixed September 2026)
+
+A live Vercel production build (on `main`) failed outright: WordPress/WPGraphQL calls during
+static generation started timing out (`Network or Parsing Error: This operation was aborted`),
+which tripped the KV-backed circuit breaker (see "Server stability fixes" above —
+`[circuit-breaker] CMS circuit opened (shared) for 60s after 3 failures`). While the CMS was
+struggling, one fetch stood out in the logs: `Failed to set Next.js data cache for
+.../wp-json/wp/v2/culture_directory?per_page=100&_embed=1..., items over 2MB can not be cached
+(5525442 bytes)`. Because that response could never be cached, it was refetched in full on every
+build worker that needed it — real added load on an already-struggling CMS, not just a log
+warning. `/directory/[slug]` pages then blew past their 60s-per-attempt budget three times each
+(`Failed to build /directory/[slug]/page: /directory/spoken-word-poetry after 3 attempts`) and the
+build exited nonzero.
+
+**Root cause**: `getDirectoryEntriesWithFallback()` in `packages/shared/lib/wp.ts` — the REST
+fallback path used only when WPGraphQL returns zero entries (i.e. exactly when the CMS is already
+having trouble, the worst possible time to make the fetch heavier) — requested
+`per_page=100&_embed=1` with no `_fields` filter. `_embed=1` embeds the **full, unstripped**
+`content` field on every one of the 100 posts to pull in featured media + taxonomy terms, but
+`mapRestDirectoryToFrontendShape()` right below it never reads `content` at all — only
+`id`/`slug`/`title`/`date`/`excerpt`/`acf`/`meta` plus the embedded media/term objects. 100 posts'
+worth of full rich-text bodies is exactly the kind of payload that blows past Next's 2MB
+per-entry data-cache ceiling.
+
+**Fixed** by adding `&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded` to the
+fallback URL — WP core REST's `_fields` param whitelists top-level response fields (dropping the
+unused `content`, `guid`, `type`, etc.), which is enough on its own to bring a 100-post response
+back under 2MB. **`_links`/`_embedded` must be listed explicitly in `_fields`** — WP applies field
+filtering *after* embedding, so without those two names in the list, `_fields` strips the embedded
+media/terms data right back out along with everything else, silently breaking every directory
+card's image and type badges.
+
+**The same pattern likely exists in every other `_embed=1` REST-fallback fetch in this file**
+(`culture_newsletter?per_page=${first}&_embed=1`, `posts?country=...&_embed=1`,
+`posts?issues=...&per_page=100&_embed=1`) — none were touched in this pass since only the
+directory one was the one actually observed failing in production, but if a future build failure
+shows the same "`_embed=1`... items over 2MB can not be cached" warning against a different REST
+fallback URL, apply the identical `_fields` fix there rather than re-diagnosing from scratch.
+
+**Not verified against the real CMS response size** — this sandbox can't reach `cms.themoveee.com`
+to measure the actual before/after payload size, same recurring network gap noted throughout this
+file. Verified via a CSS/brace-balance-equivalent check (`wp.ts`'s brace count, 786/786) and a
+manual read confirming every field `mapRestDirectoryToFrontendShape()` touches is present in the
+new `_fields` whitelist. Re-check that the next production build of a page hitting this fallback
+path (i.e. one that occurs while WPGraphQL is genuinely down) completes without the 2MB warning
+before considering this fully closed.
+
 ### Article/newsletter comment box — sleek/minimal redesign (September 2026)
 
 `apps/site/components/ArticleComments.tsx` + its CSS in `apps/site/app/globals.css` (previously

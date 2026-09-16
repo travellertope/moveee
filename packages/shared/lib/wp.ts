@@ -319,7 +319,15 @@ export async function getDirectoryEntriesWithFallback(first = 200, options: any 
   if (gqlEntries.length > 0) return gqlEntries;
 
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 100)}&status=publish&_embed=1&orderby=date&order=desc`;
+    // `_fields` strips the full `content` body (unused by mapRestDirectoryToFrontendShape
+    // below, which only reads id/slug/title/date/excerpt/acf/meta/embedded media+terms) —
+    // without it, `_embed=1` on 100 posts routinely exceeds Next's 2MB data-cache limit
+    // (fixed September 2026: a 5.5MB response here made this fetch uncacheable, which
+    // amplified CMS load during a circuit-breaker-tripped build and contributed to
+    // /directory/[slug] static-generation timeouts). `_links`/`_embedded` must stay in the
+    // `_fields` list or WP strips the embedded media/terms data along with everything else.
+    const fields = "id,slug,title,date,excerpt,acf,meta,_links,_embedded";
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 100)}&status=publish&_embed=1&orderby=date&order=desc&_fields=${fields}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
