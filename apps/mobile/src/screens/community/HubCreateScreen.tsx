@@ -13,6 +13,7 @@ import { useColors } from "../../hooks/useColors";
 import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, MOBILE_API } from "../../api/client";
 import type { Hub } from "../../types";
+import { HUB_CATEGORIES } from "../../utils/hubCategories";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: boolean }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
@@ -81,6 +82,7 @@ export default function HubCreateScreen() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [allowed, setAllowed] = useState<string[]>(DEFAULT_TEMPLATES);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -122,6 +124,7 @@ export default function HubCreateScreen() {
         description: description.trim(),
         allowed_templates: allowed.length ? allowed : DEFAULT_TEMPLATES,
         cover_image_url: coverImageUrl,
+        category,
       });
       nav.navigate("HubDetail", { slug: hub.slug });
     } catch (e: any) {
@@ -168,6 +171,23 @@ export default function HubCreateScreen() {
           editable={!submitting}
           multiline
         />
+
+        <Text style={styles.label}>Category (optional)</Text>
+        <View style={styles.grid}>
+          {HUB_CATEGORIES.map((cat) => {
+            const active = category === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setCategory(active ? "" : cat)}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={styles.hint}>Helps people browsing Hubs find yours — pick the closest fit, or skip it.</Text>
 
         <Text style={styles.label}>Cover image (optional)</Text>
         <TouchableOpacity

@@ -1659,6 +1659,14 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Literati Connect events near this Hub's topic (Stoop/Literati
+        // Connect surfacing — see Culture_Hubs::get_related_events()).
+        register_rest_route( 'culture/v1', '/hub/(?P<id>\d+)/related-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_related_events' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // For You Hub candidate pool (docs/hubs-plan.md §4.5). Public —
         // user_id is optional, only used to personalise liked/reaction state.
         register_rest_route( 'culture/v1', '/hub/for-you-candidates', array(
@@ -2230,6 +2238,7 @@ class Culture_REST_API {
             'description'       => (string) $request->get_param( 'description' ),
             'coverImageUrl'     => (string) $request->get_param( 'cover_image_url' ),
             'allowedTemplates'  => $request->get_param( 'allowed_templates' ),
+            'category'          => (string) $request->get_param( 'category' ),
         );
 
         $result = Culture_Hubs::create( $user_id, $data );
@@ -2256,6 +2265,9 @@ class Culture_REST_API {
         if ( null !== $request->get_param( 'allowed_templates' ) ) {
             $data['allowedTemplates'] = $request->get_param( 'allowed_templates' );
         }
+        if ( null !== $request->get_param( 'category' ) ) {
+            $data['category'] = (string) $request->get_param( 'category' );
+        }
 
         $result = Culture_Hubs::update( $hub_id, $user_id, $data );
         if ( is_wp_error( $result ) ) {
@@ -2281,6 +2293,7 @@ class Culture_REST_API {
         $params = array(
             'q'        => (string) $request->get_param( 'q' ),
             'sort'     => (string) $request->get_param( 'sort' ),
+            'category' => (string) $request->get_param( 'category' ),
             'page'     => (int) ( $request->get_param( 'page' ) ?: 1 ),
             'per_page' => (int) ( $request->get_param( 'per_page' ) ?: 20 ),
         );
@@ -2291,6 +2304,11 @@ class Culture_REST_API {
     public static function handle_hub_my_hubs( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );
         return rest_ensure_response( Culture_Hubs::get_for_user( $user_id ) );
+    }
+
+    public static function handle_hub_related_events( $request ) {
+        $hub_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( array( 'events' => Culture_Hubs::get_related_events( $hub_id ) ) );
     }
 
     public static function handle_hub_get( $request ) {

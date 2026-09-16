@@ -15,6 +15,7 @@ import { api, MOBILE_API } from "../../api/client";
 import type { Hub } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
 import { hubGradient } from "../../utils/hubGradient";
+import { HUB_CATEGORIES } from "../../utils/hubCategories";
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
@@ -57,6 +58,15 @@ function createStyles(c: ColorPalette) {
       textTransform: "uppercase", letterSpacing: 0.5,
     },
     rail: { paddingHorizontal: space[4], gap: 12 },
+
+    // Category filter chips
+    catChip: {
+      height: 32, paddingHorizontal: 14, borderRadius: radius.full,
+      backgroundColor: c.paperDeep, justifyContent: "center",
+    },
+    catChipActive: { backgroundColor: c.ink },
+    catChipText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    catChipTextActive: { fontFamily: fonts.sansBold, color: c.paper },
 
     // "Your Hubs" avatar tiles
     tile: { width: 74, alignItems: "center", gap: 6 },
@@ -122,6 +132,7 @@ export default function HubsScreen() {
   const { user } = useAuthStore() as any;
 
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState("");
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [myJoined, setMyJoined] = useState<Hub[]>([]);
   const [trending, setTrending] = useState<Hub[]>([]);
@@ -129,11 +140,12 @@ export default function HubsScreen() {
 
   const joinedIds = useMemo(() => new Set(myJoined.map((h) => h.id)), [myJoined]);
 
-  const load = useCallback(async (query: string) => {
+  const load = useCallback(async (query: string, cat: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ sort: "popular", per_page: "20" });
       if (query) params.set("q", query);
+      if (cat) params.set("category", cat);
       const data = await api.get<{ hubs: Hub[] }>(`${MOBILE_API}/hub/discover?${params}`, false);
       setHubs(data?.hubs ?? []);
     } catch {
@@ -143,9 +155,9 @@ export default function HubsScreen() {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => load(q), 300);
+    const t = setTimeout(() => load(q, category), 300);
     return () => clearTimeout(t);
-  }, [q, load]);
+  }, [q, category, load]);
 
   // Trending is independent of the search query — it sits above the
   // search/grid section, same as "Your Hubs", so it's fetched once.
@@ -195,6 +207,27 @@ export default function HubsScreen() {
           <Text style={styles.startBtnText}>Start →</Text>
         </TouchableOpacity>
       </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, { paddingTop: 0, paddingBottom: 4 }]}>
+        <TouchableOpacity
+          style={[styles.catChip, !category && styles.catChipActive]}
+          onPress={() => setCategory("")}
+        >
+          <Text style={[styles.catChipText, !category && styles.catChipTextActive]}>All</Text>
+        </TouchableOpacity>
+        {HUB_CATEGORIES.map((cat) => {
+          const active = category === cat;
+          return (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.catChip, active && styles.catChipActive]}
+              onPress={() => setCategory(active ? "" : cat)}
+            >
+              <Text style={[styles.catChipText, active && styles.catChipTextActive]}>{cat}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       {myJoined.length > 0 && (
         <View style={styles.section}>

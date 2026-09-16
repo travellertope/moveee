@@ -19,6 +19,8 @@ import { useAuthStore } from "../../auth/authStore";
 import FeedItemCard from "../../components/community/FeedItemCard";
 import BottomSheet from "../../components/ui/BottomSheet";
 import { hubGradient } from "../../utils/hubGradient";
+import { HUB_CATEGORIES } from "../../utils/hubCategories";
+import { openInApp } from "../../utils/openInApp";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
@@ -79,6 +81,11 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4,
     },
     officialChipText: { fontFamily: fonts.monoBold, fontSize: 8.5, color: "#fff", letterSpacing: 0.6, textTransform: "uppercase" },
+    categoryChip: {
+      alignSelf: "flex-start", backgroundColor: "rgba(20,17,13,0.45)",
+      paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4,
+    },
+    categoryChipText: { fontFamily: fonts.monoBold, fontSize: 8.5, color: "#fff", letterSpacing: 0.6, textTransform: "uppercase" },
     hubNameOverlay: {
       fontFamily: fonts.serifBold, fontSize: 18, color: "#fff", marginBottom: 3,
       textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
@@ -176,12 +183,15 @@ export default function HubDetailScreen() {
   const [manageOpen, setManageOpen] = useState(false);
   const [mName, setMName] = useState("");
   const [mDescription, setMDescription] = useState("");
+  const [mCategory, setMCategory] = useState("");
   const [mAllowed, setMAllowed] = useState<string[]>([]);
   const [mCoverImageUrl, setMCoverImageUrl] = useState("");
   const [mUploadingCover, setMUploadingCover] = useState(false);
   const [mSaving, setMSaving] = useState(false);
   const [mArchiving, setMArchiving] = useState(false);
   const [mError, setMError] = useState("");
+
+  const [relatedEvents, setRelatedEvents] = useState<{ id: number; title: string; slug: string; eventDate: string; imageUrl: string }[]>([]);
 
   const isOwner = status.role === "owner";
   const isModerator = status.role === "owner" || status.role === "mod";
@@ -215,9 +225,13 @@ export default function HubDetailScreen() {
         if (hubData) {
           setMName(hubData.name);
           setMDescription(hubData.description);
+          setMCategory(hubData.category ?? "");
           setMAllowed(hubData.allowedTemplates ?? []);
           setMCoverImageUrl(hubData.coverImageUrl ?? "");
           loadFeed(hubData.id);
+          api.get<{ events: typeof relatedEvents }>(`${MOBILE_API}/hub/${hubData.id}/related-events`, false)
+            .then((d) => setRelatedEvents(d?.events ?? []))
+            .catch(() => setRelatedEvents([]));
         }
         if (hubData && user) {
           const statusData = await api.get<HubStatus>(`${MOBILE_API}/hub/${hubData.id}/status`);
@@ -331,6 +345,7 @@ export default function HubDetailScreen() {
         description: mDescription.trim(),
         allowed_templates: mAllowed,
         cover_image_url: mCoverImageUrl,
+        category: mCategory,
       });
       setHub(updated);
     } catch (e: any) {
@@ -545,6 +560,11 @@ export default function HubDetailScreen() {
                       <Text style={styles.officialChipText}>Official</Text>
                     </View>
                   )}
+                  {!hub.isOfficial && hub.category && (
+                    <View style={styles.categoryChip}>
+                      <Text style={styles.categoryChipText}>{hub.category}</Text>
+                    </View>
+                  )}
                   <Text style={styles.hubNameOverlay} numberOfLines={2}>{hub.name}</Text>
                   <Text style={styles.hubStatsOverlay}>
                     {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
@@ -611,6 +631,43 @@ export default function HubDetailScreen() {
             </View>
           )}
 
+          {hub.clusterId && (
+            <TouchableOpacity
+              style={[styles.card, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+              onPress={() => nav.navigate("ClusterScreen", { id: hub.clusterId })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Discussion for a Stoop</Text>
+                <Text style={styles.cardBody}>This Hub is the discussion space for a weekly Stoop — tap to view it.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={c.mute} />
+            </TouchableOpacity>
+          )}
+
+          {relatedEvents.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Related events</Text>
+              {relatedEvents.map((ev) => (
+                <TouchableOpacity
+                  key={ev.id}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 }}
+                  onPress={() => openInApp(`https://web.themoveee.com/events/${ev.slug}`)}
+                >
+                  {ev.imageUrl ? (
+                    <Image source={{ uri: ev.imageUrl }} style={{ width: 48, height: 48, borderRadius: radius.md }} />
+                  ) : (
+                    <View style={{ width: 48, height: 48, borderRadius: radius.md, backgroundColor: c.paperWarm }} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardBody} numberOfLines={2}>{ev.title}</Text>
+                    <Text style={[styles.hubStatsOverlay, { color: c.mute }]}>{ev.eventDate}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={c.mute} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
           {/* Moderator tools — tucked behind the banner's ⚙ icon instead of
               an always-expanded inline form pushing the feed down for every
               visitor who happens to be a mod. */}
@@ -653,6 +710,23 @@ export default function HubDetailScreen() {
                         <Text style={styles.coverPickerText}>Choose an image</Text>
                       )}
                     </TouchableOpacity>
+
+                    <Text style={styles.label}>Category</Text>
+                    <View style={styles.grid}>
+                      {HUB_CATEGORIES.map((cat) => {
+                        const active = mCategory === cat;
+                        return (
+                          <TouchableOpacity
+                            key={cat}
+                            style={[styles.chip, active && styles.chipActive]}
+                            onPress={() => setMCategory(active ? "" : cat)}
+                            disabled={hub.status === "archived"}
+                          >
+                            <Text style={styles.chipText}>{cat}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
 
                     <Text style={styles.label}>What can members post?</Text>
                     <View style={styles.grid}>
