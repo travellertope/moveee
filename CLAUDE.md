@@ -4877,6 +4877,86 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 
 ---
 
+## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
+
+First step of a longer-term plan to retire the standalone `/quotes` product and make
+`culture_quote` posts fully feed-native — the user's explicit goal, stated as "how can we
+merge web.themoveee.com/quotes to work as part of the feed not a separate product? so we
+can retire /quotes/". Quote cards already rendered natively inline in the unified feed on
+both platforms (`FeedCard.tsx`'s quote branch on web, `QuoteCard` in
+`apps/mobile/src/components/community/FeedItemCard.tsx` on mobile — neither ever linked
+out to `/quotes/[slug]` to render; `href` is only used for the ReactionBar's share URL) —
+so this pass tackled the two specific gaps flagged when the merge was scoped: seeded
+quotes had no valid author identity, and the auto-seeding automation was confirmed
+non-functional and explicitly approved for retirement. The standalone `/quotes` pages
+themselves are **not yet retired** — that's a later step, to be scoped again (same
+`AskUserQuestion` treatment as the `/visuals` retirement) once the author-archive-view and
+other `/quotes`-only functionality (like/report/audit endpoints, sitemap entry, SEO
+`Quotation` JSON-LD, the global `SearchModal`'s quote content-type) have a plan.
+
+**Synthetic system author (`Culture_System_Author`, new class,
+`culture-community/includes/core/class-culture-system-author.php`)** — editorially-seeded
+quotes have no real community submitter; `/api/quotes/auto-populate` (see retirement below)
+always POSTed `user_id: 0`, and `handle_create_quote()`'s fallback chain
+(`user_id → get_current_user_id()`) also resolved to 0 for an unauthenticated API-key
+request, so every seeded quote's `post_author` ended up `0`. `get_userdata(0)` returns
+`false`, so `get_quote_feed_items()`'s `communityAuthor`/`communityAuthorUsername`/
+`communityAuthorAvatar` fields (which mobile's `QuoteCard`/`CommunityQuoteCard` are already
+built to read, same as every other feed item type) silently rendered blank for these.
+Fixed by giving `handle_create_quote()` a third fallback — `Culture_System_Author::get_id()`
+— mirroring `Culture_Account_Deletion::get_placeholder_user_id()`'s exact shape: a
+lazily-created, login-disabled WP user (`moveee-editors`, display name "Moveee", random
+unusable password, `subscriber` role, `_culture_avatar_url` pointed at
+`https://themoveee.com/logo-black.png`), cached by the `culture_system_author_user_id`
+option so it's only ever created once. `Culture_System_Author::maybe_backfill_quote_authors()`
+(hooked on `wp_loaded`, same reasoning as `Culture_Country_Cleanup::init()` — needs the
+`culture_quote` post type already registered) is a one-time migration reassigning every
+pre-existing `post_author = 0` quote to this account, gated by
+`culture_quote_authors_backfilled` — same shape as every other `maybe_backfill_*` in this
+plugin. New quotes submitted through the real composer path (`SubmitPost.tsx`'s Update
+family) are unaffected — they already carry a real submitter.
+
+**Seeding automation retired** — per explicit user instruction ("the seeding dont even
+work autonomously anyways. So I dont mind retiring it"). Removed entirely, not just
+disabled:
+- The WP-Cron "Quotes seed (weekly)" job (`Culture_Cron::HOOK_SEED_QUOTES`/`seed_quotes()`)
+  — removed from `class-culture-cron.php`'s hook registration, `schedule()`/`unschedule()`
+  hook lists, and its handler method. A new one-time `maybe_clear_retired_jobs()` (hooked
+  alongside the others in `init()`, gated by `culture_cron_retired_jobs_cleared`) clears
+  any already-scheduled `culture_seed_quotes` cron-table row on sites that had it —
+  otherwise it would keep firing into a `do_action()` with no listener forever, harmless
+  but cluttering WP Admin's cron views. If a future job is ever retired the same way, add
+  its hook name to `maybe_clear_retired_jobs()`'s list rather than leaving a stale row.
+- `/api/quotes/auto-populate` (both `apps/site` and `apps/connect` — the route + its
+  `data.ts` curated-quote list) — deleted outright.
+- The WP Admin "Quote Seeder" panel on the Directory Tools page (`class-culture-
+  directory-tools.php` — the "Seed Moveee Quotes" button, its `ajax_run_quote_seeder()`
+  handler and `wp_ajax_culture_run_quote_seeder` registration, its `culture_quote_seeder_
+  offset` option, and its JS click handler) — removed, since it called the now-deleted
+  route too. The adjacent **"Bulk Quote Importer" panel (CSV paste/upload) is unrelated
+  and was left untouched** — that's a manual, non-automated import path, not "seeding."
+- `packages/shared/lib/quotes-seeder.ts` trimmed to just `searchSerper()`/
+  `SerperQuoteResult` — still needed by `/api/quotes/audit` (a distinct, still-live
+  concern: fact-checking *existing* quotes for fabrication, not creating new ones).
+  `QUOTE_AUTHORS`, `buildQuoteQueries()`, `fetchVerifiedQuotesForAuthor()`, and
+  `runVerifiedQuotesBatch()` were deleted along with their only caller. `gemini.ts`'s
+  `searchAndExtractQuotes()` is now unused (kept, per this file's "leave dead code that
+  might be needed again" convention) — it has no remaining call site.
+- Manual, admin-curated quote creation still works exactly as before (WP Admin post
+  editor for `culture_quote`, and the Bulk Quote Importer CSV panel) — only the automated
+  discovery/seeding pipeline (curated-list-then-Serper/Gemini-discovery) is gone.
+
+**Not verified against a real WordPress install** — same recurring sandbox gap as every
+other pass in this file (no `cms.themoveee.com` credentials/network access here).
+Verified via `php -l` on every touched PHP file and `tsc --noEmit` on both Next.js apps
+(only pre-existing, environment-level errors — missing `node_modules`/`@types/node` —
+none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
+`culture_quote` created via the post editor with no author picked still resolves
+sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
+Quotes" button, before considering this fully closed.
+
+---
+
 ## Cron / scheduled jobs — split ownership between WP-Cron and cron-job.org (June 2026)
 
 Two independent schedulers trigger Next.js worker routes via `Authorization:

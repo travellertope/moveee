@@ -3557,10 +3557,19 @@ class Culture_REST_API {
         $source  = $request->get_param( 'source' );
         
         // If user_id is passed and we're authenticated via API key, use it.
-        // Otherwise, fallback to the logged-in session user.
+        // Otherwise, fallback to the logged-in session user, and finally to
+        // the synthetic "Moveee" system author (Culture_System_Author) for
+        // quotes with no real submitter at all — e.g. an editorially-seeded
+        // quote posted with user_id=0 from an unauthenticated API-key
+        // request. Never leave post_author at 0: get_userdata(0) returns
+        // false everywhere downstream (get_quote_feed_items()'s
+        // communityAuthor fields in particular).
         $user_id = (int) $request->get_param( 'user_id' );
         if ( ! $user_id ) {
             $user_id = get_current_user_id();
+        }
+        if ( ! $user_id && class_exists( 'Culture_System_Author' ) ) {
+            $user_id = (int) Culture_System_Author::get_id();
         }
 
         // Duplicate detection: compare normalised content hash.
