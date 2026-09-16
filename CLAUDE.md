@@ -6596,13 +6596,43 @@ field. The "More by {name} →" archive link is **omitted** whenever `guestBylin
 no real `/author/{slug}` page for a typed guest name, so linking to the real WP account's archive
 under the guest's displayed name would be actively wrong.
 
-**Deliberately out of scope for this pass** — not swept, same "known, deliberate scope limit"
-convention used elsewhere in this file: the mobile app's `ArticleScreen.tsx` (still reads
-`item.author`, unaware of `guestByline`), the RSS feed, `sitemap.ts`'s author-archive generation,
-search results (`SearchOverlay.tsx`/`app/api/search/route.ts`), the newsletter reader, and the
-TOC sidebar's plain-text rendering path in `class-culture-post-types.php` if one exists elsewhere.
-If Guest Byline needs to show up on any of those surfaces later, extend from the `guestByline`
-GraphQL field already in place — don't build a second mechanism.
+**Mobile app extended (September 2026, follow-up).** `apps/mobile` fetches articles via raw
+WordPress REST (`wp-json/wp/v2/posts`), not GraphQL, so the GraphQL-only resolver above was
+invisible to it — fixed two ways:
+- `Culture_Post_Types::register_guest_byline_meta()` (new, `class-culture-post-types.php`,
+  hooked on `init`) registers `guest_byline_name`/`guest_byline_bio`/`guest_byline_avatar` via
+  `register_post_meta('post', ..., ['show_in_rest' => true])` — mirrors the pre-existing
+  `as_told_to` registration in the same file. **ACF-stored postmeta is not automatically REST-
+  visible** — without this, `meta.guest_byline_*` never appears in the REST response regardless
+  of what the ACF field group itself does; this is the one call GraphQL didn't need (WPGraphQL's
+  resolver reads raw postmeta directly) but REST does.
+- `useMagazine.ts`'s `mapPost()` reads `post.meta?.guest_byline_name` and, when set, overrides
+  the mapped `author` (`name`/`avatarUrl`/`bio`) the same way the web page does — `slug` is left
+  `""` for a guest byline (no real `/author` archive to link to). `Article`'s `author` type in
+  `types/index.ts` gained an optional `bio` field and a comment documenting the empty-slug
+  convention. `ArticleScreen.tsx`'s "More articles by {name} →" link is now gated on
+  `article.author.slug` being non-empty, mirroring the web page's own "omit the archive link for
+  a guest byline" rule.
+
+**RSS, sitemap, and search — checked, nothing to extend.** None of these actually display an
+author name in the first place, so there's no override to add:
+- `apps/site/lib/rss.ts`'s newsletter RSS template (`buildNewsletterRssFeed`) has no
+  author/`dc:creator`/`itunes:author` field at all, and there is no RSS feed for magazine
+  articles anywhere in this codebase.
+- `apps/site/app/sitemap.ts` has zero author references. The real author archive page
+  (`apps/site/app/author/[slug]/page.tsx`) correctly shows the real account's own name/avatar/bio
+  on its masthead (it's that account's own page, not a per-article override target) and its
+  story grid (`ArchiveCardGrid.tsx`, shared with the homepage/`/magazine`/series pages) never
+  renders a per-card author byline at all.
+- Site A's search (`apps/site/app/api/search/route.ts`'s `SEARCH_POSTS` query +
+  `SearchOverlay.tsx`) shows only Category · Country as a result's meta line, never an author.
+  Site B's search (`apps/connect/app/api/search/route.ts`, native `wp/v2/search`) maps results to
+  a bare `{id, title, subtype, href}` — no author field is fetched or rendered by
+  `SearchModal.tsx` either.
+
+If a genuine author-display gap turns up on any of these later, extend from the `guestByline`
+GraphQL field (web) or the newly-REST-exposed `meta.guest_byline_*` fields (mobile/any future
+REST consumer) — don't build a second mechanism.
 
 Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
 credentials gap as every other pass in this file; this feature additionally needs the plugin
