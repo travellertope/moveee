@@ -102,7 +102,7 @@ export default function ArticleComments({ postId, content }: Props) {
     return `${Math.floor(h / 24)}d ago`;
   };
 
-  const displayName = session?.user?.displayName || session?.user?.name || "You";
+  const displayName = session?.user?.name || "You";
   const composerActive = isFocused || newComment.length > 0;
 
   return (
