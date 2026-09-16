@@ -84,7 +84,6 @@ const Footer = () => {
               <li><Link href="/literary">The Moveee Literary</Link></li>
               <li><Link href="/newsletter">Newsletter</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
-              <li><Link href="/visuals">Visuals</Link></li>
               <li><a href={`${CONNECT_URL}/quotes`}>Quotes</a></li>
             </ul>
           </div>

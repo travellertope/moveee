@@ -2819,6 +2819,55 @@ work needed.
   would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
   and a newsletter issue page in a real environment before considering this fully closed.
 
+### `/visuals` retired — web route only, backend/mobile deliberately untouched (September 2026)
+
+Per explicit user request ("relegate /visuals totally" → clarified as "retire"), the Site A
+illustration gallery at `/visuals` (a public gallery of AI-generated illustrations sourced from
+`culture_directory` entries via `GET /wp-json/culture/v1/visuals`, plus `/visuals/[slug]` single
+pages reusing `GET_DIRECTORY_ENTRY_BY_SLUG`) has been removed **on the web frontend only** — an
+explicit scope choice, confirmed via `AskUserQuestion` before touching anything, since this
+feature also has a WordPress-side admin illustration-generation tool, a `culture/v1/visuals` REST
+endpoint, and a download-credit/gamification tracking system (`_culture_visual_downloads`
+usermeta, `visual_downloads_today` in the mobile/NextAuth session shape) — none of that backend
+was touched, and neither was the unrelated mobile app's own "Visuals" **category** filter on
+`MagazineScreen.tsx` (a magazine-category concept, distinct from this web gallery, confirmed by
+name only — not the same feature).
+
+**Removed**: `apps/site/app/visuals/` (`page.tsx` + `[slug]/page.tsx`), `apps/site/app/
+visuals.css`, `apps/site/components/VisualsGrid.tsx`/`VisualsSingleClient.tsx`, the Footer's
+"Visuals" link (`packages/shared/components/Footer.tsx`, Explore column), the `/visuals`
+sitemap entry, `'visuals'` from `CONTENT_PATHS` in `app/api/revalidate/route.ts` (harmless to
+revalidate a nonexistent path, but cleaned up anyway), and the `/visuals` mention in `app/api/
+wp-health/route.ts`'s doc comment (that endpoint only ever actually probed `directory`/`quotes`
+GraphQL queries — the comment's claim of "three queries" including visuals was already stale
+before this pass, unrelated pre-existing inaccuracy, fixed in passing).
+
+**Redirect**: `'visuals'` was removed from `proxy.ts`'s `APP_ROUTES` set, and a new explicit
+block added — `pathname === '/visuals' || pathname.startsWith('/visuals/')` → 301 `/magazine` —
+placed alongside the other JetEngine-taxonomy prefix-redirects (`/tag/`, `/series/`, `/country/`,
+`/industry/`). **This could not just rely on `ROUTE_ALIASES`** (the existing `{ 'tours':
+'/journeys', 'lifestyle': '/shop' }` map) — that map is only checked against a *single-segment*
+`cleanPath`, so it would have correctly redirected bare `/visuals` but left every individual
+`/visuals/{illustration-slug}` URL to fall through to the routes that no longer exist and 404
+instead of preserving SEO equity via a 301, which is why this got its own dedicated
+`startsWith('/visuals/')` block instead.
+
+**Deliberately out of scope, left running**: the WP Admin illustration-generation tool
+(`class-culture-directory-tools.php`), the `culture/v1/visuals` REST endpoint and its mobile-API
+counterpart, the `_culture_visual_downloads` usermeta/credit-tracking system, and
+`apps/mobile/src/screens/magazine/MagazineScreen.tsx`'s "Visuals" category filter chip. If a
+future pass wants the backend torn down too, treat it as a separate, larger piece of work — it
+has its own admin UI, REST surface, and gamification hooks that a frontend-only removal
+correctly left alone.
+
+**Not visually verified in a browser** — no `node_modules` installed this session, so neither
+`next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
+Verified via a repo-wide grep confirming zero remaining `/visuals` references in `apps/site`/
+`apps/connect`/`packages` outside the new proxy.ts redirect block itself, and a brace-balance
+check on the edited `proxy.ts` (82/82). Re-check that `themoveee.com/visuals` and
+`themoveee.com/visuals/{any-old-slug}` both 301 to `/magazine` in a real environment before
+considering this fully closed.
+
 ### Pull-quote/blockquote — centered treatment, magazine + literary + newsletters (September 2026)
 
 Mockup-first as usual (Artifact, iterated once — first draft was flush-left with the quotation

@@ -70,7 +70,6 @@ const APP_ROUTES = new Set([
   'journeys',
   'newsletter',
   'shop',
-  'visuals',
   'makers',
   'author',
   'services',
@@ -248,6 +247,15 @@ export async function proxy(request: NextRequest) {
 
   // /industry/slug → /magazine (JetEngine taxonomy)
   if (pathname.startsWith('/industry/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // ── /visuals retired (September 2026) ────────────────────────
+  // Section removed outright, both the gallery (/visuals) and individual
+  // illustration pages (/visuals/[slug]) — redirect to /magazine rather
+  // than falling through to the single-segment catch-all below, which
+  // only handles one path segment and would 404 on /visuals/[slug].
+  if (pathname === '/visuals' || pathname.startsWith('/visuals/')) {
     return NextResponse.redirect(new URL('/magazine', request.url), 301)
   }
 
