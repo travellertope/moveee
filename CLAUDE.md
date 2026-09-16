@@ -6536,6 +6536,84 @@ effect. `CULTURE_VERSION` (the dbDelta-gate constant, unrelated to the plugin he
 bumped — this fix adds no new tables, so there's nothing for `culture_community_maybe_upgrade()`
 to run.
 
+## Byline Contributor role + Guest Byline field (September 2026)
+
+A restricted WP role that can create and publish `post` (Moveee Magazine article) entries and
+attribute the article to a typed guest-writer name/bio — no real WordPress user account is ever
+created for the guest, and the role never sees any other author's posts or any other post type.
+
+**Role — `culture_byline_contributor`** (`culture-community/includes/core/
+class-culture-guest-byline.php`, `Culture_Guest_Byline`). Author-equivalent primitive
+capabilities only (`edit_posts`/`edit_published_posts`/`publish_posts`/`delete_posts`/
+`delete_published_posts`/`upload_files`/`read`) — deliberately no `edit_others_posts`/
+`edit_private_posts`/`list_users`/`create_users`/`manage_options`. WP's own post-list query
+already restricts a user without `edit_others_posts` to their own posts, so "no access to all
+posts" is the ordinary capability model, not custom query filtering.
+
+**The real complication, worth understanding before touching this again**: every custom CPT in
+this plugin (`culture_event`, `culture_directory`, `culture_newsletter`, `culture_quote`,
+`culture_post`, `culture_journey`, `culture_cluster`, `culture_hub`) is registered with
+`'capability_type' => 'post'` as a bare string, not a namespaced array — WordPress reuses the
+exact same `edit_posts`/`publish_posts`/`edit_post`/`delete_post` capability strings as core
+Posts for all of them. There is no native way to grant Author-level access to just `post` without
+also granting it to every one of those CPTs. `Culture_Guest_Byline` closes this itself, not by
+touching any of those `register_post_type()` calls (would risk changing behavior for the
+`author`/`editor` roles that already rely on those exact strings):
+- `map_meta_cap` filter (`restrict_to_post_type()`) denies `edit_post`/`delete_post`/
+  `publish_post`/`read_private_post` on any post whose `post_type !== 'post'`, for a user holding
+  this role without `manage_options` — this is the real enforcement.
+- `admin_menu` (`trim_admin_menu()`) removes the other CPTs' submenu pages for this role — a UX
+  trim only; note they're all registered under `show_in_menu => 'culture-community'` (a nested
+  submenu), so this uses `remove_submenu_page('culture-community', ...)`, not
+  `remove_menu_page()`.
+- Role registration is version-gated (`ROLE_VERSION`/`culture_byline_role_version` option, same
+  shape as every other one-time-migration in this plugin) so a future cap-set change reaches
+  existing installs on their next request via `remove_role()` + `add_role()`, not just new sites.
+
+**Guest Byline — display-only, `post_author` never changes.** A new ACF field group ("Guest
+Byline": `guest_byline_name`, `guest_byline_bio`, `guest_byline_avatar`) in
+`class-culture-acf-fields.php`, restricted to the `post` type and, via ACF's "Current User Role"
+location rule, to `culture_byline_contributor` + `administrator` only — it doesn't clutter the
+editor screen for anyone else. Because ownership never changes, every capability/revision/
+authorship check above still applies to the real logged-in account; only the rendered byline
+changes. This is a second, independent mechanism from the pre-existing `as_told_to` field (name
+only, still shows the real WP author as "as told to {author}") — Guest Byline takes precedence
+over `as_told_to` wherever both are checked.
+
+**GraphQL**: `guestByline { name bio avatarUrl }` registered on `Post` in
+`moveee-graphql-bridge.php` (same isolation pattern as `moveeeMeta`/`featuredProducts` — reads
+plain postmeta directly, not `get_field()`, so it degrades to `null` if ACF is ever inactive
+rather than breaking the query) and added to `STORY_FIELDS_FRAGMENT` in
+`packages/shared/lib/wp.ts`. `Culture_Preview::resolve_guest_byline()` mirrors the same resolver
+shape for the draft-preview payload (`class-culture-preview.php`).
+
+**Frontend — `apps/site/app/magazine/[slug]/page.tsx` only.** A `guestByline`/`bylineDisplay`
+pair is derived once near the top of the page and threaded through every byline surface on this
+one route: both hero "Words by" blocks, the "Writer" row in the sidebar Details card, the
+end-of-article author band (name/bio/avatar — falls back to `guestByline.bio ||
+"Contributing writer, Moveee Magazine."` when no bio is set), and the `Article` JSON-LD `author`
+field. The "More by {name} →" archive link is **omitted** whenever `guestByline` is set — there's
+no real `/author/{slug}` page for a typed guest name, so linking to the real WP account's archive
+under the guest's displayed name would be actively wrong.
+
+**Deliberately out of scope for this pass** — not swept, same "known, deliberate scope limit"
+convention used elsewhere in this file: the mobile app's `ArticleScreen.tsx` (still reads
+`item.author`, unaware of `guestByline`), the RSS feed, `sitemap.ts`'s author-archive generation,
+search results (`SearchOverlay.tsx`/`app/api/search/route.ts`), the newsletter reader, and the
+TOC sidebar's plain-text rendering path in `class-culture-post-types.php` if one exists elsewhere.
+If Guest Byline needs to show up on any of those surfaces later, extend from the `guestByline`
+GraphQL field already in place — don't build a second mechanism.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file; this feature additionally needs the plugin
+redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the role and ACF
+field appear in WP Admin. Verified via `php -l` on every touched PHP file and a brace/paren
+balance check on the edited `page.tsx` (no `node_modules` installed this session, so `tsc
+--noEmit` couldn't run). Re-check in WP Admin — create the role, assign it to a test account, log
+in as that account, confirm Posts is the only visible/creatable content type, set a Guest Byline,
+and confirm the live article page shows it in every location listed above — before considering
+this fully closed.
+
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
 This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.

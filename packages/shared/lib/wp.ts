@@ -772,6 +772,11 @@ const STORY_FIELDS_FRAGMENT = `
       }
     }
     asToldTo
+    guestByline {
+      name
+      bio
+      avatarUrl
+    }
     seoTitle
     seoDescription
     author {
