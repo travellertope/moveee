@@ -9,10 +9,11 @@
 /* ══ MAKERS ARCHIVE ══════════════════════════════════════════════════════════ */
 
 .makers-header {
+  /* No more --header-clear top padding — /makers now shares the Moveee
+     Lifestyle's own standalone ShopHeader (app/makers/layout.tsx), which
+     renders in normal document flow, not fixed/floating like the sitewide
+     pill, so there's no clearance gap left to reserve here. */
   padding: 64px 0 48px;
-  /* Clears the floating header — see the --header-clear comment in
-     globals.css. This is the archive page's first section. */
-  padding-top: calc(var(--header-clear, 96px) + 64px);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -29,14 +30,14 @@
   margin-bottom: 12px;
 }
 .makers-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: clamp(32px, 5vw, 52px);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--ink);
 }
-.makers-title em { font-style: italic; color: var(--ochre); }
+.makers-title em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .makers-header-right { max-width: 340px; flex-shrink: 0; }
 .makers-desc {
   font-family: var(--font-sans);
@@ -83,9 +84,9 @@
 }
 .maker-card-body { padding: 20px 18px 22px; }
 .maker-card-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 19px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ink);
   margin-bottom: 4px;
@@ -157,10 +158,9 @@
   min-height: 520px;
   margin-bottom: 80px;
   padding-bottom: 32px;
-  /* Now the page's first element since the breadcrumb (which used to
-     carry this) was removed — see the --header-clear comment in
-     globals.css. */
-  padding-top: var(--header-clear, 96px);
+  /* No more --header-clear top padding — /makers now shares the Moveee
+     Lifestyle's own standalone ShopHeader, which renders in normal
+     document flow, not fixed/floating like the sitewide pill. */
 }
 .maker-hero-visual {
   position: relative;
@@ -189,9 +189,9 @@
   line-height: 1;
 }
 .maker-hero-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: clamp(28px, 4vw, 46px);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
   line-height: 1.1;
@@ -235,9 +235,9 @@
   margin-left: 24px;
 }
 .maker-stat-num {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 800;
   color: var(--ink);
   line-height: 1;
   margin-bottom: 8px;
@@ -277,13 +277,13 @@
   margin-bottom: 32px;
 }
 .maker-products-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.maker-products-title em { font-style: italic; color: var(--ochre); }
+.maker-products-title em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .maker-products-count {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -393,13 +393,13 @@
   margin-bottom: 32px;
 }
 .maker-editorial-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.maker-editorial-title em { font-style: italic; color: var(--ochre); }
+.maker-editorial-title em { font-style: normal; font-weight: 800; color: var(--ochre); }
 .maker-editorial-all {
   font-family: var(--font-sans);
   font-size: 12px;
@@ -437,9 +437,9 @@
   margin-bottom: 8px;
 }
 .maker-editorial-post-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 17px;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--ink);
   line-height: 1.35;
   margin-bottom: 8px;
@@ -470,9 +470,9 @@
   font-family: var(--font-sans);
 }
 .maker-not-found h1 {
-  font-family: var(--font-serif);
+  font-family: var(--font-lfs-display, var(--font-serif));
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 800;
   color: var(--ink);
   margin-bottom: 12px;
 }
@@ -492,7 +492,7 @@
   .makers-page,
   .maker-single         { padding: 0 20px 64px; }
 
-  .makers-header        { flex-direction: column; align-items: flex-start; padding: 40px 0 32px; padding-top: calc(var(--header-clear, 96px) + 40px); }
+  .makers-header        { flex-direction: column; align-items: flex-start; padding: 40px 0 32px; }
   .makers-header-right  { max-width: 100%; }
   .makers-grid          { grid-template-columns: repeat(2, 1fr); }
 

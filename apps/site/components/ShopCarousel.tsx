@@ -105,7 +105,7 @@ export default function ShopCarousel({ products }: { products: Product[] }) {
         {products.map((product) => (
           <Link
             key={product.id}
-            href={`/shop/${product.slug}`}
+            href={`/lifestyle/${product.slug}`}
             className="hp-carousel-card hp-product"
             draggable={false}
           >

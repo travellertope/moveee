@@ -7,6 +7,7 @@ import {
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
 import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
+import LiteraryGenreArt from "@/components/LiteraryGenreArt";
 import { decodeHtml } from "@/lib/decode-html";
 
 function plainExcerpt(html: string | undefined | null, max = 220): string {
@@ -15,7 +16,20 @@ function plainExcerpt(html: string | undefined | null, max = 220): string {
   return text.length > max ? text.slice(0, max).trim() + "…" : text;
 }
 
-const SHELF_GRADIENT = "linear-gradient(150deg, #17130f, #7a241c 65%, #8b4d2e 140%)";
+// A one-time "start the homepage fresh" reset, per explicit request — the
+// homepage's own story pools (hero/Latest/In Translation/More From) only
+// ever show pieces published on or after this date; nothing published
+// before it deletes/unpublishes anything, and every earlier piece is still
+// fully reachable via its own genre archive (/literary/{genre}), a direct
+// link, and search/sitemap — this filter touches nothing but which pieces
+// this one page's own pools pick from. GET_STORIES has no explicit
+// `orderby` and WordPress's own default post ordering is date DESC, so a
+// plain first-N fetch is already newest-first — filtering after the fetch
+// (rather than passing a date arg into the query) never risks an older
+// post displacing a newer one, it just trims the already-sorted list at
+// the cutoff. Not a rolling window (e.g. "last 7 days") — deliberately a
+// fixed date, so the homepage doesn't go back to empty during a slow week.
+const LITERARY_HOMEPAGE_CUTOFF = new Date("2026-09-14T00:00:00Z");
 
 // Rebuilt from the approved Granta-inspired mockup — every section below is
 // wired to real getLiteraryPieces() data; sections the mockup showed that
@@ -24,10 +38,15 @@ const SHELF_GRADIENT = "linear-gradient(150deg, #17130f, #7a241c 65%, #8b4d2e 14
 // of the six real genre archives instead of fabricated past issues, and a
 // submissions spotlight in place of the print-issue plug.
 export default async function LiteraryLandingPage() {
-  const [pieces, translations] = await Promise.all([
+  const [piecesRaw, translationsRaw] = await Promise.all([
     getLiteraryPieces(undefined, 12),
     getLiteraryPieces("translation", 6),
   ]);
+
+  const pieces = piecesRaw.filter((p: any) => new Date(p.date) >= LITERARY_HOMEPAGE_CUTOFF);
+  const translations = translationsRaw.filter(
+    (p: any) => new Date(p.date) >= LITERARY_HOMEPAGE_CUTOFF
+  );
 
   const heroPieces = pieces.slice(0, 3);
   const usedSlugs = new Set(heroPieces.map((p: any) => p.slug));
@@ -52,8 +71,7 @@ export default async function LiteraryLandingPage() {
   const shelfItems: LiteraryShelfItem[] = LITERARY_GENRES.map((g) => ({
     href: `/literary/${g.slug}`,
     label: g.label,
-    sub: g.label.slice(0, 3).toUpperCase(),
-    gradient: SHELF_GRADIENT,
+    slug: g.slug,
   }));
 
   return (
@@ -139,8 +157,11 @@ export default async function LiteraryLandingPage() {
         <div className="lit-wrap">
           <div className="lit-plug">
             <div className="lit-plug-cover">
-              <span className="lit-plug-cover-label">Submissions</span>
-              <span className="lit-plug-cover-title">Open</span>
+              <LiteraryGenreArt slug="submissions" className="lit-plug-cover-art" />
+              <div className="lit-plug-cover-text">
+                <span className="lit-plug-cover-label">Submissions</span>
+                <span className="lit-plug-cover-title">Open</span>
+              </div>
             </div>
             <div>
               <div className="lit-tag">Now Reading</div>

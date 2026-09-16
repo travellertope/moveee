@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   getWPData,
   GET_STORY_BY_SLUG,
@@ -9,10 +12,25 @@ import {
   literaryGenreOfPost,
   LITERARY_GENRES,
 } from "@/lib/wp";
+import { getAccessLevel } from "@/lib/access";
+import {
+  LITERARY_TOKEN_COOKIE,
+  LITERARY_READS_COOKIE,
+  LITERARY_FREE_READ_LIMIT,
+  isCrawlerUserAgent,
+  parseReadsCookie,
+  verifyLiteraryToken,
+  truncateHtmlByPercent,
+} from "@/lib/literary-access";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
+import LiteraryPieceGate from "@/components/LiteraryPieceGate";
+import LiteraryReadTracker from "@/components/LiteraryReadTracker";
 import SubscribeForm from "@/components/SubscribeForm";
+import ArticleShareFab from "@/components/ArticleShareFab";
+
+const LITERARY_READ_PERCENT = 0.3;
 
 // One dynamic segment serves two different things — a genre archive
 // (/literary/poetry) or a single piece (/literary/some-poem-slug) — since
@@ -21,6 +39,21 @@ import SubscribeForm from "@/components/SubscribeForm";
 // is a build error: "different slug names for the same dynamic path").
 // LITERARY_GENRES.slug values are checked first; anything else falls
 // through to a real post lookup.
+//
+// PiecePage calls cookies()/headers()/getServerSession() for anonymous
+// access-gating (see "Access:" below) — combined with generateStaticParams
+// existing on this route (for the six genre paths), Next.js's on-demand
+// render for an unlisted param (a real piece slug) throws DYNAMIC_SERVER_USAGE
+// as a real, uncaught 500 instead of silently falling back to per-request
+// dynamic rendering (a known App Router gotcha when generateStaticParams and
+// Dynamic APIs coexist on one route — confirmed live via Vercel logs: every
+// /literary/{slug} request from an anonymous, non-token reader 500'd with
+// this exact digest, since only that gating branch touches cookies()).
+// Forcing the whole route dynamic sidesteps it — same fix already used
+// elsewhere in this codebase for the same reason, see app/[edition]/page.tsx.
+// Genre archive pages already fetch fresh data every request anyway, so
+// there's no loss from skipping static generation for them too.
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   return LITERARY_GENRES.map((g) => ({ slug: g.slug }));
@@ -132,22 +165,88 @@ async function PiecePage({ slug }: { slug: string }) {
     year: "numeric",
   });
   const authorName = post.author?.node?.name || "The Moveee Literary";
-  const pieceUrl = `https://themoveee.com/literary/${slug}`;
-  const plainTitle = decodeHtml(post.title || "");
 
-  // Sidebar's "also in {genre}" teaser and the closing grid share one
-  // genre-scoped pool, deduped by slug so the same piece never appears in
-  // both places — the sidebar pick is excluded from the grid below it.
+  // ── Access: fold Literary Pro-gating into the existing Moveee Pro
+  // mechanism (culture_access taxonomy), and meter free reads for
+  // anonymous visitors — see the Literary gating notes in CLAUDE.md and
+  // lib/literary-access.ts. Crawlers always get the full piece: this is a
+  // soft paywall for list-building, not a wall against being indexed.
+  const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  const hdrs = await headers();
+  const isBot = isCrawlerUserAgent(hdrs.get("user-agent"));
+  const isLoggedIn = !!session?.user;
+  const isPatron = session?.user?.tier === "patron";
+  const accessLevel = getAccessLevel(post);
+  const litToken = verifyLiteraryToken(cookieStore.get(LITERARY_TOKEN_COOKIE)?.value);
+
+  const bodyHtml = sanitizeHtml(post.content || "");
+  let visibleBodyHtml = bodyHtml;
+  let trailingBodyHtml = "";
+  let gateBlock: React.ReactNode = null;
+  let shouldTrackRead = false;
+
+  if (!isBot) {
+    if (accessLevel === "patron-only") {
+      const proAuthorized = isPatron || litToken?.access === "pro";
+      if (!proAuthorized) {
+        const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          gateBlock = isLoggedIn ? (
+            <div className="lit-email-gate">
+              <div className="lit-gate-eyebrow">★ Subscribe to Continue</div>
+              <h3>There&rsquo;s more to read.</h3>
+              <p>
+                This piece continues in the Moveee Pro archive — extended fiction, poetry, and
+                essays for members going further with The Moveee Literary.
+              </p>
+              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=patron">
+                Upgrade to Moveee Pro →
+              </Link>
+            </div>
+          ) : (
+            <LiteraryPieceGate slug={slug} mode="pro" blocking />
+          );
+        }
+      }
+    } else if (!isLoggedIn && !litToken) {
+      const reads = parseReadsCookie(cookieStore.get(LITERARY_READS_COOKIE)?.value);
+      const hasFreeReadsLeft =
+        reads.length < LITERARY_FREE_READ_LIMIT || reads.some((r) => r.slug === slug);
+
+      if (hasFreeReadsLeft) {
+        shouldTrackRead = true;
+        const { visibleHtml, remainderHtml, hasMore } = truncateHtmlByPercent(
+          bodyHtml,
+          LITERARY_READ_PERCENT
+        );
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          trailingBodyHtml = remainderHtml;
+          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />;
+        }
+      } else {
+        const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
+        if (hasMore) {
+          visibleBodyHtml = visibleHtml;
+          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking />;
+        }
+      }
+    }
+  }
+
+  // Feeds the closing "More In {genre}" grid — the sidebar's own "Browse by
+  // Section" nav + genre teaser was removed (the top nav already covers the
+  // same six genres), so the whole genre-scoped pool goes to that grid now
+  // instead of reserving its first pick for a sidebar teaser.
   let genrePool: any[] = [];
   if (genre) {
     genrePool = (await getLiteraryPieces(genre.tagSlug, 8)).filter((p: any) => p.slug !== slug);
   }
-  const sidebarPick = genrePool[0];
-  const moreFromGenre = genrePool.slice(1, 4);
+  const moreFromGenre = genrePool.slice(0, 3);
 
-  const usedSlugs = new Set(
-    [slug, sidebarPick?.slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean)
-  );
+  const usedSlugs = new Set([slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean));
   const widerPool = await getLiteraryPieces(undefined, 12);
   const alsoLike = widerPool.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 3);
 
@@ -163,89 +262,48 @@ async function PiecePage({ slug }: { slug: string }) {
         <div className="lit-piece-byline">
           By <b>{authorName}</b> · {publishedDate}
         </div>
-        {/* A first sketch of the brand guide's own signature motif (§11 — a
-            curved oxblood/gold line), used here as the divider under the
-            title block instead of a plain rule. */}
-        <div className="lit-piece-motif" aria-hidden="true">
-          <svg width="150" height="20" viewBox="0 0 150 20" fill="none">
-            <path
-              d="M2 16C28 16 34 2 60 2C86 2 92 16 118 16C130 16 136 10 148 10"
-              stroke="url(#lit-motif-gradient)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-            <defs>
-              <linearGradient id="lit-motif-gradient" x1="0" y1="0" x2="150" y2="0" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#7A241C" />
-                <stop offset="1" stopColor="#B88942" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
       </div>
-
-      {post.featuredImage?.node?.sourceUrl && (
-        <div className="lit-wrap">
-          <img
-            className="lit-piece-featured-img"
-            src={post.featuredImage.node.sourceUrl}
-            alt={post.featuredImage.node.altText || ""}
-          />
-        </div>
-      )}
 
       <div className="lit-piece-layout">
         <article className="lit-piece-body-col">
-          <div
-            className="lit-piece-body"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || "") }}
-          />
-          <div className="lit-piece-share">
-            <span className="lit-piece-share-label">Share</span>
-            <div className="lit-piece-share-icons">
-              <a
-                href={`mailto:?subject=${encodeURIComponent(plainTitle)}&body=${encodeURIComponent(pieceUrl)}`}
-                aria-label="Share by email"
-              >
-                ✉
-              </a>
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(plainTitle)}&url=${encodeURIComponent(pieceUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on X"
-              >
-                𝕏
-              </a>
+          {post.featuredImage?.node?.sourceUrl && (
+            <img
+              className="lit-piece-featured-img"
+              src={post.featuredImage.node.sourceUrl}
+              alt={post.featuredImage.node.altText || ""}
+            />
+          )}
+          {shouldTrackRead && <LiteraryReadTracker slug={slug} />}
+          <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: visibleBodyHtml }} />
+          {gateBlock}
+          {trailingBodyHtml && (
+            <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: trailingBodyHtml }} />
+          )}
+          {post.author?.node?.name && (
+            <div className="lit-piece-author">
+              <div className="lit-piece-author-avatar">
+                {post.author.node.avatar?.url ? (
+                  <img src={post.author.node.avatar.url} alt={post.author.node.name} />
+                ) : (
+                  <span className="lit-piece-author-initial">
+                    {post.author.node.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <div className="lit-piece-author-info">
+                <div className="lit-piece-author-label">Written by</div>
+                <div className="lit-piece-author-name">{post.author.node.name}</div>
+                <p className="lit-piece-author-bio">
+                  {post.author.node.description || "Contributing writer, The Moveee Literary."}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </article>
 
-        <aside>
-          <div className="lit-piece-sb-block">
-            <div className="lit-piece-sb-h">Browse by Section</div>
-            {LITERARY_GENRES.map((g) => {
-              const isCurrent = genre?.slug === g.slug;
-              return (
-                <div key={g.slug}>
-                  <Link
-                    href={`/literary/${g.slug}`}
-                    className={`lit-piece-genre-row${isCurrent ? " is-current" : ""}`}
-                  >
-                    <span>{g.label}</span>
-                    <span className="chev">›</span>
-                  </Link>
-                  {isCurrent && sidebarPick && (
-                    <Link href={`/literary/${sidebarPick.slug}`} className="lit-piece-genre-pick">
-                      <div className="piece-title" dangerouslySetInnerHTML={{ __html: sidebarPick.title || "" }} />
-                      <div className="piece-byline">{sidebarPick.author?.node?.name || "The Moveee Literary"}</div>
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <ArticleShareFab />
 
+        <aside>
           <div className="lit-piece-sb-block lit-piece-sb-block--flush">
             <div className="lit-piece-subscribe">
               <div className="lit-piece-subscribe-rule" />

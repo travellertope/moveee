@@ -88,7 +88,7 @@ export default function TermsPage() {
         <h2>7. Shop & Commerce</h2>
         <p>
           Products available through The Moveee Shop are sold subject to our separate{" "}
-          <Link href="/shop/shipping">Shipping & Returns policy</Link>. Prices are displayed in NGN (₦)
+          <Link href="/lifestyle/shipping">Shipping & Returns policy</Link>. Prices are displayed in NGN (₦)
           unless otherwise stated. We reserve the right to refuse or cancel any order at our discretion.
         </p>
 

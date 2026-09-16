@@ -1,0 +1,465 @@
+import { Fragment } from "react";
+import { getWPData, getProductsWithFallback, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PRODUCTS_UNORDERED, GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, GET_POST_BY_ID, getPreviewItem } from "@/lib/wp";
+import { draftMode, cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import PreviewBanner from "@/components/PreviewBanner";
+import Link from "next/link";
+import Image from "next/image";
+import ProductGallery from "./ProductGallery";
+import ShopSessionSection from "./ShopSessionSection";
+import ProductAccordion from "./ProductAccordion";
+import ProductReviews from "./ProductReviews";
+import "../shop.css";
+import { sanitizeHtml } from "@/lib/sanitize";
+import { getCurrencyCode } from "../components/shopHelpers";
+import { getShopCountryParam } from "../components/shopCountry";
+
+export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  let product: any = null;
+  try {
+    const data = await getWPData(GET_PRODUCT_BY_SLUG, { slug });
+    product = data?.product ?? null;
+  } catch { /* CMS unreachable */ }
+
+  if (!product) return {};
+
+  const title = `${product.name} | The Moveee Lifestyle`;
+  const description = product.shortDescription
+    ? product.shortDescription.replace(/<[^>]*>/g, "").trim().slice(0, 155)
+    : `${product.name} — curated by The Moveee Lifestyle.`;
+  const image = product.image?.sourceUrl ?? "/og-fallback.png";
+
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `https://themoveee.com/lifestyle/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `https://themoveee.com/lifestyle/${slug}`,
+      siteName: "Moveee Magazine",
+      type: "website",
+      images: [{ url: image, width: 1200, height: 630, alt: product.name }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      site: "@moveeemedia",
+      creator: "@moveeemedia",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
+  let product: any = null;
+  let relatedProducts: any[] = [];
+
+  // "nigeria" (or null for everyone else) — see shopCountry.ts. Threaded into
+  // every GET_PRODUCT(S)_EXTRA fetch below so displayPrice comes back already
+  // converted to the shopper's currency.
+  const shopCountry = await getShopCountryParam();
+
+  try {
+    // Fetch core product and extra vendor/meta in parallel.
+    // GET_PRODUCT_EXTRA silently returns null if moveee-graphql-bridge
+    // is not yet active — the page still renders without vendor sections,
+    // falling back to the raw GBP price already on `product`.
+    const [coreData, extraData] = await Promise.all([
+      getWPData(GET_PRODUCT_BY_SLUG, { slug }),
+      getWPData(GET_PRODUCT_EXTRA, { slug, country: shopCountry }),
+    ]);
+    product = coreData?.product ?? null;
+    if (product && extraData?.product) {
+      product.vendorProfile    = extraData.product.vendorProfile ?? null;
+      product.moveeeMeta       = extraData.product.moveeeMeta    ?? null;
+      product.averageRating    = extraData.product.averageRating ?? "0.0";
+      product.reviewCount      = extraData.product.reviewCount   ?? 0;
+      product.productMaterials = extraData.product.productMaterials ?? [];
+      const dp = extraData.product.displayPrice;
+      if (dp) {
+        product.price              = dp.price              ?? product.price;
+        product.regularPrice       = dp.regularPrice        ?? product.regularPrice;
+        product.salePrice          = dp.salePrice           ?? product.salePrice;
+        product.proPrice           = dp.proPrice             ?? null;
+        product.proDiscountPercent = dp.proDiscountPercent   ?? null;
+      }
+    }
+  } catch { /* CMS unreachable */ }
+
+  let isPreview = false;
+
+  // GraphQL only ever returns published products — a draft product comes
+  // back null here. When Draft Mode is on (arrived via WP Admin's overridden
+  // Preview button on the product edit screen, see app/api/preview/route.ts),
+  // fall back to the signed-token resolver instead of 404ing.
+  if (!product) {
+    const draft = await draftMode();
+    if (draft.isEnabled) {
+      const cookieStore = await cookies();
+      const token = cookieStore.get("culture_preview_token")?.value;
+      const preview = token ? await getPreviewItem(token) : null;
+      if (preview?.type === "product" && preview.item?.slug === slug) {
+        product = preview.item;
+        isPreview = true;
+      }
+    }
+  }
+
+  if (!product) notFound();
+
+  // Fetch related products from same category — prefer WooCommerce-Featured
+  // products within the category (same signal as the archive page's Editor's
+  // Pick), falling back to positional order when nothing in-category is
+  // Featured so the section never goes empty on an uncurated store.
+  const firstCategory = product.productCategories?.nodes?.[0]?.slug;
+  try {
+    if (firstCategory) {
+      const [rel, relExtra] = await Promise.all([
+        getProductsWithFallback(GET_PRODUCTS, GET_PRODUCTS_UNORDERED, { first: 8, category: firstCategory }),
+        getProductsWithFallback(GET_PRODUCTS_EXTRA, GET_PRODUCTS_EXTRA_UNORDERED, { first: 8, category: firstCategory, country: shopCountry }).catch(() => null),
+      ]);
+      let pool = (rel?.products?.nodes ?? []).filter((p: any) => p.slug !== slug);
+      const extraNodes = relExtra?.products?.nodes ?? [];
+      if (extraNodes.length) {
+        const extraById = new Map<number, any>(extraNodes.map((n: any) => [n.databaseId, n]));
+        pool = pool.map((p: any) => {
+          const extra = extraById.get(p.databaseId);
+          if (!extra) return p;
+          const dp = extra.displayPrice;
+          return { ...p, featured: extra.featured, price: dp?.price ?? p.price };
+        });
+      }
+      const featuredPool = pool.filter((p: any) => p.featured);
+      relatedProducts = (featuredPool.length > 0 ? featuredPool : pool).slice(0, 4);
+    }
+  } catch { /* CMS unreachable */ }
+
+  const mainImage = product.image;
+  const gallery   = product.galleryImages?.nodes ?? [];
+  const allImages = [...(mainImage ? [mainImage] : []), ...gallery].slice(0, 5);
+
+  // ── Vendor profile (from WCFM via moveee-graphql-bridge) ──────────────────
+  // Only the maker's name/bio and a link to their profile are shown, inside
+  // the "About the Maker" accordion tab — the dedicated portrait/stats
+  // sections were removed as too heavy for this page (see /makers/[slug]
+  // for the full maker profile).
+  const vp = product.vendorProfile ?? {};
+  const vname: string      = vp.storeName || "";
+  const vendorDesc: string = vp.bio       || "";
+
+  // Session-dependent Pro perks are rendered client-side in ShopSessionSection
+
+  // ── Product editorial meta (set as WooCommerce custom fields) ─────────────
+  const pm = product.moveeeMeta ?? {};
+  const makerStory: string       = pm.makerStory       || "";
+  const careInstructions: string = pm.careInstructions || "";
+  const deliveryInfo: string     = pm.deliveryInfo     || "";
+
+  // ── Pro member perks ──────────────────────────────────────────────────────
+  // proPrice is computed server-side (base price × the effective Pro
+  // discount %) — see displayPrice.proPrice, merged onto `product` above.
+  const proPrice: string         = product.proPrice    || "";
+  const earlyAccessUntil: string = pm.earlyAccessUntil || "";
+  const isEarlyAccessActive = earlyAccessUntil
+    ? new Date(earlyAccessUntil) > new Date()
+    : false;
+  // isGated / isPro resolved client-side in ShopSessionSection
+
+  const variations = product.variations?.nodes ?? [];
+
+  // Plain/informational product attributes (WooCommerce's native "Attributes"
+  // tab, set independently of variations) — e.g. Material, Dimensions. Only
+  // non-variation attributes: attributes that generate variations already
+  // render as the interactive swatches/selectors in ProductSelectors.
+  const specAttributes: { name: string; options: string[] }[] = (product.attributes?.nodes ?? [])
+    .filter((a: any) => !a.variation && a.options?.length)
+    .map((a: any) => {
+      // Global (pa_-prefixed, taxonomy-backed) attributes: `options`/`name` are
+      // raw term/taxonomy slugs (e.g. "pa_capacity", "3-litres") — `label` and
+      // `terms.nodes[].name` carry the human-readable versions instead. Local
+      // (per-product, non-taxonomy) attributes have no `terms` at all, and
+      // their `name`/`options` are already plain text, so those fall through.
+      const terms = a.terms?.nodes;
+      return {
+        name: a.label || a.name,
+        options: terms?.length ? terms.map((t: any) => t.name) : a.options,
+      };
+    });
+
+  // Process steps — only use if genuinely set in WordPress; never show generic fallback
+  interface ProcessStep { title: string; desc: string; duration?: string }
+  let processSteps: ProcessStep[] = [];
+  try {
+    if (pm.processSteps) processSteps = JSON.parse(pm.processSteps);
+  } catch { /* malformed JSON */ }
+
+  // "As Seen In" — only fetch if the post ID is actually set
+  let asSeenInPost: any = null;
+  try {
+    if (pm.asSeenInPostId) {
+      const postData = await getWPData(GET_POST_BY_ID, { id: pm.asSeenInPostId });
+      asSeenInPost = postData?.post ?? null;
+    }
+  } catch { /* CMS unreachable */ }
+
+  // ── Accordion — only include tabs that have real content ─────────────────
+  const accordionItems = [
+    {
+      title: "Description",
+      content: (
+        <div
+          dangerouslySetInnerHTML={{
+            __html: sanitizeHtml(product.description || product.shortDescription || "<p>No description available.</p>"),
+          }}
+        />
+      ),
+    },
+    // Specifications — WooCommerce's native product Attributes, only shown
+    // when at least one non-variation attribute is set
+    ...(specAttributes.length > 0 ? [{
+      title: "Specifications",
+      content: (
+        <dl>
+          {specAttributes.map((a) => (
+            <Fragment key={a.name}>
+              <dt>{a.name}</dt>
+              <dd>{a.options.join(", ")}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      ),
+    }] : []),
+    // Materials & Care — only shown when the field is filled in WordPress
+    ...(careInstructions ? [{
+      title: "Materials & Care",
+      content: <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(careInstructions) }} />,
+    }] : []),
+    // Delivery & Returns — only shown when the field is filled in WordPress
+    ...(deliveryInfo ? [{
+      title: "Delivery & Returns",
+      content: <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(deliveryInfo) }} />,
+    }] : []),
+    // About the Maker — only shown when vendor has a name or bio in WCFM
+    ...(vname || vendorDesc ? [{
+      title: "About the Maker",
+      content: (
+        <>
+          {vendorDesc ? (
+            <p>{vendorDesc}</p>
+          ) : (
+            <p>
+              {vname} is a vetted Moveee partner. Every maker is personally reviewed
+              for craft integrity, fair production practices, and lasting quality.
+            </p>
+          )}
+          <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="sp-maker-profile-link">
+            View {vname ? `${vname}’s` : "maker"} profile →
+          </Link>
+        </>
+      ),
+    }] : []),
+    // Reviews — moved into the accordion (was a standalone full-width section
+    // below the Process block) so it sits alongside Description/Materials/
+    // About the Maker as one more right-column tab. Always included — the
+    // component itself renders its own zero-review empty state.
+    {
+      title: "Reviews",
+      content: (
+        <ProductReviews
+          productId={parseInt(product.databaseId)}
+          averageRating={parseFloat(product.averageRating) || 0}
+          reviewCount={product.reviewCount || 0}
+        />
+      ),
+    },
+  ];
+
+  const firstCat = product.productCategories?.nodes?.[0];
+  const productUrl = `https://themoveee.com/lifestyle/${slug}`;
+  const productPrice = product.price?.replace(/<[^>]*>/g, "").replace(/[^0-9.]/g, "") || "";
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.shortDescription?.replace(/<[^>]*>/g, "").trim() || product.name,
+    image: product.image?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    url: productUrl,
+    brand: { "@type": "Brand", name: vname || "Moveee Magazine" },
+    ...(productPrice ? {
+      offers: {
+        "@type": "Offer",
+        price: productPrice,
+        priceCurrency: getCurrencyCode(product.price),
+        availability: "https://schema.org/InStock",
+        url: productUrl,
+        seller: { "@type": "Organization", name: "Moveee Magazine" },
+      },
+    } : {}),
+  };
+  const productBreadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "The Moveee Lifestyle", item: "https://themoveee.com/lifestyle" },
+      ...(firstCat ? [{ "@type": "ListItem", position: 3, name: firstCat.name, item: `https://themoveee.com/lifestyle/category/${firstCat.slug}` }] : []),
+      { "@type": "ListItem", position: firstCat ? 4 : 3, name: product.name, item: productUrl },
+    ],
+  };
+
+  return (
+    <>
+      {isPreview && <PreviewBanner redirectTo={`/lifestyle/${slug}`} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productBreadcrumbJsonLd) }} />
+
+      {/* ── PRODUCT HERO ── */}
+      <section className="sp-product-hero">
+        {allImages.length > 0 ? (
+          <ProductGallery images={allImages} productName={product.name} />
+        ) : (
+          <div className="sp-gallery-wrap">
+            <div className="sp-main-image" style={{ background: "var(--ink)" }}>
+              <div className="sp-vetted-seal"><span className="star">★</span> Vetted Maker</div>
+            </div>
+          </div>
+        )}
+
+        <div className="sp-product-info">
+          {vname && (
+            <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="sp-vendor-link">{vname}</Link>
+          )}
+
+          <h1 className="sp-product-name">{product.name}</h1>
+
+          {product.reviewCount > 0 && (
+            <div className="sp-product-rating">
+              <span className="stars">★ {parseFloat(product.averageRating).toFixed(1)}</span>
+              <span className="count">({product.reviewCount} review{product.reviewCount === 1 ? "" : "s"})</span>
+            </div>
+          )}
+
+          {product.productMaterials?.length > 0 && (
+            <div className="sp-product-materials">
+              {product.productMaterials.map((m: string) => (
+                <span key={m} className="sp-material-pill">{m}</span>
+              ))}
+            </div>
+          )}
+
+          {product.shortDescription && (
+            <div
+              className="sp-product-lede"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.shortDescription) }}
+            />
+          )}
+
+          <ShopSessionSection
+            productId={parseInt(product.databaseId)}
+            price={product.price}
+            regularPrice={product.regularPrice}
+            variations={variations}
+            proPrice={proPrice}
+            isEarlyAccessActive={isEarlyAccessActive}
+            earlyAccessUntil={earlyAccessUntil}
+          />
+
+          <ProductAccordion items={accordionItems} />
+        </div>
+      </section>
+
+      {/* ── AS SEEN IN — slim tinted bridge, only when a linked magazine post is set ── */}
+      {asSeenInPost && (
+        <section className="sp-seen">
+          <div className="sp-seen-inner">
+            <div className="sp-seen-left">
+              <span className="sp-seen-label">As Seen In</span>
+              <span className="sp-seen-title">
+                <em>{asSeenInPost.title}</em>
+                {asSeenInPost.categories?.nodes?.[0] && (
+                  <> — {asSeenInPost.categories.nodes[0].name}</>
+                )}
+              </span>
+            </div>
+            <Link href={`/magazine/${asSeenInPost.slug}`} className="sp-seen-cta">
+              Read the Feature →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* ── PROCESS — only when process_steps is set in WordPress; numbering is a real sequence ── */}
+      {processSteps.length > 0 && (
+        <section className="sp-process">
+          <div className="sp-process-header">
+            <span className="sp-process-label">How It&rsquo;s Made</span>
+            <h2>From raw material <em>to your door</em></h2>
+            <p>A {processSteps.length}-stage process — each step overseen by the maker themselves.</p>
+          </div>
+          <div className="sp-process-grid">
+            {processSteps.map((step, i) => (
+              <div key={step.title} className="sp-process-step">
+                <span className="sp-process-step-num">0{i + 1}</span>
+                <h4>{step.title}</h4>
+                <p>{step.desc}</p>
+                {step.duration && <span className="duration">{step.duration}</span>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── MORE FROM THIS CATEGORY ── */}
+      {relatedProducts.length > 0 && (
+        <section className="sp-more-from">
+          <div className="sp-more-from-header">
+            <h2>More from <em>{firstCat?.name ?? "the Shop"}</em></h2>
+            <Link href={firstCat ? `/lifestyle/category/${firstCat.slug}` : "/lifestyle"}>
+              View all →
+            </Link>
+          </div>
+          <div className="sp-more-from-grid">
+            {relatedProducts.map((p: any) => (
+              <Link key={p.id} href={`/lifestyle/${p.slug}`} className="mini-product">
+                <div className="img">
+                  {p.image?.sourceUrl ? (
+                    <Image
+                      src={p.image.sourceUrl}
+                      alt={p.image.altText || p.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
+                  )}
+                </div>
+                <div className="mini-product-body">
+                  {p.vendorProfile?.storeName && (
+                    <div className="vendor-tag">{p.vendorProfile.storeName}</div>
+                  )}
+                  <div className="name">{p.name}</div>
+                  {p.price && <div className="price">{p.price}</div>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

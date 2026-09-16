@@ -181,6 +181,56 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Front-end (Next.js) draft preview — resolves a signed token from
+        // Culture_Preview into the actual draft post/product payload. Public:
+        // the token itself is the credential (verified + expiry-checked
+        // server-side in Culture_Preview::verify_token()), so no separate
+        // api_key_permission secret needs to also live in the Next.js env.
+        register_rest_route( 'culture/v1', '/preview/resolve', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_preview_resolve' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
+        // The Moveee Literary — email/OTP verification (metered soft-paywall +
+        // Pro-gating for Literary pieces). See class-culture-literary-access.php.
+        register_rest_route( 'culture/v1', '/literary/request-code', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_literary_request_code' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/literary/verify-code', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_literary_verify_code' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'code' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -2638,6 +2688,48 @@ class Culture_REST_API {
         }
 
         return false;
+    }
+
+    /**
+     * Resolve a Culture_Preview token into the actual draft post/product
+     * payload — see class-culture-preview.php for the full trust model.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_literary_request_code( $request ) {
+        $result = Culture_Literary_Access::request_code( $request->get_param( 'email' ) );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_literary_verify_code( $request ) {
+        $context = $request->get_param( 'context' );
+        $context = in_array( $context, array_keys( Culture_Literary_Access::NEWSLETTER_LIST_BY_CONTEXT ), true ) ? $context : 'literary';
+        $result  = Culture_Literary_Access::verify_code( $request->get_param( 'email' ), $request->get_param( 'code' ), $context );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array_merge( array( 'success' => true ), $result ) );
+    }
+
+    public static function handle_preview_resolve( $request ) {
+        $verified = Culture_Preview::verify_token( $request->get_param( 'token' ) );
+        if ( is_wp_error( $verified ) ) {
+            return $verified;
+        }
+
+        $payload = Culture_Preview::resolve( $verified['id'], $verified['type'] );
+        if ( is_wp_error( $payload ) ) {
+            return $payload;
+        }
+
+        return rest_ensure_response( array(
+            'type' => $verified['type'],
+            'item' => $payload,
+        ) );
     }
 
     /**

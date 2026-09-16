@@ -84,7 +84,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
                 className="shop-search-select shop-search-mobile-only"
                 value={meta.activeCategorySlug ?? ""}
                 onChange={(e) => {
-                  router.push(e.target.value ? `/shop/category/${e.target.value}` : "/shop");
+                  router.push(e.target.value ? `/lifestyle/category/${e.target.value}` : "/lifestyle");
                   onClose();
                 }}
                 aria-label="Filter by category"
@@ -97,13 +97,13 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
                 ))}
               </select>
               <div className="shop-search-pills shop-search-desktop-only">
-                <Link href="/shop" onClick={onClose} className={`sl-fpill${!meta.activeCategorySlug ? " sl-fpill--active" : ""}`}>
+                <Link href="/lifestyle" onClick={onClose} className={`sl-fpill${!meta.activeCategorySlug ? " sl-fpill--active" : ""}`}>
                   All Categories
                 </Link>
                 {meta.categories.map((cat) => (
                   <Link
                     key={cat.slug}
-                    href={`/shop/category/${cat.slug}`}
+                    href={`/lifestyle/category/${cat.slug}`}
                     onClick={onClose}
                     className={`sl-fpill${meta.activeCategorySlug === cat.slug ? " sl-fpill--active" : ""}`}
                   >
@@ -226,7 +226,7 @@ export default function ShopSearchModal({ isOpen, onClose }: Props) {
               </button>
             )}
             <button type="button" className="shop-search-view-btn" onClick={onClose}>
-              View {meta.resultCount} {meta.resultCount === 1 ? "Result" : "Results"}
+              Show Results
             </button>
           </div>
         </div>

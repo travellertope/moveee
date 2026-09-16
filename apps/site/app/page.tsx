@@ -1,7 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
-import { headers, cookies } from "next/headers";
-import { editionFromCountry, isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
+import { cookies } from "next/headers";
+import { isValidRegionalSlug, type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import FullBleedHero from "@/components/FullBleedHero";
@@ -16,12 +16,18 @@ import JoinSection from "@/components/JoinSection";
 // (that swap and the old real homepage that lived at `/app` are both
 // retired by this file; `/app` no longer exists as a route).
 //
-// Edition detection is the same pattern the temporary swap used: the
-// `moveee-edition` cookie (kept in sync with EDITION_COOKIE in proxy.ts)
-// takes priority, falling back to `x-vercel-ip-country` via
-// editionFromCountry(). The geo-redirect that used to send UK/US/Africa
-// visitors to /uk /us /africa is still disabled in proxy.ts, so this is
-// the only place that scoping happens for the front page.
+// Edition scoping is opt-in only: the homepage defaults to "global" (every
+// post, unscoped by location) unless the visitor has explicitly picked an
+// edition via the footer's edition <select>, which sets the
+// `moveee-edition` cookie (kept in sync with EDITION_COOKIE in proxy.ts).
+// This deliberately does NOT fall back to geo-IP (`x-vercel-ip-country`)
+// the way it used to — Moveee now publishes one global collection of
+// features by default, and geo-detection only used to auto-scope that away
+// from visitors who never asked for a regional edition. The geo-redirect
+// that used to send UK/US/Africa visitors to /uk /us /africa is separately
+// still disabled in proxy.ts. This does not affect newsletter region
+// scoping (`_culture_nl_segment`, EditionNewsletterHub) — that's a
+// completely separate mechanism, untouched by this.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -145,12 +151,9 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
 }
 
 export default async function Home() {
-  const h = await headers();
   const c = await cookies();
   const savedEdition = c.get("moveee-edition")?.value ?? "";
-  const edition: EditionSlug = isValidRegionalSlug(savedEdition)
-    ? savedEdition
-    : editionFromCountry(h.get("x-vercel-ip-country") ?? "");
+  const edition: EditionSlug = isValidRegionalSlug(savedEdition) ? savedEdition : "global";
 
   const {
     coverStory,
@@ -194,7 +197,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="arc-hdr">
             <h2>From The <em>Shop</em></h2>
-            <a href="/shop" className="arc-viewall">Shop all →</a>
+            <a href="/lifestyle" className="arc-viewall">Shop all →</a>
           </div>
           <ShopRail products={shopProducts} />
         </div>

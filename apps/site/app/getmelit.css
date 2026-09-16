@@ -16,7 +16,7 @@
    gradient + radial wash (editorial.css's .ar-hero/.ar-hero-wash).
    data-header-zone="dark" on the section (see GetMeLitPage.tsx) tells
    the floating header to render transparent/light over it — same
-   mechanism the article hero, homepage, and /shop's trust bar already
+   mechanism the article hero, homepage, and /lifestyle's trust bar already
    use, no separate header change needed. Title/sub sizing still
    matches /magazine's .mgh-intro; only the colour scheme (dark bg,
    light text) and the wash differ from that. */

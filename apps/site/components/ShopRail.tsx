@@ -103,7 +103,7 @@ export default function ShopRail({ products }: { products: ShopRailProduct[] }) 
           const name = decodeHtml(p.name || "");
           const vendor = p.vendor ? decodeHtml(p.vendor) : null;
           return (
-            <Link key={`${p.slug}-${i}`} href={`/shop/${p.slug}`} className="arc-shop-card">
+            <Link key={`${p.slug}-${i}`} href={`/lifestyle/${p.slug}`} className="arc-shop-card">
               <div className="arc-card-img">{p.image && <img src={p.image} alt={name} />}</div>
               {vendor && <span className="arc-shop-vendor">{vendor}</span>}
               <h3>{name}</h3>

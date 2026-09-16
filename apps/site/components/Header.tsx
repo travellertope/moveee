@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
-import ShopSearchModal from "./ShopSearchModal";
 import { useCart } from "@/context/CartContext";
 
 const CONNECT_URL = "https://web.themoveee.com";
@@ -33,18 +32,23 @@ const Header = () => {
   const pathname = usePathname();
   const active = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
-  // Shop pages get a dedicated search+filter modal instead of the generic
-  // sitewide one — see ShopSearchModal.tsx / apps/site/lib/shopFiltersBus.ts.
-  const isShopPage = pathname === "/shop" || pathname.startsWith("/shop/");
+  // The Moveee Lifestyle (/lifestyle) is now its own standalone mini-site — own
+  // masthead/ticker/nav and footer (ShopHeader.tsx/ShopFooter.tsx, rendered
+  // from app/lifestyle/layout.tsx), same shape as The Moveee Literary below. The
+  // sitewide floating pill has no role on any /lifestyle route at all anymore —
+  // this used to only swap the wordmark and hand off to a shop-specific
+  // search modal; both of those now live inside ShopHeader.tsx instead.
+  const isLifestylePage = pathname === "/lifestyle" || pathname.startsWith("/lifestyle/");
+  // /makers is now part of the same Moveee Lifestyle standalone mini-site as
+  // /lifestyle itself (own header/footer via app/makers/layout.tsx mounting
+  // ShopHeader/ShopFooter) — previously this route stayed on the sitewide
+  // pill and only swapped its wordmark/logo for the Lifestyle one; that
+  // swap is gone now that the sitewide pill never renders here at all.
   const isMakersPage = pathname === "/makers" || pathname.startsWith("/makers/");
-  // Logo-branding scope only — deliberately broader than isShopPage (which
-  // also gates the shop-specific search modal further below; /makers pages
-  // still get the generic SearchOverlay, only the wordmark itself changes).
-  const isLifestylePage = isShopPage || isMakersPage;
   // The Moveee Literary is its own standalone mini-site with its own
   // masthead, section nav, and footer (LiteraryMasthead.tsx/LiteraryFooter.tsx,
   // rendered from app/literary/layout.tsx) — the sitewide floating pill has
-  // no role there at all, unlike Shop/Makers which only swap the wordmark.
+  // no role there at all, unlike Makers which only swaps the wordmark.
   const isLiteraryPage = pathname === "/literary" || pathname.startsWith("/literary/");
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -70,7 +74,7 @@ const Header = () => {
   // `[data-header-zone="dark"]` element on the current page each time the
   // route changes (not just `.hero-full` — any page's dark first section,
   // e.g. .ar-hero on an article, .sr-hero on a series landing page,
-  // .sl-trust on /shop, opts in the same way) and, on every scroll tick,
+  // .sl-trust on /lifestyle, opts in the same way) and, on every scroll tick,
   // checks whether the header's own vertical position currently falls
   // inside ANY of them — so the header stays transparent (with light
   // logo/icon colours) for as long as it's floating over a dark zone,
@@ -238,24 +242,21 @@ const Header = () => {
     .filter(Boolean)
     .join(" ");
 
-  // The Moveee Literary renders its own masthead/nav/footer (see the
-  // comment on isLiteraryPage above) — every hook above still runs
-  // unconditionally (Rules of Hooks), only the render is skipped.
-  if (isLiteraryPage) return null;
+  // The Moveee Literary and The Moveee Lifestyle (/lifestyle) both render their
+  // own standalone masthead/nav/footer (see the comments above) — every
+  // hook above still runs unconditionally (Rules of Hooks), only the
+  // render is skipped.
+  if (isLiteraryPage || isLifestylePage || isMakersPage) return null;
 
   return (
     <>
       <div className={toolbarClass}>
         <div className="toolbar-shell">
           <div className="toolbar-pill">
-            <Link href={isLifestylePage ? (isMakersPage ? "/makers" : "/shop") : "/"} className="toolbar-logo">
+            <Link href="/" className="toolbar-logo">
               <img
-                src={
-                  isLifestylePage
-                    ? onDark ? "/logo-lifestyle-white.png" : "/logo-lifestyle-black.png"
-                    : onDark ? "/logo-white.png" : "/logo-black.png"
-                }
-                alt={isLifestylePage ? "Moveee Lifestyle" : "Moveee"}
+                src={onDark ? "/logo-white.png" : "/logo-black.png"}
+                alt="Moveee"
                 className="toolbar-logo-img"
               />
             </Link>
@@ -312,18 +313,18 @@ const Header = () => {
                 <a href={`${CONNECT_URL}/events`}>Events</a>
                 <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
                 <Link href="/literary" data-active={active("/literary") || undefined}>The Moveee Literary</Link>
-                <Link href="/shop" data-active={active("/shop") || undefined}>Shop</Link>
+                <Link href="/lifestyle" data-active={active("/lifestyle") || undefined}>The Moveee Lifestyle</Link>
                 <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
               </nav>
             </div>
 
             {/* Column 2 — featured product */}
             <div>
-              <p className="menu-col-label">From the Shop</p>
+              <p className="menu-col-label">From The Moveee Lifestyle</p>
               {featuredLoading ? (
                 <div className="menu-feature-card menu-feature-card--loading" />
               ) : featuredProduct ? (
-                <Link href={`/shop/${featuredProduct.slug}`} className="menu-feature-card" onClick={() => setMenuOpen(false)}>
+                <Link href={`/lifestyle/${featuredProduct.slug}`} className="menu-feature-card" onClick={() => setMenuOpen(false)}>
                   <div className="menu-feature-photo">
                     {featuredProduct.image && <img src={featuredProduct.image} alt={featuredProduct.name} />}
                   </div>
@@ -337,8 +338,8 @@ const Header = () => {
                   <span className="menu-feature-cta">Shop now →</span>
                 </Link>
               ) : (
-                <Link href="/shop" className="menu-feature-card menu-feature-card--fallback" onClick={() => setMenuOpen(false)}>
-                  <p className="menu-feature-title">Visit the Shop</p>
+                <Link href="/lifestyle" className="menu-feature-card menu-feature-card--fallback" onClick={() => setMenuOpen(false)}>
+                  <p className="menu-feature-title">Visit The Moveee Lifestyle</p>
                   <span className="menu-feature-cta">Browse all products →</span>
                 </Link>
               )}
@@ -395,11 +396,7 @@ const Header = () => {
         <div className="menu-overlay-foot">Best in Culture</div>
       </div>
 
-      {isShopPage ? (
-        <ShopSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      ) : (
-        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      )}
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 };

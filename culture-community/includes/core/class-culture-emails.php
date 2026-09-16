@@ -172,6 +172,98 @@ class Culture_Emails {
     }
 
     /**
+     * Send a reading-verification code for The Moveee Literary — sent to a
+     * raw email address, not a WP user (the reader may not have an account
+     * at all). See class-culture-literary-access.php for the request/verify
+     * flow this is one step of.
+     *
+     * @param string $email
+     * @param string $code Plain 6-digit code (never stored in the clear).
+     */
+    public static function send_literary_otp_email( $email, $code ) {
+        $subject = 'Your reading code for The Moveee Literary: ' . $code;
+
+        $body  = self::get_header( 'Your reading code' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Enter this code to keep reading:</p>';
+        $body .= '<p style="text-align:center;margin:0 0 20px;"><span style="display:inline-block;padding:14px 28px;background:#f4f4f4;border-radius:6px;font-size:28px;font-weight:700;letter-spacing:6px;color:#161412;">' . esc_html( $code ) . '</span></p>';
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:0;">This code expires in 10 minutes. If you didn\'t request this, you can safely ignore this email.</p>';
+        $body .= self::get_footer();
+
+        self::send( $email, $subject, $body );
+    }
+
+    /**
+     * Notify a contributor to The Moveee Literary that their emailed submission has
+     * been accepted or rejected. Fired by Culture_Literary_Submissions on a
+     * status transition into 'accepted'/'rejected' — never on every save, and
+     * never when the writer left no email address (nothing to send to).
+     *
+     * @param string $email         Writer's email address.
+     * @param string $writer_name
+     * @param string $section_label e.g. "Poetry" or "The Moveee Flash".
+     * @param string $title         Piece title, may be blank.
+     * @param string $status        'accepted' | 'rejected'.
+     * @param string $payment_label e.g. "$15–$25" or "$10 flat" — only used on acceptance.
+     */
+    public static function send_literary_submission_decision( $email, $writer_name, $section_label, $title, $status, $payment_label = '' ) {
+        if ( ! is_email( $email ) || ! in_array( $status, array( 'accepted', 'rejected' ), true ) ) {
+            return false;
+        }
+
+        $merge = array(
+            '{writer_name}'   => esc_html( $writer_name ),
+            '{piece}'         => $title ? '&ldquo;' . esc_html( $title ) . '&rdquo;' : 'your piece',
+            '{section}'       => esc_html( $section_label ),
+            '{payment_label}' => esc_html( $payment_label ),
+        );
+
+        $slug    = 'accepted' === $status ? 'literary_accepted' : 'literary_rejected';
+        $tpl     = Culture_Email_Templates::get_template( $slug );
+        $subject = Culture_Email_Templates::merge( $tpl['subject'], $merge );
+
+        $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
+        $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
+        $body .= self::get_button( self::get_frontend_url() . 'literary', Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_footer();
+
+        return self::send( $email, $subject, $body );
+    }
+
+    /**
+     * Confirms receipt of an online submission to The Moveee Literary — fired the
+     * moment a submission is actually created (Flash: immediately; a paid
+     * section: once payment or a waiver code is confirmed). Distinct from
+     * send_literary_submission_decision() above, which fires later once an
+     * editor accepts/rejects the piece.
+     *
+     * @param string $email
+     * @param string $writer_name
+     * @param string $section_label
+     * @param string $title
+     */
+    public static function send_literary_submission_received( $email, $writer_name, $section_label, $title ) {
+        if ( ! is_email( $email ) ) {
+            return false;
+        }
+
+        $merge = array(
+            '{writer_name}' => esc_html( $writer_name ),
+            '{piece}'       => $title ? '&ldquo;' . esc_html( $title ) . '&rdquo;' : 'your piece',
+            '{section}'     => esc_html( $section_label ),
+        );
+
+        $tpl     = Culture_Email_Templates::get_template( 'literary_received' );
+        $subject = Culture_Email_Templates::merge( $tpl['subject'], $merge );
+
+        $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
+        $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
+        $body .= self::get_button( self::get_frontend_url() . 'literary', Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_footer();
+
+        return self::send( $email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id

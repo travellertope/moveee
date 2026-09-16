@@ -2,7 +2,7 @@
  * GET /api/wp-health
  *
  * Diagnostic endpoint: tests the WordPress GraphQL connection and runs the
- * queries used by /directory and /quotes.
+ * three queries used by /directory, /visuals, and /quotes.
  * Returns raw counts and any errors so you can see exactly what's failing.
  *
  * No auth required — returns only aggregate counts, never content.

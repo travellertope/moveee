@@ -94,6 +94,7 @@ const nextConfig = {
       { source: '/services/book-publishers', destination: '/services', permanent: true },
 
       // ── Permanent structural redirects ──────────────────────────────────
+      { source: '/literary/submit/new', destination: '/literary/submit/form',     permanent: true },
       { source: '/origins',             destination: '/journeys',                 permanent: true },
       { source: '/origins/:slug*',      destination: '/journeys/:slug*',          permanent: true },
       { source: '/cat/:slug*',        destination: '/magazine/category/:slug*', permanent: true },

@@ -186,6 +186,55 @@ class Culture_Email_Templates {
 </table>
 <p style="font-size:13px;opacity:0.6;">A confirmation has been sent to {attendee_email}. Please bring this email or tell us your name at the door on the night.</p>',
             ),
+            'literary_accepted' => array(
+                'label'           => __( 'Literary Submission — Accepted', 'culture-community' ),
+                'description'     => __( 'Sent to a contributor to The Moveee Literary when their emailed submission is marked Accepted in the Literary Submissions manager.', 'culture-community' ),
+                'tags'            => array(
+                    '{writer_name}'    => __( 'Writer\'s name', 'culture-community' ),
+                    '{piece}'          => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
+                    '{section}'        => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
+                    '{payment_label}'  => __( 'Contributor payment for this section, e.g. "$15–$25" or "$10 flat"', 'culture-community' ),
+                ),
+                'default_subject' => 'Your submission to The Moveee Literary has been accepted',
+                'default_heading' => "You're in.",
+                'default_button'  => 'Visit The Moveee Literary',
+                'default_body'    => '<p>Hi {writer_name},</p>
+<p>We\'re glad to tell you that {piece}, submitted to <strong>{section}</strong>, has been accepted for The Moveee Literary.</p>
+<p>We\'ll be in touch shortly with a contributor agreement and next steps &mdash; contributor payment for this section is {payment_label}, confirmed in that agreement.</p>
+<p>Thank you for trusting us with your work.</p>',
+            ),
+
+            'literary_rejected' => array(
+                'label'           => __( 'Literary Submission — Rejected', 'culture-community' ),
+                'description'     => __( 'Sent to a contributor to The Moveee Literary when their emailed submission is marked Rejected in the Literary Submissions manager.', 'culture-community' ),
+                'tags'            => array(
+                    '{writer_name}' => __( 'Writer\'s name', 'culture-community' ),
+                    '{piece}'       => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
+                    '{section}'     => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
+                ),
+                'default_subject' => 'An update on your submission to The Moveee Literary',
+                'default_heading' => 'Thank you for sending this our way.',
+                'default_button'  => 'Visit The Moveee Literary',
+                'default_body'    => '<p>Hi {writer_name},</p>
+<p>After careful reading, we won\'t be moving forward with {piece} for <strong>{section}</strong> at this time. This was a genuinely close call, not a reflection of the work\'s worth &mdash; we read every submission on its own terms and can only publish a small number of what we receive.</p>
+<p>We\'d welcome future submissions. Thank you for sending us your work.</p>',
+            ),
+
+            'literary_received' => array(
+                'label'           => __( 'Literary Submission — Received', 'culture-community' ),
+                'description'     => __( 'Sent immediately after a writer successfully submits through the online submission form for The Moveee Literary (once payment, waiver, or the free Moveee Flash call has been confirmed).', 'culture-community' ),
+                'tags'            => array(
+                    '{writer_name}' => __( 'Writer\'s name', 'culture-community' ),
+                    '{piece}'       => __( 'The piece title in quotes, or "your piece" if no title was recorded', 'culture-community' ),
+                    '{section}'     => __( 'Section submitted to, e.g. "Poetry" or "The Moveee Flash"', 'culture-community' ),
+                ),
+                'default_subject' => 'We\'ve received your submission to The Moveee Literary',
+                'default_heading' => 'It\'s in.',
+                'default_button'  => 'Visit The Moveee Literary',
+                'default_body'    => '<p>Hi {writer_name},</p>
+<p>Thank you for sending us {piece} for <strong>{section}</strong> &mdash; we\'ve received it and it\'s now in our reading queue.</p>
+<p>We read every submission blindly, on its own terms, and will follow up by email once a decision has been made. There\'s nothing further you need to do in the meantime.</p>',
+            ),
         );
     }
 

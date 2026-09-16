@@ -1,13 +1,15 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useCart } from "@/context/CartContext";
 
 interface Props {
   productId: number;
   className?: string;
+  children?: ReactNode;
 }
 
-export default function AddToCartButton({ productId, className = "padd" }: Props) {
+export default function AddToCartButton({ productId, className = "padd", children }: Props) {
   const { addItem, isLoading } = useCart();
 
   return (
@@ -21,7 +23,7 @@ export default function AddToCartButton({ productId, className = "padd" }: Props
         addItem(productId);
       }}
     >
-      Add to Cart →
+      {children ?? "Add to Cart →"}
     </button>
   );
 }

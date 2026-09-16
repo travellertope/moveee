@@ -422,6 +422,135 @@ language into this vertical's user-facing copy unless a real print product is co
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
 
+### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
+
+Pro-only Literary pieces are folded into the **existing** Moveee Pro mechanism — no separate
+"Literary Club" membership tier was built, per an explicit decision against that ("fold it into
+Moveee Pro" beats a second paid tier splitting the audience). All non-logged-in readers are also
+metered: a limited number of free Literary reads per rolling 30 days, enforced server-side
+(genuine truncation of the HTML that's sent, not a client-hidden soft gate), with a compact inline
+email/OTP box doing double duty as both the unlock mechanism and the list-building funnel.
+
+**Prerequisite bug fixed first**: `STORY_FIELDS_FRAGMENT` in `packages/shared/lib/wp.ts` was
+missing `cultureAccesses { nodes { slug } } }` entirely — `getAccessLevel()` (`lib/access.ts`)
+always silently returned `"public"` for anything fetched via `GET_STORY_BY_SLUG`, so Pro-gating
+never actually worked on `/magazine` either, only on pages using a different query. Fixed by
+adding the field to the shared fragment — this incidentally fixes magazine Pro-gating too, not
+just Literary.
+
+**Why the existing `ArticleContentGate` pattern couldn't be reused as-is**: it's a client
+component (`"use client"`) that receives the full article HTML as a `fullContent` prop and only
+conditionally *renders* it based on `useSession()` — the full content is still present in the
+RSC payload sent to every visitor regardless of access, just hidden client-side. That's fine for
+a soft nudge but not for genuine enforcement, so Literary's gate does real server-side truncation
+instead (see below) and only ever ships the withheld remainder over the wire once verified.
+
+**Backend** (`culture-community/includes/core/class-culture-literary-access.php`,
+`Culture_Literary_Access`) — same HMAC-signed-token trust model as `Culture_Preview`
+(`base64url(email|access|expiry) + "." + hash_hmac('sha256', ..., culture_api_secret)`), so no
+new secret to keep in sync:
+- `request_code($email)` — generates a 6-digit code, stores only its `wp_hash()` in a 10-minute
+  transient (never the code itself), rate-limited (3 requests / 10 min per email), emails it via
+  a new `Culture_Emails::send_literary_otp_email()`.
+- `verify_code($email, $code)` — checks the code (max 5 wrong attempts before it's invalidated),
+  then resolves access: an email matching an existing WP user with `_culture_membership_tier =
+  patron` gets `access: 'pro'`; anything else gets `access: 'free'` **and** is added to the
+  `culture_newsletter_subscribers` option under a `literary-club` list tag (the list-building
+  mechanism — mirrors `handle_newsletter_subscribe()`'s find-or-create shape rather than calling
+  it, since `Culture_Subscribers::merge_subscribers()` is private). Issues the signed token.
+- REST: `POST /culture/v1/literary/request-code`, `POST /culture/v1/literary/verify-code` (both
+  public — the code/token themselves are the credential).
+
+**Next.js verifies the token locally, not via a round trip to WordPress** —
+`apps/site/lib/literary-access.ts`'s `verifyLiteraryToken()` re-implements the same HMAC check in
+Node using `process.env.CULTURE_API_SECRET` (the same value as the `culture_api_secret` WP
+option, already the shared secret for the Bearer-auth REST surface). Also in that file:
+- `truncateHtmlByPercent(html, percent)` — splits sanitized HTML on top-level block-tag
+  boundaries (`p`/`h1-6`/`blockquote`/`figure`/`ul`/`ol`/`table`/`div`), accumulates each block's
+  plain-text length until the target percentage is reached, and cuts there — never mid-paragraph.
+  Degrades to "show everything, no gate" when the content is a single block (too short/flat to
+  split sensibly) rather than gating something that can't be partially shown.
+- `isCrawlerUserAgent()` — known search-engine/social-preview bots always get the full piece,
+  untracked, ungated. This is a list-building mechanism, not an anti-indexing wall.
+- Free-read metering — `moveee_lit_reads` cookie (JSON array of `{slug, ts}`, pruned to a 30-day
+  window, deduped by slug so re-reading the same piece doesn't cost another credit). Written by
+  a Route Handler (`app/api/literary/track-read/route.ts`), not `page.tsx` itself — a Server
+  Component can't set a cookie during render in this Next.js version, only a Route
+  Handler/Server Action can, so the piece page calls a tiny client component
+  (`LiteraryReadTracker.tsx`, fire-and-forget `useEffect` POST) to write it after mount instead.
+  `LITERARY_FREE_READ_LIMIT = 3` per 30 days.
+
+**Cross-origin cookie relay**: WordPress can't set a cookie on `themoveee.com` directly (different
+origin), so `app/api/literary/verify-code/route.ts` is what actually sets the first-party
+`moveee_lit_token` httpOnly cookie (30-day `maxAge`) after relaying the verify call to WordPress —
+same relay pattern `/api/preview` already uses for the draft-preview token.
+
+**`apps/site/app/literary/[slug]/page.tsx`'s `PiecePage` computes access server-side** on every
+request (session via `getServerSession(authOptions)`, the verified-token cookie, the free-reads
+cookie, and the crawler check) and branches three ways:
+1. **Patron-only piece, not authorized, logged in** (any tier but Pro) → real server-side
+   truncation at 30%, then a plain static "Upgrade to Moveee Pro" block (not the email box — they
+   already have an account, the box is specifically for anonymous readers).
+2. **Patron-only piece, not authorized, anonymous** → truncated at 30%, `LiteraryPieceGate`
+   (`mode="pro"`, `blocking`) — verifying with an email that isn't a Pro account still joins them
+   to the free list but leaves this specific piece gated with an upgrade nudge.
+3. **Public piece, anonymous, free-read quota exhausted** → truncated at 30%,
+   `LiteraryPieceGate` (`mode="meter"`, `blocking`) — verifying (free or Pro either way) unlocks
+   it via one AJAX fetch to `app/api/literary/remainder/route.ts`, which re-derives authorization
+   server-side (never trusts the client) and returns just the withheld HTML, injected in place —
+   no page reload, so scroll position/reading state is never disturbed.
+4. **Public piece, anonymous, quota still has reads left** → full content ships as normal, but a
+   **non-blocking** `LiteraryPieceGate` (`mode="meter"`, `blocking={false}`) is still inserted at
+   the 30% mark as a dismissible "Join The Moveee Literary Club" nudge — this is the literal
+   "compact box after every 30% read for non-logged-in users" ask, independent of metering
+   enforcement. A "Skip for now" link just hides it; nothing is withheld in this case since the
+   whole point is the content's already fully present.
+5. **Logged in (any tier) on a public piece, or already carrying a valid verified-token cookie**
+   → full content, no box at all — the box only ever renders when the page decides to render it
+   (there's no client-side "hide if logged in" check needed inside `LiteraryPieceGate` itself).
+
+**If all articles were ever made fully paid** (raised and rejected in this same design pass): it
+would kill the entire free/discovery/SEO/organic-sharing loop this vertical depends on — an
+all-paid model was explicitly not built. Keep the metered model; don't remove the free tier of
+reads without a deliberate, separate decision.
+
+**Not built in this pass**: a WP Admin UI for adjusting `LITERARY_FREE_READ_LIMIT`/code TTLs (both
+are code constants, not options); the mobile app has no equivalent gating (Literary isn't
+surfaced on `apps/mobile` at all yet, per the rest of this section).
+
+**Gate copy re-branded to The Moveee Literary's own voice (September 2026, follow-up)** — the
+gate boxes originally used generic sitewide "Moveee Pro" copy (`"This piece is Moveee Pro"`,
+`"Verify your Moveee Pro membership"`) with no Literary framing at all. Every gate state (the
+logged-in-non-Pro static block in `page.tsx`, and all three `LiteraryPieceGate.tsx` stages —
+email, otp, pro-needed) now leads with a `★ The Moveee Literary` eyebrow (`.lit-gate-eyebrow`,
+gold, mono uppercase — mirrors `ContentGate.tsx`'s `★ {tierLabel}` pattern but in the Literary
+palette) and rewritten headings/body copy in the section's own restrained voice (no hype words,
+no "we don't have X" negative framing, per the Voice/copy constraints documented above) — e.g.
+`"There's more to read."` / `"This piece continues in the Moveee Pro archive..."` instead of the
+generic `"This piece is Moveee Pro"`. **The underlying mechanism is completely unchanged** — this
+is copy/branding only, same as the Hidden Gem→Place and Route→Itinerary renames elsewhere in
+this file; the fold-into-Moveee-Pro decision, the metering, and the token/verification flow are
+untouched.
+
+**End-of-piece author bio (September 2026)** — `PiecePage` now renders a `.lit-piece-author` band
+at the end of the article body (after the share-icons row, inside `<article>`), reusing
+`post.author.node`'s existing `avatar.url`/`description`/`name`/`slug` fields (already fetched by
+`STORY_FIELDS_FRAGMENT` — no query change needed, same fields `/magazine/[slug]`'s own
+`.ar-author` band already reads). Circular photo (initial-letter fallback when no avatar is set),
+name, a real bio when `description` is set, or a plain `"Contributing writer, The Moveee
+Literary."` fallback when it isn't (never fabricated personal copy), and a `"More by {first
+name} →"` link to `/author/{slug}` (the shared, sitewide author-archive route) when the author
+has a slug. Mirrors `/magazine/[slug]`'s `.ar-author` pattern but restyled with the Literary
+palette/type system (`.lit-piece-author-*` in `literary.css`) rather than reusing `.ar-author`
+directly, since `editorial.css` isn't loaded on `/literary` routes at all.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file. Verified via a CSS brace-balance check on `literary.css` (235/235) and a
+brace/paren-balance check on `page.tsx` (155/155, 114/114) and `LiteraryPieceGate.tsx` (50/50,
+61/61). Re-check pixel fidelity — the author band's mobile wrap and the gate eyebrow's color
+against the parchment background in particular — in a real environment before considering this
+fully closed.
+
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
 changes — and, critically, reuses an existing WordPress category rather than inventing one.**
 An initial draft of this feature assumed a brand-new "literary" category tree didn't exist yet
@@ -635,6 +764,535 @@ read-through, a CSS brace-balance check on `literary.css` (157/157), and a diff 
 `is-current` dynamic states and `.lit-page` itself). Re-check pixel fidelity against the approved
 mockup and the real logo asset's rendering in a real environment before considering this fully
 closed.
+
+## Literary About Us + Submissions pages — real copy from The Moveee's editors (September 2026)
+
+`apps/site/app/literary/submit/page.tsx`'s content was previously flagged in this file as
+"reasonable starting defaults, not confirmed editorial policy" — that placeholder is now
+replaced with the real thing, supplied directly by the editors (two Word documents: an About Us
+page and a Submissions Landing Page). A new route, `apps/site/app/literary/about/page.tsx`, was
+also added — there was no About page under `/literary` before this.
+
+- **Both pages reuse the existing `.lit-submit-*` CSS classes** (`literary.css`) as-is — despite
+  the name, that class family is a plain long-form-content layout (eyebrow, h1, body copy with
+  h2 breaks, a closing 2-card row), not literally scoped to the submissions page. No new CSS was
+  needed for either page.
+- **Real, confirmed policy, not placeholders**: quarterly issues pay $15&ndash;$25/piece (The
+  Moveee Flash pays a flat $10), an 8&ndash;12 week response time (4 weeks for Flash), a $3
+  quarterly submission fee with up to 100 free waiver slots per quarter (Flash has no fee),
+  first-publication-and-archival-rights-only (author retains copyright), and prize-nomination
+  language (Pushcart, Caine Prize for African Writing, Best Small Fictions, O. Henry Prize, plus
+  an internal Moveee Editor&rsquo;s Prize). If any of these numbers ever change, this is the one
+  page to update — there's no other copy of them anywhere in the codebase.
+- **The Moveee Flash** (a free monthly flash-fiction call reserved for African writers/stories,
+  distinct from the paid quarterly issues open to writers from anywhere) is documented here for
+  the first time — it didn't exist in the old placeholder copy. If Flash ever gets its own
+  route/CTA beyond a mention on the Submissions page, this is the section to expand from.
+- **`LiteraryFooter.tsx`'s "The Magazine" column** gained an "About Us" link
+  (`/literary/about`), placed between "The Moveee Literary" and "Submit Your Work" — the
+  masthead's top nav (`LiteraryMasthead.tsx`) was deliberately left as-is (genre links only,
+  plus the existing Submit/Subscribe pills) since the user asked specifically for the footer.
+- This section's editorial voice (no hype words, no "we are/aren't X" negative framing — see the
+  Voice/copy constraints entry above) is naturally satisfied by the supplied copy as given; no
+  further rewriting was needed beyond adapting it into JSX (headings, lists, `&mdash;`/`&rsquo;`
+  entities for the site's existing HTML-entity convention).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via a brace/paren-balance check on all three edited
+  files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
+  tweaks at this volume of content) in a real environment before considering this fully closed.
+
+## Literary Submissions Manager — WP Admin only, intake stays email (September 2026, SUPERSEDED)
+
+**Superseded by "Literary Submissions — real payment-integrated online form" further below.**
+This entry originally documented an email-only intake model — kept here for history since the
+manual-logging admin tool it describes is still exactly how it was built; only the intake
+channel changed. If you're looking for how writers actually submit today, skip to that later
+entry.
+
+Per explicit user decision: writers keep submitting by emailing `literary@themoveee.com` with
+the section + name in the subject line (`/literary/submit`'s documented convention, e.g.
+"Poetry Submission — Ada Nwosu") — **no new writer-facing form was built**, this is purely an
+internal editorial tool for logging and tracking those emailed submissions through decision.
+No public submissions portal exists as of this entry; if one is ever built, it should write into
+this same storage rather than duplicating it (see "Storage" below).
+
+- **New file**: `culture-community/includes/admin/class-culture-literary-submissions.php`
+  (`Culture_Literary_Submissions`), registered as a submenu under the existing top-level
+  "Culture Community" menu (`admin.php?page=culture-literary-submissions`) — required in
+  `culture-community.php` and initialized in `culture_community_init()`, same wiring as every
+  other admin tool in this plugin.
+- **Storage**: a single `culture_literary_submissions` wp_options row (array of submission
+  objects) — same pattern as `Culture_Redirects` (`culture_redirects` option), chosen over a
+  dbDelta table since this is a small, manually-curated editorial list, not something written
+  at volume by a webhook (contrast with `wp_culture_tickets`, a real table, which is).
+- **Fields tracked per submission**: writer name/email, section, piece title, the raw email
+  subject line, status (Received/In Review/Accepted/Rejected/Published), submission-fee status
+  (Pending/Paid/Waived/N-A), contributor-payment status (Unpaid/Paid), an assigned reviewer (a
+  WP user with `edit_posts`, via `get_users()`), received date, and free-text internal notes.
+- **Terms are hardcoded per section in `Culture_Literary_Submissions::SECTIONS`**, mirroring
+  `/literary/submit`'s real, confirmed policy (see that page's "Real, confirmed policy" note):
+  quarterly sections (Fiction/Poetry/Essays/Conversations/In Translation/Notes) get a $3
+  submission fee, a $15–$25 contributor payment, and a 12-week (84-day) response window; The
+  Moveee Flash gets no submission fee, a flat $10 payment, and a 4-week (28-day) window. **If
+  these figures ever change on the submissions page, update this constant to match** — there's
+  no shared source of truth between the PHP admin tool and the Next.js copy, same caveat as
+  every other PHP/TS duplication called out elsewhere in this file.
+- **Response-time tracking**: `deadline_state()` computes `received_at + response_days` and
+  flags a still-open submission (Received/In Review) as "Overdue" once past that date or "Due
+  soon" within 7 days of it — shown as a colored deadline column in the list table, summarized
+  in a page-header count, and surfaced as a red bubble on the submenu label (the same
+  `awaiting-mod`/`pending-count` WP core CSS classes used for the native comments-pending
+  bubble). A decided submission (Accepted/Rejected/Published) is never flagged, regardless of
+  how old it is.
+- **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
+  "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
+  via a regex accepting any run of dash-like separators — hyphen, en dash, em dash, horizontal
+  bar, minus sign — or a colon (`/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i`)
+  and pre-fills the Section dropdown
+  and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
+  edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
+  the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
+  to keep fee data honest, not a hard validation.
+- **Row-level quick actions**: each row has one-click links to jump straight to In
+  Review/Accepted/Rejected/Published (`admin-post.php?action=culture_lit_submission_status`,
+  nonce'd per-row) alongside the full Edit form and a Delete button — mirrors the
+  check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
+- **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
+  current filters show, same convention as Ticket Sales' own CSV export.
+- **Deliberately out of scope**: no REST endpoints, no frontend/mobile surface, no automated
+  email ingestion (an editor still manually creates each row after reading the email) — this is
+  a manual logging tool, not an inbox parser. If automated ingestion from the literary@ inbox is
+  ever wanted, that's a separate, larger project (an email-parsing webhook/cron), not a small
+  extension of this file.
+- Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
+  against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
+  other pass in this file; this feature additionally needs the plugin redeployed (manual
+  zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
+  since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
+
+**Follow-up, same month — WordPress push + accept/reject emails.** Two explicit requests, both
+built on top of the manager above without changing its email-only intake or its manual-logging
+posture:
+
+- **Piece content + "Push to WordPress"** — a submission now has a `content` field, edited via a
+  real `wp_editor()` (TinyMCE, `teeny` toolbar — bold/italic/lists/link, matching the ACF
+  wysiwyg treatment given to other short rich-text fields elsewhere in this plugin) in the
+  add/edit form. A row whose status is Accepted or Published gets a **"Push to WordPress"**
+  button (`Culture_Literary_Submissions::push_to_wordpress()`,
+  `admin_post_culture_lit_submission_push`) that creates a real `post` — title, content
+  (`wp_kses_post`'d), status **`draft`** (never auto-published — "processing into publishing"
+  still means an editor finishes it: featured image, final formatting, and the actual Publish
+  click all still happen by hand), category = the existing `literary` category (by slug,
+  `LITERARY_CATEGORY_SLUG = 'literary'`, matching `packages/shared/lib/wp.ts`'s constant of the
+  same name), and a genre tag matching the submission's section (`GENRE_TAG_NAMES` — same label
+  strings as that file's `LITERARY_GENRES[].label`, so the draft lands on the right
+  `/literary/{genre}` archive the moment it's published). **The Moveee Flash gets no genre tag**
+  — there's no dedicated Flash genre page, so a pushed Flash piece surfaces in the main
+  `/literary` feed only, same graceful "untagged post" behaviour that section's own docs already
+  describe.
+  - **Author**: looks up the writer's email against `get_user_by('email', ...)` — if they have a
+    real WP account, the draft is authored as them (a real byline); otherwise the editor doing
+    the push is the author of record until someone reassigns it in the normal post editor. This
+    is a deliberate, documented limitation, not an oversight — there's no guest-author system in
+    this codebase to map an external contributor onto without a WP account.
+  - **Re-pushing is update-in-place, not duplication** — the submission stores `wp_post_id` once
+    a push succeeds; a second push (after the editor pastes further edits into the `content`
+    field) calls `wp_update_post()` against that same post ID instead of creating a new one. The
+    list table's "WordPress" column shows "Edit draft →" (linking to the real post editor) plus
+    "Re-push edits" once linked, or a "Push to WordPress" button before that.
+  - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
+    empty) or the `literary` category doesn't exist on the target site.
+- **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
+  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()`). Fired
+  from `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
+  change — the full edit form's `handle_save()` and the list table's one-click quick-status
+  links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
+  never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
+  sends when the submission has a `writer_email` on file — if not, the status change still
+  applies but an admin notice ("wasn't notified") tells the editor to follow up manually instead
+  of the email silently never going out. The acceptance email references the section's real
+  payment terms (`payment_label`, e.g. "$15–$25" or "$10 flat") pulled from the same `SECTIONS`
+  constant the rest of the manager already uses — **if those figures ever change on
+  `/literary/submit`, update `SECTIONS` here too**, same cross-file caveat as everywhere else
+  fee/payment terms are duplicated in this codebase.
+- Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
+  instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
+  publish round trip and both email sends against a real inbox before considering this closed.
+
+**Follow-up, same month — accept/reject email content is now WP Admin-editable.** Both emails'
+subject/heading/body/button were moved onto the plugin's existing admin-configurable
+`Culture_Email_Templates` system (`class-culture-email-templates.php` — the same mechanism
+already used for the welcome/referral/payment-receipt/grace-period/downgrade/event-RSVP emails)
+as two new template slugs, **`literary_accepted`** and **`literary_rejected`**, editable at
+**WP Admin → Culture Community → Email Templates** (a `wp_editor()` WYSIWYG for the body, plain
+text fields for subject/header-heading/button-text, a merge-tag reference table, and a
+"Reset to Default" button — same UI every other template in that list already uses). Storage:
+`wp_options` rows `culture_email_tpl_literary_accepted`/`culture_email_tpl_literary_rejected`
+(only written once an admin actually saves a customization — an unedited template keeps
+rendering the code-defined default with no options row at all).
+- **Merge tags**: `{writer_name}`, `{piece}` (the title in curly quotes, or literally "your
+  piece" if the submission has no title — computed in PHP before merging, not something an
+  admin can express in the editor), `{section}`, and (accepted only) `{payment_label}`.
+  `send_literary_submission_decision()` in `class-culture-emails.php` now just builds this
+  merge-tag map and calls `Culture_Email_Templates::get_template()`/`::merge()` — identical
+  shape to `send_referral_confirmation()`/`send_payment_receipt()` in the same file.
+  **This is a straight rewire, not a new mechanism** — the actual copy (both subject lines,
+  both `<h1>` headings, both bodies) is unchanged from the hardcoded version, now stored as
+  each template's `default_*` fields so a fresh install without any admin customization sends
+  byte-for-byte the same emails as before.
+- Both templates render through a live CTA button (new — the hardcoded version had none),
+  labelled "Visit The Moveee Literary" by default and linking to `{frontend_url}/literary`
+  (`Culture_Emails::get_frontend_url()`, the same Next.js-frontend-not-WordPress URL every
+  other templated email's button already points at).
+- **If accept/reject copy is ever wrong or needs a wording change, this is now the one place to
+  fix it** — don't go back to editing `send_literary_submission_decision()`'s PHP for a pure
+  copy change; that method should only need touching again if the merge-tag set itself changes.
+- Verified via `php -l` on both edited files. Not deployment-tested against a live WP Admin
+  (can't render `wp_editor()`/save a real option from this sandbox) or a real mail transport —
+  same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file. Re-check
+  that the Email Templates admin page actually lists and edits both new tabs, and that a saved
+  customization actually reaches a real accept/reject email, in a live environment.
+
+## Literary Submissions — real payment-integrated online form replaces email intake entirely (September 2026)
+
+**This supersedes every earlier "intake stays email" decision documented above.** After the
+manual Submissions Manager and its email-based intake shipped, the user asked directly: if
+writers submit by email, how do they even pay the $3 quarterly submission fee? The answer was
+to build a real public submission form with payment integrated end-to-end, reusing the exact
+same Paystack/Stripe machinery already powering event tickets and membership subscriptions —
+not a new payment system. **Email intake is gone.** `literary@themoveee.com` is now only for
+questions and waiver-code requests, not submissions.
+
+**The form collects the finished piece as pasted rich text, not a file upload — deliberately,
+per explicit user steer mid-build.** An earlier draft of this feature planned a manuscript
+file upload (.docx/.doc/PDF) plus server-side DOCX→HTML parsing (a whole planned
+`Culture_Literary_Inbox` class, `webklex/php-imap` + `phpoffice/phpword` Composer dependencies,
+blocked in this sandbox by `api.github.com` being unreachable through the agent proxy) so an
+editor's "Push to WordPress" button would have real body text to work with. **That entire plan
+was abandoned, not just deferred** — the user pointed out a simpler design: let the writer
+paste their formatted piece directly into a rich-text field on the form itself. This sidesteps
+file uploads, R2 storage, and DOCX parsing entirely, and the pasted content lands **directly**
+in the same `content` field the admin's existing `wp_editor()`/"Push to WordPress" flow already
+expects (see the "WordPress push" follow-up documented in the superseded entry above) — an
+editor now gets real, submission-ready body text from the moment a submission arrives, with
+zero parsing code needed anywhere. If a future request ever wants file-upload intake back
+instead, this is a deliberate, explicit reversal to revisit, not a gap that was missed.
+
+**Manuscript-format copy on `/literary/submit` was rewritten to match** — the old
+"we accept .doc, .docx, and PDF files, font size 12, double spacing, Garamond" paragraph
+described a manuscript that no longer exists; it now just says the piece is pasted directly
+into the online form's editor.
+
+### Payment — mirrors `Culture_Ticket_Payment` almost line-for-line
+
+`Culture_Literary_Submissions` (same file as the admin manager) gained the payment machinery
+directly, rather than a new class, since it already owns `add_submission()`'s one true
+creation path:
+
+- **New dbDelta table**: `wp_culture_literary_payments` (`payment_table()`/
+  `create_payments_table()`, wired into `Culture_Activator::create_tables()`,
+  `CULTURE_VERSION` bumped `2.8.0` → `2.9.0` to trigger it — see "Plugin DB table
+  auto-upgrade" above). Holds `writer_name`/`writer_email`/`section`/`title`/`content`
+  (the pasted rich text, held here until payment clears) plus the usual `payment_code`/
+  `payment_gateway`/`payment_reference`/`payment_status`/`status` fields, unique-keyed on
+  `payment_code`. **Deliberately a real table, not the option-array store** the confirmed
+  Submissions Manager list uses — this one is written at real public-webhook volume, exactly
+  the same "option array is for a small curated list, a dbDelta table is for volume" reasoning
+  `Culture_Ticket_Payment`'s own docblock gives for `wp_culture_tickets`.
+- **Three-way fee routing in `handle_submission_initiate()`** (`POST
+  /culture/v1/literary/submission/initiate`, public): (1) **The Moveee Flash**
+  (`SECTIONS['flash']['fee'] === 0`) → `add_submission()` fires immediately, `fee_status =
+  'n_a'`, no payment step at all. (2) **A waiver code** → `redeem_waiver()` validates it (see
+  below), then the same immediate `add_submission()` with `fee_status = 'waived'`.
+  (3) **Otherwise** → a pending row is inserted into the new payments table and a real
+  Paystack (`Culture_Paystack::charge_initiate()`) or Stripe
+  (`Culture_Stripe::payment_session()`) charge is initiated — same `NGN → Paystack, else →
+  Stripe` routing `Culture_Ticket_Payment::handle_initiate()` already uses, same
+  reference-prefix-then-metadata pattern (`LIT-{payment_code}` here, vs. `TKT-{ticket_code}`
+  there) so the two payment flows can share one Paystack account/webhook secret without
+  colliding.
+- **New REST routes** (all public, `__return_true`, `rest_api_init` — first time this class
+  registers REST routes; `init()` gained `add_action('rest_api_init', ...)` alongside its
+  existing `admin_post_*` hooks): `POST literary/submission/initiate`, `GET
+  literary/submission/status` (poll by `payment_code` — used by the Stripe success-redirect
+  path below), `GET literary/submission/callback` (Paystack's browser redirect back),
+  `POST literary/submission/webhook/paystack`, `POST literary/submission/webhook/stripe`.
+  Webhook signature verification (`x-paystack-signature` HMAC-SHA512, Stripe's `t=/v1=`
+  HMAC-SHA256 scheme) is copied verbatim from `Culture_Ticket_Payment` — same secrets
+  (`culture_paystack_secret_key`, `culture_stripe_webhook_secret`), no new WP Admin fields
+  needed.
+- **`confirm_payment($payment_code, $reference, $gateway)`** — idempotent (checked via
+  `status === 'confirmed'`, same pattern as `Culture_Ticket_Payment::confirm_ticket()`),
+  called from both the Paystack browser callback and either gateway's webhook (whichever
+  fires first wins; the other is a no-op). On first confirmation it calls `add_submission()`
+  with `fee_status = 'paid'`, stores the resulting submission id back on the payment row, and
+  sends the new `literary_received` email (below).
+- **Stripe's async confirmation gap, handled the same way the shop checkout flow already
+  does**: Stripe's `success_url` lands the browser back on `/literary/submit/form?
+  submission_pending={code}&session_id=...` *before* the webhook may have fired, so the page
+  polls `GET /api/literary/submission/status` every 3s (cap 40 attempts, ~2 minutes — same
+  numbers `CheckoutScreen.tsx`'s order-confirmation poll already uses) until the payment row
+  flips to `confirmed`. Paystack's flow doesn't need this — its own browser callback
+  (`handle_paystack_callback()`) verifies the transaction and calls `confirm_payment()`
+  synchronously before redirecting, landing straight on `?submission_confirmed={code}`.
+
+### Waiver codes — admin-issued, single-use, 100/quarter (per explicit user decision)
+
+Per the second AskUserQuestion answer collected for this feature: a writer who can't afford
+the $3 fee still emails to ask (the guidelines page's FAQ already said this), but an editor now
+issues a real single-use code from WP Admin rather than trusting a self-serve checkbox.
+
+- **Storage**: `culture_literary_waiver_codes` wp_options row (array of `{code, quarter, used,
+  used_by, created_at}`) — same small-array-option pattern as everything else in this class,
+  not a table, since codes are admin-generated in small batches, not written by a webhook.
+- **`current_quarter()`** — `{Y}-Q{1-4}` derived from the current month (`ceil(month/3)`).
+  A code is only redeemable in the quarter it was issued for — `redeem_waiver()` rejects a
+  stale code from a prior quarter with `waiver_expired`, distinct from `waiver_used`
+  (already redeemed) and `waiver_invalid` (doesn't exist).
+- **`generate_waiver_codes($count)`** enforces the 100-per-quarter cap by counting existing
+  codes tagged with `current_quarter()` before generating more (caps the requested count down
+  to whatever's left, or returns a `quota_reached` `WP_Error` if the quarter is already full)
+  — codes are `WAIVE-{8 hex chars}`.
+- **Admin UI**: a new "Submission Fee Waivers" panel appended to the bottom of the existing
+  Submissions Manager page (`admin.php?page=culture-literary-submissions`) — current
+  quarter's issued/remaining count, a "Generate Code(s)" form (capped to the remaining quota),
+  and a table of this quarter's codes (code / Used-or-Available / used-by email / created) with
+  a Delete link on unused codes only (`handle_waiver_delete()`'s filter explicitly refuses to
+  remove an already-used code, so redemption history for a quarter can't be erased by
+  accident).
+
+### New editable email: "Literary Submission — Received"
+
+A third template alongside the existing `literary_accepted`/`literary_rejected` pair (see the
+superseded entry above for how those work) — **`literary_received`**, added to
+`Culture_Email_Templates::templates()` and sent via the new
+`Culture_Emails::send_literary_submission_received()` the moment a submission is actually
+created (Flash: instantly; waived: instantly; paid: once `confirm_payment()` runs) — distinct
+from the accept/reject emails, which still only fire later once an editor makes a decision.
+Same merge-tag shape (`{writer_name}`, `{piece}`, `{section}`), same WP Admin → Culture
+Community → Email Templates editing surface.
+
+### Frontend (`apps/site` only)
+
+- **`app/literary/submit/form/page.tsx`** (new, client component) — the real form: name/email/
+  section/optional-title fields, a `contentEditable` rich-text box (a small Bold/Italic
+  toolbar via `document.execCommand` — no editor library dependency, matching in spirit the
+  admin's own `teeny`-toolbar `wp_editor()`) for the piece body, and (only shown for a
+  fee-bearing section) an optional waiver-code field. A local `SECTIONS` map mirrors the PHP
+  constant's `label`/`fee`/`paymentLabel` fields for display — **no shared source of truth
+  across the PHP/TS boundary**, same caveat as every other duplicated constant in this
+  codebase; keep both in sync if the fee/terms ever change.
+  - Submitting calls `POST /api/literary/submission/initiate`; a `'confirmed'` response shows
+    a plain "It's In" confirmation screen inline; a `'payment_required'` response does a full
+    `window.location.href` redirect to the returned Paystack/Stripe hosted checkout page —
+    same "normal browser tab, no in-app WebView" reasoning the shop checkout flow already
+    documents for why this is the right pattern on web (vs. mobile, which does have a WebView).
+  - On mount, reads `?submission_confirmed=`/`?submission_pending=`/`?submission_failed=`/
+    `?submission_cancelled=` off the URL (the four outcomes the PHP redirect targets can land
+    on) and branches into the matching state — including the Stripe polling loop described
+    above.
+- **New proxy routes**: `app/api/literary/submission/initiate/route.ts` and
+  `.../status/route.ts` — thin passthroughs to the two public WP REST endpoints (no secret
+  needed, same as `app/api/events/ticket/route.ts`'s equivalent proxy for
+  `/culture/v1/ticket/initiate`).
+- **`app/literary/submit/page.tsx`** (the guidelines page) — the "Send Us Your Work" section's
+  mailto instructions were replaced with a "Start Your Submission →" card linking to
+  `/literary/submit/form`; `literary@themoveee.com` is now framed purely as "questions or a
+  waiver-code request," not a submission address. The manuscript-format FAQ/guidelines
+  paragraph was rewritten to describe pasting into the online editor instead of file formats.
+- **New CSS**: `.lit-form-*` classes appended to `apps/site/app/literary.css`, built on the
+  section's existing `--lit-*` token palette (ivory/ink/oxblood/parchment/rule) — no new
+  tokens, no dependency on `.lit-submit-*` beyond the page wrapper it already provides.
+
+### Magic-code verification gate — closes The Moveee Flash's no-fee abuse gap (September 2026, follow-up)
+
+Per explicit user follow-up ("How about the free submissions for The Moveee: Flash? … we need
+to ensure only logged in users (perhaps via magic code) can submit"): every submission branch —
+Flash's no-fee path, a waiver-code redemption, and the real Paystack/Stripe payment path alike —
+now requires a verified email first. This is the same email/OTP "magic code" mechanism already
+built for `/literary` and `/magazine` content gating (`Culture_Literary_Access`), reused as-is,
+not a new auth system. It's what actually closes the Flash abuse gap: Flash has no payment
+barrier at all, so verifying real ownership of an email address is the only gate it can have.
+
+- **PHP**: `handle_submission_initiate()` now requires a `verified_token` param as its very
+  first check, before any of the `writer_name`/`section`/fee-routing validation — calls
+  `Culture_Literary_Access::verify_token($token)` (already built, previously unused from PHP;
+  its own docblock flagged it as "kept … for any future server-side need," which this is) and
+  returns 401 `not_verified` if it's missing or invalid/expired. **The verified token's own
+  email is authoritative** — `writer_email` is derived from `$verified['email']`, not from a
+  client-supplied param; the frontend no longer sends a `writer_email` field at all. This
+  applies uniformly across all three fee branches (Flash, waiver, paid), so there's no longer a
+  path to `add_submission()` that skips verification.
+- **Next.js proxy** (`app/api/literary/submission/initiate/route.ts`): reads the existing
+  `moveee_lit_token` httpOnly cookie server-side (`cookies()` from `next/headers`, same cookie
+  `/api/literary/verify-code` already sets) and forwards it as `verified_token` — short-circuits
+  with a 401 before ever reaching WordPress if the cookie is missing, so an unverified visitor
+  gets a fast, clear failure rather than a round trip that WP would reject anyway.
+- **New: `app/api/literary/verify-status/route.ts`** — lets the submission page skip the gate
+  UI entirely when a valid `moveee_lit_token` cookie already exists (e.g. the visitor verified
+  earlier in the same browser session unlocking a gated `/literary` or `/magazine` piece).
+  Verifies locally via `verifyLiteraryToken()` (`lib/literary-access.ts`) — no round trip to
+  WordPress needed, same as every other client-side literary-access check on this side.
+- **Frontend gate UI** (`app/literary/submit/form/page.tsx`): a new `verifyStep` state
+  (`checking` → `email` → `code` → `verified`) renders before the actual submission form at
+  all — on mount it silently checks `verify-status`; if not already verified, it shows a plain
+  email-then-code flow reusing the exact same two existing API routes
+  (`/api/literary/request-code`, `/api/literary/verify-code`) that `/literary`'s and
+  `/magazine`'s own gates already use. Only once `verifyStep === "verified"` does the real form
+  render — the form's own "Your email" field is now a read-only display of the verified address
+  (with a small "Verified" badge, `.lit-form-verified-badge`) rather than an editable input, and
+  the submit payload no longer includes an email field at all (the server derives it from the
+  cookie).
+- **New CSS**: `.lit-form-verified-badge` and `.lit-form-linklike` (a plain-button "Use a
+  different email" link inside the code step) appended to `apps/site/app/literary.css`'s
+  existing `.lit-form-*` block — same `--lit-*` token palette, no new tokens.
+- Verified via `php -l` on the edited PHP file and a brace/paren-balance check on all three
+  edited/new TS/TSX files and `literary.css`. **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this change
+  additionally needs the plugin redeployed before `verified_token` enforcement takes effect in
+  production (the class file itself has no new dbDelta table, so no `CULTURE_VERSION` bump was
+  needed for this follow-up specifically). Re-check the full email → code → submit round trip
+  for all three fee branches (Flash, waiver, paid) in a real environment before considering this
+  closed.
+
+**Route renamed to `/literary/submit/form` (September 2026, follow-up)** — the submission form
+originally shipped at `/literary/submit/new`; moved (`git mv`) to `/literary/submit/form` per
+explicit user request. Every reference was updated in the same pass: the two in-page `Link`s
+(the guidelines page's "Start Your Submission" card, and the form's own "Try again" link on
+payment failure), the PHP payment success/cancel redirect URLs and Paystack callback base URL in
+`handle_submission_initiate()`/`init_stripe_payment()`/`init_paystack_payment()`, and the
+doc-comments in `literary.css`/`verify-status/route.ts`. No functional/logic changes — purely a
+path rename, same pattern as the `/shop` → `/lifestyle` rename elsewhere in this file.
+
+### Deliberately out of scope for this pass
+
+- **No mobile submission flow** — The Moveee Literary isn't surfaced on `apps/mobile` at all
+  (per the section's own original scope note), so this form is web-only, same as every other
+  Literary page.
+- **No file-upload fallback** — a writer who genuinely can't paste plain-formatted text (a
+  complex layout, embedded images) has no upload path; they'd need to email
+  `literary@themoveee.com` and have an editor manually log the submission via the existing
+  admin "Log a New Submission" form, which still exists and still accepts pasted content the
+  same way.
+- **No currency selection UI** — the form always requests `USD`, routing every real charge to
+  Stripe; the PHP side's `NGN → Paystack` branch exists (mirroring the ticket flow) but is
+  currently unreachable from this form since nothing sends `currency: "NGN"`. If Naira pricing
+  is ever wanted for Nigerian writers, add a currency toggle to the form — the backend routing
+  is already there.
+- Verified via `php -l` on all five touched/new PHP files and a brace/paren-balance check on
+  the new TS/TSX files and `literary.css` (330/330). **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file, and this
+  feature additionally needs the plugin redeployed (the new table only gets created via
+  `culture_community_maybe_upgrade()`'s version-bump check — see "Plugin DB table
+  auto-upgrade" above) and real Paystack/Stripe keys configured before a real payment can be
+  tested end to end. Re-check the full paste → pay → webhook → confirmation round trip (both
+  gateways) and a waiver-code redemption in a real environment before considering this closed.
+
+## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
+
+An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired
+rebuild" above) landed a `LiteraryGenreArt.tsx` component but never actually removed the
+3-letter abbreviation caption (`FIC`/`POE`/`ESS`/…) rendered on top of it, and used a single
+monochrome oxblood/ivory/gold palette for every genre — from a live screenshot this read as an
+unillustrated flat gradient with cryptic text. Fixed:
+
+- **`LiteraryGenreArt.tsx` now uses a distinct colour palette per section** (deep burgundy for
+  Fiction, violet for Poetry, teal for Essays, amber for Conversations, blue/gold for
+  Translation, plum for Notes) instead of one shared oxblood tone, and every icon gained real
+  colour-fill accents (a red wax bookmark ribbon, a teal inkwell, a gold nib, etc.) rather than
+  single-tone ivory line art only — genuinely "illustrated," not just a decorative line icon on
+  a dark box.
+- **The abbreviation caption is gone entirely** — `LiteraryShelfItem` dropped its `sub` field,
+  `LiteraryShelf.tsx` no longer renders a `<span>` inside the cover, and `.lit-shelf-cover`'s CSS
+  was simplified to just `position: relative; overflow: hidden` (the illustration is the whole
+  cover; the real label still renders below it via `.lit-shelf-name`, unchanged).
+- **The Submissions spotlight cover** (`.lit-plug-cover`) also got a real illustration — a
+  `slug="submissions"` variant (an open envelope, a rising letter, a gold wax seal) — instead of
+  a plain oxblood gradient; the "Submissions / Open" text now overlays it via a new
+  `.lit-plug-cover-text` wrapper (`position: relative; z-index: 1`) on top of an absolutely
+  positioned `.lit-plug-cover-art`.
+- This pass also merged in `LITERARY_HOMEPAGE_CUTOFF` (a separate, unrelated fix that had landed
+  on `main` in the meantime — filters the homepage's own pools to pieces published on/after a
+  fixed date, see its own code comment in `app/literary/page.tsx`) — no conflict in intent, just
+  two branches touching the same file.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via brace/paren-balance checks on
+  `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
+
+## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
+
+`/magazine/[slug]` articles used to gate member-only/patron-only content with `ArticleContentGate`/
+`ContentGate` (`packages/shared/components/`) — a client-only soft gate (full content shipped in the
+RSC payload, hidden via `useSession()`) offering a "Join free" / "Sign in" wall. Per explicit
+request, this was replaced with The Moveee Literary's real email/OTP magic-code mechanism — reused
+as-is, not duplicated: same PHP class (`Culture_Literary_Access`), same signed HMAC token, same
+`moveee_lit_token` cookie, same `/api/literary/request-code` and `/api/literary/verify-code` routes.
+**Verifying once unlocks gated content on both `/literary` and `/magazine`** — the token only ever
+encodes an email + access level, nothing section-specific, so there was no reason to mint a second,
+parallel token system.
+
+- **The only thing that differs by caller**: which newsletter list a "free" (non-Pro) verifier joins.
+  `Culture_Literary_Access::NEWSLETTER_LIST_BY_CONTEXT` maps `'literary' => 'literary-club'` and
+  `'magazine' => 'culture-drop'` (per explicit decision — Magazine content already belongs to Culture
+  Drop editorially). `verify_code()` takes an optional `$context` param (default `'literary'`);
+  `handle_literary_verify_code()` in `class-culture-rest-api.php` validates it against that map's
+  keys before passing it through. The Next.js `/api/literary/verify-code/route.ts` forwards an
+  optional `context: "magazine"` body field the same way — no new REST namespace, no new PHP class.
+- **New: `apps/site/components/MagazinePieceGate.tsx`** — a Magazine-branded rebuild of
+  `LiteraryPieceGate.tsx`'s email → OTP flow, simplified to two modes (`"member"` | `"patron"`,
+  matching `AccessLevel`'s `member-only`/`patron-only`) and always blocking (no free-read metering —
+  see below), styled onto the existing `.ar-gate` card family in `editorial.css` (new `.ar-gate-form`/
+  `.ar-gate-input`/`.ar-gate-error`/`.ar-gate-resend` rules alongside it) rather than `literary.css`'s
+  `.lit-email-gate`, since `literary.css` isn't loaded on `/magazine` routes.
+- **New: `apps/site/app/api/magazine/remainder/route.ts`** — the same shape as
+  `/api/literary/remainder`, generalized: no `isLiteraryPost()` check (any `post` works), and no
+  metering branch, since Magazine's gate is decision **b)** below.
+- **Deliberate decisions made explicitly, not inferred** (asked directly, since getting any of these
+  wrong changes who can read what):
+  a) **Verifying a magic code alone fully satisfies `member-only`** — it does not create a real
+     WordPress account or session, it just proves the email is real. This intentionally loosens
+     "member-only" from "has a free account" to "gave a verified email," matching how Literary's own
+     free tier already works. `patron-only` still requires the verified email to belong to an
+     existing Pro (`patron`) account, or a real Pro session — magic-code verification never grants
+     Pro on its own.
+  b) **No free-read metering** — unlike Literary's public pieces (a few free reads per rolling
+     window before the gate appears), a gated Magazine article always shows the gate immediately,
+     matching the site's existing hard-wall behavior. `MagazinePieceGate` has no "Skip for now" /
+     non-blocking mode at all.
+  c) **`export const dynamic = "force-dynamic"` on the whole route**, not just the gated path — this
+     page also has `generateStaticParams()` (top 100 recent posts), the exact same combination that
+     threw `DYNAMIC_SERVER_USAGE` on `/literary/[slug]` for any slug outside its own pre-generated
+     list (see that fix's own CLAUDE.md entry above) the moment `cookies()`/`headers()`/
+     `getServerSession()` are used. This was a known, explicit tradeoff, not an oversight — every
+     article (gated or not) now renders fresh per request instead of via the previous `revalidate =
+     600` ISR, a real latency/compute cost accepted for correctness on a first ship. The lighter
+     alternative (truncate identically for everyone in the cached HTML, verify client-side after
+     load) was considered and explicitly not chosen — revisit if this page's compute cost becomes a
+     real problem.
+- **Real server-side truncation, not a client-hidden gate** — `sanitizeHtml(processedContent)` is
+  truncated to 30% via `truncateHtmlByPercent()` (`lib/literary-access.ts` — despite the filename,
+  nothing in it is actually Literary-specific) before it ever reaches the client for a non-authorized
+  visitor; the withheld remainder is fetched only after verification, via the new remainder route,
+  and injected in place inside another `.prose-content` div (preserving the width-tier grid system —
+  `.ar-wrap > .prose-content { display: contents }`, see the "width-tier rail" section above — since
+  the injected HTML still needs `alignwide`/`wp-block-gallery`/etc. to size correctly). Crawlers
+  always get the full, untruncated piece (`isCrawlerUserAgent()`, same helper Literary uses) so this
+  change doesn't regress SEO on gated articles the way real truncation otherwise would.
+- **Everything after the gate — Shop the Edit, the Culture Drop `JoinSection`, the "This piece is
+  from {Issue}" card, comments, and Finish Reading — stays hidden until authorized**, matching
+  `ArticleContentGate`'s old behavior (all of it used to live inside `fullContent`, only rendered
+  when `canView` was true).
+- **Scope: `/magazine` only.** `ArticleContentGate`/`ContentGate` are untouched and still used
+  exactly as before on `/directory/[slug]` (both `apps/site` and `apps/connect`) and the newsletter
+  single-issue reader (`/newsletter/[slug]`, `IssueReaderClient.tsx`) — those were never in scope for
+  this change and still show the original sign-in/sign-up wall.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+  other pass in this file (this feature additionally needs the plugin redeployed — see "Plugin DB
+  table auto-upgrade" — before `verify-code`'s new `context` param takes effect in production).
+  Verified via `php -l` on both touched PHP files and brace/paren-balance checks on every touched
+  TS/TSX file and `editorial.css`. Re-check the full request-code → verify-code → remainder-fetch
+  round trip against a real member-only and a real patron-only article, logged out, in a real
+  environment before considering this fully closed.
 
 ## Process: adding a new newsletter
 
@@ -1633,7 +2291,700 @@ mobile-only or web-only wrapper alone, or the two clients will drift.
   real environment (including the Paystack NGN path specifically, since `resolve_shop_currency()`
   keys off a raw `country` string match) before considering this fully closed.
 
+### "The Moveee Lifestyle" identity wired into the real `/shop` archive (September 2026)
+
+A standalone brand-identity mockup ("The Moveee Lifestyle" — Bricolage Grotesque display type,
+a centered oxblood-scrim hero, a "Browse" category dropdown beside the grid label, square
+product images) was built and iterated as a Claude Artifact first, approved, then wired into
+the real `apps/site/app/shop/ShopArchiveWrapper.tsx` — same route (`/shop`, plus its
+`category`/`tag`/`brand` archive variants, all of which already funnel through this one
+component), real WPGraphQL/WooCommerce data throughout, no mock content. This **supersedes the
+archive-page section order described immediately below** (steps 0–4 of that list); the Editor's
+Pick split-strip and the separate "Featured Products" companion grid are gone, folded into one
+hero (from the current Editor's Pick) + the existing main grid. **Untouched by this pass**: the
+Magazine bridge (`.sl-bridge`), the Moveee Pro member band (`.sl-member`), and the Origins
+closing bridge (`.sl-origins`) — all three already matched this identity's brand tokens
+(`--ochre`/`--gold`/`--paper`) and needed no restyling, so their `.sl-*` classes and JSX are
+exactly as described below. The product **detail** page (`/shop/[slug]`) was deliberately left
+out of scope for this pass — it still renders with Fraunces headings; only the archive page's
+visual identity changed.
+
+- **New files**: `apps/site/app/shop/layout.tsx` (loads Bricolage Grotesque via
+  `next/font/google`, scoped to the whole `/shop` route tree as `--font-lfs-display` — same
+  "nested layout, not the root one" pattern as `apps/site/app/literary/layout.tsx`, so the rest
+  of Site A's font bundle is unaffected) and `apps/site/app/shop/shop-lifestyle.css` (new
+  `lfs-*`-prefixed classes only — imported *after* `shop.css` in `ShopArchiveWrapper.tsx`, and
+  deliberately additive: it never redefines an existing `.sl-*` selector wholesale, so nothing
+  in `shop.css` needed renaming). One surgical exception lives directly in `shop.css`:
+  `.sl-pcard-img`'s `aspect-ratio` changed `3/4` → `1/1` (every grid card is now square, the
+  identity's signature look) and its radius bumped to `var(--radius-xl)`.
+- **Ticker** — reuses the shared sitewide `.ticker-wrap`/`.ticker-track` (`globals.css`, the
+  same component `/journeys` and `/events` already use), not a bespoke one — real copy: "Vetted
+  Makers" (accent-colored via the shared `span.a` convention), "Moveee Pro saves {live
+  discount}% storewide", "Earn Culture Credits on every order", and "New: {the newest fetched
+  product's real name}".
+- **Category nav** (`.lfs-nav`, new) — a "Browse" dropdown (hover/focus-within, pure CSS, no
+  client component) listing the real fetched `categories`, sitting where the old horizontal
+  category strip used to be conceptually; a `<details>`-based mobile equivalent opens the same
+  list via tap, since `:hover` doesn't fire on touch — same disclosure-widget trick used
+  elsewhere in this codebase for JS-free mobile menus. No "coming soon" states — every category
+  returned by `GET_PRODUCT_CATEGORIES` is a live link.
+- **Hero** (`.lfs-hero`, new) — centered copy over the current Editor's Pick's own real product
+  photo (not a stock image), with the identity's oxblood radial-gradient scrim. Headline is
+  static brand copy ("The Index of things worth *owning*."); the trust line reads "Secure
+  Checkout by Stripe and Paystack. Moveee Pro members save {live discount}% storewide." — same
+  wording locked in on the standalone mockup. "Shop the Index →" anchors to `#lfs-grid`, a new
+  `id` added directly to `ShopProductGrid.tsx`'s `<section>`.
+- **Email capture** (`.lfs-email`, new) — a real `<SubscribeForm list="culture-drop">`
+  (`apps/site/components/SubscribeForm.tsx` — note `@/components/*` resolves to
+  `packages/shared/components/*` first per this app's tsconfig paths, so this actually renders
+  the `packages/shared` copy; both are functionally identical, same `/api/newsletter/subscribe`
+  call), not a decorative `onsubmit="return false"` form. This section didn't exist on the
+  archive page before this pass.
+- **Maker Story** (`.lfs-maker`, new) — spotlights the current hero pick's own maker (real
+  `vendorProfile`/`moveeeMeta.makerStory`, sanitized via `sanitizeHtml()`, falling back to
+  `vendorProfile.bio` when no per-product story is set — same fallback chain already documented
+  for the product detail page's own Maker Story section). **Deliberately not a bulk all-makers
+  grid** — that pattern was intentionally removed sitewide (see "Shop by Category + Meet the
+  Makers sections removed" above); this pass didn't reintroduce it, it built a single spotlight
+  card instead. Added `moveeeMeta` to `ShopArchiveWrapper.tsx`'s extra-data merge (it was already
+  being fetched by `GET_PRODUCTS_EXTRA`'s `PRODUCT_EXTRA_TYPE_FIELDS`, just never copied onto
+  the merged product object before this pass).
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
+  (and no `node_modules` installed) as every other mockup-to-real pass in this file; also
+  couldn't verify that "Bricolage Grotesque" resolves via this exact Next.js version's
+  `next/font/google` (it's a real, long-established Google Font, expected to work, but
+  unconfirmed against this repo's actual Next.js version). Verified via a CSS brace-balance
+  check on both `shop.css` (609/609) and the new `shop-lifestyle.css` (75/75), a
+  parens/braces-balance check on `ShopArchiveWrapper.tsx`, and a full read-through confirming
+  every `lfs-*` class referenced in the JSX has a matching CSS rule. Re-check pixel fidelity
+  against the approved mockup, and confirm the mobile category-dropdown panel doesn't overflow
+  a narrow viewport, in a real environment before considering this fully closed.
+
+### The Moveee Lifestyle becomes a fully standalone mini-site — own header + footer, every `/shop/*` route (September 2026, follow-up)
+
+**Corrects a scope gap in the pass above.** The prior pass only rebuilt the archive page's own
+body content — it left the sitewide floating `Header.tsx` pill and the sitewide `Footer.tsx`
+rendering on every `/shop` route, same as any other Site A page. The user explicitly rejected
+this as "half" the implementation: the whole point of a from-scratch brand identity for the shop
+is that `/shop` and everything under it should feel like its own distinct mini-website, with
+**nothing** from the rest of the site's chrome — or the old (pre-identity) shop design — surviving
+anywhere in the tree. This pass makes the identity's own masthead and footer the *only* header/
+footer any `/shop/*` route renders, using the exact same "standalone mini-site" mechanism already
+proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `Header.tsx` returning
+`null`, `ConditionalFooter.tsx` excluding the path) rather than inventing a new pattern:
+
+- **`apps/site/components/Header.tsx`** — added `isShopPage = pathname === "/shop" ||
+  pathname.startsWith("/shop/")` and changed the existing literary-only early return to
+  `if (isLiteraryPage || isShopPage) return null;`. The dead `isLifestylePage`/`ShopSearchModal`
+  branches that used to make the sitewide pill *look* shop-flavoured on `/shop` (before this pass,
+  the sitewide header still rendered there, just re-skinned) were removed entirely — the sitewide
+  header has no role on `/shop` at all anymore, so there's nothing left to re-skin.
+  `isMakersPage` is untouched and still drives the sitewide header's own lifestyle-flavoured logo
+  on `/makers` — that route is a *sibling* of `/shop`, not nested under it, so it's out of scope
+  for this pass and still uses the shared sitewide chrome.
+- **`apps/site/components/ConditionalFooter.tsx`** — added `isShopPath()` (same shape as
+  `isLiteraryPath()`) to the exclusion condition, so the sitewide dark `Footer.tsx` never renders
+  on any `/shop` route.
+- **New: `apps/site/components/ShopHeader.tsx`** (client) — the identity's own masthead, rebuilt
+  verbatim from the approved mockup's `.masthead`/`.mast-*` markup: the shared ticker
+  (`.ticker-wrap`/`.ticker-track`, now living here instead of duplicated per-page — see below),
+  the real Moveee Lifestyle logo (`/logo-lifestyle-black.png`), a "Categories" dropdown (desktop
+  hover, mobile `<details>`) sourced from a new small client fetch, and search/account/bag icons —
+  live cart count from `useCart()`, a session-aware account link (`useSession()`), and the existing
+  `ShopSearchModal` wired to the search icon (moved here from `Header.tsx`, which no longer needs
+  it since it never renders on `/shop`).
+- **New: `apps/site/components/ShopFooter.tsx`** (client) — the identity's own footer, rebuilt
+  verbatim from the mockup's `.foot`/`.foot-*` markup: brand blurb + logo, and three link columns
+  (Shop / Makers / Account). Every link points at a real destination — the mockup's own "Gift
+  Cards" and "Meet the Makers" items were dropped rather than kept as dead links, since neither has
+  a real feature/page behind it (no gift-card system exists anywhere in the codebase; the bulk
+  all-makers grid was deliberately removed sitewide, see "Shop by Category + Meet the Makers
+  sections removed" above) — same "never fabricate" rule applied to the mockup's bottom-bar "Index
+  last updated {date}" line, which was dropped since there's no real data source backing it.
+- **New: `apps/site/app/api/shop/categories/route.ts`** — a small client-fetchable proxy (same
+  "global chrome slot" pattern as the pre-existing `/api/header/featured-product`), returning both
+  the real product categories (for the header's dropdown) and the live `proDiscountPercent` (for
+  the header's ticker's "Moveee Pro saves X% storewide" line) in one response, cached 5 minutes.
+- **New: `apps/site/app/shop/shop-chrome.css`** — the masthead/footer CSS, remapped from the
+  mockup's own token names onto the real site's tokens (`--bg`→`--paper`, `--text`→`--ink`,
+  `--text-mute`→`--mute`, `--line`→`--rule`, `--line-strong`→`--rule-strong` with a `--rule`
+  fallback, `--accent`→`--ochre`, `--surface`→`--paper-deep`, `--surface-raised`→`--paper`,
+  `--shadow-plate`→`--shadow-card`) — same remapping convention already used by
+  `shop-lifestyle.css`'s own header comment.
+- **`apps/site/app/shop/layout.tsx`** now mounts `<ShopHeader />` before `{children}` and
+  `<ShopFooter />` after, inside the existing Bricolage Grotesque font-variable wrapper — this is
+  the **only** place either component is mounted, so it's automatically inherited by every nested
+  route under `/shop` (archive, `category`/`tag`/`brand` archives, `[slug]` product detail,
+  `checkout`, `edit`, `shipping`, `order-confirmation`) with zero per-page changes, the same way
+  Next.js layouts always propagate.
+- **Ticker de-duplicated, not left doubled** — `ShopArchiveWrapper.tsx` previously rendered its own
+  inline `.ticker-wrap` (with live "New: {product name}" copy) *in addition to* the header's now
+  owning the ticker sitewide; that inline copy and the now-meaningless `.sl-header-spacer` clearance
+  block (a hack that only made sense when the sitewide header was a fixed/floating pill reserving
+  no layout space of its own — `ShopHeader` renders in normal document flow, so there's no gap to
+  fill) were both removed from `ShopArchiveWrapper.tsx`. The "New: {product}" line was not carried
+  over to `ShopHeader`'s ticker — the header is one shared component across every `/shop/*` route
+  (including pages with no "current product" concept, like the archive or checkout), so its ticker
+  copy is deliberately generic ("Vetted Makers · Moveee Pro saves X% storewide · Earn Culture
+  Credits on every order · Free returns within 14 days" — the 14-day figure matches the real,
+  canonical policy on `/shop/shipping`, not the unrelated stale "30 days" copy that still exists on
+  the product detail page's own buy box, `ProductSelectors.tsx` — that pre-existing mismatch is out
+  of scope for this pass).
+- **`.sp-product-hero`'s `padding-top: calc(var(--header-clear, 96px) + 50px)` removed**
+  (`shop.css`, product detail page) — same "no more fixed/floating header to clear" reasoning as
+  the archive page's spacer above; left in place it would have added a large dead gap under the
+  new normal-flow `ShopHeader`.
+- **A handful of the archive page's own Fraunces headings switched to the identity's Bricolage
+  Grotesque display face**, per "nothing from the old lifestyle page should survive": `.sl-head-inner
+  h1` (dead — no longer rendered by `ShopArchiveWrapper.tsx`, kept in case needed again, per this
+  file's usual convention), `.sl-bridge-title`, `.sl-member-left h3`, and `.sl-origins-content h3`
+  — each moved to `font-family: var(--font-lfs-display, var(--font-serif))` at `font-weight: 800`
+  (Bricolage's own bold weight, matching `.lfs-hero-title`'s existing treatment), with their `em`
+  children switched from `font-style: italic` to `font-style: normal; font-weight: 800; color:
+  var(--ochre)` — Bricolage Grotesque is a sans display face with no distinct italic cut in this
+  identity's usage (mirrors `.lfs-hero-title em`'s own `font-style: normal` precedent), so italicizing
+  it would have looked like a font-fallback bug, not a deliberate emphasis style.
+- **Follow-up, same pass — the product detail page (`/shop/[slug]`) got the same treatment too**,
+  closing the gap flagged above. Every genuine heading/title/large-display-number on that page
+  moved from `'Fraunces', serif` to `var(--font-lfs-display, var(--font-serif))` at `font-weight:
+  700`/`800` (matching each element's prior weight tier), with any `em` emphasis child switched
+  from italic to `font-style: normal` + bold + `var(--ochre)`, same convention as the archive-page
+  fixes above: `.sp-product-name` (the h1 product title — also tightened its size clamp from
+  `42–64px` to `38–56px` and dropped its unusually light `font-weight: 400` base, since Bricolage
+  at 400 reads thin compared to the rest of the identity's bold display type), `.sp-reviews-head
+  h2` ("Reviews"), `.sp-rs-avg` (the big review-average number — same "large display number"
+  treatment as `.sl-member-stat-num`), `.sp-review-form h3` ("Write a review"), `.sp-acc-header
+  .title` (the accordion tab labels — Description/Specifications/Materials & Care/etc.),
+  `.sp-seen-title` ("As Seen In" bridge), `.sp-story-header h2` / `.sp-process-header h2` /
+  `.sp-more-from-header h2` (the Origins Journal/How It's Made/More From This Category section
+  heads — these three had no `font-family` override before this pass at all, so they were already
+  rendering in the sitewide sans body font rather than the old Fraunces branding; upgraded to the
+  identity's display face anyway for consistency with every other section heading on the page,
+  not because they were "old design" specifically), `.sp-process-step h4` (the 01–04 step titles),
+  `.sp-vendor-stat .num`, and `.mini-product .name` (the "More From This Category" card titles —
+  the product-detail-page mirror of the archive grid's own `.sl-pcard-name` fix below).
+- **The two most-repeated pieces of shop typography were also fixed, sitewide across every
+  `/shop/*` route** — not page-specific, since both classes render everywhere their section
+  appears: `.sl-pcard-name` (every product card's title, on the archive, every category/tag/brand
+  archive, and the "More From This Category" grid's sibling class `.mini-product .name` above) and
+  `.sl-member-stat-num`/`.sl-empty-text` (the Moveee Pro band's stat number and the empty-grid
+  "No products found" message, both rendered wherever `ShopArchiveWrapper`/`ShopProductGrid` are).
+  These were arguably the single most-visible remaining trace of the old design, since a product
+  card's title is the one piece of typography a visitor sees dozens of times per page.
+- **Deliberately left as editorial serif body copy, not converted** — these are genuine reading
+  text or decorative letterforms, not brand headings, so switching them to the sans display face
+  would have made the page read worse, not more "on-identity": `.sp-product-lede` (the short-
+  description standfirst under the product title), `.sp-story-text p` and its drop-cap
+  `::first-letter` + the maker-story pull-quote (`blockquote`), `.sp-selector-label .value` (the
+  small inline "Blue"/"Large" selected-variant value next to a swatch), and `.sp-review-avatar-
+  fallback` (a single decorative initial letter in an avatar circle). Also left alone: `.sl-pick-
+  title`/`.sl-featured-name`/`.sl-cat-title`/`.sl-cat-name`/`.sl-makers-label`/`.sl-mcard-name` —
+  confirmed dead (zero JSX references anywhere in `apps/site/app/shop`) leftover CSS from sections
+  already removed in earlier passes (Editor's Pick split-strip, Shop by Category, Meet the Makers
+  — see those entries above), so there was nothing live left to convert.
+- **Follow-up, same pass — checkout, order confirmation, and The Edit swept too** (user asked to
+  "verify the checkout and edit pages too"). Both `/shop/checkout` and `/shop/edit` (plus
+  `/shop/order-confirmation`, which shares `checkout.css`) were confirmed to already inherit
+  `ShopHeader`/`ShopFooter` correctly (neither imports `Header`/`Footer` directly, and neither has
+  any leftover `--header-clear`-style padding — both only ever existed on the sitewide floating
+  pill, which these pages never used even before this identity build). Typography gaps found and
+  fixed: `checkout.css`'s `.chk-title` and `.chk-confirm-title` were still `Georgia, serif` at
+  `font-weight: 300` — converted to `var(--font-lfs-display, var(--font-serif))` at `700`, matching
+  every other page-level heading's weight tier in this identity. `shop.css`'s `.edit-*` classes (The
+  Edit — `/shop/edit`, editorial-story-linked products) had four genuine headings still on
+  `var(--font-serif)`: `.edit-headline` and `.edit-browse-title` (bumped to `800`, matching the
+  archive/product-page hero-title tier) and `.edit-empty h2`/`.edit-feature-title` (kept at `700`).
+  No `em` emphasis elements exist anywhere in either page's JSX, so the italic→normal+bold+ochre
+  conversion didn't apply here. Everything else in both files (mono eyebrows, sans body/meta text,
+  the `.chk-step`/`.edit-eyebrow` labels) was already sans/mono, not serif, and needed no change.
+- **This closes the "nothing from the old lifestyle page should survive" ask for typography** —
+  every genuinely-visible heading across the whole `/shop/*` tree (archive, category/tag/brand
+  archives, the product detail page, checkout, order confirmation, and The Edit) now uses the
+  identity's Bricolage Grotesque display face; only intentional editorial-serif body copy and
+  confirmed-dead CSS remain on the old face.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+  every other pass in this file. Verified via CSS brace-balance checks (`shop-chrome.css` 53/53,
+  `shop.css` 608/608, `shop-lifestyle.css` 75/75) and a full read-through confirming: `Header.tsx`
+  has no leftover `ShopSearchModal`/`isLifestylePage` references, `ConditionalFooter.tsx`'s new
+  `isShopPath()` matches the existing `isLiteraryPath()` shape exactly, `CartDrawer` (mounted
+  independently at the root layout, not inside `Header.tsx`) still renders on `/shop` so the bag
+  icon's `openDrawer()` call has something to open, and no page under `/shop` imports `Header`/
+  `Footer` directly. Re-check pixel fidelity against the approved mockup — the masthead's category
+  dropdown, the ticker, and the footer's three link columns in particular — in a real environment
+  before considering this fully closed.
+
+### Shop hero photo + product grid corrected to match the mockup exactly (September 2026)
+
+Two real fidelity bugs, both user-reported directly from a live screenshot: the hero was still
+using a product photo as its background, and the product grid didn't resemble the approved
+identity mockup at all.
+
+- **Hero background was never fixed** — despite being told not to, `.lfs-hero` in
+  `ShopArchiveWrapper.tsx` rendered `heroPick.image.sourceUrl` (whatever product happens to be the
+  current Editor's Pick) as the full-bleed hero background, effectively turning the hero into an
+  ad for one item. **Fixed**: the hero now always renders a fixed brand photo,
+  `apps/site/public/shop-hero.jpg` (a boutique/maker-studio interior shot, supplied directly by
+  the user), never a product image. If this photo is ever replaced, swap the file at that same
+  path — don't reintroduce a per-product/per-pick background.
+- **Product grid was still the old, pre-identity "Monocle-style" design** — individually rounded
+  (`--radius-xl`) + gapped (32px/26px) cards, portrait captions below a square image, a plain-text
+  "Add to Cart →" link. The identity mockup (`moveee-lifestyle-identity.html`'s `.prod-grid`)
+  specifies a completely different, flat trade-catalog grid: one bordered/radiused **outer**
+  container, cards butted flush against each other with only a 1px hairline between them (a
+  `background` colour showing through a 1px grid `gap`, not individual card borders/shadows), a
+  padded caption body with the price row pinned to the card's bottom behind a hairline
+  `border-top`, and a small floating circular "+" quick-add button bottom-right of the photo
+  (hover-reveal on desktop, always visible on touch — same convention as every other
+  hover-revealed control in this codebase). Rebuilt `ShopProductGrid.tsx` and the
+  `.sl-product-grid`/`.sl-pcard*` rules in `shop.css` to match this exactly: `grid-template-columns:
+  repeat(auto-fit, minmax(230px, 1fr))` with a 1px `background`/`border` hairline grid (no more
+  fixed 4-column/3-column/2-column breakpoint overrides — auto-fit already reflows correctly, same
+  as the mockup, which has no breakpoint rules for this grid at all), `.sl-pcard-price-row` with
+  `border-top` + a strikethrough "was" price beside the ochre "now" price when a Pro price applies,
+  and `.sl-pcard-quickadd`/`.sl-pcard-quickadd-btn` (a circular button, reusing `AddToCartButton`
+  which gained an optional `children` override for this — previously hardcoded to always render
+  "Add to Cart →" text).
+- **Follow-up, same day — the first pass still didn't match the mockup's card content/behavior,
+  caught by actually screenshotting the mockup in Chromium (`playwright`, a local `file://` load —
+  no network needed since it's a self-contained HTML file with base64-embedded images) instead of
+  only reading its CSS.** Three concrete mismatches, all now fixed in `ShopProductGrid.tsx`/
+  `shop.css`:
+  1. **Quick-add button defaulted to `opacity: 0`** (hover-only, invisible until moused over) —
+     the mockup's own CSS has it at `opacity: .85` by default, brightening to `1` + `scale(1.08)`
+     on hover. It's meant to be always faintly visible, not hidden.
+  2. **Price row order and content were backwards.** The mockup renders the strikethrough
+     original price *first*, then the discounted price *second* with "Pro" baked directly into
+     that string (`Pro ₦60,750.00`, one span) — mine rendered the discounted price first with no
+     "Pro" prefix and the strikethrough price second.
+  3. **The middle meta line (between title and price) was dropped for products with no reviews**
+     — previously conditional (`{hasReviews && <p>...</p>}`), so a product with zero reviews had
+     nothing there at all, losing the card's vertical rhythm. The mockup always renders something
+     in that slot (its own demo data uses a static "INDEX 00X · New listing" caption). Fixed to
+     always render: real `★ rating (count)` when reviews exist, else a "New listing" fallback —
+     matching this codebase's own pre-existing documented convention for the pre-identity grid,
+     which had the same fallback and was lost in the rebuild.
+  Verified via a Playwright screenshot of `moveee-lifestyle-identity.html`'s "04 — Application"
+  section (the real page-layout mockup, not the earlier "01 — Mark"/"02 — Palette" brand-guide
+  frames at the top of the same file, which are a different part of the document) and a direct
+  read of its `.prod-card`/`.prod-price-row` HTML to get the exact markup shape.
+- **Lesson, stated directly by the user and worth internalizing**: "implement exactly as is in the
+  mockup" means literally — don't leave old-design classes/values in place under a plausible-
+  sounding excuse, and don't substitute a provided asset for something else (a product photo,
+  a stock photo, anything) without checking whether the user already supplied the real one. The
+  photo in this case had been supplied earlier in the session and was sitting unused in the
+  session scratchpad the whole time — always check there before assuming an asset doesn't exist.
+- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap, and
+  no `node_modules` installed this session so `tsc`/`next build` couldn't run either. Verified via
+  a CSS brace-balance check on `shop.css` (611/611) and a manual read-through of the new grid JSX
+  against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
+  against the approved mockup in a real environment before considering this fully closed.
+
+### Shop hero — washed-out "white gap" at the top of the photo fixed (September 2026)
+
+User-reported from a live screenshot: a visible band of white/blown-out space at the very top of
+`.lfs-hero` (right where the photo meets the masthead), noticeably lighter than the bottom of the
+same hero. This was never a layout/spacing bug — there is no extra DOM element or margin between
+`ShopHeader`'s `.masthead` and `ShopArchiveWrapper.tsx`'s `<section className="lfs-hero">` (they're
+adjacent siblings, confirmed by reading both files directly); `shop.css`/`shop-lifestyle.css` both
+already document that no `--header-clear` spacer is used here since `ShopHeader` renders in normal
+document flow. The real cause was `.lfs-hero-scrim`'s gradient coverage in `shop-lifestyle.css`:
+the radial spotlight faded to as low as `.1` opacity at its outer edge, and the only linear
+gradient (`linear-gradient(0deg, rgba(...) 0%, transparent 55%)`) only darkens the **bottom** half
+of the section (needed to keep the trust line legible) — the top strip of the hero photo had
+almost no oxblood tint over it at all, so a bright section of `/shop-hero.jpg` (the boutique
+interior) showed through there, reading as a blank white gap under the header.
+
+Fixed by adding a mirrored top-anchored `linear-gradient(180deg, rgba(122,36,28,.3) 0%,
+rgba(122,36,28,0) 45%)` and raising the radial gradient's two outer stops (`.22`→`.34`,
+`.1`→`.26`) so the scrim reads as one even wash top-to-bottom instead of a vignette with a
+blown-out edge. The bottom-anchored gradient is unchanged — it's still what makes the trust-line
+copy legible. **If a future hero/scrim-over-photo section shows the same "one edge looks washed
+out" symptom, check whether its gradient stops actually cover every edge of the section, not just
+the one nearest the text** — a radial-plus-single-direction-linear combo can leave a real gap.
+Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a
+browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
+### Shop hero — height reduced (September 2026)
+
+`.lfs-hero` shrunk per explicit user request: `aspect-ratio` `16/7` → `16/9`, `min-height`
+`420px` → `320px`, `max-height` `600px` → `460px`; the mobile (`max-width: 640px`) override's
+`max-height` went `560px` → `420px` (its `aspect-ratio: 4/5` portrait ratio was left as-is —
+only the cap shrunk). The scrim/gradient fix documented in "Shop hero — washed-out 'white gap'"
+above is unaffected — it targets coverage, not the section's size. Verified via a CSS
+brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
+`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+
+### `/makers` brought onto the Moveee Lifestyle standalone chrome (September 2026)
+
+Per explicit user request ("the new design convention for Moveee Lifestyle needs to extend to
+Maker pages — from header to footer especially"), `/makers` (archive + `[slug]` profile) now
+shares the exact same standalone mini-site chrome as `/lifestyle` — new **`apps/site/app/makers/
+layout.tsx`** mounts `ShopHeader`/`ShopFooter` (same components, same `shop-chrome.css` import,
+same Bricolage Grotesque `--font-lfs-display` font load) around `{children}`, identical shape to
+`app/lifestyle/layout.tsx`/`app/literary/layout.tsx`. Previously `/makers` was only a *sibling* of
+the Lifestyle identity, still rendering the sitewide floating pill (with a special-cased logo
+swap) and the sitewide dark `Footer.tsx` — that's gone now.
+
+- **`Header.tsx`**: `isMakersPage` was added to the early-return (`if (isLiteraryPage ||
+  isLifestylePage || isMakersPage) return null;`) alongside the existing Literary/Lifestyle
+  checks — the sitewide pill no longer renders on `/makers` at all. This made the old
+  `isMakersPage ? ... : ...` ternaries for the toolbar logo (swap to the Lifestyle wordmark,
+  link to `/makers` instead of `/`) unreachable dead code, so they were simplified back to the
+  plain always-`/`/`Moveee` case rather than left as unreachable conditionals.
+- **`ConditionalFooter.tsx`**: `isLifestylePath()` now also matches `/makers`/`/makers/*`, so the
+  sitewide `Footer.tsx` is excluded there the same way it already was for `/lifestyle`.
+- **`makers.css`**: every `--header-clear` top-padding rule was removed (`.makers-header`,
+  `.maker-hero`, and the `768px` mobile override of `.makers-header`) — same "no more fixed/
+  floating header to clear" reasoning as every other page that gained a standalone header in this
+  file. (`.maker-breadcrumb`'s own `--header-clear` padding was left alone — confirmed dead CSS,
+  that element isn't rendered in the JSX at all, per its own pre-existing comment.)
+- **Typography** — every genuine heading/title/stat-number on both pages moved from
+  `var(--font-serif)` (Fraunces) to `var(--font-lfs-display, var(--font-serif))` (Bricolage
+  Grotesque), matching the exact treatment the shop archive/product pages already got: weight
+  bumped to `700`/`800` per element's size tier, and every `em` emphasis child switched from
+  `font-style: italic` to `font-style: normal; font-weight: 800; color: var(--ochre)` (Bricolage
+  has no distinct italic cut in this identity's usage, same reasoning documented for the shop
+  pages) — `.makers-title`, `.maker-card-name`, `.maker-hero-name`, `.maker-stat-num`,
+  `.maker-products-title`, `.maker-editorial-title`, `.maker-editorial-post-title`, and
+  `.maker-not-found h1`.
+- **Product-count removal, same ask as the Lifestyle grid change directly above** — the maker
+  profile page had two of its own "total number of products" displays that weren't caught by
+  that pass since they're a different file: the stats row's `{productCount} Products` tile
+  (removed entirely, leaving "Maker since"/rating) and the products section header's
+  `{productCount} pieces` span (removed). The now-unused `productCount` const was deleted too.
+  `.maker-stat-num`/`.maker-products-count`'s CSS is untouched/still real (the former still
+  renders "Maker since"/rating, the latter is now dead, kept per convention).
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
+`makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
+
+### Email-capture + Moveee Pro bands tightened (September 2026)
+
+Mockup-first (Artifact, before/after comparison at real content/widths) — both bands sat far
+taller than their content needed, per explicit user request. Implemented in
+`ShopArchiveWrapper.tsx` + `shop-lifestyle.css` (`.lfs-email*`) + `shop.css` (`.sl-member*`):
+
+- **Email band** (`.lfs-email-inner`) — vertical padding cut `56px`→`22px` (900px breakpoint
+  `40px`→`20px`, 640px `40px`→`20px`); heading `clamp(24–32px)`→`clamp(17–20px)`; form input/button
+  padding trimmed to match. Copy/layout unchanged, only sizing.
+- **Moveee Pro band** (`.sl-member*`) — the floating "2,400 Members & growing" stat card
+  (`.sl-member-right`/`.sl-member-stat*`) is **removed from the JSX**, its number folded straight
+  into the eyebrow line instead via a new `.sl-member-stat-inline` span ("Moveee Pro · 2,400
+  members and growing") — CSS for the old stat card is left in place, unused, per this file's
+  usual "kept in case needed again" convention. `.sl-member-left` dropped its `flex: 0 0 60%` split
+  (now `flex: 1 1 auto`, full width) since there's no right column left to share space with.
+  `.sl-member`'s `min-height: 460px` was removed so the card sizes to its (now much shorter)
+  content instead of a fixed floor. `.sl-member-wrap` padding `72px`→`40px` (900px `56px`→`28px`,
+  640px `40px`→`24px`); `.sl-member-left` padding `64px`→`36px 44px`; heading `42px`→`26px`; body
+  copy `16px`→`14px`; the perks grid went from a spacious 2×2 (`20px 40px` gap) to one tight row of
+  4 (`repeat(4, 1fr)`, `8px 24px` gap, dropping to 2-up at 900px and 1-up at 640px, same as before);
+  every title→sub→perks→CTA margin was roughly halved; CTA padding `14px 28px`→`10px 20px`.
+- **Bonus fix, same pass**: `.sl-member-eyebrow` ("Moveee Pro") had **zero CSS anywhere in the
+  codebase** — a bare, unstyled `<div>` inheriting the page's default dark ink text color onto a
+  dark photo band, so it rendered at near-invisible contrast. Since this pass was already adding
+  real content to that element (the folded-in member count), it got a real style too: mono
+  uppercase label, `rgba(243,236,224,.65)`. **If a similar low-contrast/invisible-text report ever
+  comes up on a dark band, grep for the class first** — an element with no matching CSS rule
+  anywhere is exactly this bug, not a color-token mismatch.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+  brace-balance checks (`shop.css` 612/612, `shop-lifestyle.css` 75/75) and a paren/brace-balance
+  check on `ShopArchiveWrapper.tsx`.
+
+### Lifestyle product grid — "Recent" label + divider removed, hero-to-grid gap tightened (September 2026)
+
+Per explicit user request, so a glimpse of the grid shows within the hero's own viewport height:
+`ShopProductGrid.tsx`'s `.sl-grid-header` block (the "Recent"/active-filter label row + its
+hairline divider, directly above the grid) was removed from the JSX entirely — `isFiltered`/
+`activeLabel` props are still passed by `ShopArchiveWrapper.tsx` but no longer read inside this
+component (harmless — this repo's `tsconfig.json` doesn't enable `noUnusedParameters`). `.sl-grid`'s
+top padding was cut from `80px`/`48px` (mobile) to `24px`/`16px` — its bottom padding is unchanged,
+so the section still has its usual closing breathing room, only the gap right under the hero
+shrank. `.sl-grid-header`/`.sl-grid-label` CSS is now dead, kept per this file's usual convention.
+Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
+brace-balance (612/612) and paren/brace-balance on `ShopProductGrid.tsx`.
+
+### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
+
+Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
+
+- The grid header's default (unfiltered) label changed from **"All Products"** to **"Recent"**
+  — the filtered case (`isFiltered ? activeLabel : ...`) is unchanged, so a category/tag/brand
+  view still shows its own label.
+- **Every visible product-count display on the page was removed**, not just this one: the grid
+  header's `— {filtered.length} pieces` count span, and `ShopSearchModal.tsx`'s filter-panel
+  footer button, which changed from `` `View {resultCount} Results` `` to a plain **"Show
+  Results"** with no number. `resultCount` itself is still computed in `ShopFilterContext.tsx`
+  and carried on the `shopFiltersBus.ts` meta type — left in place since removing the field
+  entirely would mean touching the shared type for no functional benefit, it's just no longer
+  rendered anywhere. `.sl-grid-count`'s CSS in `shop.css` is now dead, kept per this file's usual
+  "leave it in case needed again" convention. Not visually verified in a browser — no
+  `node_modules` installed this session. Verified via paren/brace-balance checks on both files.
+
+### The Moveee Lifestyle route renamed from `/shop` to `/lifestyle` (September 2026)
+
+Every page under `apps/site/app/shop/` was moved (`git mv`) to `apps/site/app/lifestyle/` — archive,
+`[slug]` product detail, `category`/`tag`/`brand` archives, `checkout`, `edit`, `shipping`,
+`order-confirmation`, `layout.tsx`, and the three CSS files (`shop.css`/`shop-chrome.css`/
+`shop-lifestyle.css` — filenames themselves were **not** renamed, only their parent directory, so
+every `import "./shop.css"`-style relative import inside the moved tree still resolves with zero
+changes). Every internal `href="/shop"`/`` href={`/shop/${x}`} ``-style link across the codebase
+(`ShopHeader.tsx`, `ShopFooter.tsx`, `Header.tsx`'s menu overlay, `ConditionalFooter.tsx`,
+`CartDrawer.tsx`, `SearchOverlay.tsx`, `ShopSearchModal.tsx`, `ShopCarousel.tsx`/`ShopRail.tsx`,
+`Hero.tsx`, the homepage, `/makers/[slug]`, `/magazine/[slug]`'s Shop-the-Edit strip, `/terms`,
+and every page inside the moved tree itself) was updated to `/lifestyle`, along with
+`sitemap.ts`'s two `/shop`/`/shop/${slug}` entries and `api/revalidate/route.ts`'s revalidation
+path list. **`/api/shop/*` (the Next.js proxy API namespace — categories, reviews, etc.) was
+deliberately left unchanged** — that's an internal fetch path, not a public page route, and
+renaming it would have meant touching every `fetch("/api/shop/...")` call site for zero user-
+facing benefit; same reasoning for WordPress's own `culture/v1/shop/checkout/*` and
+`mobile/shop/products` REST namespaces (`app/api/checkout/*`, `app/api/mobile/shop/search`) —
+those are WordPress-side API paths, unrelated to this Next.js page rename.
+
+**Old `/shop/*` URLs 301-redirect to their `/lifestyle/*` equivalent** — `proxy.ts` gained a
+dedicated block (`pathname === '/shop' || pathname.startsWith('/shop/')` →
+`pathname.replace(/^\/shop/, '/lifestyle')`) placed **before** the existing `ROUTE_ALIASES` map,
+since that map only ever matches a single whole path segment with no internal slashes (confirmed
+by reading its `cleanPath.includes('/')` guard) and so could never have handled a nested URL like
+`/shop/category/ceramics` on its own — only the bare `/shop` path. The pre-existing
+`ROUTE_ALIASES['lifestyle'] = '/shop'` entry (a stale, backwards-looking alias that had been
+sitting unused, redirecting the *not-yet-real* `/lifestyle` to `/shop`) was removed along with it.
+`APP_ROUTES` now lists `'lifestyle'` instead of `'shop'`. **If a genuinely new page is ever added
+back at `/shop` for some unrelated reason, this redirect will swallow it** — check `proxy.ts`
+first if that ever comes up.
+
+**SEO/branding — every title/description under this route dropped the "| Moveee Magazine"
+suffix in favour of "The Moveee Lifestyle" as its own standalone brand**, mirroring how The
+Moveee Literary handles its own section branding (`siteName: "Moveee Magazine"` kept only for
+OG/schema.org attribution, never in the visible title) rather than the sitewide "always suffix
+with Moveee Magazine" convention documented elsewhere in this file — this section is a standalone
+mini-site with its own identity, not ordinary editorial/shop content:
+- `/lifestyle` (root): title `"The Moveee Lifestyle"` (was `"Shop | Moveee Magazine"`).
+- `/lifestyle/{slug}` (product): title `` `${product.name} | The Moveee Lifestyle` `` (was
+  `` `${product.name} — Moveee Magazine Shop` ``); the Product JSON-LD's `brand`/`seller` fallback
+  and `openGraph.siteName` were deliberately **left** as `"Moveee Magazine"` — those name the real
+  owning organization for structured data, not the visible page title, same distinction Literary
+  draws.
+- `/lifestyle/category/{slug}`, `/lifestyle/tag/{slug}`, `/lifestyle/brand/{slug}`,
+  `/lifestyle/edit`, `/lifestyle/shipping` — all switched from `"... | Shop | Moveee Magazine"`/
+  `"... | Moveee Magazine"` to `"... | The Moveee Lifestyle"`.
+- Visible UI copy updated to match: the sitewide header menu's nav link ("Shop" → "The Moveee
+  Lifestyle", matching how "The Moveee Literary" is written in that same list), its "From the
+  Shop"/"Visit the Shop" column labels, `ShopFooter.tsx`'s "Shop" link-column heading (→
+  "Lifestyle"), and the product page's breadcrumb JSON-LD ("Shop" → "The Moveee Lifestyle").
+  `isShopPage`/`isShopPath` identifiers in `Header.tsx`/`ConditionalFooter.tsx` were renamed to
+  `isLifestylePage`/`isLifestylePath` for the same consistency reason, not because the old names
+  were broken.
+- Every doc-comment across the touched files that said "`app/shop/layout.tsx`"/"`/shop route`"/
+  "`/shop path`"/etc. was updated to say `/lifestyle` — these were purely explanatory and had no
+  functional effect, but a stale path in a comment is exactly the kind of thing that misleads the
+  next person to touch this code.
+
+**Deliberately left as literal "shop" everywhere else, not renamed**: the `shopFiltersBus.ts`/
+`shopHelpers.ts`/`shopCountry.ts`/`ShopHeader.tsx`/`ShopFooter.tsx`/`ShopArchiveWrapper.tsx`/
+`ShopSearchModal.tsx`/`ShopProductGrid.tsx`/`ShopFilterContext.tsx`/`ShopCarousel.tsx`/
+`ShopRail.tsx` **filenames and component/export names** — only the public route path and visible
+copy changed; renaming every internal identifier too would have been a much larger, purely
+cosmetic diff for no functional or SEO benefit. The `/shop-hero.jpg` public asset path is
+unrelated (a static image filename, not a route) and was never touched.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via
+paren/brace-balance checks across every touched `.tsx`/`.ts` file and CSS brace-balance checks on
+`header.css` (83/83), `getmelit.css` (65/65), `shop.css` (612/612), `shop-chrome.css` (61/61), and
+`shop-lifestyle.css` (75/75) — all unchanged from before this pass, confirming no CSS rule was
+accidentally clipped by the file move. Re-check the `/shop` → `/lifestyle` redirect and every
+renamed metadata title in a real environment before considering this fully closed.
+
+### Shop masthead nav — Shop/Makers dropped, Magazine added (September 2026)
+
+`.mast-nav` (the small text-link row moved next to the icons in "Shop masthead — nav moved next
+to the icons + a real Categories menu re-added" above) changed from Shop/The Edit/Makers to just
+**The Edit** and **Magazine** — Shop was removed since `/shop` is already the page the header
+sits on, Makers was dropped per explicit request, and Magazine is a brand-new destination linking
+out to `https://themoveee.com` (Moveee Magazine's own homepage, not back into any `/shop/*`
+route). Not visually verified in a browser — no `node_modules` installed this session. Verified
+via a paren/brace-balance check on `ShopHeader.tsx`.
+
+### Shop Magazine bridge — "Explore Origins Journal" link removed (September 2026)
+
+The `.sl-bridge` ("From The Magazine" band, between the hero and the product grid) used to show
+two CTAs side by side — "Read The Edit →" (`/magazine`) and "Explore Origins Journal →"
+(`/journeys`). The second link was removed at explicit user request; `.sl-bridge-links` now holds
+just the one CTA (its CSS is a plain flex row with `gap`, so it degrades cleanly to a single
+child with no layout changes needed). Not visually verified in a browser — no `node_modules`
+installed this session. Verified via a paren/brace-balance check on `ShopArchiveWrapper.tsx`.
+
+### Shop header — Categories dropdown removed (September 2026)
+
+`ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
+disclosure (both rendering the same `categoryList` of category `<Link>`s) were removed at
+explicit user request, since `ShopSearchModal` (opened by the header's search icon) already
+provides category filtering as a real facet — the header's own dropdown was a pure duplicate.
+The `categories` fetch/state was removed along with it (the `categoryList` JSX is now gone
+entirely); the `proDiscountPercent` fetch from the same `/api/shop/categories` response is kept,
+since the ticker's "Moveee Pro saves {proDiscountPercent}% storewide" line still needs it. The
+`.mast-cat*`/`.mast-filter` CSS rules in `shop-chrome.css` were left in place, unused, per this
+file's usual "kept in case needed again" convention — confirmed via grep that nothing else in
+`apps/site` references them. **Category filtering on `/shop` now lives exclusively inside
+`ShopSearchModal`** — if a future pass wants an on-page category control again, don't
+reintroduce it in the header; either add it back there deliberately or extend the modal.
+
+### Shop archive — "Browse" category-nav bar removed (September 2026)
+
+The `.lfs-nav-wrap`/`.lfs-nav` bar directly under the masthead on `/shop` (a "Browse ▾"
+category dropdown + mobile `<details>` disclosure + a section label, sitting above the hero)
+was removed entirely from `ShopArchiveWrapper.tsx`'s JSX at explicit user request — not hidden,
+deleted. This is the same page-level category control the header's own Categories dropdown was
+removed for earlier (see "Shop header — Categories dropdown removed" above) — category filtering
+on `/shop` now lives exclusively inside `ShopSearchModal`. `categories`/`isFiltered`/
+`activeLabel` are all still computed and used elsewhere in the file (passed into
+`ShopFilterProvider`/`ShopProductGrid`), so no other cleanup was needed. The `.lfs-nav*`/
+`.lfs-cat*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept in
+case needed again" convention.
+
+### Shop email-capture band recolored to match the mockup; Maker Story section removed (September 2026)
+
+Two more mockup-fidelity/scope fixes, caught live from a screenshot of the deployed `/shop` page:
+
+- **Email capture band didn't match `moveee-lifestyle-identity.html`'s `.email-capture` at all** —
+  the mockup is a full-bleed **ochre-background band** with white heading/copy and a white pill
+  form floating on top of it; the live page had it as a plain `--paper-deep` (light grey) section
+  with dark text and a bordered white pill — visually indistinguishable from any other neutral
+  section on the page, when the mockup clearly wants it to read as a bold accent break. Fixed in
+  `shop-lifestyle.css`: `.lfs-email` background is now `var(--ochre)`; `.lfs-email-copy h3`/`p` are
+  white/`rgba(255,255,255,.82)` (matching the mockup's literal color values); the form's border was
+  dropped (the mockup's white pill has no border, it doesn't need one against the ochre backdrop).
+- **The single-maker "Meet the Maker" spotlight section (`.lfs-maker`, between the email band and
+  the Moveee Pro member band) was removed entirely, at explicit user request** — this was a
+  different section from the bulk all-makers grid that "Shop by Category + Meet the Makers
+  sections removed" (above) already retired; that one never came back, but this narrower
+  single-maker spotlight (added by "The Moveee Lifestyle becomes a fully standalone mini-site")
+  was still live and the user wants it gone too. Removed the whole `<section className="lfs-maker">`
+  block plus its now-unused `makerStoryHtml`/`makerBio`/`makerName`/`makerLocation` derived
+  variables and the now-unused `sanitizeHtml` import from `ShopArchiveWrapper.tsx`. `vendorName()`
+  and `Image` are both still used elsewhere in the file, so those imports/helpers stayed. The
+  `.lfs-maker*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept
+  in case needed again" convention.
+- **Not visually verified in a browser** — no `node_modules` installed this session, so `tsc`
+  couldn't run cleanly (only pre-existing "module not found" noise, no real type errors from this
+  edit). Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75) and a grep
+  confirming zero remaining `lfs-maker`/`sanitizeHtml` references in `ShopArchiveWrapper.tsx`.
+  Re-check pixel fidelity against `moveee-lifestyle-identity.html`'s `.email-capture` band in a
+  real environment before considering this fully closed.
+
+### Shop masthead — narrower column + a real nav menu next to the logo (September 2026)
+
+Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
+
+- **`.masthead-row`'s `max-width` reduced from `1440px` to `1240px`** — the header row felt too
+  wide/spread-out with just the logo on the left and the icon cluster on the right and nothing in
+  between. The rest of `/shop`'s sections (hero, grid, footer) are untouched and still `1440px` —
+  this was a header-specific width complaint, not a full-page column-width change, so no other
+  file was touched.
+- **New `.mast-nav` text-link row, right after the logo inside `.mast-left`** — three real
+  destinations (Shop → `/shop`, The Edit → `/shop/edit`, Makers → `/makers`), plain sans links,
+  ochre on hover, hidden below `900px` (same breakpoint the old Categories dropdown used to hide
+  at, before it was removed — see "Shop header — Categories dropdown removed" above). This is a
+  different thing from that removed Categories dropdown — it's a small destination nav, not a
+  category filter, and doesn't reintroduce any filtering UI into the header.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (58/58).
+
+### Shop masthead — nav moved next to the icons + a real Categories menu re-added (September 2026, follow-up)
+
+Two more explicit user changes to `ShopHeader.tsx`/`shop-chrome.css`, on top of the pass directly
+above:
+
+- **`.mast-nav` moved out of `.mast-left`** (which now holds only the logo) **into a new
+  `.mast-right` flex group** that also wraps the Categories menu and `.mast-icons` — since
+  `.masthead-row` is `justify-content: space-between` with exactly two children (`.mast-left` and
+  `.mast-right`), the nav now sits immediately to the left of the icon cluster on the far right of
+  the row, instead of next to the logo on the far left.
+- **A real "Categories" menu is back**, distinct from the destination nav next to it — this is
+  **not** the same dropdown "Shop header — Categories dropdown removed" (above) took out; that
+  removal was because the old dropdown duplicated `ShopSearchModal`'s category *filter*.
+  `ShopSearchModal` still owns full search/filtering; this new menu is a lightweight
+  category-*jump* shortcut (plain links to `/shop/category/{slug}`, no filter-bus state). Rather
+  than write new CSS, it reuses the `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  rules that were left in `shop-chrome.css` "unused, kept in case needed again" from that same
+  earlier removal — desktop gets the hover dropdown (`.mast-cat`), `<900px` swaps to a `<details>`
+  disclosure (`.mast-filter`) via the same breakpoint `.mast-nav` already hides at. `ShopHeader.tsx`
+  now also reads `categories` off the existing `/api/shop/categories` response (previously only
+  `proDiscountPercent` was consumed from it).
+- **New `.mast-right` CSS** — a plain flex row (`gap: 28px`, tightened to `16px` below `900px`)
+  grouping nav + categories + icons; `.mast-left` dropped its now-unneeded `gap` (it only holds the
+  logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
+  CSS until this pass revived it).
+
+### Shop masthead — Categories moved beside the logo as a plain link list, not a dropdown (September 2026, second follow-up)
+
+**Supersedes the dropdown/`<details>` treatment from the pass directly above.** Per explicit user
+direction, Categories moved (1) to a distinct block right beside the logo on the left, and (2)
+from a hover dropdown/mobile `<details>` disclosure to a normal inline link list — the same shape
+as the right-hand `.mast-nav` (Edit/Magazine), not a popover.
+
+- **`ShopHeader.tsx`**: the `<div className="mast-cat">`/`<details className="mast-filter">` pair
+  (in `.mast-right`) was replaced with `<nav className="mast-nav mast-cat-nav">` rendered inside
+  `.mast-left`, right after the logo — one plain `.mast-nav-link` per fetched category, no panel,
+  no "View All →" trailer.
+- **`shop-chrome.css`**: `.mast-left` gained `gap: 26px` (previously only held the logo, no gap
+  needed); new `.mast-cat-nav` just adds horizontal scroll-without-a-visible-scrollbar in case the
+  category list is long, reusing `.mast-nav`'s existing font/hover/900px-hide styling wholesale
+  rather than defining new link styles. `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
+  are dead again (marked as such in the CSS, kept per this file's usual "kept in case needed
+  again" convention) — Categories no longer uses any of them.
+- Not visually verified in a browser — no `node_modules` installed this session. Verified via a
+  CSS brace-balance check on `shop-chrome.css` (63/63) and a paren/brace-balance check on
+  `ShopHeader.tsx`.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
+`ShopHeader.tsx`.
+
+### Lifestyle Edit closing bridge — shorter image, eyebrow removed (September 2026)
+
+Per explicit user request against the `.sl-origins` band (the closing "The stories behind the
+objects" section, woodworking-workshop photo left / copy right, directly below the Moveee Pro
+member band): the `<div className="sl-origins-label">The Lifestyle Edit</div>` eyebrow above the
+heading was removed from `ShopArchiveWrapper.tsx`'s JSX, and `.sl-origins`/`.sl-origins-img`'s
+`min-height` was reduced at every breakpoint the section defines — desktop `480px` → `320px`
+(both the outer `.sl-origins` and `.sl-origins-img` itself, which drive each other via
+`align-items: stretch`), the `900px` breakpoint's stacked-image `min-height` `280px` → `200px`,
+and the `640px` breakpoint's `220px` → `160px`. `.sl-origins-label`'s CSS
+(and its `::before` hairline-tick pseudo-element) was left in `shop.css`, marked dead with a
+comment, per this file's usual "kept in case needed again" convention — nothing else in the
+section references it. No other property on this section (copy, CTA, photo attribution comment,
+gradient tint) was touched.
+
+Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
+brace-balance check on `shop.css` (612/612) and a paren/brace-balance check on
+`ShopArchiveWrapper.tsx` (50/50 parens, 55/55 braces).
+
+### Shop footer — top padding reduced (September 2026)
+
+`ShopFooter.tsx`'s `.lfs-foot-inner` top padding was cut per explicit user request:
+desktop `50px` → `24px`, the `900px` breakpoint `44px` → `20px`, the `640px` breakpoint `36px` →
+`18px` — bottom/horizontal padding at every breakpoint is unchanged, only the gap above the
+brand/link-column grid shrank. Not visually verified in a browser — no `node_modules` installed
+this session. Verified via a CSS brace-balance check on `shop-chrome.css` (63/63).
+
+**Follow-up, September 2026 — `padding-top: 40px` added directly to the outer `.lfs-foot`
+element** (not `.lfs-foot-inner`), per explicit user request naming `.lfs-foot` specifically.
+`.lfs-foot` previously had no padding of its own at all (just `background`/`border-top`) — all
+spacing lived on the nested `.lfs-foot-inner` (see directly above). This adds a second, additive
+40px gap above `.lfs-foot-inner`'s own top padding — the two are independent, not a replacement
+of one by the other. If the footer's total top gap ever looks larger than expected, check both
+rules, not just `.lfs-foot-inner`.
+
 ### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
+
+**Superseded by the September 2026 identity rebuild directly above for the archive page's own
+section order (steps 0–4 below) — the Editor's Pick strip and Featured Products companion grid
+described here no longer exist in the JSX.** The Magazine bridge, member band, and Origins
+closing sections below (steps 5 onward, i.e. `.sl-bridge`/`.sl-member`/`.sl-origins`) are still
+exactly as described. Kept for reference on those still-accurate parts.
 
 `apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
 `products`/`categories` via `getWPData`) renders the page in this order
@@ -2839,7 +4190,21 @@ work needed.
   would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
   and a newsletter issue page in a real environment before considering this fully closed.
 
-### `/visuals` retired — web route only, backend/mobile deliberately untouched (September 2026)
+### `/visuals` retired, then reverted on merge — the feature is still live (September 2026)
+
+**Correction: this section's retirement never actually landed.** It described a real change made
+on one branch, but a large, independent body of work continued shipping to `main` on `/visuals`
+in parallel (Footer link, sitemap entry, `CONTENT_PATHS` in the revalidate route, and the pages
+themselves all still exist on `main`) — none of it ever picked up this retirement. When that
+branch was finally merged, restoring `/visuals` to match `main`'s already-live state (rather than
+letting a stale local deletion silently take out a feature `main` was still actively serving) was
+the only safe call — see the "Directory REST fallback" fix's own git history around the same date
+for the merge this was resolved in. **`/visuals` is not retired. Treat it as a live section** —
+`apps/site/app/visuals/page.tsx` + `[slug]/page.tsx`, `VisualsGrid.tsx`/`VisualsSingleClient.tsx`,
+the Footer link, the sitemap entry, and `'visuals'` in `proxy.ts`'s `APP_ROUTES` and the
+revalidate route's `CONTENT_PATHS` are all real again. The rest of this entry is kept only as a
+record of what was attempted and why it didn't stick — don't act on its "removed"/"redirect"
+claims.
 
 Per explicit user request ("relegate /visuals totally" → clarified as "retire"), the Site A
 illustration gallery at `/visuals` (a public gallery of AI-generated illustrations sourced from
@@ -3459,7 +4824,45 @@ as every other pass in this file.
 (`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
 a straightforward size-only tweak, no layout/structure change.
 
-### Homepage — copy + structure rebuild (`MoveeeZone.tsx`, August 2026)
+**Follow-up, same month — leftover top padding removed.** `.masthead`'s own `padding` was still
+`clamp(14px, 2.5vw, 28px) 0 0` (padding-bottom already `0`) — a leftover from before the earlier
+"all homepage section spacing halved" pass, which halved every *other* section's padding but
+missed this one since it's set directly on `.masthead`, not inherited from `.arc-section`.
+User-reported as unnecessary space at the top of the header/hero area — fixed to `padding: 0`.
+
+**Follow-up, September 2026 — a deliberate gap reintroduced, specifically for the hero-to-masthead
+transition.** `.masthead`'s `padding: 0` above meant the full-bleed hero (`.hero-full`) ran directly
+into the masthead's "Culture, curated. Movers, platformed." heading with zero visual separation —
+user-reported from a live screenshot. Fixed by giving `.masthead` a `clamp(28px, 4vw, 56px)` top
+padding (bottom still `0`) — this is not a reversion of the fix directly above: that one removed
+padding that existed for no reason tied to any specific transition (a stale leftover from an
+unrelated spacing-halving pass); this one exists specifically to separate the hero from the
+masthead copy below it.
+
+**Follow-up, same day — mobile got a disproportionate amount of the new gap.** The `clamp(28px,
+4vw, 56px)` above resolves to its 28px floor at every viewport under ~700px (`4vw` never exceeds
+28px below that width), so mobile silently got the clamp's fixed minimum while desktop scaled up
+to 56px — 28px reads as noticeably more gap on a short mobile viewport right under the hero than
+the same value does on desktop. Added a `@media (max-width: 640px)` override
+(`.masthead { padding-top: 14px; }`) — mobile now gets its own smaller flat value instead of
+inheriting the desktop clamp's floor.
+
+**Real bug found and fixed, September 2026 — this file's `.masthead` selector was unscoped and
+leaked sitewide, padding the unrelated `/lifestyle` header too.** A user report of excess
+top padding on `/lifestyle`'s header (`ShopHeader.tsx`'s `<div className="masthead">`, styled in
+`apps/site/app/lifestyle/shop-chrome.css`) turned out to be caused by *this* file. Every other
+selector here that needs page-scoping already uses `.hpv2 .wrap`, but `.masthead`/`.masthead h1`/
+`.masthead h1 em`/`.masthead p.sub` were left as bare, unscoped selectors — and since
+`homepage-v2.css` is imported globally in `app/layout.tsx` (not homepage-only), those bare rules
+applied to *any* element named `.masthead` on *any* page, including `/lifestyle`'s completely
+unrelated one. Confirmed live via a screenshot of Chrome DevTools showing the Lifestyle page's
+`div.masthead` computed styles crediting `padding: clamp(28px, 4vw, 56px) 0 0` to this exact
+file/rule. **Fixed by scoping every rule to `.hpv2 .masthead`** (the homepage's own
+`<div className="hpv2">` wrapper, set in `app/page.tsx`) — never write a bare `.masthead`
+selector in this file again, even for a quick tweak; always scope to `.hpv2`. An earlier attempt
+in this same session mistakenly assumed the complaint was about *this* file's masthead directly
+(toggling its padding to 0 and back) before the actual cross-page leak was found — that dead end
+is not otherwise documented here since the real fix supersedes it.
 
 Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
 Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit
@@ -5016,6 +6419,122 @@ in its dashboard, commonly defaulted to 30s) can be shorter than a route's own
 reports "Failed (timeout)" even when the underlying serverless function may
 still complete fine server-side. When keeping a job on cron-job.org, set its
 timeout to match or exceed the route's `maxDuration`.
+
+## Front-end draft preview — Next.js Draft Mode for magazine articles + Lifestyle products (September 2026)
+
+Editors can now preview a draft/pending `post` (magazine article) or a draft WooCommerce
+`product` through the real Next.js page (`/magazine/[slug]`, `/lifestyle/[slug]`) instead of
+only WordPress's own theme-rendered preview — which never worked properly for a headless
+frontend anyway, since WP's native preview requires a logged-in WP auth cookie that never
+reaches the separate `apps/site` origin. Scope for this pass: magazine articles + Lifestyle
+products only (newsletters/community posts/events are not wired up — extend the same pattern
+if/when those need it).
+
+**Trust model — no new secret to keep in sync.** WordPress signs a short-lived (1hr) HMAC
+token (`post_id|post_type|expiry`, signed with the existing `culture_api_secret` option — the
+same secret already used everywhere else in this plugin as the `Authorization: Bearer` REST
+secret, see `Culture_REST_API::verify_bearer_token()`) and verifies it entirely server-side.
+Next.js never needs to hold the secret itself, only the token it's handed — this is why the
+resolve endpoint is public (`__return_true` permission callback, same pattern as
+`/newsletter-unsubscribe`), not gated by `api_key_permission`.
+
+**WordPress side** (`culture-community/includes/core/class-culture-preview.php`,
+`Culture_Preview`):
+- `add_filter('preview_post_link', ...)` overrides WP Admin's native "Preview"/"Preview
+  Changes" button for `post` and `product` post types only (`SUPPORTED_TYPES`) — any other
+  post type's Preview button is untouched, still WP's own theme preview.
+- `make_token()`/`verify_token()` — base64url(`id|type|expiry`) + a `hash_hmac('sha256', ...)`
+  signature, `hash_equals()`-checked, expiry-checked. Falls back to WP's own preview link
+  (doesn't touch the filter) if `culture_api_secret` isn't set yet, rather than generating a
+  token nothing could ever verify.
+- The overridden link points at `{culture_preview_frontend_url}/api/preview?token=...&type=...
+  &slug=...` — `culture_preview_frontend_url` defaults to `https://themoveee.com` (no WP Admin
+  UI for this option yet; set it via `wp option update` or `update_option()` if it's ever
+  wrong for a given environment).
+- `Culture_Preview::resolve($id, $type)` builds the actual payload — shaped as closely as
+  practical to match `STORY_FIELDS_FRAGMENT`/`ProductFields` in `packages/shared/lib/wp.ts` so
+  the existing page components need minimal branching to render it. Deliberately best-effort
+  on secondary fields: `seoTitle`/`seoDescription` are always `null` in preview (a draft rarely
+  has SEO set yet, and `generateMetadata()` already falls back gracefully to `"{title} | Moveee
+  Magazine"` when absent — this is a safe default, not a gap), and taxonomy lookups
+  (`series`/`industry`/`country`) degrade to `[]` if the taxonomy isn't registered rather than
+  erroring.
+- New public REST endpoint: `GET /culture/v1/preview/resolve?token=...`
+  (`Culture_REST_API::handle_preview_resolve()`) — verifies the token via `Culture_Preview` and
+  returns `{ type, item }`.
+
+**Next.js side** (`apps/site` only — this feature doesn't exist on `apps/connect`):
+- `packages/shared/lib/wp.ts`'s `getPreviewItem(token)` — a plain REST `fetch()` against
+  `{WP_BASE_URL}/wp-json/culture/v1/preview/resolve`, deliberately **bypassing `getWPData()`
+  entirely**: this must never hit the KV cache (a draft's content changes on every save) or the
+  CMS circuit breaker (a preview is a rare, editor-only, time-sensitive action that should fail
+  fast and visibly, not silently wait out a 60s cooldown meant for public-traffic protection).
+- `app/api/preview/route.ts` — the entry point WordPress's overridden Preview button opens.
+  Calls `getPreviewItem(token)` (this both verifies the token *and* fetches the content in one
+  round trip — the route never trusts the caller-supplied `type`/`slug` query params on their
+  own, only what the verified response says); on success, enables Next.js Draft Mode
+  (`(await draftMode()).enable()`) and stashes the raw token in its own httpOnly
+  `culture_preview_token` cookie (Draft Mode's own cookie only marks "draft mode is on" — it
+  carries no payload, so the actual page still needs the token to refetch the draft on its own,
+  separate request), then redirects to the real `/magazine/{slug}` or `/lifestyle/{slug}`.
+- `app/api/preview/disable/route.ts` — disables Draft Mode, clears the cookie, redirects back
+  (`?redirect=` param, set by `PreviewBanner`).
+- `components/PreviewBanner.tsx` — a small sticky ochre bar ("Preview mode — this is a draft,
+  not the live page" + an Exit preview link) rendered at the top of the page only when
+  `isPreview` is true.
+- **Page wiring** (`app/magazine/[slug]/page.tsx`, `app/lifestyle/[slug]/page.tsx`): both
+  already fetch their content via GraphQL first, same as before — GraphQL only ever returns
+  published content, so a draft always comes back `null`. Only when that happens **and** Draft
+  Mode is enabled **and** the resolved preview item's slug matches the requested slug does the
+  page fall back to the preview payload (`isPreview = true`) instead of `notFound()`-ing. This
+  means the normal, published-content render path is completely unchanged; preview is purely an
+  additive fallback that only ever engages for an actual 404 while previewing.
+- **If a future pass extends this to another content type** (newsletters, community posts):
+  add its post type to `Culture_Preview::SUPPORTED_TYPES`, a `resolve_{type}()` branch in
+  `Culture_Preview::resolve()`, and the same "GraphQL null → check Draft Mode → fall back to
+  `getPreviewItem()`" pattern in that type's own `[slug]/page.tsx` — don't invent a second
+  token/verification scheme, reuse `Culture_Preview` as-is.
+- **Not verified end-to-end against a live WordPress + Vercel deploy** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file (this feature
+  additionally needs a real `culture_api_secret` set and the plugin redeployed — see "Plugin DB
+  table auto-upgrade" for why a code push alone isn't enough — before the Preview button in WP
+  Admin actually points anywhere useful). Verified via `php -l` on all three touched/new PHP
+  files and a brace/paren-balance check on every touched TS/TSX file (no `node_modules`
+  installed this session, so `tsc --noEmit` couldn't run). Re-check the full round trip — click
+  Preview on a real draft article and a real draft product — in a real environment before
+  considering this fully closed.
+
+**Gotcha found in live testing, fixed same month: the `preview_post_link` filter alone never
+fires from the block editor.** The plugin's `culture_api_secret` was already correctly set, the
+new plugin code was correctly uploaded, and clicking "Preview in new tab" still landed on
+`cms.themoveee.com`'s own theme-rendered preview. Root cause: `preview_post_link` is only read by
+code that calls `get_preview_post_link()` **server-side** — the classic editor did this, but the
+block editor's "Preview in new tab" button builds its URL **client-side in JS**, straight from
+the post's own permalink plus `?preview=true`, and never touches this PHP filter at all. So the
+filter was dead code for the one UI path anyone actually uses to click Preview.
+
+**Fixed** by adding a second, more robust mechanism in `Culture_Preview::init()`: a
+`template_redirect` hook (`maybe_redirect_preview_request()`) that intercepts *any* incoming
+preview request server-side via `is_preview()`, regardless of how the URL that got there was
+built — this is what actually fixes the reported bug, since it doesn't care whether the request
+came from the classic editor, the block editor, or someone pasting a preview URL directly. Gated
+by the same `current_user_can( 'edit_post', $post->ID )` check as an extra safety net alongside
+`is_preview()`'s own nonce verification, so it can never leak a draft's real content to someone
+who couldn't already see it via WP's own preview. The original `filter_preview_link()`/
+`preview_post_link` filter is kept alongside it (harmless, not a competing mechanism — same
+token, same destination) in case some other caller ever does read that filter server-side.
+**If this class of "preview button" or "edit link" feature is ever extended, don't trust a single
+WordPress hook/filter to fire from every UI surface that can reach the same outcome — verify
+against the actual button being clicked (here, the block editor specifically bypassed the
+filter this whole feature was originally built around) or intercept the eventual HTTP request
+server-side instead, the way `template_redirect` does here.**
+
+Plugin header `Version:` bumped to `2.2.0` in the same pass specifically so a redeploy is
+visually confirmable on the WP Admin Plugins list — the original build left this at `2.1.0`
+unchanged, so there was no way to tell from WP Admin alone whether an upload had actually taken
+effect. `CULTURE_VERSION` (the dbDelta-gate constant, unrelated to the plugin header) was **not**
+bumped — this fix adds no new tables, so there's nothing for `culture_community_maybe_upgrade()`
+to run.
 
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
