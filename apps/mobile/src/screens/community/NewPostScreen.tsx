@@ -1214,7 +1214,7 @@ const uploadImages = async (): Promise<string[]> => {
                   style={[styles.sectionTag, bookStatus === s && styles.sectionTagActive, { flex: 1, height: 36 }]}
                   onPress={() => setBookStatus(s)}
                 >
-                  <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: 11 }]}>{s}</Text>
+                  <Text style={[styles.sectionTagText, bookStatus === s && styles.sectionTagTextActive, { textAlign: "center", fontSize: fontSize.xs }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -2180,15 +2180,15 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper,
     },
     headerSideBtn:    { minWidth: 60, minHeight: 44, justifyContent: "center" },
-    headerTitle:      { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
-    cancelText:       { fontFamily: fonts.sans, fontSize: 14, color: c.ochre },
+    headerTitle:      { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    cancelText:       { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ochre },
     postBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
       paddingHorizontal: 18, paddingVertical: 8,
       alignItems: "center", justifyContent: "center",
     },
     postBtnDisabled:  { opacity: 0.4 },
-    postBtnText:      { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    postBtnText:      { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
     // Template bar
     templateBar: {
@@ -2198,8 +2198,8 @@ function createStyles(c: ColorPalette) {
     },
     templateBarLeft:   { flexDirection: "row", alignItems: "center", gap: 6 },
     templateBarEmoji:  { fontSize: 14, lineHeight: 18 },
-    templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: 13 },
-    changeFormatText:  { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
+    templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: fontSize.sm },
+    changeFormatText:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre },
 
     // Wizard step progress — dots + "Step N of M" label
     wizardProgress: {
@@ -2211,7 +2211,7 @@ function createStyles(c: ColorPalette) {
     wizardDot:       { width: 6, height: 6, borderRadius: 999, backgroundColor: c.rule },
     wizardDotActive: { backgroundColor: c.ochre, transform: [{ scale: 1.3 }] },
     wizardDotDone:   { backgroundColor: c.gold },
-    wizardLabel:     { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft, textTransform: "uppercase", letterSpacing: 0.3 },
+    wizardLabel:     { fontFamily: fonts.sansBold, fontSize: fontSize.xs, color: c.inkSoft, textTransform: "uppercase", letterSpacing: 0.3 },
 
     // Scroll body
     body: { padding: space[4], paddingBottom: 32 },
@@ -2238,22 +2238,22 @@ function createStyles(c: ColorPalette) {
       borderBottomColor: "transparent",
     },
     subtypeTabActive: { borderBottomColor: c.ochre },
-    subtypeTabText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.mute },
+    subtypeTabText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.mute },
     subtypeTabTextActive: { color: c.ochre },
 
     // Main textarea
     textarea: {
-      fontFamily: fonts.sans, fontSize: 16, color: c.ink,
+      fontFamily: fonts.sans, fontSize: fontSize.md, color: c.ink,
       lineHeight: 26, minHeight: 120,
     },
     borderedTextarea: {
-      fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+      fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
       lineHeight: 22, minHeight: 120,
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
       padding: 12, backgroundColor: c.paper,
     },
     charCount: {
-      fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
+      fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost,
       textAlign: "right", marginTop: 4, marginBottom: space[1],
     },
 
@@ -2271,7 +2271,7 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1.5, borderColor: c.ghost, borderStyle: "dashed",
       alignItems: "center", justifyContent: "center", gap: 4,
     },
-    photoAddText: { fontFamily: fonts.sans, fontSize: 10, color: c.mute },
+    photoAddText: { fontFamily: fonts.sans, fontSize: fontSize.tiny, color: c.mute },
     photoThumbWrap: { position: "relative" },
     photoThumb: { width: 80, height: 80, borderRadius: radius.md },
     photoRemoveBtn: {
@@ -2279,7 +2279,7 @@ function createStyles(c: ColorPalette) {
       width: 18, height: 18, backgroundColor: "#fff", borderRadius: 9,
       alignItems: "center", justifyContent: "center",
     },
-    photosHint: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost, marginTop: 6 },
+    photosHint: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.ghost, marginTop: 6 },
 
     // Price chips
     priceChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -2288,7 +2288,7 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
     priceChipActive: { backgroundColor: c.ink, borderColor: c.ink },
-    priceChipText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    priceChipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     priceChipTextActive: { color: c.paper },
 
     // Prefixed input
@@ -2297,8 +2297,8 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
       backgroundColor: c.paper, paddingHorizontal: 14, gap: 8,
     },
-    prefixIcon: { fontSize: 16 },
-    prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink },
+    prefixIcon: { fontSize: fontSize.md },
+    prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
 
     // Creative Showcase upload zone
     showcaseUploadZone: {
@@ -2311,8 +2311,8 @@ function createStyles(c: ColorPalette) {
       borderColor: c.gold, borderStyle: "solid",
       backgroundColor: "rgba(179,130,56,0.06)",
     },
-    showcaseUploadTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.inkSoft },
-    showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    showcaseUploadTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.inkSoft },
+    showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
 
     // Book
     bookRatingsContainer: {
@@ -2324,12 +2324,12 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 12,
       borderBottomWidth: 1, borderBottomColor: c.rule,
     },
-    bookRatingsLabel: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, width: 100 },
+    bookRatingsLabel: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, width: 100 },
 
     // Fav quote
     favQuoteWrap: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 16 },
     favQuoteInput: {
-      fontFamily: fonts.sansItalic, fontSize: 14,
+      fontFamily: fonts.sansItalic, fontSize: fontSize.base,
       color: c.ink, lineHeight: 22, minHeight: 60, textAlignVertical: "top",
     },
 
@@ -2344,8 +2344,8 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, justifyContent: "center",
     },
     recommendNoActive: { backgroundColor: "#7a241c", borderColor: "#7a241c" },
-    recommendText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
-    recommendNoText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    recommendText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
+    recommendNoText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
 
     // Segmented (poll duration)
     segmented: {
@@ -2354,7 +2354,7 @@ function createStyles(c: ColorPalette) {
     },
     segmentedBtn: { flex: 1, height: 32, alignItems: "center", justifyContent: "center" },
     segmentedBtnActive: { backgroundColor: c.ink },
-    segmentedBtnText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
+    segmentedBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     segmentedBtnTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
     // Quote redesign
@@ -2365,10 +2365,10 @@ function createStyles(c: ColorPalette) {
     },
     quoteOpenMark: {
       position: "absolute", top: 8, left: 14,
-      fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
+      fontFamily: fonts.serif, fontSize: fontSize["2xl"], color: c.ghost, opacity: 0.4, lineHeight: 44,
     },
     quoteBoxInput: {
-      fontFamily: fonts.serifItalic, fontSize: 18,
+      fontFamily: fonts.serifItalic, fontSize: fontSize.lg,
       color: c.ink, lineHeight: 28, minHeight: 100, textAlignVertical: "top",
     },
 
@@ -2381,7 +2381,7 @@ function createStyles(c: ColorPalette) {
       flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 6,
     },
     eventDateCellEmoji: { fontSize: 16 },
-    eventDateCellText: { fontFamily: fonts.sans, fontSize: 13, color: c.ink, flex: 1 },
+    eventDateCellText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, flex: 1 },
 
     // Event (legacy, kept for compatibility)
     eventBanner: {
@@ -2391,7 +2391,7 @@ function createStyles(c: ColorPalette) {
     },
     eventBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, flex: 1 },
     eventTitleInput: {
-      fontFamily: fonts.serifBold, fontSize: 20, color: c.ink,
+      fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink,
       paddingVertical: 10, borderBottomWidth: 1.5, borderBottomColor: c.rule,
       marginBottom: space[2],
     },
@@ -2412,11 +2412,11 @@ function createStyles(c: ColorPalette) {
     },
     rsvpToggleThumbActive: { alignSelf: "flex-end" },
     fieldLabel: {
-      fontFamily: fonts.mono, fontSize: 11, color: c.mute,
+      fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute,
       letterSpacing: 0.8, textTransform: "uppercase",
     },
     input: {
-      height: 46, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+      height: 46, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
       borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
       paddingHorizontal: 14, backgroundColor: c.paper,
     },
@@ -2429,12 +2429,12 @@ function createStyles(c: ColorPalette) {
       justifyContent: "center",
     },
     sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
-    sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    sectionTagText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
     genreInput: {
       height: 34, paddingHorizontal: 14, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.ochre, backgroundColor: c.paper,
-      fontFamily: fonts.sans, fontSize: 12, color: c.ink, minWidth: 120,
+      fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, minWidth: 120,
     },
 
     // Date picker
@@ -2448,7 +2448,7 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.ink, borderRadius: radius.md,
       paddingHorizontal: 14, paddingVertical: 6,
     },
-    iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
     // Toolbar
     toolbar: {
@@ -2464,8 +2464,8 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.ochre, borderRadius: 8,
       minWidth: 16, height: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
     },
-    iconBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+    iconBadgeText: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: "#fff" },
     toolbarAt:    { fontFamily: fonts.sansBold, fontSize: 18, color: c.inkSoft, lineHeight: 22 },
-    toolbarCount: { fontFamily: fonts.mono, fontSize: 12, color: c.ghost },
+    toolbarCount: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.ghost },
   });
 }
