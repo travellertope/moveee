@@ -1090,11 +1090,11 @@ class Culture_ACF_Fields {
             'location' => array(
                 array(
                     array( 'param' => 'post_type', 'operator' => '==', 'value' => 'post' ),
-                    array( 'param' => 'user_role', 'operator' => '==', 'value' => Culture_Guest_Byline::ROLE ),
+                    array( 'param' => 'current_user_role', 'operator' => '==', 'value' => Culture_Guest_Byline::ROLE ),
                 ),
                 array(
                     array( 'param' => 'post_type', 'operator' => '==', 'value' => 'post' ),
-                    array( 'param' => 'user_role', 'operator' => '==', 'value' => 'administrator' ),
+                    array( 'param' => 'current_user_role', 'operator' => '==', 'value' => 'administrator' ),
                 ),
             ),
             'menu_order'            => 0,

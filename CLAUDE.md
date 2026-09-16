@@ -6580,6 +6580,20 @@ changes. This is a second, independent mechanism from the pre-existing `as_told_
 only, still shows the real WP author as "as told to {author}") — Guest Byline takes precedence
 over `as_told_to` wherever both are checked.
 
+**Gotcha (fixed September 2026): the location rule must use `current_user_role`, not
+`user_role`.** ACF has two similarly-named location params and it's easy to reach for the wrong
+one — `user_role` is "User Role" (matches the role of the user profile being *edited* on
+`user-edit.php`; it has no applicable value on a `post` editor screen, so a rule using it there
+never matches, for **anyone**, admins included) vs. `current_user_role` ("Current User Role" —
+the role of whoever is *viewing* the current admin screen, which is what "only Byline
+Contributors and admins see this field" actually needs). The field group shipped with the wrong
+param on first build and was invisible for every role until this was caught and fixed. If a
+future ACF field group needs to gate on "who's logged in right now" rather than "which user
+profile is being edited," use `current_user_role` — verify by testing as a *non-admin* role
+before considering the field group done, since an admin's own account can otherwise mask a
+broken location rule (superadmin capability checks elsewhere might still let a field show for
+you even when the rule itself is wrong).
+
 **GraphQL**: `guestByline { name bio avatarUrl }` registered on `Post` in
 `moveee-graphql-bridge.php` (same isolation pattern as `moveeeMeta`/`featuredProducts` — reads
 plain postmeta directly, not `get_field()`, so it degrades to `null` if ACF is ever inactive
