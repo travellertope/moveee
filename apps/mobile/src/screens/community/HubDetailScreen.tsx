@@ -46,6 +46,15 @@ function createStyles(c: ColorPalette) {
     cardLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.mute, textTransform: "uppercase", letterSpacing: 1 },
     cardBody: { fontFamily: fonts.sans, fontSize: 14, color: c.ink, lineHeight: 20 },
     row: { flexDirection: "row", gap: 10, alignItems: "center" },
+    // Header row — name/meta on the left, icon-only Join/Follow actions on the right.
+    headerTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+    headerTopInfo: { flex: 1 },
+    headerActionsRow: { flexDirection: "row", gap: 8, marginTop: 2 },
+    iconActionBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    iconActionBtnJoin: { backgroundColor: c.ochre },
+    iconActionBtnJoined: { backgroundColor: c.paperDeep, borderWidth: 1, borderColor: c.rule },
+    iconActionBtnFollow: { borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper },
+    iconActionBtnFollowActive: { borderColor: c.ochre, backgroundColor: c.paperWarm },
     joinBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
       height: 44, paddingHorizontal: 20, alignItems: "center", justifyContent: "center",
@@ -57,7 +66,7 @@ function createStyles(c: ColorPalette) {
     },
     followBtnActive: { borderColor: c.ochre },
     followBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
-    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     notifyToggleText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
     leaveBtn: { paddingVertical: 8 },
     leaveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
@@ -102,8 +111,13 @@ function createStyles(c: ColorPalette) {
     memberActions: { flexDirection: "row", gap: 12 },
     memberActionText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre },
     memberActionDanger: { fontFamily: fonts.sansBold, fontSize: 12, color: "#C62828" },
-    pinnedLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", marginBottom: 2 },
-    modRow: { flexDirection: "row", gap: 16, marginTop: 4, marginBottom: 8 },
+    pinnedLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", marginBottom: 2, paddingHorizontal: space[4] },
+    modRow: { flexDirection: "row", gap: 16, marginTop: 4, marginBottom: 8, paddingHorizontal: space[4] },
+    // Feed list — breaks out of the screen's own horizontal padding (negative
+    // margin cancels it) so FeedItemCard's own baked-in marginHorizontal:16 is
+    // the only inset, matching the main Connect feed exactly instead of
+    // stacking two insets on top of each other.
+    feedListWrap: { marginHorizontal: -space[4], gap: 12 },
   });
 }
 
@@ -440,11 +454,52 @@ export default function HubDetailScreen() {
             <Image source={{ uri: hub.coverImageUrl }} style={{ width: "100%", height: 160, borderRadius: radius.xl }} />
           ) : null}
 
-          <View>
-            <Text style={styles.name}>{hub.name}</Text>
-            <Text style={styles.meta}>
-              {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
-            </Text>
+          <View style={styles.headerTop}>
+            <View style={styles.headerTopInfo}>
+              <Text style={styles.name}>{hub.name}</Text>
+              <Text style={styles.meta}>
+                {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
+              </Text>
+            </View>
+            <View style={styles.headerActionsRow}>
+              {status.isMember ? (
+                status.role === "owner" ? (
+                  <View style={[styles.iconActionBtn, styles.iconActionBtnJoined]} accessibilityLabel="You own this Hub">
+                    <Ionicons name="ribbon" size={18} color={c.ochre} />
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.iconActionBtn, styles.iconActionBtnJoined]}
+                    onPress={leave}
+                    disabled={busy}
+                    accessibilityLabel="Leave Hub"
+                  >
+                    <Ionicons name="checkmark" size={18} color={c.ochre} />
+                  </TouchableOpacity>
+                )
+              ) : (
+                <TouchableOpacity
+                  style={[styles.iconActionBtn, styles.iconActionBtnJoin]}
+                  onPress={join}
+                  disabled={busy}
+                  accessibilityLabel="Join Hub"
+                >
+                  <Ionicons name="add" size={20} color={c.paper} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.iconActionBtn, styles.iconActionBtnFollow, status.isFollowing && styles.iconActionBtnFollowActive]}
+                onPress={toggleFollow}
+                disabled={busy}
+                accessibilityLabel={status.isFollowing ? "Unfollow Hub" : "Follow Hub"}
+              >
+                <Ionicons
+                  name={status.isFollowing ? "person-remove-outline" : "person-add-outline"}
+                  size={18}
+                  color={status.isFollowing ? c.ochre : c.ink}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.card}>
@@ -452,41 +507,21 @@ export default function HubDetailScreen() {
             <Text style={styles.cardBody}>{hub.description}</Text>
           </View>
 
-          <View style={styles.card}>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <View style={styles.row}>
-              {status.isMember ? (
-                status.role === "owner" ? (
-                  <Text style={styles.ownerText}>You own this Hub</Text>
-                ) : (
-                  <TouchableOpacity onPress={leave} disabled={busy} style={styles.leaveBtn}>
-                    <Text style={styles.leaveBtnText}>{busy ? "Leaving…" : "Leave Hub"}</Text>
-                  </TouchableOpacity>
-                )
-              ) : (
-                <TouchableOpacity style={styles.joinBtn} onPress={join} disabled={busy}>
-                  <Text style={styles.joinBtnText}>{busy ? "Joining…" : "Join →"}</Text>
+          {(error || status.isFollowing) && (
+            <View style={styles.card}>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {status.isFollowing && (
+                <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotifyPosts} disabled={busy}>
+                  <Ionicons
+                    name={status.notifyPosts ? "checkbox" : "square-outline"}
+                    size={16}
+                    color={status.notifyPosts ? c.ochre : c.ghost}
+                  />
+                  <Text style={styles.notifyToggleText}>Notify me when they post</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={[styles.followBtn, status.isFollowing && styles.followBtnActive]}
-                onPress={toggleFollow}
-                disabled={busy}
-              >
-                <Text style={styles.followBtnText}>{status.isFollowing ? "Following ✓" : "Follow"}</Text>
-              </TouchableOpacity>
             </View>
-            {status.isFollowing && (
-              <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotifyPosts} disabled={busy}>
-                <Ionicons
-                  name={status.notifyPosts ? "checkbox" : "square-outline"}
-                  size={16}
-                  color={status.notifyPosts ? c.ochre : c.ghost}
-                />
-                <Text style={styles.notifyToggleText}>Notify me when they post</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
 
           {isModerator && (
             <View style={styles.card}>
@@ -635,25 +670,27 @@ export default function HubDetailScreen() {
               </Text>
             </View>
           ) : (
-            feedItems.map((item: any) => (
-              <View key={item.id}>
-                {item.isPinned && <Text style={styles.pinnedLabel}>📌 Pinned</Text>}
-                <FeedItemCard
-                  item={item}
-                  onPress={() => nav.navigate("PostDetail", { item })}
-                />
-                {isModerator && (
-                  <View style={styles.modRow}>
-                    <TouchableOpacity onPress={() => togglePin(item)} disabled={busyWpId === item.wpId}>
-                      <Text style={styles.memberActionText}>{item.isPinned ? "Unpin" : "Pin"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => removePost(item)} disabled={busyWpId === item.wpId}>
-                      <Text style={styles.memberActionDanger}>Remove</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            ))
+            <View style={styles.feedListWrap}>
+              {feedItems.map((item: any) => (
+                <View key={item.id}>
+                  {item.isPinned && <Text style={styles.pinnedLabel}>📌 Pinned</Text>}
+                  <FeedItemCard
+                    item={item}
+                    onPress={() => nav.navigate("PostDetail", { item })}
+                  />
+                  {isModerator && (
+                    <View style={styles.modRow}>
+                      <TouchableOpacity onPress={() => togglePin(item)} disabled={busyWpId === item.wpId}>
+                        <Text style={styles.memberActionText}>{item.isPinned ? "Unpin" : "Pin"}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removePost(item)} disabled={busyWpId === item.wpId}>
+                        <Text style={styles.memberActionDanger}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
           )}
         </ScrollView>
       )}
