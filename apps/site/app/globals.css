@@ -174,22 +174,133 @@ h1, h2, h3, h4 {
    rule here so every CMS <blockquote> reads identically regardless of
    which surface renders it. Each surface's own CSS file keeps only the
    selector (pointing back to this comment) rather than repeating the
-   declaration — see editorial.css/newsletter.css/getmelit.css. */
+   declaration — see editorial.css/newsletter.css/getmelit.css.
+
+   September 2026: redesigned as a centered pull-quote (was a left-border
+   block) — a solid oxblood quotation mark floats above the centered
+   italic line, with the WP core Quote block's optional <cite> centered
+   below, flanked by two short rules. Mirrors the approved mockup at
+   https://claude.ai/artifact/CNoWUikwT4cKCwh5YmDCXi. The Literary
+   vertical (/literary) is deliberately NOT part of this shared rule — it
+   runs its own brand palette/type system, see .lit-piece-body blockquote
+   in literary.css. */
 .ar-wrap .prose-content blockquote,
 .digest-prose blockquote,
 .gml-issue-prose blockquote,
 #issue-body .prose-content blockquote,
 .gml-page-body blockquote,
 .rd-body blockquote {
-  border-left: 3px solid var(--ochre);
-  margin: 1.8em 0;
-  padding: 6px 0 6px 24px;
+  position: relative;
+  border: none;
+  margin: 2.6em auto;
+  padding: 46px 16px 4px;
+  max-width: 640px;
+  text-align: center;
+}
+.ar-wrap .prose-content blockquote::before,
+.digest-prose blockquote::before,
+.gml-issue-prose blockquote::before,
+#issue-body .prose-content blockquote::before,
+.gml-page-body blockquote::before,
+.rd-body blockquote::before {
+  content: '\201C';
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 84px;
+  line-height: 1;
+  color: var(--ochre);
+  pointer-events: none;
+}
+.ar-wrap .prose-content blockquote p,
+.digest-prose blockquote p,
+.gml-issue-prose blockquote p,
+#issue-body .prose-content blockquote p,
+.gml-page-body blockquote p,
+.rd-body blockquote p {
+  margin: 0 auto 14px;
+  max-width: 46ch;
   font-family: 'Fraunces', serif;
   font-style: italic;
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 1.4;
+  font-weight: 500;
+  font-size: 23px;
+  line-height: 1.45;
   color: var(--ink);
+}
+.ar-wrap .prose-content blockquote p:last-of-type,
+.digest-prose blockquote p:last-of-type,
+.gml-issue-prose blockquote p:last-of-type,
+#issue-body .prose-content blockquote p:last-of-type,
+.gml-page-body blockquote p:last-of-type,
+.rd-body blockquote p:last-of-type {
+  margin-bottom: 0;
+}
+.ar-wrap .prose-content blockquote cite,
+.digest-prose blockquote cite,
+.gml-issue-prose blockquote cite,
+#issue-body .prose-content blockquote cite,
+.gml-page-body blockquote cite,
+.rd-body blockquote cite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+  font-style: normal;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.ar-wrap .prose-content blockquote cite::before,
+.ar-wrap .prose-content blockquote cite::after,
+.digest-prose blockquote cite::before,
+.digest-prose blockquote cite::after,
+.gml-issue-prose blockquote cite::before,
+.gml-issue-prose blockquote cite::after,
+#issue-body .prose-content blockquote cite::before,
+#issue-body .prose-content blockquote cite::after,
+.gml-page-body blockquote cite::before,
+.gml-page-body blockquote cite::after,
+.rd-body blockquote cite::before,
+.rd-body blockquote cite::after {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--ochre);
+  opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .ar-wrap .prose-content blockquote,
+  .digest-prose blockquote,
+  .gml-issue-prose blockquote,
+  #issue-body .prose-content blockquote,
+  .gml-page-body blockquote,
+  .rd-body blockquote {
+    padding-top: 40px;
+  }
+  .ar-wrap .prose-content blockquote::before,
+  .digest-prose blockquote::before,
+  .gml-issue-prose blockquote::before,
+  #issue-body .prose-content blockquote::before,
+  .gml-page-body blockquote::before,
+  .rd-body blockquote::before {
+    font-size: 66px;
+  }
+  .ar-wrap .prose-content blockquote p,
+  .digest-prose blockquote p,
+  .gml-issue-prose blockquote p,
+  #issue-body .prose-content blockquote p,
+  .gml-page-body blockquote p,
+  .rd-body blockquote p {
+    font-size: 20px;
+  }
 }
 
 .mono {
