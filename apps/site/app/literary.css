@@ -359,14 +359,68 @@
   color: var(--lit-ink);
   margin: 1.6em 0 .6em;
 }
+/* Centered pull-quote — mirrors the sitewide treatment in globals.css
+   ("Unified pull-quote/blockquote treatment") but kept as its own rule
+   since this vertical runs its own brand palette/type system, not the
+   --ochre/Fraunces one. Mark uses the display face (Bodoni Moda), body
+   uses the italic face (Cormorant Garamond), per the brand guide. */
 .lit-piece-body blockquote {
-  margin: 1.8em 0;
-  padding-left: 24px;
-  border-left: 2px solid var(--lit-oxblood);
+  position: relative;
+  margin: 2.4em auto;
+  padding: 40px 16px 4px;
+  max-width: 620px;
+  border: none;
+  text-align: center;
+}
+.lit-piece-body blockquote::before {
+  content: '\201C';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 76px;
+  line-height: 1;
+  color: var(--lit-oxblood);
+  pointer-events: none;
+}
+.lit-piece-body blockquote p {
+  margin: 0 auto 12px;
+  max-width: 44ch;
   font-family: var(--font-lit-italic), Georgia, serif;
   font-style: italic;
-  font-size: 1.08em;
+  font-size: 1.2em;
+  line-height: 1.5;
   color: var(--lit-ink);
+}
+.lit-piece-body blockquote p:last-of-type { margin-bottom: 0; }
+.lit-piece-body blockquote cite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-style: normal;
+  font-family: var(--font-lit-meta), sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lit-oxblood);
+}
+.lit-piece-body blockquote cite::before,
+.lit-piece-body blockquote cite::after {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--lit-oxblood);
+  opacity: 0.6;
+}
+@media (max-width: 480px) {
+  .lit-piece-body blockquote { padding-top: 34px; }
+  .lit-piece-body blockquote::before { font-size: 58px; }
+  .lit-piece-body blockquote p { font-size: 1.05em; }
 }
 .lit-piece-body a { color: var(--lit-oxblood); text-decoration: underline; text-underline-offset: 3px; }
 .lit-piece-body em { font-style: italic; font-family: var(--font-lit-italic), Georgia, serif; }

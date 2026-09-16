@@ -2772,6 +2772,46 @@ work needed.
   would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
   and a newsletter issue page in a real environment before considering this fully closed.
 
+### Pull-quote/blockquote — centered treatment, magazine + literary + newsletters (September 2026)
+
+Mockup-first as usual (Artifact, iterated once — first draft was flush-left with the quotation
+mark bleeding off the left edge, corrected to centered per explicit feedback: "how about the way
+the quote boxes are flushed left?"). Approved mockup:
+`https://claude.ai/artifact/CNoWUikwT4cKCwh5YmDCXi`.
+
+- **The sitewide "Unified pull-quote/blockquote treatment" rule in `globals.css`** (shared by
+  `.ar-wrap .prose-content blockquote` — magazine articles — `.digest-prose`/`.gml-issue-prose`/
+  `#issue-body .prose-content`/`.gml-page-body` — GetMeLit/digest surfaces — and `.rd-body` — the
+  newsletter reader) was redesigned from a left-border block (`border-left: 3px solid
+  var(--ochre)`) into a centered pull-quote: a solid oxblood `"` glyph (`::before`, Fraunces,
+  84px) floats above the quote, the quote text itself centers below in italic Fraunces at 23px
+  (capped to `46ch` so it doesn't stretch full-width), and WP core Quote block's optional `<cite>`
+  centers underneath, flanked by two short 20px rules on either side. `max-width: 640px; margin:
+  2.6em auto` centers the whole block within the prose column regardless of which surface's own
+  column width it sits in. A `max-width: 480px` breakpoint shrinks the mark/text sizes.
+  **Still one shared rule, still edited only in `globals.css`** — none of the per-surface CSS
+  files (`editorial.css`/`newsletter.css`/`getmelit.css`) needed touching, same "don't add a
+  divergent rule here" convention the original comment already established.
+- **The Moveee Literary vertical (`/literary`) got its own equivalent, separate rule** —
+  `.lit-piece-body blockquote` in `literary.css` — since that section deliberately runs its own
+  brand palette/type system (`--lit-oxblood`, `--font-lit-display` for the mark, `--font-lit-italic`
+  for the quote body, `--font-lit-meta` for the attribution), not the sitewide `--ochre`/Fraunces
+  tokens. Same centered shape (glyph above, italic serif center, mono attribution with flanking
+  rules below), scaled slightly smaller (620px max-width, 76px mark) to match this vertical's more
+  restrained sizing elsewhere. This was **not** folded into the sitewide selector list — keep it
+  that way; the Literary section's whole point is a separate visual identity (see "The Moveee
+  Literary" section elsewhere in this file).
+- **Deliberately out of scope for this pass**: the Quotes archive (`/quotes`, `QuoteCard.tsx`/
+  `quotes.css`) and the author-page hero variant — both were shown in the same mockup as
+  companion pieces but the user's actual ask ("implement it for magazine articles, literary
+  articles and newsletters") named only the three prose surfaces above. `QuoteCard.tsx`'s own
+  `.quote-content::before` faint-glyph treatment is untouched. Revisit only if asked.
+- **Not visually verified in a browser** — no `node_modules` installed this session, same
+  recurring sandbox gap noted throughout this file. Verified via CSS brace-balance checks on
+  `globals.css` (308/308) and `literary.css` (234/234). Re-check pixel fidelity against the
+  approved mockup on a real article, a literary piece, and a newsletter issue with a CMS
+  blockquote (with and without a `<cite>`) before considering this fully closed.
+
 ### Homepage hero — only shows posts tagged "Featured" (September 2026)
 
 `FullBleedHero` (`app/page.tsx`) renders whatever `fetchHomepageData()` sets as `coverStory` —
