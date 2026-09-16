@@ -856,6 +856,44 @@ add_action( 'graphql_register_types', function () {
 
 }, 99 );
 
+// 6d. WPGraphQL — expose the Guest Byline override on Post (see
+//     culture-community/includes/core/class-culture-guest-byline.php and
+//     includes/admin/class-culture-acf-fields.php's "Guest Byline" field
+//     group). Reads plain post meta directly rather than via ACF's own
+//     get_field(), so this degrades to null (real author shown instead)
+//     if ACF is ever inactive, same graceful-degradation posture as
+//     moveeeMeta/featuredProducts above.
+add_action( 'graphql_register_types', function () {
+
+    register_graphql_object_type( 'MoveeeGuestByline', [
+        'description' => 'Display-only byline override typed in by a Byline Contributor — never changes the real post author',
+        'fields'      => [
+            'name'      => [ 'type' => 'String' ],
+            'bio'       => [ 'type' => 'String' ],
+            'avatarUrl' => [ 'type' => 'String' ],
+        ],
+    ] );
+
+    register_graphql_field( 'Post', 'guestByline', [
+        'type'        => 'MoveeeGuestByline',
+        'description' => 'Guest writer byline override, when a Byline Contributor has set one',
+        'resolve'     => function ( $post ) {
+            $pid  = absint( $post->databaseId ?? 0 );
+            if ( ! $pid ) return null;
+
+            $name = trim( (string) get_post_meta( $pid, 'guest_byline_name', true ) );
+            if ( '' === $name ) return null;
+
+            return [
+                'name'      => $name,
+                'bio'       => (string) get_post_meta( $pid, 'guest_byline_bio', true ) ?: null,
+                'avatarUrl' => (string) get_post_meta( $pid, 'guest_byline_avatar', true ) ?: null,
+            ];
+        },
+    ] );
+
+}, 99 );
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. REST API endpoint — /wp-json/moveee/v1/vendors
 //    Public endpoint that returns all WCFM vendor profiles as JSON.

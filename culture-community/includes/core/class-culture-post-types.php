@@ -21,6 +21,7 @@ class Culture_Post_Types {
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
+        add_action( 'init', array( __CLASS__, 'register_guest_byline_meta' ) );
         add_filter( 'rest_culture_event_query', array( __CLASS__, 'exclude_expired_events' ), 10, 2 );
         add_filter( 'rest_culture_post_query', array( __CLASS__, 'exclude_hub_posts' ), 10, 2 );
 
@@ -1553,6 +1554,42 @@ class Culture_Post_Types {
             'show_in_rest'      => true,
             'default'           => '',
             'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+    }
+
+    /**
+     * Exposes the Guest Byline ACF fields (see class-culture-guest-byline.php +
+     * class-culture-acf-fields.php) under `meta.*` on the REST post response, so
+     * REST-based consumers — currently just the mobile app, which fetches via
+     * wp/v2/posts rather than GraphQL — can read them the same way
+     * `guestByline` already works over GraphQL. ACF already writes these to
+     * plain postmeta under the field's own name, so registering them here is
+     * enough; no ACF-specific REST wiring needed.
+     */
+    public static function register_guest_byline_meta() {
+        register_post_meta( 'post', 'guest_byline_name', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+        register_post_meta( 'post', 'guest_byline_bio', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+        register_post_meta( 'post', 'guest_byline_avatar', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'esc_url_raw',
             'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
         ) );
     }

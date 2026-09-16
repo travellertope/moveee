@@ -1050,6 +1050,62 @@ class Culture_ACF_Fields {
             'show_in_graphql'   => 1,
         ) );
 
+        // ── Guest Byline (Byline Contributor role) ───────────────────────────────
+        // Display-only override — never changes post_author. Only shown to the
+        // Byline Contributor role (Culture_Guest_Byline) and administrators, via
+        // ACF's "Current User Role" location rule, so it doesn't clutter the
+        // editor screen for everyone else. See class-culture-guest-byline.php.
+        acf_add_local_field_group( array(
+            'key'    => 'group_culture_guest_byline',
+            'title'  => 'Guest Byline',
+            'fields' => array(
+                array(
+                    'key'          => 'field_guest_byline_name',
+                    'label'        => 'Guest Writer Name',
+                    'name'         => 'guest_byline_name',
+                    'type'         => 'text',
+                    'instructions' => 'When set, this name replaces the byline everywhere the article is shown — the real WordPress account above still owns the post, this is display only.',
+                    'wrapper'      => array( 'width' => '50' ),
+                ),
+                array(
+                    'key'          => 'field_guest_byline_bio',
+                    'label'        => 'Guest Writer Bio',
+                    'name'         => 'guest_byline_bio',
+                    'type'         => 'textarea',
+                    'instructions' => 'Short bio shown under the byline. Optional.',
+                    'rows'         => 3,
+                    'wrapper'      => array( 'width' => '50' ),
+                ),
+                array(
+                    'key'           => 'field_guest_byline_avatar',
+                    'label'         => 'Guest Writer Photo',
+                    'name'          => 'guest_byline_avatar',
+                    'type'          => 'image',
+                    'instructions'  => 'Optional. Falls back to the site placeholder if left blank.',
+                    'return_format' => 'url',
+                    'preview_size'  => 'thumbnail',
+                    'library'       => 'all',
+                ),
+            ),
+            'location' => array(
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'post' ),
+                    array( 'param' => 'user_role', 'operator' => '==', 'value' => Culture_Guest_Byline::ROLE ),
+                ),
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'post' ),
+                    array( 'param' => 'user_role', 'operator' => '==', 'value' => 'administrator' ),
+                ),
+            ),
+            'menu_order'            => 0,
+            'position'              => 'side',
+            'style'                 => 'default',
+            'label_placement'       => 'top',
+            'instruction_placement' => 'field',
+            'active'                => true,
+            'description'           => 'Overrides the displayed article byline with a typed guest writer name/bio — no WordPress account required.',
+        ) );
+
         // ── Connect Directory — User Profile ─────────────────────────────────────
         if ( function_exists( 'acf_add_local_field_group' ) ) {
             acf_add_local_field_group( array(

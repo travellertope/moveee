@@ -1045,15 +1045,17 @@ export default function ArticleScreen() {
                       {(article.author as any).bio ? (
                         <Text style={styles.authorBioBio}>{(article.author as any).bio}</Text>
                       ) : null}
-                      <TouchableOpacity
-                        onPress={() => nav.push("AuthorArchive", {
-                          authorSlug: article.author.slug,
-                          authorName: article.author.name,
-                          authorAvatar: article.author.avatarUrl,
-                        })}
-                      >
-                        <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
-                      </TouchableOpacity>
+                      {article.author.slug ? (
+                        <TouchableOpacity
+                          onPress={() => nav.push("AuthorArchive", {
+                            authorSlug: article.author.slug,
+                            authorName: article.author.name,
+                            authorAvatar: article.author.avatarUrl,
+                          })}
+                        >
+                          <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ) : null}
 
