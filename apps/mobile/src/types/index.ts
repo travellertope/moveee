@@ -152,6 +152,7 @@ export interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   creatorId: number;
   status: 'active' | 'archived';
   allowedTemplates: string[];
@@ -159,6 +160,7 @@ export interface Hub {
   postCount: number;
   createdAt: string;
   role?: string | null;
+  isOfficial?: boolean;
 }
 
 export interface HubStatus {
