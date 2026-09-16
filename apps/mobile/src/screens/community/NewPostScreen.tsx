@@ -27,6 +27,7 @@ import MentionInput from "../../components/composer/MentionInput";
 import { TEMPLATE_DEFS, REVIEW_FAMILY, REVIEW_TAB_META, isReviewTemplate, UPDATE_FAMILY, UPDATE_TAB_META, isUpdateTemplate } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
+import BottomSheet from "../../components/ui/BottomSheet";
 
 
 interface TemplateMeta {
@@ -283,6 +284,7 @@ export default function NewPostScreen() {
   const [text, setText] = useState("");
   const [sectionTag, setSectionTag] = useState<string | null>(null);
   const [tagLocked, setTagLocked] = useState(false);
+  const [sectionSheetOpen, setSectionSheetOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [itineraryCity, setItineraryCity] = useState("");
@@ -908,46 +910,57 @@ const uploadImages = async (): Promise<string[]> => {
     </View>
   );
 
-  const renderSectionTags = (marginTop?: number) => (
-    <View style={[styles.fieldGroup, marginTop != null ? { marginTop } : undefined]}>
-      <Text style={styles.fieldLabel}>Section</Text>
-      <View style={styles.chipRow}>
-        {SECTION_TAGS.map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.sectionTag, sectionTag === t && styles.sectionTagActive]}
-            onPress={() => {
-              const next = sectionTag === t ? null : t;
-              setSectionTag(next);
-              setTagLocked(next !== null); // clearing resumes auto-detection
-            }}
-          >
-            <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
+  // A compact "Section: X ▾" pill that opens a bottom-sheet picker, instead
+  // of an always-expanded 11-chip row sitting above the compose box. Picking
+  // a section locks it (clearing resumes auto-detection from the post text,
+  // same behavior the old chip row had).
+  const renderSectionDropdown = (marginTop?: number) => (
+    <>
+      <TouchableOpacity
+        style={[
+          styles.sectionDropdownPill,
+          sectionTag && styles.sectionDropdownPillActive,
+          marginTop != null ? { marginTop } : undefined,
+        ]}
+        onPress={() => setSectionSheetOpen(true)}
+      >
+        <Text style={styles.sectionDropdownIcon}>#</Text>
+        <Text style={[styles.sectionDropdownText, sectionTag && styles.sectionDropdownTextActive]}>
+          {sectionTag ?? "Add a section"}
+        </Text>
+        <Text style={styles.sectionDropdownChevron}>▾</Text>
+      </TouchableOpacity>
+      <BottomSheet visible={sectionSheetOpen} onClose={() => setSectionSheetOpen(false)}>
+        <Text style={styles.sectionSheetTitle}>Choose a section</Text>
+        {SECTION_TAGS.map((t) => {
+          const active = sectionTag === t;
+          return (
+            <TouchableOpacity
+              key={t}
+              style={styles.sectionSheetItem}
+              onPress={() => {
+                const next = active ? null : t;
+                setSectionTag(next);
+                setTagLocked(next !== null); // clearing resumes auto-detection
+                setSectionSheetOpen(false);
+              }}
+            >
+              <Text style={[styles.sectionSheetItemText, active && styles.sectionSheetItemTextActive]}>{t}</Text>
+              {active && <Text style={styles.sectionSheetCheck}>✓</Text>}
+            </TouchableOpacity>
+          );
+        })}
+      </BottomSheet>
+    </>
   );
 
   // ── Template body renderers ───────────────────────────────────────────────────
   const renderStandardPost = () => (
     <>
-      {/* Section tags FIRST */}
-      {renderSectionTags(0)}
-      {/* What are you writing about? — optional directory link (July 2026).
-          This is what used to be the standalone Cultural Take template's
-          required directory field; folding Cultural Take into Update made
-          it optional rather than required. */}
-      <View style={[styles.fieldGroup, { marginTop: space[2] }]}>
-        <DirectorySearch
-          selected={linkedEntry}
-          onSelect={setLinkedEntry}
-          label="What are you writing about? (optional)"
-        />
-      </View>
+      {/* Body copy FIRST — the actual thing the user is here to write. */}
       <MentionInput
         inputRef={textRef}
-        style={[styles.textarea, { marginTop: space[2] }]}
+        style={styles.textarea}
         value={text}
         onChangeText={handleTextChange}
         multiline
@@ -955,7 +968,20 @@ const uploadImages = async (): Promise<string[]> => {
         placeholderTextColor={c.ghost}
         maxLength={tmpl.maxText + 50}
         textAlignVertical="top"
+        autoFocus
       />
+      {/* What are you writing about? — optional directory link (July 2026).
+          This is what used to be the standalone Cultural Take template's
+          required directory field; folding Cultural Take into Update made
+          it optional rather than required. */}
+      <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
+        <DirectorySearch
+          selected={linkedEntry}
+          onSelect={setLinkedEntry}
+          label="What are you writing about? (optional)"
+        />
+      </View>
+      {renderSectionDropdown(space[3])}
       <InlinePhotosSection
         images={images}
         onAdd={() => pickImages(true)}
@@ -2431,6 +2457,31 @@ function createStyles(c: ColorPalette) {
     sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
     sectionTagText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+
+    // Section dropdown pill (replaces the always-expanded chip row on the
+    // plain Update form — see renderSectionDropdown()).
+    sectionDropdownPill: {
+      flexDirection: "row", alignItems: "center", alignSelf: "flex-start",
+      height: 36, paddingHorizontal: 14, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper, gap: 6,
+    },
+    sectionDropdownPillActive: { borderColor: c.ochre, backgroundColor: c.goldLight },
+    sectionDropdownIcon: { fontSize: fontSize.sm, color: c.mute },
+    sectionDropdownText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    sectionDropdownTextActive: { color: c.ochre, fontFamily: fonts.sansBold },
+    sectionDropdownChevron: { fontSize: fontSize.tiny, color: c.mute, marginLeft: 2 },
+    sectionSheetTitle: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.md, color: c.ink,
+      paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3],
+    },
+    sectionSheetItem: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    sectionSheetItemText:       { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+    sectionSheetItemTextActive: { fontFamily: fonts.sansBold, color: c.ochre },
+    sectionSheetCheck: { fontSize: fontSize.base, color: c.ochre },
     genreInput: {
       height: 34, paddingHorizontal: 14, borderRadius: radius.full,
       borderWidth: 1, borderColor: c.ochre, backgroundColor: c.paper,

@@ -67,7 +67,7 @@ export const UPDATE_DEFAULT: TemplateId = "post";
 export const UPDATE_TAB_META: Record<string, { label: string; emoji: string }> = {
   post:  { label: "Update", emoji: "✏️" },
   poll:  { label: "Poll",   emoji: "📊" },
-  quote: { label: "Quote",  emoji: "❝" },
+  quote: { label: "Quote",  emoji: "💬" },
 };
 export function isUpdateTemplate(id: TemplateId): boolean {
   return UPDATE_FAMILY.includes(id);
