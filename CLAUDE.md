@@ -9131,6 +9131,82 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ---
 
+## Sign in with Apple (September 2026)
+
+Added specifically to satisfy **App Store Review Guideline 4.8** — an app that
+offers a third-party/social login (Google, above) must offer Sign in with Apple as
+an equivalent option, or risk rejection on first submission. iOS-only; Android is
+unaffected and doesn't render the button.
+
+**Verification is a local JWKS check, not a single HTTP call like Google's.** Apple
+has no `tokeninfo`-style endpoint — the ID token is a standard RS256 JWT, so
+`Culture_Apple_Auth` (`culture-community/includes/core/class-culture-apple-auth.php`)
+fetches Apple's public keys from `https://appleid.apple.com/auth/keys` (cached 12h via
+transient), reconstructs the matching RSA public key as a PEM **by hand** from the
+JWK's raw `n`/`e` (manual ASN.1 DER encoding — no JWT/JWK Composer library, same "raw,
+no SDK" convention as `class-culture-r2.php`'s hand-rolled AWS SigV4 signer), then
+verifies the signature via PHP's built-in `openssl_verify()`. This DER/PEM
+reconstruction is the one genuinely fragile part of this feature — it was verified
+standalone (a real generated RSA keypair, a fake signed Apple-shaped JWT, a positive
+verify + a tampered-payload negative verify) before being trusted; if Sign in with
+Apple ever starts failing with `invalid_apple_token`, suspect this reconstruction
+first, not the rest of the flow.
+
+**No Client-ID-style setup needed for the native app flow, unlike Google.** The
+native `ASAuthorizationAppleIDProvider` flow (what `expo-apple-authentication`
+wraps) issues an ID token whose `aud` claim is the app's own bundle identifier —
+`Culture_Apple_Auth::allowed_audiences()` hardcodes `com.moveee.connect` (matching
+`app.config.ts`'s `ios.bundleIdentifier`/`android.package`) rather than requiring a
+Google-Cloud-Console-style manual client registration. WP Admin → Culture Community
+→ General → "Sign in with Apple" only has one optional field, a Service ID — that's
+solely for if Sign in with Apple is ever added to a **web** login flow later; the
+mobile app needs nothing filled in here to work.
+
+**Email caveat, same as any Apple Sign-In integration**: Apple may return a private
+relay address (`...@privaterelay.appleid.com`) instead of the user's real email —
+treated identically to any other email by `find_or_create_user()`, no special
+handling needed. **The user's real name is only ever sent once, on the very first
+authorization ever** — `LoginScreen.tsx`'s `handleAppleSignIn()` reads
+`credential.fullName` and forwards it as `full_name` on every call regardless (it's
+`null`/empty on every subsequent login), and the backend only applies it when
+creating a brand-new account, never overwriting an existing one's `display_name`.
+
+**REST routes**: `POST /culture/v1/mobile/login-apple` (`identity_token`,
+`full_name`) — mobile-only, mirrors `/mobile/login-google`'s handler shape exactly
+(`Culture_Apple_Auth::verify_id_token()` → `::find_or_create_user()` → issue the
+existing mobile session token). **No web/`apps/connect` route was added** — this
+pass was scoped to the mobile app specifically, since that's what App Store review
+actually gates; if Apple Sign-In is ever wanted on `web.themoveee.com` too, mirror
+the Google web route (`/culture/v1/login-apple`, API-key gated) and wire it into
+NextAuth as a new provider, same shape as `providers.google` in
+`packages/shared/lib/auth.ts` — that's a separate, unstarted piece of work.
+
+**Client side** (`apps/mobile`): `expo-apple-authentication@~7.1.3` (the Expo
+SDK 52-aligned version, confirmed against `bundledNativeModules.json` on the
+`sdk-52` branch — don't bump this independently of the SDK 52 pin documented under
+"Expo SDK version — critical" below). Added to `app.config.ts`'s `plugins` array —
+the package's own Expo config plugin sets the `com.apple.developer.applesignin`
+entitlement automatically, no manual `ios.entitlements` needed.
+`LoginScreen.tsx` renders Apple's own `AppleAuthenticationButton` component (guarantees
+Apple's Human Interface Guidelines visual compliance for free — don't hand-roll a
+custom Apple button) below the existing Google button, gated on `Platform.OS ===
+"ios" && appleAvailable` (`AppleAuthentication.isAvailableAsync()`, checked once on
+mount). Cancellation is detected via `e.code === "ERR_REQUEST_CANCELED"` (silently
+no-ops, same convention as Google's `SIGN_IN_CANCELLED` check right above it).
+
+**Not tested against a real device or a real EAS build** — same sandbox gap as
+every other native-module feature in this file (no Xcode/EAS toolchain here). The
+one piece that *could* be verified offline (the JWK→PEM DER reconstruction +
+signature verification) was, via a standalone script with a real generated RSA
+keypair — see above. Re-check the full `AppleAuthentication.signInAsync()` →
+`/mobile/login-apple` → account-creation round trip, on a real EAS build, on a real
+device signed into a real Apple ID, before considering this fully closed — this
+also requires the plugin redeployed (manual zip+upload, see "Plugin DB table
+auto-upgrade" — no new dbDelta table here, so no `CULTURE_VERSION` bump was needed,
+only the plugin header version bump to `2.2.4` for redeploy-confirmation purposes).
+
+---
+
 ## Account deletion (August 2026)
 
 Required by Google Play's account-deletion policy ahead of the Play Store submission
