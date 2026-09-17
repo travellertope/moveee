@@ -1,7 +1,7 @@
 import Link from "next/link";
 import CommonsLogo from "./CommonsLogo";
 import SubscribeForm from "./SubscribeForm";
-import { COMMONS_SECTIONS, COMMONS_AUTHOR_NAME } from "@/lib/wp";
+import { COMMONS_SECTIONS } from "@/lib/wp";
 
 // The Moveee Commons' own dark footer — replaces the sitewide Footer
 // entirely on every /commons route (see ConditionalFooter.tsx's
@@ -39,7 +39,6 @@ export default function CommonsFooter() {
           <div className="comm-foot-h">The Commons</div>
           <div className="comm-foot-links">
             <Link href="/commons">The Moveee Commons</Link>
-            <Link href="/commons/writer">Reporting by {COMMONS_AUTHOR_NAME}</Link>
             <Link href="/contact">Contact</Link>
           </div>
         </div>
