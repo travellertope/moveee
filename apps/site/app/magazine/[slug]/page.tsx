@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, isCommonsCategoryPost, getPreviewItem } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, isCommonsPost, getPreviewItem } from "@/lib/wp";
 import { draftMode, cookies, headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -143,12 +143,11 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   }
 
   // Same "exactly one canonical URL per piece" rule for The Moveee Commons
-  // — see CLAUDE.md's "The Moveee Commons" entry. Only category membership
-  // redirects (isCommonsCategoryPost) — a post that only qualifies for the
-  // Commons *feed* via its author (Basit Jamiu, no "commons" category)
-  // deliberately stays at its normal /magazine/{slug} URL; see
-  // commonsPieceHref's doc comment in wp.ts for why.
-  if (isCommonsCategoryPost(post)) {
+  // — see CLAUDE.md's "The Moveee Commons" entry. Redirects for anything
+  // that qualifies for the Commons feed at all (category OR author —
+  // isCommonsPost), not just category, so every piece that shows up in the
+  // Commons feed renders under Commons chrome, never the magazine template.
+  if (isCommonsPost(post)) {
     redirect(`/commons/${post.slug}`);
   }
 

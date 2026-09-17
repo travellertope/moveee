@@ -1266,18 +1266,19 @@ established for country filtering). Deduped by `databaseId` (category-sourced co
 collision, since it's the richer GraphQL shape), sorted newest-first. Never throws — either
 half failing just means that half contributes nothing (`Promise.allSettled`).
 
-**Only category membership gets a canonical `/commons/{slug}` URL — a deliberate, narrower
-rule than the feed union above.** `commonsPieceHref(post)` returns `/commons/{slug}` for a
-category member, `/magazine/{slug}` otherwise. This means a piece that qualifies for the
-Commons *feed* only via Basit's byline (no `"commons"` category) still surfaces on the Commons
-homepage/section shelves, it just links back out to its ordinary `/magazine/{slug}` home
-rather than moving under Commons chrome — so an unrelated piece Basit happens to write doesn't
-get pulled out of the regular magazine. `/magazine/[slug]/page.tsx` redirects on the same
-narrower rule (`isCommonsCategoryPost`, not the full union) right after its existing Literary
-redirect, mirroring that redirect's "exactly one canonical URL per piece" reasoning exactly.
-`sitemap.ts` follows the identical split: `articleUrls` excludes category-based Commons pieces
-(they get their own `commonsPieceUrls` entries at `/commons/{slug}`), but an author-only piece
-stays counted in `articleUrls` at its real `/magazine/{slug}` URL.
+**Every piece that qualifies for the Commons feed gets a canonical `/commons/{slug}` URL —
+widened September 2026, per explicit request** (this superseded an earlier, narrower rule where
+only category members got a Commons URL and an author-only piece stayed at `/magazine/{slug}`;
+that split meant two different article templates depending on which rule matched, which read as
+inconsistent once live). `commonsPieceHref(post)` now returns `/commons/{slug}` for anything
+`isCommonsPost()` is true for — category or author, no distinction. `/magazine/[slug]/page.tsx`
+redirects on the same union (`isCommonsPost`, not just `isCommonsCategoryPost`) right after its
+existing Literary redirect, mirroring that redirect's "exactly one canonical URL per piece"
+reasoning exactly — so every Basit Jamiu piece (guest-bylined or not) and every "commons"
+category piece now renders under Commons chrome, never the magazine template. `sitemap.ts`
+follows the identical union: `articleUrls` excludes every Commons-qualifying piece (they all get
+`commonsPieceUrls` entries at `/commons/{slug}` instead, whether they qualified by category or
+by author).
 
 **Sections are a plain WP tag overlay on the category** — `COMMONS_SECTIONS` (Politics,
 Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`academia`/
@@ -1286,12 +1287,14 @@ Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`
 shows in the main `/commons` feed, it just won't appear on any single section's page until
 tagged. `app/commons/[slug]/page.tsx` is the same dual-purpose route Literary's `[slug]` uses
 (a `COMMONS_SECTIONS.slug` match renders a section archive; anything else falls through to a
-real post lookup, gated on `isCommonsCategoryPost`) — Next.js doesn't allow two sibling routes
-with different dynamic-segment names at the same level, same constraint documented on
-Literary's own `[slug]` route. Section archives and a piece's own "More in {section}" grid
-only ever draw from `getCommonsCategoryPieces()` (category-scoped, optionally narrowed by
-section tag) — never the author-only half of the feed, since an author-only piece has no
-canonical Commons page to be tagged into in the first place.
+real post lookup, gated on `isCommonsPost` — the full union, per the widened canonical-URL rule
+above, not just category) — Next.js doesn't allow two sibling routes with different
+dynamic-segment names at the same level, same constraint documented on Literary's own `[slug]`
+route. Section archives and a piece's own "More in {section}" grid still only ever draw from
+`getCommonsCategoryPieces()` (category-scoped, optionally narrowed by section tag) — an
+author-only piece can now have a real `/commons/{slug}` page of its own, it just won't be
+surfaced by a section archive unless it's also in the "commons" category and tagged (sections
+are a category overlay, unrelated to how the page itself is reached).
 
 **Deliberately no Pro-gating, no free-read metering** — unlike Literary/Magazine's magic-code
 gate system, Commons content is fully public in this pass; nothing in `[slug]/page.tsx` calls

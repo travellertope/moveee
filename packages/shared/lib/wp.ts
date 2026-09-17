@@ -1055,13 +1055,13 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
 //      purely a display-time override; post_author never changes (same
 //      doc), so filtering on the real author databaseId already covers
 //      every guest-bylined piece Basit submits with zero extra work.
-// Only rule 1 (category) gets a canonical /commons/{slug} URL and a
-// redirect off /magazine/{slug} — mirroring isLiteraryPost's category-only
-// semantics exactly. A piece that only qualifies via rule 2 (Basit's
-// byline, no "commons" category) still surfaces in the Commons homepage
-// feed, it just links back out to its normal /magazine/{slug} home rather
-// than moving under Commons chrome — deliberately conservative, so an
-// unrelated piece Basit writes doesn't get pulled out of the magazine.
+// Both rules get a canonical /commons/{slug} URL and a redirect off
+// /magazine/{slug} — every piece that belongs to the Commons *feed* (via
+// either rule) also renders under Commons chrome, not the magazine
+// template. This was originally category-only (a piece that only
+// qualified via rule 2 stayed at /magazine/{slug}); widened per explicit
+// request so the whole feed is consistently Commons-branded, not a mix of
+// two different article templates depending on which rule matched.
 export const COMMONS_CATEGORY_SLUG = "commons";
 export const COMMONS_AUTHOR_ID = 15; // Basit Jamiu ("basit")
 export const COMMONS_AUTHOR_NAME = "Basit Jamiu"; // display fallback only — the real name lives on the WP account itself
@@ -1090,11 +1090,12 @@ export function isCommonsPost(post: CommonsPost): boolean {
 }
 
 /**
- * Resolves a piece's canonical link — /commons/{slug} for category members,
- * /magazine/{slug} for author-only members (see the module comment above).
+ * Resolves a piece's canonical link — /commons/{slug} for anything that
+ * qualifies for the Commons feed at all (category or author), per the
+ * module comment above.
  */
 export function commonsPieceHref(post: CommonsPost & { slug?: string }): string {
-  return isCommonsCategoryPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
+  return isCommonsPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
 }
 
 /**
@@ -1321,8 +1322,11 @@ export interface CommonsSection {
 // appears in the main /commons feed; it just won't show up on any single
 // section's page until someone tags it. Order matches the "Sections" strip
 // on the approved homepage mockup. Section pages only ever draw from
-// category-based Commons pieces (see commonsPieceHref above) — an
-// author-only piece has no canonical /commons page to be tagged into.
+// category-based Commons pieces (see getCommonsCategoryPieces below) —
+// sections are a category overlay, so an author-only piece (no "commons"
+// category) can still have a canonical /commons/{slug} page (per
+// commonsPieceHref above), it just won't appear on any single section's
+// archive until it's both in the category and tagged.
 export const COMMONS_SECTIONS: CommonsSection[] = [
   {
     slug: "politics",
