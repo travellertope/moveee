@@ -54,17 +54,20 @@
 @media (max-width: 720px) { .comm-wrap { padding: 0 24px; } }
 @media (max-width: 420px) { .comm-wrap { padding: 0 20px; } }
 
-/* ── LOGO LOCKUP — no real asset supplied yet, CSS-drawn (same "first pass
-   before a real logo is supplied" precedent Literary itself used before
-   getting its own file — see LiteraryLogo.tsx's own history in
-   CLAUDE.md). ── */
-.comm-logo { display: flex; align-items: baseline; gap: 6px; }
-.comm-logo-the { font-family: var(--font-comm-display), "Newsreader", serif; font-style: italic; font-size: 14px; color: var(--comm-green); }
-.comm-logo-mark { font-family: var(--font-comm-display), "Newsreader", serif; font-weight: 700; font-size: 20px; color: var(--comm-ink); }
-.comm-logo-sub { font-family: var(--font-comm-mono), "IBM Plex Mono", monospace; font-size: 9.5px; color: var(--comm-brass); letter-spacing: 0.18em; margin-left: 2px; }
-.comm-page--inverted .comm-logo-the { color: rgba(242, 241, 234, 0.75); }
-.comm-page--inverted .comm-logo-mark { color: var(--comm-paper); }
-.comm-page--inverted .comm-logo-sub { color: var(--comm-brass); }
+/* ── LOGO LOCKUP — real asset (public/commons-logo-black.png +
+   -white.png), cropped tight to its alpha bounding box so the fixed
+   height below doesn't leave dead transparent margin around it (same
+   convention as logo-black.png/logo-white.png elsewhere in this app).
+   Two real files, not one file + a CSS invert filter, since the accent
+   dot is oxblood in both versions — see CommonsLogo.tsx's own comment. ── */
+.comm-logo { display: flex; align-items: center; }
+.comm-logo-img { height: 34px; width: auto; display: block; }
+.comm-logo-img--white { display: none; }
+.comm-page--inverted .comm-logo-img--black { display: none; }
+.comm-page--inverted .comm-logo-img--white { display: block; }
+@media (max-width: 640px) {
+  .comm-logo-img { height: 26px; }
+}
 
 /* ── "THIS WEEK" TICKER ── */
 .comm-ribbon { background: var(--comm-green); color: var(--comm-paper); padding: 9px 0; }
