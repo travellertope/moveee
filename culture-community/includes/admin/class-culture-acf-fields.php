@@ -1064,7 +1064,6 @@ class Culture_ACF_Fields {
                     'label'        => 'Guest Writer Name',
                     'name'         => 'guest_byline_name',
                     'type'         => 'text',
-                    'instructions' => 'When set, this name replaces the byline everywhere the article is shown — the real WordPress account above still owns the post, this is display only.',
                     'wrapper'      => array( 'width' => '50' ),
                 ),
                 array(
@@ -1072,7 +1071,6 @@ class Culture_ACF_Fields {
                     'label'        => 'Guest Writer Bio',
                     'name'         => 'guest_byline_bio',
                     'type'         => 'textarea',
-                    'instructions' => 'Short bio shown under the byline. Optional.',
                     'rows'         => 3,
                     'wrapper'      => array( 'width' => '50' ),
                 ),
@@ -1081,7 +1079,6 @@ class Culture_ACF_Fields {
                     'label'         => 'Guest Writer Photo',
                     'name'          => 'guest_byline_avatar',
                     'type'          => 'image',
-                    'instructions'  => 'Optional. Falls back to the site placeholder if left blank.',
                     'return_format' => 'url',
                     'preview_size'  => 'thumbnail',
                     'library'       => 'all',
