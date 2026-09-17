@@ -883,6 +883,31 @@ export const GET_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+// Cursor-paginated "every post by this WP author id", via WPGraphQL's core
+// `author` where-arg (a standard field on RootQueryToPostConnectionWhereArgs
+// for any post type — not a custom bridge-plugin field, so no isolation
+// concern the way GET_STORY_GUEST_BYLINE needs one). Exists specifically so
+// getStoriesByAuthorId can try this before falling back to the REST
+// `?author=` query below — some hosting/security configs (author-
+// enumeration hardening rules) block any request whose raw query string
+// contains `author=`, REST included, but have no way to inspect a GraphQL
+// POST body's variables the same way. See getStoriesByAuthorId's own doc
+// comment for the full reasoning.
+export const GET_STORIES_BY_AUTHOR = `
+  query GetStoriesByAuthor($first: Int, $author: Int, $after: String) {
+    posts(first: $first, after: $after, where: { author: $author }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ...StoryFields
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
 // Lightweight query — only fetches id + tags for edition-exclusion logic.
 // Avoids touching STORY_FIELDS_FRAGMENT in case post_tag isn't in the schema.
 export const GET_STORIES_TAGS = `
@@ -1073,13 +1098,46 @@ export function commonsPieceHref(post: CommonsPost & { slug?: string }): string 
 }
 
 /**
- * REST fallback for "every post by this WP author id" — WPGraphQL's
- * posts(where:) has no confirmed authorIn/author filter in this schema
- * (same reasoning as getStoriesByCountrySlugs below, applied to author
- * instead of country), so this goes straight to WP core REST, which
- * natively supports `?author=<id>` with zero plugin changes.
- *
- * Paginates via WP REST's own `page` param, bounded at MAX_PAGES (same
+ * GraphQL-first attempt at "every post by this WP author id" — tries
+ * GET_STORIES_BY_AUTHOR (cursor-paginated, bounded at 5 pages of up to
+ * 100) before ever touching the REST `?author=` fallback below. This
+ * exists because some hosting/security setups (a common WP hardening
+ * rule against author-enumeration attacks) block *any* request whose raw
+ * query string contains `author=`, REST included — the GraphQL request
+ * carries the same filter in its POST body instead, so it isn't visible
+ * to that kind of query-string pattern match at all. Returns [] (never
+ * throws) so the caller can fall back to REST when this comes back empty,
+ * whether that's because the schema genuinely doesn't support the
+ * `author` where-arg or because the author truly has no posts.
+ */
+async function getStoriesByAuthorIdGraphQL(authorId: number, first: number): Promise<any[]> {
+  const perPage = Math.min(100, first);
+  const maxPages = Math.min(5, Math.ceil(first / perPage) || 1);
+  const all: any[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < maxPages; page++) {
+    const data = await getWPData(
+      GET_STORIES_BY_AUTHOR,
+      { first: perPage, author: authorId, after },
+      { revalidate: 600 }
+    );
+    const nodes: any[] = data?.posts?.nodes || [];
+    if (nodes.length === 0) break;
+    all.push(...nodes);
+    if (all.length >= first || !data?.posts?.pageInfo?.hasNextPage) break;
+    after = data.posts.pageInfo.endCursor;
+    if (!after) break;
+  }
+
+  return all.slice(0, first);
+}
+
+/**
+ * "Every post by this WP author id" — tries GraphQL first (see
+ * getStoriesByAuthorIdGraphQL above), then falls back to WP core REST's
+ * native `?author=<id>` support if that comes back empty. The REST path
+ * paginates via WP REST's own `page` param, bounded at MAX_PAGES (same
  * "bounded pagination loop" convention already used for vendor analytics
  * elsewhere in this codebase) — a plain `per_page=<first>` single request
  * silently caps out at 100 (WP's own hard max) or at whatever `first` is,
@@ -1096,6 +1154,13 @@ export async function getStoriesByAuthorId(
   first = 24,
   options: any = {}
 ): Promise<any[]> {
+  try {
+    const graphqlResult = await getStoriesByAuthorIdGraphQL(authorId, first);
+    if (graphqlResult.length > 0) return graphqlResult;
+  } catch {
+    // fall through to REST
+  }
+
   const revalidate = options.revalidate !== undefined ? options.revalidate : 600;
   const perPage = Math.min(100, first);
   const maxPages = Math.min(5, Math.ceil(first / perPage));
