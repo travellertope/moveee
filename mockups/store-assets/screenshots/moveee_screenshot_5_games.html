@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  html,body { background:#FFFFFF; }
+  .screen {
+    width:1080px; height:1920px; position:relative; overflow:hidden;
+    background:#FFFFFF; font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; color:#14110D;
+    display:flex; flex-direction:column;
+  }
+  .statusbar {
+    flex:0 0 auto; height:66px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 40px; font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; font-weight:700; font-size:30px; color:#14110D;
+  }
+  .statusbar .icons { display:flex; gap:14px; align-items:center; }
+  .appheader {
+    flex:0 0 auto;
+    padding:18px 32px 20px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid rgba(20,17,13,0.10);
+  }
+  .wordmark { font-family:Georgia, 'Times New Roman', serif; font-weight:700; font-size:40px; letter-spacing:-0.01em; color:#14110D; }
+  .wordmark em { font-style:italic; color:#7a241c; }
+  .icon-row { display:flex; gap:22px; align-items:center; }
+  .icon-btn {
+    width:56px; height:56px; border-radius:9999px; background:#F5F5F5;
+    display:flex; align-items:center; justify-content:center; font-size:26px; position:relative;
+  }
+  .icon-btn .dot {
+    position:absolute; top:8px; right:8px; width:16px; height:16px; border-radius:999px;
+    background:#7a241c; border:2px solid #FFFFFF;
+  }
+  .placeholder {
+    background:
+      repeating-linear-gradient(135deg, rgba(179,130,56,0.10) 0 18px, transparent 18px 36px),
+      linear-gradient(160deg, #F5F5F5, #ECE6DC);
+    border:2.5px dashed #C8BFB0;
+    border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; color:#7A6F5C; text-align:center;
+  }
+  .placeholder .cam {
+    width:64px; height:64px; border-radius:999px; background:#FFFFFF;
+    display:flex; align-items:center; justify-content:center; font-size:30px;
+    box-shadow:0 2px 8px rgba(20,17,13,0.08);
+  }
+  .placeholder .lbl { font-family:'Courier New', monospace; font-size:20px; font-weight:700; letter-spacing:.02em; }
+  .placeholder .dim { font-family:'Courier New', monospace; font-size:16px; color:#C8BFB0; }
+  .pill {
+    display:inline-flex; align-items:center; padding:8px 20px; border-radius:9999px;
+    font-family:'Courier New', monospace; font-weight:700; font-size:18px; letter-spacing:.03em; text-transform:uppercase;
+  }
+  .card {
+    background:#FFFFFF; border:1px solid rgba(20,17,13,0.10); border-radius:12px;
+    box-shadow:0 2px 10px rgba(20,17,13,0.06);
+  }
+  .tabbar {
+    flex:0 0 150px; height:150px;
+    background:#FFFFFF; border-top:1px solid rgba(20,17,13,0.10);
+    display:flex; align-items:center; justify-content:space-around; padding-bottom:14px;
+  }
+  .tabitem { display:flex; flex-direction:column; align-items:center; gap:8px; width:180px; }
+  .tabitem .ic { font-size:34px; }
+  .tabitem .lb { font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; font-size:19px; font-weight:600; color:#7A6F5C; }
+  .tabitem.active .lb, .tabitem.active .ic { color:#7a241c; }
+  .content { flex:1 1 auto; overflow:hidden; position:relative; }
+</style></head>
+<body><div class="screen">
+  
+  <div class="statusbar">
+    <div>9:41</div>
+    <div class="icons">
+      <span>••••</span><span>📶</span><span>🔋</span>
+    </div>
+  </div>
+  
+  <div class="appheader">
+    <div class="wordmark">Culture Games</div>
+    
+      <div class="icon-row">
+        <div class="icon-btn">🧭</div>
+        <div class="icon-btn">🔍</div>
+        <div class="icon-btn">🔔<div class="dot"></div></div>
+      </div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin:24px 32px;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;background:rgba(179,130,56,0.10);border-color:rgba(179,130,56,0.40);">
+      <div>
+        <div style="font-family:'Courier New', monospace;font-size:16px;letter-spacing:.06em;color:#5c1b15;margin-bottom:6px;">STREAK</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:30px;">🔥 5 days</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Courier New', monospace;font-size:16px;letter-spacing:.06em;color:#5c1b15;margin-bottom:6px;">TODAY</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:30px;">+25 Cr</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:0 32px;">
+      <div class="card" style="padding:26px 24px;">
+        <div style="font-size:42px;margin-bottom:14px;">🧠</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:23px;margin-bottom:8px;">Daily Trivia</div>
+        <div style="color:#7A6F5C;font-size:17px;line-height:1.4;margin-bottom:18px;min-height:70px;">10 questions on culture, history &amp; the everyday.</div>
+        <div class="pill" style="background:rgba(179,130,56,0.10);color:#5c1b15;font-size:15px;padding:6px 16px;">Play now</div>
+      </div>
+      <div class="card" style="padding:26px 24px;">
+        <div style="font-size:42px;margin-bottom:14px;">🎤</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:23px;margin-bottom:8px;">Who Said It?</div>
+        <div style="color:#7A6F5C;font-size:17px;line-height:1.4;margin-bottom:18px;min-height:70px;">Match the quote to the culture figure.</div>
+        <div class="pill" style="background:rgba(179,130,56,0.10);color:#5c1b15;font-size:15px;padding:6px 16px;">2/10 played</div>
+      </div>
+      <div class="card" style="padding:26px 24px;">
+        <div style="font-size:42px;margin-bottom:14px;">🔢</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:23px;margin-bottom:8px;">Sudoku</div>
+        <div style="color:#7A6F5C;font-size:17px;line-height:1.4;margin-bottom:18px;min-height:70px;">A fresh grid every day.</div>
+        <div class="pill" style="background:#2D6A4F;color:#FFFFFF;font-size:15px;padding:6px 16px;">Completed ✓</div>
+      </div>
+      <div class="card" style="padding:26px 24px;">
+        <div style="font-size:42px;margin-bottom:14px;">📝</div>
+        <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:23px;margin-bottom:8px;">Crossword</div>
+        <div style="color:#7A6F5C;font-size:17px;line-height:1.4;margin-bottom:18px;min-height:70px;">Today's culture crossword.</div>
+        <div class="pill" style="background:#EDE9FE;color:#4C1D95;font-size:15px;padding:6px 16px;">New</div>
+      </div></div>
+  </div>
+  <div class="tabbar"><div class="tabitem"><div class="ic">💬</div><div class="lb">Feed</div></div><div class="tabitem"><div class="ic">📖</div><div class="lb">Magazine</div></div><div class="tabitem active"><div class="ic">🎲</div><div class="lb">Games</div></div><div class="tabitem"><div class="ic">🛍️</div><div class="lb">Shop</div></div><div class="tabitem"><div class="ic">📅</div><div class="lb">Events</div></div></div>
+</div></body></html>
