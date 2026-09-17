@@ -26,6 +26,16 @@
  *     logged-in account; only the rendered byline changes. Exposed to the
  *     frontend via a `guestByline` GraphQL field on Post
  *     (moveee-graphql-bridge.php), same isolation pattern as `moveeeMeta`.
+ *
+ * Because this is display-only, the account's own WP identity (first name/
+ * last name/nickname/display name) should never need to change just
+ * because a different guest byline was set on some post — but a shared
+ * Byline Contributor account naturally invites exactly that mistake (edit
+ * "my" profile name to match this week's guest instead of using the
+ * per-post field), which then corrupts the account's identity for every
+ * other post published under it. lock_profile_name_fields() +
+ * annotate_profile_name_fields() below close that off at the source by
+ * disabling those fields on the account's own profile.php.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -53,6 +63,88 @@ class Culture_Guest_Byline {
         add_action( 'init', array( __CLASS__, 'maybe_register_role' ), 6 );
         add_filter( 'map_meta_cap', array( __CLASS__, 'restrict_to_post_type' ), 10, 4 );
         add_action( 'admin_menu', array( __CLASS__, 'trim_admin_menu' ), 999 );
+        add_action( 'personal_options_update', array( __CLASS__, 'lock_profile_name_fields' ), 1 );
+        add_action( 'admin_head-profile.php', array( __CLASS__, 'annotate_profile_name_fields' ) );
+    }
+
+    /**
+     * Whether the currently logged-in user holds this role without also
+     * being an administrator — the "self-service byline account, not a
+     * real staff account" case both lock_profile_name_fields() and
+     * annotate_profile_name_fields() gate on.
+     */
+    private static function current_user_is_contributor_only(): bool {
+        $user = wp_get_current_user();
+        if ( ! $user || ! in_array( self::ROLE, (array) $user->roles, true ) ) {
+            return false;
+        }
+        return ! $user->has_cap( 'manage_options' );
+    }
+
+    /**
+     * Guest Byline (see the class docblock) is a purely per-post display
+     * override — post_author, and the account's own first/last/nickname/
+     * display name, are never supposed to change. In practice, a Byline
+     * Contributor account is often shared/managed on behalf of whichever
+     * guest writer is being published that week, and without this guard
+     * the natural (but wrong) move is to edit *the account's own*
+     * profile.php "Name" fields to match instead of using the per-post
+     * field — which then corrupts that shared account's identity for
+     * every other post ever published under it, and is exactly what the
+     * WP Admin Users list "Name" column then displays for the account.
+     * Hooked on `personal_options_update` (fires only when editing one's
+     * OWN profile, before wp_update_user() runs) at priority 1, so these
+     * keys are gone from $_POST before core's own save handler reads
+     * them — deliberately NOT hooked on `edit_user_profile_update` (an
+     * admin editing someone else's profile), so an admin can still fix an
+     * already-corrupted account's name from user-edit.php.
+     */
+    public static function lock_profile_name_fields() {
+        if ( ! self::current_user_is_contributor_only() ) {
+            return;
+        }
+        foreach ( array( 'first_name', 'last_name', 'nickname', 'display_name' ) as $key ) {
+            unset( $_POST[ $key ] );
+        }
+    }
+
+    /**
+     * Visually locks the same fields on the account's own profile.php (so
+     * the silent no-op above doesn't look like a bug) and explains why,
+     * pointing back at the real, correct mechanism.
+     */
+    public static function annotate_profile_name_fields() {
+        if ( ! self::current_user_is_contributor_only() ) {
+            return;
+        }
+        ?>
+        <style>
+            #first_name, #last_name, #nickname { background: #f0f0f1; }
+            #display_name { background: #f0f0f1; }
+        </style>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            ['first_name', 'last_name', 'nickname'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.setAttribute('readonly', 'readonly');
+            });
+            var dn = document.getElementById('display_name');
+            if (dn) dn.setAttribute('disabled', 'disabled');
+
+            var anchor = document.getElementById('first_name');
+            var row = anchor ? anchor.closest('tr') : null;
+            var cell = row ? row.querySelector('td') : null;
+            if (cell) {
+                var note = document.createElement('p');
+                note.className = 'description';
+                note.style.color = '#a00';
+                note.style.maxWidth = '480px';
+                note.textContent = "This account's name is fixed and isn't shown publicly. To attribute an article to a specific guest writer, use the \"Guest Byline\" field on that post instead.";
+                cell.appendChild(note);
+            }
+        });
+        </script>
+        <?php
     }
 
     /**
