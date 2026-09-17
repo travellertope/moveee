@@ -1205,56 +1205,43 @@ function mergeCommonsPosts(...lists: any[][]): any[] {
 }
 
 /**
- * Batch-resolves guestByline for a list of Commons pieces and mutates each
- * post object in place (`post.guestByline = {...}`) so every list-rendering
+ * Resolves guestByline for a list of Commons pieces and mutates each post
+ * object in place (`post.guestByline = {...}`) so every list-rendering
  * caller (CommonsPieceCard, the homepage hero) can just check
  * `piece.guestByline?.name` before falling back to the real author — the
  * same fallback /commons/[slug] and /magazine/[slug] already use for a
  * single piece.
  *
- * GET_STORY_GUEST_BYLINE only ever looks up one post at a time (by slug),
- * and per this file's own bridge-plugin-isolation rule, guestByline can
- * never be added to STORY_FIELDS_FRAGMENT itself (that's what caused the
- * September 2026 sitewide outage documented in CLAUDE.md — an unrecognized
- * field on a shared fragment fails every query using it, not just the one
- * needing the field). To still resolve it for a whole list in one request
- * rather than N, this builds one GraphQL request with N *aliased* `post(id:
- * slug, idType: SLUG)` lookups — the same single-post field the isolated
- * query already uses, just asked for multiple times under different
- * aliases, so a bridge-plugin outage still only costs this one best-effort
- * lookup, never the underlying story fetch.
- *
- * The extra `_slugs` entry in `variables` is never referenced by the query
- * itself — it exists purely so getWPData's KV cache key (derived from the
- * query name + variables, not the dynamically-built query body) varies
- * per distinct slug set, since every call site otherwise shares the same
- * "GetGuestBylinesBatch" operation name.
+ * Deliberately N parallel calls to the exact same GET_STORY_GUEST_BYLINE
+ * query the single-piece pages already use, rather than one combined
+ * request with N aliased `post(...)` lookups — an earlier version of this
+ * function tried the aliased-batch approach (one request instead of N) and
+ * it broke in production: every piece in a batch ended up showing the
+ * *same* guest byline (from whichever one post actually had one set),
+ * something isolated single-post queries never exhibited. Root cause
+ * wasn't pinned down (the PHP resolver itself correctly scopes by
+ * `$post->databaseId`, not global state, so it isn't an obvious
+ * WordPress-side bug) — rather than keep chasing an unverified live-only
+ * failure mode, this reverts to N copies of the one call already proven
+ * correct. Costs more requests (bounded by list size — homepage ~24,
+ * archive page 20, a section archive ~24), each independently KV-cached,
+ * so a warm cache still avoids re-fetching guestByline on every load.
  */
 async function attachGuestBylines(posts: any[]): Promise<any[]> {
   const withSlugs = posts.filter((p) => p?.slug);
   if (!withSlugs.length) return posts;
 
-  const query = `query GetGuestBylinesBatch {
-    ${withSlugs
-      .map((p, i) => `p${i}: post(id: ${JSON.stringify(p.slug)}, idType: SLUG) { guestByline { name bio avatarUrl } }`)
-      .join("\n")}
-  }`;
-
-  try {
-    const data = await getWPData(
-      query,
-      { _slugs: withSlugs.map((p) => p.slug) },
-      { revalidate: 600 }
-    );
-    if (data) {
-      withSlugs.forEach((post, i) => {
-        const byline = data[`p${i}`]?.guestByline;
+  await Promise.allSettled(
+    withSlugs.map(async (post) => {
+      try {
+        const data = await getWPData(GET_STORY_GUEST_BYLINE, { slug: post.slug }, { revalidate: 600 });
+        const byline = data?.post?.guestByline;
         if (byline?.name) post.guestByline = byline;
-      });
-    }
-  } catch {
-    // best-effort — pieces just fall back to their real author name
-  }
+      } catch {
+        // best-effort — this piece just falls back to its real author name
+      }
+    })
+  );
 
   return posts;
 }
