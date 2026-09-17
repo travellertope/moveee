@@ -178,6 +178,15 @@
 }
 .comm-view-all:hover { text-decoration: underline; }
 
+/* ── WRITER ARCHIVE PAGINATION ── */
+.comm-archive-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 40px 0 60px; padding-top: 20px; border-top: 1px solid var(--comm-rule-strong);
+  font-family: var(--font-comm-mono), "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--comm-green);
+}
+.comm-archive-pagination a:hover { text-decoration: underline; }
+
 .comm-section-head-plain h1 { font-family: var(--font-comm-display), "Newsreader", Georgia, serif; font-weight: 600; font-size: clamp(30px, 4.4vw, 42px); color: var(--comm-ink); }
 .comm-section-head-plain .comm-sub { max-width: 56ch; margin-top: 12px; font-size: 15px; line-height: 1.6; color: var(--comm-mute); }
 .comm-section-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }

@@ -1039,6 +1039,7 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
 // unrelated piece Basit writes doesn't get pulled out of the magazine.
 export const COMMONS_CATEGORY_SLUG = "commons";
 export const COMMONS_AUTHOR_ID = 15; // Basit Jamiu ("basit")
+export const COMMONS_AUTHOR_NAME = "Basit Jamiu"; // display fallback only — the real name lives on the WP account itself
 
 type CommonsPost =
   | {
@@ -1076,40 +1077,83 @@ export function commonsPieceHref(post: CommonsPost & { slug?: string }): string 
  * posts(where:) has no confirmed authorIn/author filter in this schema
  * (same reasoning as getStoriesByCountrySlugs below, applied to author
  * instead of country), so this goes straight to WP core REST, which
- * natively supports `?author=<id>` with zero plugin changes. Returns []
- * on any failure — best-effort, same as every other REST fallback here.
+ * natively supports `?author=<id>` with zero plugin changes.
+ *
+ * Paginates via WP REST's own `page` param, bounded at MAX_PAGES (same
+ * "bounded pagination loop" convention already used for vendor analytics
+ * elsewhere in this codebase) — a plain `per_page=<first>` single request
+ * silently caps out at 100 (WP's own hard max) or at whatever `first` is,
+ * so an author with more posts than that never had the rest fetched at
+ * all, at any point, regardless of how they're displayed downstream. With
+ * `first` left at its default 24, this still resolves in exactly one
+ * request (unchanged behaviour for existing callers); a caller that wants
+ * the author's full history should pass a much larger `first` (see
+ * getCommonsAuthorArchive below). Returns whatever was collected before
+ * any failure — best-effort, same as every other REST fallback here.
  */
 export async function getStoriesByAuthorId(
   authorId: number,
   first = 24,
   options: any = {}
 ): Promise<any[]> {
+  const revalidate = options.revalidate !== undefined ? options.revalidate : 600;
+  const perPage = Math.min(100, first);
+  const maxPages = Math.min(5, Math.ceil(first / perPage));
+  const all: any[] = [];
+
   try {
-    const { signal, clear } = wpSignal();
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/posts?author=${authorId}&per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 600 },
-    });
-    clear();
-    if (!res.ok) return [];
-    const json = await res.json();
-    if (!Array.isArray(json)) return [];
-    return json.map(mapRestStoryToFrontendShape);
+    for (let page = 1; page <= maxPages; page++) {
+      const { signal, clear } = wpSignal();
+      const url = `${WP_BASE_URL}/wp-json/wp/v2/posts?author=${authorId}&per_page=${perPage}&page=${page}&status=publish&_embed=1&orderby=date&order=desc`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        signal,
+        next: { revalidate },
+      });
+      clear();
+      if (!res.ok) break; // includes WP's 400 once `page` runs past the last one
+      const json = await res.json();
+      if (!Array.isArray(json) || json.length === 0) break;
+      all.push(...json.map(mapRestStoryToFrontendShape));
+      if (json.length < perPage || all.length >= first) break;
+    }
   } catch {
-    return [];
+    // fall through with whatever was collected before the failure
   }
+
+  return all.slice(0, first);
+}
+
+/** Dedupes several post lists by databaseId (first occurrence wins) and sorts newest-first. */
+function mergeCommonsPosts(...lists: any[][]): any[] {
+  const merged = new Map<string, any>();
+  for (const list of lists) {
+    for (const post of list) {
+      const key = String(post?.databaseId ?? post?.id ?? "");
+      if (key && !merged.has(key)) merged.set(key, post);
+    }
+  }
+  return Array.from(merged.values()).sort(
+    (a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime()
+  );
 }
 
 /**
  * Fetches the whole Commons feed: the "commons" category (GraphQL, same
  * categoryName where-arg every other section already uses) unioned with
- * every post by Basit Jamiu (REST, see getStoriesByAuthorId above).
+ * Basit Jamiu's most recent posts (REST, see getStoriesByAuthorId above).
  * Deduped by databaseId (category-sourced copy wins on a collision, since
  * it's the richer GraphQL shape), sorted newest first. Never throws — a
  * failure on either half just means that half contributes nothing.
+ *
+ * Deliberately display-capped, not exhaustive — this is what feeds the
+ * homepage's small "latest" rail, so `first` (default 24, further sliced
+ * down to 7 actually rendered by app/commons/page.tsx) is meant to be
+ * small. For "every Commons piece Basit has ever published," including
+ * ones from months ago that would never survive this cap, use
+ * getCommonsAuthorArchive() instead — that one's the exhaustive,
+ * paginated view.
  */
 export async function getCommonsPieces(first = 24): Promise<any[]> {
   const [categoryResult, authorResult] = await Promise.allSettled([
@@ -1121,15 +1165,39 @@ export async function getCommonsPieces(first = 24): Promise<any[]> {
     categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
   const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
 
-  const merged = new Map<string, any>();
-  for (const post of [...categoryPosts, ...authorPosts]) {
-    const key = String(post?.databaseId ?? post?.id ?? "");
-    if (key && !merged.has(key)) merged.set(key, post);
-  }
+  return mergeCommonsPosts(categoryPosts, authorPosts).slice(0, first);
+}
 
-  return Array.from(merged.values())
-    .sort((a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime())
-    .slice(0, first);
+/**
+ * The exhaustive, paginated counterpart to getCommonsPieces() above — every
+ * Commons-qualifying piece (category ∪ author), not just the homepage's
+ * display-capped rail. Fetches Basit's full post history (bounded to 500,
+ * via getStoriesByAuthorId's own pagination loop) and a generous single-
+ * request pool of category-tagged pieces (100 — editorial category
+ * assignment is deliberate/curated, so a much smaller volume than "every
+ * post one account has ever written" is expected in practice), merges and
+ * sorts them once, then paginates that already-in-memory list — no WP-side
+ * cursor pagination needed for the merged view itself, since both source
+ * fetches are already bounded and complete for any realistic volume.
+ */
+export async function getCommonsAuthorArchive(
+  page = 1,
+  perPage = 20
+): Promise<{ pieces: any[]; total: number; hasMore: boolean }> {
+  const [categoryResult, authorResult] = await Promise.allSettled([
+    getWPData(GET_STORIES, { first: 100, categoryName: COMMONS_CATEGORY_SLUG }),
+    getStoriesByAuthorId(COMMONS_AUTHOR_ID, 500),
+  ]);
+
+  const categoryPosts: any[] =
+    categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
+  const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
+
+  const all = mergeCommonsPosts(categoryPosts, authorPosts);
+  const start = Math.max(0, (page - 1) * perPage);
+  const pieces = all.slice(start, start + perPage);
+
+  return { pieces, total: all.length, hasMore: start + perPage < all.length };
 }
 
 export interface CommonsSection {
