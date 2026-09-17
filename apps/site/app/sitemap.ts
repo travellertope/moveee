@@ -8,7 +8,7 @@ import {
   GET_FILTERS,
   isLiteraryPost,
   LITERARY_GENRES,
-  isCommonsCategoryPost,
+  isCommonsPost,
   COMMONS_SECTIONS,
 } from "@/lib/wp";
 import { FEATURE_PAGES } from "@/lib/features";
@@ -81,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // point crawlers at a URL that immediately 308s, and skipping them from
   // literaryUrls would leave them with no sitemap entry at all.
   const articleUrls: MetadataRoute.Sitemap = articles
-    .filter((a) => !isLiteraryPost(a as any) && !isCommonsCategoryPost(a as any))
+    .filter((a) => !isLiteraryPost(a as any) && !isCommonsPost(a as any))
     .map((a) => ({
       url: `${BASE}/magazine/${a.slug}`,
       lastModified: new Date((a as any).modified || (a as any).date || new Date()),
@@ -99,12 +99,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   // Same "same `post` type, redirects off /magazine/[slug]" reasoning as
-  // literaryPieceUrls above — only category-based Commons pieces (see
-  // isCommonsCategoryPost's doc comment in wp.ts) have a canonical
-  // /commons/{slug} URL; author-only pieces (Basit Jamiu bylines with no
-  // "commons" category) keep their /magazine/{slug} entry above.
+  // literaryPieceUrls above — every piece that qualifies for the Commons
+  // feed at all (category OR author, see isCommonsPost's doc comment in
+  // wp.ts) has a canonical /commons/{slug} URL now, not just category
+  // members.
   const commonsPieceUrls: MetadataRoute.Sitemap = articles
-    .filter((a) => isCommonsCategoryPost(a as any))
+    .filter((a) => isCommonsPost(a as any))
     .map((a) => ({
       url: `${BASE}/commons/${a.slug}`,
       lastModified: new Date((a as any).modified || (a as any).date || new Date()),
