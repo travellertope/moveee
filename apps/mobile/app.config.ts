@@ -108,6 +108,11 @@ export default {
       "@react-native-community/datetimepicker",
       "expo-asset",
       "expo-font",
+      // Sets the com.apple.developer.applesignin entitlement automatically —
+      // required for Apple Store Guideline 4.8 compliance (any app offering
+      // a third-party social login, here Google, must also offer Sign in
+      // with Apple as an equivalent option). iOS-only; no-op on Android.
+      "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
         { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },

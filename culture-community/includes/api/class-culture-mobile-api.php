@@ -52,6 +52,16 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/login-apple', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_apple' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'identity_token' => array( 'required' => true, 'type' => 'string' ),
+                'full_name'      => array( 'required' => false, 'type' => 'string' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/logout', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_logout' ),
@@ -1197,6 +1207,25 @@ class Culture_Mobile_API {
         }
 
         $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+
+        $token = self::issue_token( $user->ID );
+
+        return rest_ensure_response( array(
+            'token' => $token,
+            'user'  => self::full_profile( $user ),
+        ) );
+    }
+
+    public static function handle_login_apple( $request ) {
+        $claims = Culture_Apple_Auth::verify_id_token( $request->get_param( 'identity_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Apple_Auth::find_or_create_user( $claims, (string) $request->get_param( 'full_name' ) );
         if ( is_wp_error( $user ) ) {
             return $user;
         }

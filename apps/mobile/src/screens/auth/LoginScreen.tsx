@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from "../../config/google";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 GoogleSignin.configure({
   iosClientId: GOOGLE_IOS_CLIENT_ID,
@@ -174,8 +175,15 @@ export default function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
+  }, []);
 
   async function handleGoogleSignIn() {
     if (googleLoading) return;
@@ -201,6 +209,43 @@ export default function LoginScreen() {
       }
     } finally {
       setGoogleLoading(false);
+    }
+  }
+
+  async function handleAppleSignIn() {
+    if (appleLoading) return;
+    setLocalError("");
+    setAppleLoading(true);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        setAppleLoading(false);
+        return;
+      }
+      // Apple only ever returns fullName on the very first authorization —
+      // every later sign-in gets null here, which the backend treats as
+      // "keep whatever display name the account already has."
+      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const result = await api.post<{ token: string; user: User }>(
+        `${MOBILE_API}/login-apple`,
+        { identity_token: credential.identityToken, full_name: fullName },
+        false
+      );
+      await loginWithToken(result.token, result.user);
+    } catch (e: any) {
+      if (e?.code !== "ERR_REQUEST_CANCELED") {
+        setLocalError(e?.message ?? "Apple sign-in failed. Please try again.");
+      }
+    } finally {
+      setAppleLoading(false);
     }
   }
 
@@ -410,6 +455,24 @@ export default function LoginScreen() {
               </View>
             )}
           </Pressable>
+
+          {/* Apple — App Store Guideline 4.8: required whenever a third-party
+              social login (Google, above) is offered. iOS only; Apple's own
+              button component guarantees HIG/visual compliance. */}
+          {Platform.OS === "ios" && appleAvailable && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={radius.lg}
+              style={{ width: "100%", height: 52, marginTop: space[3] }}
+              onPress={handleAppleSignIn}
+            />
+          )}
+          {appleLoading && (
+            <View style={{ alignItems: "center", marginTop: space[2] }}>
+              <ActivityIndicator color={colors.ink} size="small" />
+            </View>
+          )}
 
           {/* Footer */}
           <View style={styles.footer}>
