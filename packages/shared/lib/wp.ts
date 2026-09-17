@@ -772,11 +772,6 @@ const STORY_FIELDS_FRAGMENT = `
       }
     }
     asToldTo
-    guestByline {
-      name
-      bio
-      avatarUrl
-    }
     seoTitle
     seoDescription
     author {
@@ -855,6 +850,26 @@ export const GET_STORY_BY_SLUG = `
     }
   }
   ${STORY_FIELDS_FRAGMENT}
+`;
+
+// guestByline is resolved by moveee-graphql-bridge.php (a manually-deployed
+// bridge plugin, see CLAUDE.md's "Plugin DB table auto-upgrade"/bridge-plugin
+// docs) — an environment where that plugin isn't deployed yet has no such
+// field in its GraphQL schema, and an unrecognized field fails the *entire*
+// query, not just that field. Keeping it out of STORY_FIELDS_FRAGMENT (used
+// by every story listing, including the homepage) means a missing bridge
+// field can only ever break this one isolated, best-effort lookup — same
+// isolation rationale as GET_PRODUCT_EXTRA below. Caller must swallow errors.
+export const GET_STORY_GUEST_BYLINE = `
+  query GetStoryGuestByline($slug: ID!) {
+    post(id: $slug, idType: SLUG) {
+      guestByline {
+        name
+        bio
+        avatarUrl
+      }
+    }
+  }
 `;
 
 export const GET_STORIES = `

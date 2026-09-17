@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
 import { draftMode, cookies, headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -118,6 +118,19 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   if (!post) {
     notFound();
+  }
+
+  // Isolated, best-effort fetch — see GET_STORY_GUEST_BYLINE's own comment in
+  // wp.ts for why this can't live inside the main GET_STORY_BY_SLUG query.
+  // The preview resolver already includes guestByline directly, so only
+  // fetch it here for a normal (non-preview) render.
+  if (!isPreview) {
+    try {
+      const bylineData = await getWPData(GET_STORY_GUEST_BYLINE, { slug: resolvedParams.slug });
+      if (bylineData?.post?.guestByline) {
+        post.guestByline = bylineData.post.guestByline;
+      }
+    } catch {}
   }
 
   // Literary pieces (Poetry/Fiction/Nonfiction/Translation) are still the
