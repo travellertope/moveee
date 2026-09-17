@@ -1219,6 +1219,127 @@ unillustrated flat gradient with cryptic text. Fixed:
   every other pass in this file. Verified via brace/paren-balance checks on
   `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
 
+## The Moveee Commons (`/commons`, added September 2026)
+
+A public-affairs/research vertical at `apps/site/app/commons/*` — opinions, reports, research
+and news on politics, environment, academia and the systems that govern us. Built the same
+way The Moveee Literary was: mockup first (an Artifact design canvas, approved before any code
+was written — a "public journal" register, deliberately distinct from Literary's Granta-esque
+restraint and Lifestyle's retail energy), then wired to real content. Same "reuse the existing
+`post` type, no new CPT" pattern as Literary — see that section above for the underlying
+mechanics this one mirrors (dual-purpose `[slug]` route, standalone masthead/footer replacing
+the sitewide Header/Footer, its own font/palette system).
+
+**Design brief, for anyone touching this vertical's copy or layout again**: text-first by
+default, never structurally dependent on a featured image — some of the publications this
+section covers simply don't supply one. The hero and every card grid render a plain
+kicker/title/dek/byline block; a photo is an optional upgrade layered on top when present,
+never a placeholder standing in for a missing one (`CommonsPieceCard.tsx` only renders an
+`<img>` when `featuredImage.node.sourceUrl` actually exists — no gradient fallback, unlike
+`LiteraryPieceCard.tsx`'s `.piece-img--placeholder`). New institutional palette — deep green
+(`--comm-green: #2f4b3c`) + brass (`--comm-brass: #a6813f`) — and its own type system
+(Newsreader serif for reading type, IBM Plex Sans for UI, IBM Plex Mono for kickers/bylines/
+data labels), none of it shared with Literary's oxblood/Bodoni-Cormorant-EB-Garamond system or
+Lifestyle's ochre/Bricolage Grotesque.
+
+**Two independent, unioned membership rules — this is the core of what was actually asked to
+be wired up**, both live in `packages/shared/lib/wp.ts`:
+1. **Category** — every post carrying the `"commons"` category (`COMMONS_CATEGORY_SLUG` —
+   assumed slug, WordPress's default auto-slug for a "Commons" category title; fix the
+   constant if the real slug in WP Admin ends up different). Checked via
+   `isCommonsCategoryPost(post)`.
+2. **Author** — every post whose real `post_author` is Basit Jamiu, WP `user_id` 15, username
+   `basit` (`COMMONS_AUTHOR_ID = 15`), regardless of category — **including a piece where the
+   page shows a Guest Byline attributing it to someone else.** Guest Byline is a purely
+   display-time override (see "Byline Contributor role + Guest Byline field" above);
+   `post_author` never changes, so checking the real author's `databaseId` via
+   `isCommonsByAuthor(post)` already covers every guest-bylined piece Basit submits, with zero
+   extra plumbing needed for that case specifically.
+
+`isCommonsPost(post)` is the OR of both — "does this piece belong in the Commons feed at all."
+`getCommonsPieces(first)` fetches the actual union: the category half via GraphQL
+(`GET_STORIES` with `categoryName: "commons"`, same where-arg every other section already
+uses), the author half via a new REST helper (`getStoriesByAuthorId()` — WPGraphQL's
+`posts(where:)` has no confirmed `authorIn`/`author` filter in this schema, so this hits WP
+core REST's native `?author=<id>` instead, same reasoning `getStoriesByCountrySlugs()` already
+established for country filtering). Deduped by `databaseId` (category-sourced copy wins on a
+collision, since it's the richer GraphQL shape), sorted newest-first. Never throws — either
+half failing just means that half contributes nothing (`Promise.allSettled`).
+
+**Only category membership gets a canonical `/commons/{slug}` URL — a deliberate, narrower
+rule than the feed union above.** `commonsPieceHref(post)` returns `/commons/{slug}` for a
+category member, `/magazine/{slug}` otherwise. This means a piece that qualifies for the
+Commons *feed* only via Basit's byline (no `"commons"` category) still surfaces on the Commons
+homepage/section shelves, it just links back out to its ordinary `/magazine/{slug}` home
+rather than moving under Commons chrome — so an unrelated piece Basit happens to write doesn't
+get pulled out of the regular magazine. `/magazine/[slug]/page.tsx` redirects on the same
+narrower rule (`isCommonsCategoryPost`, not the full union) right after its existing Literary
+redirect, mirroring that redirect's "exactly one canonical URL per piece" reasoning exactly.
+`sitemap.ts` follows the identical split: `articleUrls` excludes category-based Commons pieces
+(they get their own `commonsPieceUrls` entries at `/commons/{slug}`), but an author-only piece
+stays counted in `articleUrls` at its real `/magazine/{slug}` URL.
+
+**Sections are a plain WP tag overlay on the category** — `COMMONS_SECTIONS` (Politics,
+Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`academia`/
+`reports`/`opinion`) is the exact same "optional overlay, not a requirement" relationship
+`LITERARY_GENRES` has to `LITERARY_CATEGORY_SLUG` — a Commons piece with no section tag still
+shows in the main `/commons` feed, it just won't appear on any single section's page until
+tagged. `app/commons/[slug]/page.tsx` is the same dual-purpose route Literary's `[slug]` uses
+(a `COMMONS_SECTIONS.slug` match renders a section archive; anything else falls through to a
+real post lookup, gated on `isCommonsCategoryPost`) — Next.js doesn't allow two sibling routes
+with different dynamic-segment names at the same level, same constraint documented on
+Literary's own `[slug]` route. Section archives and a piece's own "More in {section}" grid
+only ever draw from `getCommonsCategoryPieces()` (category-scoped, optionally narrowed by
+section tag) — never the author-only half of the feed, since an author-only piece has no
+canonical Commons page to be tagged into in the first place.
+
+**Deliberately no Pro-gating, no free-read metering** — unlike Literary/Magazine's magic-code
+gate system, Commons content is fully public in this pass; nothing in `[slug]/page.tsx` calls
+`cookies()`/`headers()`/`getServerSession()`, so it needed no `dynamic = "force-dynamic"`
+override either (that override exists on Literary/Magazine specifically to sidestep the
+`generateStaticParams` + Dynamic-API combination throwing `DYNAMIC_SERVER_USAGE` — Commons has
+no Dynamic API call to trigger it). If Pro-gating is ever wanted here, extend `[slug]/page.tsx`
+the same way `/magazine/[slug]` did, reusing `Culture_Literary_Access`'s existing magic-code
+mechanism (`context: "commons"` would need its own entry in
+`NEWSLETTER_LIST_BY_CONTEXT` server-side) rather than building a third parallel gate system.
+
+**No real logo asset yet** — `CommonsLogo.tsx` is a CSS-drawn text lockup ("The" italic +
+"moveee." bold + "Commons" tracked mono caps in brass), the same "first pass before a real
+logo is supplied" precedent `LiteraryLogo.tsx` itself used before its real PNG existed. Swap
+for an `<img>` once a real asset is approved, following that component's own history for the
+pattern.
+
+**"Data & Reports" band deliberately has no fabricated chart** — the original Artifact mockup
+showed an illustrative CSS bar chart explicitly labeled as such; the real homepage
+(`app/commons/page.tsx`) replaces it with a real teaser pulled from
+`getCommonsCategoryPieces("reports", 3)` (title + byline of actual Reports-tagged pieces)
+rather than rendering invented numbers as if they were real data — consistent with this
+codebase's standing "never fabricate" rule (see e.g. the Discover facet-count precedent
+elsewhere in this file). `.comm-bar-chart`/`.comm-bar` CSS is kept in `commons.css`, unused,
+per this file's usual "kept in case needed again" convention, for if a real reporting dataset
+is ever wired up to visualize.
+
+**Discoverability**: linked from the Site A header's menu overlay (`Header.tsx`, between "The
+Moveee Literary" and "The Moveee Lifestyle"), the shared `Footer.tsx`'s Explore column, and
+`CommonsFooter.tsx`'s own Sections/The Commons columns.
+
+**Not built in this pass, deliberately out of scope**: any submissions/pitch intake flow for
+non-staff contributors (Literary's own submissions system was a separate, later addition —
+revisit the same way if Commons ever needs one), any Pro/Patron gating (see above), and
+cleaning up the assumed `"commons"` category slug if WP Admin's real slug differs — check that
+first if the feed ever comes back empty despite content existing in WP Admin under a category
+that reads "Commons".
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file, and no `node_modules` installed this session so `tsc --noEmit`
+couldn't run either. Verified via brace/paren-balance checks on every new/edited file
+(`commons.css`, `commons/page.tsx`, `commons/[slug]/page.tsx`, `commons/layout.tsx`,
+`CommonsMasthead.tsx`, `CommonsFooter.tsx`, `CommonsLogo.tsx`, `CommonsPieceCard.tsx`,
+`magazine/[slug]/page.tsx`, `sitemap.ts`, `wp.ts`) and a repo-wide grep confirming no other
+file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommons*` export.
+Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
+category slug in WP Admin, in a real environment before considering this fully closed.
+
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
 `/magazine/[slug]` articles used to gate member-only/patron-only content with `ArticleContentGate`/

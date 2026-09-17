@@ -11,6 +11,7 @@ import "./editorial.css";
 import "./not-found.css";
 import "./legal.css";
 import "./literary.css";
+import "./commons.css";
 import Header from "@/components/Header";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import CookieConsent from "@/components/CookieConsent";

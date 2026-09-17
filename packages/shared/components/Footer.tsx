@@ -82,6 +82,7 @@ const Footer = () => {
             <ul>
               <li><Link href="/magazine">Magazine</Link></li>
               <li><Link href="/literary">The Moveee Literary</Link></li>
+              <li><Link href="/commons">The Moveee Commons</Link></li>
               <li><Link href="/newsletter">Newsletter</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
               <li><Link href="/visuals">Visuals</Link></li>

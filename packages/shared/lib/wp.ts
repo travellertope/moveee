@@ -1012,6 +1012,207 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
   }
 }
 
+// ── The Moveee Commons ─────────────────────────────────────────────────────
+// A public-affairs/research vertical at apps/site/app/commons/* — opinions,
+// reports, research and news on politics/environment/academia. Same "reuse
+// the existing `post` type, no new CPT" pattern as The Moveee Literary
+// above. A piece belongs to the vertical's *feed* under either of two
+// independent, unioned rules:
+//   1. It carries the "commons" category (display name TBD in WP Admin —
+//      assumed slug "commons", WordPress's default auto-slug for a
+//      "Commons" category title; fix COMMONS_CATEGORY_SLUG if the real
+//      slug ends up different).
+//   2. It's *authored* by Basit Jamiu (WP user_id 15, username "basit",
+//      the "Byline Contributor" account — see CLAUDE.md's "Byline
+//      Contributor role + Guest Byline field") — regardless of category,
+//      and regardless of whether the piece carries a Guest Byline
+//      attributing it to someone else on the page. Guest Byline is
+//      purely a display-time override; post_author never changes (same
+//      doc), so filtering on the real author databaseId already covers
+//      every guest-bylined piece Basit submits with zero extra work.
+// Only rule 1 (category) gets a canonical /commons/{slug} URL and a
+// redirect off /magazine/{slug} — mirroring isLiteraryPost's category-only
+// semantics exactly. A piece that only qualifies via rule 2 (Basit's
+// byline, no "commons" category) still surfaces in the Commons homepage
+// feed, it just links back out to its normal /magazine/{slug} home rather
+// than moving under Commons chrome — deliberately conservative, so an
+// unrelated piece Basit writes doesn't get pulled out of the magazine.
+export const COMMONS_CATEGORY_SLUG = "commons";
+export const COMMONS_AUTHOR_ID = 15; // Basit Jamiu ("basit")
+
+type CommonsPost =
+  | {
+      categories?: { nodes?: { slug: string }[] | null } | null;
+      author?: { node?: { databaseId?: number } | null } | null;
+    }
+  | null
+  | undefined;
+
+/** Category-only membership — this is what gates the canonical /commons/{slug} route. */
+export function isCommonsCategoryPost(post: CommonsPost): boolean {
+  return (post?.categories?.nodes || []).some((c) => c.slug === COMMONS_CATEGORY_SLUG);
+}
+
+/** Author-only membership — a Basit Jamiu byline, independent of category. */
+export function isCommonsByAuthor(post: CommonsPost): boolean {
+  return post?.author?.node?.databaseId === COMMONS_AUTHOR_ID;
+}
+
+/** Union of both rules — "does this piece belong in the Commons feed at all." */
+export function isCommonsPost(post: CommonsPost): boolean {
+  return isCommonsCategoryPost(post) || isCommonsByAuthor(post);
+}
+
+/**
+ * Resolves a piece's canonical link — /commons/{slug} for category members,
+ * /magazine/{slug} for author-only members (see the module comment above).
+ */
+export function commonsPieceHref(post: CommonsPost & { slug?: string }): string {
+  return isCommonsCategoryPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
+}
+
+/**
+ * REST fallback for "every post by this WP author id" — WPGraphQL's
+ * posts(where:) has no confirmed authorIn/author filter in this schema
+ * (same reasoning as getStoriesByCountrySlugs below, applied to author
+ * instead of country), so this goes straight to WP core REST, which
+ * natively supports `?author=<id>` with zero plugin changes. Returns []
+ * on any failure — best-effort, same as every other REST fallback here.
+ */
+export async function getStoriesByAuthorId(
+  authorId: number,
+  first = 24,
+  options: any = {}
+): Promise<any[]> {
+  try {
+    const { signal, clear } = wpSignal();
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/posts?author=${authorId}&per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 600 },
+    });
+    clear();
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestStoryToFrontendShape);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches the whole Commons feed: the "commons" category (GraphQL, same
+ * categoryName where-arg every other section already uses) unioned with
+ * every post by Basit Jamiu (REST, see getStoriesByAuthorId above).
+ * Deduped by databaseId (category-sourced copy wins on a collision, since
+ * it's the richer GraphQL shape), sorted newest first. Never throws — a
+ * failure on either half just means that half contributes nothing.
+ */
+export async function getCommonsPieces(first = 24): Promise<any[]> {
+  const [categoryResult, authorResult] = await Promise.allSettled([
+    getWPData(GET_STORIES, { first, categoryName: COMMONS_CATEGORY_SLUG }),
+    getStoriesByAuthorId(COMMONS_AUTHOR_ID, first),
+  ]);
+
+  const categoryPosts: any[] =
+    categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
+  const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
+
+  const merged = new Map<string, any>();
+  for (const post of [...categoryPosts, ...authorPosts]) {
+    const key = String(post?.databaseId ?? post?.id ?? "");
+    if (key && !merged.has(key)) merged.set(key, post);
+  }
+
+  return Array.from(merged.values())
+    .sort((a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime())
+    .slice(0, first);
+}
+
+export interface CommonsSection {
+  slug: string;
+  tagSlug: string;
+  label: string;
+  tagline: string;
+}
+
+// A plain WP tag overlay on the "commons" category — same "optional
+// overlay, not a requirement" relationship LITERARY_GENRES has to
+// LITERARY_CATEGORY_SLUG above. A Commons piece with no section tag still
+// appears in the main /commons feed; it just won't show up on any single
+// section's page until someone tags it. Order matches the "Sections" strip
+// on the approved homepage mockup. Section pages only ever draw from
+// category-based Commons pieces (see commonsPieceHref above) — an
+// author-only piece has no canonical /commons page to be tagged into.
+export const COMMONS_SECTIONS: CommonsSection[] = [
+  {
+    slug: "politics",
+    tagSlug: "politics",
+    label: "Politics",
+    tagline: "Power, policy, and the people who wield it.",
+  },
+  {
+    slug: "environment",
+    tagSlug: "environment",
+    label: "Environment",
+    tagline: "Climate, land, and the systems that shape them.",
+  },
+  {
+    slug: "academia",
+    tagSlug: "academia",
+    label: "Academia",
+    tagline: "Research, scholarship, and the debates inside it.",
+  },
+  {
+    slug: "reports",
+    tagSlug: "reports",
+    label: "Reports",
+    tagline: "Original data and document-backed investigations.",
+  },
+  {
+    slug: "opinion",
+    tagSlug: "opinion",
+    label: "Opinion",
+    tagline: "Argument, analysis, and a stated point of view.",
+  },
+];
+
+export function getCommonsSection(slug: string): CommonsSection | undefined {
+  return COMMONS_SECTIONS.find((s) => s.slug === slug.toLowerCase());
+}
+
+export function commonsSectionOfPost(
+  post: { tags?: { nodes?: { slug: string }[] | null } | null } | null | undefined
+): CommonsSection | undefined {
+  const tagSlugs = new Set((post?.tags?.nodes || []).map((t) => t.slug));
+  return COMMONS_SECTIONS.find((s) => tagSlugs.has(s.tagSlug));
+}
+
+/**
+ * Category-scoped Commons pieces (omit tagSlug for the whole category, or
+ * pass one of COMMONS_SECTIONS[].tagSlug to narrow to one section) — the
+ * pool used by /commons/[slug]'s section-archive branch and the piece
+ * page's own "More in {section}" grid. Deliberately doesn't include the
+ * author-only half of getCommonsPieces() — see that function's doc comment
+ * for why. Degrades to [] on any fetch failure, same as getLiteraryPieces.
+ */
+export async function getCommonsCategoryPieces(tagSlug?: string, first = 24): Promise<any[]> {
+  try {
+    const data = await getWPData(GET_STORIES, {
+      first,
+      categoryName: COMMONS_CATEGORY_SLUG,
+      tag: tagSlug || undefined,
+    });
+    return data?.posts?.nodes || [];
+  } catch (err: any) {
+    console.error("[commons] getCommonsCategoryPieces failed:", err?.message || err);
+    return [];
+  }
+}
+
 // Kept for reference but no longer used directly — see GET_SERIES_STORIES etc.
 export const GET_TAX_STORIES = `
   query GetTaxStories($category: String, $series: ID, $industry: ID, $country: ID) {

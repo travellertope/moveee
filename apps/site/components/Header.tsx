@@ -50,6 +50,10 @@ const Header = () => {
   // rendered from app/literary/layout.tsx) — the sitewide floating pill has
   // no role there at all, unlike Makers which only swaps the wordmark.
   const isLiteraryPage = pathname === "/literary" || pathname.startsWith("/literary/");
+  // The Moveee Commons is also its own standalone mini-site with its own
+  // masthead/nav/footer (CommonsMasthead.tsx/CommonsFooter.tsx, rendered
+  // from app/commons/layout.tsx) — same reasoning as Literary above.
+  const isCommonsPage = pathname === "/commons" || pathname.startsWith("/commons/");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -246,7 +250,7 @@ const Header = () => {
   // own standalone masthead/nav/footer (see the comments above) — every
   // hook above still runs unconditionally (Rules of Hooks), only the
   // render is skipped.
-  if (isLiteraryPage || isLifestylePage || isMakersPage) return null;
+  if (isLiteraryPage || isLifestylePage || isMakersPage || isCommonsPage) return null;
 
   return (
     <>
@@ -313,6 +317,7 @@ const Header = () => {
                 <a href={`${CONNECT_URL}/events`}>Events</a>
                 <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
                 <Link href="/literary" data-active={active("/literary") || undefined}>The Moveee Literary</Link>
+                <Link href="/commons" data-active={active("/commons") || undefined}>The Moveee Commons</Link>
                 <Link href="/lifestyle" data-active={active("/lifestyle") || undefined}>The Moveee Lifestyle</Link>
                 <Link href="/newsletter" data-active={active("/newsletter") || undefined}>Newsletter</Link>
               </nav>
