@@ -8,6 +8,8 @@ import {
   GET_FILTERS,
   isLiteraryPost,
   LITERARY_GENRES,
+  isCommonsCategoryPost,
+  COMMONS_SECTIONS,
 } from "@/lib/wp";
 import { FEATURE_PAGES } from "@/lib/features";
 
@@ -49,10 +51,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/features`,     changeFrequency: "monthly" as const, priority: 0.7, lastModified: new Date() },
     { url: `${BASE}/literary`,     changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
     { url: `${BASE}/literary/submit`, changeFrequency: "monthly" as const, priority: 0.4, lastModified: new Date() },
+    { url: `${BASE}/commons`,      changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
   ];
 
   const literaryGenreUrls: MetadataRoute.Sitemap = LITERARY_GENRES.map((g) => ({
     url: `${BASE}/literary/${g.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+    lastModified: new Date(),
+  }));
+
+  const commonsSectionUrls: MetadataRoute.Sitemap = COMMONS_SECTIONS.map((s) => ({
+    url: `${BASE}/commons/${s.slug}`,
     changeFrequency: "weekly" as const,
     priority: 0.6,
     lastModified: new Date(),
@@ -71,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // point crawlers at a URL that immediately 308s, and skipping them from
   // literaryUrls would leave them with no sitemap entry at all.
   const articleUrls: MetadataRoute.Sitemap = articles
-    .filter((a) => !isLiteraryPost(a as any))
+    .filter((a) => !isLiteraryPost(a as any) && !isCommonsCategoryPost(a as any))
     .map((a) => ({
       url: `${BASE}/magazine/${a.slug}`,
       lastModified: new Date((a as any).modified || (a as any).date || new Date()),
@@ -83,6 +93,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((a) => isLiteraryPost(a as any))
     .map((a) => ({
       url: `${BASE}/literary/${a.slug}`,
+      lastModified: new Date((a as any).modified || (a as any).date || new Date()),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
+
+  // Same "same `post` type, redirects off /magazine/[slug]" reasoning as
+  // literaryPieceUrls above — only category-based Commons pieces (see
+  // isCommonsCategoryPost's doc comment in wp.ts) have a canonical
+  // /commons/{slug} URL; author-only pieces (Basit Jamiu bylines with no
+  // "commons" category) keep their /magazine/{slug} entry above.
+  const commonsPieceUrls: MetadataRoute.Sitemap = articles
+    .filter((a) => isCommonsCategoryPost(a as any))
+    .map((a) => ({
+      url: `${BASE}/commons/${a.slug}`,
       lastModified: new Date((a as any).modified || (a as any).date || new Date()),
       changeFrequency: "monthly" as const,
       priority: 0.7,
@@ -119,9 +143,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticPages,
     ...literaryGenreUrls,
+    ...commonsSectionUrls,
     ...featureUrls,
     ...articleUrls,
     ...literaryPieceUrls,
+    ...commonsPieceUrls,
     ...productUrls,
     ...newsletterUrls,
     ...journeyUrls,

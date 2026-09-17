@@ -33,6 +33,12 @@ function isLiteraryPath(pathname: string): boolean {
   return pathname === "/literary" || pathname.startsWith("/literary/");
 }
 
+// The Moveee Commons renders its own footer (CommonsFooter.tsx, via
+// app/commons/layout.tsx) — same reasoning as Literary above.
+function isCommonsPath(pathname: string): boolean {
+  return pathname === "/commons" || pathname.startsWith("/commons/");
+}
+
 // The Moveee Lifestyle (/lifestyle) is its own standalone mini-site with its own
 // footer (ShopFooter.tsx, via app/lifestyle/layout.tsx) — same reasoning as
 // Literary above. Every route under /lifestyle (archive, category/tag/brand,
@@ -53,7 +59,10 @@ export default function ConditionalFooter() {
   const pathname = usePathname();
   if (
     pathname &&
-    (isNewsletterReaderPath(pathname) || isLiteraryPath(pathname) || isLifestylePath(pathname))
+    (isNewsletterReaderPath(pathname) ||
+      isLiteraryPath(pathname) ||
+      isLifestylePath(pathname) ||
+      isCommonsPath(pathname))
   )
     return null;
   return <Footer />;

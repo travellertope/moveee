@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, isCommonsCategoryPost, getPreviewItem } from "@/lib/wp";
 import { draftMode, cookies, headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -140,6 +140,16 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   // duplicate-render, so there's exactly one canonical URL per piece.
   if (isLiteraryPost(post)) {
     redirect(`/literary/${post.slug}`);
+  }
+
+  // Same "exactly one canonical URL per piece" rule for The Moveee Commons
+  // — see CLAUDE.md's "The Moveee Commons" entry. Only category membership
+  // redirects (isCommonsCategoryPost) — a post that only qualifies for the
+  // Commons *feed* via its author (Basit Jamiu, no "commons" category)
+  // deliberately stays at its normal /magazine/{slug} URL; see
+  // commonsPieceHref's doc comment in wp.ts for why.
+  if (isCommonsCategoryPost(post)) {
+    redirect(`/commons/${post.slug}`);
   }
 
   const accessLevel = getAccessLevel(post);
