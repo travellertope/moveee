@@ -50,8 +50,8 @@ export default async function CommonsLandingPage() {
 
   const heroSection = commonsSectionOfPost(hero);
   const heroImageUrl = hero.featuredImage?.node?.sourceUrl as string | undefined;
-  const heroAuthorName = hero.author?.node?.name || "The Moveee Commons";
-  const heroAvatarUrl = hero.author?.node?.avatar?.url as string | undefined;
+  const heroAuthorName = hero.guestByline?.name || hero.author?.node?.name || "The Moveee Commons";
+  const heroAvatarUrl = (hero.guestByline?.avatarUrl || hero.author?.node?.avatar?.url) as string | undefined;
 
   return (
     <div>
@@ -128,7 +128,7 @@ export default async function CommonsLandingPage() {
                     {decodeHtml(piece.title || "")}
                   </Link>
                   <div className="comm-card-byline" style={{ paddingTop: 4 }}>
-                    {piece.author?.node?.name || "The Moveee Commons"} · {formattedDate(piece.date)}
+                    {piece.guestByline?.name || piece.author?.node?.name || "The Moveee Commons"} · {formattedDate(piece.date)}
                   </div>
                 </div>
               ))}

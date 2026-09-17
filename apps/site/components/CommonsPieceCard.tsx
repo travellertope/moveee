@@ -23,7 +23,7 @@ function formattedDate(date: string | undefined | null): string {
 export default function CommonsPieceCard({ piece }: { piece: any }) {
   const section = commonsSectionOfPost(piece);
   const imageUrl = piece.featuredImage?.node?.sourceUrl as string | undefined;
-  const author = piece.author?.node?.name || "The Moveee Commons";
+  const author = piece.guestByline?.name || piece.author?.node?.name || "The Moveee Commons";
 
   return (
     <Link href={commonsPieceHref(piece)} className={`comm-card${imageUrl ? " comm-card--image" : ""}`}>

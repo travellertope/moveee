@@ -1205,6 +1205,61 @@ function mergeCommonsPosts(...lists: any[][]): any[] {
 }
 
 /**
+ * Batch-resolves guestByline for a list of Commons pieces and mutates each
+ * post object in place (`post.guestByline = {...}`) so every list-rendering
+ * caller (CommonsPieceCard, the homepage hero) can just check
+ * `piece.guestByline?.name` before falling back to the real author — the
+ * same fallback /commons/[slug] and /magazine/[slug] already use for a
+ * single piece.
+ *
+ * GET_STORY_GUEST_BYLINE only ever looks up one post at a time (by slug),
+ * and per this file's own bridge-plugin-isolation rule, guestByline can
+ * never be added to STORY_FIELDS_FRAGMENT itself (that's what caused the
+ * September 2026 sitewide outage documented in CLAUDE.md — an unrecognized
+ * field on a shared fragment fails every query using it, not just the one
+ * needing the field). To still resolve it for a whole list in one request
+ * rather than N, this builds one GraphQL request with N *aliased* `post(id:
+ * slug, idType: SLUG)` lookups — the same single-post field the isolated
+ * query already uses, just asked for multiple times under different
+ * aliases, so a bridge-plugin outage still only costs this one best-effort
+ * lookup, never the underlying story fetch.
+ *
+ * The extra `_slugs` entry in `variables` is never referenced by the query
+ * itself — it exists purely so getWPData's KV cache key (derived from the
+ * query name + variables, not the dynamically-built query body) varies
+ * per distinct slug set, since every call site otherwise shares the same
+ * "GetGuestBylinesBatch" operation name.
+ */
+async function attachGuestBylines(posts: any[]): Promise<any[]> {
+  const withSlugs = posts.filter((p) => p?.slug);
+  if (!withSlugs.length) return posts;
+
+  const query = `query GetGuestBylinesBatch {
+    ${withSlugs
+      .map((p, i) => `p${i}: post(id: ${JSON.stringify(p.slug)}, idType: SLUG) { guestByline { name bio avatarUrl } }`)
+      .join("\n")}
+  }`;
+
+  try {
+    const data = await getWPData(
+      query,
+      { _slugs: withSlugs.map((p) => p.slug) },
+      { revalidate: 600 }
+    );
+    if (data) {
+      withSlugs.forEach((post, i) => {
+        const byline = data[`p${i}`]?.guestByline;
+        if (byline?.name) post.guestByline = byline;
+      });
+    }
+  } catch {
+    // best-effort — pieces just fall back to their real author name
+  }
+
+  return posts;
+}
+
+/**
  * Fetches the whole Commons feed: the "commons" category (GraphQL, same
  * categoryName where-arg every other section already uses) unioned with
  * Basit Jamiu's most recent posts (REST, see getStoriesByAuthorId above).
@@ -1230,7 +1285,8 @@ export async function getCommonsPieces(first = 24): Promise<any[]> {
     categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
   const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
 
-  return mergeCommonsPosts(categoryPosts, authorPosts).slice(0, first);
+  const pieces = mergeCommonsPosts(categoryPosts, authorPosts).slice(0, first);
+  return attachGuestBylines(pieces);
 }
 
 /**
@@ -1260,7 +1316,7 @@ export async function getCommonsAuthorArchive(
 
   const all = mergeCommonsPosts(categoryPosts, authorPosts);
   const start = Math.max(0, (page - 1) * perPage);
-  const pieces = all.slice(start, start + perPage);
+  const pieces = await attachGuestBylines(all.slice(start, start + perPage));
 
   return { pieces, total: all.length, hasMore: start + perPage < all.length };
 }
@@ -1339,7 +1395,7 @@ export async function getCommonsCategoryPieces(tagSlug?: string, first = 24): Pr
       categoryName: COMMONS_CATEGORY_SLUG,
       tag: tagSlug || undefined,
     });
-    return data?.posts?.nodes || [];
+    return attachGuestBylines(data?.posts?.nodes || []);
   } catch (err: any) {
     console.error("[commons] getCommonsCategoryPieces failed:", err?.message || err);
     return [];
