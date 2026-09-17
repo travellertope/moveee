@@ -6658,6 +6658,36 @@ in as that account, confirm Posts is the only visible/creatable content type, se
 and confirm the live article page shows it in every location listed above — before considering
 this fully closed.
 
+**Production outage caused by this feature, fixed same day (September 2026).** The `guestByline`
+GraphQL field above was added directly into `STORY_FIELDS_FRAGMENT` — the shared fragment nearly
+every story query on the site uses, including the homepage's own `getMagazineSections()` and
+`/magazine`'s archive. Once the frontend code shipped ahead of `moveee-graphql-bridge.php` being
+redeployed (per the "manual zip+upload" note above), the live GraphQL schema didn't recognize
+`guestByline` — **an unrecognized field fails the entire GraphQL query, not just that field** —
+so every page fetching stories via WPGraphQL came back empty: the homepage sections all went
+blank and newly-published articles stopped appearing anywhere on the web app, while the mobile
+app (raw WP REST, not GraphQL) kept working fine. This is the same "bridge-plugin isolation"
+failure mode `GET_PRODUCTS_EXTRA`'s own comment already warns about for the shop — `guestByline`
+just wasn't given the same treatment when it was added. **Fixed** by moving `guestByline` out of
+`STORY_FIELDS_FRAGMENT` into its own isolated `GET_STORY_GUEST_BYLINE` query
+(`packages/shared/lib/wp.ts`), fetched only by `/magazine/[slug]/page.tsx` and wrapped in a bare
+`try {} catch {}` — a missing/undeployed bridge field can now only ever cost that one page its
+guest-byline lookup, never break story listings sitewide. **If you ever add a new bridge-plugin
+field to a GraphQL response, it must go in its own isolated query with a swallowed-error caller,
+never into a shared fragment used by listing pages** — this is not optional, it's the one rule
+this incident exists to enforce.
+
+**Mobile "always shows the generic account name" bug, same pass.** Separately, `useMagazine.ts`'s
+`mapPost()` only ever read `guest_byline_name` (brand new, essentially unused in real content) and
+never `as_told_to` (the older, pre-existing, actually-used field) — so any article an editor
+attributed via As-Told-To showed the real writer's name on web but silently fell back to the
+generic WP publishing account's name on mobile, on every single as-told-to article, which is what
+read as "always says the wrong byline." Fixed by giving `mapPost()` the same three-way precedence
+web's article page already has (Guest Byline full override → As-Told-To compound "{person}, as
+told to {account}" string → plain real author name, with `"The Moveee"` as the final fallback,
+matching web's own literal fallback string) — `as_told_to` was already `show_in_rest`-registered
+from before this feature existed, so no plugin redeploy was needed for this half of the fix.
+
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
 This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.
