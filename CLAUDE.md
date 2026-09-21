@@ -10073,6 +10073,52 @@ equivalent) `#if FMT_USE_CONSTEVAL` block that no longer matches this plugin's e
 silently making the injected patch a no-op again (the plugin doesn't currently warn if its `sub`
 finds no match).
 
+### Android build failure — duplicate `:sentry-react-native`/`:sentry_react-native` Gradle projects (September 2026)
+
+A real EAS Android production build (`eas build --platform android --profile production`) got past
+network/auth issues, dependency resolution, Metro bundling, and Sentry source-map upload, then
+failed at the Gradle build step:
+```
+A problem was found with the configuration of task ':sentry_react-native:packageReleaseResources'
+(type 'MergeResources').
+  Reason: Task ':sentry_react-native:packageReleaseResources' uses this output of task
+  ':sentry-react-native:generateReleaseResValues' without declaring an explicit or implicit
+  dependency.
+```
+Earlier in the same log, both `:sentry-react-native:*` (hyphenated) and `:sentry_react-native:*`
+(underscored) task graphs appear — two separate Gradle project registrations pointing at the exact
+same physical folder, `node_modules/@sentry/react-native/android`.
+
+**Root cause**: `@sentry/react-native` ships both a `react-native.config.js` (picked up by classic
+React Native autolinking, which sanitizes the package name with underscores → `sentry_react-native`)
+and an `expo-module.config.json` (picked up by Expo Modules autolinking, which sanitizes with
+hyphens → `sentry-react-native`) — a known, documented class of bug (dual-autolinking discovery of
+the same native module under two different project names; see
+[kitten.sh/blog/autolinkings-broken-promise](https://kitten.sh/blog/autolinkings-broken-promise)),
+only properly fixed by the unified autolinking resolver Expo shipped in **SDK 54**. This app is
+deliberately pinned to **SDK 52** (see "Expo SDK version — critical" above — `react-native-passkeys`
+0.4.0 and other pinned packages require it), so upgrading to get the real fix is out of scope.
+Because both duplicate projects physically share one output directory, either one's resource-
+packaging task can race the other's resource-generation tasks — Gradle 8.10's stricter task
+validation now rejects that race as a hard failure instead of silently tolerating it.
+
+**Fixed** with `apps/mobile/plugins/withSentryGradleTaskOrderingFix.js` (new, registered in
+`app.config.ts`'s `plugins` array right after `withFmtConstevalFix`) — a `withProjectBuildGradle`
+config plugin appending a `gradle.projectsEvaluated` block to `android/build.gradle` that declares
+the missing `dependsOn` directly (Gradle's own suggested fix #2 for this exact error class), for
+every producer/consumer task-name pair across both project-name variants, in both directions, so
+whichever project Gradle happens to build first doesn't matter. Guarded with null-checks throughout
+(`findProject`/`tasks.findByName`) so it's a harmless no-op if a future dependency bump removes the
+duplicate or renames either project, rather than failing the build outright.
+
+Not verified against a real Gradle/Android toolchain — this sandbox has none. Verified via
+`node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
+embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
+actually clears the `MergeResources` validation error before considering it closed — if it doesn't,
+the two project names/task names to check first (via a build log or `npx expo-modules-autolinking
+verify -v`) are whatever Gradle's error message names, since a future dependency version could shift
+which task pair races.
+
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
 since nothing forces it local to `apps/mobile`) has its own bundled `.d.ts` files that do
