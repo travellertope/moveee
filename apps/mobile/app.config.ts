@@ -151,6 +151,14 @@ export default {
       // the newer Xcode/Clang required by eas.json's build.production.ios.image
       // ("latest"). See apps/mobile/plugins/withFmtConstevalFix.js.
       "./plugins/withFmtConstevalFix",
+      // Works around an Android Gradle build failure (Gradle's stricter
+      // task-validation rejecting a race between two duplicate
+      // :sentry-react-native / :sentry_react-native Gradle project
+      // registrations for @sentry/react-native, caused by that package
+      // being picked up by both classic RN autolinking and Expo Modules
+      // autolinking on this SDK-52-pinned project). See
+      // apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
+      "./plugins/withSentryGradleTaskOrderingFix",
     ],
     extra: {
       eas: {
