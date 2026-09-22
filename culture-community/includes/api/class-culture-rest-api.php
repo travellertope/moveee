@@ -4369,7 +4369,7 @@ class Culture_REST_API {
 
         if ( class_exists( 'Culture_Gamification' ) ) {
             $post_type = get_post_type( $post_id );
-            $action    = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            $action    = in_array( $post_type, array( 'culture_newsletter', 'getmelit', 'culture_drop' ), true ) ? 'newsletter_comment' : 'magazine_comment';
             Culture_Gamification::award_points( $user_id, $action );
         }
 

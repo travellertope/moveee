@@ -3,7 +3,7 @@ import {
   getWPData,
   GET_STORIES,
   GET_PRODUCTS,
-  GET_NEWSLETTERS,
+  getNewslettersWithFallback,
   GET_JOURNEYS,
   GET_FILTERS,
   isLiteraryPost,
@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [articles, products, newsletters, journeys, filters] = await Promise.all([
     fetchSlugs(GET_STORIES, { first: 500 }, (d) => d?.posts?.nodes ?? []),
     fetchSlugs(GET_PRODUCTS, { first: 500 }, (d) => d?.products?.nodes ?? []),
-    fetchSlugs(GET_NEWSLETTERS, { first: 200 }, (d) => d?.cultureNewsletters?.nodes ?? []),
+    getNewslettersWithFallback(200, { revalidate: 3600 }).catch(() => []),
     fetchSlugs(GET_JOURNEYS, { first: 100 }, (d) => d?.cultureJourneys?.nodes ?? []),
     getWPData(GET_FILTERS, {}, { revalidate: 3600 }).catch(() => null),
   ]);

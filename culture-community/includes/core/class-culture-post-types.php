@@ -1038,6 +1038,40 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Same nlList/nlSegment/nlIssueNum fields, mirrored onto the GetMeLit and
+        // Culture Drop GraphQL types so the frontend's newsletter fragment is
+        // identical across all three sources. nlList is a fixed constant here
+        // (the post type itself is the list — see Culture_Newsletter_Queue::
+        // resolve_nl_list()), not read from meta the way CultureNewsletter's is.
+        $nl_type_lists = array(
+            'GetMeLitIssue'   => 'getmelit',
+            'CultureDropIssue' => 'culture-drop',
+        );
+        foreach ( $nl_type_lists as $gql_type => $list_value ) {
+            register_graphql_field( $gql_type, 'nlList', array(
+                'type'        => 'String',
+                'description' => 'Which newsletter list this post belongs to.',
+                'resolve'     => function() use ( $list_value ) {
+                    return $list_value;
+                },
+            ) );
+            register_graphql_field( $gql_type, 'nlSegment', array(
+                'type'        => 'String',
+                'description' => 'Regional segment this issue was targeted at (us, uk, ng, gh, ca, au), or empty for all regions.',
+                'resolve'     => function( $post ) {
+                    return (string) ( get_post_meta( $post->databaseId, '_culture_nl_segment', true ) ?: '' );
+                },
+            ) );
+            register_graphql_field( $gql_type, 'nlIssueNum', array(
+                'type'        => 'Int',
+                'description' => 'Canonical issue number, shared across all regional editions of the same issue.',
+                'resolve'     => function( $post ) {
+                    $val = get_post_meta( $post->databaseId, '_culture_nl_issue_num', true );
+                    return $val ? (int) $val : null;
+                },
+            ) );
+        }
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
@@ -1151,6 +1185,85 @@ class Culture_Post_Types {
             'default'      => 0,
             'show_in_rest' => true,
         ) );
+
+        // GetMeLit / Culture Drop CPTs – dedicated post types for the two flagship
+        // newsletter lists, added so an Application Password client can create and
+        // publish content directly against a list-specific REST endpoint
+        // (wp-json/wp/v2/getmelit, wp-json/wp/v2/culture_drop) with no meta field
+        // needed to say which list a post belongs to — the post type itself is the
+        // list. Existing culture_newsletter posts (both lists, mixed, discriminated
+        // by the pre-existing _culture_nl_list meta) are untouched and keep working
+        // exactly as before; these are additive, for new content going forward.
+        // See Culture_Newsletter_Queue::resolve_nl_list() for how the send queue,
+        // analytics, and GraphQL resolvers derive "which list" uniformly across all
+        // three post types.
+        register_post_type( 'getmelit', array(
+            'labels' => array(
+                'name'               => __( 'GetMeLit', 'culture-community' ),
+                'singular_name'      => __( 'GetMeLit Issue', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New GetMeLit Issue', 'culture-community' ),
+                'edit_item'          => __( 'Edit GetMeLit Issue', 'culture-community' ),
+                'view_item'          => __( 'View GetMeLit Issue', 'culture-community' ),
+                'all_items'          => __( 'GetMeLit', 'culture-community' ),
+                'search_items'       => __( 'Search GetMeLit', 'culture-community' ),
+                'not_found'          => __( 'No GetMeLit issues found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-email-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            'rewrite'             => array( 'slug' => 'getmelit' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'getMeLitIssue',
+            'graphql_plural_name' => 'getMeLitIssues',
+        ) );
+
+        register_post_type( 'culture_drop', array(
+            'labels' => array(
+                'name'               => __( 'Culture Drop', 'culture-community' ),
+                'singular_name'      => __( 'Culture Drop Issue', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Culture Drop Issue', 'culture-community' ),
+                'edit_item'          => __( 'Edit Culture Drop Issue', 'culture-community' ),
+                'view_item'          => __( 'View Culture Drop Issue', 'culture-community' ),
+                'all_items'          => __( 'Culture Drop', 'culture-community' ),
+                'search_items'       => __( 'Search Culture Drop', 'culture-community' ),
+                'not_found'          => __( 'No Culture Drop issues found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-email-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            'rewrite'             => array( 'slug' => 'culture-drop' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureDropIssue',
+            'graphql_plural_name' => 'cultureDropIssues',
+        ) );
+
+        foreach ( array( 'getmelit', 'culture_drop' ) as $nl_cpt ) {
+            // No _culture_nl_list meta on these — the post type itself is the list
+            // (see resolve_nl_list()). Segment/issue-num are still real, per-post
+            // meta, same shape as culture_newsletter's.
+            register_post_meta( $nl_cpt, '_culture_nl_segment', array(
+                'type'         => 'string',
+                'single'       => true,
+                'default'      => '',
+                'show_in_rest' => true,
+            ) );
+            register_post_meta( $nl_cpt, '_culture_nl_issue_num', array(
+                'type'         => 'integer',
+                'single'       => true,
+                'default'      => 0,
+                'show_in_rest' => true,
+            ) );
+        }
 
         // Quote CPT – nested under Culture Community menu.
         register_post_type( 'culture_quote', array(
@@ -1284,7 +1397,7 @@ class Culture_Post_Types {
      * Register custom taxonomies.
      */
     public static function register_taxonomies() {
-        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_directory' ), array(
             'labels' => array(
                 'name'              => __( 'Access Level', 'culture-community' ),
                 'singular_name'     => __( 'Access Level', 'culture-community' ),
@@ -1332,7 +1445,7 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'quoteAuthors',
         ) );
 
-        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_directory' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
                 'singular_name' => __( 'Interest', 'culture-community' ),

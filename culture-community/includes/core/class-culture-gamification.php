@@ -883,7 +883,7 @@ class Culture_Gamification {
                     "SELECT COUNT(*)
                      FROM {$wpdb->comments} c
                      INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
-                     WHERE c.user_id = %d AND p.post_type = 'culture_newsletter' AND c.comment_approved = '1'",
+                     WHERE c.user_id = %d AND p.post_type IN ( 'culture_newsletter', 'getmelit', 'culture_drop' ) AND c.comment_approved = '1'",
                     $user_id
                 ) );
 

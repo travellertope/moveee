@@ -10,10 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Newsletter_Send {
 
+    /** Every post type that carries newsletter/digest content. */
+    const NL_POST_TYPES = array( 'culture_newsletter', 'getmelit', 'culture_drop' );
+
     public static function init() {
         add_action( 'add_meta_boxes',                array( __CLASS__, 'register_meta_box' ) );
         add_action( 'admin_enqueue_scripts',          array( __CLASS__, 'enqueue_assets' ) );
         add_action( 'save_post_culture_newsletter',   array( __CLASS__, 'save_list_meta' ), 10, 2 );
+        add_action( 'save_post_getmelit',             array( __CLASS__, 'save_list_meta' ), 10, 2 );
+        add_action( 'save_post_culture_drop',         array( __CLASS__, 'save_list_meta' ), 10, 2 );
 
         add_action( 'wp_ajax_culture_nl_send_test',  array( __CLASS__, 'ajax_send_test' ) );
         add_action( 'wp_ajax_culture_nl_send_issue', array( __CLASS__, 'ajax_send_issue' ) );
@@ -56,7 +61,7 @@ class Culture_Newsletter_Send {
     public static function rest_send_issue( WP_REST_Request $request ) {
         $post_id = absint( $request->get_param( 'post_id' ) );
 
-        if ( 'culture_newsletter' !== get_post_type( $post_id ) ) {
+        if ( ! in_array( get_post_type( $post_id ), self::NL_POST_TYPES, true ) ) {
             return new WP_REST_Response( array( 'message' => __( 'Invalid post.', 'culture-community' ) ), 400 );
         }
 
@@ -95,7 +100,14 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        self::persist_list_meta( $post_id, $_POST['culture_nl_list'] ?? 'getmelit', $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
+        // getmelit/culture_drop have no editable list dropdown (the post type
+        // itself is the list, see resolve_nl_list()) — don't write a
+        // _culture_nl_list value that would just be ignored downstream.
+        $list = in_array( get_post_type( $post_id ), array( 'getmelit', 'culture_drop' ), true )
+            ? null
+            : ( $_POST['culture_nl_list'] ?? 'getmelit' );
+
+        self::persist_list_meta( $post_id, $list, $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
     }
 
     /**
@@ -103,11 +115,18 @@ class Culture_Newsletter_Send {
      * Shared by save_list_meta() (on post save) and the Send Test / Send Issue
      * AJAX handlers (so a send always targets whatever is currently selected
      * in the dropdowns, even if the post hasn't been saved yet).
+     *
+     * @param int         $post_id
+     * @param string|null $list    Pass null to leave _culture_nl_list untouched
+     *                             (used for getmelit/culture_drop, where the
+     *                             post type is the list and there's nothing to save).
      */
     private static function persist_list_meta( $post_id, $list, $segment, $issue_num = 0 ) {
-        $list = sanitize_key( $list );
-        if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
-            update_post_meta( $post_id, '_culture_nl_list', $list );
+        if ( null !== $list ) {
+            $list = sanitize_key( $list );
+            if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
+                update_post_meta( $post_id, '_culture_nl_list', $list );
+            }
         }
 
         // Segment is optional — empty string means send to all segments of this list.
@@ -138,7 +157,7 @@ class Culture_Newsletter_Send {
             'culture_nl_send',
             __( 'Send Newsletter', 'culture-community' ),
             array( __CLASS__, 'render_meta_box' ),
-            'culture_newsletter',
+            self::NL_POST_TYPES,
             'side',
             'high'
         );
@@ -155,7 +174,7 @@ class Culture_Newsletter_Send {
         }
 
         $screen = get_current_screen();
-        if ( ! $screen || 'culture_newsletter' !== $screen->post_type ) {
+        if ( ! $screen || ! in_array( $screen->post_type, self::NL_POST_TYPES, true ) ) {
             return;
         }
 
@@ -202,9 +221,10 @@ class Culture_Newsletter_Send {
         $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
         $current_user = wp_get_current_user();
 
-        $nl_list      = get_post_meta( $post->ID, '_culture_nl_list',      true ) ?: 'getmelit';
+        $nl_list      = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
         $nl_segment   = get_post_meta( $post->ID, '_culture_nl_segment',   true ) ?: '';
         $nl_issue_num = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
+        $list_locked  = in_array( get_post_type( $post->ID ), array( 'getmelit', 'culture_drop' ), true );
 
         $lists_config = array(
             'getmelit'                  => 'GetMeLit',
@@ -278,13 +298,22 @@ class Culture_Newsletter_Send {
             <div class="culture-nl-section" style="margin-bottom:0;">
                 <label class="culture-nl-label"><?php esc_html_e( 'Newsletter List', 'culture-community' ); ?></label>
                 <?php wp_nonce_field( 'culture_nl_list_' . $post->ID, 'culture_nl_list_nonce' ); ?>
-                <select name="culture_nl_list" style="width:100%;margin-top:4px;">
-                    <?php foreach ( $lists_config as $lk => $ln ) : ?>
-                        <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $nl_list, $lk ); ?>>
-                            <?php echo esc_html( $ln ); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php if ( $list_locked ) : ?>
+                    <p style="margin:4px 0 0;font-weight:600;">
+                        <?php echo esc_html( $lists_config[ $nl_list ] ?? $nl_list ); ?>
+                    </p>
+                    <p style="font-size:11px;color:#666;margin:2px 0 0;">
+                        <?php esc_html_e( 'Fixed by post type — this post is a GetMeLit or Culture Drop issue.', 'culture-community' ); ?>
+                    </p>
+                <?php else : ?>
+                    <select name="culture_nl_list" style="width:100%;margin-top:4px;">
+                        <?php foreach ( $lists_config as $lk => $ln ) : ?>
+                            <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $nl_list, $lk ); ?>>
+                                <?php echo esc_html( $ln ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
             </div>
 
             <?php /* ── SEGMENT FILTER ── */ ?>

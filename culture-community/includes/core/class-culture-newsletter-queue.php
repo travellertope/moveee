@@ -18,6 +18,35 @@ class Culture_Newsletter_Queue {
     }
 
     /**
+     * Which newsletter list a post belongs to, uniformly across all three
+     * post types content can now live under:
+     *  - getmelit / culture_drop: the post type itself IS the list (no meta
+     *    involved — see class-culture-post-types.php's CPT registration).
+     *  - culture_newsletter: legacy behaviour, unchanged — read from the
+     *    _culture_nl_list post meta exactly as before.
+     *
+     * Every place in the plugin that used to read _culture_nl_list meta
+     * directly (the send queue, analytics, the Send Newsletter meta box)
+     * should go through this instead, so all three post types are handled
+     * the same way with one source of truth.
+     *
+     * @param int    $post_id
+     * @param string $default Fallback when a culture_newsletter post has no
+     *                        meta set yet. Irrelevant for getmelit/culture_drop.
+     * @return string
+     */
+    public static function resolve_nl_list( $post_id, $default = '' ) {
+        switch ( get_post_type( $post_id ) ) {
+            case 'getmelit':
+                return 'getmelit';
+            case 'culture_drop':
+                return 'culture-drop';
+            default:
+                return get_post_meta( $post_id, '_culture_nl_list', true ) ?: $default;
+        }
+    }
+
+    /**
      * Snapshot subscribers and schedule the first batch.
      * Filters by _culture_nl_list post meta so each newsletter only goes to
      * its own list. Legacy plain-string subscribers are treated as GetMeLit subscribers.
@@ -33,7 +62,7 @@ class Culture_Newsletter_Queue {
         }
 
         // Determine which list and segment this newsletter targets.
-        $nl_list    = get_post_meta( $post_id, '_culture_nl_list',    true ) ?: '';
+        $nl_list    = self::resolve_nl_list( $post_id, '' );
         $nl_segment = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
 
         // Standardize to email strings for the snapshot, filtering by list and segment.
@@ -173,7 +202,7 @@ class Culture_Newsletter_Queue {
                       . '&token=' . rawurlencode( $unsub_token )
                       . '&c='    . $post_id;
 
-        $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
+        $nl_list = self::resolve_nl_list( $post_id, 'getmelit' );
         $content = self::render_content( $post );
         $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $nl_list, $email );
 
@@ -205,7 +234,7 @@ class Culture_Newsletter_Queue {
         $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
         $title     = '[TEST] ' . get_the_title( $post_id );
         $permalink = $frontend_url . '/newsletter/' . $post->post_name;
-        $nl_list_test = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
+        $nl_list_test = self::resolve_nl_list( $post_id, 'getmelit' );
         $content   = self::render_content( $post );
         $body      = self::build_email( $title, $content, $permalink, '#', true, 0, '', $nl_list_test );
 

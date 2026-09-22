@@ -475,7 +475,7 @@ class Culture_NL_Analytics {
              LEFT   JOIN {$wpdb->postmeta} pm_total
                     ON pm_total.post_id  = p.ID
                    AND pm_total.meta_key = '_culture_nl_send_total'
-             WHERE  p.post_type = 'culture_newsletter'
+             WHERE  p.post_type IN ( 'culture_newsletter', 'getmelit', 'culture_drop' )
                AND  p.ID IN (
                      SELECT DISTINCT campaign_id FROM {$ot} WHERE subscriber = %s
                      UNION
@@ -544,7 +544,7 @@ class Culture_NL_Analytics {
         // Query newsletters that completed (have _culture_nl_sent_at set)
         // OR that were marked sent before that meta existed.
         $posts = get_posts( array(
-            'post_type'      => 'culture_newsletter',
+            'post_type'      => array( 'culture_newsletter', 'getmelit', 'culture_drop' ),
             'posts_per_page' => -1,
             'meta_query'     => array(
                 'relation' => 'OR',
@@ -564,7 +564,7 @@ class Culture_NL_Analytics {
 
         foreach ( $posts as $post ) {
             $sent          = (int) get_post_meta( $post->ID, '_culture_nl_send_total', true );
-            $nl_list       = get_post_meta( $post->ID, '_culture_nl_list',    true ) ?: 'getmelit';
+            $nl_list       = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
             $nl_segment    = get_post_meta( $post->ID, '_culture_nl_segment', true ) ?: '';
             $unique_opens  = (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(DISTINCT subscriber) FROM {$ot} WHERE campaign_id = %d",
