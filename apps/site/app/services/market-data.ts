@@ -167,7 +167,7 @@ const amplifyUK: TierService = {
     {
       name: "Priority",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "85", currency: "£",
+      price: "150", currency: "£",
       features: [
         { label: "Paid social boost — The Moveee channels", included: true },
         { label: "Audience location & interest targeting", included: false },
@@ -182,7 +182,7 @@ const amplifyUK: TierService = {
     {
       name: "Sponsored",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "140", currency: "£",
+      price: "245", currency: "£",
       features: [
         { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
@@ -198,7 +198,7 @@ const amplifyUK: TierService = {
       name: "Sponsored+",
       highlight: true,
       billingNote: "Monthly Recurring Option Also Available",
-      price: "145", currency: "£",
+      price: "255", currency: "£",
       features: [
         { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
@@ -213,7 +213,7 @@ const amplifyUK: TierService = {
     {
       name: "Invested",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "350", currency: "£",
+      price: "620", currency: "£",
       features: [
         { label: "Paid social boost — UK + international channels", included: true },
         { label: "Audience location & interest targeting", included: true },
