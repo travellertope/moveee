@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   const resolved = partnershipCategory
-    ? resolvePartnershipPayment(partnershipCategory, itemName, kind)
+    ? resolvePartnershipPayment(market, partnershipCategory, itemName, kind)
     : resolveSectionPayment(market, sectionId, itemName, kind);
 
   if (!resolved) {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         name,
         email,
-        market: partnershipCategory ? "africa" : market,
+        market,
         section_id: partnershipCategory ? `partnership-${partnershipCategory}` : sectionId,
         item_name: resolved.label,
         item_kind: kind,

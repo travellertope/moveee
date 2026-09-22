@@ -2,10 +2,33 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket } from "../../market-data";
-import { PARTNERSHIP_CATEGORIES } from "../../partnership-pages";
-import { ServiceSectionDetail, getServiceSectionMetadata } from "../[slug]/page";
+import { getPartnershipCategories } from "../../partnership-pages";
 
 const VALID_MARKETS = ["africa", "uk", "us"];
+
+const HUB_COPY: Record<
+  string,
+  { headline: string; lead: string; body: string; cities: string }
+> = {
+  africa: {
+    headline: "For the organisations that carry African culture forward.",
+    lead: "A sustained editorial partnership for publishers, galleries, and filmmakers — not a one-off feature, but a media relationship built around your programme.",
+    body: "The Moveee media partnership is a three-month editorial programme designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches. We cover all three — same programme structure, tailored to each discipline, sustained over three months and renewable around your programme calendar.",
+    cities: "Lagos, Abuja, London, and New York",
+  },
+  uk: {
+    headline: "For the organisations that carry British culture forward.",
+    lead: "A three-month editorial partnership for publishers, galleries, and filmmakers — not a one-off feature, but a media relationship built around your programme.",
+    body: "The Moveee media partnership is a three-month editorial package designed for UK cultural organisations that need more than a press release. Publishers and authors need a review and an interview that build a real author profile. Galleries need critical coverage that ends up in press kits and funding applications. Filmmakers need a press record that works for festival submissions and distribution pitches. We cover all three — same package structure, tailored to each discipline.",
+    cities: "London, Birmingham, Manchester, and Bristol",
+  },
+  us: {
+    headline: "For the organisations that carry American culture forward.",
+    lead: "A three-month editorial partnership for publishers, galleries, and filmmakers — not a one-off feature, but a media relationship built around your programme.",
+    body: "The Moveee media partnership is a three-month editorial package designed for US cultural organisations that need more than a press release. Publishers and authors need a review and an interview that build a real author profile. Galleries need critical coverage that ends up in press kits and funding applications. Filmmakers need a press record that works for festival submissions and distribution pitches. We cover all three — same package structure, tailored to each discipline.",
+    cities: "New York, Atlanta, Houston, DC, and LA",
+  },
+};
 
 export function generateStaticParams() {
   return VALID_MARKETS.map((market) => ({ market }));
@@ -17,19 +40,12 @@ export async function generateMetadata({
   params: Promise<{ market: string }>;
 }): Promise<Metadata> {
   const { market } = await params;
-
-  // Only Africa has the richer, discipline-by-discipline Partnership Hub
-  // below — UK/US have a single "Media Partnership" section instead (see
-  // the routing note further down), so their metadata comes from the same
-  // place [slug]/page.tsx already uses for every other section.
-  if (market !== "africa") return getServiceSectionMetadata(market, "partnership");
-
   const data = getMarket(market);
   if (!data) return { title: { absolute: "Media Partnership | Moveee" } };
+  const copy = HUB_COPY[market] ?? HUB_COPY.africa;
   return {
     title: { absolute: `Media Partnership | Moveee` },
-    description:
-      "A sustained editorial partnership for African cultural organisations — book publishers, art galleries, and filmmakers.",
+    description: copy.lead,
   };
 }
 
@@ -41,22 +57,11 @@ export default async function PartnershipHubPage({
   const { market } = await params;
   if (!VALID_MARKETS.includes(market)) redirect("/services");
 
-  // The Africa-only, per-discipline Partnership Hub below (Publishers /
-  // Galleries / Filmmakers, each with its own 3-month tiered packages) has
-  // no UK/US equivalent in the data — those two markets each have one
-  // plain "Media Partnership" section instead (market-data.ts). This
-  // folder (`partnership/`) is a literal, static route segment, so it
-  // always wins the URL match over the sibling `[slug]/` dynamic route,
-  // for every market — without this branch, a UK/US visitor hitting
-  // /services/{market}/partnership would 404 (or be redirected away)
-  // rather than ever reaching their market's real "partnership" section
-  // content, even though that content exists. Render it directly here.
-  if (market !== "africa") {
-    return <ServiceSectionDetail market={market} slug="partnership" />;
-  }
-
   const marketData = getMarket(market);
   if (!marketData) redirect("/services");
+
+  const copy = HUB_COPY[market] ?? HUB_COPY.africa;
+  const categories = getPartnershipCategories(market);
 
   return (
     <div className="svc-page">
@@ -72,13 +77,13 @@ export default async function PartnershipHubPage({
         {/* Hero */}
         <section className="svc-wrap svc-hero" style={{ padding: "8px 0 72px" }}>
           <h1 style={{ fontSize: "clamp(32px, 4vw, 54px)" }}>
-            For the organisations that carry African culture forward.
+            {copy.headline}
           </h1>
           <p className="svc-hero-lead" style={{ maxWidth: 720 }}>
-            A sustained editorial partnership for publishers, galleries, and filmmakers — not a one-off feature, but a media relationship built around your programme.
+            {copy.lead}
           </p>
           <p className="svc-detail-tagline" style={{ maxWidth: 720 }}>
-            The Moveee media partnership is a three-month editorial programme designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches. We cover all three — same programme structure, tailored to each discipline, sustained over three months and renewable around your programme calendar.
+            {copy.body}
           </p>
         </section>
 
@@ -88,7 +93,7 @@ export default async function PartnershipHubPage({
             <h2 className="svc-section-title">What does your organisation do?</h2>
           </div>
           <div className="svc-fgrid svc-fgrid--auto">
-            {PARTNERSHIP_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/services/${market}/partnership/${cat.id}`}
@@ -116,7 +121,7 @@ export default async function PartnershipHubPage({
                 { title: "Editorial Reviews", body: "Critical coverage written with genuine opinion and cultural context — not promotional summaries." },
                 { title: "Profile Interviews", body: "In-depth interviews with authors, artists, or filmmakers. Written and edited for publication, not just transcribed." },
                 { title: "News Releases", body: "Professionally written press releases for launches, events, milestones, and announcements." },
-                { title: "GetMeLit Distribution", body: "All editorial content distributes through GetMeLit, our newsletter read by professionals across Lagos, Abuja, London, and New York." },
+                { title: "GetMeLit Distribution", body: `All editorial content distributes through GetMeLit, our newsletter read by professionals across ${copy.cities}.` },
                 { title: "Social Amplification", body: "Social posts across Moveee's channels for every piece of published content. Multimedia posts on higher tiers." },
                 { title: "Three-Month Partnership Window", body: "Enough time to cover a launch properly, sustain a programme, and build a meaningful media record." },
               ].map((f) => (
