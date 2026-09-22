@@ -1162,28 +1162,41 @@ class Culture_Post_Types {
         ) );
 
         // Expose _culture_nl_list so the frontend knows which newsletter each post belongs to.
+        //
+        // auth_callback is required here, not optional — WordPress treats any
+        // underscore-prefixed meta key as "protected" (is_protected_meta()) and
+        // hides it from REST entirely (both the schema and actual GET responses)
+        // unless an explicit auth_callback is provided, regardless of
+        // show_in_rest => true. Every other register_post_meta() call in this
+        // plugin already does this (see register_rest_meta_fields() above for
+        // culture_event's fields, the pattern this was missing); this one and
+        // its two siblings below were the only ones that didn't, which is why
+        // these three never actually appeared in REST despite show_in_rest.
         register_post_meta( 'culture_newsletter', '_culture_nl_list', array(
-            'type'         => 'string',
-            'single'       => true,
-            'default'      => '',
-            'show_in_rest' => true,
+            'type'          => 'string',
+            'single'        => true,
+            'default'       => '',
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
         // Expose _culture_nl_segment so edition pages (uk/us/africa) can show only
         // issues targeted at their region (empty segment = all regions), and so the
         // global hub/reader pages can group regional editions of the same issue.
         register_post_meta( 'culture_newsletter', '_culture_nl_segment', array(
-            'type'         => 'string',
-            'single'       => true,
-            'default'      => '',
-            'show_in_rest' => true,
+            'type'          => 'string',
+            'single'        => true,
+            'default'       => '',
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
         // Expose _culture_nl_issue_num so regional editions of the same issue can
         // be deduplicated on the frontend (UK/US/Africa editions share one issue number).
         register_post_meta( 'culture_newsletter', '_culture_nl_issue_num', array(
-            'type'         => 'integer',
-            'single'       => true,
-            'default'      => 0,
-            'show_in_rest' => true,
+            'type'          => 'integer',
+            'single'        => true,
+            'default'       => 0,
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
 
         // GetMeLit / Culture Drop CPTs – dedicated post types for the two flagship
@@ -1250,18 +1263,22 @@ class Culture_Post_Types {
         foreach ( array( 'getmelit', 'culture_drop' ) as $nl_cpt ) {
             // No _culture_nl_list meta on these — the post type itself is the list
             // (see resolve_nl_list()). Segment/issue-num are still real, per-post
-            // meta, same shape as culture_newsletter's.
+            // meta, same shape as culture_newsletter's. auth_callback required —
+            // see the comment on culture_newsletter's own _culture_nl_list
+            // registration above for why.
             register_post_meta( $nl_cpt, '_culture_nl_segment', array(
-                'type'         => 'string',
-                'single'       => true,
-                'default'      => '',
-                'show_in_rest' => true,
+                'type'          => 'string',
+                'single'        => true,
+                'default'       => '',
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
             register_post_meta( $nl_cpt, '_culture_nl_issue_num', array(
-                'type'         => 'integer',
-                'single'       => true,
-                'default'      => 0,
-                'show_in_rest' => true,
+                'type'          => 'integer',
+                'single'        => true,
+                'default'       => 0,
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
             ) );
         }
 
