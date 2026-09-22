@@ -30,16 +30,26 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // pinned packages require it), so upgrading to SDK 54 to get the real fix
 // is out of scope. Instead, this declares the missing dependency directly —
 // exactly Gradle's own suggested fix #2 in the original error message
-// ("Declare an explicit dependency ... using Task#dependsOn") — for every
-// (producer, consumer) pair across both project-name variants, in both
-// directions, so either project's packageReleaseResources correctly waits
-// on the OTHER project's resource-generation tasks regardless of which one
-// Gradle happens to evaluate/build first. Registered via
-// `gradle.projectsEvaluated` (fires once every subproject has been
+// ("Declare an explicit dependency ... using Task#dependsOn"). Registered
+// via `gradle.projectsEvaluated` (fires once every subproject has been
 // configured) so it works regardless of project evaluation order, and
 // guarded with null-checks throughout so it's a harmless no-op if a future
 // dependency bump removes the duplicate (or renames the projects) rather
 // than failing the build outright.
+//
+// A first version of this fix only wired the ONE consumer task named in the
+// original error (packageReleaseResources, type MergeResources). The very
+// next build hit a DIFFERENT consumer task racing the same producer output —
+// extractDeepLinksRelease (type ExtractDeepLinksTask) also reads
+// generateReleaseResValues's res/resValues directory, and Gradle validates
+// this per task-type, not per producer, so each new consumer task type is a
+// separate validation failure. Rather than keep enumerating exact task names
+// one whack-a-mole round at a time, every task in the consumer project whose
+// name matches the same build variant (Release/Debug) is made to depend on
+// the producer's generateResValues/generateResources tasks for that variant
+// — broad, but harmless (a few extra ordering edges within one small,
+// mutually-duplicate pair of projects), and it closes this class of bug for
+// good instead of one task name at a time.
 module.exports = function withSentryGradleTaskOrderingFix(config) {
   return withProjectBuildGradle(config, (config) => {
     const marker = "withSentryGradleTaskOrderingFix";
@@ -49,8 +59,8 @@ module.exports = function withSentryGradleTaskOrderingFix(config) {
 // ${marker} — see apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
 gradle.projectsEvaluated {
     def sentryProjectPaths = [':sentry-react-native', ':sentry_react-native']
-    def producerTaskNames = ['generateReleaseResValues', 'generateReleaseResources', 'generateDebugResValues', 'generateDebugResources']
-    def consumerTaskNames = ['packageReleaseResources', 'packageDebugResources']
+    def variants = ['Release', 'Debug']
+    def producerTaskSuffixes = ['ResValues', 'Resources']
 
     sentryProjectPaths.each { producerPath ->
         def producerProject = findProject(producerPath)
@@ -61,14 +71,17 @@ gradle.projectsEvaluated {
             def consumerProject = findProject(consumerPath)
             if (consumerProject == null) return
 
-            producerTaskNames.each { producerTaskName ->
-                def producerTask = producerProject.tasks.findByName(producerTaskName)
-                if (producerTask == null) return
+            variants.each { variant ->
+                def producerTasks = producerTaskSuffixes.collect { suffix ->
+                    producerProject.tasks.findByName("generate${variant}${suffix}")
+                }.findAll { it != null }
+                if (producerTasks.isEmpty()) return
 
-                consumerTaskNames.each { consumerTaskName ->
-                    def consumerTask = consumerProject.tasks.findByName(consumerTaskName)
-                    if (consumerTask != null) {
-                        consumerTask.dependsOn(producerTask)
+                consumerProject.tasks.matching { it.name.contains(variant) }.each { consumerTask ->
+                    producerTasks.each { producerTask ->
+                        if (consumerTask != producerTask) {
+                            consumerTask.dependsOn(producerTask)
+                        }
                     }
                 }
             }

@@ -10105,19 +10105,30 @@ validation now rejects that race as a hard failure instead of silently toleratin
 **Fixed** with `apps/mobile/plugins/withSentryGradleTaskOrderingFix.js` (new, registered in
 `app.config.ts`'s `plugins` array right after `withFmtConstevalFix`) — a `withProjectBuildGradle`
 config plugin appending a `gradle.projectsEvaluated` block to `android/build.gradle` that declares
-the missing `dependsOn` directly (Gradle's own suggested fix #2 for this exact error class), for
-every producer/consumer task-name pair across both project-name variants, in both directions, so
-whichever project Gradle happens to build first doesn't matter. Guarded with null-checks throughout
-(`findProject`/`tasks.findByName`) so it's a harmless no-op if a future dependency bump removes the
-duplicate or renames either project, rather than failing the build outright.
+the missing `dependsOn` directly (Gradle's own suggested fix #2 for this exact error class).
+Guarded with null-checks throughout (`findProject`/`tasks.findByName`) so it's a harmless no-op if
+a future dependency bump removes the duplicate or renames either project, rather than failing the
+build outright.
+
+**First version only covered the exact task named in the original error
+(`packageReleaseResources`, type `MergeResources`) — the very next build hit a *different*
+consumer task racing the same producer output** (`extractDeepLinksRelease`, type
+`ExtractDeepLinksTask` — also reads `generateReleaseResValues`'s `res/resValues` directory, and
+Gradle validates per task *type*, not per producer, so each new consumer task type is its own
+separate validation failure). Rather than keep enumerating exact task names one whack-a-mole round
+at a time, the fix now makes **every task in the consumer project whose name matches the same
+build variant** (Release/Debug) depend on the producer's `generateResValues`/`generateResources`
+tasks for that variant — broader than Gradle's own minimal suggestion, but harmless (a few extra
+ordering edges within one small, mutually-duplicate pair of projects), and it closes this class of
+bug for good instead of one task name at a time. **If a third consumer-task-type failure somehow
+still turns up, it means some other producer task besides `generateResValues`/`generateResources`
+is being raced — check the new error's own "output of task X" line, since that's the new producer
+to add to `producerTaskSuffixes`, not the consumer to add to an enumerated list.**
 
 Not verified against a real Gradle/Android toolchain — this sandbox has none. Verified via
 `node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
 embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
-actually clears the `MergeResources` validation error before considering it closed — if it doesn't,
-the two project names/task names to check first (via a build log or `npx expo-modules-autolinking
-verify -v`) are whatever Gradle's error message names, since a future dependency version could shift
-which task pair races.
+actually clears the Gradle validation error before considering it closed.
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
