@@ -18,6 +18,69 @@ class Culture_Newsletter_Send {
         add_action( 'wp_ajax_culture_nl_send_test',  array( __CLASS__, 'ajax_send_test' ) );
         add_action( 'wp_ajax_culture_nl_send_issue', array( __CLASS__, 'ajax_send_issue' ) );
         add_action( 'wp_ajax_culture_nl_get_status', array( __CLASS__, 'ajax_get_status' ) );
+
+        add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
+    }
+
+    /**
+     * REST equivalent of the "Send Issue" admin button, for automated/headless
+     * publishing (e.g. an Application Password client that creates a
+     * culture_newsletter post and then wants to trigger the send without a
+     * browser session). The AJAX handlers above can't be used for this — they
+     * require check_ajax_referer(), a CSRF nonce tied to a live logged-in
+     * browser session, which an Application Password has no way to produce.
+     * Application Password auth is exempt from nonce checks under WP core's
+     * REST authentication stack, so a plain capability check here is enough.
+     */
+    public static function register_rest_routes() {
+        register_rest_route( 'culture/v1', '/newsletter/send-issue', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'rest_send_issue' ),
+            'permission_callback' => function ( $request ) {
+                $post_id = absint( $request->get_param( 'post_id' ) );
+                return $post_id && current_user_can( 'edit_post', $post_id );
+            },
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer' ),
+                'list'    => array( 'required' => false, 'type' => 'string' ),
+                'segment' => array( 'required' => false, 'type' => 'string' ),
+            ),
+        ) );
+    }
+
+    /**
+     * REST callback for POST /culture/v1/newsletter/send-issue.
+     * Same underlying call as ajax_send_issue() — Culture_Newsletter_Queue
+     * queues subscribers, WP-Cron dispatches batches of 50 every minute.
+     */
+    public static function rest_send_issue( WP_REST_Request $request ) {
+        $post_id = absint( $request->get_param( 'post_id' ) );
+
+        if ( 'culture_newsletter' !== get_post_type( $post_id ) ) {
+            return new WP_REST_Response( array( 'message' => __( 'Invalid post.', 'culture-community' ) ), 400 );
+        }
+
+        // Same as the AJAX handler — let the caller override list/segment at
+        // send time without requiring a separate save step first.
+        $list = $request->get_param( 'list' );
+        if ( null !== $list ) {
+            self::persist_list_meta( $post_id, $list, $request->get_param( 'segment' ) ?? '' );
+        }
+
+        $count = Culture_Newsletter_Queue::schedule_send( $post_id );
+
+        if ( false === $count ) {
+            return new WP_REST_Response( array( 'message' => __( 'No subscribers found.', 'culture-community' ) ), 400 );
+        }
+
+        return new WP_REST_Response( array(
+            'message' => sprintf(
+                /* translators: %s: formatted subscriber count */
+                __( 'Queued for %s subscribers. Batches of 50 will go out every minute.', 'culture-community' ),
+                number_format( $count )
+            ),
+            'total'   => $count,
+        ), 200 );
     }
 
     const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
