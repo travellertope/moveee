@@ -169,7 +169,7 @@ const amplifyUK: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "85", currency: "£",
       features: [
-        { label: "Paid social boost — The British Moveee channels", included: true },
+        { label: "Paid social boost — The Moveee channels", included: true },
         { label: "Audience location & interest targeting", included: false },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit UK newsletter premium slot", included: false },
@@ -240,7 +240,7 @@ const amplifyUS: TierService = {
       billingNote: "Monthly Recurring Option Also Available",
       price: "100", currency: "$",
       features: [
-        { label: "Paid social boost — The Moveee America channels", included: true },
+        { label: "Paid social boost — The Moveee channels", included: true },
         { label: "Audience location & interest targeting", included: false },
         { label: "1-week Instagram Feed pin", included: false },
         { label: "GetMeLit US newsletter premium slot", included: false },
@@ -398,7 +398,7 @@ const moveeeProUK: TierService = {
   ],
   addOns: [
     { icon: "🎥", price: "£250", description: "Video Interview (Virtual) — recorded long-form conversation published on The Moveee's video channels." },
-    { icon: "📱", price: "£150", description: "Instagram Live Q&A — live session hosted on The British Moveee Instagram, open to our full follower base." },
+    { icon: "📱", price: "£150", description: "Instagram Live Q&A — live session hosted on The Moveee Instagram, open to our full follower base." },
     { icon: "🎬", price: "£450", description: "Promo Trailer — short-form video asset for your own channels to drive pre-orders, ticket sales, or awareness." },
   ],
 };
@@ -449,7 +449,7 @@ const moveeeProUS: TierService = {
   ],
   addOns: [
     { icon: "🎥", price: "$380", description: "Video Interview (Virtual) — recorded long-form conversation published on The Moveee's video channels." },
-    { icon: "📱", price: "$230", description: "Instagram Live Q&A — live session hosted on The Moveee America Instagram, open to our full follower base." },
+    { icon: "📱", price: "$230", description: "Instagram Live Q&A — live session hosted on The Moveee Instagram, open to our full follower base." },
     { icon: "🎬", price: "$650", description: "Promo Trailer — short-form video asset for your own channels to drive pre-orders, ticket sales, or awareness." },
   ],
 };
@@ -459,7 +459,7 @@ const moveeeProUS: TierService = {
 export const MARKETS: Market[] = [
   {
     id: "africa",
-    name: "Moveee Africa",
+    name: "The Moveee",
     flag: "🌍",
     tagline: "Editorial, commerce, events, and media services for Nigerian and global audiences.",
     currency: "₦",
@@ -709,7 +709,7 @@ export const MARKETS: Market[] = [
 
   {
     id: "uk",
-    name: "The British Moveee",
+    name: "The Moveee",
     flag: "🇬🇧",
     tagline: "Editorial, commerce, and media services for our community across Britain.",
     currency: "£",
@@ -728,7 +728,7 @@ export const MARKETS: Market[] = [
               "1 × longform editorial feature (800–1,200 words)",
               "3 social posts + Reel/TikTok option",
               "GetMeLit UK newsletter feature",
-              "Archived on The British Moveee editorial hub",
+              "Archived on The Moveee editorial hub",
             ],
           },
         ],
@@ -764,7 +764,7 @@ export const MARKETS: Market[] = [
               "Distribution to UK digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
-              "1 × The British Moveee editorial mention per quarter",
+              "1 × The Moveee editorial mention per quarter",
             ],
           },
           {
@@ -777,7 +777,7 @@ export const MARKETS: Market[] = [
               "2 press releases + 1 thought leadership piece per month",
               "Distribution to UK and international digital publications",
               "Monthly strategy call + performance report",
-              "1 × The British Moveee editorial feature per quarter",
+              "1 × The Moveee editorial feature per quarter",
             ],
           },
           {
@@ -793,7 +793,7 @@ export const MARKETS: Market[] = [
               "Thought leadership + op-ed placements",
               "Outreach to mainstream UK and international publications",
               "Weekly strategy touchpoint",
-              "Monthly The British Moveee editorial feature",
+              "Monthly The Moveee editorial feature",
               "Crisis and reputation management support",
             ],
           },
@@ -872,7 +872,7 @@ export const MARKETS: Market[] = [
             includes: [
               "Day-of live social coverage + content creation",
               "Post-event editorial on Moveee Happenings UK",
-              "Official The British Moveee media partner badge",
+              "Official The Moveee media partner badge",
             ],
           },
           {
@@ -885,7 +885,7 @@ export const MARKETS: Market[] = [
               "Full festival coverage across all days",
               "Daily social content + highlights recap",
               "Pre/post festival editorial on Moveee Happenings UK",
-              "Official The British Moveee media partner badge",
+              "Official The Moveee media partner badge",
             ],
           },
           {
@@ -959,7 +959,7 @@ export const MARKETS: Market[] = [
 
   {
     id: "us",
-    name: "The Moveee America",
+    name: "The Moveee",
     flag: "🇺🇸",
     tagline: "Editorial, commerce, and media services for a global, culturally engaged community across the United States.",
     currency: "$",
@@ -977,8 +977,8 @@ export const MARKETS: Market[] = [
             includes: [
               "Sponsored editorial feature (branded)",
               "GetMeLit US newsletter placement",
-              "Social amplification across The Moveee America channels",
-              "Archived on The Moveee America editorial hub",
+              "Social amplification across The Moveee channels",
+              "Archived on The Moveee editorial hub",
             ],
           },
         ],
@@ -1014,7 +1014,7 @@ export const MARKETS: Market[] = [
               "Distribution to US digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
-              "1 × The Moveee America editorial mention per quarter",
+              "1 × The Moveee editorial mention per quarter",
             ],
           },
           {
@@ -1027,7 +1027,7 @@ export const MARKETS: Market[] = [
               "2 press releases + 1 thought leadership piece per month",
               "Distribution to US and international digital publications",
               "Monthly strategy call + performance report",
-              "1 × The Moveee America editorial feature per quarter",
+              "1 × The Moveee editorial feature per quarter",
             ],
           },
           {
@@ -1043,7 +1043,7 @@ export const MARKETS: Market[] = [
               "Thought leadership + op-ed placements",
               "Outreach to mainstream US and international publications",
               "Weekly strategy touchpoint",
-              "Monthly The Moveee America editorial feature",
+              "Monthly The Moveee editorial feature",
               "Crisis and reputation management support",
             ],
           },
@@ -1122,7 +1122,7 @@ export const MARKETS: Market[] = [
             includes: [
               "Day-of live coverage + content creation",
               "Post-event editorial on Moveee Happenings US",
-              "Official The Moveee America media partner badge",
+              "Official The Moveee media partner badge",
             ],
           },
           {
@@ -1135,7 +1135,7 @@ export const MARKETS: Market[] = [
               "Full festival coverage across all days",
               "Daily social content + highlights recap",
               "Pre/post festival editorial on Moveee Happenings US",
-              "Official The Moveee America media partner badge",
+              "Official The Moveee media partner badge",
             ],
           },
           {
