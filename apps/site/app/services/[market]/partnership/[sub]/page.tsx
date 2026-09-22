@@ -2,19 +2,20 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket, type TierPackage } from "../../../market-data";
-import { PARTNERSHIP_CATEGORIES, getPartnershipCategory } from "../../../partnership-pages";
+import { getPartnershipCategories, getPartnershipCategory } from "../../../partnership-pages";
 import { isPayableTier } from "../../../payment-lookup";
 
-function checkoutHref(subCategoryId: string, itemName: string, label: string, price: string) {
-  const params = new URLSearchParams({ partnership: subCategoryId, item: itemName, kind: "one_time", label, price });
+const VALID_MARKETS = ["africa", "uk", "us"];
+
+function checkoutHref(market: string, subCategoryId: string, itemName: string, label: string, price: string) {
+  const params = new URLSearchParams({ market, partnership: subCategoryId, item: itemName, kind: "one_time", label, price });
   return `/services/checkout?${params.toString()}`;
 }
 
 export function generateStaticParams() {
-  return PARTNERSHIP_CATEGORIES.map((cat) => ({
-    market: "africa",
-    sub: cat.id,
-  }));
+  return VALID_MARKETS.flatMap((market) =>
+    getPartnershipCategories(market).map((cat) => ({ market, sub: cat.id }))
+  );
 }
 
 export async function generateMetadata({
@@ -22,8 +23,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ market: string; sub: string }>;
 }): Promise<Metadata> {
-  const { sub } = await params;
-  const cat = getPartnershipCategory(sub);
+  const { market, sub } = await params;
+  const cat = getPartnershipCategory(market, sub);
   if (!cat) return { title: { absolute: "Media Partnership | Moveee" } };
   return {
     title: { absolute: `${cat.label} — Media Partnership | Moveee` },
@@ -31,7 +32,7 @@ export async function generateMetadata({
   };
 }
 
-function TierGrid({ packages, subCategoryId }: { packages: TierPackage[]; subCategoryId: string }) {
+function TierGrid({ packages, market, subCategoryId }: { packages: TierPackage[]; market: string; subCategoryId: string }) {
   return (
     <div className="svc-fgrid svc-fgrid--auto">
       {packages.map((pkg) => {
@@ -65,7 +66,7 @@ function TierGrid({ packages, subCategoryId }: { packages: TierPackage[]; subCat
             </ul>
             {canBuy ? (
               <Link
-                href={checkoutHref(subCategoryId, pkg.name, pkg.name, priceLabel)}
+                href={checkoutHref(market, subCategoryId, pkg.name, pkg.name, priceLabel)}
                 className="svc-btn-primary svc-price-cta"
               >
                 {pkg.cta}
@@ -92,16 +93,16 @@ export default async function PartnershipSubPage({
 }) {
   const { market, sub } = await params;
 
-  if (market !== "africa") redirect("/services");
+  if (!VALID_MARKETS.includes(market)) redirect("/services");
 
   const marketData = getMarket(market);
   if (!marketData) redirect("/services");
 
-  const cat = getPartnershipCategory(sub);
+  const cat = getPartnershipCategory(market, sub);
   if (!cat) notFound();
 
   const content = cat.page;
-  const otherCategories = PARTNERSHIP_CATEGORIES.filter((c) => c.id !== sub);
+  const otherCategories = getPartnershipCategories(market).filter((c) => c.id !== sub);
 
   const emailSubject = encodeURIComponent(
     `Partnership Enquiry — ${cat.label}`
@@ -179,7 +180,7 @@ export default async function PartnershipSubPage({
           <div className="svc-section-head">
             <h2 className="svc-section-title">Three-month packages.</h2>
           </div>
-          <TierGrid packages={cat.service.packages} subCategoryId={sub} />
+          <TierGrid packages={cat.service.packages} market={market} subCategoryId={sub} />
 
           {cat.service.addOns && cat.service.addOns.length > 0 && (
             <div className="svc-addons">

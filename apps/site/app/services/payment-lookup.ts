@@ -104,11 +104,12 @@ export function resolveSectionPayment(
 }
 
 export function resolvePartnershipPayment(
+  market: string,
   subCategoryId: string,
   itemName: string,
   kind: PaymentKind
 ): ResolvedPrice | null {
-  const cat = getPartnershipCategory(subCategoryId);
+  const cat = getPartnershipCategory(market, subCategoryId);
   if (!cat) return null;
   const pkg = cat.service.packages.find((p) => p.name === itemName);
   if (!pkg) return null;
