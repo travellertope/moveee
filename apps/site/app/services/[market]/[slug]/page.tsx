@@ -74,11 +74,10 @@ function TierGrid({ packages }: { packages: TierPackage[] }) {
         <div key={pkg.name} className={`svc-price-card${pkg.highlight ? " svc-price-card--tint" : ""}`}>
           <div className="svc-price-top">
             <h3>{pkg.name}</h3>
-            <span className={`svc-tag${pkg.highlight ? " svc-tag--ochre" : ""}`}>
-              {pkg.highlight ? pkg.featuredBadge ?? "Most popular" : pkg.billingNote}
-            </span>
+            {pkg.highlight && (
+              <span className="svc-tag svc-tag--ochre">{pkg.featuredBadge ?? "Most popular"}</span>
+            )}
           </div>
-          {pkg.highlight && <p className="svc-price-desc">{pkg.billingNote}</p>}
           <div className="svc-price-row">
             <span className="svc-price-amount">{pkg.currency}{pkg.price}</span>
             {pkg.unit && <span className="svc-price-unit">{pkg.unit}</span>}
