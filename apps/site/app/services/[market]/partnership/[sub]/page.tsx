@@ -3,6 +3,12 @@ import { redirect, notFound } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket, type TierPackage } from "../../../market-data";
 import { PARTNERSHIP_CATEGORIES, getPartnershipCategory } from "../../../partnership-pages";
+import { isPayableTier } from "../../../payment-lookup";
+
+function checkoutHref(subCategoryId: string, itemName: string, label: string, price: string) {
+  const params = new URLSearchParams({ partnership: subCategoryId, item: itemName, kind: "one_time", label, price });
+  return `/services/checkout?${params.toString()}`;
+}
 
 export function generateStaticParams() {
   return PARTNERSHIP_CATEGORIES.map((cat) => ({
@@ -25,11 +31,13 @@ export async function generateMetadata({
   };
 }
 
-function TierGrid({ packages }: { packages: TierPackage[] }) {
+function TierGrid({ packages, subCategoryId }: { packages: TierPackage[]; subCategoryId: string }) {
   return (
     <div className="svc-fgrid svc-fgrid--auto">
       {packages.map((pkg) => {
         const isHighlight = pkg.highlight ?? false;
+        const priceLabel = `${pkg.currency}${pkg.price}`;
+        const canBuy = isPayableTier(pkg, "one_time");
         return (
           <div key={pkg.name} className={`svc-price-card${isHighlight ? " svc-price-card--tint" : ""}`}>
             <div className="svc-price-top">
@@ -55,12 +63,21 @@ function TierGrid({ packages }: { packages: TierPackage[] }) {
                 );
               })}
             </ul>
-            <a
-              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Partnership Enquiry — ${pkg.name}`)}`}
-              className="svc-btn-primary svc-price-cta"
-            >
-              {pkg.cta}
-            </a>
+            {canBuy ? (
+              <Link
+                href={checkoutHref(subCategoryId, pkg.name, pkg.name, priceLabel)}
+                className="svc-btn-primary svc-price-cta"
+              >
+                {pkg.cta}
+              </Link>
+            ) : (
+              <a
+                href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Partnership Enquiry — ${pkg.name}`)}`}
+                className="svc-btn-primary svc-price-cta"
+              >
+                {pkg.cta}
+              </a>
+            )}
           </div>
         );
       })}
@@ -162,7 +179,7 @@ export default async function PartnershipSubPage({
           <div className="svc-section-head">
             <h2 className="svc-section-title">Three-month packages.</h2>
           </div>
-          <TierGrid packages={cat.service.packages} />
+          <TierGrid packages={cat.service.packages} subCategoryId={sub} />
 
           {cat.service.addOns && cat.service.addOns.length > 0 && (
             <div className="svc-addons">

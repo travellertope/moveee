@@ -399,6 +399,45 @@
 .svc-related a:hover { background: var(--paper-deep); }
 .svc-related a span { color: var(--ochre); flex-shrink: 0; }
 
+/* ── Checkout page (Stripe/Paystack — see payment-lookup.ts + checkout/page.tsx) ── */
+.svc-checkout-wrap { max-width: 520px; padding-bottom: 96px; }
+.svc-checkout-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(28px, 4vw, 40px);
+  margin: 8px 0 16px;
+}
+.svc-checkout-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
+  background: var(--paper-deep);
+  padding: 20px 24px;
+  margin: 28px 0;
+}
+.svc-checkout-summary-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .03em; color: var(--mute); margin: 0 0 4px; }
+.svc-checkout-summary-name { font-family: var(--font-serif); font-weight: 500; font-size: 19px; margin: 0; }
+.svc-checkout-summary-price { font-family: var(--font-serif); font-weight: 500; font-size: 22px; margin: 0; white-space: nowrap; }
+.svc-checkout-form { display: flex; flex-direction: column; gap: 18px; }
+.svc-checkout-field { display: flex; flex-direction: column; gap: 8px; }
+.svc-checkout-field label { font-family: var(--font-sans); font-weight: 700; font-size: 12.5px; color: var(--ink-soft); }
+.svc-checkout-field input {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  padding: 13px 16px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  color: var(--ink);
+}
+.svc-checkout-field input:focus { outline: none; border-color: var(--ochre); }
+.svc-checkout-error { font-family: var(--font-sans); font-size: 13.5px; color: var(--ochre); margin: 0; }
+.svc-checkout-submit { justify-content: center; width: 100%; margin-top: 4px; }
+.svc-checkout-submit:disabled { opacity: .6; cursor: default; }
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .svc-wrap { padding: 0 40px; }

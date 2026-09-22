@@ -3,9 +3,12 @@ import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket } from "../../market-data";
 import { PARTNERSHIP_CATEGORIES } from "../../partnership-pages";
+import { ServiceSectionDetail, getServiceSectionMetadata } from "../[slug]/page";
+
+const VALID_MARKETS = ["africa", "uk", "us"];
 
 export function generateStaticParams() {
-  return [{ market: "africa" }];
+  return VALID_MARKETS.map((market) => ({ market }));
 }
 
 export async function generateMetadata({
@@ -14,6 +17,13 @@ export async function generateMetadata({
   params: Promise<{ market: string }>;
 }): Promise<Metadata> {
   const { market } = await params;
+
+  // Only Africa has the richer, discipline-by-discipline Partnership Hub
+  // below — UK/US have a single "Media Partnership" section instead (see
+  // the routing note further down), so their metadata comes from the same
+  // place [slug]/page.tsx already uses for every other section.
+  if (market !== "africa") return getServiceSectionMetadata(market, "partnership");
+
   const data = getMarket(market);
   if (!data) return { title: { absolute: "Media Partnership | Moveee" } };
   return {
@@ -29,7 +39,21 @@ export default async function PartnershipHubPage({
   params: Promise<{ market: string }>;
 }) {
   const { market } = await params;
-  if (market !== "africa") redirect("/services");
+  if (!VALID_MARKETS.includes(market)) redirect("/services");
+
+  // The Africa-only, per-discipline Partnership Hub below (Publishers /
+  // Galleries / Filmmakers, each with its own 3-month tiered packages) has
+  // no UK/US equivalent in the data — those two markets each have one
+  // plain "Media Partnership" section instead (market-data.ts). This
+  // folder (`partnership/`) is a literal, static route segment, so it
+  // always wins the URL match over the sibling `[slug]/` dynamic route,
+  // for every market — without this branch, a UK/US visitor hitting
+  // /services/{market}/partnership would 404 (or be redirected away)
+  // rather than ever reaching their market's real "partnership" section
+  // content, even though that content exists. Render it directly here.
+  if (market !== "africa") {
+    return <ServiceSectionDetail market={market} slug="partnership" />;
+  }
 
   const marketData = getMarket(market);
   if (!marketData) redirect("/services");
