@@ -3,7 +3,13 @@ import { redirect, notFound } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket, type Section, type RateCard, type TierPackage } from "../../market-data";
 import { getServicePage } from "../../service-pages";
+import { isPayableCard, isPayableTier } from "../../payment-lookup";
 import { sanitizeHtml } from "@/lib/sanitize";
+
+function checkoutHref(market: string, sectionId: string, itemName: string, kind: "one_time" | "subscription", label: string, price: string) {
+  const params = new URLSearchParams({ market, section: sectionId, item: itemName, kind, label, price });
+  return `/services/checkout?${params.toString()}`;
+}
 
 const VALID_MARKETS = ["africa", "uk", "us"];
 
@@ -25,6 +31,17 @@ export async function generateMetadata({
   params: Promise<{ market: string; slug: string }>;
 }): Promise<Metadata> {
   const { market, slug } = await params;
+  return getServiceSectionMetadata(market, slug);
+}
+
+// Shared by both this catch-all route and [market]/partnership/page.tsx —
+// "partnership" is a real section on every market's data (see
+// market-data.ts), but a literal `partnership/` folder sits beside this
+// `[slug]/` one and always wins the route match for that URL segment,
+// regardless of market. UK/US never reach this file for slug="partnership"
+// even though they have real section data for it, so that route renders
+// this exact same detail view directly for them instead of redirecting away.
+export function getServiceSectionMetadata(market: string, slug: string): Metadata {
   const content = getServicePage(market, slug);
   const marketData = getMarket(market);
   if (!content || !marketData) return { title: { absolute: "Media Services | Moveee" } };
@@ -34,7 +51,7 @@ export async function generateMetadata({
   };
 }
 
-function CardGrid({ cards, columns }: { cards: RateCard[]; columns?: 2 }) {
+function CardGrid({ cards, columns, market, sectionId }: { cards: RateCard[]; columns?: 2; market: string; sectionId: string }) {
   return (
     <div className={`svc-fgrid ${columns === 2 ? "svc-fgrid--2" : "svc-fgrid--auto"}`}>
       {cards.map((card) => (
@@ -55,95 +72,119 @@ function CardGrid({ cards, columns }: { cards: RateCard[]; columns?: 2 }) {
               <li key={item}><span className="svc-check">✓</span>{item}</li>
             ))}
           </ul>
-          <a
-            href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${card.name}`)}`}
-            className="svc-btn-primary svc-price-cta"
-          >
-            Enquire →
-          </a>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TierGrid({ packages }: { packages: TierPackage[] }) {
-  return (
-    <div className="svc-fgrid svc-fgrid--auto">
-      {packages.map((pkg) => (
-        <div key={pkg.name} className={`svc-price-card${pkg.highlight ? " svc-price-card--tint" : ""}`}>
-          <div className="svc-price-top">
-            <h3>{pkg.name}</h3>
-            {pkg.highlight && (
-              <span className="svc-tag svc-tag--ochre">{pkg.featuredBadge ?? "Most popular"}</span>
-            )}
-          </div>
-          <div className="svc-price-row">
-            <span className="svc-price-amount">{pkg.currency}{pkg.price}</span>
-            {pkg.unit && <span className="svc-price-unit">{pkg.unit}</span>}
-          </div>
-          <ul className="svc-price-includes">
-            {pkg.features.map((f) => {
-              const isIncluded = typeof f.included === "string"
-                ? !f.included.startsWith("0")
-                : f.included;
-              return (
-                <li key={f.label}>
-                  <span className={`svc-check${isIncluded ? "" : " svc-check--no"}`}>{isIncluded ? "✓" : "–"}</span>
-                  {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="svc-price-ctas">
-            <a
-              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${pkg.name}`)}`}
+          {isPayableCard(card) ? (
+            <Link
+              href={checkoutHref(market, sectionId, card.name, "one_time", card.name, card.price)}
               className="svc-btn-primary svc-price-cta"
             >
-              {pkg.cta}
+              Buy now →
+            </Link>
+          ) : (
+            <a
+              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${card.name}`)}`}
+              className="svc-btn-primary svc-price-cta"
+            >
+              Enquire →
             </a>
-            {pkg.ctaSecondary && (
-              <a
-                href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Monthly Plan — ${pkg.name}`)}`}
-                className="svc-btn-ghost svc-price-cta-secondary"
-              >
-                {pkg.ctaSecondary}
-              </a>
-            )}
-          </div>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-function PricingSection({ section }: { section: Section }) {
+function TierGrid({ packages, market, sectionId }: { packages: TierPackage[]; market: string; sectionId: string }) {
+  return (
+    <div className="svc-fgrid svc-fgrid--auto">
+      {packages.map((pkg) => {
+        const priceLabel = `${pkg.currency}${pkg.price}`;
+        const canBuy = isPayableTier(pkg, "one_time");
+        const canSubscribe = isPayableTier(pkg, "subscription");
+        return (
+          <div key={pkg.name} className={`svc-price-card${pkg.highlight ? " svc-price-card--tint" : ""}`}>
+            <div className="svc-price-top">
+              <h3>{pkg.name}</h3>
+              {pkg.highlight && (
+                <span className="svc-tag svc-tag--ochre">{pkg.featuredBadge ?? "Most popular"}</span>
+              )}
+            </div>
+            <div className="svc-price-row">
+              <span className="svc-price-amount">{priceLabel}</span>
+              {pkg.unit && <span className="svc-price-unit">{pkg.unit}</span>}
+            </div>
+            <ul className="svc-price-includes">
+              {pkg.features.map((f) => {
+                const isIncluded = typeof f.included === "string"
+                  ? !f.included.startsWith("0")
+                  : f.included;
+                return (
+                  <li key={f.label}>
+                    <span className={`svc-check${isIncluded ? "" : " svc-check--no"}`}>{isIncluded ? "✓" : "–"}</span>
+                    {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="svc-price-ctas">
+              {canBuy ? (
+                <Link
+                  href={checkoutHref(market, sectionId, pkg.name, "one_time", pkg.name, priceLabel)}
+                  className="svc-btn-primary svc-price-cta"
+                >
+                  {pkg.cta}
+                </Link>
+              ) : (
+                <a
+                  href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${pkg.name}`)}`}
+                  className="svc-btn-primary svc-price-cta"
+                >
+                  {pkg.cta}
+                </a>
+              )}
+              {pkg.ctaSecondary && (
+                canSubscribe ? (
+                  <Link
+                    href={checkoutHref(market, sectionId, pkg.name, "subscription", `${pkg.name} — Monthly`, `${priceLabel}/mo`)}
+                    className="svc-btn-ghost svc-price-cta-secondary"
+                  >
+                    {pkg.ctaSecondary}
+                  </Link>
+                ) : (
+                  <a
+                    href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Monthly Plan — ${pkg.name}`)}`}
+                    className="svc-btn-ghost svc-price-cta-secondary"
+                  >
+                    {pkg.ctaSecondary}
+                  </a>
+                )
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PricingSection({ section, market }: { section: Section; market: string }) {
   if (section.kind === "cards") {
-    return <CardGrid cards={section.cards} columns={section.columns} />;
+    return <CardGrid cards={section.cards} columns={section.columns} market={market} sectionId={section.id} />;
   }
   if (section.kind === "tiers") {
-    return <TierGrid packages={section.service.packages} />;
+    return <TierGrid packages={section.service.packages} market={market} sectionId={section.id} />;
   }
   return (
     <>
-      <CardGrid cards={section.cards} />
+      <CardGrid cards={section.cards} market={market} sectionId={section.id} />
       <p className="svc-addons-label" style={{ marginTop: 40 }}>
         {section.serviceLabel ?? section.service.eyebrow}
       </p>
-      <TierGrid packages={section.service.packages} />
+      <TierGrid packages={section.service.packages} market={market} sectionId={section.id} />
     </>
   );
 }
 
-export default async function SlugPage({
-  params,
-}: {
-  params: Promise<{ market: string; slug: string }>;
-}) {
-  const { market, slug } = await params;
-
-  if (!VALID_MARKETS.includes(market)) redirect("/services");
-
+export async function ServiceSectionDetail({ market, slug }: { market: string; slug: string }) {
   const marketData = getMarket(market);
   if (!marketData) redirect("/services");
 
@@ -243,7 +284,7 @@ export default async function SlugPage({
             </div>
           )}
 
-          <PricingSection section={section} />
+          <PricingSection section={section} market={market} />
 
           {"crossSellTo" in section && section.crossSellTo && (
             <div className="svc-crosssell">
@@ -323,4 +364,16 @@ export default async function SlugPage({
       </div>
     </div>
   );
+}
+
+export default async function SlugPage({
+  params,
+}: {
+  params: Promise<{ market: string; slug: string }>;
+}) {
+  const { market, slug } = await params;
+
+  if (!VALID_MARKETS.includes(market)) redirect("/services");
+
+  return <ServiceSectionDetail market={market} slug={slug} />;
 }

@@ -62,6 +62,9 @@ class Culture_Activator {
         // Paid ticket sales table.
         Culture_Ticket_Payment::create_table();
 
+        // /services (Media Services) payment table.
+        Culture_Services_Payment::create_table();
+
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
 

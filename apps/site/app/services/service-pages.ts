@@ -857,6 +857,80 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaSubtext: "Starter from £250/month. Growth from £450/month.",
     },
 
+    partnership: {
+      headline: "For UK Publishers, Galleries, and Filmmakers Building an Ongoing Programme",
+      tagline: "A sustained media partnership for UK cultural organisations — not a one-off feature, but a media relationship built around your programme.",
+      intro: [
+        "A book launch, an exhibition opening, a festival premiere — these deserve more than a single mention squeezed into a roundup. The Moveee Media Partnership exists because independent publishers, art galleries, and filmmakers across Britain are chronically underserved by media that only shows up once, if at all.",
+        "This isn't sponsorship for logo placement. It's an editorial partnership over a three-month window: reviews written by people who understand the form, interviews given proper space, news releases for your launches, and social coverage tied to your actual programming calendar.",
+        "Three tiers, one per discipline — Publishers — Debut from £180, Galleries — Preview from £280, Filmmakers — Development from £220. Each covers one review, one interview or spotlight, two news releases, and social media sync across the three-month partnership window.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Onboarding & Brief",
+          body: "We schedule a short onboarding call to understand your programme, your audience, and the key moments over the partnership window — a launch date, an opening night, a premiere. From that we build a content schedule.",
+        },
+        {
+          step: "02",
+          title: "Reviews & Interviews",
+          body: "For publishers, review copies come to our editorial team. For galleries, our reviewers attend or receive access. For filmmakers, screeners are arranged. Interviews are scheduled with your team, to the agreed calendar.",
+        },
+        {
+          step: "03",
+          title: "Publish Across The Moveee",
+          body: "Reviews, interviews, and news releases publish on The Moveee and distribute through our UK newsletter — sustained coverage that builds into a real media archive, not a single burst of attention.",
+        },
+        {
+          step: "04",
+          title: "Social Sync",
+          body: "Every piece of content gets social support, synced to your own announcement moments. Add-ons — a video interview, an Instagram Live Q&A, a promo trailer — are available for landmark moments within the partnership.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Sustained Coverage, Not a One-Off",
+          body: "A single review is forgotten within the week. A three-month partnership means recurring visibility — a review, an interview, and social content that keeps your organisation in conversation through the window that actually matters.",
+        },
+        {
+          title: "Editorial Credibility, Not Advertorial",
+          body: "Our reviews read as reviews, with real opinions and real context. That's what makes them worth having attached to your organisation's name — coverage that's earned, not bought.",
+        },
+        {
+          title: "Reach Across the UK's Culturally Engaged Audience",
+          body: "Our newsletter reaches creatives and professionals across London, Birmingham, Manchester, and Bristol — the same audience that already engages with our Sponsored Content and Amplify services.",
+        },
+        {
+          title: "Add-Ons for Landmark Moments",
+          body: "A video interview, an Instagram Live Q&A, or a promo trailer can be booked for a specific launch or event within the partnership window, on top of the core package.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Is this only for book publishers?",
+          answer: "No — the three tiers cover publishers, galleries, and filmmakers specifically, but any UK cultural organisation with editorial merit is welcome to get in touch, including theatres, museums, and arts nonprofits.",
+        },
+        {
+          question: "How is this different from Sponsored Content?",
+          answer: "Sponsored Content is a single commissioned feature about your brand or product. Media Partnership is a three-month editorial relationship — reviews, interviews, and news releases tied to your actual programme, not a one-off placement.",
+        },
+        {
+          question: "How long does a review take after we send the book or arrange access?",
+          answer: "We aim for publication within three to four weeks. For a launch with a fixed date, tell us upfront and we'll schedule around it.",
+        },
+        {
+          question: "Can we influence the editorial angle of a review?",
+          answer: "No — reviews are editorially independent, which is what makes them valuable. You can provide context and press materials; the editorial team decides the angle and conclusion.",
+        },
+        {
+          question: "What happens after the three months?",
+          answer: "Partnerships are renewable around your next programme cycle — a new title, a new season, a new release. Get in touch ahead of the expiry date to keep coverage continuous.",
+        },
+      ],
+      ctaLabel: "Enquire about a partnership →",
+      ctaSubtext: "Publishers from £180 · Galleries from £280 · Filmmakers from £220.",
+    },
+
     events: {
       headline: "Your Event Is Part of UK Culture. Cover It Like It Is.",
       tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for our community.",
@@ -1363,6 +1437,80 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       ctaLabel: "Book a strategy call →",
       ctaSubtext: "Starter from $350/month. Growth from $650/month.",
+    },
+
+    partnership: {
+      headline: "For Publishers, Galleries, and Filmmakers Building an Ongoing Programme in the US",
+      tagline: "A sustained media partnership for US cultural organisations — not a one-off feature, but a media relationship built around your programme.",
+      intro: [
+        "A book launch, an exhibition opening, a festival premiere — across New York, Atlanta, Houston, DC, and LA, these deserve more than a single mention squeezed into a roundup. The Moveee Media Partnership exists because independent publishers, art galleries, and filmmakers are chronically underserved by media that only shows up once, if at all.",
+        "This isn't sponsorship for logo placement. It's an editorial partnership over a three-month window: reviews written by people who understand the form, interviews given proper space, news releases for your launches, and social coverage tied to your actual programming calendar.",
+        "Three tiers, one per discipline — Publishers — Debut from $280, Galleries — Preview from $420, Filmmakers — Development from $350. Each covers one review, one interview or spotlight, two news releases, and social media sync across the three-month partnership window.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Onboarding & Brief",
+          body: "We schedule a short onboarding call to understand your programme, your audience, and the key moments over the partnership window — a launch date, an opening night, a premiere. From that we build a content schedule.",
+        },
+        {
+          step: "02",
+          title: "Reviews & Interviews",
+          body: "For publishers, review copies come to our editorial team. For galleries, our reviewers attend or receive access. For filmmakers, screeners are arranged. Interviews are scheduled with your team, to the agreed calendar.",
+        },
+        {
+          step: "03",
+          title: "Publish Across The Moveee",
+          body: "Reviews, interviews, and news releases publish on The Moveee and distribute through our US newsletter — sustained coverage that builds into a real media archive, not a single burst of attention.",
+        },
+        {
+          step: "04",
+          title: "Social Sync",
+          body: "Every piece of content gets social support, synced to your own announcement moments. Add-ons — a video interview, an Instagram Live Q&A, a promo trailer — are available for landmark moments within the partnership.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Sustained Coverage, Not a One-Off",
+          body: "A single review is forgotten within the week. A three-month partnership means recurring visibility — a review, an interview, and social content that keeps your organisation in conversation through the window that actually matters.",
+        },
+        {
+          title: "Editorial Credibility, Not Advertorial",
+          body: "Our reviews read as reviews, with real opinions and real context. That's what makes them worth having attached to your organisation's name — coverage that's earned, not bought.",
+        },
+        {
+          title: "Reach Across US Cities",
+          body: "Our newsletter reaches creatives and professionals across New York, Atlanta, Houston, DC, and LA — the same audience that already engages with our Sponsored Content and Amplify services.",
+        },
+        {
+          title: "Add-Ons for Landmark Moments",
+          body: "A video interview, an Instagram Live Q&A, or a promo trailer can be booked for a specific launch or event within the partnership window, on top of the core package.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Is this only for book publishers?",
+          answer: "No — the three tiers cover publishers, galleries, and filmmakers specifically, but any US cultural organisation with editorial merit is welcome to get in touch, including theatres, museums, and arts nonprofits.",
+        },
+        {
+          question: "How is this different from Sponsored Content?",
+          answer: "Sponsored Content is a single commissioned feature about your brand or product. Media Partnership is a three-month editorial relationship — reviews, interviews, and news releases tied to your actual programme, not a one-off placement.",
+        },
+        {
+          question: "How long does a review take after we send the book or arrange access?",
+          answer: "We aim for publication within three to four weeks. For a launch with a fixed date, tell us upfront and we'll schedule around it.",
+        },
+        {
+          question: "Can we influence the editorial angle of a review?",
+          answer: "No — reviews are editorially independent, which is what makes them valuable. You can provide context and press materials; the editorial team decides the angle and conclusion.",
+        },
+        {
+          question: "What happens after the three months?",
+          answer: "Partnerships are renewable around your next programme cycle — a new title, a new season, a new release. Get in touch ahead of the expiry date to keep coverage continuous.",
+        },
+      ],
+      ctaLabel: "Enquire about a partnership →",
+      ctaSubtext: "Publishers from $280 · Galleries from $420 · Filmmakers from $350.",
     },
 
     events: {

@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     2.2.5
+ * Version:     2.3.0
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.9.0' );
+define( 'CULTURE_VERSION', '3.0.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -88,6 +88,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-services-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-literary-submissions.php';
@@ -160,6 +161,7 @@ function culture_community_init() {
     Culture_Clusters_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
     Culture_Shop_Checkout::init();
+    Culture_Services_Payment::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
     Culture_Follows::init();
