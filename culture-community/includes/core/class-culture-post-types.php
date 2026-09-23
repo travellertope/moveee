@@ -1096,7 +1096,14 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-calendar-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            // 'custom-fields' is required for WordPress core to expose the
+            // `meta` property on this post type's REST schema at all — see
+            // WP_REST_Posts_Controller::get_item_schema()'s `case
+            // 'custom-fields':` branch. Without it, register_post_meta()
+            // calls for this type are fully registered internally but never
+            // reach the REST response, regardless of show_in_rest/
+            // auth_callback. This bit every custom post type in this file.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'events' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1124,7 +1131,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-book-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'directory' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1151,7 +1160,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'digest' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1226,7 +1237,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'getmelit' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1251,7 +1264,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'culture-drop' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1378,7 +1393,9 @@ class Culture_Post_Types {
             'show_ui'             => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-groups',
-            'supports'            => array( 'title' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'custom-fields' ),
             'show_in_rest'        => true,
             'rest_base'           => 'clusters',
             'capability_type'     => 'post',
@@ -1403,7 +1420,9 @@ class Culture_Post_Types {
             'show_ui'             => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-groups',
-            'supports'            => array( 'title' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'custom-fields' ),
             'show_in_rest'        => true,
             'rest_base'           => 'hubs',
             'capability_type'     => 'post',
