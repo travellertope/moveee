@@ -62,7 +62,11 @@ class Culture_Newsletter_Queue {
         }
 
         // Determine which list and segment this newsletter targets.
-        $nl_list    = self::resolve_nl_list( $post_id, '' );
+        // Default matches send_to()/send_test() below ('getmelit') — NOT an
+        // empty string. An empty string here would make the `if ( $nl_list )`
+        // filter below never engage, silently broadcasting to every
+        // subscriber across every list instead of falling back safely.
+        $nl_list    = self::resolve_nl_list( $post_id, 'getmelit' );
         $nl_segment = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
 
         // Standardize to email strings for the snapshot, filtering by list and segment.
