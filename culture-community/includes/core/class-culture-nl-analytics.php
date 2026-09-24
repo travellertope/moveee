@@ -598,24 +598,18 @@ class Culture_NL_Analytics {
         $avg_ctr       = $n > 0
             ? round( array_sum( array_column( $campaign_data, 'ctr' ) ) / $n, 1 )
             : 0.0;
-        $total_sent       = array_sum( array_column( $campaign_data, 'sent' ) );
-        $subscribers_list = get_option( 'culture_newsletter_subscribers', array() );
-        $subscribers      = is_array( $subscribers_list ) ? count( $subscribers_list ) : 0;
+        $total_sent  = array_sum( array_column( $campaign_data, 'sent' ) );
+        $subscribers = Culture_Subscribers_DB::count();
 
-        // Per-list (and per-list+segment) subscriber counts.
-        $list_counts = array_fill_keys( array_keys( self::LIST_LABELS ), 0 );
-        foreach ( $subscribers_list as $sub ) {
-            $sub_lists   = is_array( $sub ) ? ( $sub['lists']   ?? array() ) : array();
-            if ( empty( $sub_lists ) ) {
-                // Legacy plain-string subscriber counts as GetMeLit.
-                $list_counts['getmelit'] = ( $list_counts['getmelit'] ?? 0 ) + 1;
-            } else {
-                foreach ( array_keys( $list_counts ) as $lk ) {
-                    if ( in_array( $lk, $sub_lists, true ) ) {
-                        $list_counts[ $lk ]++;
-                    }
-                }
-            }
+        // Per-list subscriber counts, now backed by the real list registry
+        // rather than the fixed LIST_LABELS constant — so a Hub list or any
+        // admin-created list shows up here too, not just the 6 defaults.
+        $list_counts = array();
+        foreach ( Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_CONTENT ) as $list ) {
+            $list_counts[ $list['slug'] ] = Culture_Newsletter_Lists::subscriber_count( $list['id'] );
+        }
+        foreach ( Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_SYSTEM ) as $list ) {
+            $list_counts[ $list['slug'] ] = Culture_Newsletter_Lists::subscriber_count( $list['id'] );
         }
 
         return array(
@@ -629,35 +623,43 @@ class Culture_NL_Analytics {
     }
 
     /**
-     * Find a subscriber's raw record from the subscribers option.
-     * Returns the record array (object subscriber) or a synthesised array for
-     * legacy plain-string entries. Returns null if not found.
+     * Find a subscriber's record, in the same {email,name,date,lists,segment}
+     * shape callers (the admin subscriber-detail view) already expect.
+     * `lists` is every list this subscriber belongs to, content and region
+     * alike; `segment` is the first region-type list found, purely for this
+     * legacy display shape — a subscriber can now belong to more than one
+     * region, which this single field can't represent, but no caller reads
+     * more than one.
      *
      * @param  string $email
      * @return array|null
      */
     public static function get_subscriber_record( $email ) {
-        $email       = strtolower( trim( $email ) );
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $sub = Culture_Subscribers_DB::find_by_email( $email );
+        if ( ! $sub ) {
+            return null;
+        }
 
-        foreach ( $subscribers as $sub ) {
-            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( strtolower( trim( $sub_email ) ) === $email ) {
-                if ( is_array( $sub ) ) {
-                    return $sub;
-                }
-                // Normalise legacy plain-string entry.
-                return array(
-                    'email'   => $email,
-                    'name'    => '',
-                    'date'    => '',
-                    'lists'   => array( 'getmelit' ),
-                    'segment' => '',
-                );
+        $lists  = array();
+        $segment = '';
+        foreach ( Culture_Subscribers_DB::get_list_ids( $sub['id'] ) as $list_id ) {
+            $list = Culture_Newsletter_Lists::get( $list_id );
+            if ( ! $list ) {
+                continue;
+            }
+            $lists[] = $list['slug'];
+            if ( ! $segment && Culture_Newsletter_Lists::TYPE_REGION === $list['type'] ) {
+                $segment = $list['slug'];
             }
         }
 
-        return null;
+        return array(
+            'email'   => $sub['email'],
+            'name'    => $sub['name'],
+            'date'    => $sub['createdAt'],
+            'lists'   => $lists ?: array( 'getmelit' ),
+            'segment' => $segment,
+        );
     }
 
     /**

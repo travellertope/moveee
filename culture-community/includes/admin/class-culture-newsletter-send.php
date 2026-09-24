@@ -218,7 +218,6 @@ class Culture_Newsletter_Send {
         $offset       = $status_data['offset'];
         $percent      = $status_data['percent'];
         $sent_at      = $status_data['sent_at'];
-        $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
         $current_user = wp_get_current_user();
 
         $nl_list      = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
@@ -226,57 +225,38 @@ class Culture_Newsletter_Send {
         $nl_issue_num = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
         $list_locked  = in_array( get_post_type( $post->ID ), array( 'getmelit', 'culture_drop' ), true );
 
-        $lists_config = array(
-            'getmelit'                  => 'GetMeLit',
-            'culture-drop'              => 'Culture Drop',
-            'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
-            'vendor-letter'             => 'The Vendor Letter (waitlist)',
-            'origins-field-notes'       => 'Origins Field Notes (waitlist)',
-            'announcements'             => 'Announcements (hidden from frontend archive)',
-        );
+        // Lists (content + system) and segments (region + the virtual 'pro'
+        // filter) are now sourced from the real list registry — a Hub list
+        // or a custom list an admin creates shows up here immediately, with
+        // no code change (September 2026; see Culture_Newsletter_Lists).
+        $lists_config = array();
+        foreach ( array_merge(
+            Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_CONTENT ),
+            Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_SYSTEM )
+        ) as $l ) {
+            $lists_config[ $l['slug'] ] = $l['name'];
+        }
 
-        $segments_config = array(
-            ''       => 'All segments',
-            'africa' => 'Africa (All — NG, GH, KE, ZA + more)',
-            'us'     => 'The Moveee America (US)',
-            'uk'     => 'The British Moveee (UK)',
-            'ng'     => 'Nigeria',
-            'gh'     => 'Ghana',
-            'ke'     => 'Kenya',
-            'za'     => 'South Africa',
-            'ca'     => 'Canada',
-            'au'     => 'Australia',
-            'pro'    => 'Moveee Pro Members',
-        );
+        $segments_config = array( '' => 'All segments' );
+        foreach ( Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_REGION ) as $l ) {
+            $segments_config[ $l['slug'] ] = $l['name'];
+        }
+        $segments_config['africa'] = 'Africa (All — NG, GH, KE, ZA + more)';
+        $segments_config['pro']    = 'Moveee Pro Members';
 
         // Build counts[list][segment] — empty string segment = whole list total.
-        $counts_map = array(
-            'getmelit'      => array( '' => 0 ),
-            'culture-drop'  => array( '' => 0 ),
-            'announcements' => array( '' => 0 ),
-        );
-
-        if ( is_array( $subscribers ) ) {
-            foreach ( $subscribers as $sub ) {
-                $sub_lists   = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
-                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-
-                // Legacy entries (no lists field) count only towards getmelit.
-                if ( empty( $sub_lists ) ) {
-                    $counts_map['getmelit']['']++;
-                    if ( $sub_segment ) {
-                        $counts_map['getmelit'][ $sub_segment ] = ( $counts_map['getmelit'][ $sub_segment ] ?? 0 ) + 1;
-                    }
-                } else {
-                    foreach ( array_keys( $counts_map ) as $lk ) {
-                        if ( in_array( $lk, $sub_lists, true ) ) {
-                            $counts_map[ $lk ]['']++;
-                            if ( $sub_segment ) {
-                                $counts_map[ $lk ][ $sub_segment ] = ( $counts_map[ $lk ][ $sub_segment ] ?? 0 ) + 1;
-                            }
-                        }
-                    }
+        $counts_map = array();
+        foreach ( $lists_config as $slug => $label ) {
+            $list_row = Culture_Newsletter_Lists::get_by_slug( $slug );
+            if ( ! $list_row ) {
+                continue;
+            }
+            $counts_map[ $slug ] = array( '' => Culture_Newsletter_Lists::subscriber_count( $list_row['id'] ) );
+            foreach ( $segments_config as $seg_slug => $seg_label ) {
+                if ( '' === $seg_slug ) {
+                    continue;
                 }
+                $counts_map[ $slug ][ $seg_slug ] = count( Culture_Subscribers_DB::resolve_send_emails( $list_row['id'], $seg_slug ) );
             }
         }
 

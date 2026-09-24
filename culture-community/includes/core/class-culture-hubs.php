@@ -123,6 +123,53 @@ class Culture_Hubs {
         if ( class_exists( 'Culture_Clusters' ) ) {
             Culture_Clusters::maybe_backfill_companion_hubs();
         }
+        self::maybe_backfill_hub_lists();
+    }
+
+    /**
+     * One-time backfill (September 2026): every Hub that existed before the
+     * Hub-auto-list feature shipped gets its list provisioned now, and every
+     * currently-active member is subscribed to it — same end state as if the
+     * Hub had been created/joined after this feature existed. Gated so it
+     * only ever runs once; a Hub created afterwards already gets this via
+     * create()/join() directly.
+     */
+    private static function maybe_backfill_hub_lists() {
+        if ( '1' === get_option( 'culture_hub_lists_backfilled', '' ) ) {
+            return;
+        }
+        if ( ! class_exists( 'Culture_Newsletter_Lists' ) || ! class_exists( 'Culture_Subscribers_DB' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $hub_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'culture_hub' AND post_status = 'publish'" );
+
+        foreach ( $hub_ids as $hub_id ) {
+            $name = get_post_meta( $hub_id, '_hub_name', true ) ?: get_the_title( $hub_id );
+            $slug = get_post_meta( $hub_id, '_hub_slug', true );
+            if ( ! $name || ! $slug ) {
+                continue;
+            }
+
+            $list = Culture_Newsletter_Lists::get_or_create_for_hub( $hub_id, $name, $slug );
+            if ( ! $list ) {
+                continue;
+            }
+
+            $member_ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT user_id FROM " . self::members_table() . " WHERE hub_id = %d AND status = 'active'",
+                $hub_id
+            ) );
+            foreach ( $member_ids as $member_id ) {
+                $member = get_userdata( $member_id );
+                if ( $member && is_email( $member->user_email ) ) {
+                    Culture_Subscribers_DB::subscribe( $member->user_email, array( $list['slug'] ), $member->display_name, '', (int) $member_id );
+                }
+            }
+        }
+
+        update_option( 'culture_hub_lists_backfilled', '1' );
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -866,6 +913,21 @@ class Culture_Hubs {
             'status'    => 'active',
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
+        // Every Hub automatically gets its own newsletter list so members
+        // can be emailed as a group (September 2026) — the owner is
+        // auto-subscribed here the same way join() subscribes every later
+        // member, since the owner's own membership row above is inserted
+        // directly rather than going through join().
+        if ( class_exists( 'Culture_Newsletter_Lists' ) ) {
+            $list = Culture_Newsletter_Lists::get_or_create_for_hub( $post_id, $name, $slug );
+            if ( $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+                $owner = get_userdata( $user_id );
+                if ( $owner && is_email( $owner->user_email ) ) {
+                    Culture_Subscribers_DB::subscribe( $owner->user_email, array( $list['slug'] ), $owner->display_name, '', $user_id );
+                }
+            }
+        }
+
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'hub_created' );
         }
@@ -998,6 +1060,19 @@ class Culture_Hubs {
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
 
+        // Auto-subscribe to the Hub's newsletter list (opt-out available
+        // afterwards via the Subscribers admin page or a future
+        // preferences UI) — this is what actually makes "send an email to
+        // this Hub's members" possible, per the September 2026 decision to
+        // default every Hub list to opt-out-on-join.
+        if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) ) {
+            $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+            $joiner   = get_userdata( $user_id );
+            if ( $hub_list && $joiner && is_email( $joiner->user_email ) ) {
+                Culture_Subscribers_DB::subscribe( $joiner->user_email, array( $hub_list['slug'] ), $joiner->display_name, '', $user_id );
+            }
+        }
+
         // Hub Founder badge (docs/hubs-plan.md §6.2) — re-evaluated against
         // the owner, not the joining member, since crossing the 10-member
         // threshold is the owner's achievement. award_points()/award_reputation()
@@ -1061,6 +1136,18 @@ class Culture_Hubs {
         }
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+        // Mirror of the auto-subscribe on join() above — leaving a Hub also
+        // removes the member from its newsletter list. Only that one list
+        // membership is touched; any other list the person is on (getmelit,
+        // another Hub, etc.) is unaffected.
+        if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) ) {
+            $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+            $leaver   = get_userdata( $user_id );
+            if ( $hub_list && $leaver && is_email( $leaver->user_email ) ) {
+                Culture_Subscribers_DB::remove_from_list_slug( $leaver->user_email, $hub_list['slug'] );
+            }
+        }
 
         return true;
     }

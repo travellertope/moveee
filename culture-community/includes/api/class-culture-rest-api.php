@@ -2759,12 +2759,11 @@ class Culture_REST_API {
             );
         }
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-            $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-            return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-        } ) );
-        update_option( 'culture_newsletter_subscribers', $updated, false );
+        // A one-click "unsubscribe from everything" — the frontend's own
+        // /newsletter/unsubscribe page (unlike the email footer link, which
+        // is scoped to the one list that email came from, see
+        // Culture_Newsletter_Queue::handle_unsubscribe()).
+        Culture_Subscribers_DB::delete_subscriber_by_email( $email );
 
         // Log for analytics — this lets us attribute unsubs to the campaign that triggered them.
         if ( class_exists( 'Culture_NL_Analytics' ) ) {
@@ -2779,8 +2778,13 @@ class Culture_REST_API {
 
     /**
      * Handle newsletter subscription.
-     * Stores subscribers as objects: { email, name, date, lists[], segment }.
-     * Legacy plain-string entries are preserved and treated as GetMeLit subscribers.
+     *
+     * `list` is validated against the real list registry (Culture_Newsletter_Lists)
+     * rather than a hardcoded array — this is what makes a new list (a
+     * custom one an admin creates, or one auto-provisioned for a Hub) usable
+     * from this endpoint with zero code changes. Only 'content'/'system'
+     * type lists are accepted here; 'region' rows are what `segment` picks
+     * from instead.
      */
     public static function handle_newsletter_subscribe( $request ) {
         $email   = $request->get_param( 'email' );
@@ -2789,8 +2793,8 @@ class Culture_REST_API {
         $segment = $request->get_param( 'segment' ) ?: '';
         $tier    = $request->get_param( 'tier' ) ?: '';
 
-        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
-        if ( ! in_array( $list, $allowed_lists, true ) ) {
+        $list_row = Culture_Newsletter_Lists::get_by_slug( $list );
+        if ( ! $list_row || Culture_Newsletter_Lists::TYPE_REGION === $list_row['type'] ) {
             $list = 'culture-drop';
         }
 
@@ -2799,78 +2803,19 @@ class Culture_REST_API {
             $segment = '';
         }
 
-        // 'patron' is the internal DB value for Moveee Pro — stored as-is on the
-        // subscriber record so Pro-only newsletter campaigns can target it.
-        $is_pro = ( 'patron' === $tier );
+        // 'patron' (Moveee Pro) is not stored as list membership — Pro-only
+        // sends are resolved live against _culture_membership_tier at send
+        // time (see Culture_Subscribers_DB::resolve_send_emails()'s 'pro'
+        // branch), so $tier itself needs no persistence here.
+        unset( $tier );
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $was_existing = (bool) Culture_Subscribers_DB::find_by_email( $email );
 
-        // Find existing subscriber (handles both legacy strings and new objects).
-        $found_idx = null;
-        foreach ( $subscribers as $i => $sub ) {
-            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
-                $found_idx = $i;
-                break;
-            }
+        $list_slugs = array( $list );
+        if ( $segment ) {
+            $list_slugs[] = $segment;
         }
-
-        if ( null !== $found_idx ) {
-            $existing = $subscribers[ $found_idx ];
-
-            if ( is_array( $existing ) ) {
-                // Already an object — add list if not present, refresh segment/pro tag.
-                // NOTE: we intentionally do not force-add 'announcements' here — an
-                // existing subscriber may have already opted out of it via preferences,
-                // and re-subscribing to a different list shouldn't silently undo that.
-                $lists = $existing['lists'] ?? array();
-                if ( ! in_array( $list, $lists, true ) ) {
-                    $lists[] = $list;
-                    $subscribers[ $found_idx ]['lists'] = $lists;
-                }
-                if ( $segment ) {
-                    $subscribers[ $found_idx ]['segment'] = $segment;
-                }
-                if ( $tier ) {
-                    $subscribers[ $found_idx ]['pro'] = $is_pro;
-                }
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
-            } else {
-                // Upgrade legacy plain-string to object, add new list. Legacy entries
-                // predate the 'announcements' list, so they get backfilled onto it too
-                // (mirrors maybe_backfill_announcements() in Culture_Subscribers).
-                $subscribers[ $found_idx ] = array(
-                    'email'   => $email,
-                    'name'    => $name,
-                    'date'    => current_time( 'mysql' ),
-                    'lists'   => array( 'getmelit', $list, 'announcements' ),
-                    'segment' => $segment,
-                    'pro'     => $is_pro,
-                );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
-            }
-
-            return rest_ensure_response( array(
-                'success' => true,
-                'message' => __( 'You are already subscribed.', 'culture-community' ),
-            ) );
-        }
-
-        // New subscriber. 'announcements' is opt-out (default ON) — every new
-        // subscriber is added to it unless they later remove it via preferences.
-        $new_lists = array( $list );
-        if ( ! in_array( 'announcements', $new_lists, true ) ) {
-            $new_lists[] = 'announcements';
-        }
-        $subscribers[] = array(
-            'email'   => $email,
-            'name'    => $name,
-            'date'    => current_time( 'mysql' ),
-            'lists'   => $new_lists,
-            'segment' => $segment,
-            'pro'     => $is_pro,
-        );
-        update_option( 'culture_newsletter_subscribers', $subscribers, false );
+        Culture_Subscribers_DB::subscribe( $email, $list_slugs, $name );
 
         // Award reputation to the matching WP user on their first newsletter subscription.
         // Deferred to WP-Cron so the public subscribe endpoint doesn't block on
@@ -2888,7 +2833,9 @@ class Culture_REST_API {
 
         return rest_ensure_response( array(
             'success' => true,
-            'message' => __( 'Subscribed successfully.', 'culture-community' ),
+            'message' => $was_existing
+                ? __( 'You are already subscribed.', 'culture-community' )
+                : __( 'Subscribed successfully.', 'culture-community' ),
         ) );
     }
 
@@ -3541,33 +3488,17 @@ class Culture_REST_API {
         if ( $user ) {
             update_user_meta( $user->ID, '_culture_newsletter_prefs', $clean );
 
-            // Mirror to global subscriber list based on 'cultural-digest' state.
-            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            $in_list     = false;
-            foreach ( $subscribers as $sub ) {
-                $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-                if ( strtolower( $sub_email ) === strtolower( $email ) ) {
-                    $in_list = true;
-                    break;
-                }
-            }
-
+            // Mirror to the subscriber table based on 'cultural-digest' state
+            // — preserves this endpoint's existing (pre-list-model) behaviour
+            // of creating/removing a bare subscriber record with no list
+            // membership at all when toggled here.
             $wants_main = $clean['cultural-digest'] ?? true;
+            $in_list    = (bool) Culture_Subscribers_DB::find_by_email( $email );
 
             if ( $wants_main && ! $in_list ) {
-                $subscribers[] = array(
-                    'email'    => $email,
-                    'name'     => $user->display_name,
-                    'location' => '',
-                    'date'     => current_time( 'mysql' ),
-                );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
+                Culture_Subscribers_DB::get_or_create( $email, $user->display_name, '', $user->ID );
             } elseif ( ! $wants_main && $in_list ) {
-                $subscribers = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-                    $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-                    return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-                } ) );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
+                Culture_Subscribers_DB::delete_subscriber_by_email( $email );
             }
         }
 

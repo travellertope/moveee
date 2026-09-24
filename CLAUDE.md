@@ -282,9 +282,129 @@ analytics pages, badge/credit toast messages, membership perk copy) is still pen
 
 ## Newsletter system architecture
 
-### Subscriber storage
-Stored as a single WordPress option: `culture_newsletter_subscribers` — an
-array of objects:
+### Subscriber storage — real DB tables (September 2026, supersedes the option-array model below)
+
+**The flat `culture_newsletter_subscribers` wp_options array described in this
+subsection is retired as a write target — it is migrated once, then left
+untouched as a historical snapshot.** Real storage is now three tables:
+`wp_culture_newsletter_lists` (the list/segment **registry** —
+`Culture_Newsletter_Lists`), `wp_culture_subscribers` (one row per email —
+`Culture_Subscribers_DB`), and `wp_culture_subscriber_lists` (many-to-many
+between the two). This is what the old array's `lists[]` and `segment` fields
+used to encode as freeform strings against hardcoded PHP constants
+(`LIST_OPTIONS`/`SEGMENT_OPTIONS` in `class-culture-subscribers.php`, now
+deleted) — they're unified into one thing: any subscriber can belong to any
+number of list rows, and a list row's `type` (`content` / `region` / `system`)
+says what it's for. A `region` row (uk/ng/us/...) is a narrowing filter
+applied alongside a `content` list on a send, not something a subscriber is
+"subscribed to" in the ordinary sense — this preserves the old List+Segment
+two-dropdown shape in the Send Newsletter meta box and in
+`Culture_Subscribers_DB::resolve_send_emails()`, just backed by real rows
+instead of a hardcoded array. `system` (e.g. `announcements`) is hidden from
+the public archive/preferences UI, same as before, via `visibility: 'hidden'`
+and `default_subscribed: 1` (opt-out) columns instead of special-cased code.
+
+**Every write everywhere in the plugin (admin UI, REST endpoints, mobile API,
+imports, WP-CLI, `Culture_Literary_Access`) must go through
+`Culture_Subscribers_DB`** — that class is the single find-or-create/list-
+membership entry point (`subscribe()`, `subscribe_many()`,
+`add_to_list_slug()`, `remove_from_list_slug()`, `resolve_send_emails()`,
+`resolve_emails_for_lists()`). Never call `get_option('culture_newsletter_subscribers')`
+or `update_option()` against it again — the one remaining read of that option
+is the one-time migration inside `Culture_Subscribers_DB::maybe_migrate_from_options()`,
+gated by the `culture_subscribers_migrated_to_db` option so it only ever runs
+once per site.
+
+**Admin UI, three pages under Culture Community**: **Subscribers**
+(`class-culture-subscribers.php`, unchanged menu slug `culture-subscribers`)
+— add/edit/delete subscribers, list-membership checkboxes populated
+dynamically from the registry, search + filter-by-list, CSV export. **Newsletter
+Lists** (`class-culture-newsletter-lists-admin.php`, slug
+`culture-newsletter-lists`, new) — create/rename/delete a list or region row,
+set its type/visibility/opt-out default; this is what makes "manage segments"
+a real, no-code admin action instead of a PHP constant edit. **Campaigns**
+(see "One-off email campaigns" below).
+
+**`Culture_Newsletter_Lists::get_all()`/`get_by_slug()` are what every
+"which lists exist" check reads now** — `handle_newsletter_subscribe()`
+(REST), the Send Newsletter meta box's list/segment dropdowns, and
+`class-culture-nl-analytics.php`'s per-list counts all validate/populate
+against the registry rather than a hardcoded array. A list created on the
+Newsletter Lists admin page (or auto-provisioned for a Hub, see below) is
+immediately usable everywhere with zero code changes — this is what
+"Process: adding a new newsletter" (further down this file) used to require
+editing ~7 files for; that process is now **only relevant for a list that
+needs bespoke frontend UI** (its own subscribe card copy on `/newsletter`,
+its own archive filter tab) — the list/segment/send-targeting plumbing itself
+no longer needs any of those steps.
+
+**Unsubscribe is scoped to the list the email actually came from, not the
+whole account.** `Culture_Newsletter_Queue::handle_unsubscribe()` (the email
+footer link) resolves the list from the `c=` (newsletter post ID) or
+`campaign=` (one-off campaign ID) query param and removes only that
+membership; only a link with neither param (pre-September-2026 already-sent
+mail) falls back to deleting the whole subscriber record. The frontend's own
+`/newsletter/unsubscribe` page (`handle_newsletter_unsubscribe()` REST
+endpoint) is still a full "remove from everything" action, unchanged.
+
+### One-off email campaigns
+
+A send that is **not** a `culture_newsletter`/`getmelit`/`culture_drop` post
+at all — no CPT, no frontend archive entry, no issue number. `Culture_Campaigns`
+(`wp_culture_campaigns` table) owns its own subject/body/target-lists/status
+and reuses `Culture_Newsletter_Queue::build_email()` (now `public`, renamed
+label param to a plain string instead of a hardcoded lookup —
+`build_campaign_email()` is the wrapper Campaigns calls) for the actual HTML
+template, plus the same batched-WP-Cron-dispatch shape as newsletter sends
+(`culture_campaign_process_batch`, 50/batch, 60s apart). Admin UI: **Campaigns**
+page (`class-culture-campaigns-admin.php`, slug `culture-campaigns`) — compose
+with `wp_editor()`, tick one or more lists from the registry (a campaign can
+target several lists in one send — `Culture_Subscribers_DB::resolve_emails_for_lists()`
+unions and dedupes them), Save Draft / Send Test / Send Now. A campaign is
+`draft` → `sending` → `sent`; only a draft can be edited or deleted.
+
+### Hub → newsletter list auto-provisioning
+
+Per an explicit September 2026 decision: **every Hub (`culture_hub` post),
+official or user-created, automatically gets its own newsletter list**, and
+members are **auto-subscribed on join, opt-out available afterward** (not
+opt-in) — same "default ON" posture as the pre-existing `announcements` list.
+- `Culture_Hubs::create()` calls `Culture_Newsletter_Lists::get_or_create_for_hub()`
+  right after inserting the Hub post — slug `hub-{hub_slug}`, type `content`,
+  visibility `hidden` (it's a Hub-management concern, not something a visitor
+  picks off `/newsletter`), `source_type/source_id` = `'hub'`/the Hub's post
+  ID, so the list can always be found again via `get_for_hub()`. The owner is
+  subscribed immediately (their membership row is inserted directly in
+  `create()`, not via `join()`).
+- `Culture_Hubs::join()`/`leave()` call `Culture_Subscribers_DB::subscribe()`/
+  `remove_from_list_slug()` against that same list — this is the actual
+  mechanism that makes "email this Hub's members" possible; nothing else
+  writes to a Hub's list.
+- **Existing Hubs from before this feature shipped are covered by a one-time
+  backfill**, `Culture_Hubs::maybe_backfill_hub_lists()` (hooked in `init()`,
+  gated by `culture_hub_lists_backfilled`, same shape as this file's other
+  `maybe_*` migrations) — provisions a list for every already-published Hub
+  and subscribes every currently-active member, so the end state matches a
+  Hub that had always had this feature.
+- **If you ever need to email a specific Hub's members**, use the Campaigns
+  page and tick that Hub's list (named `"{Hub Name} (Hub)"` in the Newsletter
+  Lists admin page) — don't reach for a bespoke query against
+  `wp_culture_hub_members`, the list is already kept in sync.
+
+### Sending
+Each `culture_newsletter` post has two pieces of post meta:
+- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
+- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
+  `au`) or empty for all
+
+The send queue (`class-culture-newsletter-queue.php`) filters subscribers
+by these meta values at send time (now via `Culture_Subscribers_DB::resolve_send_emails()`,
+not an inline scan of the option array — see above). Batches of 50, 60s
+intervals via WP-Cron.
+
+### Subscriber storage (historical — the option array itself, now migrated)
+Was stored as a single WordPress option: `culture_newsletter_subscribers` —
+an array of objects:
 ```php
 [
   'email'   => 'user@example.com',
@@ -294,18 +414,10 @@ array of objects:
   'segment' => 'uk',                    // regional segment (optional)
 ]
 ```
-Legacy plain-string entries (pre-multi-list) are treated as GetMeLit-only
-throughout the codebase. The `maybe_migrate()` method in
-`class-culture-subscribers.php` upgrades them on load.
-
-### Sending
-Each `culture_newsletter` post has two pieces of post meta:
-- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
-- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
-  `au`) or empty for all
-
-The send queue (`class-culture-newsletter-queue.php`) filters subscribers
-by these meta values at send time. Batches of 50, 60s intervals via WP-Cron.
+Legacy plain-string entries (pre-multi-list) were treated as GetMeLit-only
+throughout the codebase. Kept here for reference only — the option itself is
+never read again after the one-time migration described above; don't add a
+new write path against it.
 
 ### Email template
 Plain white background, no header block. Content flows directly from the

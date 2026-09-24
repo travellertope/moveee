@@ -163,51 +163,17 @@ class Culture_Literary_Access {
 
 	/**
 	 * Add (or update) a subscriber record for the given newsletter list —
-	 * the list-building side of this feature. Mirrors
-	 * Culture_REST_API::handle_newsletter_subscribe()'s find-or-create
-	 * shape rather than calling into it (that logic lives on the public
-	 * newsletter-subscribe endpoint and isn't reusable as a plain
-	 * function), since Culture_Subscribers::merge_subscribers() is private
-	 * to that class.
+	 * the list-building side of this feature. Culture_Subscribers_DB::subscribe()
+	 * (September 2026) is exactly the reusable find-or-create helper this
+	 * docblock used to say didn't exist — now shared across every list-join
+	 * caller (REST subscribe endpoint, imports, WP-CLI, this class) instead
+	 * of each maintaining its own copy of the same logic.
 	 *
 	 * @param string $email
 	 * @param string $list One of NEWSLETTER_LIST_BY_CONTEXT's values.
 	 */
 	private static function add_to_list( $email, $list ) {
-		$subscribers = get_option( 'culture_newsletter_subscribers', array() );
-
-		foreach ( $subscribers as $i => $sub ) {
-			$sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-			if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
-				if ( is_array( $sub ) ) {
-					$lists = $sub['lists'] ?? array();
-					if ( ! in_array( $list, $lists, true ) ) {
-						$lists[] = $list;
-						$subscribers[ $i ]['lists'] = $lists;
-						update_option( 'culture_newsletter_subscribers', $subscribers, false );
-					}
-				} else {
-					$subscribers[ $i ] = array(
-						'email'   => $email,
-						'name'    => '',
-						'date'    => current_time( 'mysql' ),
-						'lists'   => array( 'getmelit', $list, 'announcements' ),
-						'segment' => '',
-					);
-					update_option( 'culture_newsletter_subscribers', $subscribers, false );
-				}
-				return;
-			}
-		}
-
-		$subscribers[] = array(
-			'email'   => $email,
-			'name'    => '',
-			'date'    => current_time( 'mysql' ),
-			'lists'   => array( $list, 'announcements' ),
-			'segment' => '',
-		);
-		update_option( 'culture_newsletter_subscribers', $subscribers, false );
+		Culture_Subscribers_DB::subscribe( $email, array( $list ) );
 	}
 
 	/**

@@ -2920,15 +2920,9 @@ class Culture_Mobile_API {
             }
         }
 
-        // Fall back: check subscriber record for legacy data
+        // Fall back: check the real subscriber table.
         if ( empty( $lists ) && $user ) {
-            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            foreach ( $subscribers as $sub ) {
-                if ( is_array( $sub ) && isset( $sub['email'] ) && $sub['email'] === $user->user_email ) {
-                    $lists = isset( $sub['lists'] ) ? (array) $sub['lists'] : array( 'getmelit' );
-                    break;
-                }
-            }
+            $lists = Culture_Subscribers_DB::get_list_slugs_for_email( $user->user_email );
         }
 
         return rest_ensure_response( array( 'lists' => $lists ) );
