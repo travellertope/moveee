@@ -19,7 +19,7 @@ class Culture_RSVP_Admin {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'culture-community',
+            'culture-ticket-sales',
             __( 'Event RSVPs', 'culture-community' ),
             __( 'RSVPs', 'culture-community' ),
             'manage_options',

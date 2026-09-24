@@ -19,9 +19,26 @@ class Culture_Tickets_Admin {
         add_action( 'admin_post_culture_cancel_ticket',    [ __CLASS__, 'handle_cancel' ] );
     }
 
+    /**
+     * Registers the top-level "Moveee Events" admin menu (September 2026) —
+     * this page (Ticket Sales) is its anchor/first page, same "top-level
+     * slug doubles as one of its own submenu slugs" pattern used by Moveee
+     * Newsletters (see class-culture-subscribers.php). Event RSVPs is
+     * parented to this same slug — see class-culture-rsvp-admin.php.
+     */
     public static function register_menu(): void {
+        add_menu_page(
+            __( 'Moveee Events', 'culture-community' ),
+            __( 'Moveee Events', 'culture-community' ),
+            'manage_options',
+            'culture-ticket-sales',
+            [ __CLASS__, 'render_page' ],
+            'dashicons-calendar-alt',
+            32
+        );
+
         add_submenu_page(
-            'culture-community',
+            'culture-ticket-sales',
             __( 'Ticket Sales', 'culture-community' ),
             __( 'Ticket Sales', 'culture-community' ),
             'manage_options',

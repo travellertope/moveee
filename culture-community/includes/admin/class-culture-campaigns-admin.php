@@ -25,14 +25,18 @@ class Culture_Campaigns_Admin {
     }
 
     public static function maybe_enqueue_editor( $hook ) {
-        if ( 'culture-community_page_culture-campaigns' === $hook ) {
+        // Hook suffix is derived from the parent menu slug — Campaigns is
+        // parented under the "Moveee Newsletters" top-level menu (anchor
+        // slug `culture-subscribers`, see class-culture-subscribers.php),
+        // not `culture-community`, since the September 2026 menu split.
+        if ( 'culture-subscribers_page_culture-campaigns' === $hook ) {
             wp_enqueue_editor();
         }
     }
 
     public static function register_menu() {
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'One-Off Campaigns', 'culture-community' ),
             __( 'Campaigns', 'culture-community' ),
             'manage_options',

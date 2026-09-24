@@ -24,9 +24,9 @@ class Culture_Newsletter_Lists_Admin {
 
     public static function register_menu() {
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'Newsletter Lists & Segments', 'culture-community' ),
-            __( 'Newsletter Lists', 'culture-community' ),
+            __( 'Lists & Segments', 'culture-community' ),
             'manage_options',
             'culture-newsletter-lists',
             array( __CLASS__, 'render_page' )

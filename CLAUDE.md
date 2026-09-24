@@ -391,6 +391,56 @@ opt-in) — same "default ON" posture as the pre-existing `announcements` list.
   Lists admin page) — don't reach for a bespoke query against
   `wp_culture_hub_members`, the list is already kept in sync.
 
+### WP Admin menu structure — split into 3 top-level menus (September 2026)
+
+The single "Culture Community" top-level menu had grown to 15 submenu items
+and was hard to navigate — split into three top-level WP Admin menus. **Every
+slug is unchanged**, only which menu a page is parented under (and, for the
+renamed top-level itself, its label) changed — so no `admin.php?page=...`
+link/bookmark anywhere in the codebase or in anyone's browser needed updating.
+
+- **Moveee Community** (slug `culture-community`, was labelled "Culture
+  Community") — Settings (the default/anchor page), Analytics, Directory
+  Tools, Redirect Manager, Email Templates, Pro Memberships, Literary
+  Submissions, Stoop Clusters. Registered in `class-culture-settings.php`.
+- **Moveee Newsletters** (new, anchor slug `culture-subscribers` — Subscribers
+  is both the top-level page and a submenu of itself, the standard WP
+  "duplicate the anchor slug as the first submenu with its own label" pattern)
+  — Subscribers, Lists & Segments (`culture-newsletter-lists`), Campaigns
+  (`culture-campaigns`), Import Newsletters (`culture-import-newsletters`),
+  Games Subscribers (`culture-games-subscribers` — a separate, older
+  subscriber list for the games feature, unrelated storage to
+  `Culture_Subscribers_DB`, but grouped here since it's the same kind of
+  "manage an email list" concern). Registered in `class-culture-subscribers.php`
+  (top-level `add_menu_page()` + the anchor submenu); every other page in this
+  group just changed its `add_submenu_page()` parent from `culture-community`
+  to `culture-subscribers`.
+- **Moveee Events** (new, anchor slug `culture-ticket-sales`, same pattern) —
+  Ticket Sales, Event RSVPs (`culture-rsvp-manager`). Registered in
+  `class-culture-tickets-admin.php`.
+
+**Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
+check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
+=== $hook`, in `class-culture-campaigns-admin.php`'s `maybe_enqueue_editor()`)
+silently stopped matching once Campaigns was reparented — the hook suffix
+WordPress generates is derived from the parent menu slug
+(`{parent_slug}_page_{slug}` for a submenu of a top-level page, `toplevel_page_{slug}`
+for the top-level page itself), so moving a page to a new parent changes its
+hook suffix even though its own slug is unchanged. **If you ever reparent a
+submenu page again, grep that file (and any file enqueuing assets scoped to
+it) for a hardcoded `{old_parent}_page_{slug}`/`toplevel_page_{slug}` string
+— `class-culture-analytics.php`, `class-culture-nl-analytics-admin.php`, and
+`class-culture-directory-tools.php` all have one of these for pages that
+stayed under Moveee Community and were correctly left alone in this pass, but
+the exact same string needs updating if any of those three ever move.**
+
+**If you add a new admin page to this plugin**, pick a parent by kind:
+newsletter/subscriber/list/campaign-related → `culture-subscribers`;
+ticketing/RSVP-related → `culture-ticket-sales`; anything else → `culture-community`.
+Only add a fourth top-level menu if a new feature area grows to 3+ pages of
+its own — a single new page almost always belongs under one of the three
+above rather than becoming its own top-level menu.
+
 ### Sending
 Each `culture_newsletter` post has two pieces of post meta:
 - `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)

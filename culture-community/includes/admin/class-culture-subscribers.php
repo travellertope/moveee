@@ -37,11 +37,28 @@ class Culture_Subscribers {
     }
 
     /**
-     * Register submenu under Culture Community.
+     * Registers the top-level "Moveee Newsletters" admin menu (September
+     * 2026) — this class's own Subscribers page is its anchor/first page
+     * (slug `culture-subscribers` doubles as both the top-level menu slug
+     * and this submenu's slug, the standard WP pattern for a top-level menu
+     * whose landing page is also one of its own submenus). Every other
+     * newsletter-related admin page (Lists & Segments, Campaigns, Import,
+     * Games Subscribers) is parented to this same slug — see each of their
+     * own register_menu() methods.
      */
     public static function register_menu() {
+        add_menu_page(
+            __( 'Moveee Newsletters', 'culture-community' ),
+            __( 'Moveee Newsletters', 'culture-community' ),
+            'manage_options',
+            'culture-subscribers',
+            array( __CLASS__, 'render_page' ),
+            'dashicons-email-alt',
+            31
+        );
+
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'Newsletter Subscribers', 'culture-community' ),
             __( 'Subscribers', 'culture-community' ),
             'manage_options',

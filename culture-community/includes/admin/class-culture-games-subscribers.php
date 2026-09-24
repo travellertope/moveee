@@ -19,7 +19,7 @@ class Culture_Games_Subscribers {
 
     public static function register_menu() {
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'Games Subscribers', 'culture-community' ),
             __( 'Games Subscribers', 'culture-community' ),
             'manage_options',

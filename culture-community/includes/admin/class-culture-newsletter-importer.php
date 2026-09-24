@@ -22,11 +22,11 @@ class Culture_Newsletter_Importer {
     }
 
     /**
-     * Register submenu under Culture Community.
+     * Register submenu under Moveee Newsletters.
      */
     public static function register_menu() {
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'Import Newsletters', 'culture-community' ),
             __( 'Import Newsletters', 'culture-community' ),
             'manage_options',
