@@ -621,7 +621,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "UK Stories, Told With the Weight They Deserve",
       tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand culture isn't a segment — it's a craft.",
       intro: [
-        "The UK's culturally engaged audience — across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious in the country. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
+        "The UK's culturally engaged audience — across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious in the country. It is also one of the most consistently misread by mainstream media. The Moveee Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
         "The flat rate is £600, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
@@ -639,7 +639,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "03",
           title: "Publish & Distribute",
-          body: "The feature goes live on The British Moveee, drops into our newsletter, and three native social posts roll out. You receive all links and a performance summary within 72 hours of publication.",
+          body: "The feature goes live on The Moveee, drops into our newsletter, and three native social posts roll out. You receive all links and a performance summary within 72 hours of publication.",
         },
         {
           step: "04",
@@ -699,7 +699,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Our Shoppers Are Intentional. Meet Them Where They Are.",
       tagline: "Curated commerce and editorial for brands our community actually wants — not brands that want to be seen in it.",
       intro: [
-        "The British Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
+        "The Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
         "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit UK newsletter distribution, and social promotion for £250 flat. Seasonal Drop takes it further — at Black History Month, Christmas gifting season, and other high-intent cultural moments, we build coordinated editorial campaigns around a select group of brands.",
         "At every tier, we earn on conversions. Our incentives are aligned with yours.",
       ],
@@ -857,11 +857,85 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaSubtext: "Starter from £250/month. Growth from £450/month.",
     },
 
+    partnership: {
+      headline: "For UK Publishers, Galleries, and Filmmakers Building an Ongoing Programme",
+      tagline: "A sustained media partnership for UK cultural organisations — not a one-off feature, but a media relationship built around your programme.",
+      intro: [
+        "A book launch, an exhibition opening, a festival premiere — these deserve more than a single mention squeezed into a roundup. The Moveee Media Partnership exists because independent publishers, art galleries, and filmmakers across Britain are chronically underserved by media that only shows up once, if at all.",
+        "This isn't sponsorship for logo placement. It's an editorial partnership over a three-month window: reviews written by people who understand the form, interviews given proper space, news releases for your launches, and social coverage tied to your actual programming calendar.",
+        "Three tiers, one per discipline — Publishers — Debut from £180, Galleries — Preview from £280, Filmmakers — Development from £220. Each covers one review, one interview or spotlight, two news releases, and social media sync across the three-month partnership window.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Onboarding & Brief",
+          body: "We schedule a short onboarding call to understand your programme, your audience, and the key moments over the partnership window — a launch date, an opening night, a premiere. From that we build a content schedule.",
+        },
+        {
+          step: "02",
+          title: "Reviews & Interviews",
+          body: "For publishers, review copies come to our editorial team. For galleries, our reviewers attend or receive access. For filmmakers, screeners are arranged. Interviews are scheduled with your team, to the agreed calendar.",
+        },
+        {
+          step: "03",
+          title: "Publish Across The Moveee",
+          body: "Reviews, interviews, and news releases publish on The Moveee and distribute through our UK newsletter — sustained coverage that builds into a real media archive, not a single burst of attention.",
+        },
+        {
+          step: "04",
+          title: "Social Sync",
+          body: "Every piece of content gets social support, synced to your own announcement moments. Add-ons — a video interview, an Instagram Live Q&A, a promo trailer — are available for landmark moments within the partnership.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Sustained Coverage, Not a One-Off",
+          body: "A single review is forgotten within the week. A three-month partnership means recurring visibility — a review, an interview, and social content that keeps your organisation in conversation through the window that actually matters.",
+        },
+        {
+          title: "Editorial Credibility, Not Advertorial",
+          body: "Our reviews read as reviews, with real opinions and real context. That's what makes them worth having attached to your organisation's name — coverage that's earned, not bought.",
+        },
+        {
+          title: "Reach Across the UK's Culturally Engaged Audience",
+          body: "Our newsletter reaches creatives and professionals across London, Birmingham, Manchester, and Bristol — the same audience that already engages with our Sponsored Content and Amplify services.",
+        },
+        {
+          title: "Add-Ons for Landmark Moments",
+          body: "A video interview, an Instagram Live Q&A, or a promo trailer can be booked for a specific launch or event within the partnership window, on top of the core package.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Is this only for book publishers?",
+          answer: "No — the three tiers cover publishers, galleries, and filmmakers specifically, but any UK cultural organisation with editorial merit is welcome to get in touch, including theatres, museums, and arts nonprofits.",
+        },
+        {
+          question: "How is this different from Sponsored Content?",
+          answer: "Sponsored Content is a single commissioned feature about your brand or product. Media Partnership is a three-month editorial relationship — reviews, interviews, and news releases tied to your actual programme, not a one-off placement.",
+        },
+        {
+          question: "How long does a review take after we send the book or arrange access?",
+          answer: "We aim for publication within three to four weeks. For a launch with a fixed date, tell us upfront and we'll schedule around it.",
+        },
+        {
+          question: "Can we influence the editorial angle of a review?",
+          answer: "No — reviews are editorially independent, which is what makes them valuable. You can provide context and press materials; the editorial team decides the angle and conclusion.",
+        },
+        {
+          question: "What happens after the three months?",
+          answer: "Partnerships are renewable around your next programme cycle — a new title, a new season, a new release. Get in touch ahead of the expiry date to keep coverage continuous.",
+        },
+      ],
+      ctaLabel: "Enquire about a partnership →",
+      ctaSubtext: "Publishers from £180 · Galleries from £280 · Filmmakers from £220.",
+    },
+
     events: {
       headline: "Your Event Is Part of UK Culture. Cover It Like It Is.",
       tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for our community.",
       intro: [
-        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define the UK's cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The British Moveee Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
+        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define the UK's cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The Moveee Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
         "We partner with events we believe in editorially. That selectivity is what makes our coverage credible — and what makes readers trust our recommendations enough to show up.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -895,7 +969,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the British Moveee media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected UK media brand.",
+          body: "Use the Moveee media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected UK media brand.",
         },
         {
           title: "Three Editorial Touchpoints",
@@ -1068,9 +1142,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
     amplify: {
       headline: "Push Your Moveee Feature Further",
-      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The British Moveee.",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee.",
       intro: [
-        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The British Moveee. We don't amplify external content — only work published on our own platform.",
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee. We don't amplify external content — only work published on our own platform.",
         "Once your feature is live, Amplify extends its reach through paid social ads targeting culturally engaged audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right people, faster than organic reach alone will manage.",
       ],
@@ -1078,7 +1152,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "01",
           title: "Confirm Your Moveee Feature",
-          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The British Moveee. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
         },
         {
           step: "02",
@@ -1094,7 +1168,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "UK Audience Targeting",
-          body: "Every paid placement targets culturally engaged UK audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
+          body: "Every paid placement targets culturally engaged UK audiences — the same readership that already engages with The Moveee. No wasted impressions on irrelevant demographics.",
         },
         {
           title: "Credibility That Travels",
@@ -1108,7 +1182,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
-          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The British Moveee.",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee.",
         },
         {
           question: "Can I add Amplify after my feature has already gone live?",
@@ -1129,7 +1203,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "For Brands That Know Culture Isn't One Story",
       tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage culturally engaged communities with substance.",
       intro: [
-        "Our audience in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's creative economy and the Nigerian American professional community in the DMV.",
+        "Our audience in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's creative economy and the Nigerian American professional community in the DMV.",
         "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $800 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],
@@ -1207,7 +1281,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Our Audience Shops With Intention. Be Worth Discovering.",
       tagline: "Curated commerce and editorial for brands that deserve a place in the cultural conversation.",
       intro: [
-        "The Moveee America Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of our audience with zero risk.",
+        "The Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of our audience with zero risk.",
         "When you're ready for full editorial treatment, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit US newsletter distribution, and social promotion for $450 flat. Seasonal Drop positions your brand inside Juneteenth, Black History Month, and holiday gifting season — coordinated editorial campaigns built around high-intent cultural moments.",
         "At every tier, we earn on confirmed conversions. Our incentives are aligned with yours.",
       ],
@@ -1365,11 +1439,85 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaSubtext: "Starter from $350/month. Growth from $650/month.",
     },
 
+    partnership: {
+      headline: "For Publishers, Galleries, and Filmmakers Building an Ongoing Programme in the US",
+      tagline: "A sustained media partnership for US cultural organisations — not a one-off feature, but a media relationship built around your programme.",
+      intro: [
+        "A book launch, an exhibition opening, a festival premiere — across New York, Atlanta, Houston, DC, and LA, these deserve more than a single mention squeezed into a roundup. The Moveee Media Partnership exists because independent publishers, art galleries, and filmmakers are chronically underserved by media that only shows up once, if at all.",
+        "This isn't sponsorship for logo placement. It's an editorial partnership over a three-month window: reviews written by people who understand the form, interviews given proper space, news releases for your launches, and social coverage tied to your actual programming calendar.",
+        "Three tiers, one per discipline — Publishers — Debut from $280, Galleries — Preview from $420, Filmmakers — Development from $350. Each covers one review, one interview or spotlight, two news releases, and social media sync across the three-month partnership window.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Onboarding & Brief",
+          body: "We schedule a short onboarding call to understand your programme, your audience, and the key moments over the partnership window — a launch date, an opening night, a premiere. From that we build a content schedule.",
+        },
+        {
+          step: "02",
+          title: "Reviews & Interviews",
+          body: "For publishers, review copies come to our editorial team. For galleries, our reviewers attend or receive access. For filmmakers, screeners are arranged. Interviews are scheduled with your team, to the agreed calendar.",
+        },
+        {
+          step: "03",
+          title: "Publish Across The Moveee",
+          body: "Reviews, interviews, and news releases publish on The Moveee and distribute through our US newsletter — sustained coverage that builds into a real media archive, not a single burst of attention.",
+        },
+        {
+          step: "04",
+          title: "Social Sync",
+          body: "Every piece of content gets social support, synced to your own announcement moments. Add-ons — a video interview, an Instagram Live Q&A, a promo trailer — are available for landmark moments within the partnership.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Sustained Coverage, Not a One-Off",
+          body: "A single review is forgotten within the week. A three-month partnership means recurring visibility — a review, an interview, and social content that keeps your organisation in conversation through the window that actually matters.",
+        },
+        {
+          title: "Editorial Credibility, Not Advertorial",
+          body: "Our reviews read as reviews, with real opinions and real context. That's what makes them worth having attached to your organisation's name — coverage that's earned, not bought.",
+        },
+        {
+          title: "Reach Across US Cities",
+          body: "Our newsletter reaches creatives and professionals across New York, Atlanta, Houston, DC, and LA — the same audience that already engages with our Sponsored Content and Amplify services.",
+        },
+        {
+          title: "Add-Ons for Landmark Moments",
+          body: "A video interview, an Instagram Live Q&A, or a promo trailer can be booked for a specific launch or event within the partnership window, on top of the core package.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Is this only for book publishers?",
+          answer: "No — the three tiers cover publishers, galleries, and filmmakers specifically, but any US cultural organisation with editorial merit is welcome to get in touch, including theatres, museums, and arts nonprofits.",
+        },
+        {
+          question: "How is this different from Sponsored Content?",
+          answer: "Sponsored Content is a single commissioned feature about your brand or product. Media Partnership is a three-month editorial relationship — reviews, interviews, and news releases tied to your actual programme, not a one-off placement.",
+        },
+        {
+          question: "How long does a review take after we send the book or arrange access?",
+          answer: "We aim for publication within three to four weeks. For a launch with a fixed date, tell us upfront and we'll schedule around it.",
+        },
+        {
+          question: "Can we influence the editorial angle of a review?",
+          answer: "No — reviews are editorially independent, which is what makes them valuable. You can provide context and press materials; the editorial team decides the angle and conclusion.",
+        },
+        {
+          question: "What happens after the three months?",
+          answer: "Partnerships are renewable around your next programme cycle — a new title, a new season, a new release. Get in touch ahead of the expiry date to keep coverage continuous.",
+        },
+      ],
+      ctaLabel: "Enquire about a partnership →",
+      ctaSubtext: "Publishers from $280 · Galleries from $420 · Filmmakers from $350.",
+    },
+
     events: {
       headline: "Cultural Events Deserve More Than an Instagram Post",
       tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for a culturally engaged audience.",
       intro: [
-        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Cultural events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee America Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
+        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Cultural events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
         "We partner with events editorially. That selectivity is the reason our coverage carries weight with readers who've learned to trust our recommendations.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -1403,7 +1551,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the Moveee America media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected culture media brand.",
+          body: "Use the Moveee media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected culture media brand.",
         },
         {
           title: "Editorial Across Three Time Horizons",
@@ -1560,7 +1708,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who are the members?",
-          answer: "Creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about the culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
+          answer: "Creatives, entrepreneurs, and professionals — people who engage with The Moveee and care enough about the culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
         },
         {
           question: "What does the sponsored content slot look like?",
@@ -1584,9 +1732,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
     amplify: {
       headline: "Push Your Moveee Feature Further",
-      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee America.",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee.",
       intro: [
-        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee America. We don't amplify external content — only work published on our own platform.",
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee. We don't amplify external content — only work published on our own platform.",
         "Once your feature is live, Amplify extends its reach through paid social ads targeting culturally engaged audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right audience, faster than organic reach alone will manage.",
       ],
@@ -1594,7 +1742,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "01",
           title: "Confirm Your Moveee Feature",
-          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee America. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
         },
         {
           step: "02",
@@ -1610,7 +1758,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Culturally Specific Targeting",
-          body: "Every paid placement targets culturally engaged audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
+          body: "Every paid placement targets culturally engaged audiences across US cities — the same readership that already engages with The Moveee. Precise, culturally specific, zero wasted spend.",
         },
         {
           title: "Editorial Credibility Behind Every Promotion",
@@ -1624,7 +1772,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
-          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee America.",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee.",
         },
         {
           question: "Can I add Amplify after my feature has already gone live?",

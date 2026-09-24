@@ -62,6 +62,9 @@ class Culture_Activator {
         // Paid ticket sales table.
         Culture_Ticket_Payment::create_table();
 
+        // /services (Media Services) payment table.
+        Culture_Services_Payment::create_table();
+
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
 
@@ -223,6 +226,22 @@ class Culture_Activator {
         // Hub membership + follow tables (docs/hubs-plan.md, Phase 1).
         Culture_Hubs::create_members_table();
         Culture_Hubs::create_follows_table();
+
+        // The Moveee Literary — pending-payment table for the online submission
+        // form's $3 fee (Paystack/Stripe), added September 2026.
+        Culture_Literary_Submissions::create_payments_table();
+
+        // Newsletter subscriber/list management (September 2026) — replaces
+        // the flat `culture_newsletter_subscribers` wp_options array + the
+        // hardcoded LIST_OPTIONS/SEGMENT_OPTIONS constants with real,
+        // admin-manageable tables. See class-culture-newsletter-lists.php
+        // and class-culture-subscribers-db.php.
+        Culture_Newsletter_Lists::create_table();
+        Culture_Subscribers_DB::create_tables();
+
+        // One-off email campaigns — sends that are not tied to any
+        // culture_newsletter/getmelit/culture_drop post at all.
+        Culture_Campaigns::create_table();
 
         update_option( 'culture_db_version', CULTURE_VERSION );
 

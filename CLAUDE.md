@@ -282,9 +282,208 @@ analytics pages, badge/credit toast messages, membership perk copy) is still pen
 
 ## Newsletter system architecture
 
-### Subscriber storage
-Stored as a single WordPress option: `culture_newsletter_subscribers` — an
-array of objects:
+### Subscriber storage — real DB tables (September 2026, supersedes the option-array model below)
+
+**The flat `culture_newsletter_subscribers` wp_options array described in this
+subsection is retired as a write target — it is migrated once, then left
+untouched as a historical snapshot.** Real storage is now three tables:
+`wp_culture_newsletter_lists` (the list/segment **registry** —
+`Culture_Newsletter_Lists`), `wp_culture_subscribers` (one row per email —
+`Culture_Subscribers_DB`), and `wp_culture_subscriber_lists` (many-to-many
+between the two). This is what the old array's `lists[]` and `segment` fields
+used to encode as freeform strings against hardcoded PHP constants
+(`LIST_OPTIONS`/`SEGMENT_OPTIONS` in `class-culture-subscribers.php`, now
+deleted) — they're unified into one thing: any subscriber can belong to any
+number of list rows, and a list row's `type` (`content` / `region` / `system`)
+says what it's for. A `region` row (uk/ng/us/...) is a narrowing filter
+applied alongside a `content` list on a send, not something a subscriber is
+"subscribed to" in the ordinary sense — this preserves the old List+Segment
+two-dropdown shape in the Send Newsletter meta box and in
+`Culture_Subscribers_DB::resolve_send_emails()`, just backed by real rows
+instead of a hardcoded array. `system` (e.g. `announcements`) is hidden from
+the public archive/preferences UI, same as before, via `visibility: 'hidden'`
+and `default_subscribed: 1` (opt-out) columns instead of special-cased code.
+
+**Every write everywhere in the plugin (admin UI, REST endpoints, mobile API,
+imports, WP-CLI, `Culture_Literary_Access`) must go through
+`Culture_Subscribers_DB`** — that class is the single find-or-create/list-
+membership entry point (`subscribe()`, `subscribe_many()`,
+`add_to_list_slug()`, `remove_from_list_slug()`, `resolve_send_emails()`,
+`resolve_emails_for_lists()`). Never call `get_option('culture_newsletter_subscribers')`
+or `update_option()` against it again — the one remaining read of that option
+is the one-time migration inside `Culture_Subscribers_DB::maybe_migrate_from_options()`,
+gated by the `culture_subscribers_migrated_to_db` option so it only ever runs
+once per site.
+
+**Admin UI, three pages under Culture Community**: **Subscribers**
+(`class-culture-subscribers.php`, unchanged menu slug `culture-subscribers`)
+— add/edit/delete subscribers, list-membership checkboxes populated
+dynamically from the registry, search + filter-by-list, CSV export. **Newsletter
+Lists** (`class-culture-newsletter-lists-admin.php`, slug
+`culture-newsletter-lists`, new) — create/rename/delete a list or region row,
+set its type/visibility/opt-out default; this is what makes "manage segments"
+a real, no-code admin action instead of a PHP constant edit. **Campaigns**
+(see "One-off email campaigns" below).
+
+**`Culture_Newsletter_Lists::get_all()`/`get_by_slug()` are what every
+"which lists exist" check reads now** — `handle_newsletter_subscribe()`
+(REST), the Send Newsletter meta box's list/segment dropdowns, and
+`class-culture-nl-analytics.php`'s per-list counts all validate/populate
+against the registry rather than a hardcoded array. A list created on the
+Newsletter Lists admin page (or auto-provisioned for a Hub, see below) is
+immediately usable everywhere with zero code changes — this is what
+"Process: adding a new newsletter" (further down this file) used to require
+editing ~7 files for; that process is now **only relevant for a list that
+needs bespoke frontend UI** (its own subscribe card copy on `/newsletter`,
+its own archive filter tab) — the list/segment/send-targeting plumbing itself
+no longer needs any of those steps.
+
+**Unsubscribe is scoped to the list the email actually came from, not the
+whole account.** `Culture_Newsletter_Queue::handle_unsubscribe()` (the email
+footer link) resolves the list from the `c=` (newsletter post ID) or
+`campaign=` (one-off campaign ID) query param and removes only that
+membership; only a link with neither param (pre-September-2026 already-sent
+mail) falls back to deleting the whole subscriber record. The frontend's own
+`/newsletter/unsubscribe` page (`handle_newsletter_unsubscribe()` REST
+endpoint) is still a full "remove from everything" action, unchanged.
+
+### One-off email campaigns
+
+A send that is **not** a `culture_newsletter`/`getmelit`/`culture_drop` post
+at all — no CPT, no frontend archive entry, no issue number. `Culture_Campaigns`
+(`wp_culture_campaigns` table) owns its own subject/body/target-lists/status
+and reuses `Culture_Newsletter_Queue::build_email()` (now `public`, renamed
+label param to a plain string instead of a hardcoded lookup —
+`build_campaign_email()` is the wrapper Campaigns calls) for the actual HTML
+template, plus the same batched-WP-Cron-dispatch shape as newsletter sends
+(`culture_campaign_process_batch`, 50/batch, 60s apart). Admin UI: **Campaigns**
+page (`class-culture-campaigns-admin.php`, slug `culture-campaigns`) — compose
+with `wp_editor()`, tick one or more lists from the registry (a campaign can
+target several lists in one send — `Culture_Subscribers_DB::resolve_emails_for_lists()`
+unions and dedupes them), Save Draft / Send Test / Send Now. A campaign is
+`draft` → `sending` → `sent`; only a draft can be edited or deleted.
+
+### Hub → newsletter list auto-provisioning
+
+Per an explicit September 2026 decision: **every Hub (`culture_hub` post),
+official or user-created, automatically gets its own newsletter list**, and
+members are **auto-subscribed on join, opt-out available afterward** (not
+opt-in) — same "default ON" posture as the pre-existing `announcements` list.
+- `Culture_Hubs::create()` calls `Culture_Newsletter_Lists::get_or_create_for_hub()`
+  right after inserting the Hub post — slug `hub-{hub_slug}`, type `content`,
+  visibility `hidden` (it's a Hub-management concern, not something a visitor
+  picks off `/newsletter`), `source_type/source_id` = `'hub'`/the Hub's post
+  ID, so the list can always be found again via `get_for_hub()`. The owner is
+  subscribed immediately (their membership row is inserted directly in
+  `create()`, not via `join()`).
+- `Culture_Hubs::join()`/`leave()` call `Culture_Subscribers_DB::subscribe()`/
+  `remove_from_list_slug()` against that same list — this is the actual
+  mechanism that makes "email this Hub's members" possible; nothing else
+  writes to a Hub's list.
+- **Existing Hubs from before this feature shipped are covered by a one-time
+  backfill**, `Culture_Hubs::maybe_backfill_hub_lists()` (hooked in `init()`,
+  gated by `culture_hub_lists_backfilled`, same shape as this file's other
+  `maybe_*` migrations) — provisions a list for every already-published Hub
+  and subscribes every currently-active member, so the end state matches a
+  Hub that had always had this feature.
+- **If you ever need to email a specific Hub's members**, use the Campaigns
+  page and tick that Hub's list (named `"{Hub Name} (Hub)"` in the Newsletter
+  Lists admin page) — don't reach for a bespoke query against
+  `wp_culture_hub_members`, the list is already kept in sync.
+
+### WP Admin menu structure — split into top-level menus (September 2026)
+
+The single "Culture Community" top-level menu had grown to 15 submenu items
+and was hard to navigate — split into multiple top-level WP Admin menus,
+initially 3 (Community/Newsletters/Events), then Literary was split out of
+Community into its own 4th shortly after. **Every slug is unchanged**, only
+which menu a page is parented under (and, for the renamed top-level itself,
+its label) changed — so no `admin.php?page=...` link/bookmark anywhere in the
+codebase or in anyone's browser needed updating.
+
+- **Moveee Community** (slug `culture-community`, was labelled "Culture
+  Community") — Settings (the default/anchor page), Analytics, Directory
+  Tools, Redirect Manager, Email Templates, Pro Memberships. Registered in
+  `class-culture-settings.php`.
+- **Moveee Newsletters** (anchor slug `culture-subscribers` — Subscribers
+  is both the top-level page and a submenu of itself, the standard WP
+  "duplicate the anchor slug as the first submenu with its own label" pattern)
+  — Subscribers, Lists & Segments (`culture-newsletter-lists`), Campaigns
+  (`culture-campaigns`), Import Newsletters (`culture-import-newsletters`),
+  Games Subscribers (`culture-games-subscribers` — a separate, older
+  subscriber list for the games feature, unrelated storage to
+  `Culture_Subscribers_DB`, but grouped here since it's the same kind of
+  "manage an email list" concern). Registered in `class-culture-subscribers.php`
+  (top-level `add_menu_page()` + the anchor submenu); every other page in this
+  group just changed its `add_submenu_page()` parent from `culture-community`
+  to `culture-subscribers`.
+- **Moveee Events** (anchor slug `culture-ticket-sales`, same pattern) —
+  Ticket Sales, Event RSVPs (`culture-rsvp-manager`). Registered in
+  `class-culture-tickets-admin.php`.
+- **Moveee Literary** (anchor slug `culture-literary-submissions`, same
+  pattern) — just Literary Submissions (the submissions manager + its
+  Waivers tab) today; registered in `class-culture-literary-submissions.php`.
+  Split into its own top-level the same day as the 3-menu split above, once
+  it became clear this feature area would keep growing on its own (see "The
+  Moveee Literary" section elsewhere in this file for the feature itself).
+  The pending-submissions count badge (`awaiting-mod`/`pending-count` WP-core
+  classes) that used to show on the submenu label now shows on the top-level
+  label instead — same mechanism (raw HTML in the `$menu_title` arg), just
+  duplicated onto both `add_menu_page()`'s and `add_submenu_page()`'s title
+  args since a top-level menu and its anchor submenu render independently.
+- **Moveee Hubs** (anchor slug `culture-hubs-manager`, same pattern) — a
+  brand-new page, not a moved one: before this, `culture_hub` posts had no
+  real WP Admin UI at all (see "Moveee Hubs admin manager" below). Registered
+  in the new `class-culture-hubs-admin.php`.
+- **Moveee Stoop** (anchor slug `culture-clusters-manager`, same pattern) —
+  just Clusters (the Stoop host-appointment manager) today, moved out of
+  Moveee Community the same way Literary/Hubs were. Registered in
+  `class-culture-clusters-admin.php`. Like Hubs, `culture_cluster`'s own
+  native CPT admin screen had its `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` at the same time — the real manager already
+  existed for this one (unlike Hubs, which had no admin page at all before
+  this pass), so there was never a second competing "Clusters" entry to add,
+  only to stop the bare native one from also showing up as a sibling of it.
+
+**Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
+check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
+=== $hook`, in `class-culture-campaigns-admin.php`'s `maybe_enqueue_editor()`)
+silently stopped matching once Campaigns was reparented — the hook suffix
+WordPress generates is derived from the parent menu slug
+(`{parent_slug}_page_{slug}` for a submenu of a top-level page, `toplevel_page_{slug}`
+for the top-level page itself), so moving a page to a new parent changes its
+hook suffix even though its own slug is unchanged. **If you ever reparent a
+submenu page again, grep that file (and any file enqueuing assets scoped to
+it) for a hardcoded `{old_parent}_page_{slug}`/`toplevel_page_{slug}` string
+— `class-culture-analytics.php`, `class-culture-nl-analytics-admin.php`, and
+`class-culture-directory-tools.php` all have one of these for pages that
+stayed under Moveee Community and were correctly left alone in this pass, but
+the exact same string needs updating if any of those three ever move.**
+
+**If you add a new admin page to this plugin**, pick a parent by kind:
+newsletter/subscriber/list/campaign-related → `culture-subscribers`;
+ticketing/RSVP-related → `culture-ticket-sales`; Literary-related →
+`culture-literary-submissions`; anything else → `culture-community`. Only add
+another top-level menu if a new feature area grows to several pages of its
+own (the actual bar has turned out to be lower than "3+" — Literary got its
+own top-level with just one page, since the user wanted it broken out
+regardless of page count) — check with the user rather than assuming a
+single new page should just join `culture-community` by default.
+
+### Sending
+Each `culture_newsletter` post has two pieces of post meta:
+- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
+- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
+  `au`) or empty for all
+
+The send queue (`class-culture-newsletter-queue.php`) filters subscribers
+by these meta values at send time (now via `Culture_Subscribers_DB::resolve_send_emails()`,
+not an inline scan of the option array — see above). Batches of 50, 60s
+intervals via WP-Cron.
+
+### Subscriber storage (historical — the option array itself, now migrated)
+Was stored as a single WordPress option: `culture_newsletter_subscribers` —
+an array of objects:
 ```php
 [
   'email'   => 'user@example.com',
@@ -294,18 +493,10 @@ array of objects:
   'segment' => 'uk',                    // regional segment (optional)
 ]
 ```
-Legacy plain-string entries (pre-multi-list) are treated as GetMeLit-only
-throughout the codebase. The `maybe_migrate()` method in
-`class-culture-subscribers.php` upgrades them on load.
-
-### Sending
-Each `culture_newsletter` post has two pieces of post meta:
-- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
-- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
-  `au`) or empty for all
-
-The send queue (`class-culture-newsletter-queue.php`) filters subscribers
-by these meta values at send time. Batches of 50, 60s intervals via WP-Cron.
+Legacy plain-string entries (pre-multi-list) were treated as GetMeLit-only
+throughout the codebase. Kept here for reference only — the option itself is
+never read again after the one-time migration described above; don't add a
+new write path against it.
 
 ### Email template
 Plain white background, no header block. Content flows directly from the
@@ -801,6 +992,393 @@ also added — there was no About page under `/literary` before this.
   files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
   tweaks at this volume of content) in a real environment before considering this fully closed.
 
+## Literary Submissions Manager — WP Admin only, intake stays email (September 2026, SUPERSEDED)
+
+**Superseded by "Literary Submissions — real payment-integrated online form" further below.**
+This entry originally documented an email-only intake model — kept here for history since the
+manual-logging admin tool it describes is still exactly how it was built; only the intake
+channel changed. If you're looking for how writers actually submit today, skip to that later
+entry.
+
+Per explicit user decision: writers keep submitting by emailing `literary@themoveee.com` with
+the section + name in the subject line (`/literary/submit`'s documented convention, e.g.
+"Poetry Submission — Ada Nwosu") — **no new writer-facing form was built**, this is purely an
+internal editorial tool for logging and tracking those emailed submissions through decision.
+No public submissions portal exists as of this entry; if one is ever built, it should write into
+this same storage rather than duplicating it (see "Storage" below).
+
+- **New file**: `culture-community/includes/admin/class-culture-literary-submissions.php`
+  (`Culture_Literary_Submissions`), registered as a submenu under the existing top-level
+  "Culture Community" menu (`admin.php?page=culture-literary-submissions`) — required in
+  `culture-community.php` and initialized in `culture_community_init()`, same wiring as every
+  other admin tool in this plugin.
+- **Storage**: a single `culture_literary_submissions` wp_options row (array of submission
+  objects) — same pattern as `Culture_Redirects` (`culture_redirects` option), chosen over a
+  dbDelta table since this is a small, manually-curated editorial list, not something written
+  at volume by a webhook (contrast with `wp_culture_tickets`, a real table, which is).
+- **Fields tracked per submission**: writer name/email, section, piece title, the raw email
+  subject line, status (Received/In Review/Accepted/Rejected/Published), submission-fee status
+  (Pending/Paid/Waived/N-A), contributor-payment status (Unpaid/Paid), an assigned reviewer (a
+  WP user with `edit_posts`, via `get_users()`), received date, and free-text internal notes.
+- **Terms are hardcoded per section in `Culture_Literary_Submissions::SECTIONS`**, mirroring
+  `/literary/submit`'s real, confirmed policy (see that page's "Real, confirmed policy" note):
+  quarterly sections (Fiction/Poetry/Essays/Conversations/In Translation/Notes) get a $3
+  submission fee, a $15–$25 contributor payment, and a 12-week (84-day) response window; The
+  Moveee Flash gets no submission fee, a flat $10 payment, and a 4-week (28-day) window. **If
+  these figures ever change on the submissions page, update this constant to match** — there's
+  no shared source of truth between the PHP admin tool and the Next.js copy, same caveat as
+  every other PHP/TS duplication called out elsewhere in this file.
+- **Response-time tracking**: `deadline_state()` computes `received_at + response_days` and
+  flags a still-open submission (Received/In Review) as "Overdue" once past that date or "Due
+  soon" within 7 days of it — shown as a colored deadline column in the list table, summarized
+  in a page-header count, and surfaced as a red bubble on the submenu label (the same
+  `awaiting-mod`/`pending-count` WP core CSS classes used for the native comments-pending
+  bubble). A decided submission (Accepted/Rejected/Published) is never flagged, regardless of
+  how old it is.
+- **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
+  "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
+  via a regex accepting any run of dash-like separators — hyphen, en dash, em dash, horizontal
+  bar, minus sign — or a colon (`/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i`)
+  and pre-fills the Section dropdown
+  and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
+  edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
+  the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
+  to keep fee data honest, not a hard validation.
+- **Row-level quick actions**: each row has one-click links to jump straight to In
+  Review/Accepted/Rejected/Published (`admin-post.php?action=culture_lit_submission_status`,
+  nonce'd per-row) alongside the full Edit form and a Delete button — mirrors the
+  check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
+- **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
+  current filters show, same convention as Ticket Sales' own CSV export.
+- **Deliberately out of scope**: no REST endpoints, no frontend/mobile surface, no automated
+  email ingestion (an editor still manually creates each row after reading the email) — this is
+  a manual logging tool, not an inbox parser. If automated ingestion from the literary@ inbox is
+  ever wanted, that's a separate, larger project (an email-parsing webhook/cron), not a small
+  extension of this file.
+- Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
+  against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
+  other pass in this file; this feature additionally needs the plugin redeployed (manual
+  zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
+  since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
+
+**Follow-up, same month — WordPress push + accept/reject emails.** Two explicit requests, both
+built on top of the manager above without changing its email-only intake or its manual-logging
+posture:
+
+- **Piece content + "Push to WordPress"** — a submission now has a `content` field, edited via a
+  real `wp_editor()` (TinyMCE, `teeny` toolbar — bold/italic/lists/link, matching the ACF
+  wysiwyg treatment given to other short rich-text fields elsewhere in this plugin) in the
+  add/edit form. A row whose status is Accepted or Published gets a **"Push to WordPress"**
+  button (`Culture_Literary_Submissions::push_to_wordpress()`,
+  `admin_post_culture_lit_submission_push`) that creates a real `post` — title, content
+  (`wp_kses_post`'d), status **`draft`** (never auto-published — "processing into publishing"
+  still means an editor finishes it: featured image, final formatting, and the actual Publish
+  click all still happen by hand), category = the existing `literary` category (by slug,
+  `LITERARY_CATEGORY_SLUG = 'literary'`, matching `packages/shared/lib/wp.ts`'s constant of the
+  same name), and a genre tag matching the submission's section (`GENRE_TAG_NAMES` — same label
+  strings as that file's `LITERARY_GENRES[].label`, so the draft lands on the right
+  `/literary/{genre}` archive the moment it's published). **The Moveee Flash gets no genre tag**
+  — there's no dedicated Flash genre page, so a pushed Flash piece surfaces in the main
+  `/literary` feed only, same graceful "untagged post" behaviour that section's own docs already
+  describe.
+  - **Author**: looks up the writer's email against `get_user_by('email', ...)` — if they have a
+    real WP account, the draft is authored as them (a real byline); otherwise the editor doing
+    the push is the author of record until someone reassigns it in the normal post editor. This
+    is a deliberate, documented limitation, not an oversight — there's no guest-author system in
+    this codebase to map an external contributor onto without a WP account.
+  - **Re-pushing is update-in-place, not duplication** — the submission stores `wp_post_id` once
+    a push succeeds; a second push (after the editor pastes further edits into the `content`
+    field) calls `wp_update_post()` against that same post ID instead of creating a new one. The
+    list table's "WordPress" column shows "Edit draft →" (linking to the real post editor) plus
+    "Re-push edits" once linked, or a "Push to WordPress" button before that.
+  - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
+    empty) or the `literary` category doesn't exist on the target site.
+- **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
+  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()`). Fired
+  from `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
+  change — the full edit form's `handle_save()` and the list table's one-click quick-status
+  links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
+  never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
+  sends when the submission has a `writer_email` on file — if not, the status change still
+  applies but an admin notice ("wasn't notified") tells the editor to follow up manually instead
+  of the email silently never going out. The acceptance email references the section's real
+  payment terms (`payment_label`, e.g. "$15–$25" or "$10 flat") pulled from the same `SECTIONS`
+  constant the rest of the manager already uses — **if those figures ever change on
+  `/literary/submit`, update `SECTIONS` here too**, same cross-file caveat as everywhere else
+  fee/payment terms are duplicated in this codebase.
+- Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
+  instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
+  publish round trip and both email sends against a real inbox before considering this closed.
+
+**Follow-up, same month — accept/reject email content is now WP Admin-editable.** Both emails'
+subject/heading/body/button were moved onto the plugin's existing admin-configurable
+`Culture_Email_Templates` system (`class-culture-email-templates.php` — the same mechanism
+already used for the welcome/referral/payment-receipt/grace-period/downgrade/event-RSVP emails)
+as two new template slugs, **`literary_accepted`** and **`literary_rejected`**, editable at
+**WP Admin → Culture Community → Email Templates** (a `wp_editor()` WYSIWYG for the body, plain
+text fields for subject/header-heading/button-text, a merge-tag reference table, and a
+"Reset to Default" button — same UI every other template in that list already uses). Storage:
+`wp_options` rows `culture_email_tpl_literary_accepted`/`culture_email_tpl_literary_rejected`
+(only written once an admin actually saves a customization — an unedited template keeps
+rendering the code-defined default with no options row at all).
+- **Merge tags**: `{writer_name}`, `{piece}` (the title in curly quotes, or literally "your
+  piece" if the submission has no title — computed in PHP before merging, not something an
+  admin can express in the editor), `{section}`, and (accepted only) `{payment_label}`.
+  `send_literary_submission_decision()` in `class-culture-emails.php` now just builds this
+  merge-tag map and calls `Culture_Email_Templates::get_template()`/`::merge()` — identical
+  shape to `send_referral_confirmation()`/`send_payment_receipt()` in the same file.
+  **This is a straight rewire, not a new mechanism** — the actual copy (both subject lines,
+  both `<h1>` headings, both bodies) is unchanged from the hardcoded version, now stored as
+  each template's `default_*` fields so a fresh install without any admin customization sends
+  byte-for-byte the same emails as before.
+- Both templates render through a live CTA button (new — the hardcoded version had none),
+  labelled "Visit The Moveee Literary" by default and linking to `{frontend_url}/literary`
+  (`Culture_Emails::get_frontend_url()`, the same Next.js-frontend-not-WordPress URL every
+  other templated email's button already points at).
+- **If accept/reject copy is ever wrong or needs a wording change, this is now the one place to
+  fix it** — don't go back to editing `send_literary_submission_decision()`'s PHP for a pure
+  copy change; that method should only need touching again if the merge-tag set itself changes.
+- Verified via `php -l` on both edited files. Not deployment-tested against a live WP Admin
+  (can't render `wp_editor()`/save a real option from this sandbox) or a real mail transport —
+  same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file. Re-check
+  that the Email Templates admin page actually lists and edits both new tabs, and that a saved
+  customization actually reaches a real accept/reject email, in a live environment.
+
+## Literary Submissions — real payment-integrated online form replaces email intake entirely (September 2026)
+
+**This supersedes every earlier "intake stays email" decision documented above.** After the
+manual Submissions Manager and its email-based intake shipped, the user asked directly: if
+writers submit by email, how do they even pay the $3 quarterly submission fee? The answer was
+to build a real public submission form with payment integrated end-to-end, reusing the exact
+same Paystack/Stripe machinery already powering event tickets and membership subscriptions —
+not a new payment system. **Email intake is gone.** `literary@themoveee.com` is now only for
+questions and waiver-code requests, not submissions.
+
+**The form collects the finished piece as pasted rich text, not a file upload — deliberately,
+per explicit user steer mid-build.** An earlier draft of this feature planned a manuscript
+file upload (.docx/.doc/PDF) plus server-side DOCX→HTML parsing (a whole planned
+`Culture_Literary_Inbox` class, `webklex/php-imap` + `phpoffice/phpword` Composer dependencies,
+blocked in this sandbox by `api.github.com` being unreachable through the agent proxy) so an
+editor's "Push to WordPress" button would have real body text to work with. **That entire plan
+was abandoned, not just deferred** — the user pointed out a simpler design: let the writer
+paste their formatted piece directly into a rich-text field on the form itself. This sidesteps
+file uploads, R2 storage, and DOCX parsing entirely, and the pasted content lands **directly**
+in the same `content` field the admin's existing `wp_editor()`/"Push to WordPress" flow already
+expects (see the "WordPress push" follow-up documented in the superseded entry above) — an
+editor now gets real, submission-ready body text from the moment a submission arrives, with
+zero parsing code needed anywhere. If a future request ever wants file-upload intake back
+instead, this is a deliberate, explicit reversal to revisit, not a gap that was missed.
+
+**Manuscript-format copy on `/literary/submit` was rewritten to match** — the old
+"we accept .doc, .docx, and PDF files, font size 12, double spacing, Garamond" paragraph
+described a manuscript that no longer exists; it now just says the piece is pasted directly
+into the online form's editor.
+
+### Payment — mirrors `Culture_Ticket_Payment` almost line-for-line
+
+`Culture_Literary_Submissions` (same file as the admin manager) gained the payment machinery
+directly, rather than a new class, since it already owns `add_submission()`'s one true
+creation path:
+
+- **New dbDelta table**: `wp_culture_literary_payments` (`payment_table()`/
+  `create_payments_table()`, wired into `Culture_Activator::create_tables()`,
+  `CULTURE_VERSION` bumped `2.8.0` → `2.9.0` to trigger it — see "Plugin DB table
+  auto-upgrade" above). Holds `writer_name`/`writer_email`/`section`/`title`/`content`
+  (the pasted rich text, held here until payment clears) plus the usual `payment_code`/
+  `payment_gateway`/`payment_reference`/`payment_status`/`status` fields, unique-keyed on
+  `payment_code`. **Deliberately a real table, not the option-array store** the confirmed
+  Submissions Manager list uses — this one is written at real public-webhook volume, exactly
+  the same "option array is for a small curated list, a dbDelta table is for volume" reasoning
+  `Culture_Ticket_Payment`'s own docblock gives for `wp_culture_tickets`.
+- **Three-way fee routing in `handle_submission_initiate()`** (`POST
+  /culture/v1/literary/submission/initiate`, public): (1) **The Moveee Flash**
+  (`SECTIONS['flash']['fee'] === 0`) → `add_submission()` fires immediately, `fee_status =
+  'n_a'`, no payment step at all. (2) **A waiver code** → `redeem_waiver()` validates it (see
+  below), then the same immediate `add_submission()` with `fee_status = 'waived'`.
+  (3) **Otherwise** → a pending row is inserted into the new payments table and a real
+  Paystack (`Culture_Paystack::charge_initiate()`) or Stripe
+  (`Culture_Stripe::payment_session()`) charge is initiated — same `NGN → Paystack, else →
+  Stripe` routing `Culture_Ticket_Payment::handle_initiate()` already uses, same
+  reference-prefix-then-metadata pattern (`LIT-{payment_code}` here, vs. `TKT-{ticket_code}`
+  there) so the two payment flows can share one Paystack account/webhook secret without
+  colliding.
+- **New REST routes** (all public, `__return_true`, `rest_api_init` — first time this class
+  registers REST routes; `init()` gained `add_action('rest_api_init', ...)` alongside its
+  existing `admin_post_*` hooks): `POST literary/submission/initiate`, `GET
+  literary/submission/status` (poll by `payment_code` — used by the Stripe success-redirect
+  path below), `GET literary/submission/callback` (Paystack's browser redirect back),
+  `POST literary/submission/webhook/paystack`, `POST literary/submission/webhook/stripe`.
+  Webhook signature verification (`x-paystack-signature` HMAC-SHA512, Stripe's `t=/v1=`
+  HMAC-SHA256 scheme) is copied verbatim from `Culture_Ticket_Payment` — same secrets
+  (`culture_paystack_secret_key`, `culture_stripe_webhook_secret`), no new WP Admin fields
+  needed.
+- **`confirm_payment($payment_code, $reference, $gateway)`** — idempotent (checked via
+  `status === 'confirmed'`, same pattern as `Culture_Ticket_Payment::confirm_ticket()`),
+  called from both the Paystack browser callback and either gateway's webhook (whichever
+  fires first wins; the other is a no-op). On first confirmation it calls `add_submission()`
+  with `fee_status = 'paid'`, stores the resulting submission id back on the payment row, and
+  sends the new `literary_received` email (below).
+- **Stripe's async confirmation gap, handled the same way the shop checkout flow already
+  does**: Stripe's `success_url` lands the browser back on `/literary/submit/form?
+  submission_pending={code}&session_id=...` *before* the webhook may have fired, so the page
+  polls `GET /api/literary/submission/status` every 3s (cap 40 attempts, ~2 minutes — same
+  numbers `CheckoutScreen.tsx`'s order-confirmation poll already uses) until the payment row
+  flips to `confirmed`. Paystack's flow doesn't need this — its own browser callback
+  (`handle_paystack_callback()`) verifies the transaction and calls `confirm_payment()`
+  synchronously before redirecting, landing straight on `?submission_confirmed={code}`.
+
+### Waiver codes — admin-issued, single-use, 100/quarter (per explicit user decision)
+
+Per the second AskUserQuestion answer collected for this feature: a writer who can't afford
+the $3 fee still emails to ask (the guidelines page's FAQ already said this), but an editor now
+issues a real single-use code from WP Admin rather than trusting a self-serve checkbox.
+
+- **Storage**: `culture_literary_waiver_codes` wp_options row (array of `{code, quarter, used,
+  used_by, created_at}`) — same small-array-option pattern as everything else in this class,
+  not a table, since codes are admin-generated in small batches, not written by a webhook.
+- **`current_quarter()`** — `{Y}-Q{1-4}` derived from the current month (`ceil(month/3)`).
+  A code is only redeemable in the quarter it was issued for — `redeem_waiver()` rejects a
+  stale code from a prior quarter with `waiver_expired`, distinct from `waiver_used`
+  (already redeemed) and `waiver_invalid` (doesn't exist).
+- **`generate_waiver_codes($count)`** enforces the 100-per-quarter cap by counting existing
+  codes tagged with `current_quarter()` before generating more (caps the requested count down
+  to whatever's left, or returns a `quota_reached` `WP_Error` if the quarter is already full)
+  — codes are `WAIVE-{8 hex chars}`.
+- **Admin UI**: a new "Submission Fee Waivers" panel appended to the bottom of the existing
+  Submissions Manager page (`admin.php?page=culture-literary-submissions`) — current
+  quarter's issued/remaining count, a "Generate Code(s)" form (capped to the remaining quota),
+  and a table of this quarter's codes (code / Used-or-Available / used-by email / created) with
+  a Delete link on unused codes only (`handle_waiver_delete()`'s filter explicitly refuses to
+  remove an already-used code, so redemption history for a quarter can't be erased by
+  accident).
+
+### New editable email: "Literary Submission — Received"
+
+A third template alongside the existing `literary_accepted`/`literary_rejected` pair (see the
+superseded entry above for how those work) — **`literary_received`**, added to
+`Culture_Email_Templates::templates()` and sent via the new
+`Culture_Emails::send_literary_submission_received()` the moment a submission is actually
+created (Flash: instantly; waived: instantly; paid: once `confirm_payment()` runs) — distinct
+from the accept/reject emails, which still only fire later once an editor makes a decision.
+Same merge-tag shape (`{writer_name}`, `{piece}`, `{section}`), same WP Admin → Culture
+Community → Email Templates editing surface.
+
+### Frontend (`apps/site` only)
+
+- **`app/literary/submit/form/page.tsx`** (new, client component) — the real form: name/email/
+  section/optional-title fields, a `contentEditable` rich-text box (a small Bold/Italic
+  toolbar via `document.execCommand` — no editor library dependency, matching in spirit the
+  admin's own `teeny`-toolbar `wp_editor()`) for the piece body, and (only shown for a
+  fee-bearing section) an optional waiver-code field. A local `SECTIONS` map mirrors the PHP
+  constant's `label`/`fee`/`paymentLabel` fields for display — **no shared source of truth
+  across the PHP/TS boundary**, same caveat as every other duplicated constant in this
+  codebase; keep both in sync if the fee/terms ever change.
+  - Submitting calls `POST /api/literary/submission/initiate`; a `'confirmed'` response shows
+    a plain "It's In" confirmation screen inline; a `'payment_required'` response does a full
+    `window.location.href` redirect to the returned Paystack/Stripe hosted checkout page —
+    same "normal browser tab, no in-app WebView" reasoning the shop checkout flow already
+    documents for why this is the right pattern on web (vs. mobile, which does have a WebView).
+  - On mount, reads `?submission_confirmed=`/`?submission_pending=`/`?submission_failed=`/
+    `?submission_cancelled=` off the URL (the four outcomes the PHP redirect targets can land
+    on) and branches into the matching state — including the Stripe polling loop described
+    above.
+- **New proxy routes**: `app/api/literary/submission/initiate/route.ts` and
+  `.../status/route.ts` — thin passthroughs to the two public WP REST endpoints (no secret
+  needed, same as `app/api/events/ticket/route.ts`'s equivalent proxy for
+  `/culture/v1/ticket/initiate`).
+- **`app/literary/submit/page.tsx`** (the guidelines page) — the "Send Us Your Work" section's
+  mailto instructions were replaced with a "Start Your Submission →" card linking to
+  `/literary/submit/form`; `literary@themoveee.com` is now framed purely as "questions or a
+  waiver-code request," not a submission address. The manuscript-format FAQ/guidelines
+  paragraph was rewritten to describe pasting into the online editor instead of file formats.
+- **New CSS**: `.lit-form-*` classes appended to `apps/site/app/literary.css`, built on the
+  section's existing `--lit-*` token palette (ivory/ink/oxblood/parchment/rule) — no new
+  tokens, no dependency on `.lit-submit-*` beyond the page wrapper it already provides.
+
+### Magic-code verification gate — closes The Moveee Flash's no-fee abuse gap (September 2026, follow-up)
+
+Per explicit user follow-up ("How about the free submissions for The Moveee: Flash? … we need
+to ensure only logged in users (perhaps via magic code) can submit"): every submission branch —
+Flash's no-fee path, a waiver-code redemption, and the real Paystack/Stripe payment path alike —
+now requires a verified email first. This is the same email/OTP "magic code" mechanism already
+built for `/literary` and `/magazine` content gating (`Culture_Literary_Access`), reused as-is,
+not a new auth system. It's what actually closes the Flash abuse gap: Flash has no payment
+barrier at all, so verifying real ownership of an email address is the only gate it can have.
+
+- **PHP**: `handle_submission_initiate()` now requires a `verified_token` param as its very
+  first check, before any of the `writer_name`/`section`/fee-routing validation — calls
+  `Culture_Literary_Access::verify_token($token)` (already built, previously unused from PHP;
+  its own docblock flagged it as "kept … for any future server-side need," which this is) and
+  returns 401 `not_verified` if it's missing or invalid/expired. **The verified token's own
+  email is authoritative** — `writer_email` is derived from `$verified['email']`, not from a
+  client-supplied param; the frontend no longer sends a `writer_email` field at all. This
+  applies uniformly across all three fee branches (Flash, waiver, paid), so there's no longer a
+  path to `add_submission()` that skips verification.
+- **Next.js proxy** (`app/api/literary/submission/initiate/route.ts`): reads the existing
+  `moveee_lit_token` httpOnly cookie server-side (`cookies()` from `next/headers`, same cookie
+  `/api/literary/verify-code` already sets) and forwards it as `verified_token` — short-circuits
+  with a 401 before ever reaching WordPress if the cookie is missing, so an unverified visitor
+  gets a fast, clear failure rather than a round trip that WP would reject anyway.
+- **New: `app/api/literary/verify-status/route.ts`** — lets the submission page skip the gate
+  UI entirely when a valid `moveee_lit_token` cookie already exists (e.g. the visitor verified
+  earlier in the same browser session unlocking a gated `/literary` or `/magazine` piece).
+  Verifies locally via `verifyLiteraryToken()` (`lib/literary-access.ts`) — no round trip to
+  WordPress needed, same as every other client-side literary-access check on this side.
+- **Frontend gate UI** (`app/literary/submit/form/page.tsx`): a new `verifyStep` state
+  (`checking` → `email` → `code` → `verified`) renders before the actual submission form at
+  all — on mount it silently checks `verify-status`; if not already verified, it shows a plain
+  email-then-code flow reusing the exact same two existing API routes
+  (`/api/literary/request-code`, `/api/literary/verify-code`) that `/literary`'s and
+  `/magazine`'s own gates already use. Only once `verifyStep === "verified"` does the real form
+  render — the form's own "Your email" field is now a read-only display of the verified address
+  (with a small "Verified" badge, `.lit-form-verified-badge`) rather than an editable input, and
+  the submit payload no longer includes an email field at all (the server derives it from the
+  cookie).
+- **New CSS**: `.lit-form-verified-badge` and `.lit-form-linklike` (a plain-button "Use a
+  different email" link inside the code step) appended to `apps/site/app/literary.css`'s
+  existing `.lit-form-*` block — same `--lit-*` token palette, no new tokens.
+- Verified via `php -l` on the edited PHP file and a brace/paren-balance check on all three
+  edited/new TS/TSX files and `literary.css`. **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this change
+  additionally needs the plugin redeployed before `verified_token` enforcement takes effect in
+  production (the class file itself has no new dbDelta table, so no `CULTURE_VERSION` bump was
+  needed for this follow-up specifically). Re-check the full email → code → submit round trip
+  for all three fee branches (Flash, waiver, paid) in a real environment before considering this
+  closed.
+
+**Route renamed to `/literary/submit/form` (September 2026, follow-up)** — the submission form
+originally shipped at `/literary/submit/new`; moved (`git mv`) to `/literary/submit/form` per
+explicit user request. Every reference was updated in the same pass: the two in-page `Link`s
+(the guidelines page's "Start Your Submission" card, and the form's own "Try again" link on
+payment failure), the PHP payment success/cancel redirect URLs and Paystack callback base URL in
+`handle_submission_initiate()`/`init_stripe_payment()`/`init_paystack_payment()`, and the
+doc-comments in `literary.css`/`verify-status/route.ts`. No functional/logic changes — purely a
+path rename, same pattern as the `/shop` → `/lifestyle` rename elsewhere in this file.
+
+### Deliberately out of scope for this pass
+
+- **No mobile submission flow** — The Moveee Literary isn't surfaced on `apps/mobile` at all
+  (per the section's own original scope note), so this form is web-only, same as every other
+  Literary page.
+- **No file-upload fallback** — a writer who genuinely can't paste plain-formatted text (a
+  complex layout, embedded images) has no upload path; they'd need to email
+  `literary@themoveee.com` and have an editor manually log the submission via the existing
+  admin "Log a New Submission" form, which still exists and still accepts pasted content the
+  same way.
+- **No currency selection UI** — the form always requests `USD`, routing every real charge to
+  Stripe; the PHP side's `NGN → Paystack` branch exists (mirroring the ticket flow) but is
+  currently unreachable from this form since nothing sends `currency: "NGN"`. If Naira pricing
+  is ever wanted for Nigerian writers, add a currency toggle to the form — the backend routing
+  is already there.
+- Verified via `php -l` on all five touched/new PHP files and a brace/paren-balance check on
+  the new TS/TSX files and `literary.css` (330/330). **Not deployment-tested** — same
+  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file, and this
+  feature additionally needs the plugin redeployed (the new table only gets created via
+  `culture_community_maybe_upgrade()`'s version-bump check — see "Plugin DB table
+  auto-upgrade" above) and real Paystack/Stripe keys configured before a real payment can be
+  tested end to end. Re-check the full paste → pay → webhook → confirmation round trip (both
+  gateways) and a waiver-code redemption in a real environment before considering this closed.
+
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 
 An earlier "shelf illustration" pass (see "Brand-guide rebuild, then a full Granta-inspired
@@ -831,6 +1409,130 @@ unillustrated flat gradient with cryptic text. Fixed:
 - **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
   every other pass in this file. Verified via brace/paren-balance checks on
   `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
+
+## The Moveee Commons (`/commons`, added September 2026)
+
+A public-affairs/research vertical at `apps/site/app/commons/*` — opinions, reports, research
+and news on politics, environment, academia and the systems that govern us. Built the same
+way The Moveee Literary was: mockup first (an Artifact design canvas, approved before any code
+was written — a "public journal" register, deliberately distinct from Literary's Granta-esque
+restraint and Lifestyle's retail energy), then wired to real content. Same "reuse the existing
+`post` type, no new CPT" pattern as Literary — see that section above for the underlying
+mechanics this one mirrors (dual-purpose `[slug]` route, standalone masthead/footer replacing
+the sitewide Header/Footer, its own font/palette system).
+
+**Design brief, for anyone touching this vertical's copy or layout again**: text-first by
+default, never structurally dependent on a featured image — some of the publications this
+section covers simply don't supply one. The hero and every card grid render a plain
+kicker/title/dek/byline block; a photo is an optional upgrade layered on top when present,
+never a placeholder standing in for a missing one (`CommonsPieceCard.tsx` only renders an
+`<img>` when `featuredImage.node.sourceUrl` actually exists — no gradient fallback, unlike
+`LiteraryPieceCard.tsx`'s `.piece-img--placeholder`). New institutional palette — deep green
+(`--comm-green: #2f4b3c`) + brass (`--comm-brass: #a6813f`) — and its own type system
+(Newsreader serif for reading type, IBM Plex Sans for UI, IBM Plex Mono for kickers/bylines/
+data labels), none of it shared with Literary's oxblood/Bodoni-Cormorant-EB-Garamond system or
+Lifestyle's ochre/Bricolage Grotesque.
+
+**Two independent, unioned membership rules — this is the core of what was actually asked to
+be wired up**, both live in `packages/shared/lib/wp.ts`:
+1. **Category** — every post carrying the `"commons"` category (`COMMONS_CATEGORY_SLUG` —
+   assumed slug, WordPress's default auto-slug for a "Commons" category title; fix the
+   constant if the real slug in WP Admin ends up different). Checked via
+   `isCommonsCategoryPost(post)`.
+2. **Author** — every post whose real `post_author` is Basit Jamiu, WP `user_id` 15, username
+   `basit` (`COMMONS_AUTHOR_ID = 15`), regardless of category — **including a piece where the
+   page shows a Guest Byline attributing it to someone else.** Guest Byline is a purely
+   display-time override (see "Byline Contributor role + Guest Byline field" above);
+   `post_author` never changes, so checking the real author's `databaseId` via
+   `isCommonsByAuthor(post)` already covers every guest-bylined piece Basit submits, with zero
+   extra plumbing needed for that case specifically.
+
+`isCommonsPost(post)` is the OR of both — "does this piece belong in the Commons feed at all."
+`getCommonsPieces(first)` fetches the actual union: the category half via GraphQL
+(`GET_STORIES` with `categoryName: "commons"`, same where-arg every other section already
+uses), the author half via a new REST helper (`getStoriesByAuthorId()` — WPGraphQL's
+`posts(where:)` has no confirmed `authorIn`/`author` filter in this schema, so this hits WP
+core REST's native `?author=<id>` instead, same reasoning `getStoriesByCountrySlugs()` already
+established for country filtering). Deduped by `databaseId` (category-sourced copy wins on a
+collision, since it's the richer GraphQL shape), sorted newest-first. Never throws — either
+half failing just means that half contributes nothing (`Promise.allSettled`).
+
+**Every piece that qualifies for the Commons feed gets a canonical `/commons/{slug}` URL —
+widened September 2026, per explicit request** (this superseded an earlier, narrower rule where
+only category members got a Commons URL and an author-only piece stayed at `/magazine/{slug}`;
+that split meant two different article templates depending on which rule matched, which read as
+inconsistent once live). `commonsPieceHref(post)` now returns `/commons/{slug}` for anything
+`isCommonsPost()` is true for — category or author, no distinction. `/magazine/[slug]/page.tsx`
+redirects on the same union (`isCommonsPost`, not just `isCommonsCategoryPost`) right after its
+existing Literary redirect, mirroring that redirect's "exactly one canonical URL per piece"
+reasoning exactly — so every Basit Jamiu piece (guest-bylined or not) and every "commons"
+category piece now renders under Commons chrome, never the magazine template. `sitemap.ts`
+follows the identical union: `articleUrls` excludes every Commons-qualifying piece (they all get
+`commonsPieceUrls` entries at `/commons/{slug}` instead, whether they qualified by category or
+by author).
+
+**Sections are a plain WP tag overlay on the category** — `COMMONS_SECTIONS` (Politics,
+Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`academia`/
+`reports`/`opinion`) is the exact same "optional overlay, not a requirement" relationship
+`LITERARY_GENRES` has to `LITERARY_CATEGORY_SLUG` — a Commons piece with no section tag still
+shows in the main `/commons` feed, it just won't appear on any single section's page until
+tagged. `app/commons/[slug]/page.tsx` is the same dual-purpose route Literary's `[slug]` uses
+(a `COMMONS_SECTIONS.slug` match renders a section archive; anything else falls through to a
+real post lookup, gated on `isCommonsPost` — the full union, per the widened canonical-URL rule
+above, not just category) — Next.js doesn't allow two sibling routes with different
+dynamic-segment names at the same level, same constraint documented on Literary's own `[slug]`
+route. Section archives and a piece's own "More in {section}" grid still only ever draw from
+`getCommonsCategoryPieces()` (category-scoped, optionally narrowed by section tag) — an
+author-only piece can now have a real `/commons/{slug}` page of its own, it just won't be
+surfaced by a section archive unless it's also in the "commons" category and tagged (sections
+are a category overlay, unrelated to how the page itself is reached).
+
+**Deliberately no Pro-gating, no free-read metering** — unlike Literary/Magazine's magic-code
+gate system, Commons content is fully public in this pass; nothing in `[slug]/page.tsx` calls
+`cookies()`/`headers()`/`getServerSession()`, so it needed no `dynamic = "force-dynamic"`
+override either (that override exists on Literary/Magazine specifically to sidestep the
+`generateStaticParams` + Dynamic-API combination throwing `DYNAMIC_SERVER_USAGE` — Commons has
+no Dynamic API call to trigger it). If Pro-gating is ever wanted here, extend `[slug]/page.tsx`
+the same way `/magazine/[slug]` did, reusing `Culture_Literary_Access`'s existing magic-code
+mechanism (`context: "commons"` would need its own entry in
+`NEWSLETTER_LIST_BY_CONTEXT` server-side) rather than building a third parallel gate system.
+
+**No real logo asset yet** — `CommonsLogo.tsx` is a CSS-drawn text lockup ("The" italic +
+"moveee." bold + "Commons" tracked mono caps in brass), the same "first pass before a real
+logo is supplied" precedent `LiteraryLogo.tsx` itself used before its real PNG existed. Swap
+for an `<img>` once a real asset is approved, following that component's own history for the
+pattern.
+
+**"Data & Reports" band deliberately has no fabricated chart** — the original Artifact mockup
+showed an illustrative CSS bar chart explicitly labeled as such; the real homepage
+(`app/commons/page.tsx`) replaces it with a real teaser pulled from
+`getCommonsCategoryPieces("reports", 3)` (title + byline of actual Reports-tagged pieces)
+rather than rendering invented numbers as if they were real data — consistent with this
+codebase's standing "never fabricate" rule (see e.g. the Discover facet-count precedent
+elsewhere in this file). `.comm-bar-chart`/`.comm-bar` CSS is kept in `commons.css`, unused,
+per this file's usual "kept in case needed again" convention, for if a real reporting dataset
+is ever wired up to visualize.
+
+**Discoverability**: linked from the Site A header's menu overlay (`Header.tsx`, between "The
+Moveee Literary" and "The Moveee Lifestyle"), the shared `Footer.tsx`'s Explore column, and
+`CommonsFooter.tsx`'s own Sections/The Commons columns.
+
+**Not built in this pass, deliberately out of scope**: any submissions/pitch intake flow for
+non-staff contributors (Literary's own submissions system was a separate, later addition —
+revisit the same way if Commons ever needs one), any Pro/Patron gating (see above), and
+cleaning up the assumed `"commons"` category slug if WP Admin's real slug differs — check that
+first if the feed ever comes back empty despite content existing in WP Admin under a category
+that reads "Commons".
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file, and no `node_modules` installed this session so `tsc --noEmit`
+couldn't run either. Verified via brace/paren-balance checks on every new/edited file
+(`commons.css`, `commons/page.tsx`, `commons/[slug]/page.tsx`, `commons/layout.tsx`,
+`CommonsMasthead.tsx`, `CommonsFooter.tsx`, `CommonsLogo.tsx`, `CommonsPieceCard.tsx`,
+`magazine/[slug]/page.tsx`, `sitemap.ts`, `wp.ts`) and a repo-wide grep confirming no other
+file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommons*` export.
+Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
+category slug in WP Admin, in a real environment before considering this fully closed.
 
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
@@ -3687,6 +4389,73 @@ confirm the fix's numbers actually clear the header rather than under- or over-s
 Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
 breakpoint, before considering this fully closed.
 
+### Directory REST fallback — oversized `_embed=1` response broke Next's data cache and tripped a real production build failure (fixed September 2026)
+
+A live Vercel production build (on `main`) failed outright: WordPress/WPGraphQL calls during
+static generation started timing out (`Network or Parsing Error: This operation was aborted`),
+which tripped the KV-backed circuit breaker (see "Server stability fixes" above —
+`[circuit-breaker] CMS circuit opened (shared) for 60s after 3 failures`). While the CMS was
+struggling, one fetch stood out in the logs: `Failed to set Next.js data cache for
+.../wp-json/wp/v2/culture_directory?per_page=100&_embed=1..., items over 2MB can not be cached
+(5525442 bytes)`. Because that response could never be cached, it was refetched in full on every
+build worker that needed it — real added load on an already-struggling CMS, not just a log
+warning. `/directory/[slug]` pages then blew past their 60s-per-attempt budget three times each
+(`Failed to build /directory/[slug]/page: /directory/spoken-word-poetry after 3 attempts`) and the
+build exited nonzero.
+
+**Root cause**: `getDirectoryEntriesWithFallback()` in `packages/shared/lib/wp.ts` — the REST
+fallback path used only when WPGraphQL returns zero entries (i.e. exactly when the CMS is already
+having trouble, the worst possible time to make the fetch heavier) — requested
+`per_page=100&_embed=1` with no `_fields` filter. `_embed=1` embeds the **full, unstripped**
+`content` field on every one of the 100 posts to pull in featured media + taxonomy terms, but
+`mapRestDirectoryToFrontendShape()` right below it never reads `content` at all — only
+`id`/`slug`/`title`/`date`/`excerpt`/`acf`/`meta` plus the embedded media/term objects. 100 posts'
+worth of full rich-text bodies is exactly the kind of payload that blows past Next's 2MB
+per-entry data-cache ceiling.
+
+**Fixed** by adding `&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded` to the
+fallback URL — WP core REST's `_fields` param whitelists top-level response fields (dropping the
+unused `content`, `guid`, `type`, etc.), which is enough on its own to bring a 100-post response
+back under 2MB. **`_links`/`_embedded` must be listed explicitly in `_fields`** — WP applies field
+filtering *after* embedding, so without those two names in the list, `_fields` strips the embedded
+media/terms data right back out along with everything else, silently breaking every directory
+card's image and type badges.
+
+**The same pattern likely exists in every other `_embed=1` REST-fallback fetch in this file**
+(`culture_newsletter?per_page=${first}&_embed=1`, `posts?country=...&_embed=1`,
+`posts?issues=...&per_page=100&_embed=1`) — none were touched in this pass since only the
+directory one was the one actually observed failing in production, but if a future build failure
+shows the same "`_embed=1`... items over 2MB can not be cached" warning against a different REST
+fallback URL, apply the identical `_fields` fix there rather than re-diagnosing from scratch.
+
+**Not verified against the real CMS response size** — this sandbox can't reach `cms.themoveee.com`
+to measure the actual before/after payload size, same recurring network gap noted throughout this
+file. Verified via a CSS/brace-balance-equivalent check (`wp.ts`'s brace count, 786/786) and a
+manual read confirming every field `mapRestDirectoryToFrontendShape()` touches is present in the
+new `_fields` whitelist. Re-check that the next production build of a page hitting this fallback
+path (i.e. one that occurs while WPGraphQL is genuinely down) completes without the 2MB warning
+before considering this fully closed.
+
+**Follow-up — the `_fields`-only fix above was not actually enough (confirmed by a real
+production build failure, September 2026).** A live Vercel build showed the exact same failure
+mode against the exact same, already-`_fields`-trimmed URL: `Failed to set Next.js data cache for
+.../culture_directory?per_page=100&...&_fields=id,slug,title,date,excerpt,acf,meta,_links,_embedded,
+items over 2MB can not be cached (2944629 bytes)` — down from the original 5.5MB, but still over
+the 2MB ceiling, still uncacheable, and it still cascaded into the identical
+`/directory/[slug]` 60-second-timeout-×3 build failure this section originally documented as
+fixed. **Root cause of the shortfall**: `_fields` only filters *top-level* response fields — it
+has no way to trim what's nested inside an embedded object. `_embed=1`'s `wp:featuredmedia` entry
+is the *entire* attachment object (every registered image size's url/width/height/mime,
+description, caption, author, its own `_links`, etc.), and that alone is enough to push 100 posts
+back over 2MB even with `content`/`guid`/`type` already stripped from the top level. **Actually
+fixed** by capping `per_page` from 100 down to 50 (on top of, not instead of, the `_fields` trim)
+— halving the entry count roughly halves the payload, landing with real margin under the 2MB
+ceiling instead of hovering just over it regardless of which posts happen to be in the batch. If
+this exact "`_fields` is already applied but the response is still uncacheable" symptom recurs
+here or on any of the other `_embed=1` fallback fetches this section already flagged as sharing
+the pattern, don't reach for `_fields` again — it's already doing everything it can; lower
+`per_page` instead.
+
 ### Article/newsletter comment box — sleek/minimal redesign (September 2026)
 
 `apps/site/components/ArticleComments.tsx` + its CSS in `apps/site/app/globals.css` (previously
@@ -3735,6 +4504,109 @@ work needed.
   old `.article-comments-*` classnames and no other file used the new class names in a way that
   would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
   and a newsletter issue page in a real environment before considering this fully closed.
+
+### `/visuals` retired, then reverted on merge — the feature is still live (September 2026)
+
+**Correction: this section's retirement never actually landed.** It described a real change made
+on one branch, but a large, independent body of work continued shipping to `main` on `/visuals`
+in parallel (Footer link, sitemap entry, `CONTENT_PATHS` in the revalidate route, and the pages
+themselves all still exist on `main`) — none of it ever picked up this retirement. When that
+branch was finally merged, restoring `/visuals` to match `main`'s already-live state (rather than
+letting a stale local deletion silently take out a feature `main` was still actively serving) was
+the only safe call — see the "Directory REST fallback" fix's own git history around the same date
+for the merge this was resolved in. **`/visuals` is not retired. Treat it as a live section** —
+`apps/site/app/visuals/page.tsx` + `[slug]/page.tsx`, `VisualsGrid.tsx`/`VisualsSingleClient.tsx`,
+the Footer link, the sitemap entry, and `'visuals'` in `proxy.ts`'s `APP_ROUTES` and the
+revalidate route's `CONTENT_PATHS` are all real again. The rest of this entry is kept only as a
+record of what was attempted and why it didn't stick — don't act on its "removed"/"redirect"
+claims.
+
+Per explicit user request ("relegate /visuals totally" → clarified as "retire"), the Site A
+illustration gallery at `/visuals` (a public gallery of AI-generated illustrations sourced from
+`culture_directory` entries via `GET /wp-json/culture/v1/visuals`, plus `/visuals/[slug]` single
+pages reusing `GET_DIRECTORY_ENTRY_BY_SLUG`) has been removed **on the web frontend only** — an
+explicit scope choice, confirmed via `AskUserQuestion` before touching anything, since this
+feature also has a WordPress-side admin illustration-generation tool, a `culture/v1/visuals` REST
+endpoint, and a download-credit/gamification tracking system (`_culture_visual_downloads`
+usermeta, `visual_downloads_today` in the mobile/NextAuth session shape) — none of that backend
+was touched, and neither was the unrelated mobile app's own "Visuals" **category** filter on
+`MagazineScreen.tsx` (a magazine-category concept, distinct from this web gallery, confirmed by
+name only — not the same feature).
+
+**Removed**: `apps/site/app/visuals/` (`page.tsx` + `[slug]/page.tsx`), `apps/site/app/
+visuals.css`, `apps/site/components/VisualsGrid.tsx`/`VisualsSingleClient.tsx`, the Footer's
+"Visuals" link (`packages/shared/components/Footer.tsx`, Explore column), the `/visuals`
+sitemap entry, `'visuals'` from `CONTENT_PATHS` in `app/api/revalidate/route.ts` (harmless to
+revalidate a nonexistent path, but cleaned up anyway), and the `/visuals` mention in `app/api/
+wp-health/route.ts`'s doc comment (that endpoint only ever actually probed `directory`/`quotes`
+GraphQL queries — the comment's claim of "three queries" including visuals was already stale
+before this pass, unrelated pre-existing inaccuracy, fixed in passing).
+
+**Redirect**: `'visuals'` was removed from `proxy.ts`'s `APP_ROUTES` set, and a new explicit
+block added — `pathname === '/visuals' || pathname.startsWith('/visuals/')` → 301 `/magazine` —
+placed alongside the other JetEngine-taxonomy prefix-redirects (`/tag/`, `/series/`, `/country/`,
+`/industry/`). **This could not just rely on `ROUTE_ALIASES`** (the existing `{ 'tours':
+'/journeys', 'lifestyle': '/shop' }` map) — that map is only checked against a *single-segment*
+`cleanPath`, so it would have correctly redirected bare `/visuals` but left every individual
+`/visuals/{illustration-slug}` URL to fall through to the routes that no longer exist and 404
+instead of preserving SEO equity via a 301, which is why this got its own dedicated
+`startsWith('/visuals/')` block instead.
+
+**Deliberately out of scope, left running**: the WP Admin illustration-generation tool
+(`class-culture-directory-tools.php`), the `culture/v1/visuals` REST endpoint and its mobile-API
+counterpart, the `_culture_visual_downloads` usermeta/credit-tracking system, and
+`apps/mobile/src/screens/magazine/MagazineScreen.tsx`'s "Visuals" category filter chip. If a
+future pass wants the backend torn down too, treat it as a separate, larger piece of work — it
+has its own admin UI, REST surface, and gamification hooks that a frontend-only removal
+correctly left alone.
+
+**Not visually verified in a browser** — no `node_modules` installed this session, so neither
+`next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
+Verified via a repo-wide grep confirming zero remaining `/visuals` references in `apps/site`/
+`apps/connect`/`packages` outside the new proxy.ts redirect block itself, and a brace-balance
+check on the edited `proxy.ts` (82/82). Re-check that `themoveee.com/visuals` and
+`themoveee.com/visuals/{any-old-slug}` both 301 to `/magazine` in a real environment before
+considering this fully closed.
+
+### Pull-quote/blockquote — centered treatment, magazine + literary + newsletters (September 2026)
+
+Mockup-first as usual (Artifact, iterated once — first draft was flush-left with the quotation
+mark bleeding off the left edge, corrected to centered per explicit feedback: "how about the way
+the quote boxes are flushed left?"). Approved mockup:
+`https://claude.ai/artifact/CNoWUikwT4cKCwh5YmDCXi`.
+
+- **The sitewide "Unified pull-quote/blockquote treatment" rule in `globals.css`** (shared by
+  `.ar-wrap .prose-content blockquote` — magazine articles — `.digest-prose`/`.gml-issue-prose`/
+  `#issue-body .prose-content`/`.gml-page-body` — GetMeLit/digest surfaces — and `.rd-body` — the
+  newsletter reader) was redesigned from a left-border block (`border-left: 3px solid
+  var(--ochre)`) into a centered pull-quote: a solid oxblood `"` glyph (`::before`, Fraunces,
+  84px) floats above the quote, the quote text itself centers below in italic Fraunces at 23px
+  (capped to `46ch` so it doesn't stretch full-width), and WP core Quote block's optional `<cite>`
+  centers underneath, flanked by two short 20px rules on either side. `max-width: 640px; margin:
+  2.6em auto` centers the whole block within the prose column regardless of which surface's own
+  column width it sits in. A `max-width: 480px` breakpoint shrinks the mark/text sizes.
+  **Still one shared rule, still edited only in `globals.css`** — none of the per-surface CSS
+  files (`editorial.css`/`newsletter.css`/`getmelit.css`) needed touching, same "don't add a
+  divergent rule here" convention the original comment already established.
+- **The Moveee Literary vertical (`/literary`) got its own equivalent, separate rule** —
+  `.lit-piece-body blockquote` in `literary.css` — since that section deliberately runs its own
+  brand palette/type system (`--lit-oxblood`, `--font-lit-display` for the mark, `--font-lit-italic`
+  for the quote body, `--font-lit-meta` for the attribution), not the sitewide `--ochre`/Fraunces
+  tokens. Same centered shape (glyph above, italic serif center, mono attribution with flanking
+  rules below), scaled slightly smaller (620px max-width, 76px mark) to match this vertical's more
+  restrained sizing elsewhere. This was **not** folded into the sitewide selector list — keep it
+  that way; the Literary section's whole point is a separate visual identity (see "The Moveee
+  Literary" section elsewhere in this file).
+- **Deliberately out of scope for this pass**: the Quotes archive (`/quotes`, `QuoteCard.tsx`/
+  `quotes.css`) and the author-page hero variant — both were shown in the same mockup as
+  companion pieces but the user's actual ask ("implement it for magazine articles, literary
+  articles and newsletters") named only the three prose surfaces above. `QuoteCard.tsx`'s own
+  `.quote-content::before` faint-glyph treatment is untouched. Revisit only if asked.
+- **Not visually verified in a browser** — no `node_modules` installed this session, same
+  recurring sandbox gap noted throughout this file. Verified via CSS brace-balance checks on
+  `globals.css` (308/308) and `literary.css` (234/234). Re-check pixel fidelity against the
+  approved mockup on a real article, a literary piece, and a newsletter issue with a CMS
+  blockquote (with and without a `<cite>`) before considering this fully closed.
 
 ### Homepage hero — only shows posts tagged "Featured" (September 2026)
 
@@ -5743,6 +6615,86 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 
 ---
 
+## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
+
+First step of a longer-term plan to retire the standalone `/quotes` product and make
+`culture_quote` posts fully feed-native — the user's explicit goal, stated as "how can we
+merge web.themoveee.com/quotes to work as part of the feed not a separate product? so we
+can retire /quotes/". Quote cards already rendered natively inline in the unified feed on
+both platforms (`FeedCard.tsx`'s quote branch on web, `QuoteCard` in
+`apps/mobile/src/components/community/FeedItemCard.tsx` on mobile — neither ever linked
+out to `/quotes/[slug]` to render; `href` is only used for the ReactionBar's share URL) —
+so this pass tackled the two specific gaps flagged when the merge was scoped: seeded
+quotes had no valid author identity, and the auto-seeding automation was confirmed
+non-functional and explicitly approved for retirement. The standalone `/quotes` pages
+themselves are **not yet retired** — that's a later step, to be scoped again (same
+`AskUserQuestion` treatment as the `/visuals` retirement) once the author-archive-view and
+other `/quotes`-only functionality (like/report/audit endpoints, sitemap entry, SEO
+`Quotation` JSON-LD, the global `SearchModal`'s quote content-type) have a plan.
+
+**Synthetic system author (`Culture_System_Author`, new class,
+`culture-community/includes/core/class-culture-system-author.php`)** — editorially-seeded
+quotes have no real community submitter; `/api/quotes/auto-populate` (see retirement below)
+always POSTed `user_id: 0`, and `handle_create_quote()`'s fallback chain
+(`user_id → get_current_user_id()`) also resolved to 0 for an unauthenticated API-key
+request, so every seeded quote's `post_author` ended up `0`. `get_userdata(0)` returns
+`false`, so `get_quote_feed_items()`'s `communityAuthor`/`communityAuthorUsername`/
+`communityAuthorAvatar` fields (which mobile's `QuoteCard`/`CommunityQuoteCard` are already
+built to read, same as every other feed item type) silently rendered blank for these.
+Fixed by giving `handle_create_quote()` a third fallback — `Culture_System_Author::get_id()`
+— mirroring `Culture_Account_Deletion::get_placeholder_user_id()`'s exact shape: a
+lazily-created, login-disabled WP user (`moveee-editors`, display name "Moveee", random
+unusable password, `subscriber` role, `_culture_avatar_url` pointed at
+`https://themoveee.com/logo-black.png`), cached by the `culture_system_author_user_id`
+option so it's only ever created once. `Culture_System_Author::maybe_backfill_quote_authors()`
+(hooked on `wp_loaded`, same reasoning as `Culture_Country_Cleanup::init()` — needs the
+`culture_quote` post type already registered) is a one-time migration reassigning every
+pre-existing `post_author = 0` quote to this account, gated by
+`culture_quote_authors_backfilled` — same shape as every other `maybe_backfill_*` in this
+plugin. New quotes submitted through the real composer path (`SubmitPost.tsx`'s Update
+family) are unaffected — they already carry a real submitter.
+
+**Seeding automation retired** — per explicit user instruction ("the seeding dont even
+work autonomously anyways. So I dont mind retiring it"). Removed entirely, not just
+disabled:
+- The WP-Cron "Quotes seed (weekly)" job (`Culture_Cron::HOOK_SEED_QUOTES`/`seed_quotes()`)
+  — removed from `class-culture-cron.php`'s hook registration, `schedule()`/`unschedule()`
+  hook lists, and its handler method. A new one-time `maybe_clear_retired_jobs()` (hooked
+  alongside the others in `init()`, gated by `culture_cron_retired_jobs_cleared`) clears
+  any already-scheduled `culture_seed_quotes` cron-table row on sites that had it —
+  otherwise it would keep firing into a `do_action()` with no listener forever, harmless
+  but cluttering WP Admin's cron views. If a future job is ever retired the same way, add
+  its hook name to `maybe_clear_retired_jobs()`'s list rather than leaving a stale row.
+- `/api/quotes/auto-populate` (both `apps/site` and `apps/connect` — the route + its
+  `data.ts` curated-quote list) — deleted outright.
+- The WP Admin "Quote Seeder" panel on the Directory Tools page (`class-culture-
+  directory-tools.php` — the "Seed Moveee Quotes" button, its `ajax_run_quote_seeder()`
+  handler and `wp_ajax_culture_run_quote_seeder` registration, its `culture_quote_seeder_
+  offset` option, and its JS click handler) — removed, since it called the now-deleted
+  route too. The adjacent **"Bulk Quote Importer" panel (CSV paste/upload) is unrelated
+  and was left untouched** — that's a manual, non-automated import path, not "seeding."
+- `packages/shared/lib/quotes-seeder.ts` trimmed to just `searchSerper()`/
+  `SerperQuoteResult` — still needed by `/api/quotes/audit` (a distinct, still-live
+  concern: fact-checking *existing* quotes for fabrication, not creating new ones).
+  `QUOTE_AUTHORS`, `buildQuoteQueries()`, `fetchVerifiedQuotesForAuthor()`, and
+  `runVerifiedQuotesBatch()` were deleted along with their only caller. `gemini.ts`'s
+  `searchAndExtractQuotes()` is now unused (kept, per this file's "leave dead code that
+  might be needed again" convention) — it has no remaining call site.
+- Manual, admin-curated quote creation still works exactly as before (WP Admin post
+  editor for `culture_quote`, and the Bulk Quote Importer CSV panel) — only the automated
+  discovery/seeding pipeline (curated-list-then-Serper/Gemini-discovery) is gone.
+
+**Not verified against a real WordPress install** — same recurring sandbox gap as every
+other pass in this file (no `cms.themoveee.com` credentials/network access here).
+Verified via `php -l` on every touched PHP file and `tsc --noEmit` on both Next.js apps
+(only pre-existing, environment-level errors — missing `node_modules`/`@types/node` —
+none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
+`culture_quote` created via the post editor with no author picked still resolves
+sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
+Quotes" button, before considering this fully closed.
+
+---
+
 ## Cron / scheduled jobs — split ownership between WP-Cron and cron-job.org (June 2026)
 
 Two independent schedulers trigger Next.js worker routes via `Authorization:
@@ -5898,6 +6850,158 @@ unchanged, so there was no way to tell from WP Admin alone whether an upload had
 effect. `CULTURE_VERSION` (the dbDelta-gate constant, unrelated to the plugin header) was **not**
 bumped — this fix adds no new tables, so there's nothing for `culture_community_maybe_upgrade()`
 to run.
+
+## Byline Contributor role + Guest Byline field (September 2026)
+
+A restricted WP role that can create and publish `post` (Moveee Magazine article) entries and
+attribute the article to a typed guest-writer name/bio — no real WordPress user account is ever
+created for the guest, and the role never sees any other author's posts or any other post type.
+
+**Role — `culture_byline_contributor`** (`culture-community/includes/core/
+class-culture-guest-byline.php`, `Culture_Guest_Byline`). Author-equivalent primitive
+capabilities only (`edit_posts`/`edit_published_posts`/`publish_posts`/`delete_posts`/
+`delete_published_posts`/`upload_files`/`read`) — deliberately no `edit_others_posts`/
+`edit_private_posts`/`list_users`/`create_users`/`manage_options`. WP's own post-list query
+already restricts a user without `edit_others_posts` to their own posts, so "no access to all
+posts" is the ordinary capability model, not custom query filtering.
+
+**The real complication, worth understanding before touching this again**: every custom CPT in
+this plugin (`culture_event`, `culture_directory`, `culture_newsletter`, `culture_quote`,
+`culture_post`, `culture_journey`, `culture_cluster`, `culture_hub`) is registered with
+`'capability_type' => 'post'` as a bare string, not a namespaced array — WordPress reuses the
+exact same `edit_posts`/`publish_posts`/`edit_post`/`delete_post` capability strings as core
+Posts for all of them. There is no native way to grant Author-level access to just `post` without
+also granting it to every one of those CPTs. `Culture_Guest_Byline` closes this itself, not by
+touching any of those `register_post_type()` calls (would risk changing behavior for the
+`author`/`editor` roles that already rely on those exact strings):
+- `map_meta_cap` filter (`restrict_to_post_type()`) denies `edit_post`/`delete_post`/
+  `publish_post`/`read_private_post` on any post whose `post_type !== 'post'`, for a user holding
+  this role without `manage_options` — this is the real enforcement.
+- `admin_menu` (`trim_admin_menu()`) removes the other CPTs' submenu pages for this role — a UX
+  trim only; note they're all registered under `show_in_menu => 'culture-community'` (a nested
+  submenu), so this uses `remove_submenu_page('culture-community', ...)`, not
+  `remove_menu_page()`.
+- Role registration is version-gated (`ROLE_VERSION`/`culture_byline_role_version` option, same
+  shape as every other one-time-migration in this plugin) so a future cap-set change reaches
+  existing installs on their next request via `remove_role()` + `add_role()`, not just new sites.
+
+**Guest Byline — display-only, `post_author` never changes.** A new ACF field group ("Guest
+Byline": `guest_byline_name`, `guest_byline_bio`, `guest_byline_avatar`) in
+`class-culture-acf-fields.php`, restricted to the `post` type and, via ACF's "Current User Role"
+location rule, to `culture_byline_contributor` + `administrator` only — it doesn't clutter the
+editor screen for anyone else. Because ownership never changes, every capability/revision/
+authorship check above still applies to the real logged-in account; only the rendered byline
+changes. This is a second, independent mechanism from the pre-existing `as_told_to` field (name
+only, still shows the real WP author as "as told to {author}") — Guest Byline takes precedence
+over `as_told_to` wherever both are checked.
+
+**Gotcha (fixed September 2026): the location rule must use `current_user_role`, not
+`user_role`.** ACF has two similarly-named location params and it's easy to reach for the wrong
+one — `user_role` is "User Role" (matches the role of the user profile being *edited* on
+`user-edit.php`; it has no applicable value on a `post` editor screen, so a rule using it there
+never matches, for **anyone**, admins included) vs. `current_user_role` ("Current User Role" —
+the role of whoever is *viewing* the current admin screen, which is what "only Byline
+Contributors and admins see this field" actually needs). The field group shipped with the wrong
+param on first build and was invisible for every role until this was caught and fixed. If a
+future ACF field group needs to gate on "who's logged in right now" rather than "which user
+profile is being edited," use `current_user_role` — verify by testing as a *non-admin* role
+before considering the field group done, since an admin's own account can otherwise mask a
+broken location rule (superadmin capability checks elsewhere might still let a field show for
+you even when the rule itself is wrong).
+
+**GraphQL**: `guestByline { name bio avatarUrl }` registered on `Post` in
+`moveee-graphql-bridge.php` (same isolation pattern as `moveeeMeta`/`featuredProducts` — reads
+plain postmeta directly, not `get_field()`, so it degrades to `null` if ACF is ever inactive
+rather than breaking the query) and added to `STORY_FIELDS_FRAGMENT` in
+`packages/shared/lib/wp.ts`. `Culture_Preview::resolve_guest_byline()` mirrors the same resolver
+shape for the draft-preview payload (`class-culture-preview.php`).
+
+**Frontend — `apps/site/app/magazine/[slug]/page.tsx` only.** A `guestByline`/`bylineDisplay`
+pair is derived once near the top of the page and threaded through every byline surface on this
+one route: both hero "Words by" blocks, the "Writer" row in the sidebar Details card, the
+end-of-article author band (name/bio/avatar — falls back to `guestByline.bio ||
+"Contributing writer, Moveee Magazine."` when no bio is set), and the `Article` JSON-LD `author`
+field. The "More by {name} →" archive link is **omitted** whenever `guestByline` is set — there's
+no real `/author/{slug}` page for a typed guest name, so linking to the real WP account's archive
+under the guest's displayed name would be actively wrong.
+
+**Mobile app extended (September 2026, follow-up).** `apps/mobile` fetches articles via raw
+WordPress REST (`wp-json/wp/v2/posts`), not GraphQL, so the GraphQL-only resolver above was
+invisible to it — fixed two ways:
+- `Culture_Post_Types::register_guest_byline_meta()` (new, `class-culture-post-types.php`,
+  hooked on `init`) registers `guest_byline_name`/`guest_byline_bio`/`guest_byline_avatar` via
+  `register_post_meta('post', ..., ['show_in_rest' => true])` — mirrors the pre-existing
+  `as_told_to` registration in the same file. **ACF-stored postmeta is not automatically REST-
+  visible** — without this, `meta.guest_byline_*` never appears in the REST response regardless
+  of what the ACF field group itself does; this is the one call GraphQL didn't need (WPGraphQL's
+  resolver reads raw postmeta directly) but REST does.
+- `useMagazine.ts`'s `mapPost()` reads `post.meta?.guest_byline_name` and, when set, overrides
+  the mapped `author` (`name`/`avatarUrl`/`bio`) the same way the web page does — `slug` is left
+  `""` for a guest byline (no real `/author` archive to link to). `Article`'s `author` type in
+  `types/index.ts` gained an optional `bio` field and a comment documenting the empty-slug
+  convention. `ArticleScreen.tsx`'s "More articles by {name} →" link is now gated on
+  `article.author.slug` being non-empty, mirroring the web page's own "omit the archive link for
+  a guest byline" rule.
+
+**RSS, sitemap, and search — checked, nothing to extend.** None of these actually display an
+author name in the first place, so there's no override to add:
+- `apps/site/lib/rss.ts`'s newsletter RSS template (`buildNewsletterRssFeed`) has no
+  author/`dc:creator`/`itunes:author` field at all, and there is no RSS feed for magazine
+  articles anywhere in this codebase.
+- `apps/site/app/sitemap.ts` has zero author references. The real author archive page
+  (`apps/site/app/author/[slug]/page.tsx`) correctly shows the real account's own name/avatar/bio
+  on its masthead (it's that account's own page, not a per-article override target) and its
+  story grid (`ArchiveCardGrid.tsx`, shared with the homepage/`/magazine`/series pages) never
+  renders a per-card author byline at all.
+- Site A's search (`apps/site/app/api/search/route.ts`'s `SEARCH_POSTS` query +
+  `SearchOverlay.tsx`) shows only Category · Country as a result's meta line, never an author.
+  Site B's search (`apps/connect/app/api/search/route.ts`, native `wp/v2/search`) maps results to
+  a bare `{id, title, subtype, href}` — no author field is fetched or rendered by
+  `SearchModal.tsx` either.
+
+If a genuine author-display gap turns up on any of these later, extend from the `guestByline`
+GraphQL field (web) or the newly-REST-exposed `meta.guest_byline_*` fields (mobile/any future
+REST consumer) — don't build a second mechanism.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file; this feature additionally needs the plugin
+redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the role and ACF
+field appear in WP Admin. Verified via `php -l` on every touched PHP file and a brace/paren
+balance check on the edited `page.tsx` (no `node_modules` installed this session, so `tsc
+--noEmit` couldn't run). Re-check in WP Admin — create the role, assign it to a test account, log
+in as that account, confirm Posts is the only visible/creatable content type, set a Guest Byline,
+and confirm the live article page shows it in every location listed above — before considering
+this fully closed.
+
+**Production outage caused by this feature, fixed same day (September 2026).** The `guestByline`
+GraphQL field above was added directly into `STORY_FIELDS_FRAGMENT` — the shared fragment nearly
+every story query on the site uses, including the homepage's own `getMagazineSections()` and
+`/magazine`'s archive. Once the frontend code shipped ahead of `moveee-graphql-bridge.php` being
+redeployed (per the "manual zip+upload" note above), the live GraphQL schema didn't recognize
+`guestByline` — **an unrecognized field fails the entire GraphQL query, not just that field** —
+so every page fetching stories via WPGraphQL came back empty: the homepage sections all went
+blank and newly-published articles stopped appearing anywhere on the web app, while the mobile
+app (raw WP REST, not GraphQL) kept working fine. This is the same "bridge-plugin isolation"
+failure mode `GET_PRODUCTS_EXTRA`'s own comment already warns about for the shop — `guestByline`
+just wasn't given the same treatment when it was added. **Fixed** by moving `guestByline` out of
+`STORY_FIELDS_FRAGMENT` into its own isolated `GET_STORY_GUEST_BYLINE` query
+(`packages/shared/lib/wp.ts`), fetched only by `/magazine/[slug]/page.tsx` and wrapped in a bare
+`try {} catch {}` — a missing/undeployed bridge field can now only ever cost that one page its
+guest-byline lookup, never break story listings sitewide. **If you ever add a new bridge-plugin
+field to a GraphQL response, it must go in its own isolated query with a swallowed-error caller,
+never into a shared fragment used by listing pages** — this is not optional, it's the one rule
+this incident exists to enforce.
+
+**Mobile "always shows the generic account name" bug, same pass.** Separately, `useMagazine.ts`'s
+`mapPost()` only ever read `guest_byline_name` (brand new, essentially unused in real content) and
+never `as_told_to` (the older, pre-existing, actually-used field) — so any article an editor
+attributed via As-Told-To showed the real writer's name on web but silently fell back to the
+generic WP publishing account's name on mobile, on every single as-told-to article, which is what
+read as "always says the wrong byline." Fixed by giving `mapPost()` the same three-way precedence
+web's article page already has (Guest Byline full override → As-Told-To compound "{person}, as
+told to {account}" string → plain real author name, with `"The Moveee"` as the final fallback,
+matching web's own literal fallback string) — `as_told_to` was already `show_in_rest`-registered
+from before this feature existed, so no plugin redeploy was needed for this half of the fix.
 
 ## Next.js middleware — use proxy.ts, never middleware.ts
 
@@ -7037,6 +8141,31 @@ consistency, even though that app isn't the production composer).
 
 ---
 
+## Hubs vs. Stoop — the two community axes (product positioning, September 2026)
+
+Two systems in this codebase both build "communities" but along deliberately different axes —
+worth stating explicitly since it's easy to conflate them when writing product copy, onboarding
+flows, or admin tooling:
+
+- **Hubs = what you're into.** Topic-based, location-agnostic. Anyone anywhere can join —
+  nothing in the data model (`culture_hub`, `wp_culture_hub_members`) ties a Hub to a place. The
+  11 official Hubs (Music, Fashion, Art, Film, Food, Sport, Travel, Ideas, Literature, Design,
+  Tech) are the canonical example; a niche interest Hub (gamers, romance readers, a specific
+  beverage/cocktail community, etc.) is exactly the same shape and just as legitimate. Each Hub
+  has its own feed, allowed post templates, mods, a pinned post, and (per the September 2026
+  newsletter work above) its own auto-provisioned mailing list.
+- **Stoop = who you can physically show up with.** Real-world, place-bound. The whole mechanic
+  (`culture_cluster`, `_cluster_street`/city fields, a capacity cap, weekly QR check-in, host
+  election — see `docs/literati-connect-plan.md`) assumes proximity: people meeting in person,
+  regularly, to do something together (reading, watching a film, sharing food). It answers "who's
+  near me," not "what am I into."
+
+**The two are not mutually exclusive and don't compete** — someone can be in the global "Romance
+Readers" Hub *and* a local Stoop that happens to read romance together in person; the Hub is the
+interest, the Stoop is the standing local meetup. When building copy, onboarding, or discovery UI
+for either feature, keep this framing (interest vs. proximity) rather than treating one as a
+scaled-down version of the other.
+
 ## Hubs — user-created topic communities
 
 **Full plan (read before touching any Hub code): `docs/hubs-plan.md`.** Phases 1–4 (core
@@ -7052,6 +8181,53 @@ always starts on "Join" even for members who already joined — idempotent, so h
 extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**, only the backend
 fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
 see the doc's own status line, which is the authoritative source, not this summary.
+
+### WP Admin Hubs manager (September 2026)
+
+Before this, `culture_hub` posts had **no real WP Admin UI** — the CPT was registered `show_ui:
+true` with a bare native post-list/edit screen (title field + a generic Custom Fields box; no
+meta box for description/cover/category/allowed templates, no member list, no way to archive).
+`class-culture-hubs-admin.php` is the real manager, a new top-level **Moveee Hubs** menu (anchor
+slug `culture-hubs-manager`, see the "WP Admin menu structure" note above): a list view (search,
+filter by status/category/official-only, member/post counts, owner, linked newsletter-list
+subscriber count, per-row Archive/Reactivate) and a detail view per Hub (edit
+name/description/cover/category/allowed post types, archive/reactivate, member list with
+promote/demote/make-owner/remove actions, an "Add member by email/username" form, and a shortcut
+to the Campaigns page for emailing that Hub's auto-provisioned list).
+
+**The native CPT admin screen is now hidden, not just superseded** — `culture_hub`'s
+`show_in_menu` was flipped from `'culture-community'` to `false` in
+`class-culture-post-types.php` (`show_ui` stays `true`, so `edit.php?post_type=culture_hub` still
+technically works if visited directly, it's just not linked from the sidebar anymore) — otherwise
+there'd be two different, confusing "Hubs" entries in WP Admin.
+
+**Why this needed new `Culture_Hubs::admin_*()` methods instead of just calling the existing
+API**: every mutating method on `Culture_Hubs` (`update()`, `archive()`, `appoint_mod()`,
+`remove_mod()`, `remove_member()`) gates on the **requester** holding `'owner'`/`'mod'` in
+`wp_culture_hub_members` — there is no admin bypass baked into any of them, on purpose, so as not
+to weaken the member-facing permission model those same methods serve on the REST API. That's a
+real dead end for the 11 official/platform-owned Hubs specifically: they have `post_author = 0`
+and **no owner row at all** (seeded by `maybe_seed_official_hubs()`), so `get_role()` returns
+`null` for literally every user, admin included — meaning a real WP administrator could not
+rename an official Hub, change its category, or add a first member to it through the existing
+API at all. `Culture_Hubs::admin_update()` / `admin_set_status()` / `admin_set_role()` /
+`admin_remove_member()` are a parallel, un-gated set of methods added specifically for this admin
+page — **they perform no requester/role check of their own; the caller (only
+`class-culture-hubs-admin.php`) is responsible for the `current_user_can('manage_options')`
+check**. Never call them from a REST route without adding that capability check at the route
+handler itself.
+
+`admin_set_role()` also does two things the member-facing API can't: it can hand ownership to a
+new user directly (demoting whoever currently holds `'owner'` to `'mod'` so a Hub is never left
+with two owners — official Hubs, having no owner, just skip that demote step and go straight to
+assigning one), and it auto-subscribes a newly-added member to the Hub's newsletter list the same
+way `join()` already does (`admin_remove_member()` mirrors `leave()`'s unsubscribe the same way)
+— so a member added directly from WP Admin behaves identically to one who joined through the app.
+
+**Never hard-deletes a Hub** — only `archive`/`reactivate`, same "never hard-delete a user-created
+group" convention as Stoop Clusters and every other community feature in this codebase. If a
+genuine deletion is ever needed, that's a deliberate exception to raise with the user first, not
+something to add to this admin page by default.
 
 ### Official-Hub seeding race condition — duplicate Hubs (fixed July 2026)
 
@@ -8372,6 +9548,82 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ---
 
+## Sign in with Apple (September 2026)
+
+Added specifically to satisfy **App Store Review Guideline 4.8** — an app that
+offers a third-party/social login (Google, above) must offer Sign in with Apple as
+an equivalent option, or risk rejection on first submission. iOS-only; Android is
+unaffected and doesn't render the button.
+
+**Verification is a local JWKS check, not a single HTTP call like Google's.** Apple
+has no `tokeninfo`-style endpoint — the ID token is a standard RS256 JWT, so
+`Culture_Apple_Auth` (`culture-community/includes/core/class-culture-apple-auth.php`)
+fetches Apple's public keys from `https://appleid.apple.com/auth/keys` (cached 12h via
+transient), reconstructs the matching RSA public key as a PEM **by hand** from the
+JWK's raw `n`/`e` (manual ASN.1 DER encoding — no JWT/JWK Composer library, same "raw,
+no SDK" convention as `class-culture-r2.php`'s hand-rolled AWS SigV4 signer), then
+verifies the signature via PHP's built-in `openssl_verify()`. This DER/PEM
+reconstruction is the one genuinely fragile part of this feature — it was verified
+standalone (a real generated RSA keypair, a fake signed Apple-shaped JWT, a positive
+verify + a tampered-payload negative verify) before being trusted; if Sign in with
+Apple ever starts failing with `invalid_apple_token`, suspect this reconstruction
+first, not the rest of the flow.
+
+**No Client-ID-style setup needed for the native app flow, unlike Google.** The
+native `ASAuthorizationAppleIDProvider` flow (what `expo-apple-authentication`
+wraps) issues an ID token whose `aud` claim is the app's own bundle identifier —
+`Culture_Apple_Auth::allowed_audiences()` hardcodes `com.moveee.connect` (matching
+`app.config.ts`'s `ios.bundleIdentifier`/`android.package`) rather than requiring a
+Google-Cloud-Console-style manual client registration. WP Admin → Culture Community
+→ General → "Sign in with Apple" only has one optional field, a Service ID — that's
+solely for if Sign in with Apple is ever added to a **web** login flow later; the
+mobile app needs nothing filled in here to work.
+
+**Email caveat, same as any Apple Sign-In integration**: Apple may return a private
+relay address (`...@privaterelay.appleid.com`) instead of the user's real email —
+treated identically to any other email by `find_or_create_user()`, no special
+handling needed. **The user's real name is only ever sent once, on the very first
+authorization ever** — `LoginScreen.tsx`'s `handleAppleSignIn()` reads
+`credential.fullName` and forwards it as `full_name` on every call regardless (it's
+`null`/empty on every subsequent login), and the backend only applies it when
+creating a brand-new account, never overwriting an existing one's `display_name`.
+
+**REST routes**: `POST /culture/v1/mobile/login-apple` (`identity_token`,
+`full_name`) — mobile-only, mirrors `/mobile/login-google`'s handler shape exactly
+(`Culture_Apple_Auth::verify_id_token()` → `::find_or_create_user()` → issue the
+existing mobile session token). **No web/`apps/connect` route was added** — this
+pass was scoped to the mobile app specifically, since that's what App Store review
+actually gates; if Apple Sign-In is ever wanted on `web.themoveee.com` too, mirror
+the Google web route (`/culture/v1/login-apple`, API-key gated) and wire it into
+NextAuth as a new provider, same shape as `providers.google` in
+`packages/shared/lib/auth.ts` — that's a separate, unstarted piece of work.
+
+**Client side** (`apps/mobile`): `expo-apple-authentication@~7.1.3` (the Expo
+SDK 52-aligned version, confirmed against `bundledNativeModules.json` on the
+`sdk-52` branch — don't bump this independently of the SDK 52 pin documented under
+"Expo SDK version — critical" below). Added to `app.config.ts`'s `plugins` array —
+the package's own Expo config plugin sets the `com.apple.developer.applesignin`
+entitlement automatically, no manual `ios.entitlements` needed.
+`LoginScreen.tsx` renders Apple's own `AppleAuthenticationButton` component (guarantees
+Apple's Human Interface Guidelines visual compliance for free — don't hand-roll a
+custom Apple button) below the existing Google button, gated on `Platform.OS ===
+"ios" && appleAvailable` (`AppleAuthentication.isAvailableAsync()`, checked once on
+mount). Cancellation is detected via `e.code === "ERR_REQUEST_CANCELED"` (silently
+no-ops, same convention as Google's `SIGN_IN_CANCELLED` check right above it).
+
+**Not tested against a real device or a real EAS build** — same sandbox gap as
+every other native-module feature in this file (no Xcode/EAS toolchain here). The
+one piece that *could* be verified offline (the JWK→PEM DER reconstruction +
+signature verification) was, via a standalone script with a real generated RSA
+keypair — see above. Re-check the full `AppleAuthentication.signInAsync()` →
+`/mobile/login-apple` → account-creation round trip, on a real EAS build, on a real
+device signed into a real Apple ID, before considering this fully closed — this
+also requires the plugin redeployed (manual zip+upload, see "Plugin DB table
+auto-upgrade" — no new dbDelta table here, so no `CULTURE_VERSION` bump was needed,
+only the plugin header version bump to `2.2.4` for redeploy-confirmation purposes).
+
+---
+
 ## Account deletion (August 2026)
 
 Required by Google Play's account-deletion policy ahead of the Play Store submission
@@ -9083,6 +10335,63 @@ future RN bump could pull in a different fmt version with a differently-shaped (
 equivalent) `#if FMT_USE_CONSTEVAL` block that no longer matches this plugin's exact-text regex,
 silently making the injected patch a no-op again (the plugin doesn't currently warn if its `sub`
 finds no match).
+
+### Android build failure — duplicate `:sentry-react-native`/`:sentry_react-native` Gradle projects (September 2026)
+
+A real EAS Android production build (`eas build --platform android --profile production`) got past
+network/auth issues, dependency resolution, Metro bundling, and Sentry source-map upload, then
+failed at the Gradle build step:
+```
+A problem was found with the configuration of task ':sentry_react-native:packageReleaseResources'
+(type 'MergeResources').
+  Reason: Task ':sentry_react-native:packageReleaseResources' uses this output of task
+  ':sentry-react-native:generateReleaseResValues' without declaring an explicit or implicit
+  dependency.
+```
+Earlier in the same log, both `:sentry-react-native:*` (hyphenated) and `:sentry_react-native:*`
+(underscored) task graphs appear — two separate Gradle project registrations pointing at the exact
+same physical folder, `node_modules/@sentry/react-native/android`.
+
+**Root cause**: `@sentry/react-native` ships both a `react-native.config.js` (picked up by classic
+React Native autolinking, which sanitizes the package name with underscores → `sentry_react-native`)
+and an `expo-module.config.json` (picked up by Expo Modules autolinking, which sanitizes with
+hyphens → `sentry-react-native`) — a known, documented class of bug (dual-autolinking discovery of
+the same native module under two different project names; see
+[kitten.sh/blog/autolinkings-broken-promise](https://kitten.sh/blog/autolinkings-broken-promise)),
+only properly fixed by the unified autolinking resolver Expo shipped in **SDK 54**. This app is
+deliberately pinned to **SDK 52** (see "Expo SDK version — critical" above — `react-native-passkeys`
+0.4.0 and other pinned packages require it), so upgrading to get the real fix is out of scope.
+Because both duplicate projects physically share one output directory, either one's resource-
+packaging task can race the other's resource-generation tasks — Gradle 8.10's stricter task
+validation now rejects that race as a hard failure instead of silently tolerating it.
+
+**Fixed** with `apps/mobile/plugins/withSentryGradleTaskOrderingFix.js` (new, registered in
+`app.config.ts`'s `plugins` array right after `withFmtConstevalFix`) — a `withProjectBuildGradle`
+config plugin appending a `gradle.projectsEvaluated` block to `android/build.gradle` that declares
+the missing `dependsOn` directly (Gradle's own suggested fix #2 for this exact error class).
+Guarded with null-checks throughout (`findProject`/`tasks.findByName`) so it's a harmless no-op if
+a future dependency bump removes the duplicate or renames either project, rather than failing the
+build outright.
+
+**First version only covered the exact task named in the original error
+(`packageReleaseResources`, type `MergeResources`) — the very next build hit a *different*
+consumer task racing the same producer output** (`extractDeepLinksRelease`, type
+`ExtractDeepLinksTask` — also reads `generateReleaseResValues`'s `res/resValues` directory, and
+Gradle validates per task *type*, not per producer, so each new consumer task type is its own
+separate validation failure). Rather than keep enumerating exact task names one whack-a-mole round
+at a time, the fix now makes **every task in the consumer project whose name matches the same
+build variant** (Release/Debug) depend on the producer's `generateResValues`/`generateResources`
+tasks for that variant — broader than Gradle's own minimal suggestion, but harmless (a few extra
+ordering edges within one small, mutually-duplicate pair of projects), and it closes this class of
+bug for good instead of one task name at a time. **If a third consumer-task-type failure somehow
+still turns up, it means some other producer task besides `generateResValues`/`generateResources`
+is being raced — check the new error's own "output of task X" line, since that's the new producer
+to add to `producerTaskSuffixes`, not the consumer to add to an enumerated list.**
+
+Not verified against a real Gradle/Android toolchain — this sandbox has none. Verified via
+`node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
+embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
+actually clears the Gradle validation error before considering it closed.
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,

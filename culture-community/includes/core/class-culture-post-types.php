@@ -21,6 +21,7 @@ class Culture_Post_Types {
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
+        add_action( 'init', array( __CLASS__, 'register_guest_byline_meta' ) );
         add_filter( 'rest_culture_event_query', array( __CLASS__, 'exclude_expired_events' ), 10, 2 );
         add_filter( 'rest_culture_post_query', array( __CLASS__, 'exclude_hub_posts' ), 10, 2 );
 
@@ -1037,6 +1038,40 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Same nlList/nlSegment/nlIssueNum fields, mirrored onto the GetMeLit and
+        // Culture Drop GraphQL types so the frontend's newsletter fragment is
+        // identical across all three sources. nlList is a fixed constant here
+        // (the post type itself is the list — see Culture_Newsletter_Queue::
+        // resolve_nl_list()), not read from meta the way CultureNewsletter's is.
+        $nl_type_lists = array(
+            'GetMeLitIssue'   => 'getmelit',
+            'CultureDropIssue' => 'culture-drop',
+        );
+        foreach ( $nl_type_lists as $gql_type => $list_value ) {
+            register_graphql_field( $gql_type, 'nlList', array(
+                'type'        => 'String',
+                'description' => 'Which newsletter list this post belongs to.',
+                'resolve'     => function() use ( $list_value ) {
+                    return $list_value;
+                },
+            ) );
+            register_graphql_field( $gql_type, 'nlSegment', array(
+                'type'        => 'String',
+                'description' => 'Regional segment this issue was targeted at (us, uk, ng, gh, ca, au), or empty for all regions.',
+                'resolve'     => function( $post ) {
+                    return (string) ( get_post_meta( $post->databaseId, '_culture_nl_segment', true ) ?: '' );
+                },
+            ) );
+            register_graphql_field( $gql_type, 'nlIssueNum', array(
+                'type'        => 'Int',
+                'description' => 'Canonical issue number, shared across all regional editions of the same issue.',
+                'resolve'     => function( $post ) {
+                    $val = get_post_meta( $post->databaseId, '_culture_nl_issue_num', true );
+                    return $val ? (int) $val : null;
+                },
+            ) );
+        }
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
@@ -1061,7 +1096,14 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-calendar-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            // 'custom-fields' is required for WordPress core to expose the
+            // `meta` property on this post type's REST schema at all — see
+            // WP_REST_Posts_Controller::get_item_schema()'s `case
+            // 'custom-fields':` branch. Without it, register_post_meta()
+            // calls for this type are fully registered internally but never
+            // reach the REST response, regardless of show_in_rest/
+            // auth_callback. This bit every custom post type in this file.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'events' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1089,7 +1131,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-book-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'directory' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1116,7 +1160,9 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
             'rewrite'             => array( 'slug' => 'digest' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
@@ -1127,29 +1173,129 @@ class Culture_Post_Types {
         ) );
 
         // Expose _culture_nl_list so the frontend knows which newsletter each post belongs to.
+        //
+        // auth_callback is required here, not optional — WordPress treats any
+        // underscore-prefixed meta key as "protected" (is_protected_meta()) and
+        // hides it from REST entirely (both the schema and actual GET responses)
+        // unless an explicit auth_callback is provided, regardless of
+        // show_in_rest => true. Every other register_post_meta() call in this
+        // plugin already does this (see register_rest_meta_fields() above for
+        // culture_event's fields, the pattern this was missing); this one and
+        // its two siblings below were the only ones that didn't, which is why
+        // these three never actually appeared in REST despite show_in_rest.
         register_post_meta( 'culture_newsletter', '_culture_nl_list', array(
-            'type'         => 'string',
-            'single'       => true,
-            'default'      => '',
-            'show_in_rest' => true,
+            'type'          => 'string',
+            'single'        => true,
+            'default'       => '',
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
         // Expose _culture_nl_segment so edition pages (uk/us/africa) can show only
         // issues targeted at their region (empty segment = all regions), and so the
         // global hub/reader pages can group regional editions of the same issue.
         register_post_meta( 'culture_newsletter', '_culture_nl_segment', array(
-            'type'         => 'string',
-            'single'       => true,
-            'default'      => '',
-            'show_in_rest' => true,
+            'type'          => 'string',
+            'single'        => true,
+            'default'       => '',
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
         // Expose _culture_nl_issue_num so regional editions of the same issue can
         // be deduplicated on the frontend (UK/US/Africa editions share one issue number).
         register_post_meta( 'culture_newsletter', '_culture_nl_issue_num', array(
-            'type'         => 'integer',
-            'single'       => true,
-            'default'      => 0,
-            'show_in_rest' => true,
+            'type'          => 'integer',
+            'single'        => true,
+            'default'       => 0,
+            'show_in_rest'  => true,
+            'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
         ) );
+
+        // GetMeLit / Culture Drop CPTs – dedicated post types for the two flagship
+        // newsletter lists, added so an Application Password client can create and
+        // publish content directly against a list-specific REST endpoint
+        // (wp-json/wp/v2/getmelit, wp-json/wp/v2/culture_drop) with no meta field
+        // needed to say which list a post belongs to — the post type itself is the
+        // list. Existing culture_newsletter posts (both lists, mixed, discriminated
+        // by the pre-existing _culture_nl_list meta) are untouched and keep working
+        // exactly as before; these are additive, for new content going forward.
+        // See Culture_Newsletter_Queue::resolve_nl_list() for how the send queue,
+        // analytics, and GraphQL resolvers derive "which list" uniformly across all
+        // three post types.
+        register_post_type( 'getmelit', array(
+            'labels' => array(
+                'name'               => __( 'GetMeLit', 'culture-community' ),
+                'singular_name'      => __( 'GetMeLit Issue', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New GetMeLit Issue', 'culture-community' ),
+                'edit_item'          => __( 'Edit GetMeLit Issue', 'culture-community' ),
+                'view_item'          => __( 'View GetMeLit Issue', 'culture-community' ),
+                'all_items'          => __( 'GetMeLit', 'culture-community' ),
+                'search_items'       => __( 'Search GetMeLit', 'culture-community' ),
+                'not_found'          => __( 'No GetMeLit issues found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-email-alt',
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
+            'rewrite'             => array( 'slug' => 'getmelit' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'getMeLitIssue',
+            'graphql_plural_name' => 'getMeLitIssues',
+        ) );
+
+        register_post_type( 'culture_drop', array(
+            'labels' => array(
+                'name'               => __( 'Culture Drop', 'culture-community' ),
+                'singular_name'      => __( 'Culture Drop Issue', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Culture Drop Issue', 'culture-community' ),
+                'edit_item'          => __( 'Edit Culture Drop Issue', 'culture-community' ),
+                'view_item'          => __( 'View Culture Drop Issue', 'culture-community' ),
+                'all_items'          => __( 'Culture Drop', 'culture-community' ),
+                'search_items'       => __( 'Search Culture Drop', 'culture-community' ),
+                'not_found'          => __( 'No Culture Drop issues found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-email-alt',
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
+            'rewrite'             => array( 'slug' => 'culture-drop' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureDropIssue',
+            'graphql_plural_name' => 'cultureDropIssues',
+        ) );
+
+        foreach ( array( 'getmelit', 'culture_drop' ) as $nl_cpt ) {
+            // No _culture_nl_list meta on these — the post type itself is the list
+            // (see resolve_nl_list()). Segment/issue-num are still real, per-post
+            // meta, same shape as culture_newsletter's. auth_callback required —
+            // see the comment on culture_newsletter's own _culture_nl_list
+            // registration above for why.
+            register_post_meta( $nl_cpt, '_culture_nl_segment', array(
+                'type'          => 'string',
+                'single'        => true,
+                'default'       => '',
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+            ) );
+            register_post_meta( $nl_cpt, '_culture_nl_issue_num', array(
+                'type'          => 'integer',
+                'single'        => true,
+                'default'       => 0,
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+            ) );
+        }
 
         // Quote CPT – nested under Culture Community menu.
         register_post_type( 'culture_quote', array(
@@ -1244,10 +1390,18 @@ class Culture_Post_Types {
                 'not_found'          => __( 'No clusters found', 'culture-community' ),
             ),
             'public'              => false,
+            // 'show_in_menu' is false (September 2026) — same reasoning as
+            // culture_hub's own CPT registration just below: this native
+            // screen is a bare title field + raw Custom Fields box, fully
+            // superseded by class-culture-clusters-admin.php's real "Moveee
+            // Stoop" manager. Leaving both would mean two different,
+            // confusing "Clusters" entries in WP Admin.
             'show_ui'             => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => false,
             'menu_icon'           => 'dashicons-groups',
-            'supports'            => array( 'title' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'custom-fields' ),
             'show_in_rest'        => true,
             'rest_base'           => 'clusters',
             'capability_type'     => 'post',
@@ -1269,10 +1423,21 @@ class Culture_Post_Types {
                 'not_found'          => __( 'No hubs found', 'culture-community' ),
             ),
             'public'              => false,
+            // 'show_ui' stays true (revisions/queries etc. still need the
+            // post-edit screen to exist at edit.php?post_type=culture_hub)
+            // but 'show_in_menu' is false (September 2026) — this CPT's
+            // native admin UI was just a bare title field + a raw Custom
+            // Fields box, no real editing surface for description/cover/
+            // category/allowed templates/members. class-culture-hubs-admin.php
+            // (the "Moveee Hubs" top-level menu) is the real manager now;
+            // keeping the native CPT submenu too would just be a second,
+            // worse "Hubs" entry next to it.
             'show_ui'             => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => false,
             'menu_icon'           => 'dashicons-groups',
-            'supports'            => array( 'title' ),
+            // See culture_event's own 'supports' comment above — required
+            // for register_post_meta() on this type to actually reach REST.
+            'supports'            => array( 'title', 'custom-fields' ),
             'show_in_rest'        => true,
             'rest_base'           => 'hubs',
             'capability_type'     => 'post',
@@ -1283,7 +1448,7 @@ class Culture_Post_Types {
      * Register custom taxonomies.
      */
     public static function register_taxonomies() {
-        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_directory' ), array(
             'labels' => array(
                 'name'              => __( 'Access Level', 'culture-community' ),
                 'singular_name'     => __( 'Access Level', 'culture-community' ),
@@ -1331,7 +1496,7 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'quoteAuthors',
         ) );
 
-        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_directory' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
                 'singular_name' => __( 'Interest', 'culture-community' ),
@@ -1553,6 +1718,42 @@ class Culture_Post_Types {
             'show_in_rest'      => true,
             'default'           => '',
             'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+    }
+
+    /**
+     * Exposes the Guest Byline ACF fields (see class-culture-guest-byline.php +
+     * class-culture-acf-fields.php) under `meta.*` on the REST post response, so
+     * REST-based consumers — currently just the mobile app, which fetches via
+     * wp/v2/posts rather than GraphQL — can read them the same way
+     * `guestByline` already works over GraphQL. ACF already writes these to
+     * plain postmeta under the field's own name, so registering them here is
+     * enough; no ACF-specific REST wiring needed.
+     */
+    public static function register_guest_byline_meta() {
+        register_post_meta( 'post', 'guest_byline_name', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+        register_post_meta( 'post', 'guest_byline_bio', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+        register_post_meta( 'post', 'guest_byline_avatar', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'esc_url_raw',
             'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
         ) );
     }

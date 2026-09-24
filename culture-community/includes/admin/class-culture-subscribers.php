@@ -3,6 +3,15 @@
  * Newsletter subscriber management admin page.
  * Lists all subscribers with delete, CSV export, MailPoet import,
  * WP user import, and auto-subscribe on registration.
+ *
+ * Storage backend as of September 2026: wp_culture_subscribers +
+ * wp_culture_subscriber_lists (Culture_Subscribers_DB), not the flat
+ * culture_newsletter_subscribers option array this file used to read/write
+ * directly — see that class's own docblock for the migration. List/segment
+ * checkboxes below are populated from the real list registry
+ * (Culture_Newsletter_Lists) instead of the old hardcoded LIST_OPTIONS/
+ * SEGMENT_OPTIONS constants, so a Hub list or a custom list an admin creates
+ * on the Newsletter Lists page shows up here automatically.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,32 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Subscribers {
 
-    const LIST_OPTIONS    = array(
-        'getmelit'                  => 'GetMeLit',
-        'culture-drop'              => 'Culture Drop',
-        'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
-        'vendor-letter'             => 'The Vendor Letter (waitlist)',
-        'origins-field-notes'       => 'Origins Field Notes (waitlist)',
-        'announcements'             => 'Announcements (hidden from frontend archive)',
-    );
-    const SEGMENT_OPTIONS = array(
-        ''    => 'All segments',
-        'us'  => 'The Moveee America (US)',
-        'uk'  => 'The British Moveee (UK)',
-        'ng'  => 'Nigeria',
-        'gh'  => 'Ghana',
-        'ke'  => 'Kenya',
-        'za'  => 'South Africa',
-        'ca'  => 'Canada',
-        'au'  => 'Australia',
-        'pro' => 'Moveee Pro Members',
-    );
-
     public static function init() {
-        // Run migration if needed
-        self::maybe_migrate();
-        self::maybe_backfill_announcements();
-
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_post_culture_delete_subscriber',    array( __CLASS__, 'handle_delete' ) );
         add_action( 'admin_post_culture_export_subscribers',   array( __CLASS__, 'handle_export' ) );
@@ -53,70 +37,28 @@ class Culture_Subscribers {
     }
 
     /**
-     * Migrate subscribers from simple array of emails to array of objects.
-     */
-    private static function maybe_migrate() {
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        if ( empty( $subscribers ) ) {
-            return;
-        }
-
-        // If the first element is a string, we need to migrate.
-        if ( is_string( reset( $subscribers ) ) ) {
-            $migrated = array();
-            $now      = current_time( 'mysql' );
-            foreach ( $subscribers as $email ) {
-                $migrated[] = array(
-                    'email'    => sanitize_email( $email ),
-                    'name'     => '',
-                    'location' => '',
-                    'date'     => $now,
-                );
-            }
-            update_option( 'culture_newsletter_subscribers', $migrated, false );
-        }
-    }
-
-    /**
-     * One-time backfill: add every existing subscriber to the 'announcements' list,
-     * since it is an opt-out (default ON) list rather than opt-in. Runs once, gated
-     * by the 'culture_announcements_backfilled' option, so a future un-subscribe from
-     * 'announcements' (via newsletter preferences) is never silently re-added.
-     */
-    private static function maybe_backfill_announcements() {
-        if ( '1' === get_option( 'culture_announcements_backfilled', '' ) ) {
-            return;
-        }
-
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $changed     = false;
-
-        foreach ( $subscribers as &$sub ) {
-            if ( ! is_array( $sub ) ) {
-                continue;
-            }
-            $lists = $sub['lists'] ?? array();
-            if ( ! in_array( 'announcements', $lists, true ) ) {
-                $lists[]       = 'announcements';
-                $sub['lists']  = $lists;
-                $changed       = true;
-            }
-        }
-        unset( $sub );
-
-        if ( $changed ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers, false );
-        }
-
-        update_option( 'culture_announcements_backfilled', '1' );
-    }
-
-    /**
-     * Register submenu under Culture Community.
+     * Registers the top-level "Moveee Newsletters" admin menu (September
+     * 2026) — this class's own Subscribers page is its anchor/first page
+     * (slug `culture-subscribers` doubles as both the top-level menu slug
+     * and this submenu's slug, the standard WP pattern for a top-level menu
+     * whose landing page is also one of its own submenus). Every other
+     * newsletter-related admin page (Lists & Segments, Campaigns, Import,
+     * Games Subscribers) is parented to this same slug — see each of their
+     * own register_menu() methods.
      */
     public static function register_menu() {
+        add_menu_page(
+            __( 'Moveee Newsletters', 'culture-community' ),
+            __( 'Moveee Newsletters', 'culture-community' ),
+            'manage_options',
+            'culture-subscribers',
+            array( __CLASS__, 'render_page' ),
+            'dashicons-email-alt',
+            31
+        );
+
         add_submenu_page(
-            'culture-community',
+            'culture-subscribers',
             __( 'Newsletter Subscribers', 'culture-community' ),
             __( 'Subscribers', 'culture-community' ),
             'manage_options',
@@ -129,12 +71,22 @@ class Culture_Subscribers {
      * Render the subscribers admin page.
      */
     public static function render_page() {
-        global $wpdb;
-
-        $subscribers    = get_option( 'culture_newsletter_subscribers', array() );
-        $count          = count( $subscribers );
-        $auto_subscribe = get_option( 'culture_nl_auto_subscribe', '0' ) === '1';
+        $count           = Culture_Subscribers_DB::count();
+        $auto_subscribe  = get_option( 'culture_nl_auto_subscribe', '0' ) === '1';
         $mailpoet_active = self::is_mailpoet_active();
+        $all_lists       = Culture_Newsletter_Lists::get_all();
+        $lists_by_id     = array();
+        foreach ( $all_lists as $l ) {
+            $lists_by_id[ $l['id'] ] = $l;
+        }
+
+        $page   = max( 1, absint( $_GET['paged'] ?? 1 ) );
+        $search = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+        $filter_list_id = absint( $_GET['list_id'] ?? 0 );
+
+        $result      = Culture_Subscribers_DB::all( array( 'page' => $page, 'per_page' => 50, 'search' => $search, 'list_id' => $filter_list_id ) );
+        $subscribers = $result['subscribers'];
+        $total_pages = $result['perPage'] > 0 ? (int) ceil( $result['total'] / $result['perPage'] ) : 1;
 
         // Feedback notices from redirects.
         $notice = '';
@@ -159,15 +111,10 @@ class Culture_Subscribers {
             : '';
 
         if ( $editing_email ) {
-            $edit_sub = null;
-            foreach ( $subscribers as $s ) {
-                $e = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-                if ( strtolower( trim( $e ) ) === strtolower( $editing_email ) ) {
-                    $edit_sub = is_array( $s ) ? $s : array( 'email' => $s );
-                    break;
-                }
-            }
-            if ( $edit_sub ) : ?>
+            $edit_sub = Culture_Subscribers_DB::find_by_email( $editing_email );
+            if ( $edit_sub ) {
+                $edit_sub_list_ids = Culture_Subscribers_DB::get_list_ids( $edit_sub['id'] );
+                ?>
         <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:28px;">
             <h2 style="margin:0 0 18px;font-size:14px;font-weight:600;">
                 <?php esc_html_e( 'Edit Subscriber', 'culture-community' ); ?> —
@@ -175,7 +122,7 @@ class Culture_Subscribers {
             </h2>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <input type="hidden" name="action" value="culture_edit_subscriber">
-                <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $edit_sub['email'] ); ?>">
+                <input type="hidden" name="subscriber_id" value="<?php echo esc_attr( $edit_sub['id'] ); ?>">
                 <?php wp_nonce_field( 'culture_edit_subscriber' ); ?>
                 <table class="form-table" style="margin:0;">
                     <tr>
@@ -187,29 +134,16 @@ class Culture_Subscribers {
                         <td><input type="text" name="sub_location" class="regular-text" value="<?php echo esc_attr( $edit_sub['location'] ?? '' ); ?>"></td>
                     </tr>
                     <tr>
-                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
+                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Lists & Segments', 'culture-community' ); ?></th>
                         <td>
-                            <?php
-                            $sub_lists = $edit_sub['lists'] ?? array();
-                            foreach ( self::LIST_OPTIONS as $list_id => $list_label ) : ?>
-                            <label style="display:inline-flex;align-items:center;gap:6px;margin-right:18px;">
-                                <input type="checkbox" name="sub_lists[]" value="<?php echo esc_attr( $list_id ); ?>"
-                                    <?php checked( in_array( $list_id, $sub_lists, true ) ); ?>>
-                                <?php echo esc_html( $list_label ); ?>
+                            <?php foreach ( $all_lists as $list ) : ?>
+                            <label style="display:inline-flex;align-items:center;gap:6px;margin-right:18px;margin-bottom:6px;">
+                                <input type="checkbox" name="sub_lists[]" value="<?php echo esc_attr( $list['id'] ); ?>"
+                                    <?php checked( in_array( $list['id'], $edit_sub_list_ids, true ) ); ?>>
+                                <?php echo esc_html( $list['name'] ); ?>
+                                <span style="font-size:10px;color:#999;text-transform:uppercase;">(<?php echo esc_html( $list['type'] ); ?>)</span>
                             </label>
                             <?php endforeach; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Segment', 'culture-community' ); ?></th>
-                        <td>
-                            <select name="sub_segment">
-                                <?php foreach ( self::SEGMENT_OPTIONS as $seg_id => $seg_label ) : ?>
-                                <option value="<?php echo esc_attr( $seg_id ); ?>" <?php selected( ( $edit_sub['segment'] ?? '' ), $seg_id ); ?>>
-                                    <?php echo esc_html( $seg_label ); ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
                         </td>
                     </tr>
                 </table>
@@ -221,11 +155,18 @@ class Culture_Subscribers {
                 </div>
             </form>
         </div>
-            <?php endif;
+                <?php
+            }
         }
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php esc_html_e( 'Newsletter Subscribers', 'culture-community' ); ?></h1>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-newsletter-lists' ) ); ?>" class="page-title-action">
+                <?php esc_html_e( 'Manage Lists & Segments', 'culture-community' ); ?>
+            </a>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-campaigns' ) ); ?>" class="page-title-action">
+                <?php esc_html_e( 'One-Off Campaigns', 'culture-community' ); ?>
+            </a>
             <hr class="wp-header-end">
 
             <?php if ( $notice ) : ?>
@@ -265,7 +206,7 @@ class Culture_Subscribers {
             <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;"><?php esc_html_e( 'Import Subscribers', 'culture-community' ); ?></h2>
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px;">
 
-                <?php /* NEW: Bulk Import Card */ ?>
+                <?php /* Bulk Import Card */ ?>
                 <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;min-width:340px;max-width:480px;flex:1;">
                     <h3 style="margin:0 0 6px;font-size:13px;font-weight:600;">
                         <?php esc_html_e( 'Bulk Import (CSV or Paste)', 'culture-community' ); ?>
@@ -276,7 +217,7 @@ class Culture_Subscribers {
                     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="culture_bulk_import_emails">
                         <?php wp_nonce_field( 'culture_bulk_import_emails' ); ?>
-                        
+
                         <div style="margin-bottom:12px;">
                             <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Paste List</label>
                             <textarea name="bulk_list" rows="3" style="width:100%;font-family:monospace;font-size:12px;" placeholder="tope@moveee.com, Tope, Lagos"></textarea>
@@ -376,50 +317,54 @@ class Culture_Subscribers {
 
             <?php /* ── SUBSCRIBER LIST ── */ ?>
             <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;"><?php esc_html_e( 'Subscriber List', 'culture-community' ); ?></h2>
+
+            <form method="get" style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+                <input type="hidden" name="page" value="culture-subscribers">
+                <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search email or name…', 'culture-community' ); ?>" style="min-width:240px;">
+                <select name="list_id">
+                    <option value="0"><?php esc_html_e( 'All lists', 'culture-community' ); ?></option>
+                    <?php foreach ( $all_lists as $list ) : ?>
+                        <option value="<?php echo esc_attr( $list['id'] ); ?>" <?php selected( $filter_list_id, $list['id'] ); ?>>
+                            <?php echo esc_html( $list['name'] ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="button"><?php esc_html_e( 'Filter', 'culture-community' ); ?></button>
+            </form>
+
             <?php if ( empty( $subscribers ) ) : ?>
-                <p style="color:#646970;"><?php esc_html_e( 'No subscribers yet.', 'culture-community' ); ?></p>
+                <p style="color:#646970;"><?php esc_html_e( 'No subscribers found.', 'culture-community' ); ?></p>
             <?php else : ?>
                 <table class="wp-list-table widefat fixed striped">
                     <thead>
                         <tr>
-                            <th scope="col" style="width:40px;">#</th>
                             <th scope="col" style="width:220px;"><?php esc_html_e( 'Email Address', 'culture-community' ); ?></th>
                             <th scope="col" style="width:150px;"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:160px;"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:140px;"><?php esc_html_e( 'Segment', 'culture-community' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
                             <th scope="col" style="width:120px;"><?php esc_html_e( 'Joined', 'culture-community' ); ?></th>
                             <th scope="col" style="width:130px;"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ( array_reverse( $subscribers ) as $idx => $sub ) : ?>
+                        <?php foreach ( $subscribers as $sub ) : ?>
                             <?php
-                            $email    = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-                            $name     = is_array( $sub ) ? ( $sub['name'] ?? '' ) : '';
-                            $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
-                            $segment  = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-                            $date     = is_array( $sub ) && ! empty( $sub['date'] )
-                                ? date_i18n( get_option( 'date_format' ), strtotime( $sub['date'] ) )
-                                : '';
-                            $is_editing = ( strtolower( trim( $email ) ) === strtolower( $editing_email ) );
+                            $date = $sub['createdAt'] ? date_i18n( get_option( 'date_format' ), strtotime( $sub['createdAt'] ) ) : '';
+                            $is_editing = ( strtolower( trim( $sub['email'] ) ) === strtolower( $editing_email ) );
                             ?>
                             <tr<?php echo $is_editing ? ' style="background:#fffbe6;"' : ''; ?>>
-                                <td style="color:#646970;"><?php echo esc_html( $count - $idx ); ?></td>
-                                <td><strong><?php echo esc_html( $email ); ?></strong></td>
-                                <td><?php echo esc_html( $name ); ?></td>
+                                <td><strong><?php echo esc_html( $sub['email'] ); ?></strong></td>
+                                <td><?php echo esc_html( $sub['name'] ); ?></td>
                                 <td>
-                                    <?php if ( ! empty( $sub_lists ) ) : ?>
-                                        <?php foreach ( $sub_lists as $l ) : ?>
-                                            <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.05em;margin:1px;background:<?php echo $l === 'getmelit' ? '#d1fae5' : '#e0e7ff'; ?>;color:<?php echo $l === 'getmelit' ? '#065f46' : '#3730a3'; ?>;">
-                                                <?php echo esc_html( self::LIST_OPTIONS[ $l ] ?? $l ); ?>
+                                    <?php if ( ! empty( $sub['lists'] ) ) : ?>
+                                        <?php foreach ( $sub['lists'] as $slug ) : ?>
+                                            <?php $list = Culture_Newsletter_Lists::get_by_slug( $slug ); ?>
+                                            <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.05em;margin:1px;background:<?php echo $list && 'region' === $list['type'] ? '#fef3c7' : '#e0e7ff'; ?>;color:<?php echo $list && 'region' === $list['type'] ? '#92400e' : '#3730a3'; ?>;">
+                                                <?php echo esc_html( $list ? $list['name'] : $slug ); ?>
                                             </span>
                                         <?php endforeach; ?>
                                     <?php else : ?>
                                         <span style="font-size:11px;color:#aaa;">—</span>
                                     <?php endif; ?>
-                                </td>
-                                <td style="font-size:12px;color:#646970;">
-                                    <?php echo $segment ? esc_html( self::SEGMENT_OPTIONS[ $segment ] ?? $segment ) : '<span style="color:#aaa;">—</span>'; ?>
                                 </td>
                                 <td style="font-size:12px;color:#646970;"><?php echo esc_html( $date ); ?></td>
                                 <td>
@@ -428,17 +373,17 @@ class Culture_Subscribers {
                                             href="<?php echo esc_url( add_query_arg( array(
                                                 'page'       => 'culture-subscribers',
                                                 'sub_action' => 'edit',
-                                                'sub_email'  => rawurlencode( $email ),
+                                                'sub_email'  => rawurlencode( $sub['email'] ),
                                             ), admin_url( 'admin.php' ) ) ); ?>#edit-subscriber"
                                             class="button button-small"
                                         ><?php esc_html_e( 'Edit', 'culture-community' ); ?></a>
                                         <form
                                             method="post"
                                             action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-                                            onsubmit="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $email ) ); ?>')"
+                                            onsubmit="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $sub['email'] ) ); ?>')"
                                         >
                                             <input type="hidden" name="action" value="culture_delete_subscriber">
-                                            <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $email ); ?>">
+                                            <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $sub['email'] ); ?>">
                                             <?php wp_nonce_field( 'culture_delete_subscriber' ); ?>
                                             <button type="submit" class="button button-small button-link-delete">
                                                 <?php esc_html_e( 'Remove', 'culture-community' ); ?>
@@ -450,6 +395,21 @@ class Culture_Subscribers {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <?php if ( $total_pages > 1 ) : ?>
+                <div style="margin-top:14px;">
+                    <?php
+                    echo paginate_links( array(
+                        'base'      => add_query_arg( 'paged', '%#%' ),
+                        'format'    => '',
+                        'current'   => $page,
+                        'total'     => $total_pages,
+                        'prev_text' => '«',
+                        'next_text' => '»',
+                    ) );
+                    ?>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
         <?php
@@ -458,7 +418,7 @@ class Culture_Subscribers {
     // ── HANDLERS ─────────────────────────────────────────────────────────────
 
     /**
-     * Handle edit subscriber POST action — updates name, location, lists, segment.
+     * Handle edit subscriber POST action — updates name, location, list membership.
      */
     public static function handle_edit() {
         check_admin_referer( 'culture_edit_subscriber' );
@@ -467,42 +427,19 @@ class Culture_Subscribers {
             wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
         }
 
-        $email    = sanitize_email( $_POST['subscriber_email'] ?? '' );
-        $name     = sanitize_text_field( $_POST['sub_name'] ?? '' );
-        $location = sanitize_text_field( $_POST['sub_location'] ?? '' );
-        $segment  = sanitize_text_field( $_POST['sub_segment'] ?? '' );
-        $lists    = array_values( array_intersect(
-            array_map( 'sanitize_text_field', (array) ( $_POST['sub_lists'] ?? array() ) ),
-            array_keys( self::LIST_OPTIONS )
-        ) );
-
-        if ( ! $email ) {
+        $id = absint( $_POST['subscriber_id'] ?? 0 );
+        if ( ! $id ) {
             wp_safe_redirect( add_query_arg( 'page', 'culture-subscribers', admin_url( 'admin.php' ) ) );
             exit;
         }
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $found       = false;
+        Culture_Subscribers_DB::update_subscriber( $id, array(
+            'name'     => sanitize_text_field( $_POST['sub_name'] ?? '' ),
+            'location' => sanitize_text_field( $_POST['sub_location'] ?? '' ),
+        ) );
 
-        foreach ( $subscribers as &$sub ) {
-            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
-                if ( ! is_array( $sub ) ) {
-                    $sub = array( 'email' => $sub_email, 'date' => current_time( 'mysql' ) );
-                }
-                $sub['name']     = $name;
-                $sub['location'] = $location;
-                $sub['lists']    = $lists;
-                $sub['segment']  = $segment;
-                $found = true;
-                break;
-            }
-        }
-        unset( $sub );
-
-        if ( $found ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers, false );
-        }
+        $list_ids = array_map( 'absint', (array) ( $_POST['sub_lists'] ?? array() ) );
+        Culture_Subscribers_DB::set_lists( $id, $list_ids );
 
         wp_safe_redirect( add_query_arg( array(
             'page'      => 'culture-subscribers',
@@ -522,14 +459,8 @@ class Culture_Subscribers {
         }
 
         $email = sanitize_email( $_POST['subscriber_email'] ?? '' );
-
         if ( $email ) {
-            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-                $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-                return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-            } ) );
-            update_option( 'culture_newsletter_subscribers', $updated, false );
+            Culture_Subscribers_DB::delete_subscriber_by_email( $email );
         }
 
         wp_safe_redirect( add_query_arg( array(
@@ -549,8 +480,7 @@ class Culture_Subscribers {
             wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
         }
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $filename    = 'newsletter-subscribers-' . date( 'Y-m-d' ) . '.csv';
+        $filename = 'newsletter-subscribers-' . date( 'Y-m-d' ) . '.csv';
 
         header( 'Content-Type: text/csv; charset=utf-8' );
         header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
@@ -558,20 +488,22 @@ class Culture_Subscribers {
         header( 'Expires: 0' );
 
         $output = fopen( 'php://output', 'w' );
-        fputcsv( $output, array( 'Email Address', 'Name', 'Location', 'Date Joined' ) );
+        fputcsv( $output, array( 'Email Address', 'Name', 'Location', 'Date Joined', 'Lists' ) );
 
-        foreach ( $subscribers as $sub ) {
-            if ( is_array( $sub ) ) {
+        $page = 1;
+        do {
+            $result = Culture_Subscribers_DB::all( array( 'page' => $page, 'per_page' => 200 ) );
+            foreach ( $result['subscribers'] as $sub ) {
                 fputcsv( $output, array(
                     $sub['email'],
-                    $sub['name'] ?? '',
-                    $sub['location'] ?? '',
-                    $sub['date'] ?? '',
+                    $sub['name'],
+                    $sub['location'],
+                    $sub['createdAt'],
+                    implode( '; ', $sub['lists'] ),
                 ) );
-            } else {
-                fputcsv( $output, array( $sub, '', '', '' ) );
             }
-        }
+            $page++;
+        } while ( count( $result['subscribers'] ) === $result['perPage'] );
 
         fclose( $output );
         exit;
@@ -628,7 +560,7 @@ class Culture_Subscribers {
             exit;
         }
 
-        $count = self::merge_subscribers( $items );
+        $count = Culture_Subscribers_DB::subscribe_many( $items );
 
         wp_safe_redirect( add_query_arg( array(
             'page'     => 'culture-subscribers',
@@ -669,7 +601,7 @@ class Culture_Subscribers {
             );
         }
 
-        $imported = self::merge_subscribers( $items );
+        $imported = Culture_Subscribers_DB::subscribe_many( $items );
 
         wp_safe_redirect( add_query_arg( array(
             'page'     => 'culture-subscribers',
@@ -709,7 +641,7 @@ class Culture_Subscribers {
             );
         }
 
-        $imported = self::merge_subscribers( $items );
+        $imported = Culture_Subscribers_DB::subscribe_many( $items );
 
         wp_safe_redirect( add_query_arg( array(
             'page'     => 'culture-subscribers',
@@ -749,64 +681,10 @@ class Culture_Subscribers {
             return;
         }
 
-        self::merge_subscribers( array(
-            array(
-                'email'    => $user->user_email,
-                'name'     => $user->display_name,
-                'location' => '',
-            )
-        ) );
+        Culture_Subscribers_DB::subscribe( $user->user_email, array(), $user->display_name, '', $user_id );
     }
 
     // ── HELPERS ──────────────────────────────────────────────────────────────
-
-    /**
-     * Merge a list of email items into the subscriber list, skipping duplicates.
-     *
-     * @param  array $items Each item: [email => ..., name => ..., location => ...]
-     * @return int   Number of newly added subscribers.
-     */
-    private static function merge_subscribers( array $items ) {
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        
-        // Build lookup of current emails
-        $existing_emails = array();
-        foreach ( $subscribers as $sub ) {
-            $existing_emails[] = strtolower( trim( is_array( $sub ) ? $sub['email'] : $sub ) );
-        }
-        $existing_emails = array_unique( $existing_emails );
-
-        $added = 0;
-        $now   = current_time( 'mysql' );
-
-        foreach ( $items as $item ) {
-            $email = sanitize_email( is_array( $item ) ? $item['email'] : $item );
-            if ( ! $email || ! is_email( $email ) ) {
-                continue;
-            }
-            if ( in_array( strtolower( $email ), $existing_emails, true ) ) {
-                continue;
-            }
-
-            $subscribers[] = array(
-                'email'    => $email,
-                'name'     => sanitize_text_field( $item['name'] ?? '' ),
-                'location' => sanitize_text_field( $item['location'] ?? '' ),
-                'date'     => $now,
-                // 'announcements' is opt-out (default ON) — every new subscriber gets it unless
-                // they later remove it via newsletter preferences.
-                'lists'    => array( 'announcements' ),
-            );
-            $existing_emails[] = strtolower( $email );
-            $added++;
-        }
-
-        if ( $added > 0 ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers, false );
-        }
-
-        return $added;
-    }
 
     /**
      * Check whether MailPoet is active and its subscribers table exists.

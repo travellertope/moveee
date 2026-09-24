@@ -1,0 +1,100 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  html,body { background:#FFFFFF; }
+  .screen {
+    width:1080px; height:1920px; position:relative; overflow:hidden;
+    background:#FFFFFF; font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; color:#14110D;
+    display:flex; flex-direction:column;
+  }
+  .statusbar {
+    flex:0 0 auto; height:66px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 40px; font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; font-weight:700; font-size:30px; color:#14110D;
+  }
+  .statusbar .icons { display:flex; gap:14px; align-items:center; }
+  .appheader {
+    flex:0 0 auto;
+    padding:18px 32px 20px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid rgba(20,17,13,0.10);
+  }
+  .wordmark { font-family:Georgia, 'Times New Roman', serif; font-weight:700; font-size:40px; letter-spacing:-0.01em; color:#14110D; }
+  .wordmark em { font-style:italic; color:#7a241c; }
+  .icon-row { display:flex; gap:22px; align-items:center; }
+  .icon-btn {
+    width:56px; height:56px; border-radius:9999px; background:#F5F5F5;
+    display:flex; align-items:center; justify-content:center; font-size:26px; position:relative;
+  }
+  .icon-btn .dot {
+    position:absolute; top:8px; right:8px; width:16px; height:16px; border-radius:999px;
+    background:#7a241c; border:2px solid #FFFFFF;
+  }
+  .placeholder {
+    background:
+      repeating-linear-gradient(135deg, rgba(179,130,56,0.10) 0 18px, transparent 18px 36px),
+      linear-gradient(160deg, #F5F5F5, #ECE6DC);
+    border:2.5px dashed #C8BFB0;
+    border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; color:#7A6F5C; text-align:center;
+  }
+  .placeholder .cam {
+    width:64px; height:64px; border-radius:999px; background:#FFFFFF;
+    display:flex; align-items:center; justify-content:center; font-size:30px;
+    box-shadow:0 2px 8px rgba(20,17,13,0.08);
+  }
+  .placeholder .lbl { font-family:'Courier New', monospace; font-size:20px; font-weight:700; letter-spacing:.02em; }
+  .placeholder .dim { font-family:'Courier New', monospace; font-size:16px; color:#C8BFB0; }
+  .pill {
+    display:inline-flex; align-items:center; padding:8px 20px; border-radius:9999px;
+    font-family:'Courier New', monospace; font-weight:700; font-size:18px; letter-spacing:.03em; text-transform:uppercase;
+  }
+  .card {
+    background:#FFFFFF; border:1px solid rgba(20,17,13,0.10); border-radius:12px;
+    box-shadow:0 2px 10px rgba(20,17,13,0.06);
+  }
+  .tabbar {
+    flex:0 0 150px; height:150px;
+    background:#FFFFFF; border-top:1px solid rgba(20,17,13,0.10);
+    display:flex; align-items:center; justify-content:space-around; padding-bottom:14px;
+  }
+  .tabitem { display:flex; flex-direction:column; align-items:center; gap:8px; width:180px; }
+  .tabitem .ic { font-size:34px; }
+  .tabitem .lb { font-family:-apple-system, 'Helvetica Neue', Arial, sans-serif; font-size:19px; font-weight:600; color:#7A6F5C; }
+  .tabitem.active .lb, .tabitem.active .ic { color:#7a241c; }
+  .content { flex:1 1 auto; overflow:hidden; position:relative; }
+</style></head>
+<body><div class="screen">
+  
+  <div class="statusbar">
+    <div>9:41</div>
+    <div class="icons">
+      <span>••••</span><span>📶</span><span>🔋</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="placeholder" style="width:1080px;height:620px;border-radius:0;"><div class="cam">📷</div><div class="lbl">HERO PHOTO</div><div class="dim">1080×620 — replace me</div></div>
+    <div style="position:absolute;top:24px;left:32px;right:32px;display:flex;justify-content:space-between;">
+      <div class="icon-btn" style="background:rgba(20,17,13,0.45);color:#FFFFFF;">←</div>
+      <div class="icon-btn" style="background:rgba(20,17,13,0.45);color:#FFFFFF;">↗</div>
+    </div>
+    <div style="padding:34px 36px 200px;">
+      <div class="pill" style="background:#FFF0EB;color:#7a241c;margin-bottom:20px;">The Lane</div>
+      <div style="font-family:Georgia, 'Times New Roman', serif;font-weight:700;font-size:40px;line-height:1.15;margin-bottom:18px;">
+        Threads &amp; Traditions: Lagos Fashion Week's Quiet Revolution
+      </div>
+      <div style="color:#7A6F5C;font-size:19px;margin-bottom:30px;">By Wanjiru Kamau · Sept 12 · 6 min read</div>
+      <div style="font-size:22px;line-height:1.65;color:#3A342B;">
+        <p style="margin-bottom:22px;">Backstage at Eko Hotel, the young designers weren't chasing trend cycles —
+        they were rebuilding archives. Between fittings, three names kept coming up: Ìfẹ́ Studio,
+        Kaine Row, and a newcomer working entirely in adire.</p>
+        <div style="border-left:4px solid #7a241c;padding:6px 0 6px 24px;margin:28px 0;font-family:Georgia, 'Times New Roman', serif;font-style:italic;font-size:24px;">
+          "Every stitch here is a footnote to something older than the runway."
+        </div>
+        <p>What ties the week together isn't a single aesthetic — it's a refusal to treat
+        heritage as costume. The clothes move. The stories move with them.</p>
+      </div>
+      <div class="placeholder" style="width:1012px;height:560px;margin-top:32px;"><div class="cam">📷</div><div class="lbl">IN-ARTICLE PHOTO</div><div class="dim">1012×560 — replace me</div></div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:190px;right:36px;width:96px;height:96px;border-radius:999px;background:#7a241c;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 6px 18px rgba(122,36,28,.35);">📑</div>
+</div></body></html>

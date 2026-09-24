@@ -3,6 +3,7 @@
 import { useState, useRef, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { HUB_CATEGORIES } from "@/lib/hubCategories";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
@@ -21,6 +22,7 @@ export default function CreateHubClient() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [allowed, setAllowed] = useState<string[]>(DEFAULT_TEMPLATES);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -69,6 +71,7 @@ export default function CreateHubClient() {
           description: description.trim(),
           allowed_templates: allowed.length ? allowed : DEFAULT_TEMPLATES,
           cover_image_url: coverImageUrl,
+          category,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -145,6 +148,23 @@ export default function CreateHubClient() {
                 style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: "var(--radius-lg, 6px)", marginBottom: 12 }}
               />
             )}
+
+            <p className="hfc-label" style={{ marginTop: 20 }}>Category (optional)</p>
+            <div className="hfc-venue-grid">
+              {HUB_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`hfc-venue-chip${category === cat ? " hfc-venue-chip--active" : ""}`}
+                  onClick={() => setCategory(category === cat ? "" : cat)}
+                >
+                  <span className="hfc-venue-label">{cat}</span>
+                </button>
+              ))}
+            </div>
+            <p className="hfc-capacity-hint">
+              Helps people browsing Hubs find yours — pick the closest fit, or skip it.
+            </p>
 
             <p className="hfc-label" style={{ marginTop: 20 }}>What can members post?</p>
             <div className="hfc-venue-grid">

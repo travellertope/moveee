@@ -98,9 +98,9 @@ export function isReviewTemplate(t: TemplateType): boolean {
 export const UPDATE_FAMILY: TemplateType[] = ["post", "poll", "quote"];
 export const UPDATE_DEFAULT: TemplateType = "post";
 export const UPDATE_TAB_META: Record<string, { label: string; emoji: string }> = {
-  post:  { label: "Update", emoji: "📝" },
+  post:  { label: "Update", emoji: "✏️" },
   poll:  { label: "Poll",   emoji: "📊" },
-  quote: { label: "Quote",  emoji: "✦" },
+  quote: { label: "Quote",  emoji: "💬" },
 };
 export function isUpdateTemplate(t: TemplateType): boolean {
   return UPDATE_FAMILY.includes(t);

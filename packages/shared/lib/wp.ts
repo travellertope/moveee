@@ -350,7 +350,24 @@ export async function getDirectoryEntriesWithFallback(first = 200, options: any 
   if (gqlEntries.length > 0) return gqlEntries;
 
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 100)}&status=publish&_embed=1&orderby=date&order=desc`;
+    // `_fields` strips the full `content` body (unused by mapRestDirectoryToFrontendShape
+    // below, which only reads id/slug/title/date/excerpt/acf/meta/embedded media+terms) —
+    // without it, `_embed=1` on 100 posts routinely exceeds Next's 2MB data-cache limit
+    // (first fixed September 2026: a 5.5MB response here made this fetch uncacheable, which
+    // amplified CMS load during a circuit-breaker-tripped build and contributed to
+    // /directory/[slug] static-generation timeouts). `_links`/`_embedded` must stay in the
+    // `_fields` list or WP strips the embedded media/terms data along with everything else.
+    //
+    // `_fields` alone wasn't enough — `_embed=1`'s `wp:featuredmedia` entry is the *full*
+    // attachment object (every registered image size's url/width/height/mime, description,
+    // caption, author, its own `_links`, etc.), and `_fields` can't trim fields nested inside
+    // an embedded object, only top-level ones. At 100 posts this still landed at ~2.9MB —
+    // still uncacheable, still re-fetched from WP on every page that hit this fallback during
+    // a build, still able to trip the exact same cascade (confirmed live in a September 2026
+    // production build failure). Capped `per_page` to 50 on top of the `_fields` trim so the
+    // real payload has margin under the 2MB ceiling instead of hovering just over it.
+    const fields = "id,slug,title,date,excerpt,acf,meta,_links,_embedded";
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 50)}&status=publish&_embed=1&orderby=date&order=desc&_fields=${fields}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -688,52 +705,74 @@ function mapRestNewsletterToFrontendShape(item: any) {
   };
 }
 
-export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+async function getCultureNewsletterIssues(first: number, options: any) {
   try {
     const gql = await getWPData(GET_NEWSLETTERS, { first }, options);
     const nodes = gql?.cultureNewsletters?.nodes ?? [];
     if (nodes.length > 0) return nodes;
   } catch {}
+  return fetchRestIssues("culture_newsletter", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
 
+async function getGetMeLitIssues(first: number, options: any) {
   try {
-    const { signal, clear } = wpSignal();
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
-    });
-    clear();
-    if (!res.ok) return [];
-    const json = await res.json();
-    if (!Array.isArray(json)) return [];
-    return json.map(mapRestNewsletterToFrontendShape);
-  } catch {
-    return [];
-  }
+    const gql = await getWPData(GET_GETMELIT_ISSUES, { first }, options);
+    const nodes = gql?.getMeLitIssues?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch {}
+  return fetchRestIssues("getmelit", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
+
+async function getCultureDropIssues(first: number, options: any) {
+  try {
+    const gql = await getWPData(GET_CULTUREDROP_ISSUES, { first }, options);
+    const nodes = gql?.cultureDropIssues?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch {}
+  return fetchRestIssues("culture_drop", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
+
+// Merges all three newsletter-content sources (legacy culture_newsletter —
+// both lists, mixed — plus the dedicated getmelit/culture_drop post types)
+// into one date-sorted list. Every existing caller (the /newsletter archive,
+// edition hubs, RSS feed routes, the homepage spotlight) already just reads
+// plain fields like nlList/nlSegment off each item, so merging sources here
+// means zero changes needed anywhere downstream.
+export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+  const [legacy, getmelit, cultureDrop] = await Promise.all([
+    getCultureNewsletterIssues(first, options),
+    getGetMeLitIssues(first, options),
+    getCultureDropIssues(first, options),
+  ]);
+
+  return [...legacy, ...getmelit, ...cultureDrop].sort((a: any, b: any) => {
+    const da = a?.date ? new Date(a.date).getTime() : 0;
+    const db = b?.date ? new Date(b.date).getTime() : 0;
+    return db - da;
+  });
 }
 
 export async function getNewsletterBySlugWithFallback(slug: string, options: any = {}) {
+  const revalidate = options.revalidate !== undefined ? options.revalidate : 3600;
+
   try {
     const gql = await getWPData(GET_NEWSLETTER_BY_SLUG, { slug }, options);
     if (gql?.cultureNewsletter) return gql.cultureNewsletter;
   } catch {}
-
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (!Array.isArray(json) || json.length === 0) return null;
-    return mapRestNewsletterToFrontendShape(json[0]);
-  } catch {
-    return null;
-  }
+    const gql = await getWPData(GET_GETMELIT_ISSUE_BY_SLUG, { slug }, options);
+    if (gql?.getMeLitIssue) return gql.getMeLitIssue;
+  } catch {}
+  try {
+    const gql = await getWPData(GET_CULTUREDROP_ISSUE_BY_SLUG, { slug }, options);
+    if (gql?.cultureDropIssue) return gql.cultureDropIssue;
+  } catch {}
+
+  const restLegacy = await fetchRestIssueBySlug("culture_newsletter", slug, revalidate);
+  if (restLegacy) return restLegacy;
+  const restGetMeLit = await fetchRestIssueBySlug("getmelit", slug, revalidate);
+  if (restGetMeLit) return restGetMeLit;
+  return fetchRestIssueBySlug("culture_drop", slug, revalidate);
 }
 
 /**
@@ -835,9 +874,54 @@ export const GET_STORY_BY_SLUG = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+// guestByline is resolved by moveee-graphql-bridge.php (a manually-deployed
+// bridge plugin, see CLAUDE.md's "Plugin DB table auto-upgrade"/bridge-plugin
+// docs) — an environment where that plugin isn't deployed yet has no such
+// field in its GraphQL schema, and an unrecognized field fails the *entire*
+// query, not just that field. Keeping it out of STORY_FIELDS_FRAGMENT (used
+// by every story listing, including the homepage) means a missing bridge
+// field can only ever break this one isolated, best-effort lookup — same
+// isolation rationale as GET_PRODUCT_EXTRA below. Caller must swallow errors.
+export const GET_STORY_GUEST_BYLINE = `
+  query GetStoryGuestByline($slug: ID!) {
+    post(id: $slug, idType: SLUG) {
+      guestByline {
+        name
+        bio
+        avatarUrl
+      }
+    }
+  }
+`;
+
 export const GET_STORIES = `
   query GetStories($first: Int, $categoryName: String, $tag: String) {
     posts(first: $first, where: { categoryName: $categoryName, tag: $tag }) {
+      nodes {
+        ...StoryFields
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+// Cursor-paginated "every post by this WP author id", via WPGraphQL's core
+// `author` where-arg (a standard field on RootQueryToPostConnectionWhereArgs
+// for any post type — not a custom bridge-plugin field, so no isolation
+// concern the way GET_STORY_GUEST_BYLINE needs one). Exists specifically so
+// getStoriesByAuthorId can try this before falling back to the REST
+// `?author=` query below — some hosting/security configs (author-
+// enumeration hardening rules) block any request whose raw query string
+// contains `author=`, REST included, but have no way to inspect a GraphQL
+// POST body's variables the same way. See getStoriesByAuthorId's own doc
+// comment for the full reasoning.
+export const GET_STORIES_BY_AUTHOR = `
+  query GetStoriesByAuthor($first: Int, $author: Int, $after: String) {
+    posts(first: $first, after: $after, where: { author: $author }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         ...StoryFields
       }
@@ -971,6 +1055,362 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
     return data?.posts?.nodes || [];
   } catch (err: any) {
     console.error("[literary] getLiteraryPieces failed:", err?.message || err);
+    return [];
+  }
+}
+
+// ── The Moveee Commons ─────────────────────────────────────────────────────
+// A public-affairs/research vertical at apps/site/app/commons/* — opinions,
+// reports, research and news on politics/environment/academia. Same "reuse
+// the existing `post` type, no new CPT" pattern as The Moveee Literary
+// above. A piece belongs to the vertical's *feed* under either of two
+// independent, unioned rules:
+//   1. It carries the "commons" category (display name TBD in WP Admin —
+//      assumed slug "commons", WordPress's default auto-slug for a
+//      "Commons" category title; fix COMMONS_CATEGORY_SLUG if the real
+//      slug ends up different).
+//   2. It's *authored* by Basit Jamiu (WP user_id 15, username "basit",
+//      the "Byline Contributor" account — see CLAUDE.md's "Byline
+//      Contributor role + Guest Byline field") — regardless of category,
+//      and regardless of whether the piece carries a Guest Byline
+//      attributing it to someone else on the page. Guest Byline is
+//      purely a display-time override; post_author never changes (same
+//      doc), so filtering on the real author databaseId already covers
+//      every guest-bylined piece Basit submits with zero extra work.
+// Both rules get a canonical /commons/{slug} URL and a redirect off
+// /magazine/{slug} — every piece that belongs to the Commons *feed* (via
+// either rule) also renders under Commons chrome, not the magazine
+// template. This was originally category-only (a piece that only
+// qualified via rule 2 stayed at /magazine/{slug}); widened per explicit
+// request so the whole feed is consistently Commons-branded, not a mix of
+// two different article templates depending on which rule matched.
+export const COMMONS_CATEGORY_SLUG = "commons";
+export const COMMONS_AUTHOR_ID = 15; // Basit Jamiu ("basit")
+export const COMMONS_AUTHOR_NAME = "Basit Jamiu"; // display fallback only — the real name lives on the WP account itself
+
+type CommonsPost =
+  | {
+      categories?: { nodes?: { slug: string }[] | null } | null;
+      author?: { node?: { databaseId?: number } | null } | null;
+    }
+  | null
+  | undefined;
+
+/** Category-only membership — this is what gates the canonical /commons/{slug} route. */
+export function isCommonsCategoryPost(post: CommonsPost): boolean {
+  return (post?.categories?.nodes || []).some((c) => c.slug === COMMONS_CATEGORY_SLUG);
+}
+
+/** Author-only membership — a Basit Jamiu byline, independent of category. */
+export function isCommonsByAuthor(post: CommonsPost): boolean {
+  return post?.author?.node?.databaseId === COMMONS_AUTHOR_ID;
+}
+
+/** Union of both rules — "does this piece belong in the Commons feed at all." */
+export function isCommonsPost(post: CommonsPost): boolean {
+  return isCommonsCategoryPost(post) || isCommonsByAuthor(post);
+}
+
+/**
+ * Resolves a piece's canonical link — /commons/{slug} for anything that
+ * qualifies for the Commons feed at all (category or author), per the
+ * module comment above.
+ */
+export function commonsPieceHref(post: CommonsPost & { slug?: string }): string {
+  return isCommonsPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
+}
+
+/**
+ * GraphQL-first attempt at "every post by this WP author id" — tries
+ * GET_STORIES_BY_AUTHOR (cursor-paginated, bounded at 5 pages of up to
+ * 100) before ever touching the REST `?author=` fallback below. This
+ * exists because some hosting/security setups (a common WP hardening
+ * rule against author-enumeration attacks) block *any* request whose raw
+ * query string contains `author=`, REST included — the GraphQL request
+ * carries the same filter in its POST body instead, so it isn't visible
+ * to that kind of query-string pattern match at all. Returns [] (never
+ * throws) so the caller can fall back to REST when this comes back empty,
+ * whether that's because the schema genuinely doesn't support the
+ * `author` where-arg or because the author truly has no posts.
+ */
+async function getStoriesByAuthorIdGraphQL(authorId: number, first: number): Promise<any[]> {
+  const perPage = Math.min(100, first);
+  const maxPages = Math.min(5, Math.ceil(first / perPage) || 1);
+  const all: any[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < maxPages; page++) {
+    const data = await getWPData(
+      GET_STORIES_BY_AUTHOR,
+      { first: perPage, author: authorId, after },
+      { revalidate: 600 }
+    );
+    const nodes: any[] = data?.posts?.nodes || [];
+    if (nodes.length === 0) break;
+    all.push(...nodes);
+    if (all.length >= first || !data?.posts?.pageInfo?.hasNextPage) break;
+    after = data.posts.pageInfo.endCursor;
+    if (!after) break;
+  }
+
+  return all.slice(0, first);
+}
+
+/**
+ * "Every post by this WP author id" — tries GraphQL first (see
+ * getStoriesByAuthorIdGraphQL above), then falls back to WP core REST's
+ * native `?author=<id>` support if that comes back empty. The REST path
+ * paginates via WP REST's own `page` param, bounded at MAX_PAGES (same
+ * "bounded pagination loop" convention already used for vendor analytics
+ * elsewhere in this codebase) — a plain `per_page=<first>` single request
+ * silently caps out at 100 (WP's own hard max) or at whatever `first` is,
+ * so an author with more posts than that never had the rest fetched at
+ * all, at any point, regardless of how they're displayed downstream. With
+ * `first` left at its default 24, this still resolves in exactly one
+ * request (unchanged behaviour for existing callers); a caller that wants
+ * the author's full history should pass a much larger `first` (see
+ * getCommonsAuthorArchive below). Returns whatever was collected before
+ * any failure — best-effort, same as every other REST fallback here.
+ */
+export async function getStoriesByAuthorId(
+  authorId: number,
+  first = 24,
+  options: any = {}
+): Promise<any[]> {
+  try {
+    const graphqlResult = await getStoriesByAuthorIdGraphQL(authorId, first);
+    if (graphqlResult.length > 0) return graphqlResult;
+  } catch {
+    // fall through to REST
+  }
+
+  const revalidate = options.revalidate !== undefined ? options.revalidate : 600;
+  const perPage = Math.min(100, first);
+  const maxPages = Math.min(5, Math.ceil(first / perPage));
+  const all: any[] = [];
+
+  try {
+    for (let page = 1; page <= maxPages; page++) {
+      const { signal, clear } = wpSignal();
+      const url = `${WP_BASE_URL}/wp-json/wp/v2/posts?author=${authorId}&per_page=${perPage}&page=${page}&status=publish&_embed=1&orderby=date&order=desc`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        signal,
+        next: { revalidate },
+      });
+      clear();
+      if (!res.ok) break; // includes WP's 400 once `page` runs past the last one
+      const json = await res.json();
+      if (!Array.isArray(json) || json.length === 0) break;
+      all.push(...json.map(mapRestStoryToFrontendShape));
+      if (json.length < perPage || all.length >= first) break;
+    }
+  } catch {
+    // fall through with whatever was collected before the failure
+  }
+
+  return all.slice(0, first);
+}
+
+/** Dedupes several post lists by databaseId (first occurrence wins) and sorts newest-first. */
+function mergeCommonsPosts(...lists: any[][]): any[] {
+  const merged = new Map<string, any>();
+  for (const list of lists) {
+    for (const post of list) {
+      const key = String(post?.databaseId ?? post?.id ?? "");
+      if (key && !merged.has(key)) merged.set(key, post);
+    }
+  }
+  return Array.from(merged.values()).sort(
+    (a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime()
+  );
+}
+
+/**
+ * Resolves guestByline for a list of Commons pieces and mutates each post
+ * object in place (`post.guestByline = {...}`) so every list-rendering
+ * caller (CommonsPieceCard, the homepage hero) can just check
+ * `piece.guestByline?.name` before falling back to the real author — the
+ * same fallback /commons/[slug] and /magazine/[slug] already use for a
+ * single piece.
+ *
+ * Deliberately N parallel calls to the exact same GET_STORY_GUEST_BYLINE
+ * query the single-piece pages already use, rather than one combined
+ * request with N aliased `post(...)` lookups — an earlier version of this
+ * function tried the aliased-batch approach (one request instead of N) and
+ * it broke in production: every piece in a batch ended up showing the
+ * *same* guest byline (from whichever one post actually had one set),
+ * something isolated single-post queries never exhibited. Root cause
+ * wasn't pinned down (the PHP resolver itself correctly scopes by
+ * `$post->databaseId`, not global state, so it isn't an obvious
+ * WordPress-side bug) — rather than keep chasing an unverified live-only
+ * failure mode, this reverts to N copies of the one call already proven
+ * correct. Costs more requests (bounded by list size — homepage ~24,
+ * archive page 20, a section archive ~24), each independently KV-cached,
+ * so a warm cache still avoids re-fetching guestByline on every load.
+ */
+async function attachGuestBylines(posts: any[]): Promise<any[]> {
+  const withSlugs = posts.filter((p) => p?.slug);
+  if (!withSlugs.length) return posts;
+
+  await Promise.allSettled(
+    withSlugs.map(async (post) => {
+      try {
+        const data = await getWPData(GET_STORY_GUEST_BYLINE, { slug: post.slug }, { revalidate: 600 });
+        const byline = data?.post?.guestByline;
+        if (byline?.name) post.guestByline = byline;
+      } catch {
+        // best-effort — this piece just falls back to its real author name
+      }
+    })
+  );
+
+  return posts;
+}
+
+/**
+ * Fetches the whole Commons feed: the "commons" category (GraphQL, same
+ * categoryName where-arg every other section already uses) unioned with
+ * Basit Jamiu's most recent posts (REST, see getStoriesByAuthorId above).
+ * Deduped by databaseId (category-sourced copy wins on a collision, since
+ * it's the richer GraphQL shape), sorted newest first. Never throws — a
+ * failure on either half just means that half contributes nothing.
+ *
+ * Deliberately display-capped, not exhaustive — this is what feeds the
+ * homepage's small "latest" rail, so `first` (default 24, further sliced
+ * down to 7 actually rendered by app/commons/page.tsx) is meant to be
+ * small. For "every Commons piece Basit has ever published," including
+ * ones from months ago that would never survive this cap, use
+ * getCommonsAuthorArchive() instead — that one's the exhaustive,
+ * paginated view.
+ */
+export async function getCommonsPieces(first = 24): Promise<any[]> {
+  const [categoryResult, authorResult] = await Promise.allSettled([
+    getWPData(GET_STORIES, { first, categoryName: COMMONS_CATEGORY_SLUG }),
+    getStoriesByAuthorId(COMMONS_AUTHOR_ID, first),
+  ]);
+
+  const categoryPosts: any[] =
+    categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
+  const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
+
+  const pieces = mergeCommonsPosts(categoryPosts, authorPosts).slice(0, first);
+  return attachGuestBylines(pieces);
+}
+
+/**
+ * The exhaustive, paginated counterpart to getCommonsPieces() above — every
+ * Commons-qualifying piece (category ∪ author), not just the homepage's
+ * display-capped rail. Fetches Basit's full post history (bounded to 500,
+ * via getStoriesByAuthorId's own pagination loop) and a generous single-
+ * request pool of category-tagged pieces (100 — editorial category
+ * assignment is deliberate/curated, so a much smaller volume than "every
+ * post one account has ever written" is expected in practice), merges and
+ * sorts them once, then paginates that already-in-memory list — no WP-side
+ * cursor pagination needed for the merged view itself, since both source
+ * fetches are already bounded and complete for any realistic volume.
+ */
+export async function getCommonsAuthorArchive(
+  page = 1,
+  perPage = 20
+): Promise<{ pieces: any[]; total: number; hasMore: boolean }> {
+  const [categoryResult, authorResult] = await Promise.allSettled([
+    getWPData(GET_STORIES, { first: 100, categoryName: COMMONS_CATEGORY_SLUG }),
+    getStoriesByAuthorId(COMMONS_AUTHOR_ID, 500),
+  ]);
+
+  const categoryPosts: any[] =
+    categoryResult.status === "fulfilled" ? categoryResult.value?.posts?.nodes || [] : [];
+  const authorPosts: any[] = authorResult.status === "fulfilled" ? authorResult.value : [];
+
+  const all = mergeCommonsPosts(categoryPosts, authorPosts);
+  const start = Math.max(0, (page - 1) * perPage);
+  const pieces = await attachGuestBylines(all.slice(start, start + perPage));
+
+  return { pieces, total: all.length, hasMore: start + perPage < all.length };
+}
+
+export interface CommonsSection {
+  slug: string;
+  tagSlug: string;
+  label: string;
+  tagline: string;
+}
+
+// A plain WP tag overlay on the "commons" category — same "optional
+// overlay, not a requirement" relationship LITERARY_GENRES has to
+// LITERARY_CATEGORY_SLUG above. A Commons piece with no section tag still
+// appears in the main /commons feed; it just won't show up on any single
+// section's page until someone tags it. Order matches the "Sections" strip
+// on the approved homepage mockup. Section pages only ever draw from
+// category-based Commons pieces (see getCommonsCategoryPieces below) —
+// sections are a category overlay, so an author-only piece (no "commons"
+// category) can still have a canonical /commons/{slug} page (per
+// commonsPieceHref above), it just won't appear on any single section's
+// archive until it's both in the category and tagged.
+export const COMMONS_SECTIONS: CommonsSection[] = [
+  {
+    slug: "politics",
+    tagSlug: "politics",
+    label: "Politics",
+    tagline: "Power, policy, and the people who wield it.",
+  },
+  {
+    slug: "environment",
+    tagSlug: "environment",
+    label: "Environment",
+    tagline: "Climate, land, and the systems that shape them.",
+  },
+  {
+    slug: "academia",
+    tagSlug: "academia",
+    label: "Academia",
+    tagline: "Research, scholarship, and the debates inside it.",
+  },
+  {
+    slug: "reports",
+    tagSlug: "reports",
+    label: "Reports",
+    tagline: "Original data and document-backed investigations.",
+  },
+  {
+    slug: "opinion",
+    tagSlug: "opinion",
+    label: "Opinion",
+    tagline: "Argument, analysis, and a stated point of view.",
+  },
+];
+
+export function getCommonsSection(slug: string): CommonsSection | undefined {
+  return COMMONS_SECTIONS.find((s) => s.slug === slug.toLowerCase());
+}
+
+export function commonsSectionOfPost(
+  post: { tags?: { nodes?: { slug: string }[] | null } | null } | null | undefined
+): CommonsSection | undefined {
+  const tagSlugs = new Set((post?.tags?.nodes || []).map((t) => t.slug));
+  return COMMONS_SECTIONS.find((s) => tagSlugs.has(s.tagSlug));
+}
+
+/**
+ * Category-scoped Commons pieces (omit tagSlug for the whole category, or
+ * pass one of COMMONS_SECTIONS[].tagSlug to narrow to one section) — the
+ * pool used by /commons/[slug]'s section-archive branch and the piece
+ * page's own "More in {section}" grid. Deliberately doesn't include the
+ * author-only half of getCommonsPieces() — see that function's doc comment
+ * for why. Degrades to [] on any fetch failure, same as getLiteraryPieces.
+ */
+export async function getCommonsCategoryPieces(tagSlug?: string, first = 24): Promise<any[]> {
+  try {
+    const data = await getWPData(GET_STORIES, {
+      first,
+      categoryName: COMMONS_CATEGORY_SLUG,
+      tag: tagSlug || undefined,
+    });
+    return attachGuestBylines(data?.posts?.nodes || []);
+  } catch (err: any) {
+    console.error("[commons] getCommonsCategoryPieces failed:", err?.message || err);
     return [];
   }
 }
@@ -1647,6 +2087,165 @@ export const GET_NEWSLETTER_BY_SLUG = `
   }
   ${NEWSLETTER_FIELDS_FRAGMENT}
 `;
+
+// GetMeLit / Culture Drop — dedicated WP post types (getmelit, culture_drop)
+// added alongside the legacy culture_newsletter CPT so automated/API-created
+// content can target a list directly via its own REST/GraphQL endpoint, with
+// no _culture_nl_list meta needed (the post type itself is the list). Every
+// existing culture_newsletter post — both lists, mixed — is untouched and
+// keeps working exactly as before via GET_NEWSLETTERS above; these two are
+// purely additive sources merged in by getNewslettersWithFallback() below,
+// same "fetch each source, merge+sort client-side" pattern already used for
+// Commons/Literary elsewhere in this file. Field shape matches
+// NEWSLETTER_FIELDS_FRAGMENT exactly — nlList/nlSegment/nlIssueNum resolve
+// server-side on these types too (see class-culture-post-types.php), so
+// nothing downstream of getNewslettersWithFallback()/getNewsletterBySlugWithFallback()
+// needs to know these are a different WP post type at all.
+const GETMELIT_FIELDS_FRAGMENT = `
+  fragment GetMeLitFields on GetMeLitIssue {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    content
+    nlList
+    nlSegment
+    nlIssueNum
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+const CULTUREDROP_FIELDS_FRAGMENT = `
+  fragment CultureDropFields on CultureDropIssue {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    content
+    nlList
+    nlSegment
+    nlIssueNum
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+const GET_GETMELIT_ISSUES = `
+  query GetGetMeLitIssues($first: Int) {
+    getMeLitIssues(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        ...GetMeLitFields
+      }
+    }
+  }
+  ${GETMELIT_FIELDS_FRAGMENT}
+`;
+
+const GET_CULTUREDROP_ISSUES = `
+  query GetCultureDropIssues($first: Int) {
+    cultureDropIssues(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        ...CultureDropFields
+      }
+    }
+  }
+  ${CULTUREDROP_FIELDS_FRAGMENT}
+`;
+
+const GET_GETMELIT_ISSUE_BY_SLUG = `
+  query GetGetMeLitIssueBySlug($slug: ID!) {
+    getMeLitIssue(id: $slug, idType: SLUG) {
+      ...GetMeLitFields
+    }
+  }
+  ${GETMELIT_FIELDS_FRAGMENT}
+`;
+
+const GET_CULTUREDROP_ISSUE_BY_SLUG = `
+  query GetCultureDropIssueBySlug($slug: ID!) {
+    cultureDropIssue(id: $slug, idType: SLUG) {
+      ...CultureDropFields
+    }
+  }
+  ${CULTUREDROP_FIELDS_FRAGMENT}
+`;
+
+async function fetchRestIssues(postType: string, first: number, revalidate: number) {
+  try {
+    const { signal, clear } = wpSignal();
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/${postType}?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      next: { revalidate },
+    });
+    clear();
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    const listByType: Record<string, string> = { getmelit: "getmelit", culture_drop: "culture-drop" };
+    return json.map((item: any) => ({
+      ...mapRestNewsletterToFrontendShape(item),
+      nlList: listByType[postType] ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRestIssueBySlug(postType: string, slug: string, revalidate: number) {
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/${postType}?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) return null;
+    const listByType: Record<string, string> = { getmelit: "getmelit", culture_drop: "culture-drop" };
+    return { ...mapRestNewsletterToFrontendShape(json[0]), nlList: listByType[postType] ?? null };
+  } catch {
+    return null;
+  }
+}
 
 export const GET_ADJACENT_NEWSLETTERS = `
   query GetAdjacentNewsletters($notIn: [ID], $first: Int) {

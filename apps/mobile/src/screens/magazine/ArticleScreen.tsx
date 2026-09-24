@@ -41,16 +41,16 @@ const HEADER_TRIGGER = HERO_HEIGHT - 60;
 function makeHtmlTagStyles(c: ColorPalette) {
   return {
     // Block
-    p:          { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 14 },
-    h2:         { fontFamily: "DMSans_700Bold", fontSize: 20, color: c.ink, marginTop: 16, marginBottom: 8 },
-    h3:         { fontFamily: "DMSans_700Bold", fontSize: 18, color: c.ink, marginTop: 12, marginBottom: 6 },
-    h4:         { fontFamily: "DMSans_700Bold", fontSize: 16, color: c.ink, marginTop: 10, marginBottom: 4 },
+    p:          { fontSize: fontSize.md, lineHeight: 26, color: c.inkSoft, marginBottom: 14 },
+    h2:         { fontFamily: "DMSans_700Bold", fontSize: fontSize.xl, color: c.ink, marginTop: 16, marginBottom: 8 },
+    h3:         { fontFamily: "DMSans_700Bold", fontSize: fontSize.lg, color: c.ink, marginTop: 12, marginBottom: 6 },
+    h4:         { fontFamily: "DMSans_700Bold", fontSize: fontSize.md, color: c.ink, marginTop: 10, marginBottom: 4 },
     blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute, marginVertical: 12 },
     ul:         { marginBottom: 14, paddingLeft: 4 },
     ol:         { marginBottom: 14, paddingLeft: 4 },
-    li:         { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 4 },
+    li:         { fontSize: fontSize.md, lineHeight: 26, color: c.inkSoft, marginBottom: 4 },
     img:        { borderRadius: 6 },
-    figcaption: { fontSize: 11, color: c.mute, textAlign: "center" as const, marginTop: 4 },
+    figcaption: { fontSize: fontSize.xs, color: c.mute, textAlign: "center" as const, marginTop: 4 },
     // Inline — must use explicit fontFamily for Expo custom fonts; fontWeight alone won't switch the variant
     a:          { color: c.gold, textDecorationLine: "underline" as const },
     strong:     { fontFamily: "DMSans_700Bold" },
@@ -58,8 +58,8 @@ function makeHtmlTagStyles(c: ColorPalette) {
     em:         { fontStyle: "italic" as const },
     i:          { fontStyle: "italic" as const },
     u:          { textDecorationLine: "underline" as const },
-    code:       { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep },
-    pre:        { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep, padding: 12, borderRadius: 6 },
+    code:       { fontFamily: "JetBrainsMono_400Regular", fontSize: fontSize.sm, backgroundColor: c.paperDeep },
+    pre:        { fontFamily: "JetBrainsMono_400Regular", fontSize: fontSize.sm, backgroundColor: c.paperDeep, padding: 12, borderRadius: 6 },
   };
 }
 
@@ -130,7 +130,7 @@ function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
                   width: colWidth(ci),
                   padding: 8,
                   fontFamily: ri === 0 ? "DMSans_700Bold" : "DMSans_400Regular",
-                  fontSize: 13,
+                  fontSize: fontSize.sm,
                   color: c.ink,
                   borderRightWidth: ci < row.length - 1 ? 1 : 0,
                   borderRightColor: c.rule,
@@ -310,18 +310,18 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
           <Ionicons name="mail-outline" size={18} color={c.gold} />
         </View>
         <Text style={{
-          fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, flex: 1, lineHeight: 22,
+          fontFamily: fonts.serifBold, fontSize: fontSize.md, color: c.ink, flex: 1, lineHeight: 22,
         }}>{"Culture in your inbox,\nevery Tuesday"}</Text>
       </View>
       <Text style={{
-        fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginBottom: 16,
+        fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 19, marginBottom: 16,
       }}>
         Culture Drop — our weekly edit of what to watch, read, see and experience. Straight to your inbox.
       </Text>
       {submitted ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Ionicons name="checkmark-circle" size={18} color={c.gold} />
-          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.gold }}>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.gold }}>
             You're on the list — see you Tuesday!
           </Text>
         </View>
@@ -340,7 +340,7 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
                 flex: 1, height: 44, borderWidth: 1,
                 borderColor: error ? "#7a241c" : c.rule,
                 borderRadius: radius.md, paddingHorizontal: 12,
-                fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+                fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink,
                 backgroundColor: c.paper,
               }}
             />
@@ -353,13 +353,13 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
                 opacity: busy ? 0.6 : 1,
               }}
             >
-              <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
+              <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper }}>
                 {busy ? "…" : "Subscribe"}
               </Text>
             </TouchableOpacity>
           </View>
           {error ? (
-            <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: "#7a241c", marginTop: 6 }}>
+            <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.xs, color: "#7a241c", marginTop: 6 }}>
               {error}
             </Text>
           ) : null}
@@ -399,9 +399,9 @@ function ShopTheEdit({ articleSlug, c, nav }: { articleSlug: string; c: ColorPal
       <View style={{
         flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
       }}>
-        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Shop the edit</Text>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink }}>Shop the edit</Text>
         <TouchableOpacity onPress={() => nav.navigate("ShopHome")}>
-          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>Browse all →</Text>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre }}>Browse all →</Text>
         </TouchableOpacity>
       </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
@@ -428,14 +428,14 @@ function ShopTheEdit({ articleSlug, c, nav }: { articleSlug: string; c: ColorPal
                 {p.brand}
               </Text>
               <Text style={{
-                fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, lineHeight: 17,
+                fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink, lineHeight: 17,
               }} numberOfLines={2}>
                 {p.name}
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
-                <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ink }}>{p.price}</Text>
+                <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink }}>{p.price}</Text>
                 {p.pro_price ? (
-                  <Text style={{ fontFamily: fonts.sansBold, fontSize: 11, color: c.gold }}>{p.pro_price} Pro</Text>
+                  <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.xs, color: c.gold }}>{p.pro_price} Pro</Text>
                 ) : null}
               </View>
             </View>
@@ -476,9 +476,9 @@ function KeepReading({ articleSlug, c, nav }: { articleSlug: string; c: ColorPal
       <View style={{
         flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
       }}>
-        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Keep reading</Text>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink }}>Keep reading</Text>
         <TouchableOpacity onPress={() => nav.navigate("MagazineList")}>
-          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>See all →</Text>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre }}>See all →</Text>
         </TouchableOpacity>
       </View>
       <View style={{ borderTopWidth: 1, borderTopColor: c.rule }}>
@@ -511,12 +511,12 @@ function KeepReading({ articleSlug, c, nav }: { articleSlug: string; c: ColorPal
                 </Text>
               ) : null}
               <Text style={{
-                fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, lineHeight: 19,
+                fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink, lineHeight: 19,
               }} numberOfLines={3}>
                 {a.title}
               </Text>
               <Text style={{
-                fontFamily: fonts.mono, fontSize: 11, color: c.ghost, marginTop: 4,
+                fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost, marginTop: 4,
               }}>
                 {[a.author, a.readingTime ? `${a.readingTime} min read` : null]
                   .filter(Boolean).join(" · ")}
@@ -1045,15 +1045,17 @@ export default function ArticleScreen() {
                       {(article.author as any).bio ? (
                         <Text style={styles.authorBioBio}>{(article.author as any).bio}</Text>
                       ) : null}
-                      <TouchableOpacity
-                        onPress={() => nav.push("AuthorArchive", {
-                          authorSlug: article.author.slug,
-                          authorName: article.author.name,
-                          authorAvatar: article.author.avatarUrl,
-                        })}
-                      >
-                        <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
-                      </TouchableOpacity>
+                      {article.author.slug ? (
+                        <TouchableOpacity
+                          onPress={() => nav.push("AuthorArchive", {
+                            authorSlug: article.author.slug,
+                            authorName: article.author.name,
+                            authorAvatar: article.author.avatarUrl,
+                          })}
+                        >
+                          <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ) : null}
 
@@ -1172,7 +1174,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     width: 40, height: 40, alignItems: "center", justifyContent: "center",
   },
   stickyTitle: {
-    flex: 1, fontFamily: fonts.sansMedium, fontSize: 14, color: c.ink,
+    flex: 1, fontFamily: fonts.sansMedium, fontSize: fontSize.base, color: c.ink,
     textAlign: "center", marginHorizontal: 8,
   },
   stickyIconBtn: {
@@ -1220,11 +1222,11 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
 
   title: {
-    fontFamily: fonts.serifBold, fontSize: 26, color: c.ink,
+    fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink,
     lineHeight: 32, marginBottom: space[2],
   },
   standfirst: {
-    fontFamily: fonts.sansItalic, fontSize: 15,
+    fontFamily: fonts.sansItalic, fontSize: fontSize.base,
     color: c.inkSoft, lineHeight: 22, marginTop: 6,
   },
 
@@ -1240,8 +1242,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   bylineLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   bylineInfo: { flex: 1 },
-  bylineWords: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
-  bylineMeta: { fontFamily: fonts.mono, fontSize: 11, color: c.ghost, marginTop: 3 },
+  bylineWords: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+  bylineMeta: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost, marginTop: 3 },
   seriesBadge: {
     borderWidth: 1, borderColor: c.ghost, borderRadius: radius.full,
     paddingHorizontal: 10, paddingVertical: 4, maxWidth: 120,
@@ -1259,7 +1261,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderWidth: 2, borderColor: c.gold,
     backgroundColor: c.goldLight, alignItems: "center", justifyContent: "center",
   },
-  avatarInitials: { fontFamily: fonts.sansBold, fontSize: 14, color: c.gold },
+  avatarInitials: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.gold },
 
   // Actions bar
   actionsBar: {
@@ -1278,7 +1280,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     paddingLeft: 16, marginVertical: 20,
   },
   pullQuoteText: {
-    fontFamily: fonts.serifItalic, fontSize: 20,
+    fontFamily: fonts.serifItalic, fontSize: fontSize.lg,
     color: c.inkSoft, lineHeight: 28,
   },
 
@@ -1295,11 +1297,11 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.goldLight,
   },
   gateTitle: {
-    fontFamily: fonts.serifBold, fontSize: 18, color: c.ink,
+    fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink,
     marginBottom: 10, textAlign: "center",
   },
   gateDesc: {
-    fontFamily: fonts.sans, fontSize: 14, color: c.mute,
+    fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute,
     textAlign: "center", lineHeight: 20, marginBottom: 20,
   },
   upgradeBtn: {
@@ -1307,10 +1309,10 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderRadius: radius.full, alignItems: "center", justifyContent: "center",
   },
   upgradeBtnText: {
-    fontFamily: fonts.sansBold, fontSize: 14, color: "#fff",
+    fontFamily: fonts.sansBold, fontSize: fontSize.base, color: "#fff",
   },
   signInLink: {
-    fontFamily: fonts.sansMedium, fontSize: 14, color: c.ochre,
+    fontFamily: fonts.sansMedium, fontSize: fontSize.base, color: c.ochre,
   },
 
   // Article complete banner
@@ -1327,10 +1329,10 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: "#fff", alignItems: "center", justifyContent: "center",
   },
   completeTitle: {
-    fontFamily: fonts.sansBold, fontSize: 14, color: "#fff",
+    fontFamily: fonts.sansBold, fontSize: fontSize.base, color: "#fff",
   },
   completePoints: {
-    fontFamily: fonts.mono, fontSize: 11, color: "#fff", opacity: 0.9, marginTop: 2,
+    fontFamily: fonts.mono, fontSize: fontSize.xs, color: "#fff", opacity: 0.9, marginTop: 2,
   },
   collectBtn: {
     height: 34, paddingHorizontal: 14, borderRadius: radius.full,
@@ -1338,7 +1340,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   collectBtnDone: { opacity: 0.65 },
   collectBtnText: {
-    fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre,
+    fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre,
   },
 
   // Series strip
@@ -1348,7 +1350,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     paddingHorizontal: 16, gap: 10,
   },
   seriesStripText: {
-    flex: 1, fontFamily: fonts.sans, fontSize: 13, color: c.mute,
+    flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute,
   },
 
   // Issue card
@@ -1366,11 +1368,11 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     marginBottom: 4,
   },
   issueTitle: {
-    fontFamily: fonts.serifBold, fontSize: 15, color: c.ink, lineHeight: 20,
+    fontFamily: fonts.serifBold, fontSize: fontSize.base, color: c.ink, lineHeight: 20,
   },
-  issueMeta: { fontFamily: fonts.mono, fontSize: 11, color: c.mute, marginTop: 4 },
+  issueMeta: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: 4 },
   issueBrowse: {
-    fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre, marginTop: 8,
+    fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre, marginTop: 8,
   },
 
   // Author bio card
@@ -1387,18 +1389,18 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.goldLight, alignItems: "center", justifyContent: "center",
   },
   authorBioName: {
-    fontFamily: fonts.serifBold, fontSize: 18, color: c.ink, marginBottom: 4,
+    fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink, marginBottom: 4,
   },
   authorBioRole: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.mute, textTransform: "uppercase",
+    fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, textTransform: "uppercase",
     letterSpacing: 1, marginBottom: 10,
   },
   authorBioBio: {
-    fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, lineHeight: 20,
+    fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft, lineHeight: 20,
     textAlign: "center", marginBottom: 12,
   },
   authorBioMore: {
-    fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre,
+    fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre,
   },
 
   // TOC FAB
@@ -1417,10 +1419,10 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: c.rule,
   },
   tocHeaderTitle: {
-    fontFamily: fonts.serifBold, fontSize: 22, color: c.ink, marginBottom: 6,
+    fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink, marginBottom: 6,
   },
   tocArticleTitle: {
-    fontFamily: fonts.monoItalic, fontSize: 11, color: c.ghost, lineHeight: 16,
+    fontFamily: fonts.monoItalic, fontSize: fontSize.xs, color: c.ghost, lineHeight: 16,
   },
   tocMeta: {
     marginTop: 16, marginBottom: 0,
@@ -1456,13 +1458,13 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   tocDotPlaceholder: { width: 7, height: 7, flexShrink: 0 },
   tocItemText: {
-    flex: 1, fontFamily: fonts.sans, fontSize: 15, color: c.ink, lineHeight: 22,
+    flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink, lineHeight: 22,
   },
   tocItemTextActive: {
     fontFamily: fonts.sansBold, color: c.ochre,
   },
   tocItemTextNested: {
-    fontSize: 13, color: c.inkSoft,
+    fontSize: fontSize.sm, color: c.inkSoft,
   },
 
 }); }

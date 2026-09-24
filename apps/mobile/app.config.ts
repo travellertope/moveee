@@ -108,6 +108,11 @@ export default {
       "@react-native-community/datetimepicker",
       "expo-asset",
       "expo-font",
+      // Sets the com.apple.developer.applesignin entitlement automatically —
+      // required for Apple Store Guideline 4.8 compliance (any app offering
+      // a third-party social login, here Google, must also offer Sign in
+      // with Apple as an equivalent option). iOS-only; no-op on Android.
+      "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
         { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
@@ -146,6 +151,14 @@ export default {
       // the newer Xcode/Clang required by eas.json's build.production.ios.image
       // ("latest"). See apps/mobile/plugins/withFmtConstevalFix.js.
       "./plugins/withFmtConstevalFix",
+      // Works around an Android Gradle build failure (Gradle's stricter
+      // task-validation rejecting a race between two duplicate
+      // :sentry-react-native / :sentry_react-native Gradle project
+      // registrations for @sentry/react-native, caused by that package
+      // being picked up by both classic RN autolinking and Expo Modules
+      // autolinking on this SDK-52-pinned project). See
+      // apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
+      "./plugins/withSentryGradleTaskOrderingFix",
     ],
     extra: {
       eas: {

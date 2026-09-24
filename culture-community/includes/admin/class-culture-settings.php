@@ -110,6 +110,7 @@ class Culture_Settings {
         'culture_google_client_id_web'     => '',
         'culture_google_client_id_ios'      => '',
         'culture_google_client_id_android'  => '',
+        'culture_apple_service_id'         => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
 
@@ -172,12 +173,21 @@ class Culture_Settings {
     }
 
     /**
-     * Register the main Culture Community admin menu and Settings submenu.
+     * Register the main Moveee Community admin menu and Settings submenu.
+     *
+     * Renamed from "Culture Community" (September 2026), alongside splitting
+     * the newsletter- and event-related submenus that used to live under
+     * this same parent into their own top-level menus (Moveee Newsletters /
+     * Moveee Events, see class-culture-subscribers.php / class-culture-tickets-admin.php)
+     * — this one had grown to 15 submenu items and was hard to navigate.
+     * Slug is deliberately unchanged (`culture-community`) so every existing
+     * `admin.php?page=culture-community` link/bookmark keeps working; only
+     * the label changed.
      */
     public static function register_menu() {
         add_menu_page(
-            __( 'Culture Community', 'culture-community' ),
-            __( 'Culture Community', 'culture-community' ),
+            __( 'Moveee Community', 'culture-community' ),
+            __( 'Moveee Community', 'culture-community' ),
             'manage_options',
             'culture-community',
             array( __CLASS__, 'render_page' ),
@@ -319,6 +329,7 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_google_client_id_web', $text );
         register_setting( 'culture_settings_general', 'culture_google_client_id_ios', $text );
         register_setting( 'culture_settings_general', 'culture_google_client_id_android', $text );
+        register_setting( 'culture_settings_general', 'culture_apple_service_id', $text );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
@@ -1059,6 +1070,19 @@ class Culture_Settings {
                            value="<?php echo esc_attr( self::get( 'culture_google_client_id_android' ) ); ?>" class="large-text"
                            placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
                     <p class="description"><?php esc_html_e( 'Used by the mobile app on Android via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Sign in with Apple', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Required for App Store review (Guideline 4.8) since the app also offers Google Sign-In. The native iOS app flow needs no configuration here — its identity token is already trusted against the app\'s own bundle ID (com.moveee.connect). Only fill this in if Sign in with Apple is ever added to a web login flow.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_apple_service_id"><?php esc_html_e( 'Service ID (web, optional)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_apple_service_id" name="culture_apple_service_id"
+                           value="<?php echo esc_attr( self::get( 'culture_apple_service_id' ) ); ?>" class="large-text"
+                           placeholder="com.moveee.connect.web" />
                 </td>
             </tr>
         </table>

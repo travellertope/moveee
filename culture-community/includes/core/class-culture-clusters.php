@@ -119,6 +119,7 @@ class Culture_Clusters {
         $host_id  = (int) get_post_meta( $cluster_id, '_cluster_host_id', true );
         $host     = $host_id ? get_userdata( $host_id ) : false;
         $capacity = (int) get_post_meta( $cluster_id, '_cluster_capacity', true );
+        $hub_id   = (int) get_post_meta( $cluster_id, '_cluster_hub_id', true );
 
         return array(
             'id'             => $cluster_id,
@@ -143,6 +144,8 @@ class Culture_Clusters {
             'realisticCapacity' => (int) get_post_meta( $cluster_id, '_cluster_realistic_capacity', true ),
             'accessible'        => (bool) get_post_meta( $cluster_id, '_cluster_accessible', true ),
             'addressVisible'    => get_post_meta( $cluster_id, '_cluster_address_visible', true ) ?: 'members_only',
+            'hubId'             => $hub_id ?: null,
+            'hubSlug'           => $hub_id ? ( get_post_meta( $hub_id, '_hub_slug', true ) ?: null ) : null,
         );
     }
 
@@ -372,7 +375,71 @@ class Culture_Clusters {
             'status'     => 'active',
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
+        self::maybe_create_companion_hub( $post_id, $name, $user_id );
+
         return $post_id;
+    }
+
+    /**
+     * Every Stoop cluster gets a companion Hub for its members' async chatter
+     * between gatherings — reuses the exact same "topic community" mechanism
+     * as any other Hub (same join/post/feed plumbing) rather than a bespoke
+     * cluster-chat feature. Mirrors the Section/Hub bridge in class-culture-
+     * hubs.php (every Section auto-gets an official Hub); this is the same
+     * idea one level down, per-cluster instead of per-Section. Linked in both
+     * directions: _cluster_hub_id on the cluster, _hub_cluster_id on the Hub.
+     * Best-effort — a failure here must never fail cluster creation itself.
+     */
+    private static function maybe_create_companion_hub( int $cluster_id, string $cluster_name, int $founder_id ) {
+        if ( ! class_exists( 'Culture_Hubs' ) ) {
+            return;
+        }
+        $hub_id = Culture_Hubs::create( $founder_id, array(
+            'name'        => $cluster_name . ' — Stoop',
+            'description' => "The discussion space for {$cluster_name}'s Stoop — coordinate meetups, share updates, and keep the conversation going between gatherings.",
+        ) );
+        if ( is_wp_error( $hub_id ) ) {
+            return;
+        }
+        update_post_meta( $cluster_id, '_cluster_hub_id', $hub_id );
+        update_post_meta( $hub_id, '_hub_cluster_id', $cluster_id );
+    }
+
+    /**
+     * One-time backfill for clusters created before the companion-Hub
+     * bridge above shipped — called from Culture_Hubs::init() (which
+     * already runs on every request and owns the analogous Section/Hub
+     * backfills), not from this class directly, since Culture_Clusters has
+     * no init()/hook lifecycle of its own. Gated the usual way so it only
+     * ever does real work once.
+     */
+    public static function maybe_backfill_companion_hubs() {
+        if ( '1' === get_option( 'culture_cluster_hubs_backfilled', '' ) ) {
+            return;
+        }
+        if ( ! class_exists( 'Culture_Hubs' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $missing_ids = $wpdb->get_col(
+            "SELECT p.ID FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_cluster_hub_id'
+             WHERE p.post_type = 'culture_cluster' AND p.post_status = 'publish'
+               AND ( m.meta_value IS NULL OR m.meta_value = '' )"
+        );
+
+        foreach ( $missing_ids ?: array() as $cluster_id ) {
+            $cluster_id  = (int) $cluster_id;
+            $name        = get_post_meta( $cluster_id, '_cluster_name', true ) ?: get_the_title( $cluster_id );
+            $founder_id  = (int) get_post_meta( $cluster_id, '_cluster_founder_id', true );
+            if ( ! $founder_id ) {
+                continue;
+            }
+            self::maybe_create_companion_hub( $cluster_id, $name, $founder_id );
+        }
+
+        update_option( 'culture_cluster_hubs_backfilled', '1' );
     }
 
     /**

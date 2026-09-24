@@ -186,16 +186,21 @@ export const fonts = {
 } as const;
 
 // Type scale from Figma Design System
+// Bumped app-wide (September 2026, user-reported "font sizes are too tiny") —
+// the original Figma scale read as cramped on real devices. Every screen
+// references this one scale (529 call sites across 79 files as of this pass),
+// so raising it here is the single lever that fixes it everywhere at once —
+// do not chase this by bumping individual screens' inline font sizes instead.
 export const fontSize = {
-  eyebrow:  9,   // Label/Eyebrow — tracked uppercase
-  tiny:    10,
-  xs:      11,   // Label/Mono
-  sm:      13,   // Body/Small
-  base:    15,   // Body/Medium
-  md:      17,   // Body/Large
-  lg:      22,   // Display/Subtitle
-  xl:      28,   // Display/Title
-  '2xl':   36,   // Display/Hero
+  eyebrow:  11,   // Label/Eyebrow — tracked uppercase
+  tiny:    12,
+  xs:      13,   // Label/Mono
+  sm:      15,   // Body/Small
+  base:    17,   // Body/Medium
+  md:      19,   // Body/Large
+  lg:      25,   // Display/Subtitle
+  xl:      32,   // Display/Title
+  '2xl':   40,   // Display/Hero
 } as const;
 
 export const lineHeight = {

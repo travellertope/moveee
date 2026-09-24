@@ -286,7 +286,21 @@ class Culture_Preview {
 			'seoTitle'      => null,
 			'seoDescription'=> null,
 			'asToldTo'      => get_post_meta( $post_id, '_culture_as_told_to', true ) ?: null,
+			'guestByline'   => self::resolve_guest_byline( $post_id ),
 			'featuredProducts' => array(),
+		);
+	}
+
+	/** Mirrors the guestByline GraphQL field in moveee-graphql-bridge.php. */
+	private static function resolve_guest_byline( $post_id ) {
+		$name = trim( (string) get_post_meta( $post_id, 'guest_byline_name', true ) );
+		if ( '' === $name ) {
+			return null;
+		}
+		return array(
+			'name'      => $name,
+			'bio'       => (string) get_post_meta( $post_id, 'guest_byline_bio', true ) ?: null,
+			'avatarUrl' => (string) get_post_meta( $post_id, 'guest_byline_avatar', true ) ?: null,
 		);
 	}
 

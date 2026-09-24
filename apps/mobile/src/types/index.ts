@@ -97,6 +97,8 @@ export interface Cluster {
   meetingDay: string;
   meetingTime: string;
   locationNote: string;
+  hubId?: number | null;
+  hubSlug?: string | null;
 }
 
 export interface ClusterStatus {
@@ -152,6 +154,7 @@ export interface Hub {
   slug: string;
   description: string;
   coverImageUrl: string;
+  coverImageCredit?: string;
   creatorId: number;
   status: 'active' | 'archived';
   allowedTemplates: string[];
@@ -159,6 +162,9 @@ export interface Hub {
   postCount: number;
   createdAt: string;
   role?: string | null;
+  isOfficial?: boolean;
+  category?: string | null;
+  clusterId?: number | null;
 }
 
 export interface HubStatus {
@@ -358,7 +364,10 @@ export interface Article {
   excerpt: string;
   content: string;
   featuredImage: string;
-  author: { name: string; avatarUrl: string; slug: string };
+  // `slug` is "" for a Guest Byline override (see class-culture-guest-byline.php)
+  // — there's no real /author archive for a typed guest name, so callers must
+  // treat an empty slug as "no author archive link", not fall back to one.
+  author: { name: string; avatarUrl: string; slug: string; bio?: string };
   category: string;
   // From the `country` WP taxonomy (content geotagging) — undefined when the
   // article has no country term set, not every article has one.

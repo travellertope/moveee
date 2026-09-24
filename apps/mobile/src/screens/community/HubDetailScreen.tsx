@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { useNav } from "../../hooks/useNav";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -16,6 +17,10 @@ import { api, MOBILE_API } from "../../api/client";
 import type { Hub, HubStatus, FeedItem } from "../../types";
 import { useAuthStore } from "../../auth/authStore";
 import FeedItemCard from "../../components/community/FeedItemCard";
+import BottomSheet from "../../components/ui/BottomSheet";
+import { hubGradient } from "../../utils/hubGradient";
+import { HUB_CATEGORIES } from "../../utils/hubCategories";
+import { openInApp } from "../../utils/openInApp";
 
 const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
   { slug: "post", label: "Update", emoji: "📝" },
@@ -40,12 +45,60 @@ function createStyles(c: ColorPalette) {
     loadingWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
     scroll: { padding: space[4], paddingBottom: 40, gap: 16 },
     notFoundText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, textAlign: "center" },
-    name: { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink },
-    meta: { fontFamily: fonts.mono, fontSize: 12, color: c.mute, marginTop: 4 },
     card: { backgroundColor: c.paperWarm, borderRadius: radius.xl, padding: 16, gap: 8, ...shadows.card },
     cardLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.mute, textTransform: "uppercase", letterSpacing: 1 },
     cardBody: { fontFamily: fonts.sans, fontSize: 14, color: c.ink, lineHeight: 20 },
     row: { flexDirection: "row", gap: 10, alignItems: "center" },
+
+    // Banner — full-bleed (cancels the scroll container's own padding),
+    // photo/badge/title/stats/Join-Follow all overlay it directly, the way
+    // the web/mobile mockup settled on: everything overlaid stays fully
+    // inside the scrimmed zone, never straddling onto the plain page below.
+    banner: {
+      height: 190, position: "relative", overflow: "hidden",
+      marginTop: -space[4], marginHorizontal: -space[4],
+    },
+    bannerTopbar: {
+      position: "absolute", top: 0, left: 0, right: 0, height: 52, zIndex: 3,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 12,
+    },
+    bannerIconBtn: {
+      width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center",
+      backgroundColor: "rgba(20,17,13,0.4)",
+    },
+    hubIcon: {
+      position: "absolute", left: 16, bottom: 14, zIndex: 2,
+      width: 68, height: 68, borderRadius: 20, borderWidth: 3, borderColor: c.paper,
+      alignItems: "center", justifyContent: "center", ...shadows.modal,
+    },
+    hubIconText: { fontFamily: fonts.serifBold, fontSize: 26, color: "#fff" },
+    hubHead: { position: "absolute", left: 100, right: 16, bottom: 14, zIndex: 2 },
+    hubHeadRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+    hubInfo: { flex: 1 },
+    officialChip: {
+      alignSelf: "flex-start", backgroundColor: c.ochre,
+      paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4,
+    },
+    officialChipText: { fontFamily: fonts.monoBold, fontSize: 8.5, color: "#fff", letterSpacing: 0.6, textTransform: "uppercase" },
+    categoryChip: {
+      alignSelf: "flex-start", backgroundColor: "rgba(20,17,13,0.45)",
+      paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4,
+    },
+    categoryChipText: { fontFamily: fonts.monoBold, fontSize: 8.5, color: "#fff", letterSpacing: 0.6, textTransform: "uppercase" },
+    hubNameOverlay: {
+      fontFamily: fonts.serifBold, fontSize: 18, color: "#fff", marginBottom: 3,
+      textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+    },
+    hubStatsOverlay: { fontFamily: fonts.mono, fontSize: 10.5, color: "rgba(255,255,255,0.85)" },
+    hubActionsOverlay: { flexDirection: "row", gap: 8, flexShrink: 0 },
+    // Icon-only Join/Follow — always a solid, opaque fill (never a bare
+    // outline or translucent tint that reads as "no background"). Ochre =
+    // the active/primary state (Join, Following); paper = the secondary
+    // confirmed state (Joined, plain Follow) — no new color tokens needed.
+    overlayIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", ...shadows.card },
+    overlayIconBtnOchre: { backgroundColor: c.ochre },
+    overlayIconBtnPaper: { backgroundColor: c.paper },
     joinBtn: {
       backgroundColor: c.ochre, borderRadius: radius.full,
       height: 44, paddingHorizontal: 20, alignItems: "center", justifyContent: "center",
@@ -57,7 +110,7 @@ function createStyles(c: ColorPalette) {
     },
     followBtnActive: { borderColor: c.ochre },
     followBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
-    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     notifyToggleText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
     leaveBtn: { paddingVertical: 8 },
     leaveBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#C62828" },
@@ -102,8 +155,13 @@ function createStyles(c: ColorPalette) {
     memberActions: { flexDirection: "row", gap: 12 },
     memberActionText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre },
     memberActionDanger: { fontFamily: fonts.sansBold, fontSize: 12, color: "#C62828" },
-    pinnedLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", marginBottom: 2 },
-    modRow: { flexDirection: "row", gap: 16, marginTop: 4, marginBottom: 8 },
+    pinnedLabel: { fontFamily: fonts.monoBold, fontSize: 10, color: c.ochre, textTransform: "uppercase", marginBottom: 2, paddingHorizontal: space[4] },
+    modRow: { flexDirection: "row", gap: 16, marginTop: 4, marginBottom: 8, paddingHorizontal: space[4] },
+    // Feed list — breaks out of the screen's own horizontal padding (negative
+    // margin cancels it) so FeedItemCard's own baked-in marginHorizontal:16 is
+    // the only inset, matching the main Connect feed exactly instead of
+    // stacking two insets on top of each other.
+    feedListWrap: { marginHorizontal: -space[4], gap: 12 },
   });
 }
 
@@ -125,12 +183,15 @@ export default function HubDetailScreen() {
   const [manageOpen, setManageOpen] = useState(false);
   const [mName, setMName] = useState("");
   const [mDescription, setMDescription] = useState("");
+  const [mCategory, setMCategory] = useState("");
   const [mAllowed, setMAllowed] = useState<string[]>([]);
   const [mCoverImageUrl, setMCoverImageUrl] = useState("");
   const [mUploadingCover, setMUploadingCover] = useState(false);
   const [mSaving, setMSaving] = useState(false);
   const [mArchiving, setMArchiving] = useState(false);
   const [mError, setMError] = useState("");
+
+  const [relatedEvents, setRelatedEvents] = useState<{ id: number; title: string; slug: string; eventDate: string; imageUrl: string }[]>([]);
 
   const isOwner = status.role === "owner";
   const isModerator = status.role === "owner" || status.role === "mod";
@@ -164,9 +225,13 @@ export default function HubDetailScreen() {
         if (hubData) {
           setMName(hubData.name);
           setMDescription(hubData.description);
+          setMCategory(hubData.category ?? "");
           setMAllowed(hubData.allowedTemplates ?? []);
           setMCoverImageUrl(hubData.coverImageUrl ?? "");
           loadFeed(hubData.id);
+          api.get<{ events: typeof relatedEvents }>(`${MOBILE_API}/hub/${hubData.id}/related-events`, false)
+            .then((d) => setRelatedEvents(d?.events ?? []))
+            .catch(() => setRelatedEvents([]));
         }
         if (hubData && user) {
           const statusData = await api.get<HubStatus>(`${MOBILE_API}/hub/${hubData.id}/status`);
@@ -280,6 +345,7 @@ export default function HubDetailScreen() {
         description: mDescription.trim(),
         allowed_templates: mAllowed,
         cover_image_url: mCoverImageUrl,
+        category: mCategory,
       });
       setHub(updated);
     } catch (e: any) {
@@ -412,13 +478,15 @@ export default function HubDetailScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="chevron-back" size={24} color={c.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{hub?.name || "Hub"}</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {(loading || !hub) && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => nav.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="chevron-back" size={24} color={c.ink} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Hub</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.loadingWrap}><ActivityIndicator color={c.gold} /></View>
@@ -436,179 +504,305 @@ export default function HubDetailScreen() {
             </View>
           )}
 
-          {hub.coverImageUrl ? (
-            <Image source={{ uri: hub.coverImageUrl }} style={{ width: "100%", height: 160, borderRadius: radius.xl }} />
-          ) : null}
+          {/* Banner — photo, badge, title, stats, and the icon-only
+              Join/Follow pair all overlay the cover directly (white text
+              over a scrim), the way the approved mockup settled on. The
+              back/manage icons replace the old fixed header bar entirely
+              once the Hub has loaded. */}
+          <View style={styles.banner}>
+            {hub.coverImageUrl ? (
+              <Image source={{ uri: hub.coverImageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            ) : (
+              <LinearGradient
+                colors={hubGradient(hub.id)}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
+            <LinearGradient
+              colors={["transparent", "rgba(20,17,13,0.32)", "rgba(20,17,13,0.8)"]}
+              locations={[0, 0.35, 1]}
+              style={StyleSheet.absoluteFill}
+            />
 
-          <View>
-            <Text style={styles.name}>{hub.name}</Text>
-            <Text style={styles.meta}>
-              {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
-            </Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>About</Text>
-            <Text style={styles.cardBody}>{hub.description}</Text>
-          </View>
-
-          <View style={styles.card}>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <View style={styles.row}>
-              {status.isMember ? (
-                status.role === "owner" ? (
-                  <Text style={styles.ownerText}>You own this Hub</Text>
-                ) : (
-                  <TouchableOpacity onPress={leave} disabled={busy} style={styles.leaveBtn}>
-                    <Text style={styles.leaveBtnText}>{busy ? "Leaving…" : "Leave Hub"}</Text>
-                  </TouchableOpacity>
-                )
+            <View style={styles.bannerTopbar}>
+              <TouchableOpacity
+                style={styles.bannerIconBtn}
+                onPress={() => nav.goBack()}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="chevron-back" size={20} color="#fff" />
+              </TouchableOpacity>
+              {isModerator ? (
+                <TouchableOpacity
+                  style={styles.bannerIconBtn}
+                  onPress={() => setManageOpen(true)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel={isOwner ? "Manage Hub" : "Moderate"}
+                >
+                  <Ionicons name="settings-outline" size={18} color="#fff" />
+                </TouchableOpacity>
               ) : (
-                <TouchableOpacity style={styles.joinBtn} onPress={join} disabled={busy}>
-                  <Text style={styles.joinBtnText}>{busy ? "Joining…" : "Join →"}</Text>
+                <View style={{ width: 34 }} />
+              )}
+            </View>
+
+            <View style={styles.hubIcon}>
+              <Text style={styles.hubIconText}>{(hub.name || "?").slice(0, 1).toUpperCase()}</Text>
+            </View>
+
+            <View style={styles.hubHead}>
+              <View style={styles.hubHeadRow}>
+                <View style={styles.hubInfo}>
+                  {hub.isOfficial && (
+                    <View style={styles.officialChip}>
+                      <Text style={styles.officialChipText}>Official</Text>
+                    </View>
+                  )}
+                  {!hub.isOfficial && hub.category && (
+                    <View style={styles.categoryChip}>
+                      <Text style={styles.categoryChipText}>{hub.category}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.hubNameOverlay} numberOfLines={2}>{hub.name}</Text>
+                  <Text style={styles.hubStatsOverlay}>
+                    {hub.memberCount} member{hub.memberCount === 1 ? "" : "s"} · {hub.postCount} post{hub.postCount === 1 ? "" : "s"}
+                  </Text>
+                </View>
+                <View style={styles.hubActionsOverlay}>
+                  {status.isMember ? (
+                    status.role === "owner" ? (
+                      <View style={[styles.overlayIconBtn, styles.overlayIconBtnPaper]} accessibilityLabel="You own this Hub">
+                        <Ionicons name="ribbon" size={17} color={c.ochre} />
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.overlayIconBtn, styles.overlayIconBtnPaper]}
+                        onPress={leave}
+                        disabled={busy}
+                        accessibilityLabel="Leave Hub"
+                      >
+                        <Ionicons name="checkmark" size={18} color={c.ochre} />
+                      </TouchableOpacity>
+                    )
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.overlayIconBtn, styles.overlayIconBtnOchre]}
+                      onPress={join}
+                      disabled={busy}
+                      accessibilityLabel="Join Hub"
+                    >
+                      <Ionicons name="add" size={20} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.overlayIconBtn, status.isFollowing ? styles.overlayIconBtnOchre : styles.overlayIconBtnPaper]}
+                    onPress={toggleFollow}
+                    disabled={busy}
+                    accessibilityLabel={status.isFollowing ? "Unfollow Hub" : "Follow Hub"}
+                  >
+                    <Ionicons
+                      name={status.isFollowing ? "person-remove-outline" : "person-add-outline"}
+                      size={17}
+                      color={status.isFollowing ? "#fff" : c.inkSoft}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <Text style={styles.cardBody}>{hub.description}</Text>
+
+          {(error || status.isFollowing) && (
+            <View style={styles.card}>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {status.isFollowing && (
+                <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotifyPosts} disabled={busy}>
+                  <Ionicons
+                    name={status.notifyPosts ? "checkbox" : "square-outline"}
+                    size={16}
+                    color={status.notifyPosts ? c.ochre : c.ghost}
+                  />
+                  <Text style={styles.notifyToggleText}>Notify me when they post</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={[styles.followBtn, status.isFollowing && styles.followBtnActive]}
-                onPress={toggleFollow}
-                disabled={busy}
-              >
-                <Text style={styles.followBtnText}>{status.isFollowing ? "Following ✓" : "Follow"}</Text>
-              </TouchableOpacity>
             </View>
-            {status.isFollowing && (
-              <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotifyPosts} disabled={busy}>
-                <Ionicons
-                  name={status.notifyPosts ? "checkbox" : "square-outline"}
-                  size={16}
-                  color={status.notifyPosts ? c.ochre : c.ghost}
-                />
-                <Text style={styles.notifyToggleText}>Notify me when they post</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
 
-          {isModerator && (
+          {hub.clusterId && (
+            <TouchableOpacity
+              style={[styles.card, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+              onPress={() => nav.navigate("ClusterScreen", { id: hub.clusterId })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Discussion for a Stoop</Text>
+                <Text style={styles.cardBody}>This Hub is the discussion space for a weekly Stoop — tap to view it.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={c.mute} />
+            </TouchableOpacity>
+          )}
+
+          {relatedEvents.length > 0 && (
             <View style={styles.card}>
-              {!manageOpen ? (
-                <TouchableOpacity style={styles.manageLink} onPress={() => setManageOpen(true)}>
-                  <Text style={styles.manageLinkText}>{isOwner ? "Manage Hub →" : "Moderate →"}</Text>
-                </TouchableOpacity>
-              ) : (
-                <View>
-                  <Text style={styles.cardLabel}>{isOwner ? "Manage Hub" : "Moderate"}</Text>
-                  {mError ? <Text style={styles.errorText}>{mError}</Text> : null}
-
-                  {isOwner && (
-                    <>
-                      <Text style={styles.label}>Hub name</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={mName}
-                        onChangeText={setMName}
-                        editable={!mSaving && hub.status !== "archived"}
-                      />
-
-                      <Text style={styles.label}>Description</Text>
-                      <TextInput
-                        style={styles.textarea}
-                        value={mDescription}
-                        onChangeText={setMDescription}
-                        editable={!mSaving && hub.status !== "archived"}
-                        multiline
-                      />
-
-                      <Text style={styles.label}>Cover image</Text>
-                      <TouchableOpacity
-                        style={styles.coverPicker}
-                        onPress={pickManageCover}
-                        disabled={mSaving || mUploadingCover || hub.status === "archived"}
-                      >
-                        {mUploadingCover ? (
-                          <ActivityIndicator color={c.gold} />
-                        ) : mCoverImageUrl ? (
-                          <Image source={{ uri: mCoverImageUrl }} style={styles.coverImage} />
-                        ) : (
-                          <Text style={styles.coverPickerText}>Choose an image</Text>
-                        )}
-                      </TouchableOpacity>
-
-                      <Text style={styles.label}>What can members post?</Text>
-                      <View style={styles.grid}>
-                        {ALL_TEMPLATES.map((t) => {
-                          const active = mAllowed.includes(t.slug);
-                          return (
-                            <TouchableOpacity
-                              key={t.slug}
-                              style={[styles.chip, active && styles.chipActive]}
-                              onPress={() => toggleTemplate(t.slug)}
-                              disabled={hub.status === "archived"}
-                            >
-                              <Text style={styles.chipText}>{t.emoji} {t.label}</Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-
-                      <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-                        <TouchableOpacity
-                          style={[styles.saveBtn, { flex: 1 }, (mSaving || hub.status === "archived") && { opacity: 0.5 }]}
-                          onPress={saveManage}
-                          disabled={mSaving || hub.status === "archived" || !mName.trim() || !mDescription.trim()}
-                        >
-                          {mSaving ? <ActivityIndicator color={c.paper} /> : <Text style={styles.saveBtnText}>Save changes</Text>}
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setManageOpen(false)}>
-                          <Text style={styles.manageLinkText}>Close</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
+              <Text style={styles.cardLabel}>Related events</Text>
+              {relatedEvents.map((ev) => (
+                <TouchableOpacity
+                  key={ev.id}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 }}
+                  onPress={() => openInApp(`https://web.themoveee.com/events/${ev.slug}`)}
+                >
+                  {ev.imageUrl ? (
+                    <Image source={{ uri: ev.imageUrl }} style={{ width: 48, height: 48, borderRadius: radius.md }} />
+                  ) : (
+                    <View style={{ width: 48, height: 48, borderRadius: radius.md, backgroundColor: c.paperWarm }} />
                   )}
-
-                  {!isOwner && (
-                    <TouchableOpacity onPress={() => setManageOpen(false)} style={{ marginTop: 8 }}>
-                      <Text style={styles.manageLinkText}>Close</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  <View style={styles.membersSection}>
-                    <Text style={styles.label}>Members</Text>
-                    {memberError ? <Text style={styles.errorText}>{memberError}</Text> : null}
-                    {membersLoading ? (
-                      <ActivityIndicator color={c.gold} />
-                    ) : (
-                      hubMembers.map((m) => (
-                        <View key={m.id} style={styles.memberRow}>
-                          <Text style={styles.memberName}>{m.name} <Text style={styles.memberRole}>{m.role}</Text></Text>
-                          {m.role !== "owner" && (isOwner || m.role !== "mod") && (
-                            <View style={styles.memberActions}>
-                              {isOwner && m.role === "mod" ? (
-                                <TouchableOpacity onPress={() => removeMod(m.id)} disabled={memberBusyId === m.id}>
-                                  <Text style={styles.memberActionText}>Remove mod</Text>
-                                </TouchableOpacity>
-                              ) : isOwner ? (
-                                <TouchableOpacity onPress={() => appointMod(m.id)} disabled={memberBusyId === m.id}>
-                                  <Text style={styles.memberActionText}>Make mod</Text>
-                                </TouchableOpacity>
-                              ) : null}
-                              <TouchableOpacity onPress={() => removeHubMember(m.id)} disabled={memberBusyId === m.id}>
-                                <Text style={styles.memberActionDanger}>Remove</Text>
-                              </TouchableOpacity>
-                            </View>
-                          )}
-                        </View>
-                      ))
-                    )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardBody} numberOfLines={2}>{ev.title}</Text>
+                    <Text style={[styles.hubStatsOverlay, { color: c.mute }]}>{ev.eventDate}</Text>
                   </View>
+                  <Ionicons name="chevron-forward" size={16} color={c.mute} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
-                  {isOwner && hub.status !== "archived" && (
-                    <TouchableOpacity style={styles.archiveBtn} onPress={archiveHub} disabled={mArchiving}>
-                      <Text style={styles.archiveBtnText}>{mArchiving ? "Archiving…" : "Archive this Hub"}</Text>
+          {/* Moderator tools — tucked behind the banner's ⚙ icon instead of
+              an always-expanded inline form pushing the feed down for every
+              visitor who happens to be a mod. */}
+          {isModerator && (
+            <BottomSheet visible={manageOpen} onClose={() => setManageOpen(false)}>
+              <View style={{ paddingHorizontal: space[4], paddingTop: 4 }}>
+                <Text style={styles.cardLabel}>{isOwner ? "Manage Hub" : "Moderate"}</Text>
+                {mError ? <Text style={styles.errorText}>{mError}</Text> : null}
+
+                {isOwner && (
+                  <>
+                    <Text style={styles.label}>Hub name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={mName}
+                      onChangeText={setMName}
+                      editable={!mSaving && hub.status !== "archived"}
+                    />
+
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                      style={styles.textarea}
+                      value={mDescription}
+                      onChangeText={setMDescription}
+                      editable={!mSaving && hub.status !== "archived"}
+                      multiline
+                    />
+
+                    <Text style={styles.label}>Cover image</Text>
+                    <TouchableOpacity
+                      style={styles.coverPicker}
+                      onPress={pickManageCover}
+                      disabled={mSaving || mUploadingCover || hub.status === "archived"}
+                    >
+                      {mUploadingCover ? (
+                        <ActivityIndicator color={c.gold} />
+                      ) : mCoverImageUrl ? (
+                        <Image source={{ uri: mCoverImageUrl }} style={styles.coverImage} />
+                      ) : (
+                        <Text style={styles.coverPickerText}>Choose an image</Text>
+                      )}
                     </TouchableOpacity>
+
+                    <Text style={styles.label}>Category</Text>
+                    <View style={styles.grid}>
+                      {HUB_CATEGORIES.map((cat) => {
+                        const active = mCategory === cat;
+                        return (
+                          <TouchableOpacity
+                            key={cat}
+                            style={[styles.chip, active && styles.chipActive]}
+                            onPress={() => setMCategory(active ? "" : cat)}
+                            disabled={hub.status === "archived"}
+                          >
+                            <Text style={styles.chipText}>{cat}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <Text style={styles.label}>What can members post?</Text>
+                    <View style={styles.grid}>
+                      {ALL_TEMPLATES.map((t) => {
+                        const active = mAllowed.includes(t.slug);
+                        return (
+                          <TouchableOpacity
+                            key={t.slug}
+                            style={[styles.chip, active && styles.chipActive]}
+                            onPress={() => toggleTemplate(t.slug)}
+                            disabled={hub.status === "archived"}
+                          >
+                            <Text style={styles.chipText}>{t.emoji} {t.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                      <TouchableOpacity
+                        style={[styles.saveBtn, { flex: 1 }, (mSaving || hub.status === "archived") && { opacity: 0.5 }]}
+                        onPress={saveManage}
+                        disabled={mSaving || hub.status === "archived" || !mName.trim() || !mDescription.trim()}
+                      >
+                        {mSaving ? <ActivityIndicator color={c.paper} /> : <Text style={styles.saveBtnText}>Save changes</Text>}
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setManageOpen(false)}>
+                        <Text style={styles.manageLinkText}>Close</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                {!isOwner && (
+                  <TouchableOpacity onPress={() => setManageOpen(false)} style={{ marginTop: 8 }}>
+                    <Text style={styles.manageLinkText}>Close</Text>
+                  </TouchableOpacity>
+                )}
+
+                <View style={styles.membersSection}>
+                  <Text style={styles.label}>Members</Text>
+                  {memberError ? <Text style={styles.errorText}>{memberError}</Text> : null}
+                  {membersLoading ? (
+                    <ActivityIndicator color={c.gold} />
+                  ) : (
+                    hubMembers.map((m) => (
+                      <View key={m.id} style={styles.memberRow}>
+                        <Text style={styles.memberName}>{m.name} <Text style={styles.memberRole}>{m.role}</Text></Text>
+                        {m.role !== "owner" && (isOwner || m.role !== "mod") && (
+                          <View style={styles.memberActions}>
+                            {isOwner && m.role === "mod" ? (
+                              <TouchableOpacity onPress={() => removeMod(m.id)} disabled={memberBusyId === m.id}>
+                                <Text style={styles.memberActionText}>Remove mod</Text>
+                              </TouchableOpacity>
+                            ) : isOwner ? (
+                              <TouchableOpacity onPress={() => appointMod(m.id)} disabled={memberBusyId === m.id}>
+                                <Text style={styles.memberActionText}>Make mod</Text>
+                              </TouchableOpacity>
+                            ) : null}
+                            <TouchableOpacity onPress={() => removeHubMember(m.id)} disabled={memberBusyId === m.id}>
+                              <Text style={styles.memberActionDanger}>Remove</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
+                    ))
                   )}
                 </View>
-              )}
-            </View>
+
+                {isOwner && hub.status !== "archived" && (
+                  <TouchableOpacity style={styles.archiveBtn} onPress={archiveHub} disabled={mArchiving}>
+                    <Text style={styles.archiveBtnText}>{mArchiving ? "Archiving…" : "Archive this Hub"}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </BottomSheet>
           )}
 
           {status.isMember && hub.status !== "archived" && (
@@ -635,25 +829,27 @@ export default function HubDetailScreen() {
               </Text>
             </View>
           ) : (
-            feedItems.map((item: any) => (
-              <View key={item.id}>
-                {item.isPinned && <Text style={styles.pinnedLabel}>📌 Pinned</Text>}
-                <FeedItemCard
-                  item={item}
-                  onPress={() => nav.navigate("PostDetail", { item })}
-                />
-                {isModerator && (
-                  <View style={styles.modRow}>
-                    <TouchableOpacity onPress={() => togglePin(item)} disabled={busyWpId === item.wpId}>
-                      <Text style={styles.memberActionText}>{item.isPinned ? "Unpin" : "Pin"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => removePost(item)} disabled={busyWpId === item.wpId}>
-                      <Text style={styles.memberActionDanger}>Remove</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            ))
+            <View style={styles.feedListWrap}>
+              {feedItems.map((item: any) => (
+                <View key={item.id}>
+                  {item.isPinned && <Text style={styles.pinnedLabel}>📌 Pinned</Text>}
+                  <FeedItemCard
+                    item={item}
+                    onPress={() => nav.navigate("PostDetail", { item })}
+                  />
+                  {isModerator && (
+                    <View style={styles.modRow}>
+                      <TouchableOpacity onPress={() => togglePin(item)} disabled={busyWpId === item.wpId}>
+                        <Text style={styles.memberActionText}>{item.isPinned ? "Unpin" : "Pin"}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removePost(item)} disabled={busyWpId === item.wpId}>
+                        <Text style={styles.memberActionDanger}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
           )}
         </ScrollView>
       )}

@@ -18,61 +18,58 @@ class Culture_Newsletter_Queue {
     }
 
     /**
+     * Which newsletter list a post belongs to, uniformly across all three
+     * post types content can now live under:
+     *  - getmelit / culture_drop: the post type itself IS the list (no meta
+     *    involved — see class-culture-post-types.php's CPT registration).
+     *  - culture_newsletter: legacy behaviour, unchanged — read from the
+     *    _culture_nl_list post meta exactly as before.
+     *
+     * Every place in the plugin that used to read _culture_nl_list meta
+     * directly (the send queue, analytics, the Send Newsletter meta box)
+     * should go through this instead, so all three post types are handled
+     * the same way with one source of truth.
+     *
+     * @param int    $post_id
+     * @param string $default Fallback when a culture_newsletter post has no
+     *                        meta set yet. Irrelevant for getmelit/culture_drop.
+     * @return string
+     */
+    public static function resolve_nl_list( $post_id, $default = '' ) {
+        switch ( get_post_type( $post_id ) ) {
+            case 'getmelit':
+                return 'getmelit';
+            case 'culture_drop':
+                return 'culture-drop';
+            default:
+                return get_post_meta( $post_id, '_culture_nl_list', true ) ?: $default;
+        }
+    }
+
+    /**
      * Snapshot subscribers and schedule the first batch.
-     * Filters by _culture_nl_list post meta so each newsletter only goes to
-     * its own list. Legacy plain-string subscribers are treated as GetMeLit subscribers.
+     *
+     * Resolves recipients via Culture_Subscribers_DB::resolve_send_emails()
+     * against the real subscriber/list tables (September 2026) — this used
+     * to filter the flat culture_newsletter_subscribers option array
+     * in-line; that option is now only read once, by the one-time migration
+     * in Culture_Subscribers_DB.
      *
      * @param int $post_id Newsletter post ID.
      * @return int|false Total count queued, or false if no subscribers.
      */
     public static function schedule_send( $post_id ) {
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        // Default matches send_to()/send_test() below ('getmelit') — NOT an
+        // empty string, so an unset list always resolves to a real list row.
+        $nl_list_slug = self::resolve_nl_list( $post_id, 'getmelit' );
+        $nl_segment   = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
 
-        if ( empty( $subscribers ) ) {
+        $list = Culture_Newsletter_Lists::get_by_slug( $nl_list_slug );
+        if ( ! $list ) {
             return false;
         }
 
-        // Determine which list and segment this newsletter targets.
-        $nl_list    = get_post_meta( $post_id, '_culture_nl_list',    true ) ?: '';
-        $nl_segment = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
-
-        // Standardize to email strings for the snapshot, filtering by list and segment.
-        $emails = array();
-        foreach ( $subscribers as $sub ) {
-            $e = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( ! is_email( $e ) ) continue;
-
-            if ( $nl_list ) {
-                $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
-
-                if ( ! empty( $sub_lists ) ) {
-                    // Object subscriber: must have the target list.
-                    if ( ! in_array( $nl_list, $sub_lists, true ) ) continue;
-                } else {
-                    // Legacy plain-string subscriber: treat as GetMeLit only.
-                    if ( 'getmelit' !== $nl_list ) continue;
-                }
-            }
-
-            // Segment filter: if a segment is set, only include subscribers with that segment.
-            if ( $nl_segment ) {
-                if ( 'pro' === $nl_segment ) {
-                    $wp_user = get_user_by( 'email', $e );
-                    if ( ! $wp_user || 'patron' !== get_user_meta( $wp_user->ID, '_culture_membership_tier', true ) ) continue;
-                } elseif ( 'africa' === $nl_segment ) {
-                    // 'africa' is a send-side aggregate — matches any subscriber
-                    // whose segment is a recognised African country code.
-                    $africa_segments = array( 'ng', 'gh', 'ke', 'za' );
-                    $sub_segment     = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-                    if ( ! in_array( $sub_segment, $africa_segments, true ) ) continue;
-                } else {
-                    $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-                    if ( $sub_segment !== $nl_segment ) continue;
-                }
-            }
-
-            $emails[] = $e;
-        }
+        $emails = Culture_Subscribers_DB::resolve_send_emails( $list['id'], $nl_segment );
 
         if ( empty( $emails ) ) {
             return false;
@@ -173,9 +170,10 @@ class Culture_Newsletter_Queue {
                       . '&token=' . rawurlencode( $unsub_token )
                       . '&c='    . $post_id;
 
-        $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
-        $content = self::render_content( $post );
-        $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $nl_list, $email );
+        $nl_list    = self::resolve_nl_list( $post_id, 'getmelit' );
+        $list_label = self::list_label( $nl_list );
+        $content    = self::render_content( $post );
+        $body       = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $list_label, $email );
 
         wp_mail(
             $email,
@@ -203,11 +201,11 @@ class Culture_Newsletter_Queue {
         }
 
         $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
-        $title     = '[TEST] ' . get_the_title( $post_id );
-        $permalink = $frontend_url . '/newsletter/' . $post->post_name;
-        $nl_list_test = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
-        $content   = self::render_content( $post );
-        $body      = self::build_email( $title, $content, $permalink, '#', true, 0, '', $nl_list_test );
+        $title        = '[TEST] ' . get_the_title( $post_id );
+        $permalink    = $frontend_url . '/newsletter/' . $post->post_name;
+        $nl_list_test = self::resolve_nl_list( $post_id, 'getmelit' );
+        $content      = self::render_content( $post );
+        $body         = self::build_email( $title, $content, $permalink, '#', true, 0, '', self::list_label( $nl_list_test ) );
 
         return wp_mail(
             $test_email,
@@ -390,7 +388,8 @@ class Culture_Newsletter_Queue {
 
         $email       = isset( $_GET['email'] ) ? sanitize_email( rawurldecode( $_GET['email'] ) ) : '';
         $token       = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
-        $campaign_id = ! empty( $_GET['c'] ) ? absint( $_GET['c'] ) : null;
+        $post_id     = ! empty( $_GET['c'] ) ? absint( $_GET['c'] ) : 0;
+        $campaign_id = ! empty( $_GET['campaign'] ) ? absint( $_GET['campaign'] ) : 0;
 
         if ( ! $email || ! $token || ! self::verify_unsub_token( $email, $token ) ) {
             wp_die(
@@ -400,14 +399,37 @@ class Culture_Newsletter_Queue {
             );
         }
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-            $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-            return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-        } ) );
-        update_option( 'culture_newsletter_subscribers', $updated, false );
+        // Scoped unsubscribe: remove the subscriber from only the list(s)
+        // the email that carried this link actually came from, not their
+        // whole account — matches what "unsubscribe from GetMeLit" actually
+        // implies when someone is also on Culture Drop or a Hub list.
+        // Falls back to removing every list membership only when neither a
+        // newsletter post nor a campaign can be resolved (e.g. a
+        // pre-September-2026 link with no c=/campaign= param at all).
+        if ( $post_id ) {
+            $list_slug = self::resolve_nl_list( $post_id, '' );
+            if ( $list_slug ) {
+                Culture_Subscribers_DB::remove_from_list_slug( $email, $list_slug );
+            } else {
+                Culture_Subscribers_DB::delete_subscriber_by_email( $email );
+            }
+        } elseif ( $campaign_id ) {
+            $campaign = class_exists( 'Culture_Campaigns' ) ? Culture_Campaigns::get( $campaign_id ) : null;
+            if ( $campaign ) {
+                foreach ( $campaign['listIds'] as $list_id ) {
+                    $list = Culture_Newsletter_Lists::get( $list_id );
+                    if ( $list ) {
+                        Culture_Subscribers_DB::remove_from_list_slug( $email, $list['slug'] );
+                    }
+                }
+            } else {
+                Culture_Subscribers_DB::delete_subscriber_by_email( $email );
+            }
+        } else {
+            Culture_Subscribers_DB::delete_subscriber_by_email( $email );
+        }
 
-        Culture_NL_Analytics::log_unsub( $email, $campaign_id );
+        Culture_NL_Analytics::log_unsub( $email, $post_id ?: $campaign_id );
 
         $site_name = get_bloginfo( 'name' );
         $home_url  = home_url( '/' );
@@ -427,6 +449,30 @@ class Culture_Newsletter_Queue {
     }
 
     /**
+     * Resolve a list slug (getmelit/culture-drop/a Hub list/a custom list/
+     * etc.) to its human-readable name via the list registry — replaces the
+     * old hardcoded $nl_labels lookup, which only covered the 6 slugs every
+     * install was seeded with and had no way to label a Hub or admin-created
+     * list correctly.
+     *
+     * @param string $list_slug
+     * @return string
+     */
+    public static function list_label( $list_slug ) {
+        $list = class_exists( 'Culture_Newsletter_Lists' ) ? Culture_Newsletter_Lists::get_by_slug( $list_slug ) : null;
+        return $list ? $list['name'] : ( $list_slug ? ucwords( str_replace( '-', ' ', $list_slug ) ) : 'GetMeLit' );
+    }
+
+    /**
+     * Public wrapper around build_email() for Culture_Campaigns — one-off
+     * campaigns have no WP_Post/list-slug to resolve a label from, so they
+     * pass a plain label string directly.
+     */
+    public static function build_campaign_email( $title, $content, $permalink, $is_test = false, $campaign_id = 0, $tracking_token = '', $list_label = 'Moveee', $unsub_url = '#', $email = '' ) {
+        return self::build_email( $title, $content, $permalink, $unsub_url, $is_test, $campaign_id, $tracking_token, $list_label, $email );
+    }
+
+    /**
      * Build the full HTML email body.
      *
      * @param string $title
@@ -436,9 +482,12 @@ class Culture_Newsletter_Queue {
      * @param bool   $is_test
      * @param int    $campaign_id
      * @param string $tracking_token
+     * @param string $list_label     Human-readable list name for the footer
+     *                                ("You are receiving this because you
+     *                                subscribed to {list_label}.").
      * @return string
      */
-    private static function build_email(
+    public static function build_email(
         $title,
         $content,
         $permalink,
@@ -446,19 +495,11 @@ class Culture_Newsletter_Queue {
         $is_test        = false,
         $campaign_id    = 0,
         $tracking_token = '',
-        $nl_list        = 'getmelit',
+        $list_label     = 'GetMeLit',
         $email          = ''
     ) {
         $site_name = get_bloginfo( 'name' );
-        $nl_labels = array(
-            'getmelit'                  => 'GetMeLit',
-            'culture-drop'              => 'Culture Drop',
-            'culture-narratives-digest' => 'Culture Narratives Digest',
-            'vendor-letter'             => 'The Vendor Letter',
-            'origins-field-notes'       => 'Origins Field Notes',
-            'announcements'             => 'Announcements',
-        );
-        $nl_label  = $nl_labels[ $nl_list ] ?? 'GetMeLit';
+        $nl_label  = $list_label ?: 'GetMeLit';
 
         // ── Link rewriting (click tracking) ──────────────────────────────────
         if ( ! $is_test && $campaign_id && $tracking_token ) {

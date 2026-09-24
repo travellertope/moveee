@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { HUB_CATEGORIES } from "@/lib/hubCategories";
 
 interface HubMember {
   id: number;
@@ -23,13 +24,14 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: strin
 ];
 
 export default function HubManage({
-  hubId, initialName, initialDescription, initialAllowedTemplates, initialCoverImageUrl, isArchived, role,
+  hubId, initialName, initialDescription, initialAllowedTemplates, initialCoverImageUrl, initialCategory, isArchived, role,
 }: {
   hubId: number;
   initialName: string;
   initialDescription: string;
   initialAllowedTemplates: string[];
   initialCoverImageUrl: string;
+  initialCategory?: string | null;
   isArchived: boolean;
   /** Owners get full edit/appoint-mod/archive tools; mods get a lighter
    * "Moderate" panel — members list + remove-member only (docs/hubs-plan.md
@@ -43,6 +45,7 @@ export default function HubManage({
   const [description, setDescription] = useState(initialDescription);
   const [allowed, setAllowed] = useState<string[]>(initialAllowedTemplates);
   const [coverImageUrl, setCoverImageUrl] = useState(initialCoverImageUrl);
+  const [category, setCategory] = useState(initialCategory ?? "");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [saving, setSaving] = useState(false);
   const [archiving, setArchiving] = useState(false);
@@ -159,6 +162,7 @@ export default function HubManage({
           description: description.trim(),
           allowed_templates: allowed,
           cover_image_url: coverImageUrl,
+          category,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -251,6 +255,21 @@ export default function HubManage({
           style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: "var(--radius-lg, 6px)" }}
         />
       )}
+
+      <p className="hfc-label" style={{ marginTop: 8 }}>Category</p>
+      <div className="hfc-venue-grid">
+        {HUB_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`hfc-venue-chip${category === cat ? " hfc-venue-chip--active" : ""}`}
+            onClick={() => setCategory(category === cat ? "" : cat)}
+            disabled={isArchived}
+          >
+            <span className="hfc-venue-label">{cat}</span>
+          </button>
+        ))}
+      </div>
 
       <p className="hfc-label" style={{ marginTop: 8 }}>What can members post?</p>
       <div className="hfc-venue-grid">

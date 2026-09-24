@@ -14,7 +14,6 @@
  *  - Directory seed (weekly)    — triggers Next.js /api/directory/auto-populate.
  *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
  *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
- *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
  *  - Stoop cluster forming-expiry sweep (daily) — pure WP-side
  *    logic, archives 'forming' clusters past their window (no Next.js call).
  *  - Stoop host service award (monthly) — Phase 4 — awards
@@ -24,6 +23,15 @@
  *  - Literati Connect attendance sweep (daily) — Phase 5 — awards
  *    'literati_connect_attended' once per event per confirmed RSVP attendee,
  *    for literati-flagged culture_event posts that ended in the last 48h.
+ *
+ * Retired (September 2026): Quotes seed (weekly), which used to trigger
+ * Next.js /api/quotes/auto-populate — removed at explicit user request
+ * ("the seeding dont even work autonomously anyways") alongside the wider
+ * quotes/feed-merge work (see CLAUDE.md). The auto-populate routes and
+ * most of packages/shared/lib/quotes-seeder.ts were deleted; existing
+ * seeded quotes are unaffected and now render as normal feed cards via a
+ * synthetic system author (Culture_System_Author). Manual curation via WP
+ * Admin still works — only the automated weekly seed is gone.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -38,7 +46,6 @@ class Culture_Cron {
     const HOOK_SEED_DIRECTORY   = 'culture_seed_directory';
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
-    const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
     const HOOK_CLUSTER_SWEEP           = 'culture_check_cluster_forming_expiry';
     const HOOK_CLUSTER_ELECTION_TALLY  = 'culture_check_cluster_elections';
     const HOOK_CLUSTER_GRACE_SWEEP     = 'culture_check_cluster_host_vacancy_grace';
@@ -57,13 +64,14 @@ class Culture_Cron {
         add_action( self::HOOK_SEED_DIRECTORY, array( __CLASS__, 'seed_directory' ) );
         add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
         add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
-        add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
         add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
         add_action( self::HOOK_CLUSTER_ELECTION_TALLY, array( __CLASS__, 'tally_cluster_elections' ) );
         add_action( self::HOOK_CLUSTER_GRACE_SWEEP,    array( __CLASS__, 'sweep_cluster_host_vacancy' ) );
         add_action( self::HOOK_CLUSTER_HOST_SERVICE,   array( __CLASS__, 'award_cluster_host_service' ) );
         add_action( self::HOOK_CLUSTER_CHECKIN_REMINDER, array( __CLASS__, 'send_cluster_checkin_reminders' ) );
         add_action( self::HOOK_LITERATI_ATTENDANCE,      array( __CLASS__, 'sweep_literati_attendance' ) );
+
+        self::maybe_clear_retired_jobs();
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -127,7 +135,6 @@ class Culture_Cron {
             self::HOOK_SEED_DIRECTORY   => 'weekly',
             self::HOOK_REFRESH_PULSE    => 'daily',
             self::HOOK_SEED_EVENTS      => 'daily',
-            self::HOOK_SEED_QUOTES      => 'weekly',
             'culture_check_perk_expiry'        => 'hourly',
             self::HOOK_CLUSTER_SWEEP           => 'daily',
             self::HOOK_CLUSTER_ELECTION_TALLY  => 'daily',
@@ -153,7 +160,6 @@ class Culture_Cron {
             self::HOOK_SEED_DIRECTORY,
             self::HOOK_REFRESH_PULSE,
             self::HOOK_SEED_EVENTS,
-            self::HOOK_SEED_QUOTES,
             'culture_check_perk_expiry',
             self::HOOK_CLUSTER_SWEEP,
             self::HOOK_CLUSTER_ELECTION_TALLY,
@@ -169,6 +175,32 @@ class Culture_Cron {
                 wp_unschedule_event( $timestamp, $hook );
             }
         }
+    }
+
+    /**
+     * One-time cleanup for jobs retired from this class (currently just
+     * 'culture_seed_quotes' — see the docblock above). Removing a job's
+     * add_action() alone leaves its wp_schedule_event() row in the cron
+     * table forever, still firing on schedule into a do_action() with no
+     * listener — harmless, but it clutters WP Admin's cron/health views
+     * and keeps hitting the DB for nothing. Gated by option so this only
+     * runs once per retired-job batch, same shape as every other
+     * maybe_backfill_ / maybe_clear_ method in this plugin.
+     */
+    private static function maybe_clear_retired_jobs() {
+        if ( '1' === get_option( 'culture_cron_retired_jobs_cleared', '' ) ) {
+            return;
+        }
+
+        $retired_hooks = array( 'culture_seed_quotes' );
+        foreach ( $retired_hooks as $hook ) {
+            $timestamp = wp_next_scheduled( $hook );
+            if ( $timestamp ) {
+                wp_unschedule_event( $timestamp, $hook );
+            }
+        }
+
+        update_option( 'culture_cron_retired_jobs_cleared', '1' );
     }
 
     // ── Job handlers ──────────────────────────────────────────────────────
@@ -272,14 +304,6 @@ class Culture_Cron {
      */
     public static function seed_events() {
         self::call_nextjs( '/api/events/auto-seed', array( 'citiesPerRun' => 3 ) );
-    }
-
-    /**
-     * Trigger the Quotes seeder on Next.js.
-     * Runs weekly.
-     */
-    public static function seed_quotes() {
-        self::call_nextjs( '/api/quotes/auto-populate' );
     }
 
     /**

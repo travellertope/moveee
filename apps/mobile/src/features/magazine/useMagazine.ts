@@ -30,6 +30,12 @@ interface WPPost {
   excerpt: { rendered: string };
   content: { rendered: string };
   _embedded?: WPEmbedded;
+  meta?: {
+    guest_byline_name?: string;
+    guest_byline_bio?: string;
+    guest_byline_avatar?: string;
+    as_told_to?: string;
+  };
 }
 
 function decodeEntities(text: string): string {
@@ -67,6 +73,18 @@ function mapPost(post: WPPost): Article {
   // — no extra fetch/param needed, same as `slug` for the country archive link.
   const countryTerm = flatTerms.find((t) => t.taxonomy === "country");
   const author = embedded?.author?.[0];
+  const realAuthorName = author?.name || "The Moveee";
+  // Guest Byline (class-culture-guest-byline.php) fully overrides the displayed
+  // writer — same precedence as the web article page. post_author/the real WP
+  // user is never touched, so `slug` is left "" (no real /author archive to
+  // link to for a typed guest name — ArticleScreen gates the "More articles
+  // by" link on a non-empty slug).
+  const guestName = (post.meta?.guest_byline_name || "").trim();
+  // as_told_to predates Guest Byline and is a name-only addition, not a full
+  // override — the real WP account still gets credit, formatted the same
+  // "{person}, as told to {account}" way the web article page renders it.
+  // Guest Byline still wins when both are set, same precedence as web.
+  const asToldTo = (post.meta?.as_told_to || "").trim();
 
   return {
     id: String(post.id),
@@ -75,11 +93,24 @@ function mapPost(post: WPPost): Article {
     excerpt: stripTags(post.excerpt.rendered),
     content: post.content.rendered,
     featuredImage: media,
-    author: {
-      name: author?.name ?? "Moveee",
-      avatarUrl: author?.avatar_urls?.["96"] ?? "",
-      slug: author?.slug ?? "",
-    },
+    author: guestName
+      ? {
+          name: guestName,
+          avatarUrl: post.meta?.guest_byline_avatar || "",
+          slug: "",
+          bio: post.meta?.guest_byline_bio || undefined,
+        }
+      : asToldTo
+      ? {
+          name: `${asToldTo}, as told to ${realAuthorName}`,
+          avatarUrl: author?.avatar_urls?.["96"] ?? "",
+          slug: "",
+        }
+      : {
+          name: realAuthorName,
+          avatarUrl: author?.avatar_urls?.["96"] ?? "",
+          slug: author?.slug ?? "",
+        },
     category,
     country: countryTerm ? { name: countryTerm.name, slug: countryTerm.slug ?? "" } : undefined,
     publishedAt: post.date,

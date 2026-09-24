@@ -52,6 +52,16 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/login-apple', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_apple' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'identity_token' => array( 'required' => true, 'type' => 'string' ),
+                'full_name'      => array( 'required' => false, 'type' => 'string' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/logout', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_logout' ),
@@ -529,6 +539,14 @@ class Culture_Mobile_API {
         register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/feed', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_hub_feed' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // Literati Connect events near this Hub's topic (Stoop/Literati
+        // Connect surfacing — see Culture_Hubs::get_related_events()).
+        register_rest_route( 'culture/v1', '/mobile/hub/(?P<id>\d+)/related-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_hub_related_events' ),
             'permission_callback' => '__return_true',
         ) );
 
@@ -1189,6 +1207,25 @@ class Culture_Mobile_API {
         }
 
         $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+
+        $token = self::issue_token( $user->ID );
+
+        return rest_ensure_response( array(
+            'token' => $token,
+            'user'  => self::full_profile( $user ),
+        ) );
+    }
+
+    public static function handle_login_apple( $request ) {
+        $claims = Culture_Apple_Auth::verify_id_token( $request->get_param( 'identity_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Apple_Auth::find_or_create_user( $claims, (string) $request->get_param( 'full_name' ) );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
@@ -2292,6 +2329,7 @@ class Culture_Mobile_API {
             'description'      => (string) $request->get_param( 'description' ),
             'coverImageUrl'    => (string) $request->get_param( 'cover_image_url' ),
             'allowedTemplates' => $request->get_param( 'allowed_templates' ),
+            'category'         => (string) $request->get_param( 'category' ),
         );
 
         $result = Culture_Hubs::create( $user_id, $data );
@@ -2318,6 +2356,9 @@ class Culture_Mobile_API {
         if ( null !== $request->get_param( 'allowed_templates' ) ) {
             $data['allowedTemplates'] = $request->get_param( 'allowed_templates' );
         }
+        if ( null !== $request->get_param( 'category' ) ) {
+            $data['category'] = (string) $request->get_param( 'category' );
+        }
 
         $result = Culture_Hubs::update( $hub_id, $user_id, $data );
         if ( is_wp_error( $result ) ) {
@@ -2343,11 +2384,17 @@ class Culture_Mobile_API {
         $params = array(
             'q'        => (string) $request->get_param( 'q' ),
             'sort'     => (string) $request->get_param( 'sort' ),
+            'category' => (string) $request->get_param( 'category' ),
             'page'     => (int) ( $request->get_param( 'page' ) ?: 1 ),
             'per_page' => (int) ( $request->get_param( 'per_page' ) ?: 20 ),
         );
 
         return rest_ensure_response( Culture_Hubs::discover( $params ) );
+    }
+
+    public static function handle_hub_related_events( $request ) {
+        $hub_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( array( 'events' => Culture_Hubs::get_related_events( $hub_id ) ) );
     }
 
     public static function handle_hub_my_hubs( $request ) {
@@ -2873,15 +2920,9 @@ class Culture_Mobile_API {
             }
         }
 
-        // Fall back: check subscriber record for legacy data
+        // Fall back: check the real subscriber table.
         if ( empty( $lists ) && $user ) {
-            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            foreach ( $subscribers as $sub ) {
-                if ( is_array( $sub ) && isset( $sub['email'] ) && $sub['email'] === $user->user_email ) {
-                    $lists = isset( $sub['lists'] ) ? (array) $sub['lists'] : array( 'getmelit' );
-                    break;
-                }
-            }
+            $lists = Culture_Subscribers_DB::get_list_slugs_for_email( $user->user_email );
         }
 
         return rest_ensure_response( array( 'lists' => $lists ) );

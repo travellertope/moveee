@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost, isLiteraryPost, getPreviewItem } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORY_GUEST_BYLINE, GET_STORIES, getIssuesForPost, isLiteraryPost, isCommonsPost, getPreviewItem } from "@/lib/wp";
 import { draftMode, cookies, headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -120,6 +120,19 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
+  // Isolated, best-effort fetch — see GET_STORY_GUEST_BYLINE's own comment in
+  // wp.ts for why this can't live inside the main GET_STORY_BY_SLUG query.
+  // The preview resolver already includes guestByline directly, so only
+  // fetch it here for a normal (non-preview) render.
+  if (!isPreview) {
+    try {
+      const bylineData = await getWPData(GET_STORY_GUEST_BYLINE, { slug: resolvedParams.slug });
+      if (bylineData?.post?.guestByline) {
+        post.guestByline = bylineData.post.guestByline;
+      }
+    } catch {}
+  }
+
   // Literary pieces (Poetry/Fiction/Nonfiction/Translation) are still the
   // same `post` type — see "The Moveee Literary" in CLAUDE.md — but they
   // read as a distinct vertical with its own template at /literary/{slug},
@@ -127,6 +140,15 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   // duplicate-render, so there's exactly one canonical URL per piece.
   if (isLiteraryPost(post)) {
     redirect(`/literary/${post.slug}`);
+  }
+
+  // Same "exactly one canonical URL per piece" rule for The Moveee Commons
+  // — see CLAUDE.md's "The Moveee Commons" entry. Redirects for anything
+  // that qualifies for the Commons feed at all (category OR author —
+  // isCommonsPost), not just category, so every piece that shows up in the
+  // Commons feed renders under Commons chrome, never the magazine template.
+  if (isCommonsPost(post)) {
+    redirect(`/commons/${post.slug}`);
   }
 
   const accessLevel = getAccessLevel(post);
@@ -179,6 +201,20 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   const categoryName = decodeHtml(post.categories?.nodes?.[0]?.name || "Article");
   const categorySlug = post.categories?.nodes?.[0]?.slug || "";
+
+  // Guest Byline (set via WP Admin's "Guest Byline" field, restricted to the
+  // Byline Contributor role — see class-culture-guest-byline.php) fully
+  // replaces the displayed writer everywhere below, ahead of the older
+  // as-told-to mechanism. post_author/post.author never changes — this is
+  // display only, so there's no real /author/{slug} archive for a guest
+  // name and the "More by" link is omitted when it's set.
+  const guestByline: { name: string; bio?: string | null; avatarUrl?: string | null } | null =
+    post.guestByline?.name ? post.guestByline : null;
+  const bylineDisplay: React.ReactNode = guestByline
+    ? guestByline.name
+    : post.asToldTo
+    ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
+    : post.author?.node?.name || "The Moveee";
   const hasFeaturedImage = !!post.featuredImage?.node?.sourceUrl;
 
   const toHeadingSlug = (text: string) =>
@@ -302,7 +338,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     dateModified: post.modified || post.date,
     author: {
       "@type": "Person",
-      name: post.author?.node?.name || "Moveee Magazine",
+      name: post.guestByline?.name || post.author?.node?.name || "Moveee Magazine",
     },
     publisher: {
       "@type": "Organization",
@@ -334,16 +370,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const articleMeta: { label: string; value: React.ReactNode }[] = [
     {
       label: "Writer",
-      value: post.asToldTo ? (
-        <>
-          {post.asToldTo}
-          <span className="ar-meta-val-sub">
-            as told to {post.author?.node?.name || "The Moveee"}
-          </span>
-        </>
-      ) : (
-        post.author?.node?.name || "The Moveee"
-      ),
+      value: bylineDisplay,
     },
     ...(post.countries?.nodes?.[0]?.name
       ? [{ label: "Location", value: post.countries.nodes[0].name }]
@@ -385,11 +412,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="ar-byline-items">
                 <div className="ar-byline-item">
                   <div className="ar-byline-label">Words by</div>
-                  <div className="ar-byline-val">
-                    {post.asToldTo
-                      ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
-                      : post.author?.node?.name || "The Moveee"}
-                  </div>
+                  <div className="ar-byline-val">{bylineDisplay}</div>
                 </div>
                 <div className="ar-byline-item">
                   <div className="ar-byline-label">Published</div>
@@ -415,11 +438,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="ar-byline-items">
                 <div className="ar-byline-item">
                   <div className="ar-byline-label">Words by</div>
-                  <div className="ar-byline-val">
-                    {post.asToldTo
-                      ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
-                      : post.author?.node?.name || "The Moveee"}
-                  </div>
+                  <div className="ar-byline-val">{bylineDisplay}</div>
                 </div>
                 <div className="ar-byline-item">
                   <div className="ar-byline-label">Published</div>
@@ -569,10 +588,10 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       {/* ── AUTHOR BAND ── */}
       <div className="ar-author">
         <div className="ar-author-avatar" style={{ position: "relative", overflow: "hidden" }}>
-          {post.author?.node?.avatar?.url ? (
+          {guestByline?.avatarUrl || post.author?.node?.avatar?.url ? (
             <Image
-              src={post.author.node.avatar.url}
-              alt={post.author.node.name || "Author"}
+              src={guestByline?.avatarUrl || post.author.node.avatar.url}
+              alt={guestByline?.name || post.author.node.name || "Author"}
               width={120}
               height={120}
               style={{ objectFit: "cover", width: "100%", height: "100%" }}
@@ -591,7 +610,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </div>
         <div className="ar-author-info">
           <div className="ar-author-label">Words by</div>
-          {post.asToldTo ? (
+          {guestByline ? (
+            <>
+              <div className="ar-author-name">{guestByline.name}</div>
+              <p className="ar-author-bio">
+                {guestByline.bio || "Contributing writer, Moveee Magazine."}
+              </p>
+            </>
+          ) : post.asToldTo ? (
             <>
               <div className="ar-author-name">{post.asToldTo}</div>
               <p className="ar-author-bio" style={{ fontStyle: "italic" }}>
@@ -624,7 +650,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </>
           )}
         </div>
-        {post.author?.node?.slug && (
+        {!guestByline && post.author?.node?.slug && (
           <Link href={`/author/${post.author.node.slug}`} className="ar-author-cta">
             More by {post.author.node.name?.split(" ")[0]} →
           </Link>

@@ -14,9 +14,25 @@ class Culture_Clusters_Admin {
         add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
     }
 
+    /**
+     * Registers the top-level "Moveee Stoop" admin menu (September 2026),
+     * same anchor-slug pattern as Newsletters/Events/Literary/Hubs — see the
+     * "WP Admin menu structure" note in CLAUDE.md. Previously a single
+     * submenu under Moveee Community.
+     */
     public static function register_menu(): void {
+        add_menu_page(
+            __( 'Moveee Stoop', 'culture-community' ),
+            __( 'Moveee Stoop', 'culture-community' ),
+            'manage_options',
+            'culture-clusters-manager',
+            [ __CLASS__, 'render_page' ],
+            'dashicons-location-alt',
+            35
+        );
+
         add_submenu_page(
-            'culture-community',
+            'culture-clusters-manager',
             __( 'Stoop Clusters', 'culture-community' ),
             __( 'Clusters', 'culture-community' ),
             'manage_options',

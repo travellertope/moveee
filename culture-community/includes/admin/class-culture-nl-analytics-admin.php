@@ -238,13 +238,13 @@ class Culture_NL_Analytics_Admin {
 
     private static function render_campaign_detail( $campaign_id ) {
         $post = get_post( $campaign_id );
-        if ( ! $post || 'culture_newsletter' !== $post->post_type ) {
+        if ( ! $post || ! in_array( $post->post_type, array( 'culture_newsletter', 'getmelit', 'culture_drop' ), true ) ) {
             wp_die( esc_html__( 'Campaign not found.', 'culture-community' ) );
         }
 
         $stats      = Culture_NL_Analytics::get_campaign_stats( $campaign_id );
         $sent_at    = get_post_meta( $campaign_id, '_culture_nl_sent_at',    true );
-        $nl_list    = get_post_meta( $campaign_id, '_culture_nl_list',       true ) ?: 'getmelit';
+        $nl_list    = Culture_Newsletter_Queue::resolve_nl_list( $campaign_id, 'getmelit' );
         $nl_segment = get_post_meta( $campaign_id, '_culture_nl_segment',    true ) ?: '';
         $page       = max( 1, absint( $_GET['paged'] ?? 1 ) );
         $openers    = Culture_NL_Analytics::get_campaign_openers( $campaign_id, $page );
