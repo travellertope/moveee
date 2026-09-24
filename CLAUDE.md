@@ -8141,6 +8141,31 @@ consistency, even though that app isn't the production composer).
 
 ---
 
+## Hubs vs. Stoop — the two community axes (product positioning, September 2026)
+
+Two systems in this codebase both build "communities" but along deliberately different axes —
+worth stating explicitly since it's easy to conflate them when writing product copy, onboarding
+flows, or admin tooling:
+
+- **Hubs = what you're into.** Topic-based, location-agnostic. Anyone anywhere can join —
+  nothing in the data model (`culture_hub`, `wp_culture_hub_members`) ties a Hub to a place. The
+  11 official Hubs (Music, Fashion, Art, Film, Food, Sport, Travel, Ideas, Literature, Design,
+  Tech) are the canonical example; a niche interest Hub (gamers, romance readers, a specific
+  beverage/cocktail community, etc.) is exactly the same shape and just as legitimate. Each Hub
+  has its own feed, allowed post templates, mods, a pinned post, and (per the September 2026
+  newsletter work above) its own auto-provisioned mailing list.
+- **Stoop = who you can physically show up with.** Real-world, place-bound. The whole mechanic
+  (`culture_cluster`, `_cluster_street`/city fields, a capacity cap, weekly QR check-in, host
+  election — see `docs/literati-connect-plan.md`) assumes proximity: people meeting in person,
+  regularly, to do something together (reading, watching a film, sharing food). It answers "who's
+  near me," not "what am I into."
+
+**The two are not mutually exclusive and don't compete** — someone can be in the global "Romance
+Readers" Hub *and* a local Stoop that happens to read romance together in person; the Hub is the
+interest, the Stoop is the standing local meetup. When building copy, onboarding, or discovery UI
+for either feature, keep this framing (interest vs. proximity) rather than treating one as a
+scaled-down version of the other.
+
 ## Hubs — user-created topic communities
 
 **Full plan (read before touching any Hub code): `docs/hubs-plan.md`.** Phases 1–4 (core
