@@ -391,19 +391,21 @@ opt-in) — same "default ON" posture as the pre-existing `announcements` list.
   Lists admin page) — don't reach for a bespoke query against
   `wp_culture_hub_members`, the list is already kept in sync.
 
-### WP Admin menu structure — split into 3 top-level menus (September 2026)
+### WP Admin menu structure — split into top-level menus (September 2026)
 
 The single "Culture Community" top-level menu had grown to 15 submenu items
-and was hard to navigate — split into three top-level WP Admin menus. **Every
-slug is unchanged**, only which menu a page is parented under (and, for the
-renamed top-level itself, its label) changed — so no `admin.php?page=...`
-link/bookmark anywhere in the codebase or in anyone's browser needed updating.
+and was hard to navigate — split into multiple top-level WP Admin menus,
+initially 3 (Community/Newsletters/Events), then Literary was split out of
+Community into its own 4th shortly after. **Every slug is unchanged**, only
+which menu a page is parented under (and, for the renamed top-level itself,
+its label) changed — so no `admin.php?page=...` link/bookmark anywhere in the
+codebase or in anyone's browser needed updating.
 
 - **Moveee Community** (slug `culture-community`, was labelled "Culture
   Community") — Settings (the default/anchor page), Analytics, Directory
-  Tools, Redirect Manager, Email Templates, Pro Memberships, Literary
-  Submissions, Stoop Clusters. Registered in `class-culture-settings.php`.
-- **Moveee Newsletters** (new, anchor slug `culture-subscribers` — Subscribers
+  Tools, Redirect Manager, Email Templates, Pro Memberships, Stoop Clusters.
+  Registered in `class-culture-settings.php`.
+- **Moveee Newsletters** (anchor slug `culture-subscribers` — Subscribers
   is both the top-level page and a submenu of itself, the standard WP
   "duplicate the anchor slug as the first submenu with its own label" pattern)
   — Subscribers, Lists & Segments (`culture-newsletter-lists`), Campaigns
@@ -415,9 +417,20 @@ link/bookmark anywhere in the codebase or in anyone's browser needed updating.
   (top-level `add_menu_page()` + the anchor submenu); every other page in this
   group just changed its `add_submenu_page()` parent from `culture-community`
   to `culture-subscribers`.
-- **Moveee Events** (new, anchor slug `culture-ticket-sales`, same pattern) —
+- **Moveee Events** (anchor slug `culture-ticket-sales`, same pattern) —
   Ticket Sales, Event RSVPs (`culture-rsvp-manager`). Registered in
   `class-culture-tickets-admin.php`.
+- **Moveee Literary** (anchor slug `culture-literary-submissions`, same
+  pattern) — just Literary Submissions (the submissions manager + its
+  Waivers tab) today; registered in `class-culture-literary-submissions.php`.
+  Split into its own top-level the same day as the 3-menu split above, once
+  it became clear this feature area would keep growing on its own (see "The
+  Moveee Literary" section elsewhere in this file for the feature itself).
+  The pending-submissions count badge (`awaiting-mod`/`pending-count` WP-core
+  classes) that used to show on the submenu label now shows on the top-level
+  label instead — same mechanism (raw HTML in the `$menu_title` arg), just
+  duplicated onto both `add_menu_page()`'s and `add_submenu_page()`'s title
+  args since a top-level menu and its anchor submenu render independently.
 
 **Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
 check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
@@ -436,10 +449,13 @@ the exact same string needs updating if any of those three ever move.**
 
 **If you add a new admin page to this plugin**, pick a parent by kind:
 newsletter/subscriber/list/campaign-related → `culture-subscribers`;
-ticketing/RSVP-related → `culture-ticket-sales`; anything else → `culture-community`.
-Only add a fourth top-level menu if a new feature area grows to 3+ pages of
-its own — a single new page almost always belongs under one of the three
-above rather than becoming its own top-level menu.
+ticketing/RSVP-related → `culture-ticket-sales`; Literary-related →
+`culture-literary-submissions`; anything else → `culture-community`. Only add
+another top-level menu if a new feature area grows to several pages of its
+own (the actual bar has turned out to be lower than "3+" — Literary got its
+own top-level with just one page, since the user wanted it broken out
+regardless of page count) — check with the user rather than assuming a
+single new page should just join `culture-community` by default.
 
 ### Sending
 Each `culture_newsletter` post has two pieces of post meta:
