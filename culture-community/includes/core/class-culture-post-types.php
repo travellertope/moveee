@@ -1390,8 +1390,14 @@ class Culture_Post_Types {
                 'not_found'          => __( 'No clusters found', 'culture-community' ),
             ),
             'public'              => false,
+            // 'show_in_menu' is false (September 2026) — same reasoning as
+            // culture_hub's own CPT registration just below: this native
+            // screen is a bare title field + raw Custom Fields box, fully
+            // superseded by class-culture-clusters-admin.php's real "Moveee
+            // Stoop" manager. Leaving both would mean two different,
+            // confusing "Clusters" entries in WP Admin.
             'show_ui'             => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => false,
             'menu_icon'           => 'dashicons-groups',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.

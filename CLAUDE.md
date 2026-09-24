@@ -403,8 +403,8 @@ codebase or in anyone's browser needed updating.
 
 - **Moveee Community** (slug `culture-community`, was labelled "Culture
   Community") — Settings (the default/anchor page), Analytics, Directory
-  Tools, Redirect Manager, Email Templates, Pro Memberships, Stoop Clusters.
-  Registered in `class-culture-settings.php`.
+  Tools, Redirect Manager, Email Templates, Pro Memberships. Registered in
+  `class-culture-settings.php`.
 - **Moveee Newsletters** (anchor slug `culture-subscribers` — Subscribers
   is both the top-level page and a submenu of itself, the standard WP
   "duplicate the anchor slug as the first submenu with its own label" pattern)
@@ -435,6 +435,15 @@ codebase or in anyone's browser needed updating.
   brand-new page, not a moved one: before this, `culture_hub` posts had no
   real WP Admin UI at all (see "Moveee Hubs admin manager" below). Registered
   in the new `class-culture-hubs-admin.php`.
+- **Moveee Stoop** (anchor slug `culture-clusters-manager`, same pattern) —
+  just Clusters (the Stoop host-appointment manager) today, moved out of
+  Moveee Community the same way Literary/Hubs were. Registered in
+  `class-culture-clusters-admin.php`. Like Hubs, `culture_cluster`'s own
+  native CPT admin screen had its `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` at the same time — the real manager already
+  existed for this one (unlike Hubs, which had no admin page at all before
+  this pass), so there was never a second competing "Clusters" entry to add,
+  only to stop the bare native one from also showing up as a sibling of it.
 
 **Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
 check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
