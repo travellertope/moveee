@@ -1417,8 +1417,17 @@ class Culture_Post_Types {
                 'not_found'          => __( 'No hubs found', 'culture-community' ),
             ),
             'public'              => false,
+            // 'show_ui' stays true (revisions/queries etc. still need the
+            // post-edit screen to exist at edit.php?post_type=culture_hub)
+            // but 'show_in_menu' is false (September 2026) — this CPT's
+            // native admin UI was just a bare title field + a raw Custom
+            // Fields box, no real editing surface for description/cover/
+            // category/allowed templates/members. class-culture-hubs-admin.php
+            // (the "Moveee Hubs" top-level menu) is the real manager now;
+            // keeping the native CPT submenu too would just be a second,
+            // worse "Hubs" entry next to it.
             'show_ui'             => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => false,
             'menu_icon'           => 'dashicons-groups',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.

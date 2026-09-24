@@ -431,6 +431,10 @@ codebase or in anyone's browser needed updating.
   label instead — same mechanism (raw HTML in the `$menu_title` arg), just
   duplicated onto both `add_menu_page()`'s and `add_submenu_page()`'s title
   args since a top-level menu and its anchor submenu render independently.
+- **Moveee Hubs** (anchor slug `culture-hubs-manager`, same pattern) — a
+  brand-new page, not a moved one: before this, `culture_hub` posts had no
+  real WP Admin UI at all (see "Moveee Hubs admin manager" below). Registered
+  in the new `class-culture-hubs-admin.php`.
 
 **Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
 check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
@@ -8143,6 +8147,53 @@ always starts on "Join" even for members who already joined — idempotent, so h
 extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**, only the backend
 fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
 see the doc's own status line, which is the authoritative source, not this summary.
+
+### WP Admin Hubs manager (September 2026)
+
+Before this, `culture_hub` posts had **no real WP Admin UI** — the CPT was registered `show_ui:
+true` with a bare native post-list/edit screen (title field + a generic Custom Fields box; no
+meta box for description/cover/category/allowed templates, no member list, no way to archive).
+`class-culture-hubs-admin.php` is the real manager, a new top-level **Moveee Hubs** menu (anchor
+slug `culture-hubs-manager`, see the "WP Admin menu structure" note above): a list view (search,
+filter by status/category/official-only, member/post counts, owner, linked newsletter-list
+subscriber count, per-row Archive/Reactivate) and a detail view per Hub (edit
+name/description/cover/category/allowed post types, archive/reactivate, member list with
+promote/demote/make-owner/remove actions, an "Add member by email/username" form, and a shortcut
+to the Campaigns page for emailing that Hub's auto-provisioned list).
+
+**The native CPT admin screen is now hidden, not just superseded** — `culture_hub`'s
+`show_in_menu` was flipped from `'culture-community'` to `false` in
+`class-culture-post-types.php` (`show_ui` stays `true`, so `edit.php?post_type=culture_hub` still
+technically works if visited directly, it's just not linked from the sidebar anymore) — otherwise
+there'd be two different, confusing "Hubs" entries in WP Admin.
+
+**Why this needed new `Culture_Hubs::admin_*()` methods instead of just calling the existing
+API**: every mutating method on `Culture_Hubs` (`update()`, `archive()`, `appoint_mod()`,
+`remove_mod()`, `remove_member()`) gates on the **requester** holding `'owner'`/`'mod'` in
+`wp_culture_hub_members` — there is no admin bypass baked into any of them, on purpose, so as not
+to weaken the member-facing permission model those same methods serve on the REST API. That's a
+real dead end for the 11 official/platform-owned Hubs specifically: they have `post_author = 0`
+and **no owner row at all** (seeded by `maybe_seed_official_hubs()`), so `get_role()` returns
+`null` for literally every user, admin included — meaning a real WP administrator could not
+rename an official Hub, change its category, or add a first member to it through the existing
+API at all. `Culture_Hubs::admin_update()` / `admin_set_status()` / `admin_set_role()` /
+`admin_remove_member()` are a parallel, un-gated set of methods added specifically for this admin
+page — **they perform no requester/role check of their own; the caller (only
+`class-culture-hubs-admin.php`) is responsible for the `current_user_can('manage_options')`
+check**. Never call them from a REST route without adding that capability check at the route
+handler itself.
+
+`admin_set_role()` also does two things the member-facing API can't: it can hand ownership to a
+new user directly (demoting whoever currently holds `'owner'` to `'mod'` so a Hub is never left
+with two owners — official Hubs, having no owner, just skip that demote step and go straight to
+assigning one), and it auto-subscribes a newly-added member to the Hub's newsletter list the same
+way `join()` already does (`admin_remove_member()` mirrors `leave()`'s unsubscribe the same way)
+— so a member added directly from WP Admin behaves identically to one who joined through the app.
+
+**Never hard-deletes a Hub** — only `archive`/`reactivate`, same "never hard-delete a user-created
+group" convention as Stoop Clusters and every other community feature in this codebase. If a
+genuine deletion is ever needed, that's a deliberate exception to raise with the user first, not
+something to add to this admin page by default.
 
 ### Official-Hub seeding race condition — duplicate Hubs (fixed July 2026)
 
