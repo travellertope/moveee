@@ -1,6 +1,6 @@
-import { Bricolage_Grotesque } from "next/font/google";
 import ShopHeader from "@/components/ShopHeader";
 import ShopFooter from "@/components/ShopFooter";
+import { bricolage } from "@/lib/lifestyle-font";
 import "./shop-chrome.css";
 
 // Scoped to the whole /lifestyle route tree (archive, category/tag/brand
@@ -13,13 +13,9 @@ import "./shop-chrome.css";
 // of the site's chrome ever renders here. Bricolage Grotesque is the
 // identity's display face (see the approved mockup this was built from),
 // used by both the archive page's `.lfs-*` classes and the header/footer
-// chrome in shop-chrome.css.
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
-  variable: "--font-lfs-display",
-  display: "swap",
-});
+// chrome in shop-chrome.css. The font itself is loaded once, in
+// lib/lifestyle-font.ts, and imported here and by app/makers/layout.tsx —
+// see that file's comment for why it can't be called separately in each.
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
