@@ -2,12 +2,10 @@ import Link from "next/link";
 import {
   getLiteraryPieces,
   literaryGenreOfPost,
-  LITERARY_GENRES,
   filterLiteraryCutoff,
 } from "@/lib/wp";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryHeroCarousel, { LiteraryHeroSlide } from "@/components/LiteraryHeroCarousel";
-import LiteraryShelf, { LiteraryShelfItem } from "@/components/LiteraryShelf";
 import LiteraryGenreArt from "@/components/LiteraryGenreArt";
 import { decodeHtml } from "@/lib/decode-html";
 
@@ -50,12 +48,6 @@ export default async function LiteraryLandingPage() {
     excerpt: plainExcerpt(p.excerpt),
     genreLabel: literaryGenreOfPost(p)?.label || "The Moveee Literary",
     imageUrl: p.featuredImage?.node?.sourceUrl || null,
-  }));
-
-  const shelfItems: LiteraryShelfItem[] = LITERARY_GENRES.map((g) => ({
-    href: `/literary/${g.slug}`,
-    label: g.label,
-    slug: g.slug,
   }));
 
   return (
@@ -161,15 +153,6 @@ export default async function LiteraryLandingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="lit-section" style={{ paddingTop: 8 }}>
-        <div className="lit-wrap">
-          <div className="lit-section-head">
-            <h2>Browse by Section</h2>
-          </div>
-          <LiteraryShelf items={shelfItems} />
         </div>
       </section>
     </div>
