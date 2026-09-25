@@ -1689,22 +1689,30 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
     ]);
-    const editorialStories = editData?.posts?.nodes || [];
+    // Commons-qualifying posts (category "commons" or a Basit Jamiu byline —
+    // see isCommonsPost above) never surface anywhere under /magazine, per
+    // explicit request — they're exclusively a Commons-branded destination
+    // now (mirrors the /magazine/[slug] redirect and sitemap.ts's own split,
+    // both already scoped to the same isCommonsPost union). Filtered here,
+    // before any of the per-section slicing below, so it applies uniformly
+    // to every section this function feeds (the homepage and /magazine's
+    // own default view both call this).
+    const editorialStories = (editData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
 
     const topPool = mainPool.filter(
-      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news") && !isCommonsPost(p)
     );
 
     const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
 
     const opinionStories = (opinionData?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
     const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 5);
     const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
 
     return { topPool, editorialStories, opinionStories, portraitStories, digestStories };

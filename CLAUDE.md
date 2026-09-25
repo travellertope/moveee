@@ -1752,6 +1752,33 @@ file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommo
 Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
 category slug in WP Admin, in a real environment before considering this fully closed.
 
+**Commons-qualifying posts excluded from every `/magazine` and homepage listing (September
+2026, follow-up).** Per explicit request — a Commons post's single-page URL already redirected
+away from `/magazine/{slug}` (see "Route every Commons-qualifying post to /commons" above), but
+it could still surface inside `/magazine`'s own listings as a card linking to that now-redirecting
+URL, which reads as a bug even though the click itself worked. Every place a story pool is built
+now filters out `isCommonsPost(p)` (the same category-or-author union already used for the
+single-page redirect) before rendering:
+- `getMagazineSections()` (`wp.ts`) — feeds the site root `/`'s Front Page/Edit/Opinions/Lane/
+  Free Critics sections. This is the one function both `/` and (historically) `/magazine` shared,
+  so fixing it here is the single highest-leverage change.
+- `MagazineArchiveWrapper.tsx` — every filtered view (category/tag/series/industry/country
+  archives all assign into one `stories` variable, filtered once after the branch that populates
+  it) and the Hub's own "Browse by Section" tile list (`allFetchedCats` now drops the `"commons"`
+  category slug outright, so it's not a dead-end tile that resolves to an empty archive).
+- `/magazine/[slug]/page.tsx` — the "Keep reading"/related-stories grid at the bottom of an
+  article.
+- `fetchHomepageData.ts` — the site root's separate hero/`coverStory` pipeline (independent of
+  `getMagazineSections()`): the "Featured"-tag pool (so a Commons piece tagged Featured can never
+  become the homepage hero), the edition-scoped and general story pools, and the Interviews pool.
+- **Deliberately left alone**: `generateStaticParams()` in `/magazine/[slug]/page.tsx` (still
+  pre-generates a Commons post's `/magazine/{slug}` static path — harmless, since visiting it
+  just hits the existing redirect to `/commons/{slug}`, not a rendered page) and `sitemap.ts`
+  (already excludes category-based Commons pieces from `articleUrls`, per the routing commit
+  referenced above — no further change needed there).
+- Not visually verified in a browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+  other pass in this file. Verified via brace/paren-balance checks on all four touched files.
+
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
 `/magazine/[slug]` articles used to gate member-only/patron-only content with `ArticleContentGate`/
