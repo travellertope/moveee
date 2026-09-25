@@ -22,7 +22,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_Templates {
 
     /** CPT slugs handled by this loader. */
-    const POST_TYPES = array( 'culture_event', 'culture_newsletter' );
+    const POST_TYPES = array( 'culture_event', 'culture_newsletter', 'getmelit', 'culture_drop' );
+
+    /**
+     * getmelit/culture_drop reuse culture_newsletter's own single/archive
+     * templates (identical content shape, just a different post type) rather
+     * than needing their own template files.
+     */
+    const TEMPLATE_ALIASES = array(
+        'getmelit'     => 'culture_newsletter',
+        'culture_drop' => 'culture_newsletter',
+    );
 
     public static function init() {
         add_filter( 'single_template', array( __CLASS__, 'load_single_template' ) );
@@ -42,7 +52,7 @@ class Culture_Templates {
             return $template;
         }
 
-        $file = 'single-' . $post_type . '.php';
+        $file = 'single-' . ( self::TEMPLATE_ALIASES[ $post_type ] ?? $post_type ) . '.php';
         $custom = self::locate_template( $file );
 
         return $custom ? $custom : $template;
@@ -65,7 +75,7 @@ class Culture_Templates {
             return $template;
         }
 
-        $file = 'archive-' . $post_type . '.php';
+        $file = 'archive-' . ( self::TEMPLATE_ALIASES[ $post_type ] ?? $post_type ) . '.php';
         $custom = self::locate_template( $file );
 
         return $custom ? $custom : $template;

@@ -25,12 +25,16 @@ export default function LiteraryMasthead() {
 
   return (
     <>
-      <div className="lit-ribbon">
+      {/* Ribbon deliberately disabled (September 2026) — its only CTA
+          ("Get Updates") duplicated the masthead's own Subscribe pill below.
+          Kept here, commented out, to reactivate quickly when there's an
+          actual message to run in this slot. */}
+      {/* <div className="lit-ribbon">
         <div className="lit-ribbon-inner">
           <span>Don&rsquo;t miss new fiction, poetry, essays and translations.</span>
-          <Link href="/newsletter">Get Updates</Link>
+          <Link href="/literary/subscribe">Get Updates</Link>
         </div>
-      </div>
+      </div> */}
 
       <header className="lit-masthead">
         <div className="lit-wrap lit-masthead-row">
@@ -51,7 +55,7 @@ export default function LiteraryMasthead() {
             <Link href="/literary/submit" className="lit-btn-pill">
               Submit
             </Link>
-            <Link href="/newsletter" className="lit-btn-pill lit-btn-pill--fill">
+            <Link href="/literary/subscribe" className="lit-btn-pill lit-btn-pill--fill">
               Subscribe
             </Link>
             <button

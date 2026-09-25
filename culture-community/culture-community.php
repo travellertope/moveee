@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     2.2.6
+ * Version:     2.6.5
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.9.0' );
+define( 'CULTURE_VERSION', '3.3.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -31,7 +31,10 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-gamification.php'
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-referrals.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cron.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-lists.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-subscribers-db.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-campaigns.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
@@ -40,6 +43,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-push.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-reading-tracker.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-vendor-shipping.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-clusters.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-hubs.php';
@@ -56,6 +60,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-system-author.php
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-guest-byline.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-preview.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-literary-access.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-magic-otp.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -73,6 +78,8 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-lists-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-campaigns-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-games-subscribers.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-importer.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-nl-analytics-admin.php';
@@ -81,6 +88,8 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-acf-fields.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-redirects.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-rsvp-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-clusters-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-hubs-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-content-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 
 // Payment includes.
@@ -88,6 +97,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-services-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-literary-submissions.php';
@@ -140,9 +150,14 @@ function culture_community_init() {
     Culture_Cron::init();
     Culture_Registration::init();
     Culture_Emails::init();
+    Culture_Newsletter_Lists::init();
+    Culture_Subscribers_DB::init();
     Culture_Newsletter_Queue::init();
+    Culture_Campaigns::init();
     Culture_Newsletter_Send::init();
     Culture_Subscribers::init();
+    Culture_Newsletter_Lists_Admin::init();
+    Culture_Campaigns_Admin::init();
     Culture_Games_Subscribers::init();
     Culture_NL_Analytics::init();
     Culture_NL_Analytics_Admin::init();
@@ -158,8 +173,11 @@ function culture_community_init() {
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Clusters_Admin::init();
     Culture_Clusters_Admin::init_post_handlers();
+    Culture_Hubs_Admin::init();
+    Culture_Content_Admin::init();
     Culture_Ticket_Payment::init();
     Culture_Shop_Checkout::init();
+    Culture_Services_Payment::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
     Culture_Follows::init();

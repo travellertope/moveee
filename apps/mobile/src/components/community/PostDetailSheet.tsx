@@ -24,6 +24,7 @@ import { radius, fonts } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
 import QuoteShareCard from "../quotes/QuoteShareCard";
 import { useScoreCardShare } from "../../features/games/useScoreCardShare";
+import { shareUrlFor } from "../../utils/shareUrl";
 
 const SCREEN_W = Dimensions.get("window").width;
 
@@ -733,7 +734,7 @@ function EventRsvpButton({ item, c, styles }: { item: FeedItem; c: ColorPalette;
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
   const sharerFirstName = item.communityAuthor?.split(" ")[0] ?? "Their";
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://web.themoveee.com/quotes";
+  const shareUrl = shareUrlFor(item) ?? "https://web.themoveee.com/quotes";
   const { cardRef, share: shareCard } = useScoreCardShare();
 
   const handleShare = async () => {

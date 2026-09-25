@@ -173,12 +173,21 @@ class Culture_Settings {
     }
 
     /**
-     * Register the main Culture Community admin menu and Settings submenu.
+     * Register the main Moveee Community admin menu and Settings submenu.
+     *
+     * Renamed from "Culture Community" (September 2026), alongside splitting
+     * the newsletter- and event-related submenus that used to live under
+     * this same parent into their own top-level menus (Moveee Newsletters /
+     * Moveee Events, see class-culture-subscribers.php / class-culture-tickets-admin.php)
+     * — this one had grown to 15 submenu items and was hard to navigate.
+     * Slug is deliberately unchanged (`culture-community`) so every existing
+     * `admin.php?page=culture-community` link/bookmark keeps working; only
+     * the label changed.
      */
     public static function register_menu() {
         add_menu_page(
-            __( 'Culture Community', 'culture-community' ),
-            __( 'Culture Community', 'culture-community' ),
+            __( 'Moveee Community', 'culture-community' ),
+            __( 'Moveee Community', 'culture-community' ),
             'manage_options',
             'culture-community',
             array( __CLASS__, 'render_page' ),

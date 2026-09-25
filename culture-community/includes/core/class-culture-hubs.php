@@ -123,6 +123,53 @@ class Culture_Hubs {
         if ( class_exists( 'Culture_Clusters' ) ) {
             Culture_Clusters::maybe_backfill_companion_hubs();
         }
+        self::maybe_backfill_hub_lists();
+    }
+
+    /**
+     * One-time backfill (September 2026): every Hub that existed before the
+     * Hub-auto-list feature shipped gets its list provisioned now, and every
+     * currently-active member is subscribed to it — same end state as if the
+     * Hub had been created/joined after this feature existed. Gated so it
+     * only ever runs once; a Hub created afterwards already gets this via
+     * create()/join() directly.
+     */
+    private static function maybe_backfill_hub_lists() {
+        if ( '1' === get_option( 'culture_hub_lists_backfilled', '' ) ) {
+            return;
+        }
+        if ( ! class_exists( 'Culture_Newsletter_Lists' ) || ! class_exists( 'Culture_Subscribers_DB' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $hub_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'culture_hub' AND post_status = 'publish'" );
+
+        foreach ( $hub_ids as $hub_id ) {
+            $name = get_post_meta( $hub_id, '_hub_name', true ) ?: get_the_title( $hub_id );
+            $slug = get_post_meta( $hub_id, '_hub_slug', true );
+            if ( ! $name || ! $slug ) {
+                continue;
+            }
+
+            $list = Culture_Newsletter_Lists::get_or_create_for_hub( $hub_id, $name, $slug );
+            if ( ! $list ) {
+                continue;
+            }
+
+            $member_ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT user_id FROM " . self::members_table() . " WHERE hub_id = %d AND status = 'active'",
+                $hub_id
+            ) );
+            foreach ( $member_ids as $member_id ) {
+                $member = get_userdata( $member_id );
+                if ( $member && is_email( $member->user_email ) ) {
+                    Culture_Subscribers_DB::subscribe( $member->user_email, array( $list['slug'] ), $member->display_name, '', (int) $member_id );
+                }
+            }
+        }
+
+        update_option( 'culture_hub_lists_backfilled', '1' );
     }
 
     public static function on_hub_id_meta_added( $meta_id, int $object_id, string $meta_key, $meta_value ) {
@@ -866,6 +913,21 @@ class Culture_Hubs {
             'status'    => 'active',
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
+        // Every Hub automatically gets its own newsletter list so members
+        // can be emailed as a group (September 2026) — the owner is
+        // auto-subscribed here the same way join() subscribes every later
+        // member, since the owner's own membership row above is inserted
+        // directly rather than going through join().
+        if ( class_exists( 'Culture_Newsletter_Lists' ) ) {
+            $list = Culture_Newsletter_Lists::get_or_create_for_hub( $post_id, $name, $slug );
+            if ( $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+                $owner = get_userdata( $user_id );
+                if ( $owner && is_email( $owner->user_email ) ) {
+                    Culture_Subscribers_DB::subscribe( $owner->user_email, array( $list['slug'] ), $owner->display_name, '', $user_id );
+                }
+            }
+        }
+
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'hub_created' );
         }
@@ -998,6 +1060,19 @@ class Culture_Hubs {
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
 
+        // Auto-subscribe to the Hub's newsletter list (opt-out available
+        // afterwards via the Subscribers admin page or a future
+        // preferences UI) — this is what actually makes "send an email to
+        // this Hub's members" possible, per the September 2026 decision to
+        // default every Hub list to opt-out-on-join.
+        if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) ) {
+            $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+            $joiner   = get_userdata( $user_id );
+            if ( $hub_list && $joiner && is_email( $joiner->user_email ) ) {
+                Culture_Subscribers_DB::subscribe( $joiner->user_email, array( $hub_list['slug'] ), $joiner->display_name, '', $user_id );
+            }
+        }
+
         // Hub Founder badge (docs/hubs-plan.md §6.2) — re-evaluated against
         // the owner, not the joining member, since crossing the 10-member
         // threshold is the owner's achievement. award_points()/award_reputation()
@@ -1061,6 +1136,18 @@ class Culture_Hubs {
         }
 
         update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+        // Mirror of the auto-subscribe on join() above — leaving a Hub also
+        // removes the member from its newsletter list. Only that one list
+        // membership is touched; any other list the person is on (getmelit,
+        // another Hub, etc.) is unaffected.
+        if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) ) {
+            $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+            $leaver   = get_userdata( $user_id );
+            if ( $hub_list && $leaver && is_email( $leaver->user_email ) ) {
+                Culture_Subscribers_DB::remove_from_list_slug( $leaver->user_email, $hub_list['slug'] );
+            }
+        }
 
         return true;
     }
@@ -1386,6 +1473,204 @@ class Culture_Hubs {
                 '/hub/' . ( get_post_meta( $hub_id, '_hub_slug', true ) ?: $hub_id ),
                 array( 'hub_id' => $hub_id, 'post_id' => $post_id )
             );
+        }
+
+        return true;
+    }
+
+    /* ——————————————————————————————————————
+     *  Admin-only operations (September 2026)
+     *
+     *  Every mutating method above gates on the *requester* holding
+     *  'owner'/'mod' in wp_culture_hub_members — there is deliberately no
+     *  admin bypass baked into them, so as not to weaken the member-facing
+     *  permission model those methods also serve. That gate is a real
+     *  problem for the 11 official/platform-owned Hubs specifically: they
+     *  have no owner row at all (post_author = 0, seeded by
+     *  maybe_seed_official_hubs()), so get_role() returns null for every
+     *  user including a real WP administrator — meaning update()/archive()/
+     *  appoint_mod()/remove_member() etc. could never be called on an
+     *  official Hub by anyone, admin included, through the existing API.
+     *
+     *  These admin_* methods are a separate, parallel set with no requester/
+     *  role check at all — callers MUST verify current_user_can('manage_options')
+     *  themselves before calling any of them (see class-culture-hubs-admin.php,
+     *  the only caller). They exist for the WP Admin Hubs manager only; never
+     *  expose them on a REST route without adding that capability check at
+     *  the route handler.
+     * —————————————————————————————————————— */
+
+    /**
+     * @return array|WP_Error The updated hub.
+     */
+    public static function admin_update( int $hub_id, array $data ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+
+        if ( isset( $data['name'] ) ) {
+            $name = sanitize_text_field( $data['name'] );
+            if ( '' === $name ) {
+                return new WP_Error( 'missing_name', 'A Hub name is required.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_name', $name );
+            wp_update_post( array( 'ID' => $hub_id, 'post_title' => $name ) );
+        }
+
+        if ( isset( $data['description'] ) ) {
+            $description = sanitize_textarea_field( $data['description'] );
+            if ( '' === $description ) {
+                return new WP_Error( 'missing_description', 'A short description is required.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_description', $description );
+        }
+
+        if ( isset( $data['coverImageUrl'] ) ) {
+            update_post_meta( $hub_id, '_hub_cover_image_url', esc_url_raw( (string) $data['coverImageUrl'] ) );
+            update_post_meta( $hub_id, '_hub_cover_image_credit', '' );
+        }
+
+        if ( isset( $data['allowedTemplates'] ) && is_array( $data['allowedTemplates'] ) ) {
+            $allowed = array_values( array_intersect(
+                array_map( 'sanitize_key', $data['allowedTemplates'] ),
+                self::ALLOWED_TEMPLATES
+            ) );
+            update_post_meta( $hub_id, '_hub_allowed_templates', wp_json_encode( $allowed ?: self::DEFAULT_ALLOWED_TEMPLATES ) );
+        }
+
+        if ( isset( $data['category'] ) ) {
+            $category = sanitize_text_field( (string) $data['category'] );
+            if ( '' !== $category && ! in_array( $category, self::categories(), true ) ) {
+                return new WP_Error( 'invalid_category', 'Not a valid Hub category.', array( 'status' => 400 ) );
+            }
+            update_post_meta( $hub_id, '_hub_category', $category );
+        }
+
+        return self::get_hub( $hub_id );
+    }
+
+    /**
+     * Sets a Hub's status directly — covers both archive (member-facing
+     * archive() is owner-only, so this is the only path for an official
+     * Hub) and reactivate, which no member-facing method offers at all.
+     * @return true|WP_Error
+     */
+    public static function admin_set_status( int $hub_id, string $status ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+        if ( ! in_array( $status, array( self::STATUS_ACTIVE, self::STATUS_ARCHIVED ), true ) ) {
+            return new WP_Error( 'invalid_status', 'Invalid status.', array( 'status' => 400 ) );
+        }
+        update_post_meta( $hub_id, '_hub_status', $status );
+        return true;
+    }
+
+    /**
+     * Sets (or clears, when $role is '') a member's role directly, including
+     * transferring ownership — the member-facing appoint_mod()/remove_mod()
+     * can only ever produce one 'owner' at a time via a chain of
+     * owner-initiated calls; this is a direct admin override for fixing a
+     * broken/ownerless Hub or reassigning ownership without that dance.
+     * Demotes any existing owner to 'mod' when assigning a new owner, so a
+     * Hub is never left with two owner rows.
+     * @return true|WP_Error
+     */
+    public static function admin_set_role( int $hub_id, int $user_id, string $role ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+        if ( ! in_array( $role, array( 'owner', 'mod', 'member' ), true ) ) {
+            return new WP_Error( 'invalid_role', 'Invalid role.', array( 'status' => 400 ) );
+        }
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', 'That user does not exist.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $table = self::members_table();
+
+        if ( 'owner' === $role ) {
+            $current_owner_id = $wpdb->get_var( $wpdb->prepare(
+                "SELECT user_id FROM {$table} WHERE hub_id = %d AND role = 'owner' AND status = 'active'",
+                $hub_id
+            ) );
+            if ( $current_owner_id && (int) $current_owner_id !== $user_id ) {
+                $wpdb->update( $table, array( 'role' => 'mod' ), array( 'hub_id' => $hub_id, 'user_id' => (int) $current_owner_id ), array( '%s' ), array( '%d', '%d' ) );
+            }
+        }
+
+        $existing = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE hub_id = %d AND user_id = %d",
+            $hub_id, $user_id
+        ) );
+
+        if ( $existing ) {
+            $wpdb->update( $table, array( 'role' => $role, 'status' => 'active' ), array( 'id' => $existing ), array( '%s', '%s' ), array( '%d' ) );
+        } else {
+            $wpdb->insert( $table, array(
+                'hub_id'    => $hub_id,
+                'user_id'   => $user_id,
+                'role'      => $role,
+                'joined_at' => current_time( 'mysql' ),
+                'status'    => 'active',
+            ), array( '%d', '%d', '%s', '%s', '%s' ) );
+
+            // A member added directly by an admin (not via join()) still
+            // needs the same newsletter-list auto-subscribe join() gives
+            // every other member — see "Hub → newsletter list
+            // auto-provisioning" in CLAUDE.md.
+            if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) && is_email( $user->user_email ) ) {
+                $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+                if ( $hub_list ) {
+                    Culture_Subscribers_DB::subscribe( $user->user_email, array( $hub_list['slug'] ), $user->display_name, '', $user_id );
+                }
+            }
+        }
+
+        update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+        return true;
+    }
+
+    /**
+     * Removes a member outright (sets status 'left'), regardless of their
+     * role — including the owner, unlike the member-facing remove_member(),
+     * which explicitly refuses to remove an owner. An admin removing the
+     * owner leaves the Hub ownerless (same state an official Hub is already
+     * in); use admin_set_role() to assign a new owner afterward if needed.
+     * @return true|WP_Error
+     */
+    public static function admin_remove_member( int $hub_id, int $user_id ) {
+        $post = get_post( $hub_id );
+        if ( ! $post || 'culture_hub' !== $post->post_type ) {
+            return new WP_Error( 'invalid_hub', 'This Hub does not exist.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $updated = $wpdb->update(
+            self::members_table(),
+            array( 'status' => 'left' ),
+            array( 'hub_id' => $hub_id, 'user_id' => $user_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
+
+        if ( false === $updated ) {
+            return new WP_Error( 'remove_failed', 'Could not remove that member.', array( 'status' => 500 ) );
+        }
+
+        update_post_meta( $hub_id, '_hub_member_count', self::get_member_count( $hub_id ) );
+
+        if ( class_exists( 'Culture_Newsletter_Lists' ) && class_exists( 'Culture_Subscribers_DB' ) ) {
+            $hub_list = Culture_Newsletter_Lists::get_for_hub( $hub_id );
+            $member   = get_userdata( $user_id );
+            if ( $hub_list && $member && is_email( $member->user_email ) ) {
+                Culture_Subscribers_DB::remove_from_list_slug( $member->user_email, $hub_list['slug'] );
+            }
         }
 
         return true;

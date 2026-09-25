@@ -32,7 +32,7 @@ class Culture_Community {
     public static function flush_on_delete( $post_id ) {
         $post = get_post( $post_id );
         if ( ! $post ) return;
-        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
+        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
         if ( ! in_array( $post->post_type, $cacheable_types, true ) ) return;
         self::flush_vercel_kv_cache( $post_id, $post );
     }
@@ -45,7 +45,7 @@ class Culture_Community {
         if ( $new_status !== 'publish' ) {
             return;
         }
-        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
+        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'getmelit', 'culture_drop', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
         if ( ! in_array( $post->post_type, $cacheable_types, true ) ) {
             return;
         }
@@ -81,6 +81,8 @@ class Culture_Community {
         $type_to_tags = [
             'post'                => [ 'stories' ],
             'culture_newsletter'  => [ 'newsletters' ],
+            'getmelit'            => [ 'newsletters' ],
+            'culture_drop'        => [ 'newsletters' ],
             'culture_journey'     => [ 'stories' ],
             'culture_directory'   => [ 'directory' ],
             'culture_quote'       => [ 'quotes' ],

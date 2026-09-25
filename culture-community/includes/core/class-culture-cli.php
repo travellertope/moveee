@@ -80,13 +80,10 @@ class Culture_CLI {
             );
         }
 
-        // Reflection to access private merge_subscribers if needed, 
-        // or just use handle_import_mailpoet logic.
-        // Actually merge_subscribers is private in Class_Culture_Subscribers.
-        // Let's use a workaround or make it public.
-        
-        // For now, I'll replicate the logic here to keep it clean for CLI.
-        $count = $this->merge_subscribers_cli( $items );
+        // Culture_Subscribers_DB::subscribe_many() (September 2026) is now
+        // the one shared find-or-create-many helper every importer/CLI
+        // command uses — no more per-caller reimplementation.
+        $count = Culture_Subscribers_DB::subscribe_many( $items );
 
         WP_CLI::success( "Successfully synced {$count} subscribers from MailPoet." );
     }
@@ -149,41 +146,5 @@ class Culture_CLI {
         $progress->finish();
 
         WP_CLI::success( "Import complete: {$imported} imported, {$skipped} skipped." );
-    }
-
-    /**
-     * CLI version of merge_subscribers to avoid visibility issues.
-     */
-    private function merge_subscribers_cli( array $items ) {
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $existing_emails = array();
-        foreach ( $subscribers as $sub ) {
-            $existing_emails[] = strtolower( trim( is_array( $sub ) ? $sub['email'] : $sub ) );
-        }
-        $existing_emails = array_unique( $existing_emails );
-
-        $added = 0;
-        $now   = current_time( 'mysql' );
-
-        foreach ( $items as $item ) {
-            $email = sanitize_email( $item['email'] );
-            if ( ! $email || ! is_email( $email ) ) continue;
-            if ( in_array( strtolower( $email ), $existing_emails, true ) ) continue;
-
-            $subscribers[] = array(
-                'email'    => $email,
-                'name'     => sanitize_text_field( $item['name'] ?? '' ),
-                'location' => sanitize_text_field( $item['location'] ?? '' ),
-                'date'     => $now,
-            );
-            $existing_emails[] = strtolower( $email );
-            $added++;
-        }
-
-        if ( $added > 0 ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers, false );
-        }
-
-        return $added;
     }
 }

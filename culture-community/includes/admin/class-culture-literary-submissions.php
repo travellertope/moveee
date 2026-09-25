@@ -1030,6 +1030,16 @@ class Culture_Literary_Submissions {
 
     // ── Menu ──────────────────────────────────────────────────────────────────
 
+    /**
+     * Registers the top-level "Moveee Literary" admin menu (September 2026)
+     * — previously a single submenu under Moveee Community, split out on
+     * its own now that this page (submissions + the Waivers tab) is a
+     * self-contained feature area, same reasoning as the earlier
+     * Newsletters/Events split (see the "WP Admin menu structure" note in
+     * CLAUDE.md). Only one admin page exists for this area today, so the
+     * standard "anchor slug doubles as the top-level page and its own first
+     * submenu" pattern is used — the same as Moveee Newsletters/Events.
+     */
     public static function register_menu(): void {
         $overdue = self::count_overdue( self::get_all() );
         $title   = __( 'Literary Submissions', 'culture-community' );
@@ -1040,8 +1050,26 @@ class Culture_Literary_Submissions {
             );
         }
 
+        $top_level_title = __( 'Moveee Literary', 'culture-community' );
+        if ( $overdue > 0 ) {
+            $top_level_title .= sprintf(
+                ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>',
+                $overdue
+            );
+        }
+
+        add_menu_page(
+            __( 'Moveee Literary', 'culture-community' ),
+            $top_level_title,
+            'manage_options',
+            'culture-literary-submissions',
+            array( __CLASS__, 'render_page' ),
+            'dashicons-book-alt',
+            33
+        );
+
         add_submenu_page(
-            'culture-community',
+            'culture-literary-submissions',
             __( 'Literary Submissions', 'culture-community' ),
             $title,
             'manage_options',

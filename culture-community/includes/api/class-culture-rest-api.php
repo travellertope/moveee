@@ -231,6 +231,44 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Magic-code sign-in — verifies a code, finds-or-creates an account,
+        // subscribes it to a newsletter list, returns the same profile shape
+        // as /login. See class-culture-magic-otp.php.
+        register_rest_route( 'culture/v1', '/magic-otp/request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_magic_otp_request' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/magic-otp/verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_magic_otp_verify' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'code' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'list' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_title',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -262,7 +300,10 @@ class Culture_REST_API {
             ),
         ) );
 
-        // Quote creation (logged-in users).
+        // Quote creation (logged-in users) — this is the live backend for the
+        // composer's own "Quote" template (packages/shared/components/pulse/
+        // SubmitPost.tsx posts here directly), not just the retired /quotes
+        // archive's own submission modal. Keep it registered.
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_create_quote' ),
@@ -271,27 +312,6 @@ class Culture_REST_API {
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
-            ),
-        ) );
-
-        // Quote liking (Next.js server-side).
-        register_rest_route( 'culture/v1', '/quotes/like', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_like_quote' ),
-            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
-            'args'                => array(
-                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'user_id'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-            ),
-        ) );
-
-        // Quote reporting (Next.js server-side).
-        register_rest_route( 'culture/v1', '/quotes/report', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_report_quote' ),
-            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
-            'args'                => array(
-                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -1457,6 +1477,69 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Reading Tracker shelves (web — API key, explicit user_id param).
+        // Mirrors /mobile/reading/* in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_set' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'       => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_remove' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'   => array( 'required' => true, 'type' => 'string' ),
+                'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_counts' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Reading goal (web — API key, explicit user_id param). Mirrors
+        // /mobile/reading/goal in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/reading/goal', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_goal_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'year'    => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/goal', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_goal_set' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'year'         => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_books' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2036,6 +2119,54 @@ class Culture_REST_API {
     /* ——————————————————————————————————————
      *  Community event RSVPs (web — API key, explicit user_id)
      * —————————————————————————————————————— */
+
+    public static function handle_reading_shelf_set( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $status       = sanitize_key( $request->get_param( 'status' ) );
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_shelf_remove( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        Culture_Reading_Tracker::remove_from_shelf( $user_id, $directory_id );
+        return rest_ensure_response( array( 'removed' => true ) );
+    }
+
+    public static function handle_reading_shelf_get( $request ) {
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $status   = sanitize_key( $request->get_param( 'status' ) );
+        $page     = (int) $request->get_param( 'page' ) ?: 1;
+        $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+    }
+
+    public static function handle_reading_shelf_counts( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_shelf_counts( $user_id ) );
+    }
+
+    public static function handle_reading_goal_get( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_goal( $user_id, $year ) );
+    }
+
+    public static function handle_reading_goal_set( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $year         = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        $target_books = (int) $request->get_param( 'target_books' );
+        $result       = Culture_Reading_Tracker::set_goal( $user_id, $year, $target_books );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
 
     public static function handle_community_event_rsvp( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );
@@ -2715,6 +2846,23 @@ class Culture_REST_API {
         return rest_ensure_response( array_merge( array( 'success' => true ), $result ) );
     }
 
+    public static function handle_magic_otp_request( $request ) {
+        $result = Culture_Magic_OTP::request_otp( $request->get_param( 'email' ) );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_magic_otp_verify( $request ) {
+        $list = $request->get_param( 'list' ) ?: 'getmelit';
+        $user = Culture_Magic_OTP::verify_otp( $request->get_param( 'email' ), $request->get_param( 'code' ), $list );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
     public static function handle_preview_resolve( $request ) {
         $verified = Culture_Preview::verify_token( $request->get_param( 'token' ) );
         if ( is_wp_error( $verified ) ) {
@@ -2759,12 +2907,11 @@ class Culture_REST_API {
             );
         }
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-        $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-            $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-            return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-        } ) );
-        update_option( 'culture_newsletter_subscribers', $updated, false );
+        // A one-click "unsubscribe from everything" — the frontend's own
+        // /newsletter/unsubscribe page (unlike the email footer link, which
+        // is scoped to the one list that email came from, see
+        // Culture_Newsletter_Queue::handle_unsubscribe()).
+        Culture_Subscribers_DB::delete_subscriber_by_email( $email );
 
         // Log for analytics — this lets us attribute unsubs to the campaign that triggered them.
         if ( class_exists( 'Culture_NL_Analytics' ) ) {
@@ -2779,8 +2926,13 @@ class Culture_REST_API {
 
     /**
      * Handle newsletter subscription.
-     * Stores subscribers as objects: { email, name, date, lists[], segment }.
-     * Legacy plain-string entries are preserved and treated as GetMeLit subscribers.
+     *
+     * `list` is validated against the real list registry (Culture_Newsletter_Lists)
+     * rather than a hardcoded array — this is what makes a new list (a
+     * custom one an admin creates, or one auto-provisioned for a Hub) usable
+     * from this endpoint with zero code changes. Only 'content'/'system'
+     * type lists are accepted here; 'region' rows are what `segment` picks
+     * from instead.
      */
     public static function handle_newsletter_subscribe( $request ) {
         $email   = $request->get_param( 'email' );
@@ -2789,8 +2941,8 @@ class Culture_REST_API {
         $segment = $request->get_param( 'segment' ) ?: '';
         $tier    = $request->get_param( 'tier' ) ?: '';
 
-        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
-        if ( ! in_array( $list, $allowed_lists, true ) ) {
+        $list_row = Culture_Newsletter_Lists::get_by_slug( $list );
+        if ( ! $list_row || Culture_Newsletter_Lists::TYPE_REGION === $list_row['type'] ) {
             $list = 'culture-drop';
         }
 
@@ -2799,78 +2951,19 @@ class Culture_REST_API {
             $segment = '';
         }
 
-        // 'patron' is the internal DB value for Moveee Pro — stored as-is on the
-        // subscriber record so Pro-only newsletter campaigns can target it.
-        $is_pro = ( 'patron' === $tier );
+        // 'patron' (Moveee Pro) is not stored as list membership — Pro-only
+        // sends are resolved live against _culture_membership_tier at send
+        // time (see Culture_Subscribers_DB::resolve_send_emails()'s 'pro'
+        // branch), so $tier itself needs no persistence here.
+        unset( $tier );
 
-        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $was_existing = (bool) Culture_Subscribers_DB::find_by_email( $email );
 
-        // Find existing subscriber (handles both legacy strings and new objects).
-        $found_idx = null;
-        foreach ( $subscribers as $i => $sub ) {
-            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
-                $found_idx = $i;
-                break;
-            }
+        $list_slugs = array( $list );
+        if ( $segment ) {
+            $list_slugs[] = $segment;
         }
-
-        if ( null !== $found_idx ) {
-            $existing = $subscribers[ $found_idx ];
-
-            if ( is_array( $existing ) ) {
-                // Already an object — add list if not present, refresh segment/pro tag.
-                // NOTE: we intentionally do not force-add 'announcements' here — an
-                // existing subscriber may have already opted out of it via preferences,
-                // and re-subscribing to a different list shouldn't silently undo that.
-                $lists = $existing['lists'] ?? array();
-                if ( ! in_array( $list, $lists, true ) ) {
-                    $lists[] = $list;
-                    $subscribers[ $found_idx ]['lists'] = $lists;
-                }
-                if ( $segment ) {
-                    $subscribers[ $found_idx ]['segment'] = $segment;
-                }
-                if ( $tier ) {
-                    $subscribers[ $found_idx ]['pro'] = $is_pro;
-                }
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
-            } else {
-                // Upgrade legacy plain-string to object, add new list. Legacy entries
-                // predate the 'announcements' list, so they get backfilled onto it too
-                // (mirrors maybe_backfill_announcements() in Culture_Subscribers).
-                $subscribers[ $found_idx ] = array(
-                    'email'   => $email,
-                    'name'    => $name,
-                    'date'    => current_time( 'mysql' ),
-                    'lists'   => array( 'getmelit', $list, 'announcements' ),
-                    'segment' => $segment,
-                    'pro'     => $is_pro,
-                );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
-            }
-
-            return rest_ensure_response( array(
-                'success' => true,
-                'message' => __( 'You are already subscribed.', 'culture-community' ),
-            ) );
-        }
-
-        // New subscriber. 'announcements' is opt-out (default ON) — every new
-        // subscriber is added to it unless they later remove it via preferences.
-        $new_lists = array( $list );
-        if ( ! in_array( 'announcements', $new_lists, true ) ) {
-            $new_lists[] = 'announcements';
-        }
-        $subscribers[] = array(
-            'email'   => $email,
-            'name'    => $name,
-            'date'    => current_time( 'mysql' ),
-            'lists'   => $new_lists,
-            'segment' => $segment,
-            'pro'     => $is_pro,
-        );
-        update_option( 'culture_newsletter_subscribers', $subscribers, false );
+        Culture_Subscribers_DB::subscribe( $email, $list_slugs, $name );
 
         // Award reputation to the matching WP user on their first newsletter subscription.
         // Deferred to WP-Cron so the public subscribe endpoint doesn't block on
@@ -2888,7 +2981,9 @@ class Culture_REST_API {
 
         return rest_ensure_response( array(
             'success' => true,
-            'message' => __( 'Subscribed successfully.', 'culture-community' ),
+            'message' => $was_existing
+                ? __( 'You are already subscribed.', 'culture-community' )
+                : __( 'Subscribed successfully.', 'culture-community' ),
         ) );
     }
 
@@ -3541,33 +3636,17 @@ class Culture_REST_API {
         if ( $user ) {
             update_user_meta( $user->ID, '_culture_newsletter_prefs', $clean );
 
-            // Mirror to global subscriber list based on 'cultural-digest' state.
-            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            $in_list     = false;
-            foreach ( $subscribers as $sub ) {
-                $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-                if ( strtolower( $sub_email ) === strtolower( $email ) ) {
-                    $in_list = true;
-                    break;
-                }
-            }
-
+            // Mirror to the subscriber table based on 'cultural-digest' state
+            // — preserves this endpoint's existing (pre-list-model) behaviour
+            // of creating/removing a bare subscriber record with no list
+            // membership at all when toggled here.
             $wants_main = $clean['cultural-digest'] ?? true;
+            $in_list    = (bool) Culture_Subscribers_DB::find_by_email( $email );
 
             if ( $wants_main && ! $in_list ) {
-                $subscribers[] = array(
-                    'email'    => $email,
-                    'name'     => $user->display_name,
-                    'location' => '',
-                    'date'     => current_time( 'mysql' ),
-                );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
+                Culture_Subscribers_DB::get_or_create( $email, $user->display_name, '', $user->ID );
             } elseif ( ! $wants_main && $in_list ) {
-                $subscribers = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-                    $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
-                    return strtolower( trim( $sub_email ) ) !== strtolower( $email );
-                } ) );
-                update_option( 'culture_newsletter_subscribers', $subscribers, false );
+                Culture_Subscribers_DB::delete_subscriber_by_email( $email );
             }
         }
 
@@ -3659,13 +3738,17 @@ class Culture_REST_API {
     }
 
     /**
-     * Handle creating a new quote.
+     * Handle creating a new quote. Backs both the web composer's Quote
+     * template (via /api/quotes/create) and the mobile composer's Quote
+     * template (via handle_submit_quote()'s delegate below) — this is real,
+     * live infrastructure, not part of the retired standalone /quotes
+     * browsing product.
      */
     public static function handle_create_quote( $request ) {
         $text    = $request->get_param( 'text' );
         $author  = $request->get_param( 'author' );
         $source  = $request->get_param( 'source' );
-        
+
         // If user_id is passed and we're authenticated via API key, use it.
         // Otherwise, fallback to the logged-in session user, and finally to
         // the synthetic "Moveee" system author (Culture_System_Author) for
@@ -3749,78 +3832,6 @@ class Culture_REST_API {
             'success' => true,
             'id'      => $post_id,
             'message' => __( 'Quote published successfully.', 'culture-community' ),
-        ) );
-    }
-
-    /**
-     * Handle liking a quote.
-     */
-    public static function handle_like_quote( $request ) {
-        $quote_id = (int) $request->get_param( 'quote_id' );
-        $user_id  = (int) $request->get_param( 'user_id' );
-
-        // Track user-specific like to prevent double-point awarding.
-        $liked_quotes = get_user_meta( $user_id, '_liked_quote_ids', true );
-        if ( ! is_array( $liked_quotes ) ) {
-            $liked_quotes = array();
-        }
-
-        $active = false;
-        $index = array_search( $quote_id, $liked_quotes );
-
-        if ( false !== $index ) {
-            unset( $liked_quotes[ $index ] );
-            $liked_quotes = array_values( $liked_quotes );
-        } else {
-            $liked_quotes[] = $quote_id;
-            $active = true;
-
-            // Award points for Liking a quote.
-            if ( class_exists( 'Culture_Gamification' ) ) {
-                Culture_Gamification::award_points( $user_id, 'quote_like' );
-            }
-        }
-
-        update_user_meta( $user_id, '_liked_quote_ids', $liked_quotes );
-
-        // Update global count.
-        $likes = (int) get_post_meta( $quote_id, '_quote_likes', true );
-        $new_likes = $active ? $likes + 1 : max( 0, $likes - 1 );
-        update_post_meta( $quote_id, '_quote_likes', $new_likes );
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'active'  => $active,
-            'likes'   => $new_likes
-        ) );
-    }
-
-    /**
-     * Handle reporting a quote.
-     */
-    public static function handle_report_quote( $request ) {
-        $quote_id = (int) $request->get_param( 'quote_id' );
-
-        $quote = get_post( $quote_id );
-        if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
-            return new WP_Error( 'invalid_quote', 'Quote not found.', array( 'status' => 404 ) );
-        }
-
-        // Increment reports.
-        $reports = (int) get_post_meta( $quote_id, '_quote_reports', true ) + 1;
-        update_post_meta( $quote_id, '_quote_reports', $reports );
-
-        // Hide if threshold met (e.g. 10 reports).
-        if ( $reports >= 10 ) {
-            wp_update_post( array(
-                'ID'          => $quote_id,
-                'post_status' => 'pending',
-            ) );
-        }
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'message' => 'Quote reported.',
         ) );
     }
 
@@ -4369,7 +4380,7 @@ class Culture_REST_API {
 
         if ( class_exists( 'Culture_Gamification' ) ) {
             $post_type = get_post_type( $post_id );
-            $action    = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            $action    = in_array( $post_type, array( 'culture_newsletter', 'getmelit', 'culture_drop' ), true ) ? 'newsletter_comment' : 'magazine_comment';
             Culture_Gamification::award_points( $user_id, $action );
         }
 
@@ -4702,7 +4713,9 @@ class Culture_REST_API {
 
         $slug = $post->post_name;
         if ( $is_quote ) {
-            $url = '/quotes/' . $slug;
+            // Matches get_quote_feed_items()'s href shape — the permalink
+            // page parses the leading numeric ID off this segment.
+            $url = '/quotes/' . $post->ID . '-' . $slug;
         } elseif ( $is_community ) {
             $url = '/community/' . $slug;
         } else {

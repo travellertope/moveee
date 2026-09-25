@@ -68,8 +68,11 @@ class Culture_Directory_Tools {
     }
 
     public static function register_menu() {
+        // Nested under the Moveee Content top-level menu (September 2026;
+        // was Culture Community) — it manages the Directory CPT's own
+        // seeder/image tools, so it belongs alongside Directory itself.
         add_submenu_page(
-            'culture-community',
+            'culture-content-manager',
             __( 'Directory Tools', 'culture-community' ),
             __( 'Directory Tools', 'culture-community' ),
             'manage_options',
@@ -79,7 +82,11 @@ class Culture_Directory_Tools {
     }
 
     public static function enqueue_assets( $hook ) {
-        if ( 'culture-community_page_culture-directory-tools' !== $hook ) {
+        // Hook suffix is derived from the parent menu slug
+        // ({parent_slug}_page_{slug}) — see the "WP Admin menu structure"
+        // gotcha note in CLAUDE.md: this had to change when the parent moved
+        // from culture-community to culture-content-manager.
+        if ( 'culture-content-manager_page_culture-directory-tools' !== $hook ) {
             return;
         }
         // Inline styles so we don't need a separate CSS file.

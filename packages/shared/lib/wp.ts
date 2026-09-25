@@ -705,52 +705,74 @@ function mapRestNewsletterToFrontendShape(item: any) {
   };
 }
 
-export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+async function getCultureNewsletterIssues(first: number, options: any) {
   try {
     const gql = await getWPData(GET_NEWSLETTERS, { first }, options);
     const nodes = gql?.cultureNewsletters?.nodes ?? [];
     if (nodes.length > 0) return nodes;
   } catch {}
+  return fetchRestIssues("culture_newsletter", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
 
+async function getGetMeLitIssues(first: number, options: any) {
   try {
-    const { signal, clear } = wpSignal();
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
-    });
-    clear();
-    if (!res.ok) return [];
-    const json = await res.json();
-    if (!Array.isArray(json)) return [];
-    return json.map(mapRestNewsletterToFrontendShape);
-  } catch {
-    return [];
-  }
+    const gql = await getWPData(GET_GETMELIT_ISSUES, { first }, options);
+    const nodes = gql?.getMeLitIssues?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch {}
+  return fetchRestIssues("getmelit", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
+
+async function getCultureDropIssues(first: number, options: any) {
+  try {
+    const gql = await getWPData(GET_CULTUREDROP_ISSUES, { first }, options);
+    const nodes = gql?.cultureDropIssues?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch {}
+  return fetchRestIssues("culture_drop", first, options.revalidate !== undefined ? options.revalidate : 3600);
+}
+
+// Merges all three newsletter-content sources (legacy culture_newsletter —
+// both lists, mixed — plus the dedicated getmelit/culture_drop post types)
+// into one date-sorted list. Every existing caller (the /newsletter archive,
+// edition hubs, RSS feed routes, the homepage spotlight) already just reads
+// plain fields like nlList/nlSegment off each item, so merging sources here
+// means zero changes needed anywhere downstream.
+export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+  const [legacy, getmelit, cultureDrop] = await Promise.all([
+    getCultureNewsletterIssues(first, options),
+    getGetMeLitIssues(first, options),
+    getCultureDropIssues(first, options),
+  ]);
+
+  return [...legacy, ...getmelit, ...cultureDrop].sort((a: any, b: any) => {
+    const da = a?.date ? new Date(a.date).getTime() : 0;
+    const db = b?.date ? new Date(b.date).getTime() : 0;
+    return db - da;
+  });
 }
 
 export async function getNewsletterBySlugWithFallback(slug: string, options: any = {}) {
+  const revalidate = options.revalidate !== undefined ? options.revalidate : 3600;
+
   try {
     const gql = await getWPData(GET_NEWSLETTER_BY_SLUG, { slug }, options);
     if (gql?.cultureNewsletter) return gql.cultureNewsletter;
   } catch {}
-
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (!Array.isArray(json) || json.length === 0) return null;
-    return mapRestNewsletterToFrontendShape(json[0]);
-  } catch {
-    return null;
-  }
+    const gql = await getWPData(GET_GETMELIT_ISSUE_BY_SLUG, { slug }, options);
+    if (gql?.getMeLitIssue) return gql.getMeLitIssue;
+  } catch {}
+  try {
+    const gql = await getWPData(GET_CULTUREDROP_ISSUE_BY_SLUG, { slug }, options);
+    if (gql?.cultureDropIssue) return gql.cultureDropIssue;
+  } catch {}
+
+  const restLegacy = await fetchRestIssueBySlug("culture_newsletter", slug, revalidate);
+  if (restLegacy) return restLegacy;
+  const restGetMeLit = await fetchRestIssueBySlug("getmelit", slug, revalidate);
+  if (restGetMeLit) return restGetMeLit;
+  return fetchRestIssueBySlug("culture_drop", slug, revalidate);
 }
 
 /**
@@ -1076,13 +1098,13 @@ export function filterLiteraryCutoff<T extends { date?: string | null }>(pieces:
 //      purely a display-time override; post_author never changes (same
 //      doc), so filtering on the real author databaseId already covers
 //      every guest-bylined piece Basit submits with zero extra work.
-// Only rule 1 (category) gets a canonical /commons/{slug} URL and a
-// redirect off /magazine/{slug} — mirroring isLiteraryPost's category-only
-// semantics exactly. A piece that only qualifies via rule 2 (Basit's
-// byline, no "commons" category) still surfaces in the Commons homepage
-// feed, it just links back out to its normal /magazine/{slug} home rather
-// than moving under Commons chrome — deliberately conservative, so an
-// unrelated piece Basit writes doesn't get pulled out of the magazine.
+// Both rules get a canonical /commons/{slug} URL and a redirect off
+// /magazine/{slug} — every piece that belongs to the Commons *feed* (via
+// either rule) also renders under Commons chrome, not the magazine
+// template. This was originally category-only (a piece that only
+// qualified via rule 2 stayed at /magazine/{slug}); widened per explicit
+// request so the whole feed is consistently Commons-branded, not a mix of
+// two different article templates depending on which rule matched.
 export const COMMONS_CATEGORY_SLUG = "commons";
 export const COMMONS_AUTHOR_ID = 15; // Basit Jamiu ("basit")
 export const COMMONS_AUTHOR_NAME = "Basit Jamiu"; // display fallback only — the real name lives on the WP account itself
@@ -1111,11 +1133,12 @@ export function isCommonsPost(post: CommonsPost): boolean {
 }
 
 /**
- * Resolves a piece's canonical link — /commons/{slug} for category members,
- * /magazine/{slug} for author-only members (see the module comment above).
+ * Resolves a piece's canonical link — /commons/{slug} for anything that
+ * qualifies for the Commons feed at all (category or author), per the
+ * module comment above.
  */
 export function commonsPieceHref(post: CommonsPost & { slug?: string }): string {
-  return isCommonsCategoryPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
+  return isCommonsPost(post) ? `/commons/${post?.slug}` : `/magazine/${post?.slug}`;
 }
 
 /**
@@ -1342,8 +1365,11 @@ export interface CommonsSection {
 // appears in the main /commons feed; it just won't show up on any single
 // section's page until someone tags it. Order matches the "Sections" strip
 // on the approved homepage mockup. Section pages only ever draw from
-// category-based Commons pieces (see commonsPieceHref above) — an
-// author-only piece has no canonical /commons page to be tagged into.
+// category-based Commons pieces (see getCommonsCategoryPieces below) —
+// sections are a category overlay, so an author-only piece (no "commons"
+// category) can still have a canonical /commons/{slug} page (per
+// commonsPieceHref above), it just won't appear on any single section's
+// archive until it's both in the category and tagged.
 export const COMMONS_SECTIONS: CommonsSection[] = [
   {
     slug: "politics",
@@ -2082,6 +2108,165 @@ export const GET_NEWSLETTER_BY_SLUG = `
   }
   ${NEWSLETTER_FIELDS_FRAGMENT}
 `;
+
+// GetMeLit / Culture Drop — dedicated WP post types (getmelit, culture_drop)
+// added alongside the legacy culture_newsletter CPT so automated/API-created
+// content can target a list directly via its own REST/GraphQL endpoint, with
+// no _culture_nl_list meta needed (the post type itself is the list). Every
+// existing culture_newsletter post — both lists, mixed — is untouched and
+// keeps working exactly as before via GET_NEWSLETTERS above; these two are
+// purely additive sources merged in by getNewslettersWithFallback() below,
+// same "fetch each source, merge+sort client-side" pattern already used for
+// Commons/Literary elsewhere in this file. Field shape matches
+// NEWSLETTER_FIELDS_FRAGMENT exactly — nlList/nlSegment/nlIssueNum resolve
+// server-side on these types too (see class-culture-post-types.php), so
+// nothing downstream of getNewslettersWithFallback()/getNewsletterBySlugWithFallback()
+// needs to know these are a different WP post type at all.
+const GETMELIT_FIELDS_FRAGMENT = `
+  fragment GetMeLitFields on GetMeLitIssue {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    content
+    nlList
+    nlSegment
+    nlIssueNum
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+const CULTUREDROP_FIELDS_FRAGMENT = `
+  fragment CultureDropFields on CultureDropIssue {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    content
+    nlList
+    nlSegment
+    nlIssueNum
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+const GET_GETMELIT_ISSUES = `
+  query GetGetMeLitIssues($first: Int) {
+    getMeLitIssues(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        ...GetMeLitFields
+      }
+    }
+  }
+  ${GETMELIT_FIELDS_FRAGMENT}
+`;
+
+const GET_CULTUREDROP_ISSUES = `
+  query GetCultureDropIssues($first: Int) {
+    cultureDropIssues(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        ...CultureDropFields
+      }
+    }
+  }
+  ${CULTUREDROP_FIELDS_FRAGMENT}
+`;
+
+const GET_GETMELIT_ISSUE_BY_SLUG = `
+  query GetGetMeLitIssueBySlug($slug: ID!) {
+    getMeLitIssue(id: $slug, idType: SLUG) {
+      ...GetMeLitFields
+    }
+  }
+  ${GETMELIT_FIELDS_FRAGMENT}
+`;
+
+const GET_CULTUREDROP_ISSUE_BY_SLUG = `
+  query GetCultureDropIssueBySlug($slug: ID!) {
+    cultureDropIssue(id: $slug, idType: SLUG) {
+      ...CultureDropFields
+    }
+  }
+  ${CULTUREDROP_FIELDS_FRAGMENT}
+`;
+
+async function fetchRestIssues(postType: string, first: number, revalidate: number) {
+  try {
+    const { signal, clear } = wpSignal();
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/${postType}?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      next: { revalidate },
+    });
+    clear();
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    const listByType: Record<string, string> = { getmelit: "getmelit", culture_drop: "culture-drop" };
+    return json.map((item: any) => ({
+      ...mapRestNewsletterToFrontendShape(item),
+      nlList: listByType[postType] ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRestIssueBySlug(postType: string, slug: string, revalidate: number) {
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/${postType}?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) return null;
+    const listByType: Record<string, string> = { getmelit: "getmelit", culture_drop: "culture-drop" };
+    return { ...mapRestNewsletterToFrontendShape(json[0]), nlList: listByType[postType] ?? null };
+  } catch {
+    return null;
+  }
+}
 
 export const GET_ADJACENT_NEWSLETTERS = `
   query GetAdjacentNewsletters($notIn: [ID], $first: Int) {

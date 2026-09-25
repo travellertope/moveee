@@ -10,14 +10,82 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Newsletter_Send {
 
+    /** Every post type that carries newsletter/digest content. */
+    const NL_POST_TYPES = array( 'culture_newsletter', 'getmelit', 'culture_drop' );
+
     public static function init() {
         add_action( 'add_meta_boxes',                array( __CLASS__, 'register_meta_box' ) );
         add_action( 'admin_enqueue_scripts',          array( __CLASS__, 'enqueue_assets' ) );
         add_action( 'save_post_culture_newsletter',   array( __CLASS__, 'save_list_meta' ), 10, 2 );
+        add_action( 'save_post_getmelit',             array( __CLASS__, 'save_list_meta' ), 10, 2 );
+        add_action( 'save_post_culture_drop',         array( __CLASS__, 'save_list_meta' ), 10, 2 );
 
         add_action( 'wp_ajax_culture_nl_send_test',  array( __CLASS__, 'ajax_send_test' ) );
         add_action( 'wp_ajax_culture_nl_send_issue', array( __CLASS__, 'ajax_send_issue' ) );
         add_action( 'wp_ajax_culture_nl_get_status', array( __CLASS__, 'ajax_get_status' ) );
+
+        add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
+    }
+
+    /**
+     * REST equivalent of the "Send Issue" admin button, for automated/headless
+     * publishing (e.g. an Application Password client that creates a
+     * culture_newsletter post and then wants to trigger the send without a
+     * browser session). The AJAX handlers above can't be used for this — they
+     * require check_ajax_referer(), a CSRF nonce tied to a live logged-in
+     * browser session, which an Application Password has no way to produce.
+     * Application Password auth is exempt from nonce checks under WP core's
+     * REST authentication stack, so a plain capability check here is enough.
+     */
+    public static function register_rest_routes() {
+        register_rest_route( 'culture/v1', '/newsletter/send-issue', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'rest_send_issue' ),
+            'permission_callback' => function ( $request ) {
+                $post_id = absint( $request->get_param( 'post_id' ) );
+                return $post_id && current_user_can( 'edit_post', $post_id );
+            },
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer' ),
+                'list'    => array( 'required' => false, 'type' => 'string' ),
+                'segment' => array( 'required' => false, 'type' => 'string' ),
+            ),
+        ) );
+    }
+
+    /**
+     * REST callback for POST /culture/v1/newsletter/send-issue.
+     * Same underlying call as ajax_send_issue() — Culture_Newsletter_Queue
+     * queues subscribers, WP-Cron dispatches batches of 50 every minute.
+     */
+    public static function rest_send_issue( WP_REST_Request $request ) {
+        $post_id = absint( $request->get_param( 'post_id' ) );
+
+        if ( ! in_array( get_post_type( $post_id ), self::NL_POST_TYPES, true ) ) {
+            return new WP_REST_Response( array( 'message' => __( 'Invalid post.', 'culture-community' ) ), 400 );
+        }
+
+        // Same as the AJAX handler — let the caller override list/segment at
+        // send time without requiring a separate save step first.
+        $list = $request->get_param( 'list' );
+        if ( null !== $list ) {
+            self::persist_list_meta( $post_id, $list, $request->get_param( 'segment' ) ?? '' );
+        }
+
+        $count = Culture_Newsletter_Queue::schedule_send( $post_id );
+
+        if ( false === $count ) {
+            return new WP_REST_Response( array( 'message' => __( 'No subscribers found.', 'culture-community' ) ), 400 );
+        }
+
+        return new WP_REST_Response( array(
+            'message' => sprintf(
+                /* translators: %s: formatted subscriber count */
+                __( 'Queued for %s subscribers. Batches of 50 will go out every minute.', 'culture-community' ),
+                number_format( $count )
+            ),
+            'total'   => $count,
+        ), 200 );
     }
 
     const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
@@ -32,7 +100,14 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        self::persist_list_meta( $post_id, $_POST['culture_nl_list'] ?? 'getmelit', $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
+        // getmelit/culture_drop have no editable list dropdown (the post type
+        // itself is the list, see resolve_nl_list()) — don't write a
+        // _culture_nl_list value that would just be ignored downstream.
+        $list = in_array( get_post_type( $post_id ), array( 'getmelit', 'culture_drop' ), true )
+            ? null
+            : ( $_POST['culture_nl_list'] ?? 'getmelit' );
+
+        self::persist_list_meta( $post_id, $list, $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
     }
 
     /**
@@ -40,11 +115,18 @@ class Culture_Newsletter_Send {
      * Shared by save_list_meta() (on post save) and the Send Test / Send Issue
      * AJAX handlers (so a send always targets whatever is currently selected
      * in the dropdowns, even if the post hasn't been saved yet).
+     *
+     * @param int         $post_id
+     * @param string|null $list    Pass null to leave _culture_nl_list untouched
+     *                             (used for getmelit/culture_drop, where the
+     *                             post type is the list and there's nothing to save).
      */
     private static function persist_list_meta( $post_id, $list, $segment, $issue_num = 0 ) {
-        $list = sanitize_key( $list );
-        if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
-            update_post_meta( $post_id, '_culture_nl_list', $list );
+        if ( null !== $list ) {
+            $list = sanitize_key( $list );
+            if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
+                update_post_meta( $post_id, '_culture_nl_list', $list );
+            }
         }
 
         // Segment is optional — empty string means send to all segments of this list.
@@ -75,7 +157,7 @@ class Culture_Newsletter_Send {
             'culture_nl_send',
             __( 'Send Newsletter', 'culture-community' ),
             array( __CLASS__, 'render_meta_box' ),
-            'culture_newsletter',
+            self::NL_POST_TYPES,
             'side',
             'high'
         );
@@ -92,7 +174,7 @@ class Culture_Newsletter_Send {
         }
 
         $screen = get_current_screen();
-        if ( ! $screen || 'culture_newsletter' !== $screen->post_type ) {
+        if ( ! $screen || ! in_array( $screen->post_type, self::NL_POST_TYPES, true ) ) {
             return;
         }
 
@@ -136,64 +218,45 @@ class Culture_Newsletter_Send {
         $offset       = $status_data['offset'];
         $percent      = $status_data['percent'];
         $sent_at      = $status_data['sent_at'];
-        $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
         $current_user = wp_get_current_user();
 
-        $nl_list      = get_post_meta( $post->ID, '_culture_nl_list',      true ) ?: 'getmelit';
+        $nl_list      = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
         $nl_segment   = get_post_meta( $post->ID, '_culture_nl_segment',   true ) ?: '';
         $nl_issue_num = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
+        $list_locked  = in_array( get_post_type( $post->ID ), array( 'getmelit', 'culture_drop' ), true );
 
-        $lists_config = array(
-            'getmelit'                  => 'GetMeLit',
-            'culture-drop'              => 'Culture Drop',
-            'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
-            'vendor-letter'             => 'The Vendor Letter (waitlist)',
-            'origins-field-notes'       => 'Origins Field Notes (waitlist)',
-            'announcements'             => 'Announcements (hidden from frontend archive)',
-        );
+        // Lists (content + system) and segments (region + the virtual 'pro'
+        // filter) are now sourced from the real list registry — a Hub list
+        // or a custom list an admin creates shows up here immediately, with
+        // no code change (September 2026; see Culture_Newsletter_Lists).
+        $lists_config = array();
+        foreach ( array_merge(
+            Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_CONTENT ),
+            Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_SYSTEM )
+        ) as $l ) {
+            $lists_config[ $l['slug'] ] = $l['name'];
+        }
 
-        $segments_config = array(
-            ''       => 'All segments',
-            'africa' => 'Africa (All — NG, GH, KE, ZA + more)',
-            'us'     => 'The Moveee America (US)',
-            'uk'     => 'The British Moveee (UK)',
-            'ng'     => 'Nigeria',
-            'gh'     => 'Ghana',
-            'ke'     => 'Kenya',
-            'za'     => 'South Africa',
-            'ca'     => 'Canada',
-            'au'     => 'Australia',
-            'pro'    => 'Moveee Pro Members',
-        );
+        $segments_config = array( '' => 'All segments' );
+        foreach ( Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_REGION ) as $l ) {
+            $segments_config[ $l['slug'] ] = $l['name'];
+        }
+        $segments_config['africa'] = 'Africa (All — NG, GH, KE, ZA + more)';
+        $segments_config['pro']    = 'Moveee Pro Members';
 
         // Build counts[list][segment] — empty string segment = whole list total.
-        $counts_map = array(
-            'getmelit'      => array( '' => 0 ),
-            'culture-drop'  => array( '' => 0 ),
-            'announcements' => array( '' => 0 ),
-        );
-
-        if ( is_array( $subscribers ) ) {
-            foreach ( $subscribers as $sub ) {
-                $sub_lists   = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
-                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
-
-                // Legacy entries (no lists field) count only towards getmelit.
-                if ( empty( $sub_lists ) ) {
-                    $counts_map['getmelit']['']++;
-                    if ( $sub_segment ) {
-                        $counts_map['getmelit'][ $sub_segment ] = ( $counts_map['getmelit'][ $sub_segment ] ?? 0 ) + 1;
-                    }
-                } else {
-                    foreach ( array_keys( $counts_map ) as $lk ) {
-                        if ( in_array( $lk, $sub_lists, true ) ) {
-                            $counts_map[ $lk ]['']++;
-                            if ( $sub_segment ) {
-                                $counts_map[ $lk ][ $sub_segment ] = ( $counts_map[ $lk ][ $sub_segment ] ?? 0 ) + 1;
-                            }
-                        }
-                    }
+        $counts_map = array();
+        foreach ( $lists_config as $slug => $label ) {
+            $list_row = Culture_Newsletter_Lists::get_by_slug( $slug );
+            if ( ! $list_row ) {
+                continue;
+            }
+            $counts_map[ $slug ] = array( '' => Culture_Newsletter_Lists::subscriber_count( $list_row['id'] ) );
+            foreach ( $segments_config as $seg_slug => $seg_label ) {
+                if ( '' === $seg_slug ) {
+                    continue;
                 }
+                $counts_map[ $slug ][ $seg_slug ] = count( Culture_Subscribers_DB::resolve_send_emails( $list_row['id'], $seg_slug ) );
             }
         }
 
@@ -215,13 +278,22 @@ class Culture_Newsletter_Send {
             <div class="culture-nl-section" style="margin-bottom:0;">
                 <label class="culture-nl-label"><?php esc_html_e( 'Newsletter List', 'culture-community' ); ?></label>
                 <?php wp_nonce_field( 'culture_nl_list_' . $post->ID, 'culture_nl_list_nonce' ); ?>
-                <select name="culture_nl_list" style="width:100%;margin-top:4px;">
-                    <?php foreach ( $lists_config as $lk => $ln ) : ?>
-                        <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $nl_list, $lk ); ?>>
-                            <?php echo esc_html( $ln ); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php if ( $list_locked ) : ?>
+                    <p style="margin:4px 0 0;font-weight:600;">
+                        <?php echo esc_html( $lists_config[ $nl_list ] ?? $nl_list ); ?>
+                    </p>
+                    <p style="font-size:11px;color:#666;margin:2px 0 0;">
+                        <?php esc_html_e( 'Fixed by post type — this post is a GetMeLit or Culture Drop issue.', 'culture-community' ); ?>
+                    </p>
+                <?php else : ?>
+                    <select name="culture_nl_list" style="width:100%;margin-top:4px;">
+                        <?php foreach ( $lists_config as $lk => $ln ) : ?>
+                            <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $nl_list, $lk ); ?>>
+                                <?php echo esc_html( $ln ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
             </div>
 
             <?php /* ── SEGMENT FILTER ── */ ?>

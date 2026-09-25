@@ -8,7 +8,7 @@ import {
   getCommonsSection,
   getCommonsCategoryPieces,
   getCommonsPieces,
-  isCommonsCategoryPost,
+  isCommonsPost,
   commonsSectionOfPost,
   commonsPieceHref,
   COMMONS_SECTIONS,
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     data = await getWPData(GET_STORY_BY_SLUG, { slug });
   } catch {}
   const post = data?.post;
-  if (!post || !isCommonsCategoryPost(post)) {
+  if (!post || !isCommonsPost(post)) {
     return { title: { absolute: "The Moveee Commons" } };
   }
 
@@ -120,7 +120,7 @@ async function PiecePage({ slug }: { slug: string }) {
   } catch {}
   const post = data?.post;
 
-  if (!post || !isCommonsCategoryPost(post)) {
+  if (!post || !isCommonsPost(post)) {
     notFound();
   }
 

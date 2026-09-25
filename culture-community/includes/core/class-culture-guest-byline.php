@@ -52,6 +52,8 @@ class Culture_Guest_Byline {
         'culture_event',
         'culture_directory',
         'culture_newsletter',
+        'getmelit',
+        'culture_drop',
         'culture_quote',
         'culture_post',
         'culture_journey',

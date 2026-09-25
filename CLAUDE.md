@@ -282,9 +282,257 @@ analytics pages, badge/credit toast messages, membership perk copy) is still pen
 
 ## Newsletter system architecture
 
-### Subscriber storage
-Stored as a single WordPress option: `culture_newsletter_subscribers` — an
-array of objects:
+### Subscriber storage — real DB tables (September 2026, supersedes the option-array model below)
+
+**The flat `culture_newsletter_subscribers` wp_options array described in this
+subsection is retired as a write target — it is migrated once, then left
+untouched as a historical snapshot.** Real storage is now three tables:
+`wp_culture_newsletter_lists` (the list/segment **registry** —
+`Culture_Newsletter_Lists`), `wp_culture_subscribers` (one row per email —
+`Culture_Subscribers_DB`), and `wp_culture_subscriber_lists` (many-to-many
+between the two). This is what the old array's `lists[]` and `segment` fields
+used to encode as freeform strings against hardcoded PHP constants
+(`LIST_OPTIONS`/`SEGMENT_OPTIONS` in `class-culture-subscribers.php`, now
+deleted) — they're unified into one thing: any subscriber can belong to any
+number of list rows, and a list row's `type` (`content` / `region` / `system`)
+says what it's for. A `region` row (uk/ng/us/...) is a narrowing filter
+applied alongside a `content` list on a send, not something a subscriber is
+"subscribed to" in the ordinary sense — this preserves the old List+Segment
+two-dropdown shape in the Send Newsletter meta box and in
+`Culture_Subscribers_DB::resolve_send_emails()`, just backed by real rows
+instead of a hardcoded array. `system` (e.g. `announcements`) is hidden from
+the public archive/preferences UI, same as before, via `visibility: 'hidden'`
+and `default_subscribed: 1` (opt-out) columns instead of special-cased code.
+
+**Every write everywhere in the plugin (admin UI, REST endpoints, mobile API,
+imports, WP-CLI, `Culture_Literary_Access`) must go through
+`Culture_Subscribers_DB`** — that class is the single find-or-create/list-
+membership entry point (`subscribe()`, `subscribe_many()`,
+`add_to_list_slug()`, `remove_from_list_slug()`, `resolve_send_emails()`,
+`resolve_emails_for_lists()`). Never call `get_option('culture_newsletter_subscribers')`
+or `update_option()` against it again — the one remaining read of that option
+is the one-time migration inside `Culture_Subscribers_DB::maybe_migrate_from_options()`,
+gated by the `culture_subscribers_migrated_to_db` option so it only ever runs
+once per site.
+
+**Admin UI, three pages under Culture Community**: **Subscribers**
+(`class-culture-subscribers.php`, unchanged menu slug `culture-subscribers`)
+— add/edit/delete subscribers, list-membership checkboxes populated
+dynamically from the registry, search + filter-by-list, CSV export. **Newsletter
+Lists** (`class-culture-newsletter-lists-admin.php`, slug
+`culture-newsletter-lists`, new) — create/rename/delete a list or region row,
+set its type/visibility/opt-out default; this is what makes "manage segments"
+a real, no-code admin action instead of a PHP constant edit. **Campaigns**
+(see "One-off email campaigns" below).
+
+**`Culture_Newsletter_Lists::get_all()`/`get_by_slug()` are what every
+"which lists exist" check reads now** — `handle_newsletter_subscribe()`
+(REST), the Send Newsletter meta box's list/segment dropdowns, and
+`class-culture-nl-analytics.php`'s per-list counts all validate/populate
+against the registry rather than a hardcoded array. A list created on the
+Newsletter Lists admin page (or auto-provisioned for a Hub, see below) is
+immediately usable everywhere with zero code changes — this is what
+"Process: adding a new newsletter" (further down this file) used to require
+editing ~7 files for; that process is now **only relevant for a list that
+needs bespoke frontend UI** (its own subscribe card copy on `/newsletter`,
+its own archive filter tab) — the list/segment/send-targeting plumbing itself
+no longer needs any of those steps.
+
+**Unsubscribe is scoped to the list the email actually came from, not the
+whole account.** `Culture_Newsletter_Queue::handle_unsubscribe()` (the email
+footer link) resolves the list from the `c=` (newsletter post ID) or
+`campaign=` (one-off campaign ID) query param and removes only that
+membership; only a link with neither param (pre-September-2026 already-sent
+mail) falls back to deleting the whole subscriber record. The frontend's own
+`/newsletter/unsubscribe` page (`handle_newsletter_unsubscribe()` REST
+endpoint) is still a full "remove from everything" action, unchanged.
+
+### One-off email campaigns
+
+A send that is **not** a `culture_newsletter`/`getmelit`/`culture_drop` post
+at all — no CPT, no frontend archive entry, no issue number. `Culture_Campaigns`
+(`wp_culture_campaigns` table) owns its own subject/body/target-lists/status
+and reuses `Culture_Newsletter_Queue::build_email()` (now `public`, renamed
+label param to a plain string instead of a hardcoded lookup —
+`build_campaign_email()` is the wrapper Campaigns calls) for the actual HTML
+template, plus the same batched-WP-Cron-dispatch shape as newsletter sends
+(`culture_campaign_process_batch`, 50/batch, 60s apart). Admin UI: **Campaigns**
+page (`class-culture-campaigns-admin.php`, slug `culture-campaigns`) — compose
+with `wp_editor()`, tick one or more lists from the registry (a campaign can
+target several lists in one send — `Culture_Subscribers_DB::resolve_emails_for_lists()`
+unions and dedupes them), Save Draft / Send Test / Send Now. A campaign is
+`draft` → `sending` → `sent`; only a draft can be edited or deleted.
+
+### Hub → newsletter list auto-provisioning
+
+Per an explicit September 2026 decision: **every Hub (`culture_hub` post),
+official or user-created, automatically gets its own newsletter list**, and
+members are **auto-subscribed on join, opt-out available afterward** (not
+opt-in) — same "default ON" posture as the pre-existing `announcements` list.
+- `Culture_Hubs::create()` calls `Culture_Newsletter_Lists::get_or_create_for_hub()`
+  right after inserting the Hub post — slug `hub-{hub_slug}`, type `content`,
+  visibility `hidden` (it's a Hub-management concern, not something a visitor
+  picks off `/newsletter`), `source_type/source_id` = `'hub'`/the Hub's post
+  ID, so the list can always be found again via `get_for_hub()`. The owner is
+  subscribed immediately (their membership row is inserted directly in
+  `create()`, not via `join()`).
+- `Culture_Hubs::join()`/`leave()` call `Culture_Subscribers_DB::subscribe()`/
+  `remove_from_list_slug()` against that same list — this is the actual
+  mechanism that makes "email this Hub's members" possible; nothing else
+  writes to a Hub's list.
+- **Existing Hubs from before this feature shipped are covered by a one-time
+  backfill**, `Culture_Hubs::maybe_backfill_hub_lists()` (hooked in `init()`,
+  gated by `culture_hub_lists_backfilled`, same shape as this file's other
+  `maybe_*` migrations) — provisions a list for every already-published Hub
+  and subscribes every currently-active member, so the end state matches a
+  Hub that had always had this feature.
+- **If you ever need to email a specific Hub's members**, use the Campaigns
+  page and tick that Hub's list (named `"{Hub Name} (Hub)"` in the Newsletter
+  Lists admin page) — don't reach for a bespoke query against
+  `wp_culture_hub_members`, the list is already kept in sync.
+
+### WP Admin menu structure — split into top-level menus (September 2026)
+
+The single "Culture Community" top-level menu had grown to 15 submenu items
+and was hard to navigate — split into multiple top-level WP Admin menus,
+initially 3 (Community/Newsletters/Events), then Literary was split out of
+Community into its own 4th shortly after. **Every slug is unchanged**, only
+which menu a page is parented under (and, for the renamed top-level itself,
+its label) changed — so no `admin.php?page=...` link/bookmark anywhere in the
+codebase or in anyone's browser needed updating.
+
+- **Moveee Community** (slug `culture-community`, was labelled "Culture
+  Community") — Settings (the default/anchor page), Analytics, Redirect
+  Manager, Email Templates, Pro Memberships. Registered in
+  `class-culture-settings.php`. **Directory Tools moved out to Moveee
+  Content in September 2026** (see below) — don't look for it here anymore.
+- **Moveee Newsletters** (anchor slug `culture-subscribers` — Subscribers
+  is both the top-level page and a submenu of itself, the standard WP
+  "duplicate the anchor slug as the first submenu with its own label" pattern)
+  — Subscribers, Lists & Segments (`culture-newsletter-lists`), Campaigns
+  (`culture-campaigns`), Import Newsletters (`culture-import-newsletters`),
+  Games Subscribers (`culture-games-subscribers` — a separate, older
+  subscriber list for the games feature, unrelated storage to
+  `Culture_Subscribers_DB`, but grouped here since it's the same kind of
+  "manage an email list" concern). Registered in `class-culture-subscribers.php`
+  (top-level `add_menu_page()` + the anchor submenu); every other page in this
+  group just changed its `add_submenu_page()` parent from `culture-community`
+  to `culture-subscribers`. **The three newsletter CPTs — Newsletters
+  (`culture_newsletter`), GetMeLit (`getmelit`), Culture Drop (`culture_drop`)
+  — were moved here too (September 2026)**: they're native CPT edit/list
+  screens (`register_post_type()`'s `show_in_menu` pointing at
+  `culture-subscribers`), not custom admin pages, but they're newsletter
+  content types, not general community content, so they belong in this group
+  per the "pick a parent by kind" rule below.
+- **Moveee Events** (anchor slug `culture-ticket-sales`, same pattern) —
+  Ticket Sales, Event RSVPs (`culture-rsvp-manager`), and — since September
+  2026 — the Community Events CPT (`culture_event`, native CPT screens, was
+  Culture Community; ticketing/RSVP-related, so it belongs here per the
+  "pick a parent by kind" rule below). Registered in
+  `class-culture-tickets-admin.php`.
+- **Moveee Content** (anchor slug `culture-content-manager`, same pattern,
+  added September 2026) — a catch-all for general content CPTs that don't
+  belong under any of the other top-level menus: Directory
+  (`culture_directory`), Feed Posts (`culture_post`, sidebar label renamed
+  from "All Community Posts" — see below), Journeys (`culture_journey` — all
+  native CPT screens, `show_in_menu` pointing at `culture-content-manager`,
+  all were under Culture Community), plus **Directory Tools**
+  (`culture-directory-tools`, moved from Culture Community — it manages the
+  Directory CPT's seeder/image tools, so it belongs alongside Directory
+  itself). Registered in the new `class-culture-content-admin.php` (top-level
+  `add_menu_page()` + the anchor submenu, a plain landing page linking out to
+  each CPT's list screen — there was never a real admin page for these CPTs
+  before, just their native WP list/edit screens, so this class only
+  registers the menu shell). Directory Tools' `enqueue_assets()` hook-suffix
+  check was updated to `culture-content-manager_page_culture-directory-tools`
+  — see the hook-suffix gotcha note below.
+  **Quotes (`culture_quote`) removed from the sidebar entirely (September
+  2026, follow-up to the same-month "Quotes feed merge")** — the previous
+  entry here flagged this as an open question ("if quotes are ever fully
+  retired into community posts, this menu entry is what to remove"); the
+  same pass that removed the standalone `/quotes` archive/author pages and
+  submission UI from the site (see "Quotes feed merge" elsewhere in this
+  file) made the sidebar entry pointless, since there's no longer a browsing
+  surface that points an editor at individual quote management day-to-day.
+  `culture_quote` itself is **not** deleted or hidden from the DB/REST/
+  GraphQL layer — it's still what backs quote cards in the unified feed and
+  `/quotes/[slug]` single pages — only `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` (same "hide the native screen, keep it
+  reachable by direct URL" pattern already used for `culture_cluster`/
+  `culture_hub`). The Moveee Content landing page keeps one plain link to
+  `edit.php?post_type=culture_quote` for when a quote genuinely needs manual
+  editing (the Bulk Quote Importer CSV panel on Directory Tools is still the
+  normal way to add quotes in bulk — see "Quotes feed merge" for what's
+  automated vs. manual). **"Community Posts" CPT's `all_items` label renamed
+  to "Feed Posts"** (was "All Community Posts") — copy-only, the CPT's own
+  `name`/`singular_name`/slug/REST base (`community-posts`) and everything
+  else about it are unchanged.
+- **Moveee Literary** (anchor slug `culture-literary-submissions`, same
+  pattern) — just Literary Submissions (the submissions manager + its
+  Waivers tab) today; registered in `class-culture-literary-submissions.php`.
+  Split into its own top-level the same day as the 3-menu split above, once
+  it became clear this feature area would keep growing on its own (see "The
+  Moveee Literary" section elsewhere in this file for the feature itself).
+  The pending-submissions count badge (`awaiting-mod`/`pending-count` WP-core
+  classes) that used to show on the submenu label now shows on the top-level
+  label instead — same mechanism (raw HTML in the `$menu_title` arg), just
+  duplicated onto both `add_menu_page()`'s and `add_submenu_page()`'s title
+  args since a top-level menu and its anchor submenu render independently.
+- **Moveee Hubs** (anchor slug `culture-hubs-manager`, same pattern) — a
+  brand-new page, not a moved one: before this, `culture_hub` posts had no
+  real WP Admin UI at all (see "Moveee Hubs admin manager" below). Registered
+  in the new `class-culture-hubs-admin.php`.
+- **Moveee Stoop** (anchor slug `culture-clusters-manager`, same pattern) —
+  just Clusters (the Stoop host-appointment manager) today, moved out of
+  Moveee Community the same way Literary/Hubs were. Registered in
+  `class-culture-clusters-admin.php`. Like Hubs, `culture_cluster`'s own
+  native CPT admin screen had its `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` at the same time — the real manager already
+  existed for this one (unlike Hubs, which had no admin page at all before
+  this pass), so there was never a second competing "Clusters" entry to add,
+  only to stop the bare native one from also showing up as a sibling of it.
+
+**Gotcha this pass hit and fixed**: an `admin_enqueue_scripts` hook-suffix
+check hardcoded to the *old* parent (`'culture-community_page_culture-campaigns'
+=== $hook`, in `class-culture-campaigns-admin.php`'s `maybe_enqueue_editor()`)
+silently stopped matching once Campaigns was reparented — the hook suffix
+WordPress generates is derived from the parent menu slug
+(`{parent_slug}_page_{slug}` for a submenu of a top-level page, `toplevel_page_{slug}`
+for the top-level page itself), so moving a page to a new parent changes its
+hook suffix even though its own slug is unchanged. **If you ever reparent a
+submenu page again, grep that file (and any file enqueuing assets scoped to
+it) for a hardcoded `{old_parent}_page_{slug}`/`toplevel_page_{slug}` string
+— `class-culture-analytics.php`, `class-culture-nl-analytics-admin.php`, and
+`class-culture-directory-tools.php` all have one of these for pages that
+stayed under Moveee Community and were correctly left alone in this pass, but
+the exact same string needs updating if any of those three ever move.**
+
+**If you add a new admin page to this plugin**, pick a parent by kind:
+newsletter/subscriber/list/campaign-related → `culture-subscribers`;
+ticketing/RSVP-related → `culture-ticket-sales`; Literary-related →
+`culture-literary-submissions`; general content (Directory/Quotes/Community
+Posts/Journeys and anything in that vein) → `culture-content-manager`;
+anything else → `culture-community`. Only add another top-level menu if a
+new feature area grows to several pages of its own (the actual bar has
+turned out to be lower than "3+" — Literary got its own top-level with just
+one page, since the user wanted it broken out regardless of page count) —
+check with the user rather than assuming a single new page should just join
+`culture-community` by default.
+
+### Sending
+Each `culture_newsletter` post has two pieces of post meta:
+- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
+- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
+  `au`) or empty for all
+
+The send queue (`class-culture-newsletter-queue.php`) filters subscribers
+by these meta values at send time (now via `Culture_Subscribers_DB::resolve_send_emails()`,
+not an inline scan of the option array — see above). Batches of 50, 60s
+intervals via WP-Cron.
+
+### Subscriber storage (historical — the option array itself, now migrated)
+Was stored as a single WordPress option: `culture_newsletter_subscribers` —
+an array of objects:
 ```php
 [
   'email'   => 'user@example.com',
@@ -294,24 +542,30 @@ array of objects:
   'segment' => 'uk',                    // regional segment (optional)
 ]
 ```
-Legacy plain-string entries (pre-multi-list) are treated as GetMeLit-only
-throughout the codebase. The `maybe_migrate()` method in
-`class-culture-subscribers.php` upgrades them on load.
-
-### Sending
-Each `culture_newsletter` post has two pieces of post meta:
-- `_culture_nl_list` — which newsletter (`getmelit` or `culture-drop`)
-- `_culture_nl_segment` — regional target (`us`, `uk`, `ng`, `gh`, `ca`,
-  `au`) or empty for all
-
-The send queue (`class-culture-newsletter-queue.php`) filters subscribers
-by these meta values at send time. Batches of 50, 60s intervals via WP-Cron.
+Legacy plain-string entries (pre-multi-list) were treated as GetMeLit-only
+throughout the codebase. Kept here for reference only — the option itself is
+never read again after the one-time migration described above; don't add a
+new write path against it.
 
 ### Email template
 Plain white background, no header block. Content flows directly from the
-newsletter body. Footer has unsubscribe link only. The newsletter name
-(GetMeLit / Culture Drop) is derived from `_culture_nl_list` post meta and
-used in the footer "You are receiving this because you subscribed to X" line.
+newsletter body. Footer has "Read online · Unsubscribe" as plain text links
+(no boxed button — see below). The newsletter name (GetMeLit / Culture Drop)
+is derived from `_culture_nl_list` post meta and used in the footer "You are
+receiving this because you subscribed to X" line.
+
+**"Read online" boxed button removed, folded into the footer (September 2026).**
+`build_email()` (`class-culture-newsletter-queue.php`, shared by every
+newsletter/digest send and — per "One-off email campaigns" above — reused as
+`build_campaign_email()` for Campaigns too, so this fix covers both) used to
+render a separate bordered "READ ONLINE →" button block (`.read-more`)
+between the content and the footer. Per explicit user feedback, that whole
+block (and its CSS) is gone — "Read online" is now a plain text link inside
+the footer `<p>`, right before "· Unsubscribe", same font/size/color as the
+rest of the footer copy so it reads as one flowing line rather than a
+separate CTA. Still gated on the same `$permalink && '#' !== $permalink`
+check as before — a send with no real permalink (e.g. a preview/test send)
+just shows "Unsubscribe" alone, no dangling "·".
 
 ### Archive / frontend
 `lib/wp.ts` → `getNewslettersWithFallback()` fetches all issues.
@@ -325,6 +579,79 @@ colour-coded badges: indigo = Culture Drop, green = GetMeLit.
 `wp_culture_nl_opens` and `wp_culture_nl_clicks` DB tables.
 List and segment labels defined as class constants `LIST_LABELS` and
 `SEGMENT_LABELS`.
+
+### Subscribers admin page — bulk actions, date filter, per-page (September 2026)
+
+`class-culture-subscribers.php`'s Subscriber List table gained three things,
+all server-side (nothing client-only/decorative):
+
+- **Date-range filter** — `date_from`/`date_to` GET params (`YYYY-MM-DD`,
+  validated via regex), threaded into `Culture_Subscribers_DB::all()`
+  alongside the pre-existing search/list_id filters, matched against
+  `s.created_at` (`>= {date_from} 00:00:00`, `<= {date_to} 23:59:59`,
+  inclusive). Rendered as a pair of `<input type="date">` fields in the
+  filter form, with a "Reset filters" link shown whenever any filter
+  (search/list/date) is active.
+- **Adjustable per-page** — a `per_page` `<select>` (25/50/100/200, default
+  50), validated server-side against that exact allowlist, also threaded
+  into `all()`.
+- **Bulk actions** — the whole table (toolbar + rows) is wrapped in one
+  `<form method="post" action="admin-post.php">` (`action=
+  culture_bulk_action_subscribers`, nonce `culture_bulk_subscribers`) with a
+  leading checkbox column (`subscriber_ids[]`), a select-all header
+  checkbox, and a `bulk_action` `<select>` — "Remove selected" (`delete`) or
+  "Add to list…"/"Remove from list…" per real list (`add_to_list_{id}` /
+  `remove_from_list_{id}`, populated from `Culture_Newsletter_Lists::get_all()`).
+  `handle_bulk_action()` (new, `admin_post_culture_bulk_action_subscribers`)
+  applies the action to the selected IDs and redirects back to the exact
+  filtered/paginated view it was invoked from (via hidden `ret_*` fields —
+  search/list/date/per_page/paged, echoed back into the redirect URL).
+  Two new thin wrapper methods on `Culture_Subscribers_DB` —
+  `add_subscriber_to_list_id( $subscriber_id, $list_id )` /
+  `remove_subscriber_from_list_id( $subscriber_id, $list_id )` — give the
+  bulk handler an ID-based way to change list membership (the pre-existing
+  `add_to_list_slug()`/`remove_from_list_slug()` are email+slug-based, built
+  for the REST/mobile-API write paths, not an admin page operating on
+  numeric IDs already in hand).
+  **The per-row single "Remove" action changed from a `<form>` to a plain
+  nonced GET `<a>` link** (`wp_nonce_url()`, `handle_delete()` now reads
+  `$_REQUEST['subscriber_email']` instead of `$_POST[...]`) — a `<form>`
+  cannot nest inside another `<form>`, and once the whole table became one
+  outer bulk-actions form, the old per-row form would have been invalid
+  HTML. If you ever need a similarly per-row destructive single-item action
+  inside a bulk-actions table again, use this same nonced-GET-link pattern,
+  not a nested form.
+
+### Campaigns "Send to" — searchable multi-select (September 2026)
+
+The one-off Campaigns compose form's "Send to" control (`class-culture-
+campaigns-admin.php`) used to render one checkbox per list — fine at a
+handful of lists, but stopped scaling once the list registry grew past a
+couple dozen entries (Hub auto-provisioning alone adds one list per Hub, see
+"Hub → newsletter list auto-provisioning" above). Replaced with a
+type-to-filter searchable multi-select: `render_list_multiselect()` renders
+a real `<select multiple name="list_ids[]">` (the actual form field/source
+of truth — this is what makes it degrade to a plain native multi-select box
+with JS disabled, never hidden by PHP) wrapped in a small combobox UI
+(`data-culture-ms` / `data-culture-ms-input` / `data-culture-ms-dropdown` /
+`data-culture-ms-tags`) that vanilla JS (`multiselect_js()`, no jQuery UI or
+select2 dependency, inlined via `wp_add_inline_script('jquery-core', ...)`
+— attached to that handle purely because it's reliably always-enqueued in
+wp-admin, not because the JS itself uses jQuery) progressively enhances
+into a type-ahead filter with removable tag pills, toggling the underlying
+`<option>`'s `selected` state on click/Enter. CSS is `multiselect_css()`,
+inlined via `wp_add_inline_style('wp-admin', ...)`. Both are only enqueued
+on the Campaigns page itself (`maybe_enqueue_editor()`'s existing hook-suffix
+check, `culture-subscribers_page_culture-campaigns`) — same file, same hook,
+extended rather than duplicated. **If another admin page in this plugin ever
+needs the same "checkbox-per-item doesn't scale" fix, reuse
+`render_list_multiselect()`'s pattern (or factor it out into a shared
+static helper) rather than hand-rolling a third checkbox/dropdown
+convention** — this is the second time a list-selection UI has needed this
+treatment (the first was the Subscriber bulk-actions "Add to list…"
+dropdown above, which stayed a plain `<select>`+`<optgroup>` since dropdown
+menus scale fine for a flat picklist — the multi-select-with-many-items case
+is what specifically needed the searchable-combobox treatment).
 
 ---
 
@@ -409,6 +736,74 @@ Fixed:
   effectively the same content as the global hub (every issue falls into the "empty segment = all
   regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
   content going forward.
+
+## Magic-code sign-in + subscribe — every `<SubscribeForm>` on the site (September 2026)
+
+Every "enter your email" subscribe widget site-wide — homepage `JoinSection`, `LiteraryFooter`/
+`CommonsFooter`, `CultureDropBand`, the Lifestyle Shop email band, Literary/Commons piece
+newsletter breaks — no longer just adds the email to a list. Subscribing now goes through a
+magic-code sign-in: a 6-digit code is emailed, and entering it both subscribes the address to the
+given list **and** signs the visitor into Moveee (a new Citizen account is created if the email has
+none, or the existing account is signed into if it does) — one action does both. Built first for
+the new **`/literary/subscribe`** landing page (the destination `LiteraryMasthead.tsx`'s "Get
+Updates" ribbon link and "Subscribe" pill now point at, replacing the generic `/newsletter` hub),
+then generalized to every other subscribe surface on the site per explicit user follow-up.
+
+**Backend**: `culture-community/includes/core/class-culture-magic-otp.php`
+(`Culture_Magic_OTP`) — `request_otp($email)` (rate-limited 3/10min, 6-digit code, `wp_hash()`'d in
+a transient, 10-minute TTL, mirrors `Culture_Literary_Access`'s OTP mechanics exactly) and
+`verify_otp($email, $code, $list_slug)` (max 5 wrong attempts, single-use, then finds-or-creates a
+real WP account — same shape as `Culture_Google_Auth::find_or_create_user()` — and subscribes the
+email via `Culture_Subscribers_DB::subscribe()`). Deliberately a **separate class** from
+`Culture_Literary_Access`, even though the OTP mechanics are identical in shape — that class's
+`verify_code()` issues a signed *content-access* token and never touches a real account; this one
+always creates/updates a real WP user and returns a full profile instead of a token. New REST
+routes (public): `POST /culture/v1/magic-otp/request`, `POST /culture/v1/magic-otp/verify` (returns
+the same `user_profile()` shape `/login` and `/login-google` already return). Email:
+`Culture_Emails::send_magic_otp_email()` — deliberately generic copy, not Literary-specific, since
+every subscribe surface now uses it.
+
+**NextAuth wiring**: the shared `CredentialsProvider` in `packages/shared/lib/auth.ts` gained a
+third `authorize()` branch (alongside username/password and the passkey-token exchange) — when
+`credentials.otpEmail`/`otpCode` are present, it calls `/culture/v1/magic-otp/verify` directly and
+maps the response the same way the password branch does. **`apps/site` needed its own
+`app/api/auth/[...nextauth]/route.ts` for this to work** — it never had one before (it only ever
+called `getServerSession()`, which just decodes the shared `.themoveee.com` session cookie and
+needs no local route), but `next-auth/react`'s `signIn()` posts to the *current* app's own origin,
+so a visitor entering a code on `themoveee.com` needs a real handler there to land on. Same shared
+`authOptions`, so the resulting session works on both apps immediately (shared cookie domain).
+
+**Frontend**: `packages/shared/components/SubscribeForm.tsx` (mirrored, per the existing
+convention, into the unused-but-kept-in-sync `apps/site/components/SubscribeForm.tsx` copy) is now
+a two-step widget — email+button → code+button, same input/button slot and props (`placeholder`/
+`buttonLabel`/`buttonClassName`/`inputClassName`/`successMessage`/`list`) as before, so all 9
+existing call sites needed zero changes. Step 1 POSTs to the new
+`apps/site/app/api/newsletter/magic-otp/request/route.ts` proxy; step 2 calls
+`signIn("credentials", { otpEmail, otpCode, otpList: list, redirect: false })` directly — no
+verify proxy route needed, `authorize()` talks to WordPress itself. `segment` stays in the props
+interface for backward compatibility but is unused — the magic-OTP endpoint has no per-region
+segment concept. **The pre-existing `/api/newsletter/subscribe` route and
+`NewsletterPreferences.tsx` (the member-settings list-toggle page) are untouched** — those serve an
+already-authenticated member managing their own subscriptions, a different flow from an anonymous
+visitor subscribing for the first time.
+
+`components/LiterarySubscribeForm.tsx` is a separate, full-page variant (locked copy + the same
+two-step flow) built for `/literary/subscribe` specifically — it renders inside `.lit-submit-wrap`/
+reuses `.lit-form-*` classes from `literary.css` rather than the compact inline pair the generic
+`SubscribeForm` uses, since it's a dedicated landing page, not a footer widget. Both call the same
+`/api/newsletter/magic-otp/request` proxy and the same `signIn()` verify path — no duplicated
+backend logic between them.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file (no `node_modules` installed this session either, so `tsc --noEmit`
+couldn't run). Verified via `php -l` on every touched/new PHP file and brace/paren-balance checks
+on every touched/new TS/TSX file. This also needs the plugin redeployed (manual zip+upload — no new
+dbDelta table, so no `CULTURE_VERSION` bump, only the plugin header version bump) before
+`/culture/v1/magic-otp/*` exists in production, and `apps/site` needs its own `NEXTAUTH_SECRET`/
+`NEXTAUTH_URL` env vars confirmed set on Vercel for the new `[...nextauth]` route to work there.
+Re-check the full email → code → account-created-or-signed-in → subscribed round trip, on both a
+brand-new email and an existing member's email, in a real environment before considering this fully
+closed.
 
 ## The Moveee Literary (`/literary`, added September 2026)
 
@@ -1280,18 +1675,19 @@ established for country filtering). Deduped by `databaseId` (category-sourced co
 collision, since it's the richer GraphQL shape), sorted newest-first. Never throws — either
 half failing just means that half contributes nothing (`Promise.allSettled`).
 
-**Only category membership gets a canonical `/commons/{slug}` URL — a deliberate, narrower
-rule than the feed union above.** `commonsPieceHref(post)` returns `/commons/{slug}` for a
-category member, `/magazine/{slug}` otherwise. This means a piece that qualifies for the
-Commons *feed* only via Basit's byline (no `"commons"` category) still surfaces on the Commons
-homepage/section shelves, it just links back out to its ordinary `/magazine/{slug}` home
-rather than moving under Commons chrome — so an unrelated piece Basit happens to write doesn't
-get pulled out of the regular magazine. `/magazine/[slug]/page.tsx` redirects on the same
-narrower rule (`isCommonsCategoryPost`, not the full union) right after its existing Literary
-redirect, mirroring that redirect's "exactly one canonical URL per piece" reasoning exactly.
-`sitemap.ts` follows the identical split: `articleUrls` excludes category-based Commons pieces
-(they get their own `commonsPieceUrls` entries at `/commons/{slug}`), but an author-only piece
-stays counted in `articleUrls` at its real `/magazine/{slug}` URL.
+**Every piece that qualifies for the Commons feed gets a canonical `/commons/{slug}` URL —
+widened September 2026, per explicit request** (this superseded an earlier, narrower rule where
+only category members got a Commons URL and an author-only piece stayed at `/magazine/{slug}`;
+that split meant two different article templates depending on which rule matched, which read as
+inconsistent once live). `commonsPieceHref(post)` now returns `/commons/{slug}` for anything
+`isCommonsPost()` is true for — category or author, no distinction. `/magazine/[slug]/page.tsx`
+redirects on the same union (`isCommonsPost`, not just `isCommonsCategoryPost`) right after its
+existing Literary redirect, mirroring that redirect's "exactly one canonical URL per piece"
+reasoning exactly — so every Basit Jamiu piece (guest-bylined or not) and every "commons"
+category piece now renders under Commons chrome, never the magazine template. `sitemap.ts`
+follows the identical union: `articleUrls` excludes every Commons-qualifying piece (they all get
+`commonsPieceUrls` entries at `/commons/{slug}` instead, whether they qualified by category or
+by author).
 
 **Sections are a plain WP tag overlay on the category** — `COMMONS_SECTIONS` (Politics,
 Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`academia`/
@@ -1300,12 +1696,14 @@ Environment, Academia, Reports, Opinion — tag slugs `politics`/`environment`/`
 shows in the main `/commons` feed, it just won't appear on any single section's page until
 tagged. `app/commons/[slug]/page.tsx` is the same dual-purpose route Literary's `[slug]` uses
 (a `COMMONS_SECTIONS.slug` match renders a section archive; anything else falls through to a
-real post lookup, gated on `isCommonsCategoryPost`) — Next.js doesn't allow two sibling routes
-with different dynamic-segment names at the same level, same constraint documented on
-Literary's own `[slug]` route. Section archives and a piece's own "More in {section}" grid
-only ever draw from `getCommonsCategoryPieces()` (category-scoped, optionally narrowed by
-section tag) — never the author-only half of the feed, since an author-only piece has no
-canonical Commons page to be tagged into in the first place.
+real post lookup, gated on `isCommonsPost` — the full union, per the widened canonical-URL rule
+above, not just category) — Next.js doesn't allow two sibling routes with different
+dynamic-segment names at the same level, same constraint documented on Literary's own `[slug]`
+route. Section archives and a piece's own "More in {section}" grid still only ever draw from
+`getCommonsCategoryPieces()` (category-scoped, optionally narrowed by section tag) — an
+author-only piece can now have a real `/commons/{slug}` page of its own, it just won't be
+surfaced by a section archive unless it's also in the "commons" category and tagged (sections
+are a category overlay, unrelated to how the page itself is reached).
 
 **Deliberately no Pro-gating, no free-read metering** — unlike Literary/Magazine's magic-code
 gate system, Commons content is fully public in this pass; nothing in `[slug]/page.tsx` calls
@@ -2794,6 +3192,29 @@ swap) and the sitewide dark `Footer.tsx` — that's gone now.
 Not visually verified in a browser — no `node_modules` installed this session. Verified via
 paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
 `makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
+
+**Production build failure, fixed same month — duplicate `next/font/google` call broke the
+Vercel build.** A real production deploy failed at `next build` (Turbopack) with `Module not
+found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'` /
+`next/font/google queries have exactly one entry`, traced to `app/makers/layout.tsx`. Root
+cause: `app/lifestyle/layout.tsx` and `app/makers/layout.tsx` each called
+`Bricolage_Grotesque({ subsets: ["latin"], weight: ["500","700","800"], variable:
+"--font-lfs-display", display: "swap" })` — **byte-identical arguments, in two separate files**
+— per the "Bricolage Grotesque is loaded again here ... since Next.js font loaders are scoped
+per call site" reasoning this section originally gave for `/makers`. That reasoning was wrong:
+Turbopack (Next.js 16) hashes a `next/font/google` call's config to name its generated internal
+font asset, so two identical calls in different files collide on the same hash and only one of
+them resolves at build time — the other fails exactly this way. **Fixed** by extracting the call
+into a single shared module, `apps/site/lib/lifestyle-font.ts` (exports `bricolage`), imported by
+both `app/lifestyle/layout.tsx` and `app/makers/layout.tsx` instead of each calling
+`Bricolage_Grotesque(...)` itself. **If a third route ever needs this font, import it from
+`lib/lifestyle-font.ts` — never add a third duplicate call site**, and more generally: never call
+`next/font/google` with the same exact config in two different files in this codebase; factor it
+into a shared module instead. Verified via a brace/paren-balance check on all three files (no
+`node_modules` installed this session, so `next build`/`tsc` couldn't reproduce the Turbopack
+error directly) and confirming the `@/lib/*` tsconfig alias resolves the new module correctly
+(no colliding `packages/shared/lib/lifestyle-font.ts`). Re-check the next Vercel production
+build actually goes green before considering this fully closed.
 
 ### Email-capture + Moveee Pro bands tightened (September 2026)
 
@@ -6435,6 +6856,68 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 
 ---
 
+## Mobile quote-share QR code led to a 404 — wrong URL pattern for native quotes (fixed September 2026)
+
+User-reported: scanning the QR code on a shared quote's image (mobile app, `QuoteShareCard.tsx`)
+led to a 404. Root cause was a `/community/{slug}` share-URL pattern applied to the **wrong**
+content type. This codebase has two structurally distinct "quote" things:
+
+1. **Native quotes** — `culture_quote` CPT posts (editorially seeded or system-authored), surfaced
+   in the mobile feed as `FeedItem.type === "quote"`, rendered via `QuoteCard` →
+   `QuoteDetailModal.tsx`. Their real detail page is `/quotes/{databaseId}-{slug}` on
+   `web.themoveee.com` — a **compound** URL segment (`apps/connect/app/quotes/[slug]/page.tsx`
+   parses only the leading numeric id via `segment.split('-')[0]`, then does an ID-based GraphQL
+   lookup, not a slug-based one).
+2. **Composer-submitted quote posts** — real `culture_post` entries created via the composer's
+   "Update family" quote template (`_template_type = 'quote'`), surfaced as `FeedItem.type ===
+   "community"` (`item.templateType === "quote"`). Their real detail page genuinely is
+   `/community/{slug}`.
+
+`QuoteDetailModal.tsx` (and, duplicated verbatim, `PostDetailSheet.tsx`'s `TemplateQuote`) built
+the QR/share URL as `` item.slug ? `https://themoveee.com/community/${item.slug}` : ... ``
+unconditionally — correct for case 2, but wrong for case 1 on two counts: wrong page
+(`/community/[slug]` only ever queries WordPress's `community-posts` REST base, i.e. the
+`culture_post` CPT — `packages/shared/lib/community-wordpress.ts`'s `getCommunityPostBySlug()`
+has zero knowledge of `culture_quote` at all, so the lookup always comes back empty →
+`notFound()`) **and** wrong slug shape (`item.slug` on a native quote is the bare WP `post_name`,
+never the `{id}-{slug}` compound `/quotes/[slug]` expects).
+
+**The fix didn't need a new URL-construction scheme** — the PHP feed mapper already emits a
+correctly-shaped, per-type relative path on every `FeedItem.href`
+(`class-culture-mobile-api.php`'s `get_quote_feed_items()`: `'href' => '/quotes/' . $post->ID .
+'-' . $post->post_name`, vs. `get_community_feed_items()`'s `'href' => '/community/' .
+$post->post_name`) — it just wasn't being used for sharing. New shared helper
+`apps/mobile/src/utils/shareUrl.ts` (`shareUrlFor(item)`) builds off `item.href` instead of
+hand-rolling a path from `item.slug`, with domain routing (`themoveee.com` for `editorial`,
+`web.themoveee.com` for everything else). Kept as its own tiny module rather than exported from
+`FeedItemCard.tsx` — that file already imports `QuoteDetailModal.tsx`, so exporting the helper
+from there and importing it back into `QuoteDetailModal.tsx` would have created a circular
+import. `FeedItemCard.tsx`'s own local `shareUrlFor()` (previously used for the native
+`QuoteCard`'s inline share button and `FeedReactionBar`'s generic share prop — and itself missing
+a `"quote"` branch, silently falling into the same broken `/community/{slug}` fallback) was
+deleted in favor of importing this new util.
+
+**If a future share/QR/deep-link feature needs a content item's public URL, always build off
+`item.href`, never re-derive one from `item.slug` + a hardcoded path segment** — `href` is the
+one field the backend already guarantees is shaped correctly per item type; a hand-rolled
+per-caller path is exactly how this bug happened (twice, in near-identical duplicated lines).
+
+**No web-side (`apps/connect`/`packages/shared`) equivalent exists** — the QR-code-on-shared-
+image feature is mobile-only (`QuoteShareCard.tsx`); confirmed via grep that no `QRCode`/`qrcode`
+usage exists anywhere under `packages/shared/components`.
+
+Verified via a brace/paren-balance check on all four touched/new files (no `node_modules`
+installed in this sandbox, so `tsc --noEmit` couldn't run) and a grep confirming no other
+`item.slug`-based `/community/{slug}` construction elsewhere in `apps/mobile/src` is reachable
+by a native-quote `FeedItem` (the other two matches — `SavedArticlesScreen.tsx`,
+`DirectoryPostsScreen.tsx` — both only ever build this href for genuine `type: "community"`
+items, and `PostDetailScreen.tsx`'s two literal share-URL constructions are only ever reached via
+`nav.navigate("PostDetail", { item: { type: "community", ... } })` call sites, never a quote —
+left as-is to keep this fix scoped). Re-check the real request-code → scan → `/quotes/{id}-{slug}`
+round trip on a real device before considering this fully closed.
+
+---
+
 ## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
 
 First step of a longer-term plan to retire the standalone `/quotes` product and make
@@ -6512,6 +6995,71 @@ none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
 `culture_quote` created via the post editor with no author picked still resolves
 sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
 Quotes" button, before considering this fully closed.
+
+## `/quotes` standalone product retired — bare permalink kept as a share/SEO target (September 2026)
+
+Second, final step of the retirement scoped in the section above — the standalone browsable
+`/quotes` product (archive, author archive, its own like/report/comment UI) is now gone. Quotes
+render natively inline in the feed on both platforms; this pass removed everything that turned
+that same content into a second, separately-browsable "site."
+
+**Removed**: `apps/connect/app/quotes/page.tsx` (archive/browse — its search input was never
+wired to anything), `apps/connect/app/quotes/author/[slug]/page.tsx` (author archive),
+`packages/shared/components/{QuotesInfiniteGrid,QuoteSubmissionModal,SubmitQuoteTrigger}.tsx` +
+`apps/connect/app/quotes.css`, the confirmed-dead `apps/site/components/QuoteSubmissionModal.tsx`
+(zero importers, predates this pass), `POST /culture/v1/quotes/like` /
+`/culture/v1/quotes/report` (`handle_like_quote`/`handle_report_quote`) and their Next.js proxies
+(`apps/connect/app/api/quotes/{like,report}/route.ts`) — this was the standalone product's own
+bespoke like/report system, entirely separate from the feed's real reaction system
+(`ReactionBar`/`/community/react`), and had no other caller. `apps/site/app/quotes/*` and
+`apps/site/app/api/quotes/report/route.ts` were already dead (redirect-shadowed by
+`proxy.ts`'s `connectPrefixes`) — deleted as pure cleanup. Links removed: `Footer.tsx`'s Explore
+column, `/member`'s `EXPLORE_LINKS` "Quotes Archive" entry, the `/quotes` sitemap entry.
+
+**Kept, deliberately**: `POST /culture/v1/quotes` (`handle_create_quote`) and its mobile mirror
+`POST /culture/v1/mobile/community/quote` (`handle_submit_quote`, a pure delegate) —
+**a scoping mistake was caught before shipping this**: these were first assumed to be reachable
+only from the retired archive's own "Submit a Quote" modal, duplicating the composer's own Quote
+tab. That was wrong. `packages/shared/components/pulse/SubmitPost.tsx` (web) posts directly to
+`/api/quotes/create` → this exact endpoint, and `apps/mobile/src/screens/community/
+NewPostScreen.tsx` posts directly to `/mobile/community/quote` → the exact same delegate. This is
+the live backend for the feed-native composer's Quote template on both platforms, not standalone-
+product-only — removing it would have broken quote creation entirely, not just retired a browsing
+UI. **If you ever need to touch quote creation again, this is the one method
+(`Culture_REST_API::handle_create_quote()`) both platforms' composers funnel into** — same
+"one implementation, two auth front doors" shape as the community RSVP / follow-system mirrors
+elsewhere in this file.
+
+**`/quotes/[slug]` still exists, rebuilt as a bare permalink, not deleted** — per an explicit
+product decision: since a quote's `href` (`/quotes/{id}-{slug}`) is the load-bearing destination
+for mobile+web share/QR codes (see the "Quote share/QR code 404" fix elsewhere in this file),
+`SearchModal`'s Quote-type search results (`apps/connect/app/api/search/route.ts`), and the
+member Collection's saved-quote links, killing the permalink outright would have broken all
+three. The rebuilt page has **no archive link, no author link, no like/bookmark/report actions,
+no "browse more" footer** — just the quote (styled to match `QuoteDetailModal.tsx`'s own look,
+so the permalink and the in-feed drawer are visually consistent), the real feed `ReactionBar`
+(`itemType="quote"`, same reaction system every other content type uses), and `QuoteComments`
+(unchanged — it already only ever depended on the shared `WpComment`/`getPostComments()` backend,
+not the archive). Nothing in the app links to this page except a quote's own `item.href` — don't
+add a "browse all quotes" link back into it.
+
+**Real, pre-existing bug fixed in the same pass**: `Culture_REST_API::saved_post_summary()`
+(backs the member Collection's "liked"/"bookmarked" lists) built a saved quote's `url` as
+`/quotes/{bare-slug}` — no numeric ID prefix — while the permalink page's `parseId()` requires
+`/quotes/{id}-{slug}` (`segment.split('-')[0]`). Every saved quote in a member's Collection would
+have 404'd once clicked. Fixed to `/quotes/{$post->ID}-{$slug}`, matching
+`get_quote_feed_items()`'s href shape exactly. `CollectionTabs.tsx`'s "Browse Quotes" empty-state
+buttons were repointed to `/feed` (where quotes are actually discoverable now), since `/quotes`
+is no longer a browsable destination.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file; this pass additionally needs the plugin redeployed (the
+`saved_post_summary()` URL-shape fix and the route-registration changes are both PHP) before
+either fix takes effect in production. Verified via `php -l` on both touched PHP files and a
+repo-wide grep confirming zero remaining imports of any deleted component/route. Re-check the
+full flow — creating a quote via each platform's composer, opening it from a shared QR code, and
+opening a saved quote from the member Collection — in a real environment before considering this
+fully closed.
 
 ---
 
@@ -7961,6 +8509,31 @@ consistency, even though that app isn't the production composer).
 
 ---
 
+## Hubs vs. Stoop — the two community axes (product positioning, September 2026)
+
+Two systems in this codebase both build "communities" but along deliberately different axes —
+worth stating explicitly since it's easy to conflate them when writing product copy, onboarding
+flows, or admin tooling:
+
+- **Hubs = what you're into.** Topic-based, location-agnostic. Anyone anywhere can join —
+  nothing in the data model (`culture_hub`, `wp_culture_hub_members`) ties a Hub to a place. The
+  11 official Hubs (Music, Fashion, Art, Film, Food, Sport, Travel, Ideas, Literature, Design,
+  Tech) are the canonical example; a niche interest Hub (gamers, romance readers, a specific
+  beverage/cocktail community, etc.) is exactly the same shape and just as legitimate. Each Hub
+  has its own feed, allowed post templates, mods, a pinned post, and (per the September 2026
+  newsletter work above) its own auto-provisioned mailing list.
+- **Stoop = who you can physically show up with.** Real-world, place-bound. The whole mechanic
+  (`culture_cluster`, `_cluster_street`/city fields, a capacity cap, weekly QR check-in, host
+  election — see `docs/literati-connect-plan.md`) assumes proximity: people meeting in person,
+  regularly, to do something together (reading, watching a film, sharing food). It answers "who's
+  near me," not "what am I into."
+
+**The two are not mutually exclusive and don't compete** — someone can be in the global "Romance
+Readers" Hub *and* a local Stoop that happens to read romance together in person; the Hub is the
+interest, the Stoop is the standing local meetup. When building copy, onboarding, or discovery UI
+for either feature, keep this framing (interest vs. proximity) rather than treating one as a
+scaled-down version of the other.
+
 ## Hubs — user-created topic communities
 
 **Full plan (read before touching any Hub code): `docs/hubs-plan.md`.** Phases 1–4 (core
@@ -7976,6 +8549,53 @@ always starts on "Join" even for members who already joined — idempotent, so h
 extra click; and **mobile's feed cards don't render the Hub badge/Join UI yet**, only the backend
 fields needed to build it). Phase 5 (rewards/badges/notifications/cron) also already shipped —
 see the doc's own status line, which is the authoritative source, not this summary.
+
+### WP Admin Hubs manager (September 2026)
+
+Before this, `culture_hub` posts had **no real WP Admin UI** — the CPT was registered `show_ui:
+true` with a bare native post-list/edit screen (title field + a generic Custom Fields box; no
+meta box for description/cover/category/allowed templates, no member list, no way to archive).
+`class-culture-hubs-admin.php` is the real manager, a new top-level **Moveee Hubs** menu (anchor
+slug `culture-hubs-manager`, see the "WP Admin menu structure" note above): a list view (search,
+filter by status/category/official-only, member/post counts, owner, linked newsletter-list
+subscriber count, per-row Archive/Reactivate) and a detail view per Hub (edit
+name/description/cover/category/allowed post types, archive/reactivate, member list with
+promote/demote/make-owner/remove actions, an "Add member by email/username" form, and a shortcut
+to the Campaigns page for emailing that Hub's auto-provisioned list).
+
+**The native CPT admin screen is now hidden, not just superseded** — `culture_hub`'s
+`show_in_menu` was flipped from `'culture-community'` to `false` in
+`class-culture-post-types.php` (`show_ui` stays `true`, so `edit.php?post_type=culture_hub` still
+technically works if visited directly, it's just not linked from the sidebar anymore) — otherwise
+there'd be two different, confusing "Hubs" entries in WP Admin.
+
+**Why this needed new `Culture_Hubs::admin_*()` methods instead of just calling the existing
+API**: every mutating method on `Culture_Hubs` (`update()`, `archive()`, `appoint_mod()`,
+`remove_mod()`, `remove_member()`) gates on the **requester** holding `'owner'`/`'mod'` in
+`wp_culture_hub_members` — there is no admin bypass baked into any of them, on purpose, so as not
+to weaken the member-facing permission model those same methods serve on the REST API. That's a
+real dead end for the 11 official/platform-owned Hubs specifically: they have `post_author = 0`
+and **no owner row at all** (seeded by `maybe_seed_official_hubs()`), so `get_role()` returns
+`null` for literally every user, admin included — meaning a real WP administrator could not
+rename an official Hub, change its category, or add a first member to it through the existing
+API at all. `Culture_Hubs::admin_update()` / `admin_set_status()` / `admin_set_role()` /
+`admin_remove_member()` are a parallel, un-gated set of methods added specifically for this admin
+page — **they perform no requester/role check of their own; the caller (only
+`class-culture-hubs-admin.php`) is responsible for the `current_user_can('manage_options')`
+check**. Never call them from a REST route without adding that capability check at the route
+handler itself.
+
+`admin_set_role()` also does two things the member-facing API can't: it can hand ownership to a
+new user directly (demoting whoever currently holds `'owner'` to `'mod'` so a Hub is never left
+with two owners — official Hubs, having no owner, just skip that demote step and go straight to
+assigning one), and it auto-subscribes a newly-added member to the Hub's newsletter list the same
+way `join()` already does (`admin_remove_member()` mirrors `leave()`'s unsubscribe the same way)
+— so a member added directly from WP Admin behaves identically to one who joined through the app.
+
+**Never hard-deletes a Hub** — only `archive`/`reactivate`, same "never hard-delete a user-created
+group" convention as Stoop Clusters and every other community feature in this codebase. If a
+genuine deletion is ever needed, that's a deliberate exception to raise with the user first, not
+something to add to this admin page by default.
 
 ### Official-Hub seeding race condition — duplicate Hubs (fixed July 2026)
 
@@ -9019,6 +9639,110 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phases 1–2 shipped, September 2026
+
+**Full plan: `docs/reading-tracker-plan.md`.** Build order is strictly phased (§8): shelves →
+goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Phases 1
+(shelves) and 2 (reading goal) are built** — mood/pace/stats/Buddy-Reads/gamification are still
+planning-only; don't assume any of them exist because Phases 1–2 do. Requested as "implement
+similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" — the plan
+doc breaks StoryGraph's feature set into what's already covered by existing Moveee
+infrastructure (Book Review's ratings/genres, `culture_directory` book entries, Hubs for Buddy
+Reads, the `AnalyticsClient.tsx` chart components for stats) versus what's genuinely new.
+Explicitly deferred past v1 regardless of phase: page-progress tracking, format tracking,
+Goodreads/StoryGraph import, a public reading-profile page, content warnings, and
+mood/pace-driven recommendation ranking (see the doc's §0/§9).
+
+### Phase 1 — shelves (want to read / currently reading / read)
+
+**Backend**: `Culture_Reading_Tracker` (new,
+`culture-community/includes/core/class-culture-reading-tracker.php`) — single source of truth,
+same "one class, two mirrored REST surfaces" shape as `Culture_Community_RSVP`. New table
+`wp_culture_reading_shelf` (`id, user_id, directory_id, status, started_at, finished_at,
+created_at, updated_at`, `UNIQUE KEY (user_id, directory_id)` — upsert, not duplicate rows, same
+convention as `wp_culture_hub_members`/`wp_culture_follows`), wired into
+`Culture_Activator::create_tables()`; `CULTURE_VERSION` bumped `3.1.0` → `3.2.0` to trigger the
+dbDelta on next deploy (a code push alone never runs `register_activation_hook()` — see "Plugin
+DB table auto-upgrade" above). `set_shelf_status()` validates the status against
+`Culture_Reading_Tracker::STATUSES` and that `directory_id` resolves to a published
+`culture_directory` post; `started_at`/`finished_at` are **sticky** — set once on first entry
+into `currently_reading`/`read`, never overwritten by a later re-transition (e.g. finishing a
+re-read doesn't erase the original finish date). `get_user_shelf()` returns each entry's
+title/slug/thumbnail (post thumbnail or `_external_cover_url`) and author via
+`Culture_Directory::get_first_about_field()` — that method was widened from `private` to
+`public` specifically so this class could reuse it rather than re-parsing `_about_fields` itself.
+
+REST routes, mirrored exactly like every other feature in this plugin (mobile JWT vs. web
+API-key + explicit `user_id`): `POST/DELETE/GET /mobile/reading/shelf`,
+`GET /mobile/reading/shelf/counts` (`class-culture-mobile-api.php`) and
+`POST/DELETE/GET /reading/shelf`, `GET /reading/shelf/counts` (`class-culture-rest-api.php`).
+
+**Web** (`apps/connect`): `/member/reading` (new `AccountNav` entry, "📚 Reading Tracker",
+between Portfolio and Collection — added immediately, not left as a "no nav path to it" gap the
+way Portfolio/Collection once were, per that section's own documented lesson). `page.tsx` is the
+standard `.acct-page`/`.acct-wrap`/`AccountNav` server shell (modeled on `/member/wallet`);
+`ReadingTrackerClient.tsx` owns the three-tab (`.wal-tabs`, reused verbatim) shelf switcher, a
+`.rt-grid` of `.rt-card` book cards (per-card shelf-move `<select>` + remove button), and an
+"Add a Book" modal wrapping the shared `DirectorySearch` composer component
+(`typeFilter="book"`, `aboutFieldLabel="Author"`, `externalSource="google_books"` — same
+dedup-by-external-id mechanism Book Review already uses, no new search/creation endpoint
+needed). Two new proxy routes, `app/api/reading/shelf/route.ts` (GET/POST/DELETE) and
+`app/api/reading/shelf/counts/route.ts` — both resolve `user_id` from
+`getServerSession(authOptions)` server-side and never trust a client-supplied one, per the plan
+doc's own privacy ground rule (§7). New `.rt-*` CSS appended to `member.css`.
+
+**Mobile** (`apps/mobile`): `ReadingTrackerScreen.tsx` (`screens/member/`), registered in both
+`ConnectStack` and `MemberStack` (same dual-registration every other member screen gets) and
+added to `useNav.ts`'s `AppParamList`. Same shelf-tabs/grid/add-book-modal shape as web, calling
+`${MOBILE_API}/reading/shelf*` via `api.get/post/delete`. Uses the mobile `DirectorySearch`
+component (`components/composer/DirectorySearch.tsx` — note its prop names differ slightly from
+the web version: `onSelect`/`selected`, not `onChange`/`value`, and its `DirectoryEntry` has no
+`slug` field). Linked from `MemberDashboardScreen.tsx`'s `QUICK_LINKS` ("📚 Reading Tracker").
+
+### Phase 2 — reading goal (per-year target, live progress)
+
+**Backend**: extends `Culture_Reading_Tracker` — a new table, `wp_culture_reading_goal`
+(`id, user_id, year (smallint), target_books (int), created_at, updated_at`, `UNIQUE KEY
+(user_id, year)` — one row per user per year, upsert on repeat sets), wired into the same
+`create_table()` this class already owned; `CULTURE_VERSION` bumped `3.2.0` → `3.3.0` to trigger
+the new table's `dbDelta` on next deploy (plugin header also bumped `2.6.1` → `2.6.2` for the
+same redeploy-confirmation reason documented elsewhere in this file). `get_goal($user_id, $year)`
+returns `{year, targetBooks, booksRead}` — **`booksRead` is always a live `COUNT(*)` against
+`wp_culture_reading_shelf` (`status = 'read'` AND `YEAR(finished_at) = $year`), never cached or
+denormalized**, unlike a Hub's member/post counters — a personal per-user count doesn't carry
+the same "read across many users' lists at once" cost that denormalization exists to solve for
+Hubs. `set_goal($user_id, $year, $target_books)` validates `$target_books >= 1`
+(`WP_Error('invalid_target', ...)` otherwise) and upserts.
+
+REST routes mirror the shelf endpoints exactly: `GET`/`POST /mobile/reading/goal` (JWT,
+`class-culture-mobile-api.php`, `year` optional — defaults to the current year) and `GET`/
+`POST /reading/goal` (API-key + explicit `user_id`, `class-culture-rest-api.php`). Both call the
+same `Culture_Reading_Tracker::get_goal()`/`set_goal()`.
+
+**Web**: `app/api/reading/goal/route.ts` (new proxy, same shape as the Phase 1 shelf routes —
+`getServerSession()` → 401 if absent → `user_id` resolved server-side, never trusted from the
+client body). `ReadingTrackerClient.tsx` renders a `.rt-goal-card` **persistent across all three
+shelf tabs** (year-scoped, not shelf-scoped, per the plan's own reasoning) — right below the
+"+ Add a Book" button and above the tab row. Two states: a summary ("{booksRead} of {targetBooks}
+books this year" + an `.rt-goal-bar` progress fill, tapping it opens edit mode) when a goal is
+set, or an inline "Set your {year} goal" number input + Save when it isn't. Marking a book `read`
+(via `moveShelf`) re-fetches the goal so the progress bar updates live. New `.rt-goal-*` CSS in
+`member.css`.
+
+**Mobile**: `ReadingTrackerScreen.tsx` renders the same goal card (`styles.goalCard`/
+`goalText`/`goalBar`/`goalBarFill`/`goalEdit*`) as a "Your Year in Books"-style section, placed
+between the header and the tab row — same persistent-across-tabs placement as web, same
+edit/summary toggle, same "read" transition re-triggers `loadGoal()`.
+
+**No badge/reward tied to hitting 100% in v1** — per the plan's explicit scope note; if that's
+ever wanted, it belongs with the later gamification-hook phase, not bolted onto this one.
+
+**Not built yet** (later phases, do not start without explicit direction): mood/pace tags on
+book directory entries, the stats dashboard, Buddy Reads prefill from a Hub, and the
+gamification hook (credits/reputation for shelf activity). None of Phase 1/2's
+tables/endpoints/components should need to change to support these — they're additive per the
+plan doc's own phase breakdown.
+
 ---
 
 ## Interest taxonomy (canonical slugs)
@@ -9587,6 +10311,30 @@ whether the failure happened somewhere that *doesn't* route through `api/client.
 component's own render) — those still need an explicit `Sentry.captureException` call
 added at the point of failure, this fix only covers the HTTP layer.
 
+**Correction (September 2026): "the expected 401-triggers-logout path... is normal, not
+something to page on" was too broad.** User-reported: picking a Google Books/Spotify/TMDB
+search result in the community composer (`DirectorySearch.tsx`'s `handleSelectExternal()` →
+`/directory/quick-create`) was force-logging users out. Investigation found the
+*previously known* cause of exactly this symptom (a March/earlier fix, "Fix Book Review
+composer kicking users to login on select" — collapsing transient upstream failures into a
+blanket 401) was already fixed and already live in the code for weeks, yet the bug was
+still being reported — meaning either a genuinely different, still-undiagnosed cause, or a
+real (if surprising) session invalidation. **Either way, there was no way to tell which**,
+because a 401 that fires `_onUnauthorized()` (i.e., one that actually force-logs someone
+out) was — by this section's own prior guidance — deliberately excluded from
+`captureException`, so it left literally no discoverable trace in Sentry. Fixed:
+`request()` now calls `Sentry.captureMessage()` (not `captureException` — still not treated
+as a crash-level bug) specifically in the branch where a 401 is about to fire
+`_onUnauthorized()`, including the URL/method and the response's `code` field. **Every
+route a mobile client hits that can 401 should return a distinguishing `code` field in its
+JSON error body** (e.g. `no_token` vs. `wp_401`/the upstream WP_Error's own `code`) — see
+`apps/site/app/api/directory/quick-create/route.ts`'s two 401 branches for the pattern —
+otherwise this new Sentry message can only say "a 401 happened here," not why, which is the
+exact gap being closed. **If a 401-triggered logout is ever reported again, search Sentry
+for `Auto-logout triggered:`** — that message now names the exact endpoint and code every
+time this fires, instead of the silent-by-design gap this section used to document as
+correct behavior.
+
 ---
 
 ## Passkeys (WebAuthn) — never worked on native, missing platform setup (fixed August 2026)
@@ -10083,6 +10831,63 @@ future RN bump could pull in a different fmt version with a differently-shaped (
 equivalent) `#if FMT_USE_CONSTEVAL` block that no longer matches this plugin's exact-text regex,
 silently making the injected patch a no-op again (the plugin doesn't currently warn if its `sub`
 finds no match).
+
+### Android build failure — duplicate `:sentry-react-native`/`:sentry_react-native` Gradle projects (September 2026)
+
+A real EAS Android production build (`eas build --platform android --profile production`) got past
+network/auth issues, dependency resolution, Metro bundling, and Sentry source-map upload, then
+failed at the Gradle build step:
+```
+A problem was found with the configuration of task ':sentry_react-native:packageReleaseResources'
+(type 'MergeResources').
+  Reason: Task ':sentry_react-native:packageReleaseResources' uses this output of task
+  ':sentry-react-native:generateReleaseResValues' without declaring an explicit or implicit
+  dependency.
+```
+Earlier in the same log, both `:sentry-react-native:*` (hyphenated) and `:sentry_react-native:*`
+(underscored) task graphs appear — two separate Gradle project registrations pointing at the exact
+same physical folder, `node_modules/@sentry/react-native/android`.
+
+**Root cause**: `@sentry/react-native` ships both a `react-native.config.js` (picked up by classic
+React Native autolinking, which sanitizes the package name with underscores → `sentry_react-native`)
+and an `expo-module.config.json` (picked up by Expo Modules autolinking, which sanitizes with
+hyphens → `sentry-react-native`) — a known, documented class of bug (dual-autolinking discovery of
+the same native module under two different project names; see
+[kitten.sh/blog/autolinkings-broken-promise](https://kitten.sh/blog/autolinkings-broken-promise)),
+only properly fixed by the unified autolinking resolver Expo shipped in **SDK 54**. This app is
+deliberately pinned to **SDK 52** (see "Expo SDK version — critical" above — `react-native-passkeys`
+0.4.0 and other pinned packages require it), so upgrading to get the real fix is out of scope.
+Because both duplicate projects physically share one output directory, either one's resource-
+packaging task can race the other's resource-generation tasks — Gradle 8.10's stricter task
+validation now rejects that race as a hard failure instead of silently tolerating it.
+
+**Fixed** with `apps/mobile/plugins/withSentryGradleTaskOrderingFix.js` (new, registered in
+`app.config.ts`'s `plugins` array right after `withFmtConstevalFix`) — a `withProjectBuildGradle`
+config plugin appending a `gradle.projectsEvaluated` block to `android/build.gradle` that declares
+the missing `dependsOn` directly (Gradle's own suggested fix #2 for this exact error class).
+Guarded with null-checks throughout (`findProject`/`tasks.findByName`) so it's a harmless no-op if
+a future dependency bump removes the duplicate or renames either project, rather than failing the
+build outright.
+
+**First version only covered the exact task named in the original error
+(`packageReleaseResources`, type `MergeResources`) — the very next build hit a *different*
+consumer task racing the same producer output** (`extractDeepLinksRelease`, type
+`ExtractDeepLinksTask` — also reads `generateReleaseResValues`'s `res/resValues` directory, and
+Gradle validates per task *type*, not per producer, so each new consumer task type is its own
+separate validation failure). Rather than keep enumerating exact task names one whack-a-mole round
+at a time, the fix now makes **every task in the consumer project whose name matches the same
+build variant** (Release/Debug) depend on the producer's `generateResValues`/`generateResources`
+tasks for that variant — broader than Gradle's own minimal suggestion, but harmless (a few extra
+ordering edges within one small, mutually-duplicate pair of projects), and it closes this class of
+bug for good instead of one task name at a time. **If a third consumer-task-type failure somehow
+still turns up, it means some other producer task besides `generateResValues`/`generateResources`
+is being raced — check the new error's own "output of task X" line, since that's the new producer
+to add to `producerTaskSuffixes`, not the consumer to add to an enumerated list.**
+
+Not verified against a real Gradle/Android toolchain — this sandbox has none. Verified via
+`node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
+embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
+actually clears the Gradle validation error before considering it closed.
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,

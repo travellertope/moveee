@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getMarket } from "../market-data";
-import MarketNav from "../components/MarketNav";
 
 const VALID_MARKETS = ["africa", "uk", "us"];
 
@@ -19,21 +18,10 @@ export async function generateMetadata({
   const data = getMarket(market);
   if (!data) return { title: { absolute: "Media Services | Moveee" } };
   return {
-    title: { absolute: `${data.name} — Media Services | Moveee` },
+    title: { absolute: `Media Services | Moveee` },
     description: data.tagline,
   };
 }
-
-const SECTION_ICONS: Record<string, string> = {
-  editorial: "◈",
-  amplify: "◉",
-  lifestyle: "◉",
-  presskit: "◎",
-  partnership: "◆",
-  events: "◇",
-  travel: "◎",
-  connect: "⬡",
-};
 
 export default async function MarketPage({
   params,
@@ -47,30 +35,41 @@ export default async function MarketPage({
   if (!data) redirect("/services");
 
   return (
-    <div className="market-shell">
-      <MarketNav sections={data.sections} mode="page" market={market} />
-
-      <main className="market-main">
+    <div className="svc-page">
+      <main>
 
         {/* Hero */}
-        <section className="market-hero">
-          <p className="market-eyebrow">
-            <span className="market-flag">{data.flag}</span> {data.name}
-          </p>
-          <h1 className="market-headline">
+        <section className="svc-wrap svc-hero svc-hero--first">
+          <h1>
             Get seen by the people who <em>matter</em>.
           </h1>
-          <p className="market-intro">{data.tagline}</p>
-          <a href="mailto:hello@themoveee.com" className="btn-primary-service">
-            Talk to us →
-          </a>
+          <p className="svc-hero-lead">{data.tagline}</p>
+          <div className="svc-hero-ctas">
+            <a href="mailto:hello@themoveee.com" className="svc-btn-primary">Talk to us →</a>
+            <a href="#services" className="svc-btn-ghost">See pricing</a>
+          </div>
         </section>
 
+        {/* Trust strip */}
+        <div className="svc-wrap svc-trust">
+          <span className="svc-trust-item">{data.sections.length} services</span>
+          <span className="svc-trust-dot" />
+          <span className="svc-trust-item">Transparent, flat pricing</span>
+          <span className="svc-trust-dot" />
+          <span className="svc-trust-item">48-hour response time</span>
+        </div>
+
         {/* Services overview grid */}
-        <section className="market-overview-grid-section">
-          <p className="section-eyebrow">Services</p>
-          <div className="market-overview-grid">
-            {data.sections.map((section) => {
+        <section className="svc-wrap svc-section" id="services">
+          <div className="svc-section-head">
+            <h2 className="svc-section-title">
+              {data.sections.length} ways to reach the culture.
+            </h2>
+            <a href="mailto:hello@themoveee.com" className="svc-section-more">Need a bespoke package? →</a>
+          </div>
+
+          <div className="svc-fgrid svc-fgrid--3">
+            {data.sections.map((section, i) => {
               const firstPrice =
                 section.kind === "cards"
                   ? section.cards[0]?.price
@@ -82,40 +81,62 @@ export default async function MarketPage({
                 <Link
                   key={section.id}
                   href={`/services/${market}/${section.id}`}
-                  className="market-overview-card"
+                  className="svc-card"
                 >
-                  <span className="market-overview-icon">
-                    {SECTION_ICONS[section.id] ?? "◈"}
-                  </span>
-                  <h2 className="market-overview-name">{section.label}</h2>
-                  {section.audience && (
-                    <p className="market-overview-audience">{section.audience}</p>
-                  )}
-                  <p className="market-overview-price">From {firstPrice}</p>
-                  <span className="market-overview-arrow">View service →</span>
+                  <span className="svc-card-num">{String(i + 1).padStart(2, "0")}</span>
+                  <h3 className="svc-card-name">{section.label}</h3>
+                  {section.audience && <p className="svc-card-audience">{section.audience}</p>}
+                  <div className="svc-card-foot">
+                    <span className="svc-card-price">From {firstPrice}</span>
+                    <span className="svc-card-arrow">View service →</span>
+                  </div>
                 </Link>
               );
             })}
           </div>
         </section>
 
+        {/* Pull quote */}
+        <section className="svc-section svc-section--tint">
+          <div className="svc-wrap svc-quote">
+            <span className="svc-quote-mark">&#8220;</span>
+            <p className="svc-quote-text">
+              We don&rsquo;t sell impressions. We introduce your brand to a community that already trusts our editorial judgement &mdash; and that trust does the selling for you.
+            </p>
+            <div className="svc-quote-attr">
+              <span className="svc-quote-rule" />
+              <span className="svc-quote-name">Moveee Editorial Team</span>
+              <span className="svc-quote-rule" />
+            </div>
+          </div>
+        </section>
+
         {/* Bottom CTA */}
-        <section className="market-bottom-cta">
-          <p className="section-eyebrow">Bespoke packages</p>
-          <h2>Need something tailored?</h2>
-          <p>
-            If none of the standard packages fit your brief, we can build a custom
-            visibility plan around your goals, timeline, and budget.
-          </p>
-          <a
-            href={`mailto:hello@themoveee.com?subject=${encodeURIComponent("Bespoke Package Enquiry — " + data.name)}`}
-            className="btn-primary-service"
-          >
-            Get in touch →
-          </a>
+        <section className="svc-wrap svc-section">
+          <div className="svc-cta-inner">
+            <div className="svc-cta-glow" />
+            <div className="svc-cta-text">
+              <h2>Need something tailored?</h2>
+              <p>
+                If none of the standard packages fit your brief, we can build a custom
+                visibility plan around your goals, timeline, and budget.
+              </p>
+            </div>
+            <a
+              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent("Bespoke Package Enquiry")}`}
+              className="svc-cta-btn"
+            >
+              Get in touch →
+            </a>
+          </div>
         </section>
 
       </main>
+
+      <div className="svc-wrap svc-foot">
+        <span className="svc-foot-brand">The Moveee</span>
+        <span className="svc-foot-note">Media services</span>
+      </div>
     </div>
   );
 }
