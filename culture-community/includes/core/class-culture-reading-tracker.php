@@ -2,10 +2,14 @@
 /**
  * Reading Tracker — StoryGraph-style personal shelves (Want to Read /
  * Currently Reading / Read) over the existing culture_directory `book`
- * entries. See docs/reading-tracker-plan.md for the full spec — this class
- * is Phase 1 only (shelves + counts). Mood/pace, goal tracking, and stats
- * are later phases per that doc's §8 build order and are not implemented
- * here yet.
+ * entries. See docs/reading-tracker-plan.md for the full spec.
+ *
+ * Phase 1 (shelves + counts) shipped September 2026. This pass adds
+ * Phase 2 (§1.2/§3.3 of the plan doc): a per-year reading goal, with
+ * progress always computed live off wp_culture_reading_shelf — never
+ * cached, per the plan doc's own "don't cache what's cheap to compute"
+ * reasoning. Mood/pace and stats are still later phases and are not
+ * implemented here yet.
  *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same mirrored-endpoint convention as Culture_Community_RSVP/Culture_Follows.
@@ -22,6 +26,11 @@ class Culture_Reading_Tracker {
     public static function table() : string {
         global $wpdb;
         return $wpdb->prefix . 'culture_reading_shelf';
+    }
+
+    public static function goal_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_reading_goal';
     }
 
     public static function create_table() {
@@ -42,6 +51,18 @@ class Culture_Reading_Tracker {
             UNIQUE KEY user_directory (user_id, directory_id),
             KEY user_status (user_id, status),
             KEY directory_status (directory_id, status)
+        ) {$charset_collate};" );
+
+        $goal_table = self::goal_table();
+        dbDelta( "CREATE TABLE {$goal_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            year smallint(6) NOT NULL,
+            target_books int(11) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY user_year (user_id, year)
         ) {$charset_collate};" );
     }
 
@@ -203,5 +224,71 @@ class Culture_Reading_Tracker {
         }
 
         return array( 'entries' => $entries, 'total' => $total );
+    }
+
+    /* ——————————————————————————————————————
+     *  Reading goal (Phase 2, per docs/reading-tracker-plan.md §1.2/§3.3)
+     * —————————————————————————————————————— */
+
+    /**
+     * Progress is never stored — always computed live off the shelf table,
+     * per the plan doc's reasoning (a personal per-user count read once on
+     * one dashboard, not a denormalized counter read across many users'
+     * lists like Hub member counts are).
+     */
+    public static function get_goal( int $user_id, int $year ) : array {
+        global $wpdb;
+        $target = $wpdb->get_var( $wpdb->prepare(
+            "SELECT target_books FROM " . self::goal_table() . " WHERE user_id = %d AND year = %d",
+            $user_id, $year
+        ) );
+
+        $read = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::table() . "
+             WHERE user_id = %d AND status = 'read' AND finished_at IS NOT NULL AND YEAR(finished_at) = %d",
+            $user_id, $year
+        ) );
+
+        return array(
+            'year'        => $year,
+            'targetBooks' => null !== $target ? (int) $target : null,
+            'booksRead'   => $read,
+        );
+    }
+
+    /**
+     * @return array|WP_Error
+     */
+    public static function set_goal( int $user_id, int $year, int $target_books ) {
+        if ( $target_books < 1 ) {
+            return new WP_Error( 'invalid_target', 'Goal must be at least 1 book.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $table = self::goal_table();
+        $now   = current_time( 'mysql' );
+
+        $existing_id = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE user_id = %d AND year = %d",
+            $user_id, $year
+        ) );
+
+        if ( $existing_id ) {
+            $wpdb->update(
+                $table,
+                array( 'target_books' => $target_books, 'updated_at' => $now ),
+                array( 'id' => $existing_id )
+            );
+        } else {
+            $wpdb->insert( $table, array(
+                'user_id'      => $user_id,
+                'year'         => $year,
+                'target_books' => $target_books,
+                'created_at'   => $now,
+                'updated_at'   => $now,
+            ) );
+        }
+
+        return self::get_goal( $user_id, $year );
     }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
-  ActivityIndicator, TouchableOpacity, Image, Modal, Alert,
+  ActivityIndicator, TouchableOpacity, Image, Modal, Alert, TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
@@ -32,6 +32,12 @@ interface ShelfEntry {
   finishedAt: string | null;
 }
 
+interface Goal {
+  year: number;
+  targetBooks: number | null;
+  booksRead: number;
+}
+
 function fmtDate(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
@@ -54,12 +60,30 @@ export default function ReadingTrackerScreen() {
   const [entries, setEntries] = useState<ShelfEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState("");
 
   const loadCounts = useCallback(() => {
     api.get<Record<ShelfStatus, number>>(`${MOBILE_API}/reading/shelf/counts`)
       .then(setCounts)
       .catch(() => {});
   }, []);
+
+  const loadGoal = useCallback(() => {
+    api.get<Goal>(`${MOBILE_API}/reading/goal`)
+      .then(setGoal)
+      .catch(() => {});
+  }, []);
+
+  function saveGoal() {
+    const target = parseInt(goalInput, 10);
+    if (!target || target < 1) return;
+    api.post<Goal>(`${MOBILE_API}/reading/goal`, { target_books: target })
+      .then(setGoal)
+      .catch(() => {})
+      .finally(() => setEditingGoal(false));
+  }
 
   const loadShelf = useCallback((status: ShelfStatus) => {
     setLoading(true);
@@ -69,7 +93,7 @@ export default function ReadingTrackerScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadCounts(); }, [loadCounts]);
+  useEffect(() => { loadCounts(); loadGoal(); }, [loadCounts, loadGoal]);
   useEffect(() => { loadShelf(tab); }, [tab, loadShelf]);
 
   function moveShelf(directoryId: number, status: ShelfStatus) {
@@ -78,6 +102,7 @@ export default function ReadingTrackerScreen() {
       .catch(() => {})
       .finally(() => {
         loadCounts();
+        if (status === "read") loadGoal();
         if (status === tab) loadShelf(tab);
       });
   }
@@ -117,6 +142,48 @@ export default function ReadingTrackerScreen() {
           <Ionicons name="add" size={24} color={c.ink} />
         </TouchableOpacity>
       </View>
+
+      {goal ? (
+        <View style={styles.goalCard}>
+          {editingGoal || goal.targetBooks === null ? (
+            <View style={styles.goalEdit}>
+              <Text style={styles.goalLabel}>Set your {goal.year} reading goal</Text>
+              <View style={styles.goalEditRow}>
+                <TextInput
+                  style={styles.goalInput}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 24"
+                  placeholderTextColor={c.mute}
+                  defaultValue={goal.targetBooks ? String(goal.targetBooks) : ""}
+                  onChangeText={setGoalInput}
+                />
+                <TouchableOpacity style={styles.goalSaveBtn} onPress={saveGoal}>
+                  <Text style={styles.goalSaveBtnText}>Save</Text>
+                </TouchableOpacity>
+                {goal.targetBooks !== null && (
+                  <TouchableOpacity onPress={() => setEditingGoal(false)}>
+                    <Text style={styles.goalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setEditingGoal(true)}>
+              <Text style={styles.goalText}>
+                {goal.booksRead} of {goal.targetBooks} books this year
+              </Text>
+              <View style={styles.goalBar}>
+                <View
+                  style={[
+                    styles.goalBarFill,
+                    { width: `${Math.min(100, (goal.booksRead / (goal.targetBooks || 1)) * 100)}%` },
+                  ]}
+                />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : null}
 
       <View style={styles.tabRow}>
         {TABS.map((t) => (
@@ -212,6 +279,33 @@ function createStyles(c: ColorPalette) {
     backBtn:     { width: 44, height: 44, alignItems: "flex-start", justifyContent: "center" },
     addBtn:      { width: 44, height: 44, alignItems: "flex-end", justifyContent: "center" },
     headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+
+    goalCard: {
+      backgroundColor: c.paper, marginHorizontal: space[3], marginTop: space[3],
+      padding: space[3], borderRadius: radius.xl, ...shadows.card,
+    },
+    goalText: { fontFamily: fonts.mono, fontSize: 12, color: c.ink, marginBottom: 8 },
+    goalBar: {
+      height: 8, borderRadius: radius.full, backgroundColor: c.paperDeep, overflow: "hidden",
+    },
+    goalBarFill: { height: "100%", backgroundColor: c.ochre, borderRadius: radius.full },
+    goalEdit: { gap: 10 },
+    goalLabel: {
+      fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.6,
+      textTransform: "uppercase", color: c.mute,
+    },
+    goalEditRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    goalInput: {
+      width: 80, height: 40, paddingHorizontal: 10,
+      borderWidth: 1, borderColor: c.ghost, borderRadius: radius.md,
+      fontFamily: fonts.sans, fontSize: 14, color: c.ink, backgroundColor: c.paper,
+    },
+    goalSaveBtn: {
+      height: 40, paddingHorizontal: 16, borderRadius: radius.lg,
+      backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
+    },
+    goalSaveBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
+    goalCancelText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
     tabRow: {
       flexDirection: "row", backgroundColor: c.paper,

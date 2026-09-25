@@ -9412,12 +9412,12 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
-## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phase 1 (shelves) shipped, September 2026
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phases 1–2 shipped, September 2026
 
 **Full plan: `docs/reading-tracker-plan.md`.** Build order is strictly phased (§8): shelves →
-goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Only Phase 1
-(shelves) is built so far** — goal/mood-pace/stats/Buddy-Reads/gamification are all still
-planning-only; don't assume any of them exist because Phase 1 does. Requested as "implement
+goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Phases 1
+(shelves) and 2 (reading goal) are built** — mood/pace/stats/Buddy-Reads/gamification are still
+planning-only; don't assume any of them exist because Phases 1–2 do. Requested as "implement
 similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" — the plan
 doc breaks StoryGraph's feature set into what's already covered by existing Moveee
 infrastructure (Book Review's ratings/genres, `culture_directory` book entries, Hubs for Buddy
@@ -9472,9 +9472,47 @@ component (`components/composer/DirectorySearch.tsx` — note its prop names dif
 the web version: `onSelect`/`selected`, not `onChange`/`value`, and its `DirectoryEntry` has no
 `slug` field). Linked from `MemberDashboardScreen.tsx`'s `QUICK_LINKS` ("📚 Reading Tracker").
 
-**Not built yet** (later phases, do not start without explicit direction): a reading goal
-tracker, mood/pace tags on book directory entries, the stats dashboard, Buddy Reads prefill from
-a Hub, and the gamification hook (credits/reputation for shelf activity). None of Phase 1's
+### Phase 2 — reading goal (per-year target, live progress)
+
+**Backend**: extends `Culture_Reading_Tracker` — a new table, `wp_culture_reading_goal`
+(`id, user_id, year (smallint), target_books (int), created_at, updated_at`, `UNIQUE KEY
+(user_id, year)` — one row per user per year, upsert on repeat sets), wired into the same
+`create_table()` this class already owned; `CULTURE_VERSION` bumped `3.2.0` → `3.3.0` to trigger
+the new table's `dbDelta` on next deploy (plugin header also bumped `2.6.1` → `2.6.2` for the
+same redeploy-confirmation reason documented elsewhere in this file). `get_goal($user_id, $year)`
+returns `{year, targetBooks, booksRead}` — **`booksRead` is always a live `COUNT(*)` against
+`wp_culture_reading_shelf` (`status = 'read'` AND `YEAR(finished_at) = $year`), never cached or
+denormalized**, unlike a Hub's member/post counters — a personal per-user count doesn't carry
+the same "read across many users' lists at once" cost that denormalization exists to solve for
+Hubs. `set_goal($user_id, $year, $target_books)` validates `$target_books >= 1`
+(`WP_Error('invalid_target', ...)` otherwise) and upserts.
+
+REST routes mirror the shelf endpoints exactly: `GET`/`POST /mobile/reading/goal` (JWT,
+`class-culture-mobile-api.php`, `year` optional — defaults to the current year) and `GET`/
+`POST /reading/goal` (API-key + explicit `user_id`, `class-culture-rest-api.php`). Both call the
+same `Culture_Reading_Tracker::get_goal()`/`set_goal()`.
+
+**Web**: `app/api/reading/goal/route.ts` (new proxy, same shape as the Phase 1 shelf routes —
+`getServerSession()` → 401 if absent → `user_id` resolved server-side, never trusted from the
+client body). `ReadingTrackerClient.tsx` renders a `.rt-goal-card` **persistent across all three
+shelf tabs** (year-scoped, not shelf-scoped, per the plan's own reasoning) — right below the
+"+ Add a Book" button and above the tab row. Two states: a summary ("{booksRead} of {targetBooks}
+books this year" + an `.rt-goal-bar` progress fill, tapping it opens edit mode) when a goal is
+set, or an inline "Set your {year} goal" number input + Save when it isn't. Marking a book `read`
+(via `moveShelf`) re-fetches the goal so the progress bar updates live. New `.rt-goal-*` CSS in
+`member.css`.
+
+**Mobile**: `ReadingTrackerScreen.tsx` renders the same goal card (`styles.goalCard`/
+`goalText`/`goalBar`/`goalBarFill`/`goalEdit*`) as a "Your Year in Books"-style section, placed
+between the header and the tab row — same persistent-across-tabs placement as web, same
+edit/summary toggle, same "read" transition re-triggers `loadGoal()`.
+
+**No badge/reward tied to hitting 100% in v1** — per the plan's explicit scope note; if that's
+ever wanted, it belongs with the later gamification-hook phase, not bolted onto this one.
+
+**Not built yet** (later phases, do not start without explicit direction): mood/pace tags on
+book directory entries, the stats dashboard, Buddy Reads prefill from a Hub, and the
+gamification hook (credits/reputation for shelf activity). None of Phase 1/2's
 tables/endpoints/components should need to change to support these — they're additive per the
 plan doc's own phase breakdown.
 

@@ -2929,6 +2929,90 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-add-btn:hover { background: var(--ochre); }
 
+.rt-goal-card {
+  background: var(--paper);
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+.rt-goal-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.rt-goal-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .02em;
+  color: var(--ink);
+}
+.rt-goal-bar {
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--paper-deep, #f2f2f2);
+  overflow: hidden;
+}
+.rt-goal-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--ochre);
+  border-radius: var(--radius-full);
+  transition: width .3s ease;
+}
+.rt-goal-edit { display: flex; flex-direction: column; gap: 10px; }
+.rt-goal-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.rt-goal-edit-row { display: flex; align-items: center; gap: 10px; }
+.rt-goal-input {
+  width: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.rt-goal-save {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 9px 16px;
+  cursor: pointer;
+}
+.rt-goal-save:hover { background: var(--ochre); }
+.rt-goal-cancel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 9px 6px;
+}
+.rt-goal-cancel:hover { text-decoration: underline; }
+
 .rt-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
