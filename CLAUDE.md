@@ -708,6 +708,74 @@ Fixed:
   regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
   content going forward.
 
+## Magic-code sign-in + subscribe — every `<SubscribeForm>` on the site (September 2026)
+
+Every "enter your email" subscribe widget site-wide — homepage `JoinSection`, `LiteraryFooter`/
+`CommonsFooter`, `CultureDropBand`, the Lifestyle Shop email band, Literary/Commons piece
+newsletter breaks — no longer just adds the email to a list. Subscribing now goes through a
+magic-code sign-in: a 6-digit code is emailed, and entering it both subscribes the address to the
+given list **and** signs the visitor into Moveee (a new Citizen account is created if the email has
+none, or the existing account is signed into if it does) — one action does both. Built first for
+the new **`/literary/subscribe`** landing page (the destination `LiteraryMasthead.tsx`'s "Get
+Updates" ribbon link and "Subscribe" pill now point at, replacing the generic `/newsletter` hub),
+then generalized to every other subscribe surface on the site per explicit user follow-up.
+
+**Backend**: `culture-community/includes/core/class-culture-magic-otp.php`
+(`Culture_Magic_OTP`) — `request_otp($email)` (rate-limited 3/10min, 6-digit code, `wp_hash()`'d in
+a transient, 10-minute TTL, mirrors `Culture_Literary_Access`'s OTP mechanics exactly) and
+`verify_otp($email, $code, $list_slug)` (max 5 wrong attempts, single-use, then finds-or-creates a
+real WP account — same shape as `Culture_Google_Auth::find_or_create_user()` — and subscribes the
+email via `Culture_Subscribers_DB::subscribe()`). Deliberately a **separate class** from
+`Culture_Literary_Access`, even though the OTP mechanics are identical in shape — that class's
+`verify_code()` issues a signed *content-access* token and never touches a real account; this one
+always creates/updates a real WP user and returns a full profile instead of a token. New REST
+routes (public): `POST /culture/v1/magic-otp/request`, `POST /culture/v1/magic-otp/verify` (returns
+the same `user_profile()` shape `/login` and `/login-google` already return). Email:
+`Culture_Emails::send_magic_otp_email()` — deliberately generic copy, not Literary-specific, since
+every subscribe surface now uses it.
+
+**NextAuth wiring**: the shared `CredentialsProvider` in `packages/shared/lib/auth.ts` gained a
+third `authorize()` branch (alongside username/password and the passkey-token exchange) — when
+`credentials.otpEmail`/`otpCode` are present, it calls `/culture/v1/magic-otp/verify` directly and
+maps the response the same way the password branch does. **`apps/site` needed its own
+`app/api/auth/[...nextauth]/route.ts` for this to work** — it never had one before (it only ever
+called `getServerSession()`, which just decodes the shared `.themoveee.com` session cookie and
+needs no local route), but `next-auth/react`'s `signIn()` posts to the *current* app's own origin,
+so a visitor entering a code on `themoveee.com` needs a real handler there to land on. Same shared
+`authOptions`, so the resulting session works on both apps immediately (shared cookie domain).
+
+**Frontend**: `packages/shared/components/SubscribeForm.tsx` (mirrored, per the existing
+convention, into the unused-but-kept-in-sync `apps/site/components/SubscribeForm.tsx` copy) is now
+a two-step widget — email+button → code+button, same input/button slot and props (`placeholder`/
+`buttonLabel`/`buttonClassName`/`inputClassName`/`successMessage`/`list`) as before, so all 9
+existing call sites needed zero changes. Step 1 POSTs to the new
+`apps/site/app/api/newsletter/magic-otp/request/route.ts` proxy; step 2 calls
+`signIn("credentials", { otpEmail, otpCode, otpList: list, redirect: false })` directly — no
+verify proxy route needed, `authorize()` talks to WordPress itself. `segment` stays in the props
+interface for backward compatibility but is unused — the magic-OTP endpoint has no per-region
+segment concept. **The pre-existing `/api/newsletter/subscribe` route and
+`NewsletterPreferences.tsx` (the member-settings list-toggle page) are untouched** — those serve an
+already-authenticated member managing their own subscriptions, a different flow from an anonymous
+visitor subscribing for the first time.
+
+`components/LiterarySubscribeForm.tsx` is a separate, full-page variant (locked copy + the same
+two-step flow) built for `/literary/subscribe` specifically — it renders inside `.lit-submit-wrap`/
+reuses `.lit-form-*` classes from `literary.css` rather than the compact inline pair the generic
+`SubscribeForm` uses, since it's a dedicated landing page, not a footer widget. Both call the same
+`/api/newsletter/magic-otp/request` proxy and the same `signIn()` verify path — no duplicated
+backend logic between them.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file (no `node_modules` installed this session either, so `tsc --noEmit`
+couldn't run). Verified via `php -l` on every touched/new PHP file and brace/paren-balance checks
+on every touched/new TS/TSX file. This also needs the plugin redeployed (manual zip+upload — no new
+dbDelta table, so no `CULTURE_VERSION` bump, only the plugin header version bump) before
+`/culture/v1/magic-otp/*` exists in production, and `apps/site` needs its own `NEXTAUTH_SECRET`/
+`NEXTAUTH_URL` env vars confirmed set on Vercel for the new `[...nextauth]` route to work there.
+Re-check the full email → code → account-created-or-signed-in → subscribed round trip, on both a
+brand-new email and an existing member's email, in a real environment before considering this fully
+closed.
+
 ## The Moveee Literary (`/literary`, added September 2026)
 
 A fiction/poetry/essays/conversations/translation vertical on Site A (`apps/site`), built to feel

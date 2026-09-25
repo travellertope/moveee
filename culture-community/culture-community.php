@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     2.6.2
+ * Version:     2.6.3
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -59,6 +59,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-system-author.php
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-guest-byline.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-preview.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-literary-access.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-magic-otp.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
