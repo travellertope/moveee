@@ -184,7 +184,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       getIssuesForPost(parseInt(post.databaseId)),
     ]);
     relatedStories = (relData?.posts?.nodes || [])
-      .filter((s: any) => s.slug !== resolvedParams.slug)
+      .filter((s: any) => s.slug !== resolvedParams.slug && !isCommonsPost(s))
       .slice(0, 3);
     postIssue = issueTerms?.[0] ?? null;
   } catch {}

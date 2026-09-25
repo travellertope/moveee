@@ -433,25 +433,40 @@ codebase or in anyone's browser needed updating.
 - **Moveee Content** (anchor slug `culture-content-manager`, same pattern,
   added September 2026) — a catch-all for general content CPTs that don't
   belong under any of the other top-level menus: Directory
-  (`culture_directory`), Quotes (`culture_quote`), Community Posts
-  (`culture_post`), Journeys (`culture_journey` — all four native CPT
-  screens, `show_in_menu` pointing at `culture-content-manager`, all were
-  under Culture Community), plus **Directory Tools** (`culture-directory-tools`,
-  moved from Culture Community — it manages the Directory CPT's seeder/image
-  tools, so it belongs alongside Directory itself). Registered in the new
-  `class-culture-content-admin.php` (top-level `add_menu_page()` + the anchor
-  submenu, a plain landing page linking out to each CPT's list screen — there
-  was never a real admin page for these CPTs before, just their native WP
-  list/edit screens, so this class only registers the menu shell). Directory
-  Tools' `enqueue_assets()` hook-suffix check was updated to
-  `culture-content-manager_page_culture-directory-tools` — see the hook-suffix
-  gotcha note below.
-  **Whether Quotes (`culture_quote`) is still worth keeping as a separate
-  content type** — now that quotes render natively inline in the unified
-  feed (see "Quotes feed merge" elsewhere in this file) — is an open product
-  question, not yet decided; it was moved here for menu-organization
-  purposes only, independent of that decision. If quotes are ever fully
-  retired into community posts, this menu entry is what to remove.
+  (`culture_directory`), Feed Posts (`culture_post`, sidebar label renamed
+  from "All Community Posts" — see below), Journeys (`culture_journey` — all
+  native CPT screens, `show_in_menu` pointing at `culture-content-manager`,
+  all were under Culture Community), plus **Directory Tools**
+  (`culture-directory-tools`, moved from Culture Community — it manages the
+  Directory CPT's seeder/image tools, so it belongs alongside Directory
+  itself). Registered in the new `class-culture-content-admin.php` (top-level
+  `add_menu_page()` + the anchor submenu, a plain landing page linking out to
+  each CPT's list screen — there was never a real admin page for these CPTs
+  before, just their native WP list/edit screens, so this class only
+  registers the menu shell). Directory Tools' `enqueue_assets()` hook-suffix
+  check was updated to `culture-content-manager_page_culture-directory-tools`
+  — see the hook-suffix gotcha note below.
+  **Quotes (`culture_quote`) removed from the sidebar entirely (September
+  2026, follow-up to the same-month "Quotes feed merge")** — the previous
+  entry here flagged this as an open question ("if quotes are ever fully
+  retired into community posts, this menu entry is what to remove"); the
+  same pass that removed the standalone `/quotes` archive/author pages and
+  submission UI from the site (see "Quotes feed merge" elsewhere in this
+  file) made the sidebar entry pointless, since there's no longer a browsing
+  surface that points an editor at individual quote management day-to-day.
+  `culture_quote` itself is **not** deleted or hidden from the DB/REST/
+  GraphQL layer — it's still what backs quote cards in the unified feed and
+  `/quotes/[slug]` single pages — only `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` (same "hide the native screen, keep it
+  reachable by direct URL" pattern already used for `culture_cluster`/
+  `culture_hub`). The Moveee Content landing page keeps one plain link to
+  `edit.php?post_type=culture_quote` for when a quote genuinely needs manual
+  editing (the Bulk Quote Importer CSV panel on Directory Tools is still the
+  normal way to add quotes in bulk — see "Quotes feed merge" for what's
+  automated vs. manual). **"Community Posts" CPT's `all_items` label renamed
+  to "Feed Posts"** (was "All Community Posts") — copy-only, the CPT's own
+  `name`/`singular_name`/slug/REST base (`community-posts`) and everything
+  else about it are unchanged.
 - **Moveee Literary** (anchor slug `culture-literary-submissions`, same
   pattern) — just Literary Submissions (the submissions manager + its
   Waivers tab) today; registered in `class-culture-literary-submissions.php`.
@@ -1599,6 +1614,20 @@ unillustrated flat gradient with cryptic text. Fixed:
   every other pass in this file. Verified via brace/paren-balance checks on
   `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
 
+**`LITERARY_HOMEPAGE_CUTOFF` extended to every `/literary` listing, not just the homepage, and
+moved into `wp.ts` (September 2026, follow-up).** Per explicit request, the fixed
+"nothing published before this date shows in a listing" cutoff — previously local to
+`app/literary/page.tsx` and applied only to the homepage's hero/Latest/In Translation pools —
+now also applies to a genre archive's main grid (`/literary/{genre}`) and a single piece's
+"More In {genre}"/"Also Like" grids (`app/literary/[slug]/page.tsx`). Still nothing gets
+unpublished or hidden from a direct link, search, or the sitemap — this only ever trims what a
+`getLiteraryPieces()` **listing** surfaces, on any page under this vertical. Extracted into a
+single shared export in `packages/shared/lib/wp.ts` — `LITERARY_CUTOFF` (renamed from
+`LITERARY_HOMEPAGE_CUTOFF`, since it's no longer homepage-only) plus a `filterLiteraryCutoff()`
+helper — so both files call the same constant instead of each keeping their own copy. **If this
+cutoff ever needs to move or be removed, `LITERARY_CUTOFF` in `wp.ts` is the one place to
+change it** — don't reintroduce a page-local copy.
+
 ## The Moveee Commons (`/commons`, added September 2026)
 
 A public-affairs/research vertical at `apps/site/app/commons/*` — opinions, reports, research
@@ -1722,6 +1751,33 @@ couldn't run either. Verified via brace/paren-balance checks on every new/edited
 file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommons*` export.
 Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
 category slug in WP Admin, in a real environment before considering this fully closed.
+
+**Commons-qualifying posts excluded from every `/magazine` and homepage listing (September
+2026, follow-up).** Per explicit request — a Commons post's single-page URL already redirected
+away from `/magazine/{slug}` (see "Route every Commons-qualifying post to /commons" above), but
+it could still surface inside `/magazine`'s own listings as a card linking to that now-redirecting
+URL, which reads as a bug even though the click itself worked. Every place a story pool is built
+now filters out `isCommonsPost(p)` (the same category-or-author union already used for the
+single-page redirect) before rendering:
+- `getMagazineSections()` (`wp.ts`) — feeds the site root `/`'s Front Page/Edit/Opinions/Lane/
+  Free Critics sections. This is the one function both `/` and (historically) `/magazine` shared,
+  so fixing it here is the single highest-leverage change.
+- `MagazineArchiveWrapper.tsx` — every filtered view (category/tag/series/industry/country
+  archives all assign into one `stories` variable, filtered once after the branch that populates
+  it) and the Hub's own "Browse by Section" tile list (`allFetchedCats` now drops the `"commons"`
+  category slug outright, so it's not a dead-end tile that resolves to an empty archive).
+- `/magazine/[slug]/page.tsx` — the "Keep reading"/related-stories grid at the bottom of an
+  article.
+- `fetchHomepageData.ts` — the site root's separate hero/`coverStory` pipeline (independent of
+  `getMagazineSections()`): the "Featured"-tag pool (so a Commons piece tagged Featured can never
+  become the homepage hero), the edition-scoped and general story pools, and the Interviews pool.
+- **Deliberately left alone**: `generateStaticParams()` in `/magazine/[slug]/page.tsx` (still
+  pre-generates a Commons post's `/magazine/{slug}` static path — harmless, since visiting it
+  just hits the existing redirect to `/commons/{slug}`, not a rendered page) and `sitemap.ts`
+  (already excludes category-based Commons pieces from `articleUrls`, per the routing commit
+  referenced above — no further change needed there).
+- Not visually verified in a browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+  other pass in this file. Verified via brace/paren-balance checks on all four touched files.
 
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 

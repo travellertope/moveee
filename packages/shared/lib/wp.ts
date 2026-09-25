@@ -1059,6 +1059,27 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
   }
 }
 
+/**
+ * A "start fresh" reset, per explicit request — every pieces() *listing*
+ * anywhere under /literary (the homepage's hero/Latest/In Translation pools,
+ * a genre archive's main grid, and a single piece's "More In {genre}"/
+ * "Also Like" grids) only ever surfaces work published on or after this
+ * date. Nothing published earlier is unpublished or hidden from a direct
+ * link, search, or the sitemap — this only trims what getLiteraryPieces()
+ * results ever get displayed in a list. Deliberately a fixed date, not a
+ * rolling window (e.g. "last 7 days"), so a quiet week doesn't empty out
+ * these sections. GET_STORIES has no explicit `orderby` and WordPress's own
+ * default post ordering is date DESC, so a plain first-N fetch is already
+ * newest-first — filtering after the fetch (rather than passing a date arg
+ * into the query) never risks an older post displacing a newer one, it just
+ * trims the already-sorted list at the cutoff.
+ */
+export const LITERARY_CUTOFF = new Date("2026-09-14T00:00:00Z");
+
+export function filterLiteraryCutoff<T extends { date?: string | null }>(pieces: T[]): T[] {
+  return pieces.filter((p) => new Date(p?.date || 0) >= LITERARY_CUTOFF);
+}
+
 // ── The Moveee Commons ─────────────────────────────────────────────────────
 // A public-affairs/research vertical at apps/site/app/commons/* — opinions,
 // reports, research and news on politics/environment/academia. Same "reuse
@@ -1668,22 +1689,30 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
     ]);
-    const editorialStories = editData?.posts?.nodes || [];
+    // Commons-qualifying posts (category "commons" or a Basit Jamiu byline —
+    // see isCommonsPost above) never surface anywhere under /magazine, per
+    // explicit request — they're exclusively a Commons-branded destination
+    // now (mirrors the /magazine/[slug] redirect and sitemap.ts's own split,
+    // both already scoped to the same isCommonsPost union). Filtered here,
+    // before any of the per-section slicing below, so it applies uniformly
+    // to every section this function feeds (the homepage and /magazine's
+    // own default view both call this).
+    const editorialStories = (editData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
 
     const topPool = mainPool.filter(
-      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news") && !isCommonsPost(p)
     );
 
     const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
 
     const opinionStories = (opinionData?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
     const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 5);
     const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
 
     return { topPool, editorialStories, opinionStories, portraitStories, digestStories };
