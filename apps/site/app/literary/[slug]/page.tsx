@@ -113,17 +113,6 @@ async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof ge
       <section className="lit-genre-head">
         <h1>{genre.label}</h1>
         <p className="lit-sub">{genre.tagline}</p>
-        <nav className="lit-genre-pills" aria-label="Genres">
-          {LITERARY_GENRES.map((g) => (
-            <Link
-              key={g.slug}
-              href={`/literary/${g.slug}`}
-              className={`lit-genre-pill${g.slug === genre.slug ? " lit-genre-pill--active" : ""}`}
-            >
-              {g.label}
-            </Link>
-          ))}
-        </nav>
       </section>
 
       <section className="lit-section">
